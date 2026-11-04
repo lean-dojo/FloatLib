@@ -11,9 +11,9 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 /-!
 # Uniform operation-specific capability API
 
-The public `Add`, `Sub`, `Mul`, `Div`, `Sqrt`, and `Fma` namespaces derive their interfaces from
-the single indexed `Capability` contract. Each namespace exposes the same planning and
-certification surface while retaining the operation's natural arity.
+The public `Add`, `Sub`, `Mul`, `Div`, `Sqrt`, and `Fma` namespaces all derive their interfaces from
+the one indexed `Capability` contract. So each namespace has the same planning and certification
+surface, and each keeps the operation's natural arity.
 -/
 
 @[expose] public section

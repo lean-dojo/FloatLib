@@ -9,12 +9,12 @@ module
 /-!
 # Explicit entropy for numerical operations
 
-Stochastic rounding and randomized numerical algorithms must expose their entropy state in the
-function type. `EntropyResult` and `EntropyKernel` make that state transition explicit without a
+Stochastic rounding and randomized numerical algorithms have to show their entropy state in the
+function type, and `EntropyResult` and `EntropyKernel` make that state transition visible without a
 global random source or a runtime operation dictionary.
 
-An optimized kernel remains an ordinary monomorphic function. Its proof contract records how the
-input entropy, result, and output entropy are related.
+An optimized kernel stays an ordinary monomorphic function, and its proof contract records how the
+input entropy, the result, and the output entropy are related.
 -/
 
 @[expose] public section
@@ -27,7 +27,7 @@ universe u v w x
 structure EntropyResult (Entropy : Type u) (Result : Type v) where
   /-- The operation's ordinary result. -/
   result : Result
-  /-- The explicitly updated entropy state. -/
+  /-- The updated entropy state, returned as data. -/
   entropy : Entropy
   deriving DecidableEq, Repr
 

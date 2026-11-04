@@ -10,13 +10,13 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Datum
 /-!
 # Decimal word assembly and special values
 
-IEEE 754-2019 §3.5.2 reserves combination fields `11110` for infinity and
-`11111` for NaN in both encodings. The next bit is **one for a signaling NaN**.
-Canonical encodings clear unused bits. A decoder accepts every word, retaining
-the sign and the NaN's signaling bit and decimal payload.
+BID and DPD lay out part of the word the same way, and that part lives here. IEEE 754-2019 §3.5.2
+reserves the combination field `11110` for infinity and `11111` for NaN in both encodings, and the
+next bit is **one for a signaling NaN**. Canonical encodings clear unused bits. The decoder accepts
+every word and keeps the sign, the NaN's signaling bit, and its decimal payload.
 
-`Codec` separates these shared rules from BID/DPD coefficient encoding.
-`encode?` rejects unrepresentable datums; it does not round them.
+`Codec` holds these shared rules apart from the BID and DPD coefficient encodings. `encode?`
+rejects a datum it can't represent and never rounds it.
 -/
 
 @[expose] public section
@@ -53,8 +53,8 @@ structure Codec where
 
 namespace Codec
 
-/-- Assemble a datum without rounding. Correct round trips require `Datum.Valid`;
-use `encode?` when representability has not already been established. -/
+/-- Assemble a datum without rounding. Correct round trips require `Datum.Valid`,
+so use `encode?` when representability has not already been established. -/
 def encode (codec : Codec) (f : Format) : Datum → BitVec f.bitWidth
   | .finite s c q => Bits.pack f s (codec.encodeFinite f c (q + f.bias).toNat)
   | .infinity s => Bits.pack f s (30 * (f.exponentBase * f.trailingBase))
@@ -64,7 +64,7 @@ def encode (codec : Codec) (f : Format) : Datum → BitVec f.bitWidth
         codec.encodePayload f p)
 
 /-- Checked interchange encoding. `none` means that this width cannot represent
-the supplied datum exactly, including its quantum exponent or NaN payload. -/
+the supplied datum as it is, quantum exponent and NaN payload included. -/
 def encode? (codec : Codec) (f : Format) (d : Datum) : Option (BitVec f.bitWidth) :=
   if d.Valid f then some (codec.encode f d) else none
 

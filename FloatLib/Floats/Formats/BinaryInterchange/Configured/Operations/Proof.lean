@@ -20,9 +20,9 @@ descriptor-model operation used to compute it. Results with `status := true` kee
 indicators, and the projection theorems `value_remainder` through `value_maximumNumber` state
 that their value is the configured operation without status.
 
-The arithmetic properties are proved for the descriptor-model operations. These theorems
-transport their results through the storage codec, giving the same equations for values and
-exception flags with every storage plan.
+We prove the arithmetic properties for the descriptor-model operations. These theorems transport
+those results through the storage codec, giving the same equations for values and exception flags
+with every storage plan.
 -/
 
 @[expose] public section
@@ -260,7 +260,7 @@ Configured `binaryExponent` with `status := true` delivers the value of configur
     ← Model.value_maximumNumber]
   rfl
 
-/-- The integer value is absent exactly for the values that are not finite. -/
+/-- The integer value is absent if and only if the value is not finite. -/
 @[simp] theorem toInt?_eq_none_iff (value : Value) (mode : Model.IEEERoundingMode) :
     toInt? value mode = none ↔ isFinite value = false := by
   have hdecode := Model.toDyadic?_isSome_eq_isFinite (toModel value)

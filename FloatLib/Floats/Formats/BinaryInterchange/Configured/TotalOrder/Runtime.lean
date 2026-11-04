@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Ru
 /-!
 # Total ordering of configured binary values
 
-These predicates decode the configured carrier and use the single exact semantic order.
-Storage plans, field widths, and exponent biases require no separate implementation. The
-predicates preserve NaN metadata and neither quiet signaling NaNs nor raise exceptions.
+These predicates decode the configured carrier and use the single exact semantic order, so storage
+plans, field widths, and exponent biases need no implementation of their own. NaN metadata survives,
+and no predicate quiets a signaling NaN or raises an exception.
 -/
 
 @[expose] public section

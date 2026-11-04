@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Executable packing semantics
 
-For a descriptor with `fmt.isIEEE = true`, a finite result produced by `roundRatScaled` denotes
-`roundAt` applied to the corresponding real value. Finiteness excludes the zero denominator, whose
-invalid result is a NaN.
+For a descriptor with `fmt.isIEEE = true`, a finite result of `roundRatScaled` denotes `roundAt`
+applied to the corresponding real value. The finiteness hypothesis rules out the zero
+denominator, whose invalid result is a NaN, and the overflow branches.
 
-The positive proof covers underflow, subnormal and normal results, including a carry into the next
-exponent. Finiteness excludes the overflow branches. The signed theorem restores the sign through
-the symmetry proved in `RoundedReal`.
+For positive values the proof covers underflow, subnormal and normal results, a carry into the
+next exponent included, and the signed theorem then restores the sign through the symmetry proved
+in `RoundedReal`.
 -/
 
 @[expose] public section

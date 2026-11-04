@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
 /-!
 # Integer-grid rounding guarantees
 
-The rounded integer fixes every exact integer, satisfies the directed bounds,
-and lies within half a unit in either nearest mode. The midpoint theorems specify
-the tie choice, which an error bound alone would not determine.
+These are the guarantees of `roundInteger`, the integer rounder behind the conversions. It leaves
+every integer alone. It also meets the directed bounds and stays within half a unit in either
+nearest mode, but an error bound can't tell you which way a tie goes, so the midpoint theorems say
+it outright.
 -/
 
 @[expose] public section

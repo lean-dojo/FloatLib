@@ -87,7 +87,7 @@ Custom widths can satisfy this predicate as well as the named IEEE 754 layouts.
     (ieee expWidth fracWidth expWidth_ge_two fracWidth_pos).isIEEE = true := by
   simp [isIEEE, ieee, ieeeBias, bias]
 
-/-- Characterization of descriptors represented exactly by Lean's IEEE logical model. -/
+/-- Characterization of the descriptors that Lean's IEEE logical model represents faithfully. -/
 theorem isIEEE_eq_true_iff (fmt : FloatFormat) :
     fmt.isIEEE = true ↔
       fmt.encoding = .ieee ∧ fmt.exponentBias = fmt.bias := by
@@ -111,7 +111,7 @@ theorem supportsInfinity_eq_true_of_isIEEE (fmt : FloatFormat)
     fmt.supportsInfinity = true := by
   simp [supportsInfinity, encoding_eq_ieee_of_isIEEE fmt hfmt]
 
-/-- Every IEEE descriptor represents positive and negative zero separately. -/
+/-- Every IEEE descriptor has distinct encodings for positive and negative zero. -/
 @[simp] theorem supportsSignedZero_eq_true_of_isIEEE
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     fmt.supportsSignedZero = true := by
@@ -130,17 +130,17 @@ theorem supportsInfinity_eq_true_of_isIEEE (fmt : FloatFormat)
 
 Two families of exponent bounds coexist. The policy-aware family (`minNormalExponent`,
 `minSubnormalExponent`, `maxNormalExponent`, `normalMantissaExpOffset`, `subnormalAlignExp`) is
-derived from the declared `fmt.exponentBias` and `fmt.encoding` and is the one executable
-semantics use. The `ieee`-prefixed family below is derived from the layout alone through the
-conventional bias `fmt.bias` and matches Lean's logical IEEE model; it agrees with the
-policy-aware family when `fmt.isIEEE`, as the `*_eq_ieee` theorems state. Custom biases and
-finite-only encodings can change these bounds.
+derived from the declared `fmt.exponentBias` and `fmt.encoding`, and it is the one executable
+semantics use. The `ieee`-prefixed family below comes from the layout alone, through the
+conventional bias `fmt.bias`, and matches Lean's logical IEEE model. When `fmt.isIEEE` the two
+families agree, as the `*_eq_ieee` theorems state, but custom biases and finite-only encodings can
+change these bounds.
 -/
 
 /--
 Dyadic exponent of the least positive subnormal in the conventional IEEE reading of the layout
-(binary32: `-149`). For policy-aware semantics use `minSubnormalExponent`, which is based on
-`fmt.exponentBias` rather than the layout-derived `fmt.bias`.
+(binary32: `-149`). For policy-aware semantics use `minSubnormalExponent`, which uses
+`fmt.exponentBias` where this one uses the layout-derived `fmt.bias`.
 -/
 @[inline] def ieeeMinSubnormalExponent (fmt : FloatFormat) : Int :=
   (1 : Int) - Int.ofNat fmt.bias - Int.ofNat fmt.fracWidth
@@ -155,7 +155,7 @@ a normal word with biased exponent `e` and fraction `f` denotes
 
 /--
 Largest unbiased normal exponent in the conventional IEEE reading of the layout
-(binary32: `127`). For policy-aware semantics use `maxNormalExponent`; the two differ for
+(binary32: `127`). For policy-aware semantics use `maxNormalExponent`. The two differ for
 finite-only encodings, whose all-ones exponent field is finite, and for custom biases.
 -/
 @[inline] def ieeeMaxNormalExponent (fmt : FloatFormat) : Nat :=
@@ -215,7 +215,7 @@ theorem subnormalAlignExp_eq_ieee
 /-!
 ## Layout formulas
 
-The sign occupies the top bit, followed by the exponent and then the low fraction field.
+From the top bit down, a word holds the sign, then the exponent, then the low fraction field.
 -/
 
 /-- Sign bit index (binary32: `31`). -/
@@ -333,13 +333,16 @@ public meta section
 namespace FloatLib.Floats.Formats.BinaryInterchange
 
 /--
-Prove `format.isIEEE = true`: from a hypothesis in context that states it, or by `decide` for a
-concrete IEEE-encoded format such as `FloatFormat.binary32`. The hypothesis is tried first and
-matched up to reducible unfolding only, so other Boolean facts in context, such as the finiteness of
-a result, are never evaluated, and a format that only later arguments fix never reaches `decide`
-when its proof is in context. The configured binary theorems take their format proof `hformat`
-last, with this tactic as its default, so a call on a concrete IEEE format passes no format proof,
-and a variable format passes `(hformat := h)` when no hypothesis is in context.
+Prove `format.isIEEE = true` from a hypothesis in context that states it, or by `decide` for a
+concrete IEEE-encoded format such as `FloatFormat.binary32`.
+
+The hypothesis is tried first and matched up to reducible unfolding only. So other Boolean facts
+in context, such as the finiteness of a result, are never evaluated, and a format that only later
+arguments fix never reaches `decide` when its proof is in context.
+
+The configured binary theorems take their format proof `hformat` last, with this tactic as its
+default. A call on a concrete IEEE format passes no format proof, and a variable format passes
+`(hformat := h)` when no hypothesis is in context.
 -/
 syntax (name := ieeeFormat) "ieee_format" : tactic
 

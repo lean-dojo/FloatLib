@@ -27,13 +27,13 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Pair.Runtime
 /-!
 # Configured posit backend runtime
 
-The posit planner selects from representation-independent exact-dyadic backends, two-limb
-model-valued backends, and direct packed-storage kernels that read `UInt64` words or `UInt64`
-pairs.
+This module holds every backend the posit planner can pick from. They come in three kinds:
+representation-independent exact-dyadic backends, two-limb backends that return model values, and
+direct packed-storage kernels that read `UInt64` words or `UInt64` pairs.
 
-Packed carriers pair a code with a proof that it lies below the format modulus. Their constructors
-use the arithmetic kernels' range theorems; these proof arguments are erased during compilation.
-Semantic refinement of the configured entry points is proved in
+A packed carrier pairs a code with a proof that the code lies below the format modulus, and its
+constructors get that proof from the arithmetic kernels' range theorems before compilation erases
+it. Refinement of the configured entry points is proved in
 `FloatLib.Floats.Formats.Posit.Configured.Backend.Proof`.
 -/
 
@@ -117,17 +117,17 @@ square remainder jammed into the sticky bit before the single rounding step.
 
 /-! ## Direct built-in packed-storage kernels
 
-These are the native kernels: `addWordsCodeFlatValid`, `subWordsCodeFlatValid`,
+These are the native kernels. `addWordsCodeFlatValid`, `subWordsCodeFlatValid`,
 `fmaWordsCodeFlatValid`, `PackedProduct.mulWordsCodeValid`, `PackedQuotient.divWordsCodeValid`,
-and `PackedSquareRoot.sqrtWordCodeValid` operate on `UInt64` words and consume the eligibility
+and `PackedSquareRoot.sqrtWordCodeValid` all work on `UInt64` words and consume the eligibility
 witness.
 -/
 
 /--
-Native-word addition that reads built-in packed storage directly.
+Native-word addition that reads the built-in packed storage words themselves.
 
-Unlike `dyadicAdd`, this entry point does not reconstruct `Model` operands. Its `NativeCode`
-capability is available only for built-in `UInt8`/`UInt16`/`UInt32`/`UInt64` plans.
+Unlike `dyadicAdd`, this entry point doesn't reconstruct `Model` operands. Its `NativeCode`
+capability exists only for the built-in `UInt8`/`UInt16`/`UInt32`/`UInt64` plans.
 -/
 @[noinline] def storedNativeWordAdd
     {format : Format} {plan : StoragePlan format}
@@ -275,7 +275,7 @@ capability is available only for built-in `UInt8`/`UInt16`/`UInt32`/`UInt64` pla
 
 /-! ## Direct two-limb packed-storage kernels -/
 
-/-- Two-limb addition that reads and returns `.pair` storage directly. -/
+/-- Two-limb addition that reads `.pair` storage and returns it, with no model in between. -/
 @[noinline] def storedNativeLimbAdd
     {format : Format} (width_le : format.bits ≤ 128)
     (heligible : Model.NativeLimb.Eligible format)

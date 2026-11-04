@@ -13,18 +13,18 @@ public import FloatLib.Numerics.Operation.Proof.Finite
 /-!
 # Correctness of bounded fixed-point semantics
 
-The bounded fixed-point kernels satisfy the rational contracts defined in `Semantics.Core`. The
-operation contracts distinguish three policies:
+Here we prove that the bounded fixed-point kernels satisfy the rational contracts of
+`Semantics.Core`. Each policy has its own contract:
 
-* wrapping operations denote centered reduction of the exact coefficient;
+* wrapping operations denote centered reduction of the exact coefficient
 * checked operations denote exact rational arithmetic when the destination coefficient fits, and
-  return `none` exactly when it does not;
-* saturating operations denote exact coefficient arithmetic followed by signed-range clamping.
+  return `none` if and only if it does not
+* saturating operations denote exact coefficient arithmetic followed by signed-range clamping
 
-The wrapping addition, subtraction, and multiplication kernels use direct `BitVec` operations.
+The wrapping addition, subtraction, and multiplication kernels are plain `BitVec` operations.
 
-The checked refinements are `Checked2On` contracts, which only constrain inputs whose exact
-coefficient fits. The failure half is `FixedInt.checkedAdd_eq_none_iff`,
+The checked refinements are `Checked2On` contracts, which constrain only the inputs whose exact
+coefficient fits. For the failure half, see `FixedInt.checkedAdd_eq_none_iff`,
 `FixedInt.checkedSub_eq_none_iff` (the same-scale kernels are the `FixedInt` ones) and
 `checkedMul_eq_none_iff`.
 -/
@@ -148,7 +148,7 @@ theorem checkedMul_eq_some
   change FixedInt.InRange outWidth (left.toInt * right.toInt) at hresult
   simp [checkedMul, hresult, coefficient]
 
-/-- Checked multiplication returns `none` exactly when the exact product does not fit the
+/-- Checked multiplication returns `none` if and only if the exact product does not fit the
 destination width. Same-scale checked addition and subtraction are the `FixedInt` kernels, whose
 failure laws are `FixedInt.checkedAdd_eq_none_iff` and `FixedInt.checkedSub_eq_none_iff`. -/
 theorem checkedMul_eq_none_iff

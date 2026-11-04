@@ -11,14 +11,14 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Executable exact-dyadic arithmetic
 
-These routines compute exact multiplication, addition, subtraction, and fused multiply-add before
-any target-format rounding occurs. Record entry points are convenient in specifications; matching
-field-level entry points let packed decoders reuse the same semantics without constructing
-short-lived input records.
+Multiplication, addition, subtraction, and fused multiply-add are computed here exactly, before any
+target format rounds them. Record entry points are convenient in specifications, and the matching
+field-level entry points let packed decoders reuse the same semantics without building short-lived
+input records.
 
-The representation is not normalized after every operation. Alignment uses the smaller exponent,
-which leaves normalization to the target-format rounder. `Proof` establishes that the field-level
-operations agree with their record-based counterparts and preserve rational denotation.
+We don't normalize after every operation. Alignment uses the smaller exponent and leaves
+normalization to the target-format rounder. `Proof` shows that the field-level operations agree with
+their record-based counterparts and preserve rational denotation.
 -/
 
 @[expose] public section

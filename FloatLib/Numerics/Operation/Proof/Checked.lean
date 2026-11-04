@@ -12,17 +12,18 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Proof-indexed checked operations
 
-Application lemmas for operations returning `Option`. A refinement proof shows that represented
-finite inputs cannot take the failure branch, with optional scalar preconditions when required.
+These are application lemmas for operations that return `Option`. A refinement proof shows that
+represented finite inputs can't take the failure branch, with optional scalar preconditions when
+needed.
 
-These lemmas connect an executable checker to a proof-indexed caller. At the raw-code level,
-failure remains explicit. Once the caller supplies represented finite inputs and, for the `On`
-variants, the scalar precondition, the refinement theorem proves that `none` is impossible and
-returns a value carrying its denotation proof.
+These lemmas connect an executable checker to a proof-indexed caller. At the raw-code level, failure
+stays visible. Once the caller supplies represented finite inputs and, for the `On` variants, the
+scalar precondition, the refinement theorem proves that `none` is impossible and returns a value
+that carries its denotation proof.
 
-Unary, binary, and ternary versions provide `map_denote` for the denotation equation and
-`applyAt` for constructing a proof-indexed result. The unconditional contracts also provide
-`exists_result` to recover a successful code and its denotation.
+Unary, binary, and ternary versions provide `map_denote` for the denotation equation and `applyAt`
+for building a proof-indexed result. Unconditional contracts also provide `exists_result` to recover
+a successful code and its denotation.
 -/
 
 @[expose] public section

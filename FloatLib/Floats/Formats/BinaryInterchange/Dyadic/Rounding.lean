@@ -12,13 +12,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Core
 /-!
 # Exact dyadic rounding
 
-This is the executable one-rounding boundary for exact binary values. It classifies an exact
-dyadic against descriptor-derived overflow, normal, and subnormal regions, retains only the target
+Exact binary values get their one rounding here. The executable rounder classifies an exact
+dyadic against descriptor-derived overflow, normal, and subnormal regions, keeps only the target
 significand bits, and applies nearest-even to the discarded part.
 
 Conventional IEEE descriptors may reuse Lean's logical float model as a proof-facing route.
-`roundDyadicGeneral` handles custom bias and every supported exceptional-value encoding directly.
-The public selector keeps those implementations under one descriptor-level contract.
+`roundDyadicGeneral` handles custom bias and every supported exceptional-value encoding without
+going through that model. The public selector keeps those implementations under one
+descriptor-level contract.
 -/
 
 @[expose] public section
@@ -110,13 +111,13 @@ theorem zero_extendedMantissa_shiftRight (shift : Nat) :
 /--
 Overflow result for a signed magnitude under a known rounding direction.
 
-IEEE 754-2019 Section 7.4 rounds an overflowing magnitude to the format's overflow value when
-the direction carries the magnitude upward and to the largest finite value when it carries the
-magnitude downward. `roundMagnitudeUp` records that direction after the sign has been taken into
-account: toward zero never rounds up, toward positive infinity rounds a positive magnitude up, and
-toward negative infinity rounds a negative magnitude up. Nearest modes always round up. The
-directed and policy rounders share this definition so that a finite-with-NaN encoding saturates
-in the truncating direction under both engines.
+IEEE 754-2019 Section 7.4 sends an overflowing magnitude to the format's overflow value when the
+direction carries it upward, and to the largest finite value when it carries it downward.
+`roundMagnitudeUp` records that direction with the sign taken into account. Toward zero never
+rounds up, toward positive infinity rounds a positive magnitude up, toward negative infinity
+rounds a negative magnitude up, and nearest modes always round up. The directed and policy
+rounders share this definition, so a finite-with-NaN encoding saturates in the truncating
+direction under both engines.
 -/
 @[inline] def directedOverflow (fmt : FloatFormat) (negative roundMagnitudeUp : Bool) :
     Model fmt :=
@@ -167,8 +168,8 @@ that their rounding decision and supplied overflow result match the requested po
 Round an exact dyadic according to the complete format descriptor.
 
 Only the retained significand and the discarded-bit rounding decision are materialized. The
-implementation supports custom exponent bias and every `FloatFormat.Encoding`; it does not pass
-through Lean's conventional IEEE model.
+implementation supports custom exponent bias and every `FloatFormat.Encoding`, and it does not
+pass through Lean's conventional IEEE model.
 -/
 @[inline] def roundDyadicGeneral (fmt : FloatFormat) (d : Numerics.Dyadic) : Model fmt :=
   if d.significand == 0 then
@@ -196,8 +197,8 @@ through Lean's conventional IEEE model.
 /--
 Round an exact dyadic to `Model fmt` using round-to-nearest, ties-to-even.
 
-Conventional IEEE formats retain the established logical-model specification and its checked
-native implementation. Other static formats use the descriptor-aware integer algorithm directly.
+Conventional IEEE formats keep the logical-model specification and its checked native
+implementation. Other static formats use the descriptor-aware integer algorithm.
 -/
 @[inline] def roundDyadic (fmt : FloatFormat) (d : Numerics.Dyadic) : Model fmt :=
   if fmt.isIEEE then ieeeRoundDyadic fmt d else roundDyadicGeneral fmt d
@@ -206,7 +207,8 @@ native implementation. Other static formats use the descriptor-aware integer alg
 Exact addition at the binary-format API boundary.
 
 The implementation is shared with posit arithmetic and exact reductions through
-`Numerics.Dyadic.add`; binary operations keep this name so their specifications read naturally.
+`Numerics.Dyadic.add`. Binary operations keep this name so that their specifications read
+naturally.
 No rounding occurs until the result is passed to `roundDyadic`.
 -/
 @[inline] def addDyadic (a b : Numerics.Dyadic) : Numerics.Dyadic :=

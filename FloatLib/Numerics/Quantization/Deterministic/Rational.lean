@@ -14,13 +14,13 @@ import Mathlib.Data.Rat.Floor
 /-!
 # Deterministic nearest-even rational rounding
 
-This is the exact `Rat`-to-`Int` specialization of the shared quotient-rounding decision. It uses
-integer numerator and denominator arithmetic throughout; no floating approximation is introduced
-while deciding a tie.
+This is the exact `Rat`-to-`Int` case of the shared quotient-rounding decision. It uses integer
+numerator and denominator arithmetic throughout, and no floating approximation enters while a tie is
+decided.
 
-The proofs cover both signs, the half-unit error bound, fixed points, and exact half steps. Keeping
-those facts beside the executable definition gives fixed-point and mixed-precision code one
-rounding primitive with a stable, reusable contract.
+Our proofs cover both signs, the half-unit error bound, fixed points, and exact half steps, and we
+keep those facts beside the executable definition so that fixed-point and mixed-precision code share
+one rounding primitive with a stable contract.
 -/
 
 @[expose] public section
@@ -122,7 +122,7 @@ theorem roundQuotientEven_error_le_half
   · exact floor_error_le_half numerator denominator hdenominator hequal.le
   · exact ceil_error_le_half numerator denominator hdenominator hequal.ge
 
-/-- Nearest-even rational rounding fixes every integer exactly. -/
+/-- Nearest-even rational rounding fixes every integer. -/
 @[simp, grind =] theorem roundRatEven_intCast (value : Int) :
     roundRatEven (value : Rat) = value := by
   have hone : roundQuotientEven value.natAbs 1 = value.natAbs := by

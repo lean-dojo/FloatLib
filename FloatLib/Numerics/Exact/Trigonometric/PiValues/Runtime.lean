@@ -11,10 +11,10 @@ public import Mathlib.Data.Rat.Floor
 /-!
 # Exact rational values at rational multiples of pi
 
-Most rational angles have irrational sine and cosine. The exceptions must be handled before
-interval refinement: an interval may otherwise straddle an exact rounding boundary forever.
-Reduction modulo one leaves four cosine cases; the removed integer controls the sign.
-No approximate value of pi enters this classification.
+Most rational angles have irrational sine and cosine. The exceptions, such as cos(π/3) = 1/2, have
+to be caught before interval refinement, because an interval could otherwise straddle an exact
+rounding boundary forever. Reduction modulo one leaves four cosine cases. The integer it removed
+controls the sign. No approximate value of pi enters this classification.
 -/
 
 @[expose] public section
@@ -49,7 +49,7 @@ def centeredPi (argument : ℚ) : ℚ :=
   let fraction := Int.fract argument
   if fraction < 1 / 2 then fraction else fraction - 1
 
-/-- Exact rational tangent values; half-integer poles are checked separately. -/
+/-- Exact rational tangent values. The half-integer poles have a check of their own. -/
 def tanPiExact (argument : ℚ) : Option ℚ :=
   let angle := centeredPi argument
   if angle = -1 / 4 then some (-1)

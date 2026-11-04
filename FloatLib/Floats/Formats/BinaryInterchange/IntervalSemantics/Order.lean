@@ -14,8 +14,8 @@ import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 # Order of interval endpoints
 
 Boolean endpoint comparisons agree with real order for finite values and with extended-real
-order for non-NaN values, including infinities. The non-NaN hypotheses are needed because NaNs
-are unordered.
+order for non-NaN values, including infinities. NaNs are unordered, so the non-NaN hypotheses
+cannot be dropped.
 -/
 
 @[expose] public section
@@ -36,7 +36,7 @@ theorem le_iff_leB_eq_true
   | some order =>
       cases order <;> simp
 
-/-- On non-NaN values, executable comparison agrees exactly with extended-real `≤`. -/
+/-- On non-NaN values, executable comparison agrees with extended-real `≤`. -/
 theorem le_iff_toEReal_le_of_isNaN_eq_false
     {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = false) :
@@ -60,7 +60,7 @@ theorem leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
     leB x y = true ↔ toEReal x ≤ toEReal y :=
   (le_iff_leB_eq_true x y).symm.trans (le_iff_toEReal_le_of_isNaN_eq_false x y hx hy)
 
-/-- On finite values, executable boolean comparison agrees exactly with real `≤`. -/
+/-- On finite values, executable boolean comparison agrees with real `≤`. -/
 theorem leB_eq_true_iff_toReal_le_of_isFinite
     {fmt : FloatFormat} (x y : Model fmt)
     (hx : isFinite x = true) (hy : isFinite y = true) :
@@ -70,7 +70,7 @@ theorem leB_eq_true_iff_toReal_le_of_isFinite
     toEReal_eq_coe_toReal_of_isFinite x hx, toEReal_eq_coe_toReal_of_isFinite y hy,
     EReal.coe_le_coe_iff]
 
-/-- On finite values, the proposition-valued executable order agrees exactly with real `≤`. -/
+/-- On finite values, the proposition-valued executable order agrees with real `≤`. -/
 theorem le_iff_toReal_le_of_isFinite
     {fmt : FloatFormat} (x y : Model fmt)
     (hx : isFinite x = true) (hy : isFinite y = true) :
@@ -167,7 +167,7 @@ theorem le_ofBounds_upper {fmt : FloatFormat} (lo hi : Model fmt)
   · exact le_rfl
   · exact (eRealMem_whole fmt hfmt _).2
 
-/-- Ordered finite bounds survive the enclosure check exactly. -/
+/-- Ordered finite bounds pass the enclosure check unchanged. -/
 theorem ofBounds_eq_of_isFinite {fmt : FloatFormat} (lo hi : Model fmt)
     (hlo : isFinite lo = true) (hhi : isFinite hi = true)
     (hordered : toReal lo ≤ toReal hi) : ofBounds lo hi = ⟨lo, hi⟩ := by

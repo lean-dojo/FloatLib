@@ -11,12 +11,12 @@ public import Mathlib.Data.Rat.Cast.Order
 /-!
 # Executable rational intervals
 
-The endpoints stay rational throughout a calculation, with no rounding in these operations.
-Callers use the bounds to compare an exact value with rounding boundaries or to establish a
-unique rounded result. Soundness over the reals is proved in `Rational.Proof`.
+Nothing here rounds. The endpoints stay rational throughout a calculation, and callers use the
+bounds to compare an exact value with rounding boundaries or to establish a unique rounded result.
+Soundness over the reals is proved in `Rational.Proof`.
 
-An interval may be empty: the carrier records endpoints without enforcing their order.
-Membership hypotheses supply the required ordering in proofs.
+An interval may be empty, since the carrier records endpoints without enforcing their order. In
+proofs, membership hypotheses supply the ordering.
 -/
 
 @[expose] public section
@@ -39,8 +39,8 @@ def point (x : ℚ) : RationalInterval :=
 
 /--
 The interval with endpoints `midpoint - radius` and `midpoint + radius`, for any `radius`. With a
-nonnegative radius it is the ball of absolute error `radius` around `midpoint` (`contains_around`);
-a negative radius gives reversed endpoints, an empty interval.
+nonnegative radius it is the ball of absolute error `radius` around `midpoint` (`contains_around`).
+A negative radius gives reversed endpoints, which is an empty interval.
 -/
 def around (midpoint radius : ℚ) : RationalInterval :=
   ⟨midpoint - radius, midpoint + radius⟩
@@ -59,9 +59,9 @@ def sub (left right : RationalInterval) : RationalInterval :=
 
 /--
 Multiply both endpoints of `interval` by `factor` without exchanging them, for any rational
-`factor`. The intended use is a nonnegative factor, where the result encloses `factor * x` for
-every enclosed `x` (`contains_scaleNonnegative`). With a negative factor and ordered endpoints, the
-new lower endpoint is the larger one; `scale` exchanges them.
+`factor`. The intended use is a nonnegative factor, where the result encloses `factor * x` for every
+enclosed `x` (`contains_scaleNonnegative`). With a negative factor and ordered endpoints the new
+lower endpoint is the larger one, and `scale` is the version that exchanges them.
 -/
 def scaleNonnegative (interval : RationalInterval) (factor : ℚ) : RationalInterval :=
   ⟨factor * interval.lo, factor * interval.hi⟩

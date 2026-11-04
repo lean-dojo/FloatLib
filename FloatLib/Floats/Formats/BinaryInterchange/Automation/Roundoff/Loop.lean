@@ -11,12 +11,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Sign
 /-!
 # Loops in the `roundoff` analysis
 
-A registered loop is analyzed once for a symbolic accumulator whose error against its reference
-is given, and the loop's lemmas lift that step bound through the whole traversal: the absolute
-bound of `List.fold_error` and its analogues, or a mixed bound together with a relational
-invariant, the finiteness of the accumulator and a sign of its reference. Conditions concern the
-states actually visited. A loop that keeps its accumulator exact, or changes it at a single
-coordinate, is exact at every length.
+A registered loop is analyzed once, for a symbolic accumulator whose error against its reference is
+given. Its lemmas then lift that step bound through the whole traversal. The result is
+either the absolute bound of `List.fold_error` and its analogues, or a mixed bound together with a
+relational invariant, the finiteness of the accumulator and a sign of its reference. Conditions
+concern the states actually visited. A loop that keeps its accumulator exact, or changes it at a
+single coordinate, is exact at every length.
 -/
 
 public meta section
@@ -30,7 +30,7 @@ open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
 loop over `input` unless the entries of `input` are stored inputs or indices (`storedEntries`), or
 the step ignores the entry and `input` is index data (`indexClosed`). An entry is analyzed as exact
 data, so an entry of any other computed container, of whatever type, could bring an already-rounded
-value into the reference; and the reference takes a step per entry, so a container whose length is
+value into the reference. The reference also takes a step per entry, so a container whose length is
 computed from a rounded value could too. -/
 def checkEntries (loop : Loop) (input referenceStep : Lean.Expr) : AnalyzeM Unit := do
   if ← storedEntries loop input (← read).carriers then return
@@ -49,7 +49,7 @@ def checkEntries (loop : Loop) (input referenceStep : Lean.Expr) : AnalyzeM Unit
 namespace Analyze
 
 /-- A loop in absolute analysis. The step is analyzed once for a symbolic accumulator
-whose error against its reference is given, and `fold_error` lifts it through the loop; its
+whose error against its reference is given, and `fold_error` lifts it through the loop. Its
 side conditions concern the visited states. -/
 def absoluteFold (r : Recursor) (loop : Loop)
     (observe step initial input inputType stateType : Lean.Expr) (fuel : Nat) :
@@ -122,7 +122,7 @@ def containerFold (r : Recursor) (observe fold : Lean.Expr) (fuel : Nat) : Analy
 /-- A loop in mixed analysis. The step is analyzed once for a symbolic accumulator whose bound
 against its reference is given, at the element variable `element`, together with a relational
 invariant: finiteness of the accumulator and a sign of its reference, each kept when the step
-preserves it; a sign that neither the step's bound nor its finiteness proof and conditions use is
+preserves it. A sign that neither the step's bound nor its finiteness proof and conditions use is
 dropped without analyzing the step again. Its side conditions concern the visited states, and
 `fold_mixedError` lifts it through the loop. A step that keeps zero budgets zero from zero initial
 budgets makes the loop exact (`Loop.exactBudgets`). -/
@@ -327,10 +327,9 @@ def mixedFold (r : Recursor) (loop : Loop)
     if let some estimate := carried? then return estimate
   throwError "roundoff: no relational invariant carries this loop"
 
-/-- A fold over coordinates whose step branches on a test that holds at exactly one
-coordinate. If every step elsewhere keeps an exact zero and then the reached value, the fold
-returns exactly the value its step at that coordinate produces from zero, for every length
-(`fold_eq_of_single`). -/
+/-- A fold over coordinates whose step branches on a test that holds at a single coordinate. If
+every step elsewhere keeps an exact zero and then the reached value, the fold returns the value its
+step at that coordinate produces from zero, for every length (`fold_eq_of_single`). -/
 partial def singleFold (r : Recursor) (loop : Loop)
     (observe step initial input coordinateType stateType : Lean.Expr) (fuel : Nat) :
     AnalyzeM Estimate := do
@@ -392,7 +391,7 @@ partial def singleFold (r : Recursor) (loop : Loop)
       return estimate
   throwError "roundoff: no single-coordinate test makes this loop exact"
 
-/-- `singleFold` for the test `guard`, which holds exactly at `index`. -/
+/-- `singleFold` for the test `guard`, which holds at `index` and nowhere else. -/
 def singleFoldAt (r : Recursor) (loop : Loop)
     (observe step initial coordinateType stateType : Lean.Expr) (configured : Bool)
     (valid guard index : Lean.Expr) (fuel : Nat) : AnalyzeM Estimate := do
@@ -452,8 +451,9 @@ def singleFoldAt (r : Recursor) (loop : Loop)
   return ⟨value, .mixed q(0) q(0), ← mkAppM ``MixedError.of_eq #[exact], finite?⟩
 
 /-- A fold whose every step keeps the exact value of the accumulator, such as a sum of exact
-zeros, returns its initial value exactly, for every length. `fold` is the loop itself; its step
-is analyzed at the element variable `element`, which the loop's obligations may not mention. -/
+zeros, returns its initial value unchanged, for every length. `fold` is the loop itself, and its
+step is analyzed at the element variable `element`, which the loop's obligations may not mention.
+-/
 def constantFold (r : Recursor) (loop : Loop)
     (observe step initial element stateType fold : Lean.Expr) (fuel : Nat) :
     AnalyzeM Estimate := do
@@ -563,7 +563,7 @@ def exactStepCase (r : Recursor) (observe step valid : Lean.Expr) (configured : 
     return (← mkLambdaFVars #[hypothesis] proof, target)
 
 /-- Keep the obligations created since `before` that `proofs` use as conditions of the loop,
-in its outer context; the speculative analysis of an operand may leave others that no proof
+in its outer context. The speculative analysis of an operand may leave others that no proof
 needs. A used obligation about the loop's local state is an error. -/
 def liftLoopObligations (before : Nat) (outerContext : LocalContext)
     (outerInstances : LocalInstances) (proofs : Array Lean.Expr) : AnalyzeM Unit := do

@@ -4,13 +4,13 @@ This is where we develop rounded arithmetic over `ℝ`: radix powers, FIX/FLX/FL
 abrupt-underflow formats, rounding modes, ULPs, error bounds, and Sterbenz's lemma for exact
 subtraction. None of it depends on a bit encoding or an executable kernel.
 
-We develop the theory in Lean following Flocq's organization, but leave out its specialized
-algorithm proofs and Coq application modules. Finite-result bridge theorems in
+We follow Flocq's organization in Lean but leave out its specialized algorithm proofs and Coq
+application modules. Finite-result bridge theorems in
 `Formats/BinaryInterchange/` connect it to executable binary arithmetic, and
 `Flocq/Calculation/` builds brackets and truncation on top of it.
 
-Its main definitions are `bpow`, `genericFormat`, `ulp`, and `round`. Import individual modules
-to keep dependencies small, or `FloatLib.Floats.Formats.Flocq.Theory` for the full theory.
+Its main definitions are `bpow`, `genericFormat`, `ulp`, and `round`. You can import individual
+modules to keep dependencies small, or `FloatLib.Floats.Formats.Flocq.Theory` for the full theory.
 
 | Mathematical role | Definitions |
 | --- | --- |
@@ -22,4 +22,4 @@ to keep dependencies small, or `FloatLib.Floats.Formats.Flocq.Theory` for the fu
 The raw `NF` constructor accepts off-grid comparison values, and `NF.ofReal` rounds onto the
 grid. When a theorem needs its input on the grid, it says so with an `NF.IsRepresentable`
 hypothesis. Affine quantization over exact rationals lives elsewhere, in
-`FloatLib.Numerics.Quantization`. Here, `FloatRep` supplies the real-valued rounding model.
+`FloatLib.Numerics.Quantization`, and the real-valued rounding model here is `FloatRep`.

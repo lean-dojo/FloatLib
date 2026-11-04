@@ -17,17 +17,18 @@ public meta import Lean.Elab.Tactic.Decide
 # Interval proofs from rational bounds
 
 `interval` proves real inequalities by evaluating certified interval expressions. It reads rational
-bounds from the local context and first tries algebraic expressions with exact rational endpoints.
-The binary-grid backend then handles remaining goals and subdivides the widest input interval
+bounds from the local context and first tries algebraic expressions with exact rational endpoints. A
+binary-grid backend then handles the goals that remain, and it subdivides the widest input interval
 when its first enclosure is inconclusive.
 
-Finite sums, dot products, matrix products, and supported norms expand using Mathlib equalities.
-Pointwise hypotheses supply the bounds of their entries. Real and nonnegative-real inequalities
-use the same checker; nonnegative-real inputs supply their zero lower bound automatically.
+Finite sums, dot products, matrix products, and supported norms expand through Mathlib equalities,
+and pointwise hypotheses supply the bounds of their entries. Real and nonnegative-real inequalities
+use the same checker, with nonnegative-real inputs supplying their zero lower bound automatically.
 
-The options `precision`, `degree`, and `depth` control fractional endpoint bits, elementary-function
-approximation degree, and subdivision depth. A closed Boolean check is verified by Lean's kernel;
-the expression equality and the input bounds are also proved. No sampled values enter the proof.
+Three options tune the search. `precision` sets the fractional endpoint bits, `degree` the
+elementary-function approximation degree, and `depth` the subdivision depth. Lean's kernel verifies
+a closed Boolean check, and the expression equality and the input bounds are proved as well. No
+sampled values enter the proof.
 -/
 
 public meta section
@@ -61,10 +62,10 @@ private inductive ResourceLimit where
 The kernel limit that stopped a failed verification attempt, if one did.
 
 The kernel reports its limits as ordinary errors whose text `Kernel.Exception.toMessageData` fixes,
-so they are recognized by that text. Only these are classified. An elaboration limit is a runtime
-exception, which `try ... catch` in `TacticM` rethrows before any handler runs, so it ends the
-tactic with Lean's own heartbeat or recursion error instead. Any other failure, such as a checker
-that returns `false`, is not a resource failure, even when the executable preflight passed.
+so they are recognized by that text, and only these are classified. An elaboration limit is a
+runtime exception, which `try ... catch` in `TacticM` rethrows before any handler runs, so it ends
+the tactic with Lean's own heartbeat or recursion error instead. Any other failure, such as a
+checker that returns `false`, isn't a resource failure, even when the executable preflight passed.
 -/
 private def resourceLimit? (error : Exception) : MetaM (Option ResourceLimit) := do
   let text ← error.toMessageData.toString
@@ -237,28 +238,31 @@ end FloatLib.Numerics.Interval.Tactic
 /--
 Prove a real or nonnegative-real inequality from rational bounds in the local context.
 
-For example, `interval (precision := 64) (degree := 16) (depth := 8)` chooses a binary
-endpoint grid with 64 fractional bits, degree-16 elementary enclosures, and at most eight
-midpoint subdivisions along any branch. These are also the defaults. Each verification attempt and
-failure diagnostics have separate budgets of 20,000 heartbeats, even when the surrounding
-declaration disables heartbeat limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
+`interval (precision := 64) (degree := 16) (depth := 8)` uses a binary endpoint grid with 64
+fractional bits, degree-16 elementary enclosures, and at most eight midpoint subdivisions along any
+branch, and these are also the defaults. Each verification attempt and the failure diagnostics have
+budgets of 20,000 heartbeats apiece, even when the surrounding declaration disables heartbeat
+limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
 
-Algebraic goals first use exact rational endpoints without subdivision, preserving equality at
+Algebraic goals first use exact rational endpoints without subdivision, which keeps equality at
 non-dyadic hypothesis bounds. For arithmetic without registered calls, an advisory executable check
-rejects failing binary-grid leaves before kernel reduction. Registered calls use bounded kernel
-reduction directly; every successful proof requires kernel verification.
+rejects failing binary-grid leaves before kernel reduction. Registered calls go straight to bounded
+kernel reduction, and every successful proof requires kernel verification. Concrete finite sums and
+matrix expressions are expanded automatically, pointwise bounds such as `∀ i, x i ∈ Set.Icc 0 1`
+included, and norms use the instances selected in the goal.
 
-Concrete finite sums and matrix expressions are expanded automatically, including pointwise
-bounds such as `∀ i, x i ∈ Set.Icc 0 1`. Norms use the instances selected in the goal.
+Each enclosure has an accepted domain, which is a condition on the computed enclosure and not on the
+real function:
 
-The enclosures have accepted domains, which are conditions on the computed enclosures rather than
-on the real functions. Division needs a denominator enclosure that excludes zero, the logarithm
-needs an argument enclosure with a positive lower endpoint, and the square root one with a
-nonnegative lower endpoint. Inverse sine and cosine need an argument enclosure inside `[-1, 1]`,
-and tangent a cosine enclosure that excludes zero. A failure names the operation whose enclosure
-was rejected or the bound that was not small enough, and restores the original proof state. It
-suggests a larger `maxHeartbeats` only when kernel verification of an attempt ran out of its
-heartbeat budget, and it names that attempt.
+* division needs a denominator enclosure that excludes zero,
+* the logarithm needs an argument enclosure with a positive lower endpoint, and the square root one
+  with a nonnegative lower endpoint,
+* inverse sine and cosine need an argument enclosure inside `[-1, 1]`, and tangent a cosine
+  enclosure that excludes zero.
+
+A failure restores the original proof state and names the operation whose enclosure was rejected or
+the bound that wasn't small enough. It suggests a larger `maxHeartbeats`, naming the attempt, only
+when kernel verification of that attempt ran out of its heartbeat budget.
 -/
 syntax (name := interval) "interval" (ppSpace "(" ident " := " num ")")* : tactic
 

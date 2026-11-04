@@ -14,7 +14,7 @@ public import Mathlib.Tactic.NormNum
 # Affine-quantization rules for numerical automation
 
 Symbolic refinement uses the generic quantizer contract. Closed evaluation unfolds the exact
-rational kernel only during the explicit reduction phase.
+rational kernel only in the separate reduction phase.
 -/
 
 public meta section

@@ -13,8 +13,8 @@ public import Mathlib.Tactic.NormNum
 /-!
 # Boolean rules for numerical automation
 
-Symbolic proofs select the exact Boolean operation contracts. Closed reduction unfolds only the
-small native kernels.
+For symbolic proofs we select the exact Boolean operation contracts. Closed reduction unfolds only
+the small native kernels.
 -/
 
 public meta section

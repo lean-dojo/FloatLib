@@ -19,18 +19,18 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Ordered Posit exponent and fraction tails
 
-The finite exponent/fraction tail is ordered independently of regime encoding, and its value
-determines the corresponding part of exact Posit decoding. Separating the trailing fields is
-useful because two positive posit words with the same regime should be compared without
-reopening the variable-length regime parser.
+Two positive posit words with the same regime should be comparable without running the
+variable-length regime parser again. So this module treats the finite exponent/fraction tail on
+its own. It orders tails independently of the regime encoding, and a tail's value determines the
+corresponding part of exact Posit decoding.
 
-These lemmas form the local bridge used by the full code-order theorem: regime bits establish the
-coarse scale interval, while this module handles exact order inside that interval.
+For the full code-order theorem these lemmas are the local bridge. Regime bits fix the coarse scale
+interval, and this module handles the exact order inside it.
 
-`zpow_add_le_mul_zpow` and `mul_zpow_lt_zpow_add_succ` give the two binade bounds for a rational
-fraction scaled by `2 ^ targetExponent`: a fraction in `[2 ^ leading, 2 ^ (leading + 1))` lands in
-`[2 ^ (targetExponent + leading), 2 ^ (targetExponent + leading + 1))`. The guard/sticky and
-quotient rounding proofs share them.
+Two binade bounds here are shared by the guard/sticky and quotient rounding proofs. For a rational
+fraction scaled by `2 ^ targetExponent`, `zpow_add_le_mul_zpow` and `mul_zpow_lt_zpow_add_succ`
+say that a fraction in `[2 ^ leading, 2 ^ (leading + 1))` lands in
+`[2 ^ (targetExponent + leading), 2 ^ (targetExponent + leading + 1))`.
 -/
 
 @[expose] public section
@@ -268,7 +268,7 @@ theorem trailingRat_mod_twoPow (trailing raw : Nat) :
 Appending a zero bit to an exponent/fraction tail preserves its exact rational value.
 
 For tails shorter than two bits this restores one more standard exponent bit as zero. Thereafter
-it appends a zero fraction bit, doubling both the explicit numerator and denominator.
+it appends a zero fraction bit, doubling both the numerator and the denominator.
 -/
 theorem trailingRat_succ_two_mul (trailing raw : Nat) :
     trailingRat (trailing + 1) (2 * raw) =
@@ -321,8 +321,8 @@ theorem trailingRat_bounds (trailing raw : Nat) :
 
 /--
 For decoded fields with a clear sign bit, the rational field value factors into the trailing
-field and a regime power. This describes field decoding; zero and NaR are handled separately by
-the complete decoder.
+field and a regime power. This describes field decoding. The complete decoder deals with zero and
+NaR on its own.
 -/
 theorem decodeFields_toRat_eq_trailingRat_mul_regime
     (value : Model format) (hsign : value.signBit = false) :

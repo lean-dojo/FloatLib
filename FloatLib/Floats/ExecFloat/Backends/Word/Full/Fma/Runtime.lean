@@ -12,10 +12,10 @@ public import FloatLib.Kernels.FixedWord.Difference.Runtime
 /-!
 # Native binary64 fused multiply-add runtime
 
-The accepted paths align finite normal operands in two native limbs and round the sum or
-difference once. An addend whose scale is at most 62 bits above the product's is aligned exactly,
-and every other scale difference goes through a sticky bit. Declined cases use the generic exact
-finite kernel. `Fma.Proof` has the proofs.
+On the accepted paths, finite normal operands are aligned in two native limbs and the sum or
+difference is rounded once. If the addend's scale is at most 62 bits above the product's, the
+alignment is exact, and every other scale difference goes through a sticky bit. Declined cases use
+the generic exact finite kernel. `Fma.Proof` has the proofs.
 -/
 
 @[expose] public section

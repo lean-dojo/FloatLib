@@ -12,11 +12,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecisio
 /-!
 # Error bounds for mixed-precision accumulation
 
-Real-error decompositions and absolute bounds for `mulAcc` and `dotSequential`. Each step's bound
-accounts for both input casts, multiplication, the cast to the accumulator, and addition. The dot
-bound also includes the final output cast. The bounds assume IEEE product, accumulator, and output
-encodings and finite values throughout; the storage format may use any encoding. Their local
-half-ULP terms cover subnormals as well as normal values.
+This file decomposes the real error of `mulAcc` and `dotSequential` and bounds it absolutely. A
+step's bound counts both input casts, the multiplication, the cast to the accumulator and the
+addition, and the dot bound adds the final output cast. The product, accumulator and output
+formats must be IEEE encodings and every value must be finite, but the storage format may use any
+encoding. Each local half-ULP term covers subnormals as well as normal values.
 -/
 
 @[expose] public section
@@ -59,8 +59,7 @@ noncomputable def mulAccError (p : SitePolicy) (a b : Model p.storage)
   toReal (mulAcc p a b acc) - (toReal a * toReal b + toReal acc)
 
 /--
-The error of one mixed-precision multiply-accumulate is exactly the sum of its five site
-residuals.
+The error of one mixed-precision multiply-accumulate equals the sum of its five site residuals.
 
 This algebraic identity needs no finiteness hypotheses. To interpret the residuals as rounding
 errors, use the finiteness premises of `mulAcc_abs_error_le_budget`: `toReal` maps exceptional
@@ -159,7 +158,7 @@ theorem sequentialAccumulator_error_eq_sum (p : SitePolicy)
 
 /--
 The absolute error of a finite sequential accumulator is bounded by the sum of its local
-budgets. Finiteness is required along the executed prefix states; product and accumulator may
+budgets. Finiteness is required along the executed prefix states. Product and accumulator may
 use different IEEE formats, and storage any encoding.
 -/
 theorem sequentialAccumulator_abs_error_le_budget (p : SitePolicy)

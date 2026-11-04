@@ -38,10 +38,10 @@ local notation "Value" =>
 /--
 Correctly rounded sum of configured values in `mode` (nearest-even by default).
 
-Every operand is decoded exactly, the complete sum is accumulated without intermediate rounding,
-and the result is rounded once. With `status := true` the result also carries the IEEE exception
-indicators and the ternary value. The value form packs the value-only descriptor-model sum, which
-computes no exception indicators.
+Every operand is decoded to its exact value, the complete sum is accumulated without intermediate
+rounding, and the result is rounded once. With `status := true` the result also carries the IEEE
+exception indicators and the ternary value. The value form packs the value-only descriptor-model
+sum, which computes no exception indicators.
 -/
 @[macro_inline] def sum (values : Array Value) (mode : Model.IEEERoundingMode := .nearest)
     (status : Bool := false) :

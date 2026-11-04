@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Predi
 /-!
 # IEEE predicates on configured binary values
 
-These operations decode the configured carrier and use the model's exact comparison. The Boolean
-answer and exception flags pass through unchanged. The predicate argument selects one of the 22
-IEEE 754-2019 §5.6.1 comparisons, so `x.compareQuiet .lessEqual y` is `compareQuietLessEqual`.
+These operations decode the configured carrier and use the model's exact comparison, and the Boolean
+answer and exception flags pass through unchanged. The predicate argument selects one of the 22 IEEE
+754-2019 §5.6.1 comparisons, so `x.compareQuiet .lessEqual y` is `compareQuietLessEqual`.
 -/
 
 @[expose] public section

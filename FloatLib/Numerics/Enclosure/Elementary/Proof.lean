@@ -14,11 +14,11 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 /-!
 # Proved exponential and logarithm enclosures
 
-The bounds below describe the output of the rational algorithms, including truncation error.
-They use Mathlib's `Real.exp_bound` and `Real.abs_log_sub_add_sum_range_le`.
+These bounds describe what the rational algorithms output, truncation error included, and they rest
+on Mathlib's `Real.exp_bound` and `Real.abs_log_sub_add_sum_range_le`.
 
-The exponential reduction is valid for every rational input. The logarithm theorem requires a
-positive argument, so a format must handle its own zero and exceptional values before calling it.
+The exponential reduction is valid for every rational input. The logarithm theorem needs a positive
+argument, so a format has to handle its own zero and exceptional values before calling it.
 -/
 
 @[expose] public section

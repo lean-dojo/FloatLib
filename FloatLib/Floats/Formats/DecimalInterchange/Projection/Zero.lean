@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Exact
 /-!
 # Signed zero and its preferred quantum
 
-Every zero projects exactly with the supplied sign and the preferred exponent
-clamped to the representable exponent interval. No exception is raised, even
-when clamping changes its representation.
+A zero projects with the supplied sign and with the preferred exponent clamped into the
+representable exponent interval, so a zero that asks for quantum `200` in decimal32 gets `90`. No
+exception is raised, even when clamping changes the representation.
 -/
 
 @[expose] public section

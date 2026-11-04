@@ -17,9 +17,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Spec
 /-!
 # Certified execution backends for binary descriptors
 
-Descriptor planning uses width-generic, native-word, and fixed-limb kernels with refinement
-theorems. Backend choice is separate: `Descriptor.Plan` constructs the candidate set and the
-universal selector makes that decision.
+These are the kernels descriptor planning picks from: width-generic, native-word, and fixed-limb
+kernels, each with its refinement theorem. Nothing here chooses between them. `Descriptor.Plan`
+builds the candidate set, and the universal selector makes the choice.
 -/
 
 @[expose] public section

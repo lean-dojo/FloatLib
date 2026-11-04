@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Descriptor
 /-!
 # Posit words and exceptional encodings
 
-The exact-width posit carrier, zero, and Not-a-Real words. These definitions support storage,
-equality, and bitwise reasoning. Regime parsing and finite decoding are defined in later modules.
+A posit model is one encoded word at its exact width. This module defines that carrier and its
+two special words, zero and Not-a-Real, which is enough for storage, equality, and bitwise
+reasoning. Parsing the regime and decoding finite values come in later modules.
 -/
 
 @[expose] public section
@@ -157,12 +158,12 @@ theorem toNatBits_eq_signMaskNat_iff (value : Model format) :
   apply beq_eq_false_iff_ne.mpr
   exact Ne.symm (zero_ne_nar format)
 
-/-- The NaR predicate recognizes exactly the standard's unique NaR word. -/
+/-- The NaR predicate is true on the standard's unique NaR word and on no other word. -/
 @[simp] theorem isNaR_eq_true_iff (value : Model format) :
     value.isNaR = true ↔ value = nar format := by
   simp [isNaR]
 
-/-- The zero predicate recognizes exactly the standard's unique zero word. -/
+/-- The zero predicate is true on the standard's unique zero word and on no other word. -/
 @[simp] theorem isZero_eq_true_iff (value : Model format) :
     value.isZero = true ↔ value = zero format := by
   simp [isZero]

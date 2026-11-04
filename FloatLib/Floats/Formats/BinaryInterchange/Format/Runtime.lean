@@ -12,10 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Properties
 # Compiled binary format constants
 
 Layout proofs are easiest to read with powers such as `2 ^ fmt.expWidth`, but compiled code is
-better served by left shifts. Frequently used format values therefore have shift-based
-implementations, with proved equalities registered for compiler substitution.
-
-Theorems use the mathematical definitions, and compiled code runs the proved shift formulas.
+better served by left shifts. So frequently used format values get shift-based implementations,
+with proved equalities registered for compiler substitution. Theorems see the mathematical
+definitions, and compiled code runs the proved shift formulas.
 -/
 
 @[expose] public section

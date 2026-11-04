@@ -12,8 +12,8 @@ public import FloatLib.Numerics.Enclosure.Interval.BinaryGridProof
 /-!
 # Containment for interval multiply-add
 
-Four-corner product bounds followed by the addend bounds enclose every real combination
-of the inputs. Rounding takes place after this exact calculation.
+Four-corner product bounds followed by the addend bounds enclose every real combination of the
+inputs. Rounding happens only after this exact calculation.
 -/
 
 public section
@@ -68,9 +68,9 @@ theorem containsReal_fma? (R : OutwardRounding α ℚ) {I J K L : Interval α}
 namespace BinaryGrid
 
 /--
-The outward-rounded integer multiply-add interval encloses `x * y + z` for arbitrary real members
-of the three decoded input intervals. The corner products and the aligned addend are exact on the
-grid with twice the fractional bits; only the two final endpoints are rounded outward.
+The outward-rounded integer multiply-add interval encloses `x * y + z` for arbitrary real members of
+the three decoded input intervals. The corner products and the aligned addend are exact on the grid
+with twice the fractional bits, and only the two final endpoints are rounded outward.
 -/
 theorem containsReal_fma (precision : Nat) {I J K : Interval Int} {x y z : ℝ}
     (hx : I.ContainsReal (decode precision) x) (hy : J.ContainsReal (decode precision) y)

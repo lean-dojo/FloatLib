@@ -11,14 +11,15 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Addition.Runtime
 /-!
 # Wide-limb fused multiply-add runtime
 
-The exact product of two normal significands, formed by the schoolbook limb product, is combined
-with the third operand's significand by the same alignment core as addition, `alignAndRound?`,
-with the product at twice the significand offset. There is a single rounding. All three operands
-must be normal to enter this core. Exact cancellation returns positive zero; a nonzero result
-must pass `roundNormal?`'s lower check before rounding and upper check after rounding carry.
-Thus normal operands alone do not guarantee acceptance, even when rounding would produce the
-smallest normal value. The total operation computes declined cases with `Model.Spec.fma`;
-for every `Eligible` format, `Fma.Proof` proves agreement on all operands.
+An exact product of two normal significands, formed by the schoolbook limb product, is combined with
+the third operand's significand by `alignAndRound?`, the same alignment core as addition, with the
+product at twice the significand offset. There is one rounding. All three operands must be normal to
+enter this core. Exact cancellation returns positive zero, and a nonzero result must pass
+`roundNormal?`'s lower check before rounding and its upper check after rounding carry.
+
+So normal operands alone don't guarantee acceptance, even when rounding would produce the smallest
+normal value. Declined cases go to `Model.Spec.fma` in the total operation, and for every `Eligible`
+format `Fma.Proof` proves agreement on all operands.
 -/
 
 @[expose] public section

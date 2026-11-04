@@ -14,10 +14,10 @@ public import FloatLib.Numerics.Enclosure.Rational.AffineConvergence
 /-!
 # Terminating comparisons at rational multiples of pi
 
-The exact-value classifiers remove all rational answers before refinement. Their completeness
-and endpoint convergence then separate every rational boundary. Tangent compares a linear
-sine/cosine residual without dividing intervals. At a half-integer pole that residual is the sine,
-`1` or `-1`, so its separation needs no pole hypothesis.
+Before refinement starts, the exact-value classifiers remove every rational answer, and their
+completeness together with endpoint convergence then separates every rational boundary. Tangent
+compares a linear sine/cosine residual and never divides intervals. At a half-integer pole that
+residual is the sine, `1` or `-1`, so its separation needs no pole hypothesis.
 -/
 
 public section

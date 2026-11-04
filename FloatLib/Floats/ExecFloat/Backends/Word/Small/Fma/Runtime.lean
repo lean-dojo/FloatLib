@@ -11,17 +11,18 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Runtime
 /-!
 # Native one-word finite fused multiply-add
 
-The native FMA path serves conventional IEEE formats with at most 29 fraction bits (`Eligible`),
-which include binary16, bfloat16, and the eight-bit formats. It is the word-tier counterpart of the
-IEEE branch of `FiniteKernel.Internal.fmaComponents`. The exact product of the two significands and
-the addend significand are placed at unsigned scales in the product rounder's coordinate and passed
-to the same signed-magnitude helpers as one-word addition, with scale offset `0`. With at most
-`2 * fracWidth + 2 ≤ 60` bits in the product, every aligned sum and every sticky magnitude fits in
-`UInt64`. Refinement proofs are in `Fma.Proof`.
+This FMA path serves conventional IEEE formats with at most 29 fraction bits (`Eligible`), which
+include binary16, bfloat16, and the eight-bit formats. It's the word-tier counterpart of the IEEE
+branch of `FiniteKernel.Internal.fmaComponents`. The exact product of the two significands and the
+addend significand are placed at unsigned scales in the product rounder's coordinate and passed to
+the same signed-magnitude helpers as one-word addition, with scale offset `0`. A product has at most
+`2 * fracWidth + 2 ≤ 60` bits, so every aligned sum and every sticky magnitude fits in `UInt64`.
+Refinement proofs are in `Fma.Proof`. When we tested it against the generic FMA on every e5m2
+triple, about 16.7 million of them, there were no mismatches.
 
 It returns `none` for exceptional operands, a zero product, a wide alignment that the sticky path
-declines, results below the normal threshold before rounding, and overflow after rounding. The
-dispatcher then tries the native-storage component kernel, which returns the addend of a zero
+declines, results below the normal threshold before rounding, and overflow after rounding. In those
+cases the dispatcher tries the native-storage component kernel, which returns the addend of a zero
 product as it is.
 -/
 

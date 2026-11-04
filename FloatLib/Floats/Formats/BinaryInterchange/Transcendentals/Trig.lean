@@ -12,31 +12,39 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.ArgumentReduction.Runtim
 /-!
 # Format-generic executable sine and cosine
 
-Finite arguments of at least three quarters are reduced modulo `pi / 2` by the Payne-Hanek window
-reduction of `Numerics.Enclosure.ArgumentReduction`, which reads a window of the cached `2 / pi` at
-the cache level the argument's exponent needs. With `p` the destination precision, the reduction
-keeps `p + 32` relative bits of the remainder: it doubles its window, at most four times and only
-while the window stays within the cache level `trigReductionLevelLimit`, until its proved error is
-below `2^-(p + 32)` of the remainder. When no permitted window is accepted, sine and cosine give the
-format's invalid result. Multiplying the accepted remainder by the cached `pi / 2` and truncating to
-`p + 40` significant bits gives the reduced argument. Smaller arguments are their own reduced
-argument. The sine and cosine of the reduced argument are evaluated from exact common-denominator
-Taylor polynomials, with as many terms as the argument's exponent needs. The quadrant and the sign
-of the argument are applied to these exact values, and each result is rounded once to `Model fmt`.
+These format-generic sine and cosine kernels take three steps. The argument is reduced modulo
+`pi / 2`, the reduced argument goes through exact Taylor polynomials, and each result is rounded
+once.
 
-The reduction reads at most level `trigReductionLevelLimit` of the cache, `2^21` bits of `2 / pi`.
-For an argument `m * 2^e` whose significand has `k` bits, the first window has
-`2 k + fracWidth + 53` bits and stays within that level when `max e 0 + 2 k + fracWidth + 59` is at
-most `2^21`. A format argument has `k ≤ fracWidth + 1`, so in a format with at most 524,258
-fraction bits every finite argument below `2^(2^20)` qualifies, and with the conventional bias that
-covers every exponent field of at most 21 bits. Arguments whose first window needs a higher level,
-such as the largest ones of a 31-bit exponent field, give the format's invalid result.
+Finite arguments of at least three quarters are reduced by the Payne-Hanek window reduction of
+`Numerics.Enclosure.ArgumentReduction`, which reads a window of the cached `2 / pi` at the cache
+level the argument's exponent needs. Smaller arguments are their own reduced argument. With `p`
+the destination precision, the reduction keeps `p + 32` relative bits of the remainder. It doubles
+its window until its proved error is below `2^-(p + 32)` of the remainder, at most four times and
+only while the window stays within the cache level `trigReductionLevelLimit`. If no permitted
+window is accepted, sine and cosine give the format's invalid result. Otherwise the accepted
+remainder times the cached `pi / 2`, truncated to `p + 40` significant bits, is the reduced
+argument. Its sine and cosine come from exact common-denominator Taylor polynomials with as many
+terms as its exponent needs. The quadrant and the sign of the argument are applied to these exact
+values, and each result is rounded once to `Model fmt`.
 
-For leading exponents below `-(fracWidth + 2)`, the provider returns the input and one, preserving
-tiny sine results without converting them to the fixed-point reduction scale. The reduction error is
-proved (`Numerics.Enclosure.ArgumentReduction.QuarterTurns.Reduces.abs_sin_sub_rotate_le`), but the
-truncation, the Taylor remainder and the final rounding are not, so the kernels are deterministic
-approximations without a whole-algorithm accuracy or correct-rounding certificate.
+Reduction never reads past level `trigReductionLevelLimit` of the cache, which is `2^21` bits of
+`2 / pi`. For an argument `m * 2^e` whose significand has `k` bits, the first window has
+`2 k + fracWidth + 53` bits, and it stays within that level when
+`max e 0 + 2 k + fracWidth + 59` is at most `2^21`. A format argument has `k ≤ fracWidth + 1`. So
+in a format with at most 524,258 fraction bits every finite argument below `2^(2^20)` qualifies,
+and with the conventional bias that covers every exponent field of at most 21 bits. Arguments
+whose first window needs a higher level, such as the largest ones of a 31-bit exponent field, give
+the format's invalid result.
+
+Tiny arguments skip all of this. For leading exponents below `-(fracWidth + 2)`, the provider
+returns the input and one, which preserves tiny sine results without converting them to the
+fixed-point reduction scale.
+
+We prove the reduction error
+(`Numerics.Enclosure.ArgumentReduction.QuarterTurns.Reduces.abs_sin_sub_rotate_le`). The
+truncation, the Taylor remainder and the final rounding are unproved, so the kernels are
+deterministic approximations without a whole-algorithm accuracy or correct-rounding certificate.
 -/
 
 @[expose] public section
@@ -96,8 +104,8 @@ def trigTaylorTerms (target magnitude : Nat) : Nat :=
     go (2 ^ target) step target 1 (step * 6)
 where
   /--
-  Search upward from `count`, whose product is `bound`, for a product of at least `threshold`;
-  each term multiplies the product by `step` and two factorial factors.
+  Search upward from `count`, whose product is `bound`, for a product of at least `threshold`.
+  Each term multiplies the product by `step` and two factorial factors.
   -/
   go (threshold step : Nat) : Nat → Nat → Nat → Nat
     | 0, count, _ => count
@@ -109,13 +117,14 @@ where
 
 /--
 The exact Taylor sums of sine and cosine at a nonzero `value` below one, before division by the
-configuration's denominators: the first `terms` coefficients of `config.sinCoeffsAsc` and the first
-`terms + 1` of `config.cosCoeffsAsc`, or all of them when the configuration has fewer.
+configuration's denominators. They use the first `terms` coefficients of `config.sinCoeffsAsc`
+and the first `terms + 1` of `config.cosCoeffsAsc`, or all of them when the configuration has
+fewer.
 
 With `|value| < 2^-s` and `terms = trigTaylorTerms (bits + 8) s`, the first omitted terms are below
 `2^-(bits + 8) |value|` when the configuration holds at least `terms` sine and `terms + 1` cosine
-coefficients. A shorter table omits the terms past its end instead: the pinned binary32 table has
-7 sine and 7 cosine coefficients, so at `|value| = pi / 4` its first omitted terms are about
+coefficients. A shorter table omits the terms past its end. The pinned binary32 table has 7 sine
+and 7 cosine coefficients, so at `|value| = pi / 4` its first omitted terms are about
 `2^-45 |value|` for the sine and `2^-41` for the cosine.
 -/
 def sinCosTaylor (config : Config) (terms : Nat) (value : Numerics.Dyadic) :
@@ -130,14 +139,15 @@ def sinCosTaylor (config : Config) (terms : Nat) (value : Numerics.Dyadic) :
       denominator := config.cosDenominator } )
 
 /--
-Reduce a positive dyadic `m * 2^e` modulo `pi / 2`, keeping `bits` relative bits.
+Reduce a positive dyadic `m * 2^e` modulo `pi / 2`, keeping `bits` relative bits. Returns the
+quadrant and the reduced argument, or `none` when the first window would read a level above the
+limit or no permitted window is accepted.
 
 `Numerics.Enclosure.ArgumentReduction.reduce` reduces it with windows from `startWindow p bits`,
-with `p` the bit length of `m`, doubling at most `trigReductionFuel` times and only while the
+with `p` the bit length of `m`. It doubles at most `trigReductionFuel` times, and only while the
 window reads a cache level of at most `trigReductionLevelLimit` (`fuelWithin?`). The fraction of
-the accepted reduction times the cached lower bound of `pi / 2` at `bits + 8` bits is truncated to
-`bits + 8` significant bits. Returns the quadrant and this reduced argument, or `none` when the
-first window would read a level above the limit or no permitted window is accepted.
+the accepted reduction times the cached lower bound of `pi / 2` at `bits + 8` bits, truncated to
+`bits + 8` significant bits, is the reduced argument.
 -/
 def reduceQuarterTurns? (bits m : Nat) (e : Int) : Option (Fin 4 × Numerics.Dyadic) :=
   let p := Nat.log2 m + 1
@@ -165,16 +175,16 @@ def belowThreeQuarters (m : Nat) (leading : Int) : Bool :=
 Sine of a nonzero dyadic of leading exponent `leading < -(fracWidth + 2)`, with no work
 proportional to its exponent.
 
-A value representable in the format is its own nearest result: `x - sin x < x^3/6` is far below
-half its unit. Otherwise `sin x` lies strictly between `x - x^3/6` and `x`. When `x^3/6` is below
-a quarter of the unit of the last bit of `x`, the only rounding boundary that can lie between
-them is `x` itself, so rounding `x` moved a quarter unit toward zero selects the nearest
-encoding of `sin x`, also when `x` is a rounding midpoint. A shorter-than-necessary unit gives
-an argument with at least about `2 |leading|` bits, whose sine is evaluated from every sine
-coefficient of the configuration.
+A value representable in the format is its own nearest result, since `x - sin x < x^3/6` is far
+below half its unit. Otherwise `sin x` lies strictly between `x - x^3/6` and `x`. When `x^3/6` is
+below a quarter of the unit of the last bit of `x`, the only rounding boundary that can lie between
+them is `x` itself. Rounding `x` moved a quarter unit toward zero then selects the nearest encoding
+of `sin x`, also when `x` is a rounding midpoint. A shorter-than-necessary unit gives an argument
+with at least about `2 |leading|` bits, whose sine is evaluated from every sine coefficient of the
+configuration.
 
-The public `sin`, `cos` and `sinCos` never call it: `sinCosWithProvider` returns a tiny format
-value itself. It is reached by calling `sinCosScaledWith` directly with a dyadic argument.
+The public `sin`, `cos` and `sinCos` never call it, because `sinCosWithProvider` returns a tiny
+format value itself. You reach it by calling `sinCosScaledWith` on a dyadic argument.
 -/
 def tinySine (fmt : FloatFormat) (config : Config) (value : Numerics.Dyadic)
     (leading : Int) : Model fmt :=
@@ -188,21 +198,24 @@ def tinySine (fmt : FloatFormat) (config : Config) (value : Numerics.Dyadic)
     (sinCosTaylor config config.sinCoeffsAsc.length value).1.round fmt
 
 /--
-Reduce a dyadic argument modulo `pi / 2` and evaluate sine and cosine.
+Reduce a dyadic argument modulo `pi / 2` and evaluate sine and cosine. The configuration supplies
+the Taylor coefficients, and the reduction itself reads the constants cache of
+`Numerics.Enclosure.Constants`.
 
-The configuration supplies the Taylor coefficients, and the reduction itself reads the constants
-cache of `Numerics.Enclosure.Constants`. Tiny arguments use `tinySine`, and their cosine
-`1 - x^2/2` rounds to one. Other arguments below three quarters evaluate the polynomials on the
-exact argument, and larger ones are reduced by `reduceQuarterTurns?` with
-`fracWidth + 1 + trigGuardBits` relative bits. The polynomials take the terms that
-`trigTaylorTerms` asks for at the exponent of the reduced argument. The quadrant and the sign of
-the argument are applied before the single
-rounding of each result. The format's invalid result means that the reduction would need a cache
-level above `trigReductionLevelLimit` or that no permitted window was accepted. For an argument
-`m * 2^e` whose significand has `k` bits, the first window stays within the limit when
+* Tiny arguments use `tinySine`, and their cosine `1 - x^2/2` rounds to one.
+  `sinCosWithProvider` handles tiny format values before calling this function, so this branch
+  serves direct dyadic calls.
+* Other arguments below three quarters evaluate the polynomials on the exact argument.
+* Larger ones are reduced by `reduceQuarterTurns?` with `fracWidth + 1 + trigGuardBits` relative
+  bits.
+
+The polynomials take the terms that `trigTaylorTerms` asks for at the exponent of the reduced
+argument, and the quadrant and the sign of the argument are applied before the single rounding of
+each result. The format's invalid result means that the reduction would need a cache level above
+`trigReductionLevelLimit` or that no permitted window was accepted. For an argument `m * 2^e`
+whose significand has `k` bits, the first window stays within the limit when
 `max e 0 + 2 k + fracWidth + 59 ≤ 2^21`. The results are deterministic approximations without a
-numerical accuracy certificate. `sinCosWithProvider` handles tiny format values before calling
-this function, so its tiny-argument branch serves direct dyadic calls.
+numerical accuracy certificate.
 -/
 def sinCosScaledWith (fmt : FloatFormat) (config : Config)
     (value : Numerics.Dyadic) : Model fmt × Model fmt :=

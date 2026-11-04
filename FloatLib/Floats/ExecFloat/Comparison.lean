@@ -11,13 +11,11 @@ public import FloatLib.Floats.ExecFloat.Carrier
 /-!
 # Optional comparison capability for `ExecFloat`
 
-Comparison is format-defined rather than imposed by the universal carrier. IEEE binary formats
-use an unordered result for NaN, while standard posits use their total signed-word order,
-including NaR. Formats for which no comparison has been specified simply do not install this
-capability.
+Comparison is up to each format, and the universal carrier doesn't impose one. IEEE binary formats
+return an unordered result for NaN, while standard posits use their total signed-word order, NaR
+included. A format with no specified comparison doesn't install this capability.
 
-The public functions in this module give clients one spelling independently of the numerical
-family:
+The public functions here give you one spelling whatever the numerical family:
 
 ```lean
 ExecFloat.compare left right
@@ -25,9 +23,9 @@ ExecFloat.compareEqual left right
 ExecFloat.compareLess left right
 ```
 
-`Option Ordering` retains the distinction between an ordered result and an unordered comparison.
-The Boolean predicates then follow each format's installed comparison without assuming IEEE,
-posit, real-number, or bitwise semantics.
+`Option Ordering` keeps the distinction between an ordered result and an unordered comparison, and
+the Boolean predicates then follow each format's installed comparison, without assuming IEEE, posit,
+real-number, or bitwise semantics.
 -/
 
 @[expose] public section
@@ -47,7 +45,9 @@ Format-defined comparison for executable values.
 `none` means unordered. A format with a total order returns `some` for every pair.
 -/
 class Comparison where
-  /-- Compare two values, returning `none` precisely when the format declares them unordered. -/
+  /--
+  Compare two values, returning `none` when, and only when, the format declares them unordered.
+  -/
   compare : ExecFloat F → ExecFloat F → Option Ordering
 
 variable {F : Type u} [EncodedFormat F]
@@ -60,8 +60,8 @@ variable {F : Type u} [EncodedFormat F]
 /--
 Format-defined numerical equality.
 
-For an unordered comparison this is `false`; consequently IEEE NaNs compare unequal. A format
-whose comparison is total may choose to include exceptional stored values in its equality.
+For an unordered comparison this is `false`, so IEEE NaNs compare unequal. A format whose comparison
+is total may choose to include exceptional stored values in its equality.
 -/
 @[inline] def compareEqual [Comparison F]
     (left right : ExecFloat F) : Bool :=
@@ -76,24 +76,24 @@ This is the Boolean complement of `compareEqual`, so unordered pairs compare une
     (left right : ExecFloat F) : Bool :=
   !(compareEqual left right)
 
-/-- Strict less-than; unordered comparisons return `false`. -/
+/-- Strict less-than. Unordered comparisons return `false`. -/
 @[inline] def compareLess [Comparison F]
     (left right : ExecFloat F) : Bool :=
   compare left right == some .lt
 
-/-- Less-than-or-equal; unordered comparisons return `false`. -/
+/-- Less-than-or-equal. Unordered comparisons return `false`. -/
 @[inline] def compareLessEqual [Comparison F]
     (left right : ExecFloat F) : Bool :=
   match compare left right with
   | some .lt | some .eq => true
   | none | some .gt => false
 
-/-- Strict greater-than; unordered comparisons return `false`. -/
+/-- Strict greater-than. Unordered comparisons return `false`. -/
 @[inline] def compareGreater [Comparison F]
     (left right : ExecFloat F) : Bool :=
   compare left right == some .gt
 
-/-- Greater-than-or-equal; unordered comparisons return `false`. -/
+/-- Greater-than-or-equal. Unordered comparisons return `false`. -/
 @[inline] def compareGreaterEqual [Comparison F]
     (left right : ExecFloat F) : Bool :=
   match compare left right with

@@ -14,15 +14,14 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Inspection.Runtime
 /-!
 # Executable decimal interchange arithmetic
 
-This import provides `Arithmetic.add`, `sub`, `mul`, `div`, `fma`, `sqrt`, `quantize`,
-and the exact and explicit-direction integral-rounding variants,
-with all five rounding modes, preferred decimal cohorts, and default exception
-flags. It also includes `Inspection.Runtime`: sign operations, classification,
-all 22 comparison predicates, total ordering and quantum queries.
-It contains no proof-facet imports. Use `Arithmetic.Basic` for the value,
-range, error, signed-zero, and status theorems.
+Import this when you want to run decimal arithmetic and don't need the proofs. You get
+`Arithmetic.add`, `sub`, `mul`, `div`, `fma`, `sqrt`, `quantize`, and the integral-rounding
+variants, both the exact one and those that take a direction, all with the five rounding modes,
+preferred decimal cohorts, and default exception flags. `Inspection.Runtime` comes along too, with
+the sign operations, classification, all 22 comparison predicates, total ordering, and quantum
+queries. Nothing here imports a proof facet, so for the value, range, error, signed-zero, and
+status theorems you import `Arithmetic.Basic`.
 
-The operations consume and return `Datum`; BID and DPD remain representation
-choices at the codec boundary. Traps and a mutable exception environment are not
-part of this functional API.
+The operations take and return `Datum`. BID and DPD only come in at the codec boundary. Traps and a
+mutable exception environment aren't part of this functional API.
 -/

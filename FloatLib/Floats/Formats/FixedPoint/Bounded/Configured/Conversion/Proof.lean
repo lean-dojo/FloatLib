@@ -13,9 +13,11 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Bounded fixed-point conversion proofs
 
-The fixed-integer codec theorems connect each conversion policy to its signed coefficient:
-rejecting conversion preserves an in-range coefficient, wrapping takes centered reduction, and
-saturation clamps to the signed range. These relations retain the complete outcome and status.
+Each conversion policy comes down to a statement about the signed coefficient, and the
+fixed-integer codec theorems make the connection. Rejecting conversion keeps an in-range
+coefficient, wrapping takes the centered reduction, and saturation clamps to the signed range.
+With 8-bit words, a coefficient of `300` is rejected, wraps to `44`, or saturates to `127`. Each
+relation keeps the complete outcome and status.
 -/
 
 @[expose] public section
@@ -98,7 +100,7 @@ theorem implements_run :
 
 /--
 The status of a delivered conversion in terms of the nearest-even coefficient that `spec` uses for
-the value: inexact when the delivered value differs from the input, overflow exactly when that
+the value: inexact when the delivered value differs from the input, overflow if and only if that
 coefficient leaves the signed range, and saturation or wrapping when the policy names it.
 -/
 theorem finiteStatus_eq (policy : OverflowPolicy) (exact : Rat)
@@ -158,7 +160,7 @@ theorem spec_deterministic :
   | exceptional exceptional =>
       cases left <;> cases right <;> simp_all [spec]
 
-/-- An outcome meets `spec` exactly when it is the outcome of `run`. -/
+/-- An outcome meets `spec` if and only if it is the outcome of `run`. -/
 theorem spec_iff_eq_run (policy : OverflowPolicy) (input : NumericalValue Rat)
     (outcome : FloatLib.Floats.ExecFloat.ConversionOutcome
       (ExecFloat.BoundedFixedPoint radix fractionalDigits width)) :
@@ -179,8 +181,8 @@ theorem spec_iff_eq_run (policy : OverflowPolicy) (input : NumericalValue Rat)
 
 /--
 Unfolding of `run` at `.reject` on a finite input: success with the value built by `ofRat` and its
-status, or `outOfRange` when `ofRat` returns `none`. When that happens is the failure clause of
-`spec`, through `spec_iff_eq_run`: exactly when the nearest-even coefficient is out of range.
+status, or `outOfRange` when `ofRat` returns `none`. By `spec_iff_eq_run` the second case is the
+failure clause of `spec`, which holds if and only if the nearest-even coefficient is out of range.
 -/
 @[grind =] theorem run_reject_eq (exact : Rat) :
     run (radix := radix) (fractionalDigits := fractionalDigits) (width := width)

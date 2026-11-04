@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured unsigned integer conversions
 
-These adapters apply the Posit Standard (2022) §6.4 word-sentinel policy through
-any lawful configured codec. Integer width is independent of posit width.
-The shared model kernel handles all numerical rounding and range decisions.
+Unsigned integers follow the Posit Standard (2022) §6.4 word-sentinel policy through any lawful
+configured codec, and here too the integer width can differ from the posit width. Every numerical
+rounding and range decision happens in the shared model kernel.
 -/
 
 @[expose] public section

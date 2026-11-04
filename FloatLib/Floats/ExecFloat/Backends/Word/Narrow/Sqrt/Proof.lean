@@ -17,9 +17,9 @@ public import Init.Data.Float.Model.Unpacked.Operations.Sqrt
 /-!
 # Correctness of native binary32 square root
 
-For positive finite binary32 inputs, including subnormals, exponent parity determines an exact
-integer radicand. Its floor square root and remainder determine the rounded significand. The
-proof relates this calculation and final packing to the generic `Model` square-root kernel.
+For positive finite binary32 inputs, subnormals included, the parity of the exponent determines an
+exact integer radicand. Its floor square root and remainder then determine the rounded significand.
+This calculation and the final packing are then related to the generic `Model` square-root kernel.
 -/
 
 @[expose] public section

@@ -13,9 +13,10 @@ public import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Exact meaning of conversion range comparisons
 
-The scalable rational/dyadic comparator first tests signs and leading exponents. Its answer
-is the ordinary rational order, including zero significands and negative values. This connects
-the executable conversion range indicator with the mathematical finite interval.
+Comparing a rational with a dyadic doesn't need their full expansions. The scalable comparator
+tests signs and leading exponents first, and we prove that its answer is the ordinary rational
+order, zero significands and negative values included. That connects the executable conversion
+range indicator with the mathematical finite interval.
 -/
 
 @[expose] public section
@@ -108,7 +109,8 @@ namespace FloatLib.Floats.ExecFloat.P3109.Conversion
 
 open Formats.P3109
 
-/-- The executable exact-range test is precisely strict exclusion from the finite interval. -/
+/-- The executable exact-range test is true if and only if the value lies strictly outside the
+finite interval. -/
 theorem exceedsFiniteRange_eq_decide (format : Format) (exact : Rat) :
     exceedsFiniteRange format exact =
       decide (exact < format.minFinite.toRat ∨ format.maxFinite.toRat < exact) := by

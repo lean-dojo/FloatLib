@@ -14,13 +14,13 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 # Structural candidate portfolios for configured binary formats
 
 Each operation receives the single structural route entered by its executable dispatcher. Callers
-may prepend representation-specific direct candidates. The generic kernel remains the certified
-total baseline for every precision and encoding.
+may prepend representation-specific direct candidates. For every precision and encoding, the
+generic kernel is the certified total baseline.
 
 The constructors are planning-time code and are marked `@[nospecialize]`. Their closures contain
-the inlined word dispatchers, and specializing them for every storage plan of `Configured.Code`
-would duplicate that code once per plan and operation without any effect on the arithmetic hot
-path, which reaches the kernels through the first-order `execute` entry points instead.
+the inlined word dispatchers. Specializing them for every storage plan of `Configured.Code` would
+duplicate that code once per plan and operation, and it would do nothing for the arithmetic hot
+path, which reaches the kernels through the first-order `execute` entry points.
 -/
 
 @[expose] public section

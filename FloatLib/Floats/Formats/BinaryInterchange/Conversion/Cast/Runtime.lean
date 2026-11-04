@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 /-!
 # Executable binary format casts
 
-Convert a value from one binary descriptor (`src`) to another (`dst`), for example binary32 to
-bfloat16 or binary16 to binary64. Conversion uses the source encoding's exact value, without a
-host floating-point intermediate.
+This module converts a value from one binary descriptor (`src`) to another (`dst`), for example
+binary32 to bfloat16 or binary16 to binary64. It works from the exact value of the source
+encoding, with no host floating-point number in between.
 
 ## Finite values
 
@@ -24,14 +24,14 @@ Normal numbers, subnormals, and zeros decode to a signed dyadic:
 (±)  mant × 2^exp
 ```
 
-The integer significand and power-of-two scale represent the source value exactly. Binary32
-`1.0` decodes to exactly `1`, while binary32 `0.1` decodes to the already rounded binary32 value.
-Widening the latter preserves that value, including its difference from the rational `1/10`.
+The integer significand and the power-of-two scale represent the source value with no error.
+Binary32 `1.0` decodes to `1`, while binary32 `0.1` decodes to the already rounded binary32 value.
+Widening the latter keeps that value, including its difference from the rational `1/10`.
 
 `cast src dst x` rounds once to nearest, with ties to even, in the destination.
 `cast src dst x (mode := .up)` rounds in another direction, and `(status := true)` adds the IEEE
 exception flags and the ternary value. Identity casts and compatible fraction-field widenings
-bypass rounding because they preserve every finite source value exactly.
+skip rounding, because they preserve every finite source value.
 
 | Situation | Result |
 |-----------|--------|
@@ -54,20 +54,20 @@ Model dst
 
 ## NaNs and infinities
 
-A NaN cast to the same descriptor is quieted while retaining its sign and payload.
-Across unequal descriptors, conversion uses `propagatedNaN`, as IEEE 754-2019 §6.2.3 recommends:
-an IEEE destination keeps the source sign and the IEEE payload (the fraction without its quiet
-bit, read as a natural number) when that payload fits, and otherwise uses the zero payload. A
-maximum-NaN destination keeps the sign, an FNUZ destination has its single NaN, and a fully finite
-destination receives positive zero. `ExecFloat` conversion applies the same rule.
+A NaN cast to the same descriptor is quieted and keeps its sign and payload. Between different
+descriptors the cast uses `propagatedNaN`, as IEEE 754-2019 §6.2.3 recommends. An IEEE
+destination keeps the source sign and the IEEE payload (the fraction without its quiet bit, read
+as a natural number) when that payload fits, and otherwise uses the zero payload. A maximum-NaN
+destination keeps the sign, an FNUZ destination has its single NaN, and a fully finite destination
+gets positive zero. `ExecFloat` conversion applies the same rule.
 
-Infinity follows the destination's overflow policy: same-sign infinity for IEEE encodings,
-canonical NaN for finite-with-NaN encodings, and the same-sign maximum finite value for a fully
-finite encoding.
+Infinity follows the destination's overflow policy. That means same-sign infinity for IEEE
+encodings, canonical NaN for finite-with-NaN encodings, and the same-sign maximum finite value for
+a fully finite encoding.
 
-Once NaN and infinity have been excluded, finiteness is proved and `finiteDyadic` is total.
-With `status := true`, a cast also reports invalid input, overflow, underflow, inexactness, and the
-ternary value according to the same conversion result.
+Once NaN and infinity have been excluded, finiteness is proved and `finiteDyadic` is total. With
+`status := true`, a cast also reports invalid input, overflow, underflow, inexactness and the
+ternary value, all from the same conversion result.
 
 The public `cast` is a `@[macro_inline]` selector over three kernels: `Internal.Nearest.cast`
 for the default, `Internal.Directed.cast` for the other directions, and `Internal.Status.cast`.
@@ -81,17 +81,16 @@ namespace Model
 /--
 Widen `x` field by field into a destination `dst` with the same exponent semantics.
 
-The sign and exponent fields are copied and the source fraction is shifted into the high end of
-the wider destination fraction. The operation is total and does not look at the value class. For
-a finite `x` it preserves the value (`isFinite_widenExact` and `toReal_widenExact`, which assume
+The sign and exponent fields are copied, and the source fraction moves into the high end of the
+wider destination fraction. The operation is total and ignores the value class. For a finite `x`
+it preserves the value (`isFinite_widenExact` and `toReal_widenExact`, which assume
 `isFinite x = true`), and the casts call it only on finite inputs. A non-finite `x` need not keep
-its class: in the `finiteMaxNaN` encoding a NaN (all-ones exponent and fraction, either sign)
-gains zero low fraction bits when `dst` has a wider fraction, and that is a finite pattern.
+its class. In the `finiteMaxNaN` encoding a NaN (all-ones exponent and fraction, either sign) gains
+zero low fraction bits when `dst` has a wider fraction, and that is a finite pattern.
 
 The four proof arguments (equal exponent width, equal declared bias, equal encoding, and a
-destination fraction at least as wide) are not used in the computation. They restrict callers to
-compatible widening, so the operation cannot serve as a narrowing conversion or cross an encoding
-boundary.
+destination fraction at least as wide) play no part in the computation. They restrict callers to
+compatible widening, so the operation cannot narrow or cross an encoding boundary.
 -/
 @[inline] def widenExact {src dst : FloatFormat} (x : Model src)
     (_ : src.expWidth = dst.expWidth)
@@ -121,26 +120,23 @@ policy. It is registered before the public casts are compiled.
   exact (widenBits_eq_ofFields x hexp hfrac).symm
 
 /--
-Cast `x` from format `src` into format `dst`, the nearest-even kernel of `Model.cast src dst x`.
+Cast `x` from format `src` into format `dst` with nearest-even rounding, the kernel of
+`Model.cast src dst x`.
 
-**Finite values:** decode the source bits to an exact dyadic (`mant × 2^exp`), then
-pack that value into `dst` with round-to-nearest, ties-to-even (`roundDyadic`).
-Out-of-range magnitudes follow the destination encoding's overflow and underflow rules;
-coarser precision can introduce rounding error.
-
-**Inf:** the destination's native overflow result, just as for an overflowing finite input:
-same-sign infinity for IEEE encodings, NaN for finite-with-NaN encodings, and the same-sign maximum
-finite value for fully finite encodings. Saturating conversion is a policy of
-`ExecFloat.Binary.Conversion.Context`.
-
-**NaN:** if `src = dst`, quiet the existing encoding while retaining its sign and payload.
-Otherwise emit `propagatedNaN dst` with the source sign and IEEE payload: the payload survives when
-it fits the destination, and a finite-only destination receives positive zero.
-
-**Finite, `src = dst`:** short-circuits to `x` unchanged. Decoding to a dyadic and rounding back
-into the same grid is the identity on finite values, so this skips the decode/round work. This
-matters for uniform-format `SitePolicy`s, where `mulAcc` and
-`dotSequential` cast every operand even though storage, product, and accumulator formats agree.
+* A finite value decodes to an exact dyadic (`mant × 2^exp`), which `roundDyadic` packs into
+  `dst` with round-to-nearest, ties-to-even. Out-of-range magnitudes follow the destination
+  encoding's overflow and underflow rules, and a coarser precision can introduce rounding error.
+* An infinity gets the destination's native overflow result, as an overflowing finite input does:
+  same-sign infinity for IEEE encodings, NaN for finite-with-NaN encodings, and the same-sign
+  maximum finite value for fully finite encodings. Saturating conversion is a policy of
+  `ExecFloat.Binary.Conversion.Context`.
+* A NaN with `src = dst` is quieted and keeps its sign and payload. Otherwise the result is
+  `propagatedNaN dst` with the source sign and IEEE payload. The payload survives when it fits the
+  destination, and a finite-only destination receives positive zero.
+* A finite `x` with `src = dst` comes back unchanged. Decoding to a dyadic and rounding back into
+  the same grid is the identity on finite values, so this skips the decode and round work. That
+  matters for uniform-format `SitePolicy`s, where `mulAcc` and `dotSequential` cast every operand
+  even though storage, product, and accumulator formats agree.
 -/
 @[inline] def Internal.Nearest.cast (src dst : FloatFormat) (x : Model src) : Model dst :=
   if hnan : isNaN x = true then
@@ -213,17 +209,17 @@ dyadic and rounds once in the destination format.
           Directed.roundDyadic dst mode (finiteDyadic x hfinite)
 
 /--
-Cast `x` and report the IEEE exception indicators and the ternary value of the conversion, the
-kernel of `Model.cast src dst x (mode := mode) (status := true)`.
+Cast `x` and also report the IEEE exception indicators and the ternary value of the conversion.
+This is the kernel of `Model.cast src dst x (mode := mode) (status := true)`.
 
-A signaling NaN raises invalid. A quiet NaN raises invalid only when the destination cannot
+A signaling NaN raises invalid, and a quiet NaN raises invalid only when the destination cannot
 represent a NaN at all. Infinity is exact when the destination preserves infinity. A destination
-without infinity reports overflow and inexactness, including when its overflow encoding is a NaN,
-and does not raise invalid. Finite values use the same exact dyadic witness for
-directed rounding, status classification, and the ternary value.
+without infinity reports overflow and inexactness, even when its overflow encoding is a NaN, and
+does not raise invalid. Finite values use one exact dyadic witness for directed rounding, status
+classification and the ternary value.
 
-The ternary value of a NaN is `.eq`. An infinity uses `exactInfinityTernary`: `.eq` when the
-destination keeps it, and otherwise `.lt` for `+∞` and `.gt` for `-∞`, whether the destination
+The ternary value of a NaN is `.eq`. An infinity uses `exactInfinityTernary`, which is `.eq` when
+the destination keeps it and otherwise `.lt` for `+∞` and `.gt` for `-∞`, whether the destination
 saturates or delivers its overflow NaN.
 -/
 def Status.cast (src dst : FloatFormat) (x : Model src)
@@ -252,9 +248,9 @@ Cast `x` from format `src` into format `dst`, rounding in `mode` (nearest-even b
 `status := true` the result is the `IEEEOutcome` carrying the exception flags and the ternary
 value.
 
-A finite value decodes exactly and rounds once in the destination. An identity cast or a
-compatible fraction-field widening returns the exact value without rounding. A NaN cast to the
-same descriptor is quieted with its sign and payload, and across descriptors it follows
+A finite value decodes to its exact value and rounds once in the destination. An identity cast or
+a compatible fraction-field widening returns the value without rounding. A NaN cast to the same
+descriptor is quieted with its sign and payload, and across descriptors it follows
 `propagatedNaN`. An infinity takes the destination's native overflow result.
 -/
 @[macro_inline] def cast (src dst : FloatFormat) (x : Model src)

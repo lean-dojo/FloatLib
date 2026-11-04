@@ -55,18 +55,19 @@ result, and Python recomputes it independently.
 
 On these normal inputs, TensorLib's casts use integer shifts, masks, and rounding. Its FP16
 and FP8 decoders do use native `Float32` multiplication for subnormal inputs, but subnormals
-are covered by the correctness checks and left out of the timed fixtures. So the timings
+are covered by the correctness checks and left out of the timed fixtures, so the timings
 can't show a speed advantage from FPU arithmetic.
 
-Each direction and format gets a 10,000-iteration pilot and then nine paired trials. The pilot
-timings set a common iteration count that targets at least 20 ms for the faster implementation.
+Each direction and format gets a 10,000-iteration pilot and then nine paired trials, and the
+pilot timings set a common iteration count that targets at least 20 ms for the faster
+implementation.
 Each process warms up for 256 iterations, and the library that runs first alternates between
-pairs. The timed loop covers lookup, conversion, encoded output, index, and checksum work.
-Construction, process startup, and file output are outside it.
+pairs. The timed loop covers lookup, conversion, encoded output, index, and checksum work,
+while construction, process startup, and file output stay outside it.
 
 On the Intel Xeon Platinum 8275CL, TensorLib's medians are 4.0 to 12.5 times faster than
-FloatLib's general descriptor cast on these fixtures. The saved run measured FloatLib 2.0.0
-(commit `8c88715`) on 2026-10-31. FloatLib uses Lean 4.35.0 with Clang 23.1.0, and TensorLib
+FloatLib's general descriptor cast on these fixtures. For the saved run we measured FloatLib
+2.0.0 (commit `8c88715`) on 2026-10-31. FloatLib uses Lean 4.35.0 with Clang 23.1.0, and TensorLib
 uses Lean 4.33.0 with Clang 22.1.4. What's being compared here is the scalar
 cast interface. Tensor throughput and FloatLib's arithmetic backend kernels don't enter into
 it.

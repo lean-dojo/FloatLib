@@ -11,11 +11,11 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Runtime
 /-!
 # P3109 queries and adjacent values
 
-Format queries expose the descriptor and its distinguished encoded values. Classification and
-adjacent-value operations inspect codes directly, so their cost does not depend on the decoded
-exponent. `maxSubnormalOf` returns NaN at precision one. `nextGreaterThan` maps positive infinity
-to NaN, and `nextLessThan` maps negative infinity to NaN: these are deliberately different from
-IEEE `nextUp` and `nextDown`.
+Format queries give you the descriptor and its distinguished encoded values. Classification and
+adjacent-value operations look at the code itself, so their cost doesn't depend on the decoded
+exponent. Two cases are worth knowing. `maxSubnormalOf` returns NaN at precision one, where there
+are no subnormals. And `nextGreaterThan` maps positive infinity to NaN, as `nextLessThan` does
+negative infinity, which differs on purpose from IEEE `nextUp` and `nextDown`.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.13–4.16.
 -/
@@ -49,7 +49,7 @@ namespace FloatLib.Floats.Formats.P3109.Format
 @[inline] def maxFiniteOf (format : Format) : ExecFloat.P3109 format :=
   ExecFloat.P3109.ofNatBits format.maxFiniteBits
 
-/-- Smallest finite value; unsigned formats return zero. -/
+/-- Smallest finite value, which is zero for unsigned formats. -/
 @[inline] def minFiniteOf (format : Format) : ExecFloat.P3109 format :=
   ExecFloat.P3109.ofNatBits
     (if format.signedness == .signed then format.signBoundary + format.maxFiniteBits else 0)
@@ -93,7 +93,7 @@ variable {format : Format}
 @[inline] def isFinite (value : ExecFloat.P3109 format) : Bool :=
   !(value.isNaN || value.isInf)
 
-/-- Negative finite values and negative infinity have negative sign; NaN and zero do not. -/
+/-- Negative finite values and negative infinity have negative sign, and NaN and zero do not. -/
 @[inline] def isSignMinus (value : ExecFloat.P3109 format) : Bool :=
   format.signedness == .signed && decide (format.signBoundary < value.toNatBits)
 

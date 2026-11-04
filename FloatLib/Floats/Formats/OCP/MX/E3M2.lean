@@ -11,13 +11,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # OCP MX E3M2
 
-`FloatLib.Floats.E3M2` is a six-bit finite floating element from the OCP microscaling
-specification, with type-level identity `E3M2.Family`. Its direct runtime carrier is a byte with
-an erased `< 64` invariant. For addition, subtraction, multiplication, division, and square root,
-balanced and throughput planning select exhaustive proved tables, and latency planning selects
-arithmetic kernels. Fused multiply-add keeps both a table and the generic proved kernel.
-Throughput planning selects the table, while balanced and latency-oriented planning avoid its
-larger lookup footprint.
+`FloatLib.Floats.E3M2` is the other six-bit finite element of the OCP microscaling specification,
+trading one fraction bit of E2M3 for an extra exponent bit. Its type-level identity is
+`E3M2.Family`, and a value is one byte with an erased `< 64` invariant.
+
+Planning matches E2M3. Exhaustive proved tables serve addition, subtraction, multiplication,
+division, and square root under balanced and throughput planning, while latency planning runs
+arithmetic kernels. Fused multiply-add has both a table and the generic proved kernel. Only
+throughput planning uses the table, and the other two policies keep away from its larger lookup
+footprint.
 
 ## Reference
 

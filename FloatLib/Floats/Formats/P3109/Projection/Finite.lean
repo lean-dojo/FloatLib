@@ -14,10 +14,10 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Finite-value correctness for P3109 projection
 
-Positive-row encoding and decoding preserve the rational value of a nonnegative dyadic on the
-descriptor's precision grid, including zero and the carry significand `2^P`. These formulas use
-natural numbers without an upper exponent bound. `Projection.Range` adds the finite-range and
-bit-width bounds needed for full datum encoding.
+Encode a nonnegative dyadic on the descriptor's precision grid as a positive row, decode it, and
+you get the same rational back, zero and the carry significand `2^P` included. These formulas work
+in natural numbers with no upper exponent bound, and `Projection.Range` adds the finite-range and
+bit-width bounds that full datum encoding needs.
 -/
 
 @[expose] public section
@@ -74,8 +74,8 @@ theorem decodePositiveFinite_encodeRow_toRat
     omega
 
 /--
-Positive-row encoding preserves every nonnegative dyadic accepted by the precision grid; a zero
-significand encodes to the zero code.
+Positive-row encoding preserves every nonnegative dyadic accepted by the precision grid, and a
+zero significand encodes to the zero code.
 
 The significand bound is not strict: the carry value `2^P`, produced when precision rounding
 increments an all-ones significand, is encoded in the next exponent row. The exponent lower bound

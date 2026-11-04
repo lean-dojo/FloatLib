@@ -12,10 +12,10 @@ public import Mathlib.Data.Rat.Floor
 /-!
 # Rational meaning of P3109 rounding decisions
 
-The report's fractional part is an exact rational. Natural division implements its floor, and
-quotient/remainder comparisons implement nearest-even integer rounding. These facts identify
-every executable rounding decision with §4.7.4, including each possible supplied stochastic word.
-No distribution or randomness-quality assumption is made.
+The fractional part the report talks about is an exact rational, so natural division gives its
+floor, and comparing quotient and remainder gives nearest-even integer rounding. With these facts
+every executable rounding decision matches §4.7.4, for each possible supplied stochastic word. We
+assume nothing about the distribution or quality of the random bits.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
 -/
@@ -65,7 +65,7 @@ theorem div_eq_quotient_add_fraction (numerator denominator : Nat) (hd : 0 < den
             congrArg (fun x : Rat => x / (denominator : Rat)) hcast
     _ = _ := by field_simp
 
-/-- A remainder fraction is below one half exactly when `2 * remainder < denominator`. -/
+/-- A remainder fraction is below one half if and only if `2 * remainder < denominator`. -/
 theorem fraction_lt_half (remainder denominator : Nat) (hd : 0 < denominator) :
     (remainder : Rat) / denominator < 1 / 2 ↔ 2 * remainder < denominator := by
   have hd' : (0 : Rat) < denominator := by exact_mod_cast hd
@@ -73,7 +73,7 @@ theorem fraction_lt_half (remainder denominator : Nat) (hd : 0 < denominator) :
   norm_cast
   omega
 
-/-- A remainder fraction is one half exactly when `denominator = 2 * remainder`. -/
+/-- A remainder fraction is one half if and only if `denominator = 2 * remainder`. -/
 theorem fraction_eq_half (remainder denominator : Nat) (hd : 0 < denominator) :
     (remainder : Rat) / denominator = 1 / 2 ↔ denominator = 2 * remainder := by
   have hd' : (denominator : Rat) ≠ 0 := by positivity

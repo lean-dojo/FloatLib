@@ -16,17 +16,15 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Native-storage finite arithmetic for binary64
 
-Native binary64 field decoding agrees with the generic finite decoder, and accepted two-limb
-products agree with exact nearest-even rounding. Throughout, the public value is `Model
-FloatFormat.binary64`.
+Two facts are proved here. Native binary64 field decoding agrees with the generic finite decoder,
+and accepted two-limb products agree with exact nearest-even rounding. Throughout, the public value
+is `Model FloatFormat.binary64`.
 
-A product of normal significands needs at most 106 bits, and the multiplication path keeps it in
-two `UInt64` limbs through normalization and rounding. For addition, division and fused
-multiply-add, the finite adapters here are the shared-kernel baseline, and their specialized paths
-are proved in the operation modules.
-
-NaN and infinity handling stays in the shared dispatchers. Finite entry points return `none`
-whenever an operand has an all-ones exponent.
+A product of normal significands needs at most 106 bits, and the multiplication path keeps it in two
+`UInt64` limbs through normalization and rounding. For addition, division, and fused multiply-add,
+the finite adapters here are the shared-kernel baseline, and the operation modules prove their
+specialized paths. NaN and infinity handling stays in the shared dispatchers, so the finite entry
+points return `none` whenever an operand has an all-ones exponent.
 -/
 
 @[expose] public section

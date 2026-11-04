@@ -12,18 +12,20 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # P3109 formats
 
-P3109 descriptors have four parameters from the interim report: bit width, precision,
-signedness, and finite or extended domain. Every valid descriptor produces an exact-width
-codebook and an `ExecFloat` carrier.
+A P3109 descriptor has the four parameters of the interim report: bit width, precision,
+signedness, and finite or extended domain. `binary8p4se`, for one, is eight bits, precision four,
+signed, extended. Every valid descriptor produces an exact-width codebook and an `ExecFloat`
+carrier.
 
-This module covers representation and exact decoding. The arithmetic and projection modules
+This module covers representation and exact decoding, and the arithmetic and projection modules
 supply operations and rounding policies.
 
-The finite magnitude formula agrees with ordinary binary scientific notation after fields have
-been extracted. Classification does not: P3109 unsigned formats omit the sign bit, while signed
+Once the fields are extracted, the finite magnitude formula is ordinary binary scientific
+notation. Classification is different. P3109 unsigned formats omit the sign bit, and signed
 formats use the midpoint code for their single NaN and mirror finite magnitudes across the upper
-half of the code space. P3109 also admits field widths excluded by
-`BinaryInterchange.FloatFormat`, so it needs its own field classification.
+half of the code space, so in `binary8p4se` code `0x80` is NaN and `0x81` is the negative of
+`0x01`. P3109 also admits field widths that `BinaryInterchange.FloatFormat` excludes, so it needs
+its own field classification.
 
 ## Reference
 
@@ -55,8 +57,8 @@ inductive Domain where
 A validated descriptor for the complete four-parameter P3109 format family.
 
 One value of this structure selects a profile, with no separate Lean type or decoder for each
-bit width. The proof fields rule out exactly the invalid `(K, P, signedness)` combinations of
-the report before any value can be constructed.
+bit width. The proof fields rule out the report's invalid `(K, P, signedness)` combinations, and
+only those, before any value can be constructed.
 -/
 structure Format where
   /-- Total number of encoded bits (`K` in the report). -/
@@ -80,7 +82,7 @@ structure Format where
 
 namespace Format
 
-/-- Number of explicitly stored trailing significand bits. -/
+/-- Number of stored trailing significand bits, `P - 1`. -/
 @[inline] def trailingBits (format : Format) : Nat :=
   format.precision - 1
 

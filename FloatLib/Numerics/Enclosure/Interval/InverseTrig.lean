@@ -11,22 +11,22 @@ public import FloatLib.Numerics.Enclosure.Interval.Elementary
 /-!
 # Rational interval arcsine and arccosine
 
-Arcsine reduces an interior endpoint to `atan (x / sqrt (1 - x²))`. Integer square-root
-bounds enclose the denominator, and the rational arctangent kernel encloses the quotient.
-The endpoints `-1` and `1` use the proved enclosure of π/4 instead of dividing by zero.
-Arccosine follows from `π/2 - asin x`, with an exact zero at `x = 1`.
+Arcsine reduces an interior endpoint to `atan (x / sqrt (1 - x²))`. Integer square-root bounds
+enclose the denominator, and the rational arctangent kernel encloses the quotient. At `-1` and `1`
+that would divide by zero, so those endpoints use the proved enclosure of π/4. Arccosine follows
+from `π/2 - asin x`, with an exact zero at `x = 1`.
 
-Both operations reject intervals extending outside `[-1, 1]`. The Taylor degree `terms`
-controls the arctangent and π enclosures; `precision` is the number of fractional binary
-digits in the square-root bounds. An interior point returns `none` if those bounds cannot
-separate its square root from zero. `InverseTrigProof` proves containment over the reals.
+Both operations reject intervals that extend outside `[-1, 1]`. The Taylor degree `terms` controls
+the arctangent and π enclosures, and `precision` is the number of fractional binary digits in the
+square-root bounds. An interior point returns `none` if those bounds can't separate its square root
+from zero. `InverseTrigProof` proves containment over the reals.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.Interval
 
-/-- Enclose a rational arcsine value, treating the two endpoints and zero explicitly. -/
+/-- Enclose a rational arcsine value, with the two endpoints and zero as special cases. -/
 def Internal.asinPointBounds? (x : ℚ) (terms precision : Nat) : Option (Interval ℚ) :=
   if x = 0 then some (point 0)
   else if x = 1 then

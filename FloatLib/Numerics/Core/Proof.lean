@@ -11,11 +11,10 @@ public import FloatLib.Numerics.Core.System
 /-!
 # Proof-indexed views of numerical systems
 
-Every `NumericalSystem` has one runtime carrier, `S.Code`. The abbreviations in this module attach
-an erased proof of what a stored code denotes; they do not introduce another representation.
-
-`S.At value` tracks the complete `NumericalValue`, including infinity and exceptional encodings.
-`S.AtFinite x` is the ordinary finite specialization.
+Every `NumericalSystem` has one runtime carrier, `S.Code`. Abbreviations here attach an erased proof
+of what a stored code denotes, and they introduce no other representation. `S.At value` tracks the
+complete `NumericalValue`, infinity and exceptional encodings included, and `S.AtFinite x` is the
+ordinary finite specialization.
 -/
 
 @[expose] public section

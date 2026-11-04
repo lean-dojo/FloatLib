@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
 /-!
 # Closest preferred exponent
 
-A higher-quantum member of a finite cohort differs by an exact power of ten in
-its integer coefficient. Consequently, a coefficient with no trailing zero
-cannot move to a higher quantum. Starting from the smallest representable quantum,
-`preferredCohort` therefore selects the exponent closest to the preferred one.
+This file proves that `preferredCohort` picks the right cohort member. When two members of a
+finite cohort have different quanta, their integer coefficients differ by a power of ten, so a
+coefficient with no trailing zero can't move to a higher quantum. Starting from the smallest
+representable quantum, stripping trailing zeros therefore stops at the exponent closest to the
+preferred one.
 -/
 
 @[expose] public section
@@ -105,7 +106,7 @@ theorem preferredCohort_quantum_closest_of_eq (f : Format) (s : Bool) (c : Nat)
   exact preferredCohort_quantum_closest f c q preferred hminimal e t he'.1 he'.2.1 he'.2.2 hvalue
 
 /-- A coefficient with a full leading digit cannot be represented at a finer quantum.
-This statement compares equal numerical values; trailing zeros do not affect it. -/
+It compares equal numerical values, so trailing zeros don't affect it. -/
 theorem quantum_le_of_full_coefficient (f : Format) (c d : Nat) (q r : Int)
     (hc : f.payloadBound ≤ c) (hd : d < f.coefficientBound)
     (hvalue : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) : q ≤ r := by
@@ -127,8 +128,8 @@ namespace Arithmetic
 
 /-- A pair `(c, q)` on the least grid or with a full leading digit has the least quantum among the
 representations of its value: every `(d, r)` with `d` below the coefficient bound, `r` at least the
-least quantum and `d * 10 ^ r = c * 10 ^ q` has `q ≤ r`. This covers the whole valid cohort; neither
-pair needs to be valid otherwise. -/
+least quantum and `d * 10 ^ r = c * 10 ^ q` has `q ≤ r`. This covers the whole valid cohort, and
+neither pair needs to be valid otherwise. -/
 theorem quantum_le_of_minimum_or_full (f : Format) (c d : Nat) (q r : Int)
     (hfull : q = f.minQuantum ∨ f.payloadBound ≤ c)
     (hd : d < f.coefficientBound) (hr : f.minQuantum ≤ r)

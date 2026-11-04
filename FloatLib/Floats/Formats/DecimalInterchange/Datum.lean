@@ -13,16 +13,16 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Decimal datums and cohorts
 
-A finite datum stores a sign, an integer coefficient, and a quantum exponent:
-its value is `(-1)^sign * coefficient * 10^quantum`. Trailing coefficient zeros
-are meaningful representation information. For example, `1 × 10^0` and
-`10 × 10^-1` are different datums in the same cohort.
+A finite datum stores a sign, an integer coefficient, and a quantum exponent, and its value is
+`(-1)^sign * coefficient * 10^quantum`. Trailing zeros of the coefficient carry information.
+`1 × 10^0` and `10 × 10^-1` have the same value, for example, but they are different datums in the
+same cohort.
 
-This representation layer implements IEEE 754-2019 §§3.3 and 3.5. It supplies
-neither decimal arithmetic nor its rounding, preferred-exponent, or exception rules.
+This layer covers the representation side of IEEE 754-2019, §§3.3 and 3.5. Decimal arithmetic,
+with its rounding, preferred-exponent, and exception rules, is not part of it.
 
-Literals keep the digits they are written with, so `(1.20 : Datum)` is coefficient 120 at
-quantum `-2` and differs from `(1.2 : Datum)`. Unary minus is IEEE `negate`.
+Literals keep the digits you write, so `(1.20 : Datum)` is coefficient 120 at quantum `-2` and
+differs from `(1.2 : Datum)`. Unary minus is IEEE `negate`.
 -/
 
 @[expose] public section
@@ -90,15 +90,14 @@ instance (n : Nat) : OfNat Datum n where
   ofNat := .finite false n 0
 
 /--
-A decimal literal keeps its written coefficient and quantum: `1.20` is coefficient 120 at
-quantum `-2`, the datum that reading the text `1.20` gives, and `1.2e4` is coefficient 12 at
-quantum 3. The literal does not expand the power of ten, so `1e1000000` is coefficient 1 at
-quantum 1000000.
+A decimal literal keeps its written coefficient and quantum. `1.20` is coefficient 120 at quantum
+`-2`, as when reading the text `1.20`, and `1.2e4` is coefficient 12 at quantum 3. The power of ten
+is never expanded, so `1e1000000` is coefficient 1 at quantum 1000000.
 
-A literal need not fit the format as an operand of `Arithmetic.add`, `sub`, `mul`, `div`, `fma`,
-`sqrt`, `powInt` or `rootN`, which read the exact value of a finite operand and round only their
-result. `Arithmetic.nextUp`, `nextDown` and `remainder`, the codecs and the certified functions
-need an operand that satisfies `Valid f`.
+`Arithmetic.add`, `sub`, `mul`, `div`, `fma`, `sqrt`, `powInt` and `rootN` accept a literal that
+doesn't fit the format, because they read a finite operand's exact value and round only the result.
+`Arithmetic.nextUp`, `nextDown` and `remainder`, the codecs and the certified functions need
+`Valid f`.
 -/
 instance : OfScientific Datum where
   ofScientific mantissa exponentSign decimalExponent :=
@@ -148,14 +147,14 @@ def SameCohort : Datum → Datum → Prop
 def ofBiased (f : Format) (s : Bool) (c e : Nat) : Datum :=
   .finite s c ((e : Int) - f.bias)
 
-/-- A finite datum rebuilt from a coefficient and a biased exponent is valid exactly when both fit
+/-- A finite datum rebuilt from a coefficient and a biased exponent is valid if and only if both fit
 their format bounds. -/
 @[simp] theorem ofBiased_valid (f : Format) (s : Bool) (c e : Nat) :
     (ofBiased f s c e).Valid f ↔
       c < f.coefficientBound ∧ e < f.exponentBound := by
   simp [ofBiased, Valid]
 
-/-- A finite datum is valid exactly when its coefficient fits the precision and its quantum lies
+/-- A finite datum is valid if and only if its coefficient fits the precision and its quantum lies
 between the least and largest quantum of the format. -/
 theorem valid_quantum_iff (f : Format) (s : Bool) (c : Nat) (q : Int) :
     (.finite s c q : Datum).Valid f ↔

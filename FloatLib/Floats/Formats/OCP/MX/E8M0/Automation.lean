@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.OCP.MX.E8M0.Semantics
 /-!
 # Automation for E8M0 and block formats
 
-Exact descriptor-driven arithmetic automation lives in
-`FloatLib.Floats.Formats.BinaryInterchange.Automation.Finite`. This module registers only the
-E8M0 scale and block-decoding contracts.
+Automation for exact arithmetic driven by the binary descriptors lives in
+`FloatLib.Floats.Formats.BinaryInterchange.Automation.Finite`. This module adds just the E8M0
+scale and block-decoding contracts, which have no binary descriptor to drive them.
 -/
 
 public meta section

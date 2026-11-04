@@ -12,12 +12,11 @@ public import FloatLib.Numerics.Enclosure.Interval.Operations
 /-!
 # Rational intervals for tangent and hyperbolic functions
 
-Tangent divides the sine enclosure by the cosine enclosure and requires the latter to exclude
-zero. The hyperbolic functions use exponential enclosures and exact rational arithmetic.
-Hyperbolic cosine first takes the absolute-value range, retaining its minimum at zero.
-Hyperbolic tangent uses `(exp (2*x) - 1) / (exp (2*x) + 1)`, whose denominator stays positive.
-
-`HyperbolicProof` proves containment for every real member of the input interval.
+Tangent divides the sine enclosure by the cosine enclosure, which has to exclude zero. The
+hyperbolic functions use exponential enclosures and exact rational arithmetic. Hyperbolic cosine
+first takes the absolute-value range, so it keeps its minimum at zero, and hyperbolic tangent uses
+`(exp (2*x) - 1) / (exp (2*x) + 1)`, whose denominator stays positive. `HyperbolicProof` proves
+containment for every real member of the input interval.
 -/
 
 @[expose] public section
@@ -62,8 +61,8 @@ def Internal.coshPointBounds (x : ℚ) (terms : Nat) : Interval ℚ :=
 /--
 Enclose hyperbolic cosine by monotonicity on the absolute-value range.
 
-An input crossing zero has lower bound one. Both negative and positive intervals retain their
-endpoint-dependent lower bound; hyperbolic cosine is not monotone on all of the real line.
+An input crossing zero has lower bound one. Negative and positive intervals both keep their
+endpoint-dependent lower bound, since hyperbolic cosine isn't monotone on the whole real line.
 -/
 def coshBounds (I : Interval ℚ) (terms : Nat) : Interval ℚ :=
   monotoneBounds (fun x => Internal.coshPointBounds x terms) (absBounds I)

@@ -11,12 +11,12 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Positional-radix capability
 
-A radix is the base used by a positional numerical system.  Binary floating point uses radix two,
-decimal floating point uses radix ten, and the abstract rounded-real development can work with any
-natural radix at least two.
+A radix is the base of a positional numerical system. Binary floating point uses radix two and
+decimal floating point radix ten, and the abstract rounded-real development works with any natural
+radix of at least two.
 
-This definition belongs to the general numerical layer: fixed point, floating point, and other
-positional systems can all use the same radix without depending on a binary storage format.
+This definition lives in the general numerical layer, so fixed point, floating point, and other
+positional systems share one radix without depending on a binary storage format.
 -/
 
 @[expose] public section
@@ -30,10 +30,10 @@ structure Radix where
   /-- Positional systems require a base of at least two. -/
   base_valid : 2 ≤ base
 
-/-- Binary radix. -/
+/-- Radix two, for binary formats. -/
 def binaryRadix : Radix := ⟨2, by norm_num⟩
 
-/-- Decimal radix. -/
+/-- Radix ten, for decimal formats. -/
 def decimalRadix : Radix := ⟨10, by norm_num⟩
 
 namespace Radix

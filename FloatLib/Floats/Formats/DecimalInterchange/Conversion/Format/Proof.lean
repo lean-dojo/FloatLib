@@ -14,17 +14,18 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Decimal format conversion guarantees
 
-The numerical statements concern the returned datum for every destination
-descriptor. Nonoverflowing nearest conversion has at most half a decimal grid unit
-of error; directed conversion encloses the input on the required side.
-Representable finite inputs retain their exact value and raise no exception.
+These are the guarantees for `Conversion.convertFormat`, stated about the returned datum for every
+destination descriptor. A nearest conversion that doesn't overflow is off by at most half a decimal
+grid unit, and a directed conversion lands on the required side of the input. Representable inputs
+are the easy case. A finite input that the destination can represent keeps its exact value and
+raises no exception, even when its coefficient or quantum has to change on the way.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.DecimalInterchange.Conversion
 
-/-- Projection preserves an explicit sign when the input is presented as a magnitude. -/
+/-- Projection keeps the given sign when the input arrives as a magnitude. -/
 theorem project_signed_magnitude (f : Format) (mode : RoundingMode) (s : Bool)
     (x : ℚ) (hx : 0 ≤ x) (preferred : Int) :
     project f mode (if s then -x else x) preferred s =
@@ -79,7 +80,7 @@ theorem convertFormat_exact (f : Format) (mode : RoundingMode) (s : Bool)
   rw [convertFormat_finite]
   exact projectMagnitude_exact f mode s c q q h
 
-/-- Changing destination width or cohort cannot raise a flag on an exactly representable input. -/
+/-- Changing destination width or cohort cannot raise a flag on a representable input. -/
 theorem convertFormat_exact_status (f : Format) (mode : RoundingMode) (s : Bool)
     (c : Nat) (q : Int) (h : (Datum.finite s c q).Valid f) :
     (convertFormat f mode (.finite s c q)).status = {} := by
@@ -156,7 +157,7 @@ theorem convertFormat_down_le (f : Format) (x : Datum) (a : ℚ)
   subst a
   exact project_down_le f _ _ _ hfinite
 
-/-- Finite conversion with a finite result raises inexact exactly when the numerical value
+/-- Finite conversion with a finite result raises inexact if and only if the numerical value
 changes, also when it overflows to the greatest finite datum. -/
 theorem convertFormat_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a)
@@ -166,8 +167,8 @@ theorem convertFormat_inexact_iff (f : Format) (mode : RoundingMode)
   subst a
   exact project_inexact_iff f mode _ value _ _ hv
 
-/-- Decimal underflow uses the exact input magnitude and requires inexactness; an overflowing input
-is never tiny. -/
+/-- Decimal underflow looks at the exact input magnitude and requires inexactness, and an
+overflowing input is never tiny. -/
 theorem convertFormat_underflow_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) :
     (convertFormat f mode x).status.underflow = true ↔

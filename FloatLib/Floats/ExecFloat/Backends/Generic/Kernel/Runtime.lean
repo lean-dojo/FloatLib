@@ -15,9 +15,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Ru
 /-!
 # Executable width-generic finite arithmetic
 
-Arbitrary-precision kernels decode finite fields into a compact unsigned-scale representation.
-Compiled arithmetic uses their allocation-reduced entry points for addition, multiplication,
-division, and fused multiply-add. Refinement theorems live in `Kernel.Proof`.
+These arbitrary-precision kernels decode finite fields into a compact unsigned-scale representation.
+Compiled addition, multiplication, division, and fused multiply-add go through their
+allocation-reduced entry points. Refinement theorems live in `Kernel.Proof`.
 -/
 
 @[expose] public section
@@ -34,7 +34,7 @@ and `sign` gives its sign.
 structure Components where
   /-- Sign bit of the encoded value. -/
   sign : Bool
-  /-- Biased exponent field; zero also identifies zeros and subnormals. -/
+  /-- Biased exponent field. Zero also identifies zeros and subnormals. -/
   exponent : Nat
   /-- Integer significand, including the implicit bit for a normal value. -/
   mantissa : Nat

@@ -12,12 +12,13 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Runtime
 /-!
 # Configured `UInt64` runtime for packed posits
 
-These wrappers rebuild the statically selected `UInt64` carrier around native raw kernels.
-Range proofs are erased during compilation; semantic refinement is isolated in `Word64.Proof`.
+Each wrapper calls a native raw kernel and rebuilds the statically selected `UInt64` carrier
+around the result, with range proofs that Lean erases when it compiles and a semantic refinement
+that lives in `Word64.Proof`.
 
-The visible monomorphic boundary is intentional: it preserves the compiler's direct `UInt64`
-calling convention. Arithmetic itself is shared in `FixedWords.Kernels`, so this file contains no
-width-specific algorithm or fallback, only the small adapter required by the configured carrier.
+We keep this monomorphic boundary visible on purpose, because it preserves the compiler's direct
+`UInt64` calling convention. Arithmetic itself is shared in `FixedWords.Kernels`. So the file has
+no width-specific algorithm and no fallback, just the small adapter the configured carrier needs.
 -/
 
 @[expose] public section
@@ -26,7 +27,7 @@ namespace FloatLib.Floats.Formats.Posit.Configured.Backend.Word64
 
 variable {format : Format}
 
-/-- Add two posits stored directly in a `UInt64` carrier. -/
+/-- Add two posits held in their packed `UInt64` carrier. -/
 @[always_inline] def add
     (width_le : format.bits ≤ 64)
     (left right :
@@ -39,7 +40,7 @@ variable {format : Format}
       FixedWords.addRaw_lt_modulus FixedWords.uint64Carrier
         width_le left.raw.1 right.raw.1 left.raw.2 right.raw.2⟩
 
-/-- Subtract two posits stored directly in a `UInt64` carrier. -/
+/-- Subtract two posits held in their packed `UInt64` carrier. -/
 @[always_inline] def sub
     (width_le : format.bits ≤ 64)
     (left right :
@@ -52,7 +53,7 @@ variable {format : Format}
       FixedWords.subRaw_lt_modulus FixedWords.uint64Carrier
         width_le left.raw.1 right.raw.1 left.raw.2 right.raw.2⟩
 
-/-- Multiply two posits stored directly in a `UInt64` carrier. -/
+/-- Multiply two posits held in their packed `UInt64` carrier. -/
 @[always_inline] def mul
     (width_le : format.bits ≤ 64)
     (left right :
@@ -66,7 +67,7 @@ variable {format : Format}
         width_le left.raw.1 right.raw.1
         left.raw.2 right.raw.2⟩
 
-/-- Divide two posits stored directly in a `UInt64` carrier. -/
+/-- Divide two posits held in their packed `UInt64` carrier. -/
 @[always_inline] def div
     (width_le : format.bits ≤ 64)
     (left right :
@@ -80,7 +81,7 @@ variable {format : Format}
         width_le left.raw.1 right.raw.1
         left.raw.2 right.raw.2⟩
 
-/-- Take the square root of a posit stored directly in a `UInt64` carrier. -/
+/-- Take the square root of a posit held in its packed `UInt64` carrier. -/
 @[always_inline] def sqrt
     (width_le : format.bits ≤ 64)
     (value :
@@ -93,7 +94,7 @@ variable {format : Format}
       FixedWords.sqrtRaw_lt_modulus FixedWords.uint64Carrier
         width_le value.raw.1 value.raw.2⟩
 
-/-- Fused multiply-add for posits stored directly in a `UInt64` carrier. -/
+/-- Fused multiply-add for posits held in their packed `UInt64` carrier. -/
 @[always_inline] def fma
     (width_le : format.bits ≤ 64)
     (left right addend :

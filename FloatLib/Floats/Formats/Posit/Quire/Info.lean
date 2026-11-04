@@ -18,9 +18,10 @@ public import FloatLib.Floats.Formats.Posit.Quire.Semantics.Projective
 /-!
 # Posit quire inspection
 
-`#float_info` shows the quire width, fixed-point scale, capacity, and exact accumulation
-operations. The quire has an exact source decoder and an explicit exit to its associated posit
-type. Its profile lists those operations separately from scalar `ExecFloat` arithmetic.
+Run `#float_info` on a quire type and it shows the width, the fixed-point scale, the capacity, and
+the exact accumulation operations. A quire has an exact source decoder and one rounding back to
+its associated posit type, `qToP`, and its profile lists those operations apart from scalar
+`ExecFloat` arithmetic.
 -/
 
 public meta section

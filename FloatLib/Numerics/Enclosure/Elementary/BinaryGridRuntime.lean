@@ -12,16 +12,18 @@ public import FloatLib.Numerics.Enclosure.Interval.BinaryGrid
 /-!
 # Elementary enclosures evaluated on a binary grid
 
-Taylor polynomials and remainder bounds use integer interval arithmetic at `precision` fractional
-bits. Each multiplication and scalar division rounds outward on that grid. Argument reduction and
-scalar factors use exact rational arithmetic, and only the final endpoints are decoded.
+Here the Taylor polynomials and remainder bounds use integer interval arithmetic at `precision`
+fractional bits. Each multiplication and scalar division rounds outward on that grid. Argument
+reduction and scalar factors use exact rational arithmetic, and only the final endpoints are
+decoded.
 
 The degree selects the same Taylor polynomial as the rational kernels in `Elementary.Runtime`.
-Containment holds at every degree and precision, including zero, so the precision and degree
-estimates below guide refinement and never affect soundness. Coarse grids can give wide bounds.
+Containment holds at every degree and precision, zero included, so the precision and degree
+estimates below only guide refinement and never affect soundness. A coarse grid can give wide
+bounds, never wrong ones.
 
-Long logarithm polynomials share a table of powers through rectangular splitting, as in Section 4
-of Fredrik Johansson, [*Efficient implementation of elementary functions in the medium-precision
+Long logarithm polynomials share a table of powers through rectangular splitting, as in Section 4 of
+Fredrik Johansson, [*Efficient implementation of elementary functions in the medium-precision
 range*](https://arxiv.org/abs/1410.7176).
 -/
 
@@ -303,15 +305,14 @@ def logSeries (x : ℚ) (degree precision : Nat) : Interval Int :=
   add half half
 
 /--
-A logarithm series degree for a positive `value`, aiming at a truncation error of about
-`2 ^ -bits`.
+A logarithm series degree for a positive `value`, aiming at a truncation error of about `2 ^ -bits`.
 
-For `value = n / d` in lowest terms the series runs in `t = (n - d) / (n + d)`, so each pair of
+With `value = n / d` in lowest terms the series runs in `t = (n - d) / (n + d)`, and each pair of
 degrees gains `log₂ (1 / t²)` bits. The estimate counts `log₂` of the integer part of `1 / t²`,
-rounded down and at least one bit. It never overcounts while `t² ≤ 1/2`, that is for `value`
+rounded down and at least one bit, and it never overcounts while `t² ≤ 1/2`, that is for `value`
 between `3 - 2√2 ≈ 0.17` and `3 + 2√2 ≈ 5.83`. Farther from one a pair of degrees gains less than
-one bit, so the degree falls short of the target and the enclosure is wider; it stays sound
-(`containsReal_logUnreduced`) at every degree.
+one bit, so the degree falls short of the target and the enclosure is wider. It stays sound at every
+degree (`containsReal_logUnreduced`).
 -/
 def logSeriesDegree (value : ℚ) (bits : Nat) : Nat :=
   let numerator := value.num.natAbs

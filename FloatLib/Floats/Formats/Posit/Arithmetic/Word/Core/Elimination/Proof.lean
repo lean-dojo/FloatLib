@@ -13,14 +13,12 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Decod
 /-!
 # Correctness of posit scalar-field elimination
 
-The one-, two-, and three-operand continuation interfaces agree with the total posit decoder.
-Executable eliminators live in
+Hot kernels read decoded posit fields through continuations, so they never allocate intermediate
+records. That optimization changes data flow and nothing else. These theorems prove it. For
+every supported word-sized posit descriptor, the one-, two-, and three-operand continuation
+interfaces agree with the total posit decoder, with the same zero, NaR, sign, scale, and
+significand branches as the ordinary decoder. Executable eliminators are in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Runtime`.
-
-The continuation shape lets hot kernels consume decoded fields without allocating intermediate
-records. These theorems show that the optimization only changes data flow: zero, NaR, sign, scale,
-and significand branches are exactly those of the ordinary decoder for every supported word-sized
-posit descriptor.
 -/
 
 @[expose] public section
@@ -93,7 +91,7 @@ theorem withDyadicWordFieldsValid_toNat
     · simp only [hzero, Bool.false_eq_true, ite_false,
         withNonnegativeWordFieldsAtPayload_toNat]
 
-/-- Valid-word scalar elimination is exactly the total scalar decoder. -/
+/-- Valid-word scalar elimination equals the total scalar decoder. -/
 theorem withDyadicFieldsValid_eq {α : Type}
     (format : Format) (heligible : Eligible format)
     (code : UInt64) (hcode : code.toNat < format.modulus)
@@ -226,7 +224,7 @@ theorem withTwoDyadicFieldsValid_eq_word {α : Type}
             rightNegative rightSignificand.toNat rightExponent :=
   rfl
 
-/-- Valid two-word elimination is exactly the total two-word scalar decoder. -/
+/-- Valid two-word elimination equals the total two-word scalar decoder. -/
 theorem withTwoDyadicFieldsValid_eq {α : Type}
     (format : Format) (heligible : Eligible format)
     (left : UInt64) (hleft : left.toNat < format.modulus)
@@ -340,7 +338,7 @@ theorem withThreeDyadicWordFieldsValid_toNat
     withThreeDyadicWordFieldsValid_eq_nested]
   simp only [withDyadicWordFieldsValid_toNat]
 
-/-- Valid three-word elimination is exactly the total three-word scalar decoder. -/
+/-- Valid three-word elimination equals the total three-word scalar decoder. -/
 theorem withThreeDyadicFieldsValid_eq {α : Type}
     (format : Format) (heligible : Eligible format)
     (left : UInt64) (hleft : left.toNat < format.modulus)

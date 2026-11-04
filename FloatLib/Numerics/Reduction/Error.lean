@@ -14,13 +14,13 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Error of repeatedly rounded reductions
 
-The main bound adds the local absolute errors at the nodes actually visited by a reduction.
-It applies to any carrier with a real interpretation, so an executable floating-point tree
-does not first need to be replaced by a globally defined real rounding function.
+Our main bound adds the local absolute errors at the nodes a reduction visits. It applies to any
+carrier with a real interpretation, so an executable floating-point tree doesn't first have to be
+replaced by a globally defined real rounding function.
 
-`mixedBudget` propagates relative and absolute local errors through the schedule. The absolute
-term can cover gradual underflow; setting it to zero gives a relative-error specialization.
-These are round-per-node bounds, not bounds for an exact accumulator rounded only at the end.
+`mixedBudget` propagates relative and absolute local errors through the schedule. The absolute term
+can cover gradual underflow, and setting it to zero gives a relative-error specialization. These are
+round-per-node bounds, and they say nothing about an exact accumulator rounded only at the end.
 -/
 
 @[expose] public section
@@ -75,7 +75,9 @@ theorem abs_eval_sub_exact_le_nodeCount (t : ReductionTree α)
   simpa only [errorBudget_const] using
     t.abs_eval_sub_exact_le_errorBudget combine value interpret (fun _ _ => δ) h
 
-/-- A priori mixed error bound using exact subtree sums, not rounded intermediate values. -/
+/--
+A priori mixed error bound built from exact subtree sums, with no rounded intermediate values.
+-/
 noncomputable def mixedBudget (value : α → ℝ) (u δ : ℝ) : ReductionTree α → ℝ
   | .leaf _ => 0
   | .node a b => (1 + u) * (a.mixedBudget value u δ + b.mixedBudget value u δ) +
@@ -175,9 +177,9 @@ theorem mixedBudget_zero_le (value : α → ℝ) (u : ℝ) (hu : 0 ≤ u)
     nlinarith
 
 /--
-The familiar geometric enclosure depends only on leaf count and absolute-input scale.
-The relative premise is still local to this tree; no global floating-point relative bound is
-assumed. `nodeCount = leaves.length - 1` by `length_leaves`.
+The familiar geometric enclosure depends only on leaf count and absolute-input scale. The relative
+premise stays local to this tree, and no global floating-point relative bound is assumed.
+`nodeCount = leaves.length - 1` by `length_leaves`.
 -/
 theorem abs_eval_sub_exact_le_geometric (t : ReductionTree α)
     (combine : β → β → β) (value : α → β) (interpret : β → ℝ)

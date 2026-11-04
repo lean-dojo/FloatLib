@@ -15,12 +15,12 @@ public meta import Mathlib.Util.Qq
 /-!
 # Registering certified interval enclosures
 
-Tag a `ConstantBounds c` definition or a theorem `E.Sound f` with `@[interval_extension]` to
-associate the named real constant or function with its executable bounds. Importing the provider's
-module imports the registration. Local and scoped attributes follow Lean's usual visibility rules.
+Tag a `ConstantBounds c` definition or a theorem `E.Sound f` with `@[interval_extension]`, and the
+named real constant or function gets its executable bounds. Importing the provider's module imports
+the registration, and local and scoped attributes follow Lean's usual visibility rules.
 
-Functions have a fixed number of real arguments; parameters of other types can be fixed in a
-named wrapper. Registration checks the contract and does not introduce axioms or numerical facts.
+Functions have a fixed number of real arguments, and parameters of other types can be fixed in a
+named wrapper. Registration checks the contract and introduces no axioms or numerical facts.
 -/
 
 public meta section
@@ -70,7 +70,7 @@ initialize registerBuiltinAttribute {
 /--
 Recognize registered applications through definitional aliases.
 
-Unfolding may enlarge syntax. Visited head names prevent revisiting an alias; Lean's heartbeat
+Unfolding may enlarge syntax. Visited head names prevent revisiting an alias, and Lean's heartbeat
 and recursion-depth checks bound the search without imposing a numerical precision limit.
 -/
 partial def registeredApplication? (e : Q(ℝ)) (visited : Array Name := #[]) :

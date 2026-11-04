@@ -15,26 +15,32 @@ public import Mathlib.Order.Prod.Lex.Basic
 /-!
 # Exact destination quantization for concrete OCP MX blocks
 
-The default conversion implements the recommended algorithm of OCP MX 1.0 §6.3: select the
-largest input binade, subtract the element's largest power-of-two exponent, and quantize each
-scaled input with nearest-even rounding and saturation. The all-zero block uses scale `2^0`.
-An exponent below `-127` is clamped to `-127`, and one above `127` produces a NaN block.
-Non-finite input lanes also produce a NaN block. These choices resolve cases for which §6.3
-does not prescribe a scale, and they do not affect how stored non-finite element words decode.
+The default conversion follows the algorithm OCP MX 1.0 recommends in §6.3. It finds the binade
+of the largest input magnitude, subtracts the element's largest power-of-two exponent to get the
+scale, and rounds each scaled input to nearest-even with saturation. Section 6.3 leaves a few
+cases without a scale, and we settle them like this:
 
-Nearest rounding is relative to the selected scale, not to all possible block encodings.
-For example, a constant E4M3 block with value `15/8` selects scale `2^-8` and saturates to `7/4`,
-even though the input is representable using another scale.
+* An all-zero block uses scale `2^0`.
+* An exponent below `-127` is clamped to `-127`.
+* An exponent above `127` produces a NaN block.
+* Non-finite input lanes produce a NaN block.
 
-Element rounding searches at most 256 words with exact rational comparisons. This bounded
-reference kernel covers floating and two's-complement elements through the same numerical
-contract. Its cost depends on the size of the exact input rationals, not on an unbounded shift
-derived from an exponent field. Signed floating zeros are retained.
+None of these choices changes how stored non-finite element words decode.
+
+Nearest rounding is relative to the selected scale, and some other scale can do better. A constant
+E4M3 block with value `15/8` selects scale `2^-8`, which puts the scaled input at 480, above
+E4M3's largest finite value 448. So it saturates to `7/4`, even though another scale would
+represent `15/8` with no error.
+
+Element rounding searches at most 256 words with exact rational comparisons. One bounded reference
+kernel covers floating and two's-complement elements under the same numerical contract, and its
+cost depends on the size of the exact input rationals. No unbounded shift derived from an exponent
+field ever comes into it. Signed floating zeros are kept.
 
 FP8's required SAT and OVF element-conversion modes (§5.3.1, Table 3) are the `(overflow := ...)`
-option, `.saturate` or `.native`, of `Numerics.OverflowMode`. The default is SAT, as recommended
-in §6.3. FP4, FP6, and INT8 always saturate. Their scalar NaN conversion maps to zero, while block
-conversion records a NaN scale.
+option, `.saturate` or `.native`, of `Numerics.OverflowMode`. SAT is the default, as §6.3
+recommends. FP4, FP6, and INT8 always saturate. Their scalar NaN conversion maps to zero, while
+block conversion records a NaN scale.
 
 Reference: OCP, *Microscaling Formats (MX) Specification*, version 1.0, September 2023,
 §§5.3 and 6.3,

@@ -11,10 +11,9 @@ public import FloatLib.Numerics.Exact.Trigonometric.PiValues.Tangent
 /-!
 # Exact tangent values and poles
 
-Reducing the rational angle before introducing pi keeps the pole test exact, even at large
-arguments. On the open principal interval tangent is injective. Together with the rational
-value theorem, this proves that the three classifier branches exhaust all rational answers
-away from poles.
+We reduce the rational angle before pi enters, which keeps the pole test exact even at large
+arguments. Tangent is injective on the open principal interval, and together with the rational value
+theorem that proves the three classifier branches cover every rational answer away from poles.
 -/
 
 public section

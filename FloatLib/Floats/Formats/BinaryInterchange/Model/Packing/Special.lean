@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 /-!
 # Packing special values in Lean's float model
 
-These packing identities preserve the sign of zero and infinity in Lean's IEEE model. They apply
-to arbitrary field widths; descriptor-level classification additionally requires the relevant
-encoding support. In particular, `negZero` is a NaN word under FNUZ, and `posInf` and `negInf` need
-not denote infinities under finite-only policies.
+In Lean's IEEE model, these packing identities keep the sign of zero and infinity. They hold at
+any field widths, but classifying the result under a descriptor also needs the relevant encoding
+support. Under FNUZ, for instance, `negZero` is a NaN word, and under finite-only policies
+`posInf` and `negInf` need not denote infinities.
 
-The shared lemmas let operation proofs handle zero and overflow results without unfolding their
-exponent and significand fields.
+With these shared lemmas, operation proofs handle zero and overflow results without unfolding
+their exponent and significand fields.
 -/
 
 @[expose] public section
@@ -344,7 +344,7 @@ theorem negZero_eq_ofModel_zero (fmt : FloatFormat) :
   exact signBit_ofModel_zero fmt .negative
 
 /--
-The policy-aware zero constructor keeps the requested sign exactly when signed zero is supported.
+The policy-aware zero constructor keeps the requested sign if and only if signed zero is supported.
 -/
 @[simp] theorem signBit_zero (fmt : FloatFormat) (sign : Bool) :
     signBit (zero fmt sign) = (sign && fmt.supportsSignedZero) := by

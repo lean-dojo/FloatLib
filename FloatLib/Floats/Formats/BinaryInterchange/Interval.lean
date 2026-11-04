@@ -15,9 +15,9 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 /-!
 # Format-generic executable intervals
 
-Public entry point for `Model.Interval fmt`, including endpoint construction, outward-rounded
-arithmetic, conservative division, elementary activation ranges, and proof-aware
-`#float_info` inspection.
+This is the public entry point for `Model.Interval fmt`. It brings in endpoint construction,
+outward-rounded arithmetic, conservative division, elementary activation ranges, and
+proof-aware `#float_info` inspection.
 -/
 
 @[expose] public section

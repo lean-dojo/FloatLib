@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics
 /-!
 # Correctness of binary subtraction
 
-Subtraction is implemented as addition of the negated right operand. These theorems connect that
+Subtraction is implemented as addition of the negated right operand. We connect that
 implementation to exact real subtraction followed by one nearest-even rounding step. A difference
 with a zero operand, and `x - x` of a finite `x`, does not round (`toReal_sub_of_isZero_left`,
 `toReal_sub_of_isZero_right`, `toReal_sub_self`). By decoded value, a finite `x - x` decodes to
@@ -80,7 +80,7 @@ theorem isFinite_sub_of_abs_add_le_posMaxFinite
 Finite subtraction is exact real subtraction followed by one nearest-even format rounding.
 
 The hypothesis `hfin` excludes overflow by asking that the executable difference be finite, and it
-forces finite operands; `toReal_sub_eq_roundAt_of_abs_add_le_posMaxFinite` supplies it from a
+forces finite operands. `toReal_sub_eq_roundAt_of_abs_add_le_posMaxFinite` supplies it from a
 bound on the operands.
 -/
 theorem toReal_sub_eq_roundAt {fmt : FloatFormat} (x y : Model fmt)
@@ -127,7 +127,7 @@ theorem toReal_sub_of_isZero_right {fmt : FloatFormat} (x y : Model fmt)
     (by rw [h0, sub_zero]; exact abs_toReal_le_posMaxFinite_of_isFinite x hx)
   rw [toReal_sub_eq_roundAt x y hfmt hout, h0, sub_zero, roundAt_toReal_eq x hx]
 
-/-- Subtracting a finite value from itself gives exactly zero. -/
+/-- Subtracting a finite value from itself gives real value zero. -/
 theorem toReal_sub_self {fmt : FloatFormat} {x : Model fmt} (hfmt : fmt.isIEEE = true)
     (hx : isFinite x = true) : toReal (sub x x) = 0 := by
   have hout := isFinite_sub_of_abs_toReal_sub_le_posMaxFinite x x hfmt hx hx (by

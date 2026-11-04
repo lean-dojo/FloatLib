@@ -21,14 +21,12 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Two-word pair-kernel storage
 
-The field helpers in `Core.Runtime` agree with the width-generic carrier under
-`NativePair.Eligible`, whose bounds keep field extraction and packing from losing bits to
-native-word overflow.
-
-`packNormal_eq_ofFields` relates native packing to the canonical field constructor for an
-in-range exponent field and a normalized significand. `decode_of_normalExponent` gives the
-finite components when the exponent is nonzero and not all ones. These contracts apply to
-binary128 and every other eligible descriptor.
+Field helpers in `Core.Runtime` agree with the width-generic carrier under `NativePair.Eligible`,
+whose bounds keep field extraction and packing from losing bits to native-word overflow.
+`packNormal_eq_ofFields` relates native packing to the canonical field constructor for an in-range
+exponent field and a normalized significand, and `decode_of_normalExponent` gives the finite
+components when the exponent is nonzero and not all ones. These contracts apply to binary128 and to
+every other eligible descriptor.
 -/
 
 @[expose] public section

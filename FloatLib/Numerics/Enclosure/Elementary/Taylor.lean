@@ -15,12 +15,12 @@ import Mathlib.Tactic.FieldSimp
 /-!
 # Exact Taylor sums by binary splitting
 
-Each Horner step is an affine map with integer coefficients and a positive common denominator.
-Composing adjacent blocks uses only integer arithmetic. Binary splitting balances the sizes of
-the multiplication operands, and rational normalization happens once, at the end.
+Each Horner step is an affine map with integer coefficients and a positive common denominator, so
+composing adjacent blocks needs only integer arithmetic. Binary splitting balances the sizes of the
+multiplication operands, and rational normalization happens once, at the end.
 
 The resulting exponential, logarithm and arctangent polynomials agree with their finite sums for
-every rational argument and every number of terms, without convergence assumptions.
+every rational argument and every number of terms. No convergence assumption is involved.
 -/
 
 @[expose] public section

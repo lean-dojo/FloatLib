@@ -13,12 +13,14 @@ public import FloatLib.Numerics.Representations.FixedInt.Core
 /-!
 # Executable standard posit quire model
 
-The Posit Standard (2022) associates an `n`-bit posit with one `16n`-bit quire. The quire stores
-a signed two's-complement coefficient whose least-significant bit has value `2^(16 - 8n)`. Its
-most-negative word is reserved for quire NaR.
+Each `n`-bit posit gets one `16n`-bit quire in the Posit Standard (2022). It holds a signed
+two's-complement coefficient whose least significant bit is worth `2^(16 - 8n)`, the square of the
+smallest positive posit, and its most negative word is reserved for quire NaR. For `Posit32` that
+means 512 bits at a scale of `2^(-240)`.
 
-This module contains only the representation, executable constructors, classifiers, and
-integer/dyadic conversion kernels. Their range and denotational theorems live in `Model.Proof`.
+This module holds the representation, the executable constructors and classifiers, and the
+integer and dyadic conversion kernels, and nothing more. Their range and denotational theorems are
+in `Model.Proof`.
 
 ## References
 

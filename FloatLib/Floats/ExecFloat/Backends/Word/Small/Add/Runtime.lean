@@ -13,23 +13,27 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Native one-word finite addition
 
-The native addition path serves conventional IEEE formats whose storage word, exponent range,
-and aligned significand sum fit in `UInt64` (`Eligible`). It is the word-tier counterpart of the
+This addition path serves conventional IEEE formats whose storage word, exponent range, and aligned
+significand sum fit in `UInt64` (`Eligible`). It's the word-tier counterpart of the
 arbitrary-precision kernel `FiniteScaleAdd.roundSum`. Both operands are decoded from the storage
-word into a sign, a nonnegative scale and an integer significand. Significands are aligned by a
-left shift, or with a sticky bit when the gap is too wide for one word, then the signed
-magnitudes are combined and the result is rounded to nearest even and packed. Significand
-arithmetic uses `UInt64`, while format coordinates and shift counts also use `Nat`.
-Refinement proofs are in `Add.Proof`.
+word into a sign, a nonnegative scale, and an integer significand. Significands are aligned by a
+left shift, or with a sticky bit when the gap is too wide for one word, and then the signed
+magnitudes are combined and the result is rounded to nearest even and packed. Significand arithmetic
+uses `UInt64`, while format coordinates and shift counts also use `Nat`. Refinement proofs are in
+`Add.Proof`.
 
-It returns `none` for exceptional or zero operands, wide alignment shifts that the sticky path
-declines, a magnitude below the normal threshold before rounding, or overflow after rounding.
-The dispatcher then uses the exact generic implementation. Exact cancellation is accepted and
-returns positive zero.
+It returns `none` in four cases, and the dispatcher then uses the exact generic implementation:
 
-The refinement proofs transfer natural-number values through `UInt64.toNat` and compare both
+- exceptional or zero operands,
+- wide alignment shifts that the sticky path declines,
+- a magnitude below the normal threshold before rounding,
+- overflow after rounding.
+
+Exact cancellation is accepted and returns positive zero.
+
+To prove refinement, we carry natural-number values through `UInt64.toNat` and compare both
 implementations with exact magnitude alignment. The generic kernel's sticky-bit alignment, the
-native equal-scale branch and the native sticky path are each proved equal to that common
+native equal-scale branch, and the native sticky path are each proved equal to that common
 specification.
 -/
 
@@ -91,12 +95,12 @@ below `2 ^ 64` and no machine-word addition can wrap. Larger shifts take the sti
 Round a nonzero magnitude at an unsigned scale to a normal result, or decline.
 
 Its specification is `FiniteScaleAdd.roundMagnitude fmt offset sign magnitude scale`, the product
-rounder at scale `scale + offset`. Addition passes `alignOffset fmt`, so its scales are the compact
-finite scales, and fused multiply-add passes `0` and works in product coordinates.
-It reproduces the normal branch of `FiniteProductRound.round` in machine words: it finds the
-leading bit, rounds the significand to `fracWidth + 1` bits with ties to even, and hands carry,
-overflow and packing to the shared `NativeWordProduct.finish?`. Magnitudes below the normal
-threshold before rounding and values that overflow after rounding return `none`.
+rounder at scale `scale + offset`. Addition passes `alignOffset fmt` and so works in the compact
+finite scales, while fused multiply-add passes `0` and works in product coordinates. In machine
+words this is the normal branch of `FiniteProductRound.round`: it finds the leading bit, rounds the
+significand to `fracWidth + 1` bits with ties to even, and hands carry, overflow, and packing to the
+shared `NativeWordProduct.finish?`. Magnitudes below the normal threshold before rounding, and
+values that overflow after rounding, return `none`.
 -/
 @[inline] def roundMagnitude? (fmt : FloatFormat) (offset : UInt64) (sign : Bool)
     (magnitude scale : UInt64) : Option (Model fmt) :=
@@ -218,13 +222,14 @@ for subtraction.
       (Bool.xor (signField fmt yBits) negateRight) yExponent
       (NativeSmallWordFinite.finiteMantissa fmt yExponent (fractionField fmt yBits))
 
-/-! ## Storage-word entry points
+/-!
+## Storage-word entry points
 
-The functions below are `addFinite?` and its helpers with machine words at both ends. A carrier
-that stores the encoding as a `UInt64` calls `addFiniteWord?`, so an accepted sum never becomes
-an exact-width model value. For binary64 that model value is a natural number of up to 64 bits,
-which the runtime allocates once the sign bit is set. `Add.Proof` shows that `addFinite?` is the
-`ofWord` image of `addFiniteWord?`.
+The functions below are `addFinite?` and its helpers with machine words at both ends. A carrier that
+stores the encoding as a `UInt64` calls `addFiniteWord?`, so an accepted sum never becomes an
+exact-width model value. That matters for binary64, where the model value is a natural number of up
+to 64 bits, which the runtime allocates once the sign bit is set. `Add.Proof` shows that
+`addFinite?` is the `ofWord` image of `addFiniteWord?`.
 -/
 
 /-- The storage word of `zero fmt sign`. -/

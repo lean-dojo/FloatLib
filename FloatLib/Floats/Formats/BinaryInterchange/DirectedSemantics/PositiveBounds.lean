@@ -13,15 +13,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 /-!
 # Bounds for positive directed dyadic rounding
 
-Positive executable downward dyadic rounding is finite and a real lower bound in every encoding,
-because downward overflow saturates at the largest finite value. For conventional IEEE formats,
-upward rounding is an upper bound, with overflow to positive infinity, and both directions agree
-with real floor or ceiling rounding in the stated finite cases.
+Downward overflow saturates at the largest finite value, so positive executable downward dyadic
+rounding is finite and a real lower bound in every encoding. In conventional IEEE formats, upward
+rounding is an upper bound that overflows to positive infinity, and in the stated finite cases
+both directions agree with real floor or ceiling rounding.
 
-The proofs separate underflow, subnormal, normal, and normalization-carry regimes. The public
-results hide those packing details behind real and extended-real bounds. Formats without infinity
-need range-limited upper-bound theorems instead: after finite saturation, no encoded value can
-bound an arbitrarily large exact input.
+The proofs take the underflow, subnormal, normal and normalization-carry regimes one at a time,
+and the public results hide those packing details behind real and extended-real bounds. Formats
+without infinity need range-limited upper-bound theorems. Once rounding saturates at the largest
+finite value, no encoded value can bound an arbitrarily large exact input.
 -/
 
 @[expose] public section
@@ -533,9 +533,9 @@ theorem roundDyadicPosUp_eq_posInf_or_finite_roundAt
 /--
 In a conventional IEEE format, positive upward dyadic rounding is finite and equals the real ceiling
 on the format grid whenever the leading exponent is within range and normalizing the mantissa does
-not carry into the next binade. The carry hypothesis is what separates this statement from
-`roundDyadicPosUp_eq_posInf_or_finite_roundAt`: an exactly representable input never carries, so
-it can never overflow under upward rounding.
+not carry into the next binade. The no-carry hypothesis is the difference from
+`roundDyadicPosUp_eq_posInf_or_finite_roundAt`. A representable input never carries, so it can
+never overflow under upward rounding.
 -/
 theorem roundDyadicPosUp_finite_roundAt_of_le_max_of_no_carry
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)

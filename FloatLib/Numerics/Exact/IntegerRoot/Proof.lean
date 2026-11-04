@@ -18,9 +18,9 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Exactness of seeded integer roots
 
-Integer Newton iteration preserves an upper bound on the floor root. Once the guesses stop
-decreasing, the defining adjacent-power inequalities identify the floor root. The radicand's
-binary logarithm provides the initial bound for every positive degree.
+Integer Newton iteration keeps an upper bound on the floor root. Once the guesses stop decreasing,
+the defining adjacent-power inequalities identify the floor root, and the radicand's binary
+logarithm gives the initial bound for every positive degree.
 -/
 
 @[expose] public section

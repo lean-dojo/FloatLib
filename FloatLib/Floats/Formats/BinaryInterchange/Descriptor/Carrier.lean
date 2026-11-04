@@ -14,10 +14,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.NumericalSystem
 # Binary-interchange descriptors in the universal carrier
 
 `Descriptor format` gives an arbitrary validated binary format a type-level identity. Its runtime
-code is the existing `Model format`, so packing and unpacking are representation-preserving.
+code is the existing `Model format`, so packing and unpacking preserve the representation.
 
-This module intentionally contains no arithmetic backend. Carrier-only clients should not have to
-load word kernels, dispatch proofs, or planner machinery merely to name a descriptor.
+There is no arithmetic backend here, on purpose. A client that only needs the carrier should not
+have to load word kernels, dispatch proofs, or planner machinery just to name a descriptor.
 -/
 
 @[expose] public section
@@ -42,16 +42,16 @@ instance encodedFormat (format : FloatFormat) :
   Scalar := ℝ
 
 /--
-Total interpretation of descriptor codes through `Model.toNumericalValue`: finite codes denote
-their real value, so both signed zeros denote `0`; infinities keep their sign; NaNs keep their
-sign, payload, and signaling bit.
+Total interpretation of descriptor codes through `Model.toNumericalValue`. Finite codes denote
+their real value, so both signed zeros denote `0`. Infinities keep their sign, and NaNs keep
+their sign, payload, and signaling bit.
 -/
 noncomputable instance formatSemantics (format : FloatFormat) :
     FormatSemantics (Descriptor format) where
   denote := Model.toNumericalValue
 
 /--
-The descriptor carrier stores its proof model directly, so encoding and decoding are identities.
+The descriptor carrier stores its proof model as is, so encoding and decoding are identities.
 
 Registering that identity codec lets descriptor arithmetic use the same executable lifts and
 refinement theorems as every configured format.

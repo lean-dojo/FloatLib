@@ -9,9 +9,9 @@ module
 /-!
 # Collection reductions
 
-Scalar formats differ in their accumulation rules, but collection-shaped operations face the
-same structural failures. Keeping those failures here lets binary dot products, posit quires, and
-future reduction APIs report them without depending on one another.
+Scalar formats differ in how they accumulate, but collection-shaped operations fail in the same
+structural ways. We keep those failures here so that binary dot products, posit quires, and later
+reduction APIs can report them without depending on one another.
 -/
 
 @[expose] public section

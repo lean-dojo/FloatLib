@@ -17,7 +17,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Core
 /-!
 # Finite proof-indexed binary-interchange arithmetic
 
-The finite `Model.At` view supports constructors, decoding theorems, directed rounding bounds,
+Here the finite `Model.At` view gets constructors, decoding theorems, directed rounding bounds,
 and arithmetic operations. Each arithmetic wrapper contains the corresponding executable result
 together with an erased proof of its real index. Rounded arithmetic requires conventional IEEE
 descriptors and a finite result.
@@ -156,7 +156,7 @@ theorem le_toEReal_sqrt_up {fmt : FloatFormat} {r : ℝ}
     Model.le_toEReal_sqrt_up_of_nonnegative x.1 hfmt (isFinite x)
       (show 0 ≤ Model.toReal x.1 by simpa using hr)
 
-/-- Negation transports the real index exactly. -/
+/-- Negation transports the real index without rounding. -/
 @[inline] def neg {fmt : FloatFormat} {r : ℝ} (x : At fmt r) : At fmt (-r) :=
   ⟨Model.neg x.1, Operation.Finite1.denote (neg_refines fmt) x.2⟩
 

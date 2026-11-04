@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Arithmetic
 /-!
 # Activation ranges for `Model.Interval`
 
-Monotone operations are evaluated at interval endpoints. Absolute value handles the two monotone
-regions separately, and square root uses directed rounding at both endpoints.
+Monotone operations are evaluated at the interval endpoints. Absolute value is handled on each of
+its two monotone regions, and square root uses directed rounding at both endpoints.
 -/
 
 @[expose] public section

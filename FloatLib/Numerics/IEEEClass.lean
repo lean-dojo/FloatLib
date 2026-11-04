@@ -8,9 +8,9 @@ module
 /-!
 # IEEE floating-point classes
 
-IEEE 754-2019 §5.7.2 specifies the same ten classification results for binary
-and decimal formats. Each format determines normality and its supported special
-values; the result type is independent of radix, precision, bias, and storage.
+IEEE 754-2019 §5.7.2 gives binary and decimal formats the same ten classification results, and each
+format decides normality and its supported special values, and the result type doesn't depend on
+radix, precision, bias, or storage.
 -/
 
 @[expose] public section

@@ -12,10 +12,10 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Termination
 /-!
 # Containment, convergence, and separation for the principal argument
 
-The rational quadrant reduction gives both endpoint containment and convergence. Outside the
-nonnegative real axis, the argument cannot be rational: its tangent is the rational slope,
-whereas tangent at a nonzero rational angle is irrational. This proves that adaptive comparison
-terminates at every rational boundary, including the vertical and negative real axes.
+The rational quadrant reduction gives both endpoint containment and convergence. Off the nonnegative
+real axis the argument can't be rational, because its tangent is the rational slope, and the tangent
+at a nonzero rational angle is irrational. That proves the adaptive comparison terminates at every
+rational boundary, the vertical and negative real axes included.
 -/
 
 public section

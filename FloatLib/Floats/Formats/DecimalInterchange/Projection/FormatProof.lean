@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 /-!
 # Decimal coefficient bounds
 
-Projection, square root and adjacent-value proofs use the same relation between
-a full coefficient and its trailing digits. These consequences of the descriptor
-laws apply to every admissible custom layout as well as the named presets.
+Projection, square root and adjacent-value proofs all use one relation between a full coefficient
+and its trailing digits, and it lives here. Everything follows from the descriptor laws, so it
+holds for every admissible custom layout and for the named presets alike.
 -/
 
 @[expose] public section

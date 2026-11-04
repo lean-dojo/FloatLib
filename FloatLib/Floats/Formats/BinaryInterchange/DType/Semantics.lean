@@ -105,7 +105,7 @@ theorem floatToInt_of_exactValue_eq_nan
   simp [floatToInt, hvalue]
 
 /--
-A successful conversion of a finite input stores its rounded integer exactly: the result's signed
+A successful conversion of a finite input stores its rounded integer unchanged. The result's signed
 value is `Model.roundDyadicToInt mode exact`, at every width.
 -/
 theorem toInt_of_floatToInt_finite
@@ -151,7 +151,7 @@ theorem boolToFloat_false (fmt : FloatFormat) :
 /--
 On real values a Boolean mask keeps its operand's value or gives zero. The equation is about
 `toReal`, which sends NaN and infinities to `0` and identifies the two zeros, so for those operands
-it holds whatever word is selected; the words themselves are `x` or `posZero fmt` by the definition
+it holds whatever word is selected. The words themselves are `x` or `posZero fmt` by the definition
 of `maskFloat`.
 -/
 theorem maskFloat_eq_if {fmt : FloatFormat} (m : Bool) (x : Model fmt) :

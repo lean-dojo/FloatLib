@@ -14,9 +14,9 @@ import all Init.Data.UInt.Log2
 /-!
 # Correctness of direct posit field construction
 
-These theorems connect adaptive leading-bit discovery and direct field packing to their exact
-natural-number specifications. Complete rounding refinement belongs to `Direct.Proof`; this module
-contains only reusable facts about the field constructor.
+These theorems tie the adaptive leading-bit search and the field packing to their natural-number
+specifications, and they are reusable facts about the field constructor and no more, because the
+full rounding refinement is proved in `Direct.Proof`.
 -/
 
 @[expose] public section
@@ -25,7 +25,7 @@ namespace FloatLib.Floats.Formats.Posit.Model.DirectDyadicPacking
 
 open FloatLib.Numerics
 
-/-- The adaptive leading-bit primitive is exactly `Nat.log2`. -/
+/-- The adaptive leading-bit primitive computes `Nat.log2`. -/
 theorem leadingBit_eq_log2 (value : Nat) :
     leadingBit value = value.log2 := by
   unfold leadingBit
@@ -41,13 +41,12 @@ theorem leadingBit_eq_log2 (value : Nat) :
     rfl
 
 /--
-The normalized fraction prefix fits in exactly the number of requested positions.
+The normalized fraction prefix fits in the requested number of positions.
 
-The hypotheses characterize `leading` as the index of the leading one, the case in which
-`fractionPrefix` reads the normalized fraction. The bound itself follows from `hupper` alone:
-below `2 ^ leading` the truncated subtraction makes the fraction zero. This formulation is
-independent of `Nat.log2`, so packed backends may reuse it after proving their own normalization
-invariant.
+The hypotheses say that `leading` is the index of the leading one, which is when `fractionPrefix`
+reads the normalized fraction. The bound itself follows from `hupper` alone, since below
+`2 ^ leading` the truncated subtraction makes the fraction zero. Nothing here mentions `Nat.log2`,
+so a packed backend can reuse the theorem once it has proved its own normalization invariant.
 -/
 theorem fractionPrefix_lt_two_pow
     (significand leading count : Nat)
@@ -159,9 +158,9 @@ private theorem two_pow_add_lt_two_pow
 /--
 A normalized field prefix always encodes a nonnegative finite posit.
 
-This range theorem removes a runtime candidate-bound check from specialized rounders. Its
-hypotheses are the exponent-width and leading-bit invariants that normalization establishes. The
-bound itself uses only `exponentField < 4` and the upper significand bound; `hleading` states the
+With this range theorem a specialized rounder needs no runtime check on the candidate bound. Its
+hypotheses are the exponent-width and leading-bit invariants that normalization sets up. The bound
+uses only `exponentField < 4` and the upper significand bound, and `hleading` describes the
 normalized domain, as in `fractionPrefix_lt_two_pow`.
 -/
 theorem lowerCandidateFromFields_lt_signMask

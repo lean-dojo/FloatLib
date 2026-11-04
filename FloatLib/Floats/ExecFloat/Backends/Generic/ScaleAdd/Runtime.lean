@@ -12,8 +12,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Runtime
 # Executable unsigned-scale exact addition
 
 These kernels align and combine signed magnitudes in an unsigned scale coordinate before entering
-the product rounder. `ScaleAdd.Proof` proves agreement with exact dyadic addition and rounding for
-conventional IEEE descriptors.
+the product rounder. `ScaleAdd.Proof` proves that they agree with exact dyadic addition and rounding
+for conventional IEEE descriptors.
 -/
 
 @[expose] public section

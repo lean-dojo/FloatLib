@@ -13,10 +13,10 @@ import FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 /-!
 # Two-word square-root runtime
 
-`CheckedSquareRoot.rootAndRemainder`, which equals the proved restoring loop, computes the floor
-square root and remainder for a positive normal input of any eligible two-word layout whose
-fraction has at most 124 bits and whose bias exceeds the fraction width. Correctness proofs live
-in `Sqrt.Proof`.
+For a positive normal input of any eligible two-word layout whose fraction has at most 124 bits and
+whose bias exceeds the fraction width, `CheckedSquareRoot.rootAndRemainder` computes the floor
+square root and remainder. It equals the proved restoring loop. Correctness proofs live in
+`Sqrt.Proof`.
 -/
 
 @[expose] public section
@@ -34,12 +34,12 @@ open FloatLib.Numerics.FixedWord.RestoringSquareRoot
 /--
 Try the fixed-word square root for one positive normal value.
 
-The radicand is the significand shifted by `fracWidth` or `fracWidth + 1` bits, chosen so that the
-result exponent is integral, and the root is extracted with `fracWidth + 1` base-four digits. The
-kernel declines formats whose fraction exceeds 124 bits, outside the proved bound on the
-two-word remainder state, and formats whose bias is at most the fraction width, outside the
-hypotheses of the exponent lemmas in `SqrtArithmetic`. The dispatcher handles these cases.
-Descriptor specialization follows the pattern described in `Dispatch.Add.Runtime`.
+The radicand is the significand shifted by `fracWidth` or `fracWidth + 1` bits, whichever makes the
+result exponent integral, and the root is extracted with `fracWidth + 1` base-four digits. The
+kernel declines two kinds of format, which the dispatcher then handles: a fraction above 124 bits is
+outside the proved bound on the two-word remainder state, and a bias of at most the fraction width
+is outside the hypotheses of the exponent lemmas in `SqrtArithmetic`. Descriptor specialization
+follows the pattern described in `Dispatch.Add.Runtime`.
 -/
 @[specialize fmt] def sqrtNormal? {fmt : FloatFormat} (x : Model fmt) : Option (Model fmt) :=
   if x.bits.msb then

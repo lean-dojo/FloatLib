@@ -16,8 +16,8 @@ A normal exponent becomes a positive, in-range biased field, and removing the hi
 normalized significand leaves a legal fraction. Together these bounds show that the finite-range
 packing guard accepts every in-range IEEE normal value.
 
-The arithmetic facts are shared by nearest and directed rounding before either correctness proof
-layer is imported.
+Nearest and directed rounding share these arithmetic facts before either correctness proof layer
+is imported.
 -/
 
 @[expose] public section
@@ -95,7 +95,7 @@ theorem normalizedMantissa_sub_pow2_lt
   rw [pow_succ] at hhigh
   omega
 
-/-- Restoring the implicit leading bit reconstructs a normalized mantissa exactly. -/
+/-- Restoring the implicit leading bit gives back the normalized mantissa. -/
 theorem pow2_add_normalizedMantissa_sub (fmt : FloatFormat) (mantissa : Nat)
     (hlow : pow2 fmt.fracWidth ≤ mantissa) :
     pow2 fmt.fracWidth + (mantissa - pow2 fmt.fracWidth) = mantissa :=

@@ -12,37 +12,39 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certifie
 /-!
 # Correctly rounded binary exponential and logarithm for every input
 
-`CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1`, and the weighted exponential `expMul`
-always return a value. A finite argument first goes to an enclosure search. When the search does
-not settle, exact comparisons of the real result with rational candidates decide the rounding
-through `AlgebraicRounding.round`, as in `Model.pi`. These comparisons terminate for every
-rational boundary, so no budget limits the result. For an IEEE descriptor and a finite input in
-the domain, a finite result is the nearest-even rounding of the real function, and any other
-result is the infinity with the sign of the real result. A finite input outside the domain never
-gives a finite result. NaNs are quieted, and infinities, zeros, and arguments outside the domain
-get their IEEE 754 results. A result decided by comparisons, such as an overflow, a subnormal
-exponential, or a finite result in a descriptor other than IEEE, compares the real result with
-rational rounding candidates. An exponential comparison with a positive boundary becomes the
-comparison of the argument with the logarithm of the boundary, and the cases decided exactly,
-such as `log 1 = 0` and so `exp 0 = 1`, return without separation. The remaining comparisons
-refine rational enclosures of the logarithm until one of them excludes the candidate.
-Termination is proved, but the proof bounds neither the number of refinements nor the size of the
-rationals.
+`CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and the weighted exponential `expMul`
+always return a value. A finite argument goes to an enclosure search first, and if the search
+does not settle, exact comparisons of the real result with rational candidates decide the rounding
+through `AlgebraicRounding.round`, as in `Model.pi`. Those comparisons terminate for every
+rational boundary, so no budget limits the result. A descriptor other than IEEE skips the
+searches, and the comparisons decide every finite result.
+
+For an IEEE descriptor and a finite input in the domain, a finite result is the nearest-even
+rounding of the real function, and any other result is the infinity with the sign of the real
+result. A finite input outside the domain never gives a finite result. NaNs are quieted, and
+infinities, zeros and arguments outside the domain get their IEEE 754 results.
+
+A result decided by comparisons, such as an overflow, a subnormal exponential or a finite result
+in a descriptor other than IEEE, comes from comparing the real result with rational rounding
+candidates. For the exponential, a comparison with a positive boundary becomes a comparison of the
+argument with the logarithm of the boundary. Cases decided exactly, such as `log 1 = 0` and so
+`exp 0 = 1`, return without separation. Every other comparison refines rational enclosures of
+the logarithm until one of them excludes the candidate. We prove that this terminates. Our proof
+bounds neither the number of refinements nor the size of the rationals, though.
 
 The exponential and `expMinus1` searches are those of `Certified.expRat` and
-`Certified.expMinus1Rat`, and use both fields of the budget. The logarithm search writes its
-argument as `s * 2 ^ e` with `s` in `[3/4, 3/2)` and adds the cached table reduction
+`Certified.expMinus1Rat`, and they use both fields of the budget. The logarithm search writes its
+argument as `s * 2 ^ e` with `s` in `[3/4, 3/2)`. It adds the cached table reduction
 `Certified.logReduced` of `log s` to `e` times the cached `log 2`, on grids that start at the
 destination precision plus guard bits and the bits that cancel when `s` is near one. It uses
-`maxAttempts` but not `initialDegree`, which has no effect on `log` and `logPlus1`. `expMul x w`
-rounds `exp x * w` once. Its search reduces `x` by a multiple `k` of `log 2` and rounds the
-enclosure of `exp (x - k * log 2)` times the significand of `w`, scaled by `2 ^ k` and the
-exponent of `w` without forming that power. So for finite operands the product is finite whenever
-its rounding is, even when `exp x` alone overflows, and a zero weight with a finite `x` gives the
-zero with the weight's sign. NaN operands and `exp (±∞)` follow the IEEE 754 product rules
-described at `expMul`, so `expMul (+∞) 0` is invalid.
+`maxAttempts` but not `initialDegree`, which has no effect on `log` and `logPlus1`.
 
-A descriptor other than IEEE skips the searches, and the comparisons decide every finite result.
+`expMul x w` rounds `exp x * w` once. Its search reduces `x` by a multiple `k` of `log 2` and
+rounds the enclosure of `exp (x - k * log 2)` times the significand of `w`, scaled by `2 ^ k` and
+the exponent of `w` without forming that power. So for finite operands the product is finite
+whenever its rounding is, even when `exp x` alone overflows, and a zero weight with a finite `x`
+gives the zero with the weight's sign. NaN operands and `exp (±∞)` follow the IEEE 754 product
+rules described at `expMul`, so `expMul (+∞) 0` is invalid.
 -/
 
 @[expose] public section
@@ -241,8 +243,8 @@ def log {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}
     | none => invalidResult fmt
 
 /--
-`log (1 + x)` with the sum formed exactly, correctly rounded for every finite input above `-1` of
-an IEEE descriptor.
+`log (1 + x)` with the exact sum, correctly rounded for every finite input above `-1` of an IEEE
+descriptor.
 
 NaNs are quieted, `+∞` gives `+∞`, either zero is returned unchanged, `-1` gives `-∞`, and inputs
 below `-1`, `-∞` included, give the invalid result. `budget.initialDegree` has no effect.
@@ -263,12 +265,12 @@ def logPlus1 {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget 
 /--
 `exp x * w` with one rounding, correctly rounded for all finite inputs of an IEEE descriptor.
 
-The exponential is never rounded on its own, so for finite operands the product is finite
-whenever its rounding is, and a finite input times a zero weight is the zero with the weight's
-sign. A NaN operand gives that NaN quieted, the input's first. Otherwise `exp (+∞)` times a
-nonzero weight is an infinity with the weight's sign, `exp (-∞)` times a finite weight is a zero
-with the weight's sign, and the products `∞ * 0` give the invalid result. A finite input times an
-infinite weight is an infinity with the weight's sign.
+The exponential is never rounded on its own. So for finite operands the product is finite whenever
+its rounding is, and a finite input times a zero weight is the zero with the weight's sign. A NaN
+operand gives that NaN quieted, the input's first. Otherwise `exp (+∞)` times a nonzero weight
+and a finite input times an infinite weight are infinities with the weight's sign, `exp (-∞)`
+times a finite weight is a zero with the weight's sign, and the products `∞ * 0` give the invalid
+result.
 -/
 def expMul {fmt : FloatFormat} (input weight : Model fmt) (budget : Certified.Budget := {}) :
     Model fmt :=

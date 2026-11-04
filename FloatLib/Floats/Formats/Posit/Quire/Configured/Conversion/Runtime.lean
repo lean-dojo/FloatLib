@@ -12,10 +12,10 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Runtime conversion source for configured posit quires
 
-A quire is an exact accumulator rather than another rounded floating-point destination. Ordinary
-words decode to rationals and the reserved word decodes to NaR, so configured quires participate
-as exact conversion sources. No destination quantizer is installed without an explicit grid and
-overflow policy.
+A quire is an exact accumulator, so it doesn't join conversion as one more rounded floating-point
+destination. Ordinary words decode to rationals and the reserved word decodes to NaR, which makes
+configured quires exact conversion sources, but they get no destination quantizer, because one
+would need a stated grid and overflow policy.
 -/
 
 @[expose] public section

@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 # Direct generic dyadic rounding
 
 Generic dyadic rounding runs on integer arithmetic. `RoundingKernel.Proof` proves that these
-functions refine the logical float model and registers the compiler substitutions. With the
-implementation here, runtime backends need not import the much larger normalization proof.
+functions refine the logical float model and registers the compiler substitutions. Keeping the
+implementation here means runtime backends need not import the much larger normalization proof.
 -/
 
 @[expose] public section

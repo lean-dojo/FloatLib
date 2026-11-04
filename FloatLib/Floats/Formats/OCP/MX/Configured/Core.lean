@@ -13,9 +13,10 @@ public import FloatLib.Floats.Formats.OCP.MX.E8M0.Semantics
 /-!
 # Configured OCP MX identities
 
-E8M0 is an exponent-only shared scale, not a scalar floating-point layout. An MX block jointly
-stores that scale with an array of binary element words. Both families use the common `ExecFloat`
-carrier while retaining their complete encodings.
+E8M0 is an exponent-only shared scale with no sign and no fraction, so it doesn't fit the scalar
+floating-point layout. An MX block stores that scale together with an array of binary element
+words. Both get families on the common `ExecFloat` carrier, and both keep their complete encodings
+there.
 
 ## References
 

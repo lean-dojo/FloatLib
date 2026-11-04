@@ -14,13 +14,13 @@ import Mathlib.Tactic.NormNum.Inv
 /-!
 # Pure guard-and-sticky Posit tail specification
 
-The finite exponent/fraction stream specifies the bits consumed by fixed-word Posit packers. It
-deliberately uses `Nat` and `Nat.testBit`: executable backends refine these functions to
-machine-word operations, while the semantic proof relates the same stream to the standard's
-one-bit-wider rounding boundary.
+Fixed-word Posit packers consume a finite exponent/fraction stream, and this file says which bits
+that stream holds. We write it with `Nat` and `Nat.testBit` on purpose. Executable backends refine
+these functions to machine-word operations, and the semantic proof relates the same stream to the
+standard's one-bit-wider rounding boundary.
 
-Keeping this specification independent of `UInt64` lets division, square root, and fixed-limb
-backends use the same rounding argument.
+Because nothing here mentions `UInt64`, division, square root, and fixed-limb backends can use the
+same rounding argument.
 -/
 
 @[expose] public section
@@ -140,7 +140,7 @@ theorem streamPrefix_lt_two_pow_of_lt
 The generic guard/sticky rule is the ordinary nearest-even power-of-two shift rounder.
 
 Posit-specific proofs only need to identify their conceptual exponent/fraction stream with
-`raw`; the rounding mathematics itself is shared with the binary-interchange backend.
+`raw`. The rounding mathematics itself is shared with the binary-interchange backend.
 -/
 theorem roundStreamPrefix_eq_roundShiftRightEven
     (raw width retained : Nat) (hretained : retained ≤ width) :

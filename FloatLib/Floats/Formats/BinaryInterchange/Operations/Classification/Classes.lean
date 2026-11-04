@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classificatio
 /-!
 # The ten binary classes
 
-`classify_eq_iff` characterizes every result by the existing descriptor predicates.
-The signed numerical classes retain the stored sign; the two NaN classes deliberately
-ignore sign and payload. The result type is shared with decimal classification.
+`classify` puts every binary value in one of IEEE's ten classes, and `classify_eq_iff` says which
+descriptor predicates each class stands for. The signed numerical classes keep the stored sign.
+The two NaN classes ignore sign and payload on purpose. Decimal classification returns the same
+result type.
 -/
 
 @[expose] public section
@@ -22,7 +23,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
 variable {fmt : FloatFormat}
 
-/-- Complete characterization of all ten mutually exclusive classification results. -/
+/-- What each of the ten mutually exclusive classes means in descriptor predicates and sign. -/
 theorem classify_eq_iff (x : Model fmt) (c : Numerics.IEEEClass) :
     classify x = c ↔
       match c with
@@ -49,12 +50,12 @@ theorem classify_eq_iff (x : Model fmt) (c : Numerics.IEEEClass) :
   unfold classify
   split_ifs <;> cases c <;> simp_all
 
-/-- Classification as signaling NaN is exactly the existing signaling predicate. -/
+/-- The class is `.signalingNaN` if and only if `isSNaN` holds. -/
 @[simp] theorem classify_eq_signalingNaN_iff (x : Model fmt) :
     classify x = .signalingNaN ↔ isSNaN x = true :=
   classify_eq_iff x _
 
-/-- Classification as quiet NaN is exactly the existing quiet-NaN predicate. -/
+/-- The class is `.quietNaN` if and only if `isQNaN` holds. -/
 @[simp] theorem classify_eq_quietNaN_iff (x : Model fmt) :
     classify x = .quietNaN ↔ isQNaN x = true :=
   classify_eq_iff x _
@@ -69,7 +70,7 @@ theorem classify_eq_iff (x : Model fmt) (c : Numerics.IEEEClass) :
     classify x = .positiveInfinity ↔ isInf x = true ∧ signBit x = false :=
   classify_eq_iff x _
 
-/-- Negative zero is a policy zero with the sign bit set; FNUZ has no such value. -/
+/-- Negative zero is a policy zero with the sign bit set. FNUZ has no such value. -/
 @[simp] theorem classify_eq_negativeZero_iff (x : Model fmt) :
     classify x = .negativeZero ↔ isZero x = true ∧ signBit x = true :=
   classify_eq_iff x _
@@ -99,7 +100,7 @@ theorem classify_eq_iff (x : Model fmt) (c : Numerics.IEEEClass) :
     classify x = .positiveNormal ↔ isNormal x = true ∧ signBit x = false :=
   classify_eq_iff x _
 
-/-- The two NaN classes exhaust precisely the NaN encodings. -/
+/-- A word is a NaN if and only if its class is one of the two NaN classes. -/
 theorem isNaN_iff_classify (x : Model fmt) :
     isNaN x = true ↔ classify x = .signalingNaN ∨ classify x = .quietNaN := by
   rw [classify_eq_signalingNaN_iff, classify_eq_quietNaN_iff,
@@ -107,7 +108,7 @@ theorem isNaN_iff_classify (x : Model fmt) :
   have hs := isNaN_of_isSNaN (x := x)
   cases hn : isNaN x <;> cases hsn : isSNaN x <;> simp_all
 
-/-- The finite classes exhaust precisely zero, subnormal, and normal encodings. -/
+/-- A word is finite if and only if its class is a zero, subnormal or normal one of either sign. -/
 theorem isFinite_iff_classify (x : Model fmt) :
     isFinite x = true ↔
       classify x = .negativeZero ∨ classify x = .positiveZero ∨

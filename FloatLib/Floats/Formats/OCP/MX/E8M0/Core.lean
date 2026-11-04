@@ -11,12 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 /-!
 # Exponent-only scaling formats
 
-OCP microscaling uses E8M0 for a scale shared by a block of narrow elements. E8M0 is not a member
-of the sign/exponent/fraction family: it has no sign bit, no zero, and no explicit fraction. Codes
-`0` through `254` denote powers of two from `2^-127` through `2^127`; code `255` is NaN.
+OCP microscaling uses E8M0 for a scale shared by a block of narrow elements. It has no sign bit,
+no zero, and no explicit fraction, so it doesn't belong to the sign, exponent and fraction family
+at all. A code `c` from `0` through `254` denotes `2^(c - 127)`, which runs from `2^-127` through
+`2^127` and gives the scale `1` at code `127`. Code `255` is NaN.
 
-Keeping this scale type beside, rather than inside, `FloatFormat` prevents artificial optional
-fields and invalid combinations in the ordinary float API.
+We keep this scale type beside `FloatFormat` and out of it. Inside, it would force artificial
+optional fields on the ordinary float API and let invalid combinations through.
 
 References:
 
@@ -103,7 +104,7 @@ a power of two changes only the dyadic exponent.
 /--
 Exact mathematical decoding of a microscaling block with one shared E8M0 scale.
 
-This function decodes an already encoded block; it does not choose the shared scale. An empty
+This function decodes an already encoded block and never chooses the shared scale. An empty
 array succeeds without inspecting the scale. On a nonempty array, a NaN scale or any non-finite
 element causes decoding to fail.
 -/
@@ -111,7 +112,7 @@ def decodeBlock? {fmt : FloatFormat} (scale : E8M0) (values : Array (Model fmt))
     Option (Array FloatLib.Numerics.Dyadic) :=
   values.mapM (decodeElement? scale)
 
-/-- Encode an in-range exponent; return `none` outside `[-127, 127]`. -/
+/-- Encode an in-range exponent, returning `none` outside `[-127, 127]`. -/
 def ofExponent? (exponent : Int) : Option E8M0 :=
   if -127 ≤ exponent && exponent ≤ 127 then
     some (ofNatBits (Int.toNat (exponent + bias)))
@@ -122,7 +123,7 @@ def ofExponent? (exponent : Int) : Option E8M0 :=
 def ofExponentSaturating (exponent : Int) : E8M0 :=
   ofNatBits (Int.toNat (max (-127) (min 127 exponent) + bias))
 
-/-- An E8M0 code decodes exactly when it carries an exponent, and the decoded scale is the
+/-- An E8M0 code decodes if and only if it carries an exponent, and the decoded scale is the
 positive power of two `2 ^ exponent`, with significand one and a clear sign. -/
 theorem toDyadic?_eq_some_iff {x : E8M0} {value : FloatLib.Numerics.Dyadic} :
     toDyadic? x = some value ↔
@@ -130,7 +131,7 @@ theorem toDyadic?_eq_some_iff {x : E8M0} {value : FloatLib.Numerics.Dyadic} :
   unfold toDyadic?
   cases exponent? x <;> simp [eq_comm]
 
-/-- An E8M0 code fails to decode exactly when it carries no exponent, which is the NaN code. -/
+/-- An E8M0 code fails to decode if and only if it carries no exponent, which is the NaN code. -/
 theorem toDyadic?_eq_none_iff {x : E8M0} : toDyadic? x = none ↔ exponent? x = none := by
   simp [toDyadic?]
 

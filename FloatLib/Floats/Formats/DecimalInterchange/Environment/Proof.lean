@@ -12,9 +12,10 @@ public import FloatLib.Numerics.IEEEStatus.Proof
 /-!
 # Sticky flags and scoped rounding laws
 
-Flags raised by an operation remain set after later operations. Raising, clearing and restoring
-affect exactly the requested group and keep the rounding direction. Scoped rounding restores the
-caller's direction while preserving the flags produced by the inner computation.
+Exception flags are sticky. Once an operation raises one, later operations never clear it. Raising,
+clearing, and restoring touch the requested group of flags and no other, and none of them changes
+the rounding direction. Scoped rounding gives the caller's direction back at the end and keeps
+whatever flags the inner computation produced.
 -/
 
 public section
@@ -36,7 +37,7 @@ theorem isSet_flags_raiseFlags (environment : Environment) (group : Numerics.IEE
       (environment.flags.isSet exception || group.isSet exception) :=
   Numerics.IEEEStatus.isSet_raiseFlags _ _ _
 
-/-- Clearing a group clears exactly its flags and leaves every other flag unchanged. -/
+/-- Clearing a group clears its flags and leaves every other flag unchanged. -/
 theorem isSet_flags_lowerFlags (environment : Environment) (group : Numerics.IEEEStatus)
     (exception : Numerics.IEEEException) :
     (environment.lowerFlags group).flags.isSet exception =

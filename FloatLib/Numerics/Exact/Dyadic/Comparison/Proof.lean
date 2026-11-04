@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Exact.Dyadic.Comparison.Runtime
 /-!
 # Correctness of dyadic comparisons
 
-Comparisons on separate sign, significand, and exponent fields agree with comparisons on `Dyadic`
-records. The results cover Boolean comparisons and the power-of-two tests used by normalization.
-Kernels with unpacked operands can use these equations without constructing temporary records.
+A comparison on separate sign, significand, and exponent fields agrees with the comparison on
+`Dyadic` records. That covers the Boolean comparisons and the power-of-two tests that normalization
+uses, so kernels with unpacked operands can use these equations without building temporary records.
 -/
 
 @[expose] public section
@@ -21,7 +21,7 @@ Kernels with unpacked operands can use these equations without constructing temp
 namespace FloatLib.Numerics
 namespace Dyadic
 
-/-- Flattened field comparison is exactly record-based dyadic comparison. -/
+/-- Flattened field comparison agrees with record-based dyadic comparison. -/
 theorem compareFields_eq
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
     (rightNegative : Bool) (rightSignificand : Nat) (rightExponent : Int) :
@@ -80,7 +80,7 @@ theorem compareNonnegativeFields_eq_compareFields
             (Int.ofNat rightSignificand)
       exact (compare_ofNat_ofNat _ _).symm
 
-/-- Flattened strict comparison is exactly record-based strict comparison. -/
+/-- Flattened strict comparison agrees with record-based strict comparison. -/
 theorem isLessFields_eq
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
     (rightNegative : Bool) (rightSignificand : Nat) (rightExponent : Int) :
@@ -164,7 +164,7 @@ theorem isLessPowerOfTwoAtLeading_eq
         exact (hzero
           (Nat.shiftLeft_eq_zero_iff.mp hshiftZero)).elim
 
-/-- Flattened non-strict comparison is exactly record-based non-strict comparison. -/
+/-- Flattened non-strict comparison agrees with record-based non-strict comparison. -/
 theorem isLessOrEqualFields_eq
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
     (rightNegative : Bool) (rightSignificand : Nat) (rightExponent : Int) :

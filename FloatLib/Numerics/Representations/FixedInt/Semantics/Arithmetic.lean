@@ -13,12 +13,12 @@ public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
 
 These are the carrier-level correctness lemmas for wrapping, checked, and saturating signed
 arithmetic. They connect overflow predicates and `BitVec` operations to ordinary integer sums,
-differences, and products. A checked operation returns the wrapped result when the exact value is
-in range (`checkedAdd_eq_some`) and `none` exactly when it is not (`checkedAdd_eq_none_iff`).
+differences, and products. A checked operation returns the wrapped result when the exact value is in
+range (`checkedAdd_eq_some`) and `none` exactly when it isn't (`checkedAdd_eq_none_iff`).
 
-The file deliberately stops short of the library-wide operation interface. `Refinement` builds
-that reusable layer from these concrete facts, which keeps low-level overflow reasoning out of
-generic numerical proofs.
+On purpose, the file stops short of the library-wide operation interface. `Refinement` builds that
+reusable layer from these concrete facts, which keeps low-level overflow reasoning out of generic
+numerical proofs.
 -/
 
 @[expose] public section

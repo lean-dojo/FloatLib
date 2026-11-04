@@ -13,11 +13,11 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 /-!
 # Rounding directions as integer-rounding rules
 
-`IEEERoundingMode` has six rounding directions: the five rounding-direction attributes of
-IEEE 754-2019 (Section 4.3) and rounding away from zero, the `MPFR_RNDA` mode of GNU MPFR. They
-are the named rounding modes of the generic float model as well. `roundingFunction` interprets each
-direction as a valid integer-rounding rule, so the generic theory of `round` applies to every
-direction: `round (roundingFunction mode) x` rounds a real into a generic format.
+`IEEERoundingMode` has six rounding directions, the five rounding-direction attributes of
+IEEE 754-2019 (Section 4.3) plus rounding away from zero, which is the `MPFR_RNDA` mode of GNU
+MPFR. The generic float model uses the same six as its named modes. `roundingFunction` turns each
+direction into a valid integer-rounding rule, so the generic theory of `round` covers every
+direction, and `round (roundingFunction mode) x` rounds a real into a generic format.
 
 ## References
 

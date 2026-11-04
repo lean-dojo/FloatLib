@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 /-!
 # Direct packed-pair posit square-root runtime
 
-The packed-pair square-root kernel returns posit codes for configured values stored in two
-native limbs. Range and semantic refinement proofs live in `Sqrt.Proof`.
+Square root for configured posits in two native limbs reads one posit code and returns another.
+Its range and semantic refinement proofs are in `Sqrt.Proof`.
 -/
 
 @[expose] public section

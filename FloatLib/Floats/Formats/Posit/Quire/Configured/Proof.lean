@@ -15,10 +15,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Constants
 /-!
 # Correctness of the configured posit quire interface
 
-The public raw-word operations are lossless, posit-to-quire conversion preserves exact rational
-meaning, and the distinguished zero and NaR values are preserved across both conversion
-directions. The fold theorems at the end transport the standard capacity guarantees to
-accumulation loops written against the configured carrier.
+Three facts about configured quires are proved here. Public raw-word operations lose nothing,
+converting a posit into the quire keeps its exact rational value, and zero and NaR survive
+conversion in both directions. At the end, fold theorems such as `toRat?_foldl_qMulAdd_zero` carry
+the standard capacity guarantees over to accumulation loops written against the configured carrier.
 
 ## References
 
@@ -91,10 +91,10 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     Formats.Posit.Quire.Model.pToQ_zero]
 
 /--
-Configured posit-to-quire conversion preserves the complete optional exact rational meaning.
+Configured posit-to-quire conversion keeps the whole optional exact rational meaning.
 
-The theorem is unconditional: ordinary values are proved to fit the standard quire exactly, and
-posit NaR maps to quire NaR.
+The theorem has no hypotheses. Ordinary values are proved to fit the standard quire with no
+rounding, and posit NaR maps to quire NaR.
 -/
 @[simp, grind =]
 theorem toRat?_pToQ

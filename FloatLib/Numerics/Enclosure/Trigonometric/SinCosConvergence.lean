@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Enclosure.Rational.Convergence
 /-!
 # Convergence of global rational sine and cosine bounds
 
-For every fixed real argument, the exponential-series terms `|x|^n / n!` tend to zero.
-The global Taylor error bound therefore squeezes the rational sine and cosine polynomials
-toward their exact values. Intersecting with `[-1, 1]` preserves endpoint convergence.
+For every fixed real argument, the exponential-series terms `|x|^n / n!` tend to zero, so the global
+Taylor error bound squeezes the rational sine and cosine polynomials toward their exact values.
+Intersecting with `[-1, 1]` preserves endpoint convergence.
 -/
 
 public section

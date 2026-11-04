@@ -17,9 +17,9 @@ import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 # Correctness of packed native-word Posit square root
 
 The storage adapter decodes once, scales the exact significand into four fixed words, and runs the
-checked fixed-word square root, which equals the restoring loop. Its root and remainder are jammed
-into the common guard/sticky rounder, so the executable word path has the arbitrary-width direct
-square-root semantics.
+checked fixed-word square root, which equals the restoring loop. Root and remainder are then jammed
+into the common guard/sticky rounder. Put together, these facts give the executable word path the
+arbitrary-width direct square-root semantics. That is what the theorems here prove.
 -/
 
 @[expose] public section

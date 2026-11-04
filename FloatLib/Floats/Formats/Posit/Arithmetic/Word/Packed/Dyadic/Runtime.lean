@@ -13,13 +13,11 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Flattened packed-word exact-dyadic posit arithmetic
 
-Addition, subtraction, multiplication, and fused multiply-add decode finite posits to exact
-dyadic fields before one direct rounding step. The logical definitions use `Option Dyadic`;
-these kernels pass the decoded fields through continuations instead.
-
-The kernels in this module pass signs, significands, and exponents directly to the
-format-independent exact field operations, avoiding intermediate input options and dyadic
-records. Their semantic and compiler-refinement proofs live in
+Addition, subtraction, multiplication, and fused multiply-add decode finite posits to exact dyadic
+fields and then round once, in a single direct step. The logical definitions of these operations go
+through `Option Dyadic`. Here the decoded fields travel through continuations, so signs,
+significands, and exponents reach the format-independent exact field operations without any
+intermediate input options or dyadic records. Semantic and compiler-refinement proofs are in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Proof`.
 -/
 

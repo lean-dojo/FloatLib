@@ -13,13 +13,13 @@ public import FloatLib.Floats.ExecFloat.Info
 /-!
 # Inspection for exact logarithmic codes
 
-The exact logarithmic core represents zero or a signed integral power of a chosen radix.
-Multiplication is the only arithmetic operation supplied and is exact exponent addition.
-General addition and conversion into this value set require rounding. Nonzero division could
-subtract exponents exactly, but division and its zero-divisor policy are not implemented.
+On an exact logarithmic code, `#float_info` reports the real denotation, which is zero or a signed
+integral power of the chosen radix, and the refinement theorem for multiplication. It also prints
+the limits of the operation set. Multiplication is exact exponent addition and the only arithmetic
+supplied. Addition and conversion into the value set would need rounding, and division, though it
+could subtract exponents, isn't implemented.
 
-This optional meta module reports the real denotation and multiplication refinement through
-`#float_info`, together with the limits of the implemented operation set.
+This meta module is optional.
 -/
 
 public meta section
@@ -32,8 +32,8 @@ open FloatLib.Floats.ExecFloat
 
 /--
 Build the logarithmic description shared by the exact code and its configured `ExecFloat`
-wrapper. Both carriers use the same value set and exact multiplication law; only execution and
-wrapper-level theorem entries differ.
+wrapper. Both carriers use the same value set and exact multiplication law, and they differ only
+in their execution and wrapper-level theorem entries.
 -/
 meta def profile (base : Nat) : FormatProfile where
   family := "radix-parametric logarithmic number system"

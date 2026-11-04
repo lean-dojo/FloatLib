@@ -12,14 +12,14 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Executable rational-free exact posit quotient rounding
 
-Finite posit operands are dyadic, but their quotient need not be. Correct rounding still requires
-no rational normalization and no materialized quotient. For a positive denominator `d`,
+Finite posit operands are dyadic, but their quotient need not be. Rounding it correctly needs
+neither the quotient itself nor any rational normalization, because for a positive denominator `d`
 
 `candidate ≤ numerator / d` exactly when `candidate * d ≤ numerator`.
 
-This module drives the standard logarithmic code search and every underflow, threshold,
-saturation, and tie decision with exact dyadic products. Refinement to rational division is proved
-in `Quotient.Proof`.
+So this module runs the standard logarithmic code search, and makes every underflow, threshold,
+saturation, and tie decision, with exact dyadic products. `Quotient.Proof` proves that the result
+is the rounding of rational division.
 -/
 
 @[expose] public section

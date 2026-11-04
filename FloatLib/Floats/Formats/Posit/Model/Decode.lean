@@ -11,8 +11,10 @@ public import FloatLib.Floats.Formats.Posit.Model.Fields
 /-!
 # Exact posit decoding
 
-Every posit word is classified, and ordinary values decode into the shared exact dyadic carrier.
-The one-pass compiled decoder is proved equal to the transparent field-based definition.
+Decoding sorts every posit word into zero, NaR, or an ordinary value, and an ordinary value
+becomes a number in the shared exact dyadic carrier. There are two decoders. Compiled code makes a
+single pass over the word, while proofs use a transparent definition that reads the fields one
+at a time, and we prove the two equal.
 -/
 
 @[expose] public section
@@ -28,8 +30,8 @@ variable {format : Format}
 /--
 Decode a nonzero finite posit code into the shared dyadic execution carrier.
 
-The sign and the encoded word are separate arguments, so callers that already classified the word
-can reuse the extraction. `decodeFiniteDyadic` below is the model-facing entry point.
+It takes the sign and the encoded word as two arguments, so a caller that has already classified
+the word can reuse the extraction. `decodeFiniteDyadic` below is the model-facing entry point.
 -/
 @[noinline] def decodeFiniteDyadicCode
     (format : Format) (negative : Bool) (code : Nat) :

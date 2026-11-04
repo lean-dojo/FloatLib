@@ -17,10 +17,10 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Range safety for P3109 encoding
 
-The direct encoder receives a rounded dyadic rather than searching a finite codebook. This module
-proves that an in-range value on the descriptor's precision grid produces an in-range code and
-decodes to the same numerical datum. The argument is uniform in bit width, precision, signedness,
-and finite or extended domain.
+The direct encoder computes a code from a rounded dyadic, with no search through a finite
+codebook. This module proves that an in-range value on the descriptor's precision grid produces an
+in-range code that decodes to the same numerical datum. One argument covers every bit width,
+precision, signedness, and finite or extended domain.
 -/
 
 @[expose] public section

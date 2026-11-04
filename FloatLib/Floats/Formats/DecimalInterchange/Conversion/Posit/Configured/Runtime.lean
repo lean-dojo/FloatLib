@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit and decimal conversion
 
-The selected posit carrier is decoded or encoded through its lawful model codec.
-All numerical work is performed by the shared model conversion.
+These two functions convert between decimal and a configured posit. The selected posit carrier is
+decoded or encoded through its lawful model codec, and the shared model conversion does all the
+numerical work.
 -/
 
 @[expose] public section

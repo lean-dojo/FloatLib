@@ -45,12 +45,12 @@ direction: `(mode := .up)` with a saturating binary context rounds up and then s
 
 We evaluate a finite mixed operation in the destination's exact domain and quantize once at the
 end, and what the result means comes from the family's decoder, arithmetic, and quantizer laws.
-The mixed operations `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, and `fma` are the finite part of
-IEEE 754's formatOf operations: a non-finite operand, or a divisor of zero, gives a failure rather
-than an infinity or a NaN.
+In IEEE 754 terms, `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, and `fma` are the finite part of
+the formatOf operations, so a non-finite operand, or a divisor of zero, gives a failure and never
+an infinity or a NaN.
 Binary destinations use `Numerics.SignedRat` (a rational with an IEEE sign bit), so a cast can
-keep a negative zero when the destination encoding has one. Posits and fixed point use `Rat`.
-The [`ExactMap` embeddings](ExactMap.lean) connect the source and destination domains.
+keep a negative zero when the destination encoding has one. Posits and fixed point use `Rat`,
+and the [`ExactMap` embeddings](ExactMap.lean) connect the source and destination domains.
 
 `fma` gets its own operation because rounding `x * y + z` once can give a different answer from
 rounding the product and then the sum. For longer finite calculations, build an exact expression
@@ -65,9 +65,8 @@ that choice, and you have to call it yourself.
 
 `#float_info YourType` shows the planning policy and the certified selection, and `#float_info!`
 adds the costs and every theorem name. To list the registered bounds, use
-`#float_info [errors] YourType`. The
-[backend guide](Backends/README.md) explains eligibility, policies, and how to add an
-implementation.
+`#float_info [errors] YourType`. For eligibility, policies, and how to add an implementation,
+see the [backend guide](Backends/README.md).
 
 ## Elementary functions
 
@@ -83,7 +82,7 @@ finite positive base and any other finite exponent it's correctly rounded whenev
 enclosure search settles (`Model.Power.pow_spec_of_certified`). Certified `sqrt` and `abs` stay
 on the default import.
 
-The plain `exp`, `log`, and `pow` have no general error bound. The certified searches
+Plain `exp`, `log`, and `pow` have no general error bound. The certified searches
 `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1`, and `logPlus1` return `.ok` only once
 they have certified a finite rounded result. Otherwise you get a `Certified.Failure` that says why
 they couldn't, and a search can fail on a valid input.
@@ -96,9 +95,10 @@ rounding, so their correctness theorems need no premise on the budget. For an IE
 finite input in the domain, the result is correctly rounded when the exact result is below the
 overflow threshold in magnitude, and otherwise it's the infinity with the sign of the exact result.
 
-The `MathFunctions` instances keep the approximation kernels, so generic code doesn't change
-unless you ask. The dictionary and the scope below come with
-`FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`, so import it too. To give
+Generic code doesn't change unless you ask, because the `MathFunctions` instances keep the
+approximation kernels. You also need
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`, which brings the
+dictionary and the scope below. To give
 generic code the correctly rounded `exp` and `log` on IEEE formats, open the scope
 
 ```lean
@@ -115,10 +115,10 @@ comparisons decide a result, nothing bounds their running time, which is why thi
 
 For a whole computation, `Configured.MixedError` carries a mixed relative and absolute error,
 `|x - x₀| ≤ r * |x₀| + a`, through the arithmetic operations, fused multiply-add, square root,
-casts, and left-to-right sums of configured binary values. The relative part follows rounding in
-the normal range, and the absolute part covers underflow and cancellation. Results that don't
+casts, and left-to-right sums of configured binary values. Its relative part follows rounding
+in the normal range, and its absolute part covers underflow and cancellation. Results that don't
 round, such as `x - x` of a finite `x` or a sum with a zero, are stated by their decoded value
-with `toRat?`. The [theorem index](../THEOREMS.md) lists the bounds and their premises.
+with `toRat?`. You'll find the bounds and their premises in the [theorem index](../THEOREMS.md).
 
 ## Intervals
 
@@ -139,6 +139,6 @@ Proved exponential and logarithm bounds come from the
 stay in the real numbers, [quantized intervals](../Interval/Quantized.lean) use a Flocq-style
 rounding grid.
 
-With `import FloatLib`, the [`interval` tactic](../../../site/content/chapters/20-proving-numerical-bounds.md)
+With `import FloatLib`, the [`interval` tactic](../../../site/content/chapters/11-proving-numerical-bounds.md)
 proves real inequalities from rational input bounds using certified expression evaluation and
 subdivision.

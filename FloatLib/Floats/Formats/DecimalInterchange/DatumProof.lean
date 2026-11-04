@@ -12,9 +12,11 @@ public import Mathlib.Tactic.Ring
 /-!
 # Cohort identities, including signed zero and decimal rescaling
 
-Moving a trailing decimal zero into the quantum exponent preserves the cohort. Zero's cohort
-depends on its sign but not its quantum; infinities have singleton cohorts, and NaNs belong to
-no cohort. A literal has the rational value of the same literal in `ℚ`.
+These are the small cohort identities. Moving a trailing zero of the coefficient into the quantum
+exponent keeps a datum in its cohort, which is why `10 × 10^-1` and `1 × 10^0` share a cohort.
+Zero's cohort depends on its sign and not on its quantum. Each infinity is alone in its cohort, and
+NaNs belong to no cohort at all. The last two theorems say that a literal has the rational value of
+the same literal in `ℚ`.
 -/
 
 @[expose] public section
@@ -22,7 +24,7 @@ no cohort. A literal has the rational value of the same literal in `ℚ`.
 namespace FloatLib.Floats.Formats.DecimalInterchange.Datum
 
 /-- Moving a trailing decimal zero into the quantum exponent preserves the cohort.
-Representability at a particular width is a separate condition on each datum. -/
+Whether each datum is representable at a particular width is another matter. -/
 theorem sameCohort_shift (s : Bool) (c : Nat) (q : Int) :
     SameCohort (.finite s (10 * c) q) (.finite s c (q + 1)) := by
   refine ⟨rfl, ?_⟩

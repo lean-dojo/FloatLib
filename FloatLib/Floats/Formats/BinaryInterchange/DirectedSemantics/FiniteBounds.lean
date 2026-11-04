@@ -12,13 +12,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 /-!
 # Range-limited directed bounds for finite-only binary formats
 
-Every word of an `Encoding.finite` descriptor denotes a finite real. Outward rounding therefore
-has a real enclosure contract exactly while the exact value lies between the largest negative and
-positive finite values. Outside that range there is no infinity to fall back on, as the IEEE
-theorem has.
+Every word of an `Encoding.finite` descriptor denotes a finite real. So outward rounding has a
+real enclosure contract while the exact value lies between the largest negative and positive
+finite values, and only then. Outside that range there's no infinity to fall back on, the way the
+IEEE theorem does.
 
-These results are specific to `Encoding.finite`. Formats using `Encoding.finiteMaxNaN` or
-`Encoding.finiteUnsignedZero` reserve exceptional words and need their own boundary arguments.
+These results are specific to `Encoding.finite`. Formats that use `Encoding.finiteMaxNaN` or
+`Encoding.finiteUnsignedZero` reserve exceptional words and need boundary arguments of their own.
 -/
 
 @[expose] public section

@@ -11,11 +11,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Branch equations for nearest-even rational packing
 
-`roundRatScaled` rejects a zero denominator, returns a signed zero for a zero numerator, and
-otherwise selects an overflow, underflow, subnormal, normal, or carry-out result from the leading
-exponent of the quotient. The equations below describe each positive-magnitude branch of the IEEE
-path in terms of the descriptor's semantic exponent bounds. They are used in the finiteness and
-rounded-real proofs.
+`roundRatScaled` rejects a zero denominator and returns a signed zero for a zero numerator.
+Otherwise the leading exponent of the quotient picks an overflow, underflow, subnormal, normal or
+carry-out result. The equations below describe each positive-magnitude branch of the IEEE path in
+terms of the descriptor's semantic exponent bounds, for use in the finiteness and rounded-real
+proofs.
 -/
 
 @[expose] public section

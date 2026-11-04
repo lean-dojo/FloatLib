@@ -12,13 +12,12 @@ public import Mathlib.Topology.Instances.Real.Lemmas
 /-!
 # Endpoint convergence through affine interval operations
 
-Each endpoint of a midpoint-radius interval, a negation, a sum, a difference or a scaled interval
-is an affine function of input endpoints, so its limit is the same affine function of their
-limits. Negation exchanges the endpoints, and subtraction pairs the lower endpoint of one interval
-with the upper endpoint of the other. Scaling by a negative rational exchanges the endpoints too:
-when both endpoints converge to the same real value, either sign gives the expected scaled limit.
-A midpoint-radius interval whose radius vanishes has both endpoints converging to the midpoint
-limit.
+Each endpoint of a midpoint-radius interval, a negation, a sum, a difference or a scaled interval is
+an affine function of the input endpoints, so its limit is the same affine function of their limits.
+Negation swaps the endpoints, and subtraction pairs the lower endpoint of one interval with the
+upper endpoint of the other. Scaling by a negative rational swaps them too, but when both endpoints
+converge to the same real value, either sign gives the expected scaled limit. If the radius of a
+midpoint-radius interval vanishes, both endpoints converge to the midpoint limit.
 -/
 
 public section

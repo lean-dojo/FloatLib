@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Core
 # Fixed-point primitives for executable transcendental functions
 
 At scale `n`, the integer `k` represents `k * 2^(-n)`. Multiplication and division round back
-to that scale with ties to even. The scale is explicit so each format can choose its own working
-precision. Approximation policy and constants live in `Config.lean`.
+to that scale with ties to even. The scale is a parameter, so each format can choose its own
+working precision. Approximation policy and constants live in `Config.lean`.
 -/
 
 @[expose] public section
@@ -34,11 +34,11 @@ namespace FixedPoint
 @[inline] def scaleInt (fixed : FixedPoint) : Int :=
   Int.ofNat fixed
 
-/-- Integer power of two. -/
+/-- `2 ^ exponent` as an integer, from `Model.pow2`. -/
 @[inline] def pow2Int (exponent : Nat) : Int :=
   Int.ofNat (Model.pow2 exponent)
 
-/-- The fixed-point encoding of one. -/
+/-- The fixed-point encoding of one, `2 ^ fixed`. -/
 @[inline] def one (fixed : FixedPoint) : Int :=
   pow2Int fixed
 

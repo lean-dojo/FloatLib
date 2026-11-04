@@ -16,11 +16,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 /-!
 # Certified two-word normal division
 
-The radix-`2^32` loop produces the first quotient candidate, and a failed certificate selects the
-proved two-limb restoring result. The selected quotient is certified for every normalized input
-of an eligible layout, so this backend has no candidate-failure branch. Exceptional values,
+A radix-`2^32` loop produces the first quotient candidate, and a failed certificate selects the
+proved two-limb restoring result instead. So the selected quotient is certified for every normalized
+input of an eligible layout, and this backend has no candidate-failure branch. Exceptional values,
 subnormal operands and results, and overflow boundaries go to the generic exact-rational backend.
-The main theorem is `divNormal_refines`.
+Its main theorem is `divNormal_refines`.
 -/
 
 @[expose] public section

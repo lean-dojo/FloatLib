@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured natural posit elementary functions
 
-Every lawful configured carrier uses the same correctly rounded model operation. The codec
-changes the storage representation without adding an intermediate numerical rounding.
+These are the natural exponential and logarithm, with their `expMinus1` and `logPlus1` forms.
+Every lawful configured carrier runs the same correctly rounded model operation, and the codec
+changes only how the result is stored, with no intermediate rounding.
 -/
 
 @[expose] public section
@@ -30,7 +31,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Correctly rounded natural exponential; NaR propagates. -/
+/-- Correctly rounded natural exponential. NaR propagates. -/
 @[inline] def exp (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp value
 
@@ -38,7 +39,7 @@ local notation "Value" =>
 @[inline] def expMinus1 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.expMinus1 value
 
-/-- Correctly rounded natural logarithm; NaR and nonpositive inputs produce NaR. -/
+/-- Correctly rounded natural logarithm. NaR and nonpositive inputs produce NaR. -/
 @[inline] def log (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log value
 

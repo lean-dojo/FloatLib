@@ -11,13 +11,14 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Classification
 /-!
 # P3109 classification and adjacency facts
 
-Positive finite code order is exact numerical order. It identifies the least positive value,
-the normal/subnormal boundary, and the absence of a representable value between consecutive
-magnitude codes. These facts apply to arbitrary valid descriptors, including precision one.
-The imported classification facet connects all eight value queries to exact decoding and order.
-The neighbor facet proves immediate adjacency and the absence of a neighbor at either endpoint,
-including infinite endpoints. The additional facts here expose the positive magnitude boundary
-and partition finite values into normal and subnormal cases.
+For positive finite codes, code order is numerical order. From that we get the least positive
+value, the boundary between subnormal and normal values, and the fact that nothing representable
+lies between consecutive magnitude codes, for every valid descriptor, precision one included.
+
+Two imported facets do most of the work. The classification facet connects all eight value
+queries to exact decoding and order, and the neighbor facet proves immediate adjacency and the
+absence of a neighbor at either endpoint, infinite endpoints included. What this file adds is the
+positive magnitude boundary and the split of finite values into normal and subnormal cases.
 -/
 
 @[expose] public section
@@ -36,13 +37,15 @@ theorem minPositive_le_decodePositiveFinite (format : Format) (bits : Nat) (hbit
     (format.decodePositiveFinite 1).toRat ≤ (format.decodePositiveFinite bits).toRat :=
   format.decodePositiveFinite_strictMono.monotone hbits
 
-/-- Normal magnitude codes denote precisely values at or above the first normal value. -/
+/-- A positive finite code denotes a value at or above the first normal value if and only if it is a
+normal magnitude code. -/
 theorem minNormal_le_decodePositiveFinite_iff (format : Format) (bits : Nat) :
     (format.decodePositiveFinite (2 ^ format.trailingBits)).toRat ≤
       (format.decodePositiveFinite bits).toRat ↔ 2 ^ format.trailingBits ≤ bits :=
   format.decodePositiveFinite_strictMono.le_iff_le
 
-/-- Subnormal positive codes denote precisely nonzero values below the first normal value. -/
+/-- A positive code is subnormal if and only if it denotes a nonzero value below the first normal
+value. -/
 theorem decodePositiveFinite_subnormal_iff (format : Format) (bits : Nat) :
     (0 < (format.decodePositiveFinite bits).toRat ∧
       (format.decodePositiveFinite bits).toRat <

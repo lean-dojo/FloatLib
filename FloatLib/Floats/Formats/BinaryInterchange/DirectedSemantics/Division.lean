@@ -13,11 +13,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 # Directed division soundness for conventional IEEE formats
 
 For finite operands and a nonzero divisor, `div x y (mode := .down)` and `div x y (mode := .up)`
-round the exact rational quotient in opposite directions. The extended-real statements hold even
-when outward rounding overflows.
-
-The bounds hold for every descriptor satisfying `fmt.isIEEE = true`, with no restriction to named
-widths.
+round the exact rational quotient in opposite directions. Stated in the extended reals, the
+bounds hold even when outward rounding overflows, and they hold for every descriptor with
+`fmt.isIEEE = true`, whatever its widths.
 -/
 
 @[expose] public section

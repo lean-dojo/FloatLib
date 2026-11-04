@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Decimal conversion for configured posits
 
-The selected storage codec forwards decimal input and display to the exact-width model. Packing
-introduces no additional rounding. This interface works with native and explicit limb carriers.
+A configured posit reads and prints decimals by handing them to the exact-width model through its
+selected storage codec. Packing adds no rounding of its own. Native and limb carriers use the same
+interface.
 -/
 
 @[expose] public section

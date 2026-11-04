@@ -13,15 +13,15 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Mixed-format P3109 arithmetic
 
-The source types select exact decoders and finite values are embedded into `Rat`, so a configured
-IEEE accumulator, a P3109 operand, and an exact rational can occur in one expression. IEEE negative
-zero loses its sign in this domain, as required by §4.8.1. Every exceptional observation becomes
+One expression can mix a configured IEEE accumulator, a P3109 operand, and an exact rational. Each
+source type selects an exact decoder, and finite values are embedded into `Rat`. In that domain
+IEEE negative zero loses its sign, as §4.8.1 requires, and every exceptional observation becomes
 the report's one NaN.
 
-`Destination` supplies the final report projection. `Destination.p3109` selects any P3109
+`Destination` supplies the final report projection, and `Destination.p3109` selects any P3109
 descriptor. External destinations live in `Arithmetic.External`, so importing this module
 installs no alternative IEEE arithmetic or conversion instances. The operation always evaluates
-the whole closed expression before projecting, including fused add-add and scaled arithmetic.
+the whole closed expression before projecting, fused add-add and scaled arithmetic included.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.5, 4.8–4.10 and 5.8.
 -/
@@ -140,11 +140,11 @@ Scaled binary operation from §5.8, with an implicit exact result scale of one: 
 applied to `leftScale * left` and `rightScale * right`, and the exact result is projected once into
 `destination` with rounding `mode` and overflow policy `saturation`.
 
-Input scaling is closed multiplication: a zero scale times infinity is NaN, and a NaN scale
-propagates even when its element is zero. Dividing by the result scale one would only replace
-exceptional results by the canonical NaN, so the division is omitted;
-`Mixed.scaledBinary_eq_project_div_one` proves that the two agree for every operation with
-canonical results, which includes addition, subtraction and multiplication.
+Input scaling is closed multiplication, so a zero scale times infinity is NaN, and a NaN scale
+propagates even when its element is zero. Dividing by the result scale one would only turn
+exceptional results into the canonical NaN, so the division is left out, and
+`Mixed.scaledBinary_eq_project_div_one` proves that nothing changes for addition, subtraction,
+multiplication and every other operation with canonical results.
 -/
 @[inline] def scaledBinary (destination : Destination Result)
     (operation : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat)
@@ -154,19 +154,19 @@ canonical results, which includes addition, subtraction and multiplication.
     (operation (Arithmetic.mul (decode leftScale) (decode left))
       (Arithmetic.mul (decode rightScale) (decode right)))
 
-/-- Add two exactly scaled operands and project once. -/
+/-- Add two operands scaled without rounding, and project once. -/
 @[inline] def scaledAdd (destination : Destination Result)
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
   scaledBinary destination Arithmetic.add leftScale left rightScale right mode saturation
 
-/-- Subtract two exactly scaled operands and project once. -/
+/-- Subtract two operands scaled without rounding, and project once. -/
 @[inline] def scaledSub (destination : Destination Result)
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
   scaledBinary destination Arithmetic.sub leftScale left rightScale right mode saturation
 
-/-- Multiply two exactly scaled operands and project once. -/
+/-- Multiply two operands scaled without rounding, and project once. -/
 @[inline] def scaledMul (destination : Destination Result)
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=

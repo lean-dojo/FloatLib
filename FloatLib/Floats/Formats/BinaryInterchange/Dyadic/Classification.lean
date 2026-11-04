@@ -11,14 +11,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 /-!
 # Complete-format decoding and classification
 
-The exact dyadic decoder determines finiteness, sign, and zero status for arithmetic proofs.
-Successful decoding is equivalent to finiteness, and the decoded dyadic recovers the encoding's
-sign and zero status. The same statements cover IEEE encodings, finite-only encodings, and
-finite encodings with an unsigned-zero policy.
+Arithmetic proofs read finiteness, sign, and zero status off the exact dyadic decoder. Decoding
+succeeds if and only if the value is finite, and the decoded dyadic recovers the encoding's sign
+and zero status. The same statements cover IEEE encodings, finite-only encodings, and finite
+encodings with an unsigned-zero policy.
 
-NaN selection is handled here as classification rather than arithmetic. That keeps exceptional
-control flow out of the exact finite kernels and gives unary, binary, and ternary operations one
-shared account of when `chooseNaN` can return `none`.
+NaN selection is treated here as part of classification, which keeps exceptional control flow out
+of the exact finite kernels and gives unary, binary, and ternary operations one shared account of
+when `chooseNaN` can return `none`.
 -/
 
 @[expose] public section
@@ -30,7 +30,7 @@ open FloatLib.Numerics
 
 /-! ## Complete-format decoding theorems -/
 
-/-- Exact decoding succeeds precisely for values that are finite under the complete format. -/
+/-- Exact decoding succeeds if and only if the value is finite under the complete format. -/
 theorem toDyadic?_isSome_eq_isFinite {fmt : FloatFormat} (x : Model fmt) :
     (toDyadic? x).isSome = isFinite x := by
   by_cases hieee : fmt.isIEEE = true
@@ -60,8 +60,9 @@ theorem exists_toDyadic?_of_isFinite {fmt : FloatFormat} {x : Model fmt}
 /--
 Extract the exact dyadic represented by a value already proved finite.
 
-Complete binary descriptors make this operation total: `toDyadic?` succeeds exactly on finite
-encodings. The proof argument is erased, and extraction requires no default dyadic.
+Complete binary descriptors make this operation total, because `toDyadic?` succeeds on the finite
+encodings and nowhere else. The proof argument is erased, and extraction requires no default
+dyadic.
 -/
 @[inline] def finiteDyadic {fmt : FloatFormat}
     (x : Model fmt) (hfinite : isFinite x = true) : Numerics.Dyadic :=
@@ -153,12 +154,12 @@ theorem isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false
 
 /-! ## NaN-selection classification -/
 
-/-- Unary NaN selection returns `none` exactly when its operand is not a NaN. -/
+/-- Unary NaN selection returns `none` if and only if its operand is not a NaN. -/
 theorem chooseNaN1_eq_none_iff {fmt : FloatFormat} (x : Model fmt) :
     chooseNaN1 x = none ↔ isNaN x = false := by
   simp [chooseNaN1]
 
-/-- Binary NaN selection returns `none` exactly when neither operand is a NaN. -/
+/-- Binary NaN selection returns `none` if and only if neither operand is a NaN. -/
 theorem chooseNaN2_eq_none_iff {fmt : FloatFormat} (x y : Model fmt) :
     chooseNaN2 x y = none ↔ isNaN x = false ∧ isNaN y = false := by
   constructor
@@ -171,7 +172,7 @@ theorem chooseNaN2_eq_none_iff {fmt : FloatFormat} (x y : Model fmt) :
     have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
     simp [chooseNaN2, hxSNaN, hySNaN, hxNaN, hyNaN]
 
-/-- Ternary NaN selection returns `none` exactly when none of its operands is a NaN. -/
+/-- Ternary NaN selection returns `none` if and only if none of its operands is a NaN. -/
 theorem chooseNaN3_eq_none_iff {fmt : FloatFormat} (x y z : Model fmt) :
     chooseNaN3 x y z = none ↔
       isNaN x = false ∧ isNaN y = false ∧ isNaN z = false := by
@@ -204,7 +205,7 @@ theorem isInf_eq_false_of_encoding_ne_ieee {fmt : FloatFormat}
     isInf x = false := by
   cases h : fmt.encoding <;> simp_all [isInf]
 
-/-- In FNUZ, a value is zero exactly when all stored bits are zero. -/
+/-- In FNUZ, a value is zero if and only if all stored bits are zero. -/
 theorem isZero_eq_true_iff_of_encoding_finiteUnsignedZero {fmt : FloatFormat}
     (hfmt : fmt.encoding = .finiteUnsignedZero) (x : Model fmt) :
     isZero x = true ↔ x.bits = 0 := by
@@ -371,7 +372,7 @@ theorem toDyadic?_eq_zero_of_isZero_eq_true {fmt : FloatFormat}
       hzeroNotAll]
   · simp [toDyadic?, hieee, hfinite, hx]
 
-/-- For an exactly decoded finite value, zero classification is the significand-zero test. -/
+/-- Once a value has decoded to a dyadic, zero classification is the significand-zero test. -/
 theorem isZero_eq_beq_zero_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}
     (hx : toDyadic? x = some d) :

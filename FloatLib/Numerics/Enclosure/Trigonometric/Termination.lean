@@ -15,11 +15,10 @@ public import FloatLib.Numerics.Enclosure.Rational.AffineConvergence
 /-!
 # Termination of ordinary trigonometric comparisons
 
-At nonzero rational arguments, sine, cosine, and arctangent are irrational. Their converging
-rational endpoints therefore exclude every rational boundary at some finite degree.
-Tangent uses a linear residual: its nonvanishing follows from tangent's irrationality and
-the absence of tangent poles at rational inputs. Exact zero-input values are handled by the
-comparison runtime before refinement.
+At nonzero rational arguments, sine, cosine, and arctangent are irrational, so their converging
+rational endpoints exclude every rational boundary at some finite degree. Tangent uses a linear
+residual, which doesn't vanish because tangent is irrational there and has no poles at rational
+inputs. Exact values at input zero are handled by the comparison runtime before refinement.
 -/
 
 public section

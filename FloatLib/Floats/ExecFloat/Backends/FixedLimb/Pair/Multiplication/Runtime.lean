@@ -13,8 +13,8 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 /-!
 # Two-word multiplication runtime
 
-The partial four-limb product kernel multiplies normal operands in every eligible two-word
-layout. The operation dispatcher handles declined cases, and refinement proofs are in
+This partial four-limb product kernel multiplies normal operands in every eligible two-word layout.
+Whatever it declines goes to the operation dispatcher, and the refinement proofs are in
 `Multiplication.Proof`.
 -/
 

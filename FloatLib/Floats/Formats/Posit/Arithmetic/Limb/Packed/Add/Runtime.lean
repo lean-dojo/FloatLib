@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.SignedSum.Run
 /-!
 # Direct packed-pair posit addition runtime
 
-Addition uses the shared signed-sum kernel for posits stored in two native limbs. Significands
-stay in `UInt128` when alignment and addition fit; larger intermediates use exact dyadic
-arithmetic. The result is a two-limb code. Range and refinement proofs are in `Add.Proof`.
+For posits stored in two native limbs, addition goes through the shared signed-sum kernel and
+returns a two-limb code. Significands stay in `UInt128` as long as alignment and addition fit
+there, and larger intermediates switch to exact dyadic arithmetic. Range and refinement proofs are
+in `Add.Proof`.
 -/
 
 @[expose] public section

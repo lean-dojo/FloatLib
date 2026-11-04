@@ -13,14 +13,16 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 /-!
 # Formatting inspection reports
 
-Compact and detailed reports from `FormatProfile` data and discovered operation capabilities. Both
-styles name the inspected type and use the same sections: Format, Values, Rounding, Conversions,
-Execution, Arithmetic, the theorems, and Not claimed. A profile that lists related theorems splits
-the theorems into those about the type's own values and those about each type its values reach,
-such as its proof model; any other profile lists them under one heading. Theorem and definition
-names are rendered as constants, so they print relative to the caller's open namespaces and show
-their statements on hover. Family profiles supply the theorem references and a summary of their
-scope; declaration validation checks that the referenced names exist with the required kind.
+Compact and detailed reports are built from `FormatProfile` data and the discovered operation
+capabilities, and both styles name the inspected type and use the same sections: Format, Values,
+Rounding, Conversions, Execution, Arithmetic, the theorems, and Not claimed.
+
+A profile that lists related theorems splits the theorems into those about the type's own values and
+those about each type its values reach, such as its proof model. Any other profile lists them under
+one heading. Theorem and definition names are rendered as constants, so they print relative to the
+caller's open namespaces and show their statements on hover. Family profiles supply the theorem
+references and a summary of their scope, and declaration validation checks that each referenced name
+exists with the required kind.
 -/
 
 @[expose] public section
@@ -125,11 +127,10 @@ meta def renderTheoremSurfaceCompact (surface : TheoremSurface) : MessageData :=
   m!"  [{renderApplicabilityStatus surface.applicability}] {surface.topic}{leadingTheorem surface}"
 
 /--
-The report's theorem sections, each a heading that starts with `lead` and its groups. The
-profile's own groups come first; their heading names the inspected type only when the profile
-lists related theorems, which declares that those groups are about the type's own values. Each
-related type follows under a heading that names it and its embedding. Sections without groups are
-left out.
+The report's theorem sections, each a heading that starts with `lead` and its groups. The profile's
+own groups come first. Their heading names the inspected type only when the profile lists related
+theorems, since that declares those groups to be about the type's own values. Each related type
+follows under a heading that names it and its embedding. Sections without groups are left out.
 -/
 private meta def theoremSections (lead subject : String) (profile : FormatProfile) :
     List (MessageData × List TheoremSurface) :=
@@ -192,10 +193,10 @@ meta def renderNumericalGuaranteeCompact
     , m!"    {guarantee.statement}" ]
 
 /--
-Render only numerical-analysis contracts explicitly registered by a format profile.
+Render only the numerical-analysis contracts that a format profile registers.
 
-This mode reports type-level theorem groups. An expression-level bound additionally needs ranges
-for its inputs and a theorem that composes the operations in the expression.
+This mode reports type-level theorem groups. An expression-level bound also needs ranges for its
+inputs and a theorem that composes the operations in the expression.
 -/
 meta def renderNumericalAnalysis (subject : String) (profile : FormatProfile) (detailed : Bool) :
     MessageData :=

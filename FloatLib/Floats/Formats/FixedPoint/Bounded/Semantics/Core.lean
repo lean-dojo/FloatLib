@@ -14,22 +14,22 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Rational contracts for bounded fixed point
 
-The bounded carrier denotes the subset of the unbounded fixed-point grid whose coefficients
-fit the signed storage width. This module defines the scalar contracts for the wrapping and
-saturating policies:
+A bounded carrier denotes part of the unbounded fixed-point grid, the points whose coefficients
+fit the signed storage width. This module defines the scalar contracts for two of the overflow
+policies:
 
-* wrapping operations use centered reduction of the exact coefficient;
-* saturating operations clamp the exact coefficient to the signed destination range.
+* wrapping operations use centered reduction of the exact coefficient
+* saturating operations clamp the exact coefficient to the signed destination range
 
-The checked policy needs no scalar function of its own: `Semantics.Proof` states it as an
-`Operation.Checked2On` contract against exact rational arithmetic, under the precondition that
-the exact coefficient fits, together with the `none`-on-overflow laws.
+The checked policy needs no scalar function of its own. `Semantics.Proof` states it as an
+`Operation.Checked2On` contract against exact rational arithmetic, under the precondition that the
+exact coefficient fits, together with the `none`-on-overflow laws.
 
 The scalar contracts read each operand through `coefficientOf`, so they describe operands on the
 grid of their scale. Any other rational is first rounded to its nearest coefficient, ties to even.
 
-The executable `BitVec` kernels live in `Bounded.Core`. Their refinement proofs are isolated in
-`Semantics.Proof`, keeping the contract reusable without importing the proof implementation.
+The executable `BitVec` kernels live in `Bounded.Core`, and their refinement proofs live in
+`Semantics.Proof`. That way you can reuse the contract without importing the proofs.
 -/
 
 @[expose] public section

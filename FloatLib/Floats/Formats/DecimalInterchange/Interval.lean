@@ -13,16 +13,16 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 /-!
 # Decimal interchange interval endpoints
 
-`intervalRounding` equips actual BID or DPD words with rational outward rounding. The descriptor
-may be decimal32, decimal64, decimal128, or a custom decimal layout. Directed decimal projection
-produces each endpoint, which is encoded with the selected codec and checked against the exact
-input after decoding. A successful enclosure therefore bounds the input using the actual stored
-words, not only the decimal datums before encoding.
+`intervalRounding` gives BID or DPD words a rational outward rounding, for decimal32, decimal64,
+decimal128, or a custom decimal layout. Each endpoint comes from a directed decimal projection. It
+is encoded with the selected codec, decoded again, and compared with the exact input, so a
+successful enclosure bounds the input with the words that are really stored, and not just with the
+datums before encoding.
 
-NaNs and infinities have no rational interpretation. Overflow that needs an infinite endpoint
-returns `none`; it is not replaced by a finite bound that would exclude the input. The shared
-`Numerics.Interval` operations provide addition, subtraction, multiplication, and division away
-from zero using these endpoints.
+NaNs and infinities have no rational value. When overflow would need an infinite endpoint, the
+result is `none`, because a finite bound in its place would leave the input outside. With these
+endpoints, the shared `Numerics.Interval` operations give you addition, subtraction,
+multiplication, and division away from zero.
 -/
 
 @[expose] public section
@@ -46,7 +46,7 @@ def intervalCandidates (format : Format) (encoding : Encoding) (x : ℚ) : Inter
 Checked outward rounding for decimal words, valid for every descriptor and either codec.
 
 The exact endpoint check also covers exceptional outputs and catches any candidate that fails
-to bracket the target; the result never silently treats a saturated finite value as infinity.
+to bracket the target. A saturated finite value is never silently treated as infinity.
 -/
 def intervalRounding (format : Format) (encoding : Encoding) :
     Numerics.OutwardRounding (BitVec format.bitWidth) ℚ :=

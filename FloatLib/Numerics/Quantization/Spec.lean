@@ -11,24 +11,22 @@ public import FloatLib.Numerics.Core.System
 /-!
 # Relational quantization specifications
 
-Quantization is not, in general, a function from one scalar to one stored code. A result may
-depend on a block scale, an exception policy, an entropy stream, a status accumulator, or a
-format-specific tie rule. Some specifications intentionally permit several results before an
-implementation fixes one.
-
-`Spec Context Exact Result` is therefore the relation
+Quantization isn't, in general, a function from one scalar to one stored code. A result may depend
+on a block scale, an exception policy, an entropy stream, a status accumulator, or a format-specific
+tie rule, and some specifications permit several results on purpose before an implementation fixes
+one. So `Spec Context Exact Result` is the relation
 
 ```text
 Context → Exact → Result → Prop
 ```
 
-used to specify these choices. Deterministic reference functions and executable kernels are
-ordinary functions proved to satisfy the relation.
+that specifies these choices. Deterministic reference functions and executable kernels are ordinary
+functions proved to satisfy it.
 
-This separation follows the distinction between representability and rounding used in generic
-floating-point libraries.  In particular, Flocq defines format membership independently from
-rounding operators; see S. Boldo and G. Melquiond, “Flocq: A Unified Library for Proving
-Floating-Point Algorithms in Coq,” ARITH 2011, DOI 10.1109/ARITH.2011.40.
+This separation follows the distinction between representability and rounding in generic
+floating-point libraries. Flocq in particular defines format membership independently of rounding
+operators. See S. Boldo and G. Melquiond, “Flocq: A Unified Library for Proving Floating-Point
+Algorithms in Coq,” ARITH 2011, DOI 10.1109/ARITH.2011.40.
 -/
 
 @[expose] public section
@@ -91,7 +89,7 @@ theorem deterministic_ofFunction (reference : Context → Exact → Result) :
 Map every permitted result through a pure post-processing function.
 
 An output is permitted exactly when it is the image of a permitted source result. This is a
-proposition about the output; it adds no runtime wrapper.
+proposition about the output, and it adds no runtime wrapper.
 -/
 def mapResult {MappedResult : Type x} (spec : Spec Context Exact Result)
     (f : Result → MappedResult) : Spec Context Exact MappedResult :=

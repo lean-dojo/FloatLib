@@ -11,15 +11,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # Finite-only E4M3FNUZ
 
-`FloatLib.Floats.E4M3FNUZ` is an eight-bit format with finite values, one NaN encoding, and
-unsigned zero, and `E4M3FNUZ.Family` is its type-level identity.
-Its name records the conventions used by the ONNX float8 specification: `F` excludes infinity,
-`N` retains NaN, and `UZ` identifies the unsigned-zero encoding. These choices belong to this
-format package, and the universal executable interface assumes none of them.
+`FloatLib.Floats.E4M3FNUZ` is the FP8 format of AMD accelerators, with 4 exponent bits, 3 fraction
+bits, one NaN encoding and an unsigned zero. `E4M3FNUZ.Family` is its type-level identity. The
+letters come from the ONNX float8 specification: `F` says there is no infinity, `N` says a NaN code
+is kept, and `UZ` says zero has no sign. Those conventions belong to this package, so the universal
+executable interface doesn't assume any of them.
 
-The runtime carrier is one `UInt8`. Balanced and throughput policies select exhaustive proved byte
-tables for addition, subtraction, multiplication, division, and square root. The latency policy uses
-the exact arithmetic baseline. Fused multiply-add uses the proved generic single-rounding kernel.
+Each value is one `UInt8`. Under the balanced and throughput policies, addition, subtraction,
+multiplication, division, and square root read exhaustive byte tables that come with proofs, and
+the latency policy computes them with the exact arithmetic baseline. Fused multiply-add uses the
+proved generic single-rounding kernel, because a table over three byte operands would have
+16,777,216 entries.
 
 ## Reference
 

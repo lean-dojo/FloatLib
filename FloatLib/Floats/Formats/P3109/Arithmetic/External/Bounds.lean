@@ -14,10 +14,10 @@ public import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Precision and range of external P3109 results
 
-The quotient floor is strictly below `2^P`; every report mode chooses it or its successor.
-Consequently precision rounding produces an exact binary grid value, even at a carry. Saturation
-then places each finite result in the external format's finite range. These two facts justify
-using an ordinary binary encoder without introducing a second rounding error.
+Handing a P3109 result to an ordinary binary encoder without a second rounding error takes two
+facts, and this file proves both. The quotient floor is strictly below `2^P` and every report mode
+picks it or its successor, so precision rounding lands on the binary grid, even at a carry. Then
+saturation puts each finite result inside the external format's finite range.
 -/
 
 @[expose] public section
@@ -41,7 +41,7 @@ def FitsGrid (format : FloatFormat) (value : Numerics.Dyadic) : Prop :=
   value.significand ≤ 2 ^ (format.fracWidth + 1) ∧
     format.minSubnormalExponent ≤ value.exponent
 
-/-- Every rounding mode, for every explicit stochastic word, lands on the external grid. -/
+/-- Every rounding mode, for every supplied stochastic word, lands on the external grid. -/
 theorem roundFinite_fitsGrid (format : FloatFormat) (mode : P3109.RoundingMode) (exact : Rat) :
     FitsGrid format (roundFinite format mode exact) := by
   unfold roundFinite
@@ -70,7 +70,7 @@ theorem endpoint_fitsGrid (format : FloatFormat) (negative : Bool) :
   refine ⟨Nat.sub_le _ _, ?_⟩
   exact sub_le_sub_right (Model.minNormalExponent_le_maxNormalExponent format) _
 
-/-- The positive endpoint is exactly the existing binary model's largest finite dyadic. -/
+/-- The positive endpoint is the binary model's largest finite dyadic. -/
 theorem endpoint_eq_maxFiniteDyadic (format : FloatFormat) (hformat : format.isIEEE = true) :
     endpoint format false = Model.maxFiniteDyadic format := by
   have hencoding := FloatFormat.encoding_eq_ieee_of_isIEEE format hformat
@@ -95,7 +95,7 @@ theorem abs_endpoint_toReal (format : FloatFormat) (hformat : format.isIEEE = tr
     ← endpoint_eq_maxFiniteDyadic format hformat]
   rfl
 
-/-- Scalable comparison tests exactly the real-valued magnitude bound used by encoding. -/
+/-- Scalable comparison decides the same real-valued magnitude bound that encoding uses. -/
 theorem magnitude_bound_of_not_overflow (format : FloatFormat)
     (hformat : format.isIEEE = true) (value : Numerics.Dyadic)
     (h : (Numerics.Dyadic.Internal.compareScalable

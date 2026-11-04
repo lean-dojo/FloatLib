@@ -13,12 +13,12 @@ public import FloatLib.Numerics.Enclosure.Rational.Runtime
 # Binary rounding of rational enclosures
 
 Exact rational rounding accepts an enclosure when both endpoints select the same finite IEEE
-encoding. The endpoints are compared as encodings, so they must also agree on the sign of zero.
-The proofs show that an accepted result is finite and has the real value of the correctly rounded
-exact value, but they do not state which sign a zero result carries. An inconclusive enclosure
-returns `none` for refinement.
+encoding. Endpoints are compared as encodings, so they must also agree on the sign of zero. We
+prove that an accepted result is finite and has the real value of the correctly rounded exact
+value, but the proofs do not state which sign a zero result carries. An inconclusive enclosure
+returns `none`, and the caller refines it.
 
-An enclosure may also carry a binary scale: `roundScaled? fmt interval scale` rounds the endpoints
+An enclosure may also carry a binary scale. `roundScaled? fmt interval scale` rounds the endpoints
 of `interval` times `2 ^ scale` without forming that power, so a result far outside the range of
 the interval's rationals costs no more than one near one.
 -/

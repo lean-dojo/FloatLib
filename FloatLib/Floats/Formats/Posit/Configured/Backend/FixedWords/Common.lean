@@ -14,10 +14,10 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.SquareRoot.Pr
 /-!
 # Shared proofs for fixed-word posit backends
 
-The executable boundaries for `UInt8`, `UInt16`, `UInt32`, and `UInt64` remain separate so Lean
-can compile each one with its native calling convention. Their range arguments, however, are
-mathematical facts about the posit format rather than the carrier. This module holds those shared
-facts and keeps them out of the specialized runtime files.
+Lean compiles the `UInt8`, `UInt16`, `UInt32`, and `UInt64` boundaries one by one, each with its
+native calling convention. Their range arguments are another matter. Those are facts about the
+posit format and say nothing about the carrier, so this module proves them once and keeps them out
+of the specialized runtime files.
 -/
 
 @[expose] public section

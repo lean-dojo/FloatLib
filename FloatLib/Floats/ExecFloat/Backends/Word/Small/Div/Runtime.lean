@@ -14,9 +14,8 @@ public import Mathlib.Data.Rat.Cast.Order
 /-!
 # Native one-word finite division
 
-The native normal-division path serves conventional IEEE formats whose storage and quotient
-intermediates fit in `UInt64`. Refinement proofs and the exact-rational specification live in
-`Div.Proof`.
+This normal-division path serves conventional IEEE formats whose storage and quotient intermediates
+fit in `UInt64`. Its refinement proofs and the exact-rational specification are in `Div.Proof`.
 -/
 
 @[expose] public section

@@ -1,165 +1,720 @@
 {
-  "using-the-library": {
+  "a-short-history-of-floating-point": {
+    "slug": "from-reals-to-machine-numbers",
+    "headings": {
+      "a-narrowing-conversion-ariane-5-flight-501-1996": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-happens-when-a-number-doesnt-fit"
+      },
+      "accumulated-truncation-vancouver-1982-to-1983": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-do-small-errors-add-up"
+      },
+      "before-ieee-754": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "inconsistent-time-conversions-patriot-dhahran-1991": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-happens-when-you-chop-instead-of-round"
+      },
+      "kahan-the-8087-and-754-1985": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "low-precision-formats-for-machine-learning": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "missing-table-entries-the-pentium-fdiv-bug-1994": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-cant-you-test-every-input"
+      },
+      "model-error-sleipner-a-1991": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-does-a-proof-not-cover"
+      },
+      "p3109-formats": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "posits-and-the-quire": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "proofs-of-hardware-and-software-arithmetic": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "sources-and-definitions": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "the-2008-and-2019-revisions": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "a-short-history-of-floating-point"
+      },
+      "what-imprecision-has-cost": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-is-floating-point-hard-to-get-right"
+      }
+    }
+  },
+  "backends-and-the-planner": {
+    "slug": "performance",
+    "headings": {
+      "available-kernels": {
+        "slug": "performance",
+        "heading": "what-can-the-planner-choose-from"
+      },
+      "changing-the-workload-without-changing-the-mathematics": {
+        "slug": "performance",
+        "heading": "how-to-change-the-expected-workload"
+      },
+      "choosing-a-backend": {
+        "slug": "performance",
+        "heading": "how-to-steer-the-planner"
+      },
+      "choosing-and-caching-an-implementation": {
+        "slug": "performance",
+        "heading": "how-an-ordinary-addition-reaches-its-kernel"
+      },
+      "choosing-the-limb-carrier": {
+        "slug": "performance",
+        "heading": "how-to-store-wide-numbers-as-limbs"
+      },
+      "estimating-computation-and-memory-costs": {
+        "slug": "performance",
+        "heading": "how-does-the-planner-choose"
+      },
+      "figure-ch09-backend-ladder": {
+        "slug": "performance",
+        "heading": "figure-ch09-backend-ladder"
+      },
+      "following-a-public-arithmetic-call": {
+        "slug": "performance",
+        "heading": "how-an-ordinary-addition-reaches-its-kernel"
+      },
+      "how-the-planner-chooses": {
+        "slug": "performance",
+        "heading": "how-does-the-planner-choose"
+      },
+      "implementation-reference": {
+        "slug": "performance",
+        "heading": "how-to-check-the-planners-work"
+      },
+      "inspecting-the-selected-backend": {
+        "slug": "performance",
+        "heading": "how-to-see-which-kernel-runs"
+      },
+      "setting-the-expected-workload": {
+        "slug": "performance",
+        "heading": "how-to-change-the-expected-workload"
+      },
+      "using-the-host-fpu": {
+        "slug": "performance",
+        "heading": "why-isnt-the-host-fpu-a-candidate"
+      },
+      "what-can-we-choose": {
+        "slug": "performance",
+        "heading": "how-to-steer-the-planner"
+      },
+      "which-formats-a-kernel-supports": {
+        "slug": "performance",
+        "heading": "which-kernels-can-your-format-use"
+      },
+      "why-different-widths-use-different-kernels": {
+        "slug": "performance",
+        "heading": "what-can-the-planner-choose-from"
+      }
+    }
+  },
+  "decimal-arithmetic": {
+    "slug": "decimal-arithmetic",
+    "headings": {
+      "accumulating-exception-flags": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-keep-track-of-exception-flags"
+      },
+      "adjacent-values-scaling-and-remainder": {
+        "slug": "decimal-arithmetic",
+        "heading": "what-are-the-neighbours-of-a-value"
+      },
+      "arithmetic-and-preferred-exponents": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-add-and-multiply-decimal-numbers"
+      },
+      "comparing-values-and-representations": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-compare-decimal-numbers"
+      },
+      "conversions-between-numerical-formats": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-convert-to-other-formats"
+      },
+      "decimal-text-round-trips": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-print-a-decimal-number"
+      },
+      "encoding-the-complete-datum": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-decimal-numbers-are-stored-in-bits"
+      },
+      "powers-and-roots-retain-a-quantum": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-take-powers-and-roots"
+      },
+      "quantization-and-integral-rounding": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-choose-the-exponent-yourself"
+      }
+    }
+  },
+  "elementary-functions": {
+    "slug": "elementary-functions",
+    "headings": {
+      "calling-the-approximation-kernels": {
+        "slug": "elementary-functions",
+        "heading": "how-to-compute-exp-log-and-sine"
+      },
+      "certified-decimal-functions": {
+        "slug": "elementary-functions",
+        "heading": "how-to-use-these-functions-with-decimal-numbers"
+      },
+      "certified-exponential-and-logarithm": {
+        "slug": "elementary-functions",
+        "heading": "how-to-get-an-exp-or-log-with-a-proof"
+      },
+      "correctly-rounded-functions-for-every-input": {
+        "slug": "elementary-functions",
+        "heading": "how-to-get-a-correctly-rounded-answer-every-time"
+      },
+      "keeping-small-differences": {
+        "slug": "elementary-functions",
+        "heading": "how-to-keep-tiny-differences-near-zero"
+      },
+      "powers-and-roots-with-one-rounding": {
+        "slug": "elementary-functions",
+        "heading": "how-to-square-take-roots-and-compute-hypot"
+      }
+    }
+  },
+  "external-validation": {
+    "slug": "external-validation",
+    "headings": {
+      "binary-arithmetic-with-flocq-and-mpfr": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-flocq-and-mpfr"
+      },
+      "decimal-values-cohorts-and-flags": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-decimal-numbers-are-stored-in-bits"
+      },
+      "elementary-functions-against-mpfr": {
+        "slug": "external-validation",
+        "heading": "how-do-we-test-the-elementary-functions"
+      },
+      "encoding-tables-and-mpfr": {
+        "slug": "external-validation",
+        "heading": "what-can-a-value-table-check"
+      },
+      "error-bounds-for-a-complete-expression": {
+        "slug": "external-validation",
+        "heading": "tools-for-error-bounds-and-smt"
+      },
+      "exact-trigonometric-comparisons": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "floatspec-and-flocq-style-arithmetic": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-floatspec"
+      },
+      "flops-and-p3109": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-flops"
+      },
+      "ieee-arithmetic-and-flags": {
+        "slug": "external-validation",
+        "heading": "how-do-we-test-the-wider-ieee-formats"
+      },
+      "natural-posit-exponentials-and-logarithms": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-exponentials-and-logarithms"
+      },
+      "ordinary-posit-trigonometric-results": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "other-verified-numerical-libraries": {
+        "slug": "external-validation",
+        "heading": "how-does-floatlib-relate-to-other-verified-libraries"
+      },
+      "p3109-arithmetic-with-flops": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-flops"
+      },
+      "pi-scaled-posit-trigonometric-functions": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-measure-angles-in-half-turns"
+      },
+      "pi-scaled-posit-trigonometric-results": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-measure-angles-in-half-turns"
+      },
+      "posit-atan2": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "posit-decimal-text": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-print-and-parse-decimal-text"
+      },
+      "posit-exponentials-and-logarithms": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-exponentials-and-logarithms"
+      },
+      "posit-hyperbolic-functions": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-hyperbolic-functions"
+      },
+      "posit-integer-conversion": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-convert-a-posit-to-an-integer"
+      },
+      "posit-trigonometric-functions": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "rounded-arithmetic-with-floatspec": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-floatspec"
+      },
+      "running-the-comparisons": {
+        "slug": "external-validation",
+        "heading": "how-to-run-the-comparisons-yourself"
+      },
+      "scalar-conversions-with-tensorlib": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-tensorlib"
+      },
+      "symbolic-arithmetic-and-tensors": {
+        "slug": "external-validation",
+        "heading": "how-floatlib-compares-with-tensorlib"
+      },
+      "the-mpfx-differences": {
+        "slug": "external-validation",
+        "heading": "what-bugs-did-we-find-in-mpfx"
+      },
+      "the-softposit-differences": {
+        "slug": "external-validation",
+        "heading": "why-did-softposit-disagree-with-floatlib"
+      },
+      "two-coordinate-posit-angles": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "what-the-comparisons-check": {
+        "slug": "external-validation",
+        "heading": "why-does-a-proved-library-need-testing"
+      },
+      "why-logarithms-near-1-are-difficult": {
+        "slug": "external-validation",
+        "heading": "why-are-logarithms-near-1-hard"
+      },
+      "why-some-performance-markers-are-missing": {
+        "slug": "external-validation",
+        "heading": "why-are-some-posit-timings-missing"
+      }
+    }
+  },
+  "fixed-point-logarithmic-codebook-and-block-scaled": {
+    "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+    "headings": {
+      "affine-quantization": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-is-affine-quantization"
+      },
+      "bounded-fixed-point-and-overflow": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-happens-when-a-fixed-point-number-overflows"
+      },
+      "codebooks-assigning-a-value-to-each-word": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-is-a-codebook"
+      },
+      "exact-fixed-point-scaled-integers": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-is-a-fixed-point-number"
+      },
+      "finding-these-representations-in-the-source": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "where-to-find-the-proofs"
+      },
+      "fixed-point-operators-and-literals": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "how-to-write-sums-and-decimal-literals"
+      },
+      "logarithmic-numbers-multiplication-becomes-addition": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-is-a-logarithmic-number"
+      },
+      "one-exponent-for-a-block-of-values": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-is-a-block-scaled-format"
+      },
+      "stating-the-arithmetic-guarantees": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "what-do-all-these-contracts-have-in-common"
+      },
+      "using-the-proofs-and-inspecting-operations": {
+        "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
+        "heading": "where-to-find-the-proofs"
+      }
+    }
+  },
+  "from-reals-to-machine-numbers": {
+    "slug": "from-reals-to-machine-numbers",
+    "headings": {
+      "a-fixed-word-stores-finitely-many-values": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-is-a-floating-point-number"
+      },
+      "binary-fractions-and-dyadic-rationals": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-cant-01-be-stored-exactly"
+      },
+      "correct-rounding": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "how-does-rounding-work"
+      },
+      "exact-intermediates-and-real-valued-rounding": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "where-is-the-exact-result-kept"
+      },
+      "fixed-point-or-floating-point": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-is-a-floating-point-number"
+      },
+      "subnormals-signed-zeros-infinities-nan": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-are-subnormals-signed-zeros-infinities-and-nan"
+      },
+      "the-sign-exponent-and-fraction-fields": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "how-does-a-word-store-a-number"
+      },
+      "the-unit-in-the-last-place": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "how-big-can-a-rounding-error-be"
+      },
+      "what-a-real-number-is": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-is-a-floating-point-number"
+      }
+    }
+  },
+  "further-examples": {
     "slug": "using-the-library",
     "headings": {
-      "library-structure": {
-        "slug": "using-the-library",
-        "heading": "proving-arithmetic-agrees-with-its-specification"
-      },
-      "rounding-directions-and-status-flags": {
-        "slug": "further-examples",
-        "heading": "rounding-directions-and-status-flags"
-      },
       "choosing-a-different-endpoint-format": {
-        "slug": "further-examples",
-        "heading": "choosing-a-different-endpoint-format"
-      },
-      "reductions-that-round-once": {
-        "slug": "further-examples",
-        "heading": "sums-and-dot-products-with-one-rounding"
-      },
-      "sums-and-dot-products-with-one-rounding": {
-        "slug": "further-examples",
-        "heading": "sums-and-dot-products-with-one-rounding"
-      },
-      "the-result-as-a-real-number": {
-        "slug": "further-examples",
-        "heading": "the-result-as-a-real-number"
-      },
-      "complex-arithmetic": {
-        "slug": "further-examples",
-        "heading": "complex-arithmetic"
-      },
-      "mixing-formats": {
-        "slug": "further-examples",
-        "heading": "mixing-formats"
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-choose-a-different-endpoint-format"
       },
       "choosing-imports": {
-        "slug": "further-examples",
-        "heading": "choosing-imports"
+        "slug": "using-the-library",
+        "heading": "which-import-do-you-need"
+      },
+      "complex-arithmetic": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-work-with-complex-numbers"
+      },
+      "directed-cancellation-and-the-sign-of-zero": {
+        "slug": "ieee-binary-formats",
+        "heading": "which-zero-do-you-get-when-terms-cancel"
+      },
+      "evaluating-an-expression-with-one-final-rounding": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-round-a-whole-expression-once"
       },
       "examples-and-extension-guides": {
-        "slug": "further-examples",
-        "heading": "extending-the-library"
+        "slug": "the-numerical-models",
+        "heading": "how-to-add-your-own-format-or-backend"
       },
       "extending-the-library": {
-        "slug": "further-examples",
-        "heading": "extending-the-library"
-      }
-    }
-  },
-  "why-execution-and-proofs-are-separate": {
-    "slug": "why-execution-and-proofs-are-separate",
-    "headings": {
-      "public-and-private-imports": {
-        "slug": "why-execution-and-proofs-are-separate",
-        "heading": "runtimelean-and-prooflean"
-      },
-      "lean-compilation-and-code-extraction": {
-        "slug": "why-execution-and-proofs-are-separate",
-        "heading": "compiler-replacements-with-csimp"
-      },
-      "when-an-executable-definition-needs-a-proof": {
-        "slug": "why-execution-and-proofs-are-separate",
-        "heading": "runtimelean-and-prooflean"
-      }
-    }
-  },
-  "the-numerical-models": {
-    "slug": "the-numerical-models",
-    "headings": {
-      "numerics-exact-values-and-contracts": {
         "slug": "the-numerical-models",
-        "heading": "a-common-interface-for-numerical-formats"
+        "heading": "how-to-add-your-own-format-or-backend"
+      },
+      "mixing-formats": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-mix-formats"
+      },
+      "rounding-directions-and-status-flags": {
+        "slug": "using-the-library",
+        "heading": "how-to-choose-a-rounding-direction"
+      },
+      "sums-and-dot-products-with-one-rounding": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-to-add-a-list-with-one-rounding"
+      },
+      "the-result-as-a-real-number": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-use-these-theorems-on-binary32-values"
       }
     }
   },
   "ieee-binary-formats": {
     "slug": "ieee-binary-formats",
     "headings": {
-      "what-is-proved-for-each-operation": {
-        "slug": "ieee-binary-formats",
-        "heading": "from-executable-arithmetic-to-real-rounding"
-      },
-      "applying-a-real-valued-arithmetic-theorem": {
-        "slug": "ieee-binary-formats",
-        "heading": "from-executable-arithmetic-to-real-rounding"
-      },
-      "formats-encodings-and-their-meaning": {
-        "slug": "ieee-binary-formats",
-        "heading": "from-executable-arithmetic-to-real-rounding"
-      },
-      "powers-and-roots-with-one-rounding": {
-        "slug": "elementary-functions",
-        "heading": "powers-and-roots-with-one-rounding"
-      },
-      "decimal-interchange": {
-        "slug": "decimal-arithmetic",
-        "heading": "encoding-the-complete-datum"
-      },
-      "arithmetic-and-preferred-exponents": {
-        "slug": "decimal-arithmetic",
-        "heading": "arithmetic-and-preferred-exponents"
-      },
       "accumulating-exception-flags": {
         "slug": "decimal-arithmetic",
-        "heading": "accumulating-exception-flags"
-      },
-      "quantization-and-integral-rounding": {
-        "slug": "decimal-arithmetic",
-        "heading": "quantization-and-integral-rounding"
-      },
-      "comparing-values-and-representations": {
-        "slug": "decimal-arithmetic",
-        "heading": "comparing-values-and-representations"
+        "heading": "how-to-keep-track-of-exception-flags"
       },
       "adjacent-values-scaling-and-remainder": {
         "slug": "decimal-arithmetic",
-        "heading": "adjacent-values-scaling-and-remainder"
+        "heading": "what-are-the-neighbours-of-a-value"
       },
-      "decimal-text-round-trips": {
-        "slug": "decimal-arithmetic",
-        "heading": "decimal-text-round-trips"
+      "applying-a-real-valued-arithmetic-theorem": {
+        "slug": "ieee-binary-formats",
+        "heading": "what-the-theorems-give-you"
       },
-      "conversions-between-numerical-formats": {
+      "arithmetic-and-preferred-exponents": {
         "slug": "decimal-arithmetic",
-        "heading": "conversions-between-numerical-formats"
+        "heading": "how-to-add-and-multiply-decimal-numbers"
       },
       "arithmetic-keeps-track-of-the-cohort": {
         "slug": "decimal-arithmetic",
-        "heading": "arithmetic-and-preferred-exponents"
+        "heading": "how-to-add-and-multiply-decimal-numbers"
       },
-      "remembering-exceptions-across-a-calculation": {
-        "slug": "decimal-arithmetic",
-        "heading": "accumulating-exception-flags"
-      },
-      "choosing-a-decimal-grid": {
-        "slug": "decimal-arithmetic",
-        "heading": "quantization-and-integral-rounding"
-      },
-      "moving-through-the-decimal-values": {
-        "slug": "decimal-arithmetic",
-        "heading": "adjacent-values-scaling-and-remainder"
-      },
-      "writing-a-value-without-losing-its-representation": {
-        "slug": "decimal-arithmetic",
-        "heading": "decimal-text-round-trips"
-      },
-      "crossing-into-another-format": {
-        "slug": "decimal-arithmetic",
-        "heading": "conversions-between-numerical-formats"
-      },
-      "transcendental-functions": {
-        "slug": "elementary-functions",
-        "heading": "calling-the-approximation-kernels"
+      "casting-between-widths": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-cast-between-widths"
       },
       "certified-exponential-and-logarithm": {
         "slug": "elementary-functions",
-        "heading": "certified-exponential-and-logarithm"
+        "heading": "how-to-get-an-exp-or-log-with-a-proof"
+      },
+      "choosing-a-decimal-grid": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-choose-the-exponent-yourself"
+      },
+      "comparing-values-and-representations": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-compare-decimal-numbers"
+      },
+      "comparisons-and-neighbouring-values": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-compare-two-floats"
+      },
+      "conversions-between-numerical-formats": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-convert-to-other-formats"
+      },
+      "crossing-into-another-format": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-convert-to-other-formats"
+      },
+      "custom-widths": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-make-your-own-width"
+      },
+      "decimal-interchange": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-decimal-numbers-are-stored-in-bits"
+      },
+      "decimal-text-round-trips": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-print-a-decimal-number"
+      },
+      "directed-rounding": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-choose-a-rounding-direction"
+      },
+      "formats-encodings-and-their-meaning": {
+        "slug": "ieee-binary-formats",
+        "heading": "what-the-theorems-give-you"
+      },
+      "from-executable-arithmetic-to-real-rounding": {
+        "slug": "ieee-binary-formats",
+        "heading": "what-the-theorems-give-you"
+      },
+      "integers-and-text": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-convert-to-integers-and-text"
+      },
+      "moving-through-the-decimal-values": {
+        "slug": "decimal-arithmetic",
+        "heading": "what-are-the-neighbours-of-a-value"
+      },
+      "nan-propagation-and-signed-zero": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-nans-and-signed-zeros-behave"
+      },
+      "one-descriptor-many-widths": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-describe-a-format"
+      },
+      "parsing-and-printing": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-parse-and-print-numbers"
+      },
+      "powers-and-roots-with-one-rounding": {
+        "slug": "elementary-functions",
+        "heading": "how-to-square-take-roots-and-compute-hypot"
+      },
+      "quantization-and-integral-rounding": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-choose-the-exponent-yourself"
+      },
+      "reading-a-word": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-read-a-word"
+      },
+      "remembering-exceptions-across-a-calculation": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-keep-track-of-exception-flags"
       },
       "stable-decimal-exponential-and-logarithm": {
         "slug": "elementary-functions",
-        "heading": "certified-decimal-functions"
+        "heading": "how-to-use-these-functions-with-decimal-numbers"
+      },
+      "status-flags": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-read-the-status-flags"
+      },
+      "the-same-value-in-five-layouts": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-run-one-addition-in-every-width"
+      },
+      "transcendental-functions": {
+        "slug": "elementary-functions",
+        "heading": "how-to-compute-exp-log-and-sine"
+      },
+      "what-is-proved-for-each-operation": {
+        "slug": "ieee-binary-formats",
+        "heading": "what-the-theorems-give-you"
+      },
+      "writing-a-value-without-losing-its-representation": {
+        "slug": "decimal-arithmetic",
+        "heading": "how-to-print-a-decimal-number"
+      }
+    }
+  },
+  "kernels-fixed-word-algorithms": {
+    "slug": "performance",
+    "headings": {
+      "bounded-alignment-in-generic-addition": {
+        "slug": "performance",
+        "heading": "how-to-round-by-reading-three-bits"
+      },
+      "capacity-bounds-and-backend-dispatch": {
+        "slug": "performance",
+        "heading": "what-are-the-capacity-bounds"
+      },
+      "capacity-bounds-and-compiler-assumptions": {
+        "slug": "performance",
+        "heading": "what-are-the-capacity-bounds"
+      },
+      "checking-a-division-result": {
+        "slug": "performance",
+        "heading": "how-to-check-a-division-answer-instead-of-trusting-it"
+      },
+      "compiler-replacements-with-csimp": {
+        "slug": "performance",
+        "heading": "how-slow-definitions-get-swapped-for-fast-ones"
+      },
+      "division-and-square-root-from-limb-storage": {
+        "slug": "performance",
+        "heading": "how-limb-arrays-hold-wider-numbers"
+      },
+      "figure-ch08-limb-arrays": {
+        "slug": "performance",
+        "heading": "figure-ch08-limb-arrays"
+      },
+      "figure-ch08-restoring-division": {
+        "slug": "performance",
+        "heading": "figure-ch08-restoring-division"
+      },
+      "finding-the-kernel-implementations": {
+        "slug": "performance",
+        "heading": "how-slow-definitions-get-swapped-for-fast-ones"
+      },
+      "guard-bits-and-sticky-bits": {
+        "slug": "performance",
+        "heading": "how-to-round-by-reading-three-bits"
+      },
+      "increasing-precision-for-arbitrary-precision-square-root": {
+        "slug": "performance",
+        "heading": "how-to-take-a-square-root-two-bits-at-a-time"
+      },
+      "kernels-fixed-word-algorithms-and-limb-arrays": {
+        "slug": "performance",
+        "heading": "how-limb-arrays-hold-wider-numbers"
+      },
+      "limb-arrays-32-bit-limbs-updated-in-place": {
+        "slug": "performance",
+        "heading": "how-limb-arrays-hold-wider-numbers"
+      },
+      "one-word-two-words-four-words": {
+        "slug": "performance",
+        "heading": "how-to-multiply-in-machine-words"
+      },
+      "reading-a-compiler-certificate": {
+        "slug": "performance",
+        "heading": "how-slow-definitions-get-swapped-for-fast-ones"
+      },
+      "restoring-division": {
+        "slug": "performance",
+        "heading": "how-to-divide-one-bit-at-a-time"
+      },
+      "restoring-square-root": {
+        "slug": "performance",
+        "heading": "how-to-take-a-square-root-two-bits-at-a-time"
+      },
+      "reusing-a-kernel-proof-across-formats": {
+        "slug": "performance",
+        "heading": "how-to-check-a-division-answer-instead-of-trusting-it"
+      },
+      "what-we-mean-by-a-kernel": {
+        "slug": "performance",
+        "heading": "what-is-inside-a-kernel"
+      }
+    }
+  },
+  "lean-native-floats": {
+    "slug": "lean-native-floats",
+    "headings": {
+      "arithmetic-through-the-same-model": {
+        "slug": "lean-native-floats",
+        "heading": "what-is-proved-about-leans-arithmetic"
+      },
+      "both-implementations-lose-associativity": {
+        "slug": "lean-native-floats",
+        "heading": "do-lean-and-floatlib-give-the-same-answers"
+      },
+      "converting-to-native-floats-changes-nan-payloads": {
+        "slug": "lean-native-floats",
+        "heading": "why-do-nans-come-out-different"
+      },
+      "formats-rounding-directions-and-status": {
+        "slug": "lean-native-floats",
+        "heading": "what-does-floatlib-add-to-float-and-float32"
+      },
+      "integer-conversions": {
+        "slug": "lean-native-floats",
+        "heading": "how-to-convert-integers-to-floats-and-back"
+      },
+      "leans-model-and-its-compiled-operations": {
+        "slug": "lean-native-floats",
+        "heading": "what-are-float-and-float32"
+      },
+      "opting-into-guarded-host-operations": {
+        "slug": "lean-native-floats",
+        "heading": "how-to-use-the-processors-own-arithmetic"
+      },
+      "proofs-relating-floatlib-to-leans-float-model": {
+        "slug": "lean-native-floats",
+        "heading": "how-to-convert-between-leans-floats-and-floatlib"
       }
     }
   },
@@ -168,156 +723,633 @@
     "headings": {
       "affine-integer-quantization": {
         "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
-        "heading": "affine-quantization"
-      }
-    }
-  },
-  "posits-and-the-quire": {
-    "slug": "posits-and-the-quire",
-    "headings": {
-      "error-bounds-and-quire-limits": {
-        "slug": "posits-and-the-quire",
-        "heading": "rounding-thresholds-and-exceptional-values"
+        "heading": "what-is-affine-quantization"
       },
-      "where-the-posit-work-stops": {
-        "slug": "posits-and-the-quire",
-        "heading": "rounding-thresholds-and-exceptional-values"
-      }
-    }
-  },
-  "kernels-fixed-word-algorithms": {
-    "slug": "kernels-fixed-word-algorithms",
-    "headings": {
-      "reading-a-compiler-certificate": {
-        "slug": "kernels-fixed-word-algorithms",
-        "heading": "compiler-replacements-with-csimp"
+      "bfloat16-range-and-fraction-width": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-is-bfloat16"
       },
-      "capacity-bounds-and-compiler-assumptions": {
-        "slug": "kernels-fixed-word-algorithms",
-        "heading": "capacity-bounds-and-backend-dispatch"
+      "choosing-a-scale-for-32-elements": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-is-a-blocks-scale-chosen"
+      },
+      "conditions-on-the-error-bounds": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "which-error-bounds-hold-for-which-formats"
+      },
+      "e8m0-and-microscaling-blocks": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-is-a-block-with-a-shared-scale"
+      },
+      "executable-types-and-lookup-tables": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-compute-with-the-one-byte-types"
+      },
+      "fnuz-one-zero-one-nan-and-a-shifted-bias": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-are-the-fnuz-formats"
+      },
+      "fp6-and-fp4-fully-finite-encodings": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-are-fp6-and-fp4"
+      },
+      "fp8-reserving-fewer-exceptional-codes": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-are-the-fp8-formats"
+      },
+      "mx-dot-products-with-one-final-rounding": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-do-mx-dot-products-round"
+      },
+      "rounding-and-overflow-policies": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-happens-when-a-result-doesnt-fit"
+      },
+      "tf32-multiplication-and-binary32-accumulation": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-is-tf32"
       }
     }
   },
-  "backends-and-the-planner": {
-    "slug": "backends-and-the-planner",
+  "p3109": {
+    "slug": "low-precision-formats-for-machine-learning",
+    "heading": "what-is-ieee-p3109",
     "headings": {
-      "choosing-and-caching-an-implementation": {
-        "slug": "backends-and-the-planner",
-        "heading": "following-a-public-arithmetic-call"
+      "arithmetic-rounds-the-whole-expression": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-does-p3109-arithmetic-round"
+      },
+      "comparisons-extrema-and-neighboring-values": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-compare-values-and-find-the-next-one"
+      },
+      "constructing-and-converting-p3109-values": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-create-p3109-values-in-a-program"
+      },
+      "encoding-and-rounding-theorems": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-is-proved-about-p3109-conversions"
+      },
+      "figure-ch15-code-space": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "figure-ch15-code-space"
+      },
+      "how-p3109-differs-from-the-ocp-formats": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-is-p3109-different-from-the-ocp-formats"
+      },
+      "inspecting-a-p3109-type": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-inspect-a-p3109-type"
+      },
+      "mixed-formats-and-external-destinations": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-mix-p3109-formats-with-other-formats"
+      },
+      "projection-round-then-saturate-then-encode": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-convert-a-number-into-a-p3109-format"
+      },
+      "saturation-and-overflow": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-happens-when-a-value-is-too-big"
+      },
+      "scaling-before-arithmetic": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-do-scaled-operations-work"
+      },
+      "square-root-rounding-by-exact-comparisons": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-do-square-roots-round"
+      },
+      "using-the-p3109-apis": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "using-the-p3109-apis"
+      },
+      "width-precision-signedness-and-domain": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "how-to-describe-a-p3109-format"
+      },
+      "zero-nan-and-infinity-codes": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "where-do-zero-nan-and-infinity-go"
       }
     }
   },
   "performance": {
     "slug": "performance",
     "headings": {
-      "timing-results": {
-        "slug": "performance",
-        "heading": "public-binary-arithmetic"
-      },
-      "comparing-with-leans-native-floats": {
-        "slug": "performance",
-        "heading": "host-arithmetic-as-a-reference"
-      },
-      "leans-model-and-its-compiled-operations": {
+      "arithmetic-through-the-same-model": {
         "slug": "lean-native-floats",
-        "heading": "leans-model-and-its-compiled-operations"
+        "heading": "what-is-proved-about-leans-arithmetic"
       },
       "both-implementations-lose-associativity": {
         "slug": "lean-native-floats",
-        "heading": "both-implementations-lose-associativity"
+        "heading": "do-lean-and-floatlib-give-the-same-answers"
+      },
+      "comparing-relative-times": {
+        "slug": "performance",
+        "heading": "how-to-read-a-time-ratio"
       },
       "converting-to-native-floats-changes-nan-payloads": {
         "slug": "lean-native-floats",
-        "heading": "converting-to-native-floats-changes-nan-payloads"
+        "heading": "why-do-nans-come-out-different"
       },
-      "proofs-relating-floatlib-to-leans-float-model": {
-        "slug": "lean-native-floats",
-        "heading": "proofs-relating-floatlib-to-leans-float-model"
-      },
-      "integer-conversions-in-lean-434": {
-        "slug": "lean-native-floats",
-        "heading": "integer-conversions"
-      },
-      "arithmetic-through-the-same-model": {
-        "slug": "lean-native-floats",
-        "heading": "arithmetic-through-the-same-model"
+      "correctness-comparisons-without-timings": {
+        "slug": "performance",
+        "heading": "which-comparisons-check-answers-but-not-speed"
       },
       "formats-rounding-directions-and-status": {
         "slug": "lean-native-floats",
-        "heading": "formats-rounding-directions-and-status"
+        "heading": "what-does-floatlib-add-to-float-and-float32"
       },
-      "opting-into-guarded-host-operations": {
+      "integer-conversions-in-lean-434": {
         "slug": "lean-native-floats",
-        "heading": "opting-into-guarded-host-operations"
+        "heading": "how-to-convert-integers-to-floats-and-back"
       },
-      "the-same-finite-bits-including-rounding-effects": {
+      "leans-model-and-its-compiled-operations": {
         "slug": "lean-native-floats",
-        "heading": "both-implementations-lose-associativity"
+        "heading": "what-are-float-and-float32"
+      },
+      "matched-binary-arithmetic-with-flocq-and-mpfr": {
+        "slug": "performance",
+        "heading": "how-does-floatlib-compare-with-flocq"
+      },
+      "method-for-the-nine-trial-comparison": {
+        "slug": "performance",
+        "heading": "how-we-measured-the-nine-trial-comparison"
+      },
+      "mpfr-matching-precision-and-exponent-range": {
+        "slug": "performance",
+        "heading": "how-we-ran-the-external-implementations"
       },
       "nan-payloads-change-at-the-native-conversion-boundary": {
         "slug": "lean-native-floats",
-        "heading": "converting-to-native-floats-changes-nan-payloads"
+        "heading": "why-do-nans-come-out-different"
+      },
+      "opting-into-guarded-host-operations": {
+        "slug": "lean-native-floats",
+        "heading": "how-to-use-the-processors-own-arithmetic"
+      },
+      "other-measured-workloads": {
+        "slug": "performance",
+        "heading": "how-does-floatlib-compare-with-flops"
+      },
+      "p3109-arithmetic-with-flops": {
+        "slug": "performance",
+        "heading": "how-does-floatlib-compare-with-flops"
+      },
+      "proofs-relating-floatlib-to-leans-float-model": {
+        "slug": "lean-native-floats",
+        "heading": "how-to-convert-between-leans-floats-and-floatlib"
+      },
+      "public-binary-arithmetic": {
+        "slug": "performance",
+        "heading": "how-fast-are-the-calls-you-write-yourself"
+      },
+      "reproducing-the-measurements": {
+        "slug": "performance",
+        "heading": "how-to-reproduce-the-measurements"
+      },
+      "running-the-code-we-proved": {
+        "slug": "performance",
+        "heading": "is-the-timed-code-the-proved-code"
+      },
+      "scalar-conversions-with-tensorlib": {
+        "slug": "performance",
+        "heading": "how-fast-are-conversions-between-formats"
+      },
+      "softfloat-native-c-and-python": {
+        "slug": "performance",
+        "heading": "how-we-ran-the-external-implementations"
+      },
+      "speed-work-in-october-2026": {
+        "slug": "performance",
+        "heading": "what-made-floatlib-faster-in-october-2026"
+      },
+      "the-flocq-program-we-timed": {
+        "slug": "performance",
+        "heading": "which-flocq-program-did-we-time"
+      },
+      "the-nine-trial-software-comparison": {
+        "slug": "performance",
+        "heading": "how-does-floatlib-compare-with-softfloat-mpfr-and-native-c"
       },
       "the-proved-conversion-and-arithmetic-bridges": {
         "slug": "lean-native-floats",
-        "heading": "proofs-relating-floatlib-to-leans-float-model"
+        "heading": "how-to-convert-between-leans-floats-and-floatlib"
+      },
+      "the-same-finite-bits-including-rounding-effects": {
+        "slug": "lean-native-floats",
+        "heading": "do-lean-and-floatlib-give-the-same-answers"
+      },
+      "universal-checking-the-posit-inputs-before-timing": {
+        "slug": "performance",
+        "heading": "how-we-ran-the-external-implementations"
+      },
+      "why-a-wider-format-can-be-faster": {
+        "slug": "performance",
+        "heading": "why-can-a-wider-format-be-faster"
+      },
+      "timing-results": {
+        "slug": "performance",
+        "heading": "how-fast-are-the-calls-you-write-yourself"
+      },
+      "comparing-with-leans-native-floats": {
+        "slug": "performance",
+        "heading": "how-does-floatlib-compare-with-softfloat-mpfr-and-native-c"
       }
     }
   },
-  "external-validation": {
-    "slug": "external-validation",
+  "posits-and-the-quire": {
+    "slug": "posits-and-the-quire",
     "headings": {
-      "decimal-values-cohorts-and-flags": {
-        "slug": "decimal-arithmetic",
-        "heading": "encoding-the-complete-datum"
-      },
-      "posit-exponentials-and-logarithms": {
+      "angles-in-units-of-pi": {
         "slug": "posits-and-the-quire",
-        "heading": "exponentials-and-logarithms"
+        "heading": "how-to-measure-angles-in-half-turns"
       },
-      "posit-hyperbolic-functions": {
+      "arithmetic-correctness": {
         "slug": "posits-and-the-quire",
-        "heading": "hyperbolic-functions"
+        "heading": "how-do-you-know-the-arithmetic-is-right"
       },
-      "exact-trigonometric-comparisons": {
+      "comparing-with-universal-and-softposit": {
         "slug": "posits-and-the-quire",
-        "heading": "trigonometric-functions-in-radians"
+        "heading": "how-we-compare-posits-with-universal-and-softposit"
       },
-      "posit-trigonometric-functions": {
+      "converting-to-integers": {
         "slug": "posits-and-the-quire",
-        "heading": "trigonometric-functions-in-radians"
+        "heading": "how-to-convert-a-posit-to-an-integer"
       },
-      "pi-scaled-posit-trigonometric-functions": {
+      "cross-checks-against-universal-and-softposit": {
         "slug": "posits-and-the-quire",
-        "heading": "angles-in-units-of-pi"
+        "heading": "how-we-compare-posits-with-universal-and-softposit"
       },
-      "posit-atan2": {
+      "error-bounds-and-quire-limits": {
         "slug": "posits-and-the-quire",
-        "heading": "trigonometric-functions-in-radians"
+        "heading": "how-does-a-posit-round"
       },
-      "posit-decimal-text": {
+      "exact-accumulation-with-a-quire": {
         "slug": "posits-and-the-quire",
-        "heading": "printing-and-parsing-decimal-text"
+        "heading": "what-is-a-quire"
       },
-      "posit-integer-conversion": {
+      "exact-decimal-text": {
         "slug": "posits-and-the-quire",
-        "heading": "converting-to-integers"
+        "heading": "how-to-print-and-parse-decimal-text"
       },
-      "natural-posit-exponentials-and-logarithms": {
+      "exponentials-and-logarithms": {
         "slug": "posits-and-the-quire",
-        "heading": "exponentials-and-logarithms"
+        "heading": "how-to-compute-exponentials-and-logarithms"
       },
-      "ordinary-posit-trigonometric-results": {
+      "finding-the-posit-implementation": {
         "slug": "posits-and-the-quire",
-        "heading": "trigonometric-functions-in-radians"
+        "heading": "how-to-read-the-bits-of-a-posit"
       },
-      "pi-scaled-posit-trigonometric-results": {
+      "how-precision-changes-with-magnitude": {
         "slug": "posits-and-the-quire",
-        "heading": "angles-in-units-of-pi"
+        "heading": "how-much-precision-does-a-posit-have"
       },
-      "two-coordinate-posit-angles": {
+      "hyperbolic-functions": {
         "slug": "posits-and-the-quire",
-        "heading": "trigonometric-functions-in-radians"
+        "heading": "how-to-compute-hyperbolic-functions"
+      },
+      "ordinary-trigonometric-functions": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "printing-and-parsing-decimal-text": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-print-and-parse-decimal-text"
+      },
+      "reading-a-posit-word": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-read-the-bits-of-a-posit"
+      },
+      "roots-powers-and-fused-products": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-roots-and-powers"
+      },
+      "rounding-thresholds-and-exceptional-values": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-does-a-posit-round"
+      },
+      "trigonometric-functions-in-radians": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-compute-sines-cosines-and-tangents"
+      },
+      "what-the-decoder-proof-assumes-about-the-compiler": {
+        "slug": "posits-and-the-quire",
+        "heading": "what-does-the-posit-decoder-trust-about-the-compiler"
+      },
+      "where-the-posit-work-stops": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-does-a-posit-round"
+      },
+      "widening-without-rounding": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-to-move-to-a-wider-posit"
+      },
+      "width-fixes-the-standard-posit-format": {
+        "slug": "posits-and-the-quire",
+        "heading": "what-does-the-width-decide"
+      }
+    }
+  },
+  "proving-numerical-bounds": {
+    "slug": "proving-numerical-bounds",
+    "headings": {
+      "error-bounds-from-floating-point-code": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-get-an-error-bound-for-floating-point-code"
+      },
+      "precision-approximation-and-domains": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-tighten-an-enclosure"
+      },
+      "sums-and-matrices": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-bound-sums-and-matrices"
+      },
+      "the-computation-behind-the-proof": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-does-interval-prove-infinitely-many-cases-at-once"
+      },
+      "user-defined-constants-and-functions": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-teach-interval-a-new-constant-or-function"
+      },
+      "using-the-evaluator-in-a-program": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-run-the-evaluator-yourself"
+      },
+      "why-subdivide": {
+        "slug": "proving-numerical-bounds",
+        "heading": "why-does-interval-cut-the-range-into-pieces"
+      }
+    }
+  },
+  "the-mathematics-of-rounding": {
+    "slug": "the-mathematics-of-rounding",
+    "headings": {
+      "a-grid-described-by-an-exponent-function": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-does-a-grid-know-its-spacing"
+      },
+      "absolute-and-relative-error-bounds": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-far-can-rounding-move-a-number"
+      },
+      "connecting-the-grid-to-packed-formats": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-the-grid-connects-to-packed-formats"
+      },
+      "double-rounding": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "why-rounding-twice-can-go-wrong"
+      },
+      "exact-subtraction": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "when-is-subtraction-exact"
+      },
+      "how-a-kernel-decides-to-round": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-running-code-decides-which-way-to-round"
+      },
+      "how-the-library-rounds-once": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-floatlib-rounds-only-once"
+      },
+      "relationship-to-flocq": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-this-relates-to-flocq"
+      },
+      "rounding-as-a-function-on-the-reals": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-to-round-a-number-to-a-grid"
+      },
+      "rounding-directions-and-the-ternary-value": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-to-choose-a-rounding-direction"
+      },
+      "the-unit-in-the-last-place": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "what-is-a-ulp"
+      },
+      "when-every-addition-rounds": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "what-if-every-addition-rounds"
+      }
+    }
+  },
+  "the-numerical-models": {
+    "slug": "the-numerical-models",
+    "headings": {
+      "a-common-interface-for-numerical-formats": {
+        "slug": "the-numerical-models",
+        "heading": "what-about-formats-that-arent-binary-floats"
+      },
+      "extended-reals-for-directed-rounding": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-round-down-or-up-for-a-guaranteed-bound"
+      },
+      "from-one-operation-to-a-calculation": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-bound-a-calculation-with-several-roundings"
+      },
+      "numerics-exact-values-and-contracts": {
+        "slug": "the-numerical-models",
+        "heading": "what-about-formats-that-arent-binary-floats"
+      },
+      "one-word-three-readings": {
+        "slug": "the-numerical-models",
+        "heading": "one-stored-value-three-readings"
+      },
+      "proving-inputs-and-results-are-finite": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-prove-a-result-is-finite"
+      },
+      "status-flags-as-data": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-see-which-flags-an-operation-raised"
+      },
+      "the-reference-operations-decode-compute-exactly-round-once": {
+        "slug": "the-numerical-models",
+        "heading": "how-are-the-reference-operations-defined"
+      },
+      "the-rounding-contract-as-a-statement-about-reals": {
+        "slug": "the-numerical-models",
+        "heading": "what-does-the-addition-theorem-say-about-real-numbers"
+      },
+      "what-rounding-discards": {
+        "slug": "the-numerical-models",
+        "heading": "why-does-adding-a-tiny-number-to-one-give-back-one"
+      }
+    }
+  },
+  "using-the-library": {
+    "slug": "using-the-library",
+    "headings": {
+      "an-interval-from-two-directed-roundings": {
+        "slug": "using-the-library",
+        "heading": "how-to-trap-a-number-between-two-roundings"
+      },
+      "arithmetic-and-exact-stored-values": {
+        "slug": "using-the-library",
+        "heading": "how-to-see-the-exact-value"
+      },
+      "choosing-a-different-endpoint-format": {
+        "slug": "proving-numerical-bounds",
+        "heading": "how-to-choose-a-different-endpoint-format"
+      },
+      "choosing-a-format": {
+        "slug": "using-the-library",
+        "heading": "which-formats-can-you-use"
+      },
+      "choosing-imports": {
+        "slug": "using-the-library",
+        "heading": "which-import-do-you-need"
+      },
+      "complex-arithmetic": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-work-with-complex-numbers"
+      },
+      "examples-and-extension-guides": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-add-your-own-format-or-backend"
+      },
+      "extending-the-library": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-add-your-own-format-or-backend"
+      },
+      "further-examples": {
+        "slug": "using-the-library",
+        "heading": "where-to-go-next"
+      },
+      "inspecting-a-format": {
+        "slug": "using-the-library",
+        "heading": "how-to-look-up-a-formats-properties"
+      },
+      "library-structure": {
+        "slug": "using-the-library",
+        "heading": "where-do-the-theorems-come-from"
+      },
+      "mixing-formats": {
+        "slug": "ieee-binary-formats",
+        "heading": "how-to-mix-formats"
+      },
+      "proving-arithmetic-agrees-with-its-specification": {
+        "slug": "using-the-library",
+        "heading": "how-to-prove-your-first-theorem"
+      },
+      "reductions-that-round-once": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-to-add-a-list-with-one-rounding"
+      },
+      "rounding-directions-and-status-flags": {
+        "slug": "using-the-library",
+        "heading": "how-to-choose-a-rounding-direction"
+      },
+      "setting-up-a-project": {
+        "slug": "using-the-library",
+        "heading": "how-to-set-up-a-project"
+      },
+      "sums-and-dot-products-with-one-rounding": {
+        "slug": "the-mathematics-of-rounding",
+        "heading": "how-to-add-a-list-with-one-rounding"
+      },
+      "the-result-as-a-real-number": {
+        "slug": "the-numerical-models",
+        "heading": "how-to-use-these-theorems-on-binary32-values"
+      },
+      "what-the-theorems-give-you": {
+        "slug": "using-the-library",
+        "heading": "how-to-prove-your-first-theorem"
+      }
+    }
+  },
+  "why-execution-and-proofs-are-separate": {
+    "slug": "the-numerical-models",
+    "headings": {
+      "certifying-an-implementation": {
+        "slug": "the-numerical-models",
+        "heading": "how-do-we-know-the-fast-code-is-right"
+      },
+      "compiler-replacements-with-csimp": {
+        "slug": "the-numerical-models",
+        "heading": "how-does-the-compiler-swap-in-faster-code"
+      },
+      "figure-ch05-runtime-proof-split": {
+        "slug": "the-numerical-models",
+        "heading": "figure-ch05-runtime-proof-split"
+      },
+      "following-a-theorems-assumptions": {
+        "slug": "the-numerical-models",
+        "heading": "what-do-the-proofs-assume"
+      },
+      "from-addition-to-its-reference-operation": {
+        "slug": "the-numerical-models",
+        "heading": "what-happens-when-you-add-two-numbers"
+      },
+      "lean-compilation-and-code-extraction": {
+        "slug": "the-numerical-models",
+        "heading": "how-is-this-different-from-code-extraction"
+      },
+      "public-and-private-imports": {
+        "slug": "the-numerical-models",
+        "heading": "where-do-the-code-and-its-proofs-live"
+      },
+      "runtimelean-and-prooflean": {
+        "slug": "the-numerical-models",
+        "heading": "where-do-the-code-and-its-proofs-live"
+      },
+      "using-numerical-theorems-with-executable-arithmetic": {
+        "slug": "the-numerical-models",
+        "heading": "one-stored-value-three-readings"
+      },
+      "when-an-executable-definition-needs-a-proof": {
+        "slug": "the-numerical-models",
+        "heading": "where-do-the-code-and-its-proofs-live"
+      }
+    }
+  },
+  "why-verifying-floating-point-is-hard": {
+    "slug": "from-reals-to-machine-numbers",
+    "headings": {
+      "compilers-and-hardware": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-does-a-proof-not-cover"
+      },
+      "connecting-an-implementation-to-its-specification": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "where-is-the-exact-result-kept"
+      },
+      "error-bounds-and-exact-output-words": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-isnt-an-error-bound-enough"
+      },
+      "exceptional-values-and-signed-zeros": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "how-do-nans-and-infinities-behave"
+      },
+      "limits-of-exhaustive-testing": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-cant-you-test-every-input"
+      },
+      "overflow-policy-and-the-sign-of-zero": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-happens-when-a-number-doesnt-fit"
+      },
+      "rounding-changes-algebraic-identities": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "why-does-moving-parentheses-change-the-answer"
+      },
+      "rounding-twice": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-happens-when-you-round-twice"
+      },
+      "what-a-proof-does-not-cover": {
+        "slug": "from-reals-to-machine-numbers",
+        "heading": "what-does-a-proof-not-cover"
       }
     }
   }

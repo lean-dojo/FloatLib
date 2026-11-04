@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit hyperbolic functions
 
-A lawful model codec changes storage without adding numerical rounding. The operations
-inherit the model's NaR propagation and real-domain checks.
+`tanH`, `arcTanH`, `sinH`, `cosH`, `arcSinH`, and `arcCosH` lift the correctly rounded model
+operations through a lawful model codec. Changing the storage adds no rounding. NaR propagation
+and the real-domain checks are the model's own.
 -/
 
 @[expose] public section
@@ -30,7 +31,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Correctly rounded hyperbolic tangent; NaR propagates. -/
+/-- Correctly rounded hyperbolic tangent. NaR propagates. -/
 @[inline] def tanH (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.tanH value
 
@@ -38,19 +39,19 @@ local notation "Value" =>
 @[inline] def arcTanH (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcTanH value
 
-/-- Correctly rounded hyperbolic sine; NaR propagates. -/
+/-- Correctly rounded hyperbolic sine. NaR propagates. -/
 @[inline] def sinH (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sinH value
 
-/-- Correctly rounded hyperbolic cosine; NaR propagates. -/
+/-- Correctly rounded hyperbolic cosine. NaR propagates. -/
 @[inline] def cosH (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.cosH value
 
-/-- Correctly rounded inverse hyperbolic sine; NaR propagates. -/
+/-- Correctly rounded inverse hyperbolic sine. NaR propagates. -/
 @[inline] def arcSinH (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcSinH value
 
-/-- Correctly rounded inverse hyperbolic cosine; inputs below `1` produce NaR. -/
+/-- Correctly rounded inverse hyperbolic cosine. Inputs below `1` produce NaR. -/
 @[inline] def arcCosH (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcCosH value
 

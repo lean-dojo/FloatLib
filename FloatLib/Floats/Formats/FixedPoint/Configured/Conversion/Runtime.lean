@@ -12,12 +12,12 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Exact fixed-point conversion runtime
 
-An unbounded configured fixed-point destination has no overflow and no exceptional values. Every
-finite rational is rounded once to the nearest grid coefficient, with ties to even. Infinity and
-exceptional observations are rejected because the representation has no corresponding code.
+An unbounded configured fixed-point destination has no overflow and no exceptional values. So
+every finite rational is rounded once to the nearest grid coefficient, with ties to even, and
+infinity or an exceptional observation is rejected, because the representation has no code for it.
 
-Proofs of the reduction equations live in `Conversion.Proof`; destination capability instances
-live in `Conversion.Instances`.
+Proofs of the reduction equations live in `Conversion.Proof`, and the destination capability
+instances in `Conversion.Instances`.
 -/
 
 @[expose] public section

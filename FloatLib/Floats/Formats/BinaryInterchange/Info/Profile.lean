@@ -28,16 +28,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
 /-!
 # Inspection profiles for binary-interchange formats
 
-Representation, exceptional values, rounding rules, and theorem groups used by `#float_info`.
-`Info.Command` resolves the carrier, its storage plan, and its installed operations. Complex and
-interval profiles also use `inspectSummary` and `standardName` to read their component descriptor.
+This module assembles what `#float_info` reports about a binary-interchange format: its
+representation, exceptional values, rounding rules and theorem groups. `Info.Command` resolves
+the carrier, its storage plan, and its installed operations. Complex and interval profiles also
+use `inspectSummary` and `standardName` to read their component descriptor.
 
-The theorems a report lists depend on the carrier. A configured, static-byte, or descriptor value
-gets the theorems stated about its own type first, chosen by its installed operations, and the
-theorems about the proof model `Model format` second, reached through the carrier's embedding.
-The proof model itself gets the model theorems directly. Each theorem group states its scope.
-Applicability distinguishes destination-only IEEE contracts from contracts requiring IEEE
-encodings on both sides of a cast.
+Which theorems a report lists depends on the carrier. A configured, static-byte, or descriptor
+value gets the theorems stated about its own type first, chosen by its installed operations, and
+then the theorems about the proof model `Model format`, reached through the carrier's embedding.
+The proof model itself gets the model theorems with no embedding in between. Each theorem group
+states its scope, and applicability tells destination-only IEEE contracts apart from contracts
+requiring IEEE encodings on both sides of a cast.
 -/
 
 @[expose] public section
@@ -238,8 +239,8 @@ meta def integralApplicability (summary : Summary) : TheoremApplicability :=
       "the theorem requires `fracWidth ≤ maxNormalExponent`; this descriptor fails that range premise"
 
 /--
-Six significant decimal digits of the positive dyadic `significand * 2 ^ exponent`, as
-`3.40282e38`, computed exactly and rounded half up. It is `none` for zero or an exponent of
+Six significant decimal digits of the positive dyadic `significand * 2 ^ exponent`, as `3.40282e38`,
+computed with exact arithmetic and rounded half up. It is `none` for zero or an exponent of
 magnitude beyond a million, whose expansion would be slow.
 -/
 meta def sixDigits (significand : Nat) (exponent : Int) : Option String :=
@@ -826,7 +827,9 @@ private meta def descriptorSurfaces (operations : CoreOperationCoverage) :
         "`x + y` is `Descriptor.Spec.add`, the model operation lifted through that identity " ++
         "codec, and likewise for the other operations" } ]
 
-/-- Storage of a carrier; a configured carrier's word comes from its storage plan instead. -/
+/--
+Storage of a carrier. A configured carrier's word comes from its storage plan instead.
+-/
 meta def carrierStorage (summary : Summary) : Carrier → String
   | .configured => "the word its storage plan selects"
   | .staticByte => "UInt8"
@@ -898,7 +901,7 @@ Build the user-facing inspection profile of a binary descriptor seen through `ca
 
 `storage` describes the carrier's storage, and `operations` the universal operations whose
 capabilities are installed, which decide the refinement equations the report lists. The default
-carrier is the proof model itself, whose report lists the model theorems directly.
+carrier is the proof model itself, whose report lists the model theorems without an embedding.
 -/
 meta def profile
     (summary : Summary)

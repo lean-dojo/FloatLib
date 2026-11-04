@@ -15,10 +15,9 @@ import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 /-!
 # Correctness of two-word normal multiplication
 
-The runtime kernel multiplies two normal significands exactly in four native words, rounds the
-product of at most `2 * fracWidth + 2` bits to nearest-even, and packs a normal result. Subnormal
+At runtime the kernel multiplies two normal significands exactly in four native words, rounds the
+product of at most `2 * fracWidth + 2` bits to nearest even, and packs a normal result. Subnormal
 operands and results, overflow, NaNs, and infinities are left to the operation dispatcher.
-
 `roundNormalProduct_refines` accepts any four-limb magnitude in
 `[2^(2 * fracWidth), 2^(2 * fracWidth + 3))` together with its leading-bit position.
 -/

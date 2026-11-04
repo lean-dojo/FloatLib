@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Proof
 /-!
 # Configured posit conversion instances
 
-Every configured posit supports exact-rational quantization under explicit infinity and
-exceptional-value policies.
+Every configured posit gets the `quantizer` instance for exact-rational conversion and a default
+quantizer. What happens to an infinity or an exceptional value is up to the policies in the
+conversion `Context`, and the default maps both to `NaR`.
 -/
 
 @[expose] public section
@@ -28,7 +29,7 @@ namespace Conversion
 variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
-/-- Every configured posit supports exact-rational quantization under explicit special policy. -/
+/-- Exact-rational quantization for every configured posit, with special values set by context. -/
 instance quantizer :
     FloatLib.Floats.ExecFloat.Quantizer
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) Rat where

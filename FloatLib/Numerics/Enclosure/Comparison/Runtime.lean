@@ -12,10 +12,10 @@ public import Mathlib.Data.Nat.Find
 /-!
 # Adaptive comparison with rational enclosures
 
-The search uses only rational arithmetic. Its termination argument is a proposition and is
-erased from executable code. Callers supply a sequence of increasingly accurate intervals and
-a proof that some interval excludes the boundary; real containment is used separately to prove
-the returned ordering correct.
+Everything in the search is rational arithmetic. Its termination argument is a proposition, so it's
+erased from executable code. Callers supply a sequence of increasingly accurate intervals and a
+proof that some interval excludes the boundary, and real containment is used on its own to prove the
+returned ordering correct.
 -/
 
 @[expose] public section

@@ -12,10 +12,10 @@ import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Proof
 /-!
 # Compiler certificate for the native integer square root
 
-The logical `sqrt` is the Newton iteration, which the kernel can evaluate. Compiled code runs
+The logical `sqrt` is the Newton iteration, which the kernel can evaluate, while compiled code runs
 `sqrtChecked`, whose floating-point candidate is accepted only after an exact square check. Both
-compute `Nat.sqrt` on every word, so the substitution is registered with `@[csimp]`. Runtime modules
-import this module to compile their calls through the checked path.
+compute `Nat.sqrt` on every word. So we register the substitution with `@[csimp]`. Runtime modules
+import this module so that their calls compile through the checked path.
 -/
 
 @[expose] public section

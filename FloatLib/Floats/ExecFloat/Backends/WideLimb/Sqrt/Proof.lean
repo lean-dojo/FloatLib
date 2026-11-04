@@ -14,9 +14,9 @@ public import FloatLib.Floats.ExecFloat.Backends.SqrtNormalRounding
 /-!
 # Correctness of wide-limb square root
 
-The integer candidate is certified by square inequalities. For positive normal inputs, its
-exact root and remainder meet the hypotheses of the shared square-root rounding theorem. All other
-inputs use the reference operation, including its signed-zero and NaN payload behavior.
+Square inequalities certify the integer candidate. For positive normal inputs its exact root and
+remainder meet the hypotheses of the shared square-root rounding theorem, and all other inputs use
+the reference operation, signed-zero and NaN payload behavior included.
 -/
 
 @[expose] public section

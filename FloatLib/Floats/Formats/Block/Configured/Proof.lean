@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Block.SharedScale.Proof
 /-!
 # Correctness of configured shared-scale blocks
 
-Wrapping and unwrapping preserve the complete block code. `quantizesAt_quantizeAt` lifts the
-model's lane-wise nearest-even rounding theorem to configured blocks, at the exponent supplied by
-the caller.
+A configured block wraps the model's block code, and unwrapping gives the same code back. On top
+of that, `quantizesAt_quantizeAt` carries the model's lane-wise nearest-even rounding theorem over
+to configured blocks, at whatever exponent the caller supplies.
 -/
 
 @[expose] public section
@@ -35,7 +35,7 @@ variable {lanes : Nat}
     ofCode value.toCode = value :=
   ExecFloat.ofRaw_raw value
 
-/-- Quantization records exactly the shared exponent supplied by the caller. -/
+/-- Quantization records the caller's shared exponent unchanged. -/
 @[simp, grind =] theorem exponent_quantizeAt
     (exponent : Int) (input : Vector Rat lanes) :
     (quantizeAt exponent input).exponent = exponent :=

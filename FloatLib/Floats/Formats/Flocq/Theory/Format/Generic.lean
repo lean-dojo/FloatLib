@@ -12,13 +12,13 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 /-!
 # Generic format properties
 
-The Flocq-style generic format describes representability through a radix and a canonical exponent
-function, before choosing a concrete FIX, FLX, or FLT family. This module develops the closure and
-representation facts needed by later rounding theory.
+Before you pick a concrete FIX, FLX, or FLT family, a Flocq-style generic format already says which
+reals are representable, through a radix and a canonical exponent function. This module proves the
+closure and representation facts the rounding theory builds on, such as `x` being representable if
+and only if `-x` is.
 
-The layer is mathematical rather than executable: it gives binary-interchange and other format
-implementations a common real-valued specification against which their exact integer algorithms
-can be proved.
+None of it runs. It's the common real-valued specification that binary-interchange and other format
+implementations prove their exact integer algorithms against.
 -/
 
 @[expose] public section
@@ -53,7 +53,7 @@ theorem generic_format_neg (x : ℝ) (hx : genericFormat β fexp x) :
   apply generic_format_of_scaled_mantissa_int (n := -n)
   simp [hn]
 
-/-- A value is representable exactly when its negation is representable. -/
+/-- A value is representable if and only if its negation is representable. -/
 @[simp] theorem generic_format_neg_iff (x : ℝ) :
     genericFormat β fexp (-x) ↔ genericFormat β fexp x := by
   constructor
@@ -61,7 +61,7 @@ theorem generic_format_neg (x : ℝ) (hx : genericFormat β fexp x) :
     simpa using generic_format_neg (β := β) (fexp := fexp) (-x) hx
   · exact generic_format_neg (β := β) (fexp := fexp) x
 
-/-- A value is representable exactly when its absolute value is representable. -/
+/-- A value is representable if and only if its absolute value is representable. -/
 theorem generic_format_abs_iff (x : ℝ) :
     genericFormat β fexp (abs x) ↔ genericFormat β fexp x := by
   rcases le_total 0 x with hx | hx

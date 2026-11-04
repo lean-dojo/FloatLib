@@ -22,13 +22,22 @@ function decode(value: string): string {
 
 // Resolve moved section bookmarks before lookup so navigation uses the current chapter and heading.
 function currentChapter(slug: string, heading?: string): Extract<Route, { kind: 'chapter' }> {
-  const alias = aliases.get(slug);
-  if (!alias) return { kind: 'chapter', slug, heading };
-  if (heading !== undefined && alias.headings && Object.hasOwn(alias.headings, heading)) {
-    const target = alias.headings[heading];
-    return { kind: 'chapter', slug: target.slug, heading: target.heading };
+  const seen = new Set<string>();
+  while (true) {
+    const key = JSON.stringify([slug, heading]);
+    if (seen.has(key)) return { kind: 'chapter', slug, heading };
+    seen.add(key);
+    const alias = aliases.get(slug);
+    if (!alias) return { kind: 'chapter', slug, heading };
+    if (heading !== undefined && alias.headings && Object.hasOwn(alias.headings, heading)) {
+      const target = alias.headings[heading];
+      slug = target.slug;
+      heading = target.heading;
+    } else {
+      heading = heading ?? alias.heading;
+      slug = alias.slug;
+    }
   }
-  return { kind: 'chapter', slug: alias.slug, heading: heading ?? alias.heading };
 }
 
 export function parseRoute(hash = location.hash): Route {

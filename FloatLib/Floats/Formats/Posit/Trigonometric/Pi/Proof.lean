@@ -13,9 +13,10 @@ public import FloatLib.Numerics.Exact.Trigonometric.Pi.Proof
 /-!
 # Real rounding and domains of pi-scaled posit functions
 
-The exact rational classifiers and convergent comparison kernels determine the standard
-rounding of the mathematical result. Tangent poles are excluded explicitly: Mathlib's
-zero-valued totalization at a pole is not the posit operation's exceptional-value policy.
+Exact rational classifiers and convergent comparison kernels together determine the standard
+rounding of each mathematical result. Tangent poles need care, because Mathlib totalizes the
+tangent to zero at a pole and the posit operation has a different exceptional-value policy, so the
+tangent rounding theorem holds away from the half-integer poles and every pole produces NaR.
 -/
 
 public section

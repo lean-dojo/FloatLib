@@ -14,11 +14,11 @@ public import FloatLib.Numerics.Operation.Semantics
 /-!
 # Block-scaled numerical systems
 
-Microscaling formats store one E8M0 scale beside a block of low-precision element codes. The block
-is therefore the numerical code: an element word by itself does not carry its complete magnitude.
-This module exposes that joint representation through `NumericalSystem` and interprets successful
-decoding as an array of exact dyadic values. The raw block admits any length; an empty block has
-no element through which its scale is read, so it denotes the empty array even with a NaN scale.
+Microscaling formats store one E8M0 scale beside a block of low-precision element codes, and an
+element word alone doesn't carry its full magnitude. So the numerical code is the whole block.
+This module exposes that joint representation through `NumericalSystem`, and a successful decode
+gives an array of exact dyadic values. Raw blocks can have any length. An empty block has no
+element through which to read its scale, so it denotes the empty array even when the scale is NaN.
 -/
 
 @[expose] public section
@@ -46,14 +46,13 @@ namespace BlockCode
 end BlockCode
 
 /--
-All-finite view of an E8M0-scaled block: the array of exact scaled element values when every
-element decodes to a finite value, and NaN otherwise. An element infinity, an element NaN and a NaN
-scale all give whole-block NaN, so this system does not keep the per-lane values of OCP MX §5.1;
-`Standard.Block.decodeLane` decodes each lane of a concrete profile with its exceptional class.
+All-finite view of an E8M0-scaled block: the exact scaled element values when every element is
+finite, and NaN otherwise. An element infinity, an element NaN and a NaN scale all make the whole
+block NaN, which drops the per-lane values of OCP MX §5.1. `Standard.Block.decodeLane` keeps them,
+decoding each lane of a concrete profile with its exceptional class.
 
-The scale is read only through the elements, as in `E8M0.decodeBlock?`. A block with a NaN scale
-therefore denotes NaN when it has at least one element, while the empty block denotes the empty
-array whatever its scale. Blocks of the concrete OCP profiles, `Standard.Block`, always have 32
+The scale is read only through the elements, as in `E8M0.decodeBlock?`, so the empty block denotes
+the empty array whatever its scale. Concrete OCP blocks, `Standard.Block`, always have 32
 elements.
 -/
 def blockSystem (fmt : FloatFormat) : NumericalSystem where
@@ -64,7 +63,7 @@ def blockSystem (fmt : FloatFormat) : NumericalSystem where
     | some values => .finite values
     | none => .exceptional .nan
 
-/-- A block represents `values` exactly when its joint decoder returns `values`. -/
+/-- A block represents `values` if and only if its joint decoder returns `values`. -/
 theorem blockSystem_represents_iff {fmt : FloatFormat} (block : BlockCode fmt)
     (values : Array Numerics.Dyadic) :
     (blockSystem fmt).Represents block values ↔

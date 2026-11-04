@@ -11,14 +11,18 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Appl
 /-!
 # Premises of the `roundoff` analysis
 
-The premises of a mixed rule are proved by the analysis itself: finiteness through range
-theorems and the finiteness of exact operations, a fact about every value of a variable for a
-fresh one, a nonzero divisor from a sign or from a margin of its enclosure, the domain of a
-square root from the sign of its operand, and range conditions from the enclosure
-`(1 + r) * |x₀| + a` of an exact value. A premise that cannot be proved stays open as a condition
-on the inputs, except a premise that selects a rule, such as a sign or a zero test, which rejects
-the rule instead, and a finiteness whose derivation is in progress, which rejects a rule that needs
-it: a derivation is not nested inside itself, nor more than `finiteDepth` deep.
+The analysis proves the premises of a mixed rule itself:
+
+* finiteness through range theorems and the finiteness of exact operations,
+* a fact about every value of a variable for a fresh one,
+* a nonzero divisor from a sign or from a margin of its enclosure,
+* the domain of a square root from the sign of its operand,
+* and range conditions from the enclosure `(1 + r) * |x₀| + a` of an exact value.
+
+A premise that cannot be proved stays open as a condition on the inputs, with two exceptions. A
+premise that selects a rule, such as a sign or a zero test, rejects the rule instead. A finiteness
+whose derivation is in progress rejects a rule that needs it, because a derivation is not nested
+inside itself, nor more than `finiteDepth` deep.
 -/
 
 public meta section
@@ -32,8 +36,8 @@ namespace Analyze
 
 /-- Prove a premise of a mixed rule: finiteness through a range theorem, a fact about every
 value of a variable for a fresh one, otherwise a selection premise through the exact analysis or
-the sign rules. On `false` the premise is left unassigned, for the caller to keep or reject; `true`
-may rest on obligations recorded as pending. -/
+the sign rules. On `false` the premise is left unassigned, for the caller to keep or reject, and
+`true` may rest on obligations recorded as pending. -/
 def prove (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := do
   let type ← instantiateMVars (← goal.getType)
   -- A premise that reads a container through a surface getter is normalized like the analyzed
@@ -63,8 +67,8 @@ def prove (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := do
         return false
   r.proveNormalized goal fuel
 
-/-- The domain condition of square root follows from the sign `0 ≤ toReal value`; the finiteness
-of the value is proved or kept open. -/
+/-- The domain condition of square root follows from the sign `0 ≤ toReal value`, and the
+finiteness of the value is proved or kept open. -/
 def proveDomain (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := goal.withContext do
   let some value := domainValue? (← instantiateMVars (← goal.getType)) | return false
   let proved? ← speculate? do
@@ -91,8 +95,8 @@ def proveNormalized (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool 
   else r.proveSelection goal fuel
 
 /-- A premise about every value of a variable, such as the finiteness of every entry of a
-computed container, is proved for a fresh one. The conditions left are required of every value;
-no cached result mentioning the variable escapes. An implication is not such a premise. -/
+computed container, is proved for a fresh one. The conditions left are required of every value,
+and no cached result mentioning the variable escapes. An implication is not such a premise. -/
 def proveForall (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := goal.withContext do
   let .forallE name domain body info ← whnfR (← instantiateMVars (← goal.getType)) |
     return false
@@ -256,7 +260,7 @@ def rangeByBounds (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool :=
 
 /-- Finiteness, proved once per scope: an earlier proof whose local variables are in the current
 context is reused. A finiteness whose derivation is in progress is not derived again inside it
-(`Session.deriving`); the search fails there instead of repeating. -/
+(`Session.deriving`), and the search fails there instead of repeating. -/
 def proveFinite (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := goal.withContext do
   let type ← instantiateMVars (← goal.getType)
   let derive : AnalyzeM Bool := do
@@ -276,8 +280,8 @@ def proveFinite (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := g
   return true
 
 /-- Finiteness from the context, from an analyzed node, or from a registered finiteness
-theorem. Its enclosure premises come from the analysis; a range condition it cannot prove
-remains an obligation on the inputs, as does the finiteness of an input. -/
+theorem. Its enclosure premises come from the analysis. A range condition it cannot prove stays
+an obligation on the inputs, and so does the finiteness of an input. -/
 def deriveFinite (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := goal.withContext do
   let session ← read
   let type ← instantiateMVars (← goal.getType)

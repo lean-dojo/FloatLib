@@ -12,10 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Mathlib ordering and enumeration for configured posits
 
-Configured values use packed carriers selected from their static width. The certified codec is an
-equivalence with the exact-width model, so the standard posit order and finite enumeration can be
-transported through any lawful model codec, including primitive words, word pairs, and wide
-`BitVec` storage.
+Here configured posits get their Mathlib `LinearOrder` and `FinEnum` instances, both through
+`modelEquiv`. A configured value lives in a packed carrier chosen from its static width, but the
+certified codec is an equivalence with the exact-width model. So the standard posit order and the
+finite enumeration carry over through any lawful model codec, whether the storage is a primitive
+word, a word pair, or wide `BitVec` storage.
 -/
 
 @[expose] public section

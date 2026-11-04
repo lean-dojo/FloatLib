@@ -12,9 +12,9 @@ public import Mathlib.NumberTheory.Niven
 /-!
 # Complete rational-value classification for pi-scaled sine and cosine
 
-Niven's theorem supplies completeness, including thirds as well as the more familiar integer
-and half-integer angles. Every unclassified value is irrational, so converging rational
-enclosures eventually separate it from any rational rounding boundary.
+Completeness comes from Niven's theorem, which covers thirds as well as the more familiar integer
+and half-integer angles, and every value the classifier leaves out is irrational, so converging
+rational enclosures eventually separate it from any rational rounding boundary.
 -/
 
 public section

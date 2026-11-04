@@ -12,13 +12,11 @@ public import FloatLib.Numerics.Exact.Dyadic.Comparison.Runtime
 /-!
 # Executable exact-dyadic posit rounding
 
-Finite posit inputs and the exact results of addition, subtraction, multiplication, and fused
-multiply-add are dyadic. This module runs the standardized code search using aligned integer
-comparisons instead of repeatedly materializing normalized rational values.
-
-The search interval, `(n + 1)`-bit threshold rule, saturation behavior, tie-breaking rule, and
-whole-word negative symmetry are identical to `Model.roundRat`. Refinement theorems live in
-`Dyadic.Proof`.
+Every finite posit is a dyadic, and so are the exact sum, difference, product, and fused
+multiply-add of finite posits. This module runs the standard code search on those values with
+aligned integer comparisons, so it never builds a normalized rational along the way. Everything
+else matches `Model.roundRat`: the search interval, the `(n + 1)`-bit threshold rule, saturation,
+tie breaking, and whole-word negative symmetry. `Dyadic.Proof` has the refinement theorems.
 -/
 
 @[expose] public section
@@ -28,8 +26,8 @@ namespace FloatLib.Floats.Formats.Posit.Model.DyadicRounding
 /--
 Exact dyadic value of the posit word with unsigned code `code`.
 
-For `code < format.signMaskNat`, the value is nonnegative and finite. In general, `ofNatBits`
-first reduces the code modulo the format's modulus. Zero and NaR map to `Dyadic.zero`; other
+For `code < format.signMaskNat` the value is nonnegative and finite. Any other code is first
+reduced modulo the format's modulus by `ofNatBits`. Zero and NaR map to `Dyadic.zero`, and other
 words decode with their sign.
 -/
 @[inline] def nonnegativeDyadicAt (format : Format) (code : Nat) : FloatLib.Numerics.Dyadic :=
@@ -41,8 +39,8 @@ words decode with their sign.
 /--
 Exact smallest positive value in the dyadic comparison domain.
 
-Code `1` has a unit significand and an all-zero regime prefix. Writing that value directly avoids
-running the width-linear generic decoder for the same format constant on every rounding call.
+Code `1` has a unit significand and an all-zero regime prefix. Writing that value down by hand
+saves running the width-linear generic decoder for the same format constant on every rounding call.
 -/
 @[inline] def minPositive (format : Format) : FloatLib.Numerics.Dyadic :=
   {
@@ -108,11 +106,11 @@ pass a nonzero magnitude with `negative = false`.
   { value with negative := false }
 
 /--
-Restore a result sign directly on a complete posit encoding.
+Restore a result sign on a complete posit encoding.
 
-Every nonzero negative posit is the whole-word two's complement of its positive encoding. The
-explicit zero branch preserves the standard's unique zero. This operation is independent
-of the runtime carrier and is therefore shared by native-word and fixed-limb backends.
+Every nonzero negative posit is the whole-word two's complement of its positive encoding, and a
+zero code stays zero, which keeps the standard's unique zero. Nothing here depends on the runtime
+carrier, so native-word and fixed-limb backends share the operation.
 -/
 @[inline] def restoreSignCode
     (format : Format) (negative : Bool) (positiveCode : Nat) : Nat :=

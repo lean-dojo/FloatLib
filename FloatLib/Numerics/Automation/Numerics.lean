@@ -16,14 +16,14 @@ public meta import Lean.Elab.Tactic.Omega
 /-!
 # Representation-independent numerical automation
 
-`numerics` rewrites executable numerical expressions through proved semantic rules registered by
-their concrete families, then discharges routine arithmetic and side conditions. Closed bit-level
-evaluation is attempted only after semantic simplification. `numerics!` explicitly requests that
-concrete phase even for goals with local variables.
+`numerics` rewrites executable numerical expressions through proved semantic rules that their
+concrete families register, and then discharges routine arithmetic and side conditions. Closed
+bit-level evaluation is tried only after semantic simplification, and `numerics!` asks for that
+concrete phase even on goals with local variables.
 
-The tactic never chooses a runtime backend and does not unfold optimized kernels on symbolic
-goals. Numerical families keep direct monomorphic executable functions; this module only consumes
-their proof theorems.
+It never chooses a runtime backend, and it doesn't unfold optimized kernels on symbolic goals.
+Numerical families keep their monomorphic executable functions as they are, and this module only
+consumes their proof theorems.
 -/
 
 public meta section
@@ -79,8 +79,8 @@ attribute [aesop safe -50 (rule_sets := [Numerics])] assumption
 /--
 Apply checked-operation eliminators through Lean's tactic elaborator.
 
-These are tactic rules rather than indexed apply rules because the semantic operands are inferred
-from the family contract, not from the displayed `Option.map` result.
+These are tactic rules and not indexed apply rules, because the semantic operands are inferred from
+the family contract instead of from the displayed `Option.map` result.
 -/
 private meta def applyChecked3 : Aesop.RuleTac :=
   Aesop.RuleTac.ofTacticSyntax fun _ =>
@@ -199,8 +199,8 @@ elab (name := numericsBang) "numerics!" : tactic => do
 /--
 Construct a proof-indexed numerical view from a runtime code.
 
-The expected type determines the numerical system and semantic value. The proof component is
-erased, so the resulting runtime data is exactly `code`.
+The expected type determines the numerical system and semantic value. The proof component is erased,
+so the resulting runtime data is `code` itself.
 -/
 syntax (name := numericsRefine) "numerics_refine" term : term
 

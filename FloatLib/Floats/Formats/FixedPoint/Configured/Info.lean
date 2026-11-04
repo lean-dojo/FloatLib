@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.FixedPoint.Exact.Info
 /-!
 # Inspection for configured exact fixed point
 
-This optional meta module registers `#float_info` for `ExecFloat.FixedPoint`. The executable
-configured type remains independently importable without editor elaborators or the public proof
+`#float_info` for `ExecFloat.FixedPoint` lives in this optional meta module. You can import the
+executable configured type without it, and so without editor elaborators or the public proof
 module.
 -/
 

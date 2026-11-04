@@ -11,14 +11,17 @@ public import FloatLib.Numerics.ErrorBound.Loop
 /-!
 # Summation loops in closed form
 
-`roundoff mixed theorem` states the budget of a loop through the recurrences `List.foldRelative`
-and `List.foldAbsolute`, which follow the loop's own traversal. For a summation loop
-`s := s + t v` from zero, such as a dot product, a sum or a sum of squares, the recurrence has the
-shape `List.sumFoldStep`: each addition contributes relative error `u` and each term its own
-absolute budget `c v`. `List.abs_sub_le_of_sumFold` turns the generated bound into
-`((1 + u)^n - 1) * ∑ |p v| + (1 + u)^n * ∑ c v`, a bound by the inputs alone, which is
-`((1 + u)^n - 1) * ∑ |p v|` for exact terms (`List.abs_sub_le_of_sumFold_of_exact`), and
-`List.allSteps_sumFold_of_abs_le` derives its range conditions from bounds on the terms.
+`roundoff mixed theorem` states the budget of a loop through the recurrences `List.foldRelative` and
+`List.foldAbsolute`, which follow the loop's own traversal. For a summation loop `s := s + t v` from
+zero, such as a dot product, a sum or a sum of squares, the recurrence has the shape
+`List.sumFoldStep`, where each addition contributes relative error `u` and each term its own
+absolute budget `c v`.
+
+`List.abs_sub_le_of_sumFold` turns the generated bound into
+`((1 + u)^n - 1) * ∑ |p v| + (1 + u)^n * ∑ c v`, a bound by the inputs alone. For exact terms that
+is `((1 + u)^n - 1) * ∑ |p v|` (`List.abs_sub_le_of_sumFold_of_exact`). In binary64, where u is
+2^-53, a thousand exact terms give a factor of about 1.1 × 10^-13. `List.allSteps_sumFold_of_abs_le`
+derives the range conditions from bounds on the terms.
 -/
 
 @[expose] public section

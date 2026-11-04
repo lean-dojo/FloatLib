@@ -10,9 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Runtime
 /-!
 # Cohort preservation and preferred-exponent bounds
 
-Removing trailing zeros preserves the exact rational value and sign. The
-algorithm stops either at its exponent limit or at a coefficient with no
-trailing zero, so it never discards a significant decimal digit.
+Moving an exact result to its preferred cohort must not change it. Removing trailing zeros keeps the
+exact rational value and the sign, and a representable datum stays representable in the same format.
+The loop stops at its exponent limit or at a coefficient with no trailing zero, so it never throws
+away a significant decimal digit.
 -/
 
 @[expose] public section
@@ -31,7 +32,8 @@ theorem stripTrailing_count_le (fuel c : Nat) : (stripTrailing fuel c).2 ≤ fue
         · simpa using Nat.succ_le_succ (ih (c / 10))
         · simp
 
-/-- Exact integer decomposition, including zero. -/
+/-- The stripped coefficient times ten to the number of removed zeros is the original coefficient,
+zero included. -/
 theorem stripTrailing_value (fuel c : Nat) :
     c = (stripTrailing fuel c).1 * 10 ^ (stripTrailing fuel c).2 := by
   induction fuel generalizing c with
@@ -83,7 +85,7 @@ theorem preferredCohort_sameCohort (f : Format) (s : Bool) (c : Nat) (q preferre
   rw [hc, zpow_add₀ (by norm_num), zpow_natCast]
   ring
 
-/-- The selected cohort has exactly the original signed rational value. -/
+/-- The selected cohort member has the original signed rational value. -/
 theorem preferredCohort_toRat? (f : Format) (s : Bool) (c : Nat) (q preferred : Int) :
     (preferredCohort f s c q preferred).toRat? =
       some ((if s then -1 else 1) * (c : ℚ) * (10 : ℚ) ^ q) := by

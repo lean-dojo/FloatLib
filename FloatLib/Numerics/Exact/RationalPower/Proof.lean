@@ -11,10 +11,10 @@ public import FloatLib.Numerics.Exact.RationalPower.Runtime
 /-!
 # Real correctness of rational-power comparisons
 
-The exact equality test is complete for positive bases, and the logarithm enclosures contain the
-exact difference. Since the logarithm is strictly increasing on positive values, the sign of that
-difference is the ordering of the power and the target. Zero bases, unit bases and zero exponents
-are covered by direct evaluation.
+For positive bases the exact equality test is complete, and the logarithm enclosures contain the
+exact difference. The logarithm is strictly increasing on positive values, so the sign of that
+difference is the ordering of the power and the target. Zero bases, unit bases, and zero exponents
+are covered by evaluation.
 -/
 
 @[expose] public section

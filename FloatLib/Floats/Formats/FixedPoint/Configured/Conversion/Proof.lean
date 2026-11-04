@@ -13,8 +13,10 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Exact fixed-point conversion proofs
 
-The conversion contract exposes nearest-even coefficient selection, its half-unit error bound,
-and the parity of a tie. The complete code and status remain uniquely determined.
+Converting into exact fixed point picks the nearest coefficient, and the contract here exposes
+that choice, its half-unit error bound, and the parity of a tie. With two decimal fractional
+digits, `1/8 = 0.125` sits halfway between `0.12` and `0.13` and goes to the even coefficient,
+giving `0.12`. The complete code and status are uniquely determined.
 -/
 
 @[expose] public section

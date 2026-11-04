@@ -14,8 +14,9 @@ import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Configured posit decimal preservation
 
-Exact model preservation and the codec inverse law imply decimal round trips for every supported
-storage carrier and posit width.
+A configured posit survives a trip through its decimal string, for every supported storage
+carrier and posit width, because the model preserves values exactly and the codec has an inverse
+law.
 -/
 
 @[expose] public section
@@ -36,7 +37,7 @@ local notation "Value" => FloatLib.Floats.ExecFloat (Configured.Family format co
     parse (display value) = .ok value := by
   simp [parse, display, Except.map, ofModel, toModel]
 
-/-- A successful decimal input has precisely the model rounder's result after decoding. -/
+/-- Decoding a successful decimal input gives the model rounder's result. -/
 theorem toModel_parse (input : String) :
     (parse (format := format) (plan := plan) (code := code) input).map toModel =
       Model.parse format input := by

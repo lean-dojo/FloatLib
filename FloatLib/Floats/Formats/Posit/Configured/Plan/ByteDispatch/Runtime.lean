@@ -16,15 +16,15 @@ public import FloatLib.Floats.Formats.Posit.Configured.Core
 /-!
 # First-order runtime dispatch for byte-sized posits
 
-Byte-sized posits have exhaustive tables, direct packed-word arithmetic, width-generic dyadic
-arithmetic, and the reference specification. The general planner stores functions in candidate
-records, but projecting the winner through that representation leaves an indirect closure call in
-otherwise monomorphic `UInt8` arithmetic.
+Byte-sized posits have four implementations to choose from: exhaustive tables, direct packed-word
+arithmetic, width-generic dyadic arithmetic, and the reference specification. The general planner
+keeps functions in candidate records. Projecting the winner out of such a record leaves an
+indirect closure call in the middle of otherwise monomorphic `UInt8` arithmetic.
 
-This module runs the same deterministic comparison over a compact tag and matches the result to a
-named first-order kernel. Closed public formats hoist the tag and lazy-table resource as static
-values, preserving shared memoization without closure dispatch. Correctness and planner-agreement
-proofs live in `ByteDispatch.Proof`.
+So this module runs the same deterministic comparison over a compact tag and matches the result
+to a named first-order kernel. A closed public format hoists the tag and the lazy-table resource
+as static values, which keeps the shared memoization and needs no closure. The proofs of
+correctness and of agreement with the planner are in `ByteDispatch.Proof`.
 -/
 
 @[expose] public section
@@ -77,7 +77,7 @@ baseline. This is the same ordering used by the certified candidate portfolios.
     Choice.consider policy format width_le operation afterTable .word
   Choice.consider policy format width_le operation afterWord .dyadic
 
-/-- Metadata-only candidates corresponding exactly to the tag selector. -/
+/-- Metadata-only candidates, one for each choice the tag selector can make. -/
 def estimates
     (format : Format) (width_le : format.bits ≤ 8)
     (operation : Operation) : CandidateSet Candidate where

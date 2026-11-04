@@ -18,9 +18,9 @@ public import FloatLib.Numerics.Enclosure.Interval.OperationsProof
 /-!
 # Real-containment contracts for expression backends
 
-The elementary-function proofs hold for every real member of the input interval.
-Outward rounding preserves those bounds when they are stored in another endpoint format.
-The integer backend uses the direct binary-grid arithmetic theorems for its algebraic operations.
+The elementary-function proofs hold for every real member of the input interval, and outward
+rounding preserves those bounds when they're stored in another endpoint format. For its algebraic
+operations, the integer backend uses the binary-grid arithmetic theorems themselves.
 -/
 
 public section

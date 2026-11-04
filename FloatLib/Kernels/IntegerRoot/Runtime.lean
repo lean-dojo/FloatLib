@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Exact.IntegerRoot.Runtime
 # Integer roots with a logarithmic initial bound
 
 Degrees zero and one are immediate. Degree two uses the native-word and increasing-precision
-square-root kernel, and every degree from three uses `IntegerRoot.newton`, which starts Newton's
-method from a power-of-two seed just above the root instead of the entire radicand. The proof
-module identifies every result with `Nat.nthRoot`, including its degree-zero convention.
+square-root kernel. From degree three on we use `IntegerRoot.newton`, which starts Newton's method
+from a power-of-two seed just above the root and not from the entire radicand. The proof module
+identifies every result with `Nat.nthRoot`, including its degree-zero convention.
 -/
 
 @[expose] public section

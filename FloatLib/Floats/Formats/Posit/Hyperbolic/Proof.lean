@@ -14,8 +14,9 @@ public import FloatLib.Numerics.Exact.Hyperbolic.Proof
 /-!
 # Real rounding and domains of posit hyperbolic functions
 
-Finite inputs in the real domain round the mathematical function once, using the standard
-posit saturation and appended-bit tie rule. Invalid inputs and NaR are covered separately.
+For a finite input in its real domain, each hyperbolic function rounds the mathematical value
+once, with the standard posit saturation and the appended-bit tie rule. Invalid inputs and NaR have
+theorems of their own.
 -/
 
 @[expose] public section

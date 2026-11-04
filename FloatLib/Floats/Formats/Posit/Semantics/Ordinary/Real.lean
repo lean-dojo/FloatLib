@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Real
 /-!
 # Real coordinates for ordinary posits
 
-An ordinary posit excludes NaR and therefore has a total exact rational coordinate. This module
-canonically embeds that coordinate into mathlib's `Real` for use in proofs.
+An ordinary posit can't be NaR, so it has a total exact rational coordinate. This module embeds
+that coordinate canonically into mathlib's `Real`, where proofs can use it.
 -/
 
 @[expose] public section

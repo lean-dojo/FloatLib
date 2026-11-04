@@ -13,7 +13,7 @@ public import FloatLib.Kernels.FixedWord.Core.Proof.UInt128
 /-!
 # Verified fixed-word core
 
-Single-word bit, shift, and restoring-root facts are in `Core.Proof.Word`; nearest-even shift and
-quotient refinement is in `Core.Proof.Rounding`. Two-word representation and exact wide
-multiplication facts are in `Core.Proof.UInt128`.
+The proofs come in three files. `Core.Proof.Word` has the single-word bit, shift, and restoring-root
+facts, `Core.Proof.Rounding` refines the nearest-even shift and quotient, and `Core.Proof.UInt128`
+covers the two-word representation and exact wide multiplication.
 -/

@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.Codebook.Info
 /-!
 # Inspection for configured codebooks
 
-This optional meta module registers `#float_info` for `ExecFloat.Codebook`. Generic execution and
-storage remain independently importable without editor tooling or proof-only dependencies.
+This meta module adds `#float_info` for `ExecFloat.Codebook`, and it's optional. Generic execution
+and storage import on their own, with no editor tooling and no proof-only dependencies.
 -/
 
 public meta section

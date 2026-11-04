@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Analysis.Ulp
 /-!
 # ULP Conditions for Standard Formats
 
-FIX, positive-precision FLX, and positive-precision FLT do not flush the selected ULP to zero.
-These witnesses make the generic ULP representability theorem available for each standard family.
+The generic theorem that ULPs are representable asks that the format not flush the selected ULP to
+zero. FIX, positive-precision FLX, and positive-precision FLT all qualify, and the witnesses here
+make the theorem available for each of these standard families.
 -/
 
 @[expose] public section

@@ -13,9 +13,9 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Proof contracts for configured logarithmic decoding
 
-The runtime decoder exposes an exact rational through the common `ExactDecoder` interface, and
-`exactDecoder_run` identifies it with the configured reading `toRat`. `cast_toRat` relates that
-reading to the real-valued specification.
+At runtime the decoder hands out an exact rational through the common `ExactDecoder` interface.
+`exactDecoder_run` says that rational is the configured reading `toRat`, and `cast_toRat` carries
+the reading on to the real-valued specification.
 -/
 
 @[expose] public section

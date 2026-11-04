@@ -14,17 +14,18 @@ public import FloatLib.Numerics.Enclosure.Comparison.Cache
 /-!
 # Total comparisons for ordinary trigonometric functions
 
-These operations compare an exact trigonometric value with a rational boundary. Adaptive
-rational enclosures determine the ordering; irrationality proves that the search terminates
-outside the explicitly handled rational values at zero. Prepared comparators share a finite
-prefix of enclosures across boundary queries, with unrestricted refinement beyond that prefix.
+Each operation here compares an exact trigonometric value with a rational boundary. Adaptive
+rational enclosures settle the ordering, and irrationality proves that the search terminates
+everywhere except at the rational values at zero, which are handled up front. Prepared comparators
+share a finite prefix of enclosures across boundary queries and keep refining without limit beyond
+that prefix.
 
-Tangent compares `sin x - b * cos x` with zero and uses the sign of cosine. Inverse sine and
-cosine compare through their monotone principal branches, after exact comparisons with π
-locate the boundary. Their real-domain contract is `-1 ≤ argument ≤ 1`.
+Tangent compares `sin x - b * cos x` with zero and uses the sign of cosine. Inverse sine and cosine
+compare through their monotone principal branches, after exact comparisons with π locate the
+boundary. Their real-domain contract is `-1 ≤ argument ≤ 1`.
 
-These are ordinary radian functions. No rational-angle equality decision for π-scaled
-functions is inferred from these searches.
+These are the ordinary radian functions. We don't infer any rational-angle equality for the π-scaled
+functions from these searches.
 -/
 
 @[expose] public section

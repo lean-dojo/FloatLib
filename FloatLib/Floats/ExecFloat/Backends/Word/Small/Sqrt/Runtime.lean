@@ -13,11 +13,11 @@ import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
 /-!
 # Native one-word square root for small IEEE formats
 
-A positive finite input is `mantissa * 2 ^ (scale - (bias + fracWidth - 1))`. Scaling the mantissa
-to a radicand of `2 * fracWidth + 1` or `2 * fracWidth + 2` bits gives a floor square root with
-exactly `fracWidth + 1` bits, so the root and its remainder fit one machine word. Since a square
-root is never a midpoint, comparing the remainder with the root decides nearest rounding. This is
-the binary32 kernel with the format's bias and fraction width as parameters.
+A positive finite input is `mantissa * 2 ^ (scale - (bias + fracWidth - 1))`. Scale the mantissa to
+a radicand of `2 * fracWidth + 1` or `2 * fracWidth + 2` bits and the floor square root has
+`fracWidth + 1` bits, so the root and its remainder fit one machine word. A square root is never a
+midpoint, which means comparing the remainder with the root decides nearest rounding. It's the
+binary32 kernel, with the format's bias and fraction width as parameters.
 
 Formats whose radicand exceeds one word, or whose bias is too small for every square root to be
 normal, use the descriptor-generic kernel. `Sqrt.Proof` has the proofs.

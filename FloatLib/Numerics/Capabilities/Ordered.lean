@@ -12,14 +12,14 @@ public import FloatLib.Numerics.Quantization.Directed
 # Ordered-representability capability
 
 This proof-only capability states that every exact scalar has representable lower and upper
-neighbors. It provides the existence needed for total directed rounding without selecting an
+neighbors. That's the existence total directed rounding needs, and it comes without choosing an
 executable search algorithm or adding order fields to the universal numerical-system structure.
 
-The requirement covers the whole scalar type. A system with a largest or smallest finite value
-in an unbounded scalar type, such as a bounded float, fixed-point or posit format read in `ℚ` or
-`ℝ`, lacks a neighbor for inputs beyond that value and is never an instance; directed rounding
-there needs an overflow result, which `Quantization.Directed` leaves unspecified. Exact systems are
-the instance provided here.
+This requirement covers the whole scalar type. A system with a largest or smallest finite value in
+an unbounded scalar type, such as a bounded float, fixed-point or posit format read in `ℚ` or `ℝ`,
+has no neighbor for inputs beyond that value and is never an instance. Directed rounding there needs
+an overflow result, which `Quantization.Directed` leaves unspecified. Exact systems get the instance
+provided here.
 -/
 
 @[expose] public section

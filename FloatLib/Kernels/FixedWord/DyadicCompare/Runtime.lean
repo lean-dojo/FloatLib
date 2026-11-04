@@ -12,19 +12,17 @@ public import FloatLib.Numerics.Exact.Dyadic.Comparison.Runtime
 /-!
 # Native-word comparison of exact dyadic fields
 
-Fixed-width numerical formats frequently decode a finite value to a machine-word significand and
-an unbounded exponent. Converting that significand to `Nat` before every candidate comparison is
-unnecessary when the one required alignment shift still fits in a word.
+Fixed-width formats usually decode a finite value to a machine-word significand and an unbounded
+exponent. When the one alignment shift a comparison needs still fits in a word, there's no reason to
+convert that significand to `Nat` first. So the recognizer, which doesn't depend on the
+representation, has two branches:
 
-The recognizer is representation-independent:
+* it runs the comparison with `UInt64` shifts when the aligned operand provably fits,
+* and otherwise it calls the arbitrary-precision exact comparator.
 
-* execute the comparison with `UInt64` shifts when the aligned operand provably fits;
-* otherwise call the arbitrary-precision exact comparator.
-
-The arbitrary-precision branch is part of the algorithm, not an exceptional or unverified path.
-Consequently every format can reuse this primitive. Significand alignment and comparison use
-native words whenever the capacity guards hold. The refinement theorem lives in
-`DyadicCompare.Proof`.
+That second branch is an ordinary, verified part of the algorithm and no exceptional path, which is
+why every format can reuse this primitive. Significand alignment and comparison use native words
+whenever the capacity guards hold, and the refinement theorem is in `DyadicCompare.Proof`.
 -/
 
 @[expose] public section
@@ -34,9 +32,8 @@ namespace FloatLib.Numerics.FixedWord.DyadicCompare
 /--
 Whether shifting a nonnegative word significand left by `shift` preserves its exact value.
 
-For a nonzero word, `log2 + shift < 64` is precisely the capacity condition needed by the native
-left shift. The proposition is decidable from machine-word data; its proof is erased after
-compilation.
+For a nonzero word, `log2 + shift < 64` is the capacity condition that the native left shift needs.
+The proposition is decidable from machine-word data, and its proof is erased after compilation.
 -/
 @[inline] def shiftFits (significand : UInt64) (shift : Nat) : Prop :=
   significand = 0 ∨ (log2Word significand).toNat + shift < 64
@@ -64,8 +61,8 @@ instance (significand : UInt128) (shift : Nat) :
 Compare two nonnegative exact dyadics whose significands are native words.
 
 Only the operand with the larger dyadic exponent needs alignment. If that shift stays within one
-word, significand alignment and comparison use native operations. Large exponent gaps and
-over-wide aligned values use the exact `Nat` implementation; exponent arithmetic uses `Int`.
+word, significand alignment and comparison use native operations. Large exponent gaps and over-wide
+aligned values use the exact `Nat` implementation, and exponent arithmetic uses `Int`.
 -/
 @[inline] def compareNonnegative
     (leftSignificand : UInt64) (leftExponent : Int)
@@ -105,12 +102,12 @@ over-wide aligned values use the exact `Nat` implementation; exponent arithmetic
 /--
 Compare a nonnegative two-word dyadic with a nonnegative one-word dyadic.
 
-Values whose high limb is zero reuse `compareNonnegative`. For a nonzero high limb in the left
-significand, the only possible alignment into the wider carrier is a shift of the right word.
-The leading-bit capacity test recognizes exactly when that shift fits in 128 bits. If it does not
-fit, the shifted right operand is necessarily larger than every `UInt128`; if the left exponent
-is larger, the already-wide left operand is necessarily larger than the word target. Thus the
-wide path keeps significands in fixed limbs. Exponent arithmetic still uses `Int`.
+A value whose high limb is zero goes to `compareNonnegative`. When the left significand has a
+nonzero high limb, the only possible alignment into the wider carrier is a shift of the right word,
+and the leading-bit capacity test decides whether that shift fits in 128 bits. If it doesn't, the
+shifted right operand is larger than every `UInt128`. If the left exponent is the larger one, the
+already-wide left operand is larger than the word target. So the wide path keeps significands in
+fixed limbs, and exponent arithmetic uses `Int`.
 -/
 @[inline] def compareNonnegative128ToWord
     (leftSignificand : UInt128) (leftExponent : Int)

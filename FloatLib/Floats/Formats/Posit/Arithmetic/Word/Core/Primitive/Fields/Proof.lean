@@ -12,14 +12,14 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.
 /-!
 # Correctness of native-word posit field decoding
 
-Leading-run, sign, magnitude, exponent, and significand extraction from `UInt64` refine the
-exact-width posit model. Executable primitives live in
-`FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Runtime`.
+Extracting the leading run, sign, magnitude, exponent, and significand from a `UInt64` refines the
+exact-width posit model, and this module proves it one field at a time. Executable primitives
+are in `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Runtime`.
 
-Posit fields are variable length, so the proof records how the regime consumes the remaining word
-before relating native shifts and masks to semantic fields. Later addition, multiplication,
-division, and quire kernels reuse this decoding boundary rather than maintaining operation-specific
-parsers.
+Posit fields have variable length. The regime run decides where the exponent and the fraction
+begin, so the proof first records how the regime consumes the rest of the word, and only then
+relates native shifts and masks to semantic fields. The addition, multiplication, division, and
+quire kernels built on top all reuse this decoding boundary and keep no parsers of their own.
 -/
 
 @[expose] public section
@@ -92,7 +92,7 @@ theorem countLeadingRun_eq_model (value : UInt64) (width : Nat) (bit : Bool) :
     rfl
 
 /--
-Native right shift agrees with natural-number right shift; shifts past the machine width give
+Native right shift agrees with natural-number right shift. Shifts past the machine width give
 zero on both sides.
 -/
 theorem shiftRight_toNat (value : UInt64) (shift : Nat) :
@@ -165,8 +165,8 @@ theorem magnitudeNat_eq_model (format : Format) (code : UInt64)
 /--
 Decoded dyadic magnitude fields depend only on the unsigned posit magnitude.
 
-The explicit sign overwrite is intentional: it is the only decoded dyadic field that depends on
-the original complete word rather than its two's-complement magnitude.
+The sign is overwritten on purpose, since it is the one decoded dyadic field that depends on the
+original complete word and not on its two's-complement magnitude.
 -/
 theorem decodeFields_toDyadic_eq_of_magnitudeBits_eq
     (left right : Model format)

@@ -13,12 +13,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 /-!
 # Shared proofs for native normal operand pairs
 
-Several one-word kernels start the same way: they reject zero, subnormal and exceptional
-operands, then expose two normalized significands and their biased exponents.
-`Small.Core.Runtime` has the executable decoder, and this module proves its common contract once.
+Several one-word kernels start the same way. They reject zero, subnormal, and exceptional operands,
+then expose two normalized significands and their biased exponents. `Small.Core.Runtime` has the
+executable decoder, and this module proves its common contract once.
 
-`View` records the generic decoder results together with the bounds the fixed-word rounders need,
-so the multiplication and division proofs don't repeat the storage-field and exceptional-value
+`View` records the generic decoder results together with the bounds the fixed-word rounders need, so
+the multiplication and division proofs don't repeat the storage-field and exceptional-value
 arguments. No executable definition depends on this module.
 -/
 

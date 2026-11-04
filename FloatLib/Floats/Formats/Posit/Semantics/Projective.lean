@@ -12,18 +12,19 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Real
 /-!
 # Optional projective semantics of posits
 
-The primary posit semantics remains `NumericalValue Rat`: every ordinary word denotes an exact
-dyadic rational, while the single NaR word denotes `ExceptionalValue.notAReal`.
+Our main posit semantics is `NumericalValue Rat`, where every ordinary word denotes an exact
+dyadic rational and the single NaR word denotes `ExceptionalValue.notAReal`.
 
-For applications that intentionally want a one-point completion, `Model.toProjectiveRat` is
-`Option.toOnePoint` applied to the exact optional semantics: it maps all finite values to their
-canonical rational point and NaR to the added point. The theorem `toProjectiveRat_eq_infty_iff`
-identifies NaR exactly; it remains distinct from every finite point. Mathlib supplies the
-canonical equivalence from `OnePoint Rat` to the projective line over `Rat`.
+Some applications want a one-point completion on purpose, and this module gives them one.
+`Model.toProjectiveRat` is `Option.toOnePoint` applied to the exact optional semantics, so every
+finite value goes to its canonical rational point and NaR goes to the added point. By
+`toProjectiveRat_eq_infty_iff`, NaR is the one word that lands there, apart from every finite
+point. Mathlib supplies the canonical equivalence from `OnePoint Rat` to the projective line over
+`Rat`.
 
-Finite rational values map canonically into `OnePoint Real` and the real projective line. This
-adapter provides coordinates for topology and projective proofs. It does not change the
-arithmetic interpretation of NaR.
+Finite rational values also map canonically into `OnePoint Real` and the real projective line.
+This adapter gives you coordinates for topology and projective proofs, and it leaves the arithmetic
+interpretation of NaR alone.
 
 ## References
 
@@ -65,16 +66,16 @@ The name of that point does not give NaR an ordered or signed-infinity interpret
 /--
 The one-point projection agrees with the exact rational view on every ordinary posit.
 
-Together with `toProjectiveRat_eq_infty_iff`, this characterizes the complete projection:
-finite points correspond exactly to `some` rational, and
-the added point corresponds exactly to NaR.
+Together with `toProjectiveRat_eq_infty_iff`, this characterizes the complete projection.
+Finite points come from `some` rational and from nothing else, and the added point comes from NaR
+alone.
 -/
 theorem toProjectiveRat_eq_coe_iff (value : Model format) (rational : Rat) :
     value.toProjectiveRat = (rational : OnePoint Rat) ↔
       value.toRat? = some rational :=
   Option.toOnePoint_eq_coe_iff _ _
 
-/-- The projective view reaches its added point exactly for the NaR encoding. -/
+/-- Only the NaR encoding reaches the added point of the projective view. -/
 theorem toProjectiveRat_eq_infty_iff (value : Model format) :
     value.toProjectiveRat = OnePoint.infty ↔ value.isNaR = true :=
   (Option.toOnePoint_eq_infty_iff _).trans (toRat?_eq_none_iff value)
@@ -99,10 +100,10 @@ def projectiveRatNaR : ℙ Rat (Fin 2 → Rat) :=
   simp [toProjectiveRatLine, projectiveRatNaR]
 
 /--
-Equality of finite projective-line points is exactly equality of their rational coordinates.
+Two finite projective-line points are equal if and only if their rational coordinates are equal.
 
-The equivalence is inherited from mathlib's `OnePoint.equivProjectivization`; no separate posit
-notion of projective equality is introduced.
+The equivalence comes from mathlib's `OnePoint.equivProjectivization`, so posits get no notion of
+projective equality of their own.
 -/
 theorem toProjectiveRatLine_eq_finite_iff
     (value : Model format) (rational : Rat) :
@@ -112,7 +113,7 @@ theorem toProjectiveRatLine_eq_finite_iff
   (OnePoint.equivProjectivization_eq_iff Rat _ _).trans
     (toProjectiveRat_eq_coe_iff value rational)
 
-/-- The rational projective-line view is its NaR point exactly for the NaR encoding. -/
+/-- Only the NaR encoding has the NaR point as its rational projective-line view. -/
 theorem toProjectiveRatLine_eq_nar_iff (value : Model format) :
     value.toProjectiveRatLine = projectiveRatNaR ↔ value.isNaR = true :=
   (OnePoint.equivProjectivization_eq_iff Rat _ _).trans
@@ -123,7 +124,7 @@ theorem toProjectiveRatLine_eq_nar_iff (value : Model format) :
 /--
 Intentional real one-point projection of posit meanings.
 
-The finite branch is the canonical injection `Rat → Real`; NaR alone maps to the added point.
+The finite branch is the canonical injection `Rat → Real`, and NaR alone maps to the added point.
 This view is useful for topology and analysis. Its type distinguishes this geometric
 interpretation from the `notAReal` exception used by `decodeReal`.
 -/
@@ -140,13 +141,13 @@ interpretation from the `notAReal` exception used by `decodeReal`.
     toProjectiveReal (nar format) = OnePoint.infty := by
   simp [toProjectiveReal]
 
-/-- A finite rational coordinate is preserved exactly by the real one-point projection. -/
+/-- The real one-point projection keeps a finite rational coordinate unchanged. -/
 theorem toProjectiveReal_eq_coe_iff (value : Model format) (rational : Rat) :
     value.toProjectiveReal = ((rational : ℝ) : OnePoint ℝ) ↔
       value.toRat? = some rational :=
   Option.toOnePoint_map_eq_coe_iff Rat.cast_injective _ _
 
-/-- The real one-point projection reaches its added point exactly for NaR. -/
+/-- Only NaR reaches the added point of the real one-point projection. -/
 theorem toProjectiveReal_eq_infty_iff (value : Model format) :
     value.toProjectiveReal = OnePoint.infty ↔ value.isNaR = true :=
   (Option.toOnePoint_map_eq_infty_iff _ _).trans (toRat?_eq_none_iff value)
@@ -171,7 +172,7 @@ noncomputable def projectiveRealNaR : ℙ ℝ (Fin 2 → ℝ) :=
     toProjectiveRealLine (nar format) = projectiveRealNaR := by
   simp [toProjectiveRealLine, projectiveRealNaR]
 
-/-- Finite real projective coordinates agree exactly with the embedded rational semantics. -/
+/-- Finite real projective coordinates agree with the embedded rational semantics. -/
 theorem toProjectiveRealLine_eq_finite_iff
     (value : Model format) (rational : Rat) :
     value.toProjectiveRealLine =
@@ -180,7 +181,7 @@ theorem toProjectiveRealLine_eq_finite_iff
   (OnePoint.equivProjectivization_eq_iff ℝ _ _).trans
     (toProjectiveReal_eq_coe_iff value rational)
 
-/-- The real projective-line view is its NaR point exactly for the NaR encoding. -/
+/-- Only the NaR encoding has the NaR point as its real projective-line view. -/
 theorem toProjectiveRealLine_eq_nar_iff (value : Model format) :
     value.toProjectiveRealLine = projectiveRealNaR ↔ value.isNaR = true :=
   (OnePoint.equivProjectivization_eq_iff ℝ _ _).trans

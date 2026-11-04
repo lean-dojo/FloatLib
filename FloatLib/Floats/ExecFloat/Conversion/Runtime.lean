@@ -13,7 +13,7 @@ public import FloatLib.Floats.ExecFloat.ExactMap
 /-!
 # Conversion and mixed arithmetic
 
-Name the destination type when converting a value or combining different formats:
+Name the destination type when you convert a value or combine different formats:
 
 ```lean
 source.cast (target := Binary64)
@@ -22,36 +22,36 @@ ExecFloat.Mixed.add (target := Binary64) left right
 ```
 
 Each operation decodes its operands, maps them into the destination's exact domain through
-`ExactMap`, and quantizes the result once. Every entry point takes the same two options. `mode` is
-the rounding direction. Binary and nominal static-byte destinations take a `Numerics.RoundingMode`:
-the six directions of `IEEERoundingMode` and `.stochastic`. P3109 destinations take a P3109
-`RoundingMode`. A family without directed conversion has the single mode `()`, so naming a
-direction for it is a type error. `context` is the destination's `RoundingModes.Policy`, every
-policy except the direction, such as a rejected infinity, binary saturation or flush-to-zero,
-stochastic entropy, P3109 saturation, a saturating bounded fixed point, or a shared block
-exponent. A call without `context` uses the destination's canonical policy (`ModeContext`), and
-destinations without one, such as shared-scale blocks, require `context`.
+`ExactMap`, and quantizes the result once. Every entry point takes the same two options:
 
-The mode decides the direction: a policy has no direction field, so `(mode := .down)` and
+- `mode` is the rounding direction. Binary and nominal static-byte destinations take a
+  `Numerics.RoundingMode`, which is one of the six directions of `IEEERoundingMode` or
+  `.stochastic`. P3109 destinations take a P3109 `RoundingMode`. A family without directed
+  conversion has the single mode `()`, so naming a direction for it is a type error.
+- `context` is the destination's `RoundingModes.Policy`, which is everything about the policy except
+  the direction, such as a rejected infinity, binary saturation or flush-to-zero, stochastic
+  entropy, P3109 saturation, a saturating bounded fixed point, or a shared block exponent. A call
+  without `context` uses the destination's canonical policy (`ModeContext`), and destinations
+  without one, such as shared-scale blocks, require `context`.
+
+The mode decides the direction. A policy has no direction field, so `(mode := .down)` and
 `(context := ...)` combine and neither can cancel the other. Every entry point quantizes in
 `RoundingModes.withMode mode context`, and `spec_convert` and the other contracts in
 `Conversion.Proof` are stated in that context.
 
-Casts pass infinities and exceptional observations to the destination's policy. The mixed
-operations `Mixed.add`, `sub`, `mul`, `div`, and `fma` require finite inputs and report the first
-rejected operand. Division also rejects a denominator satisfying the exact domain's `ExactZero`
-predicate.
+Casts pass infinities and exceptional observations on to the destination's policy. The mixed
+operations `Mixed.add`, `sub`, `mul`, `div`, and `fma` need finite inputs and report the first
+rejected operand, and division also rejects a denominator that satisfies the exact domain's
+`ExactZero` predicate. Binary destinations use `SignedRat` as their exact domain, so a signed zero
+survives a cast, and mixed addition, subtraction, and FMA pick a cancellation sign from the call's
+rounding mode. Posit destinations use `Rat`, with a single zero.
 
-Binary destinations use `SignedRat` as their exact domain, so a signed zero survives a cast and
-mixed addition, subtraction, and FMA select a cancellation sign from the call's rounding mode.
-Posit destinations use `Rat`, with a single zero.
-
-For longer finite calculations, `ExactExpression.operand` and `roundOnce` use the same path with
-an ordinary `Except`-based `do` expression. Use `ExactExpression.add` and `sub` with a `mode` when a
-directed cancellation sign is required inside that expression. `Conversion.Proof` proves that each
-entry point satisfies the destination's `Quantization.Spec` relation. These composition theorems
-use the supplied exact-domain operations. That the maps and arithmetic hooks preserve numerical
-values has to be proved separately for each family.
+For longer finite calculations, `ExactExpression.operand` and `roundOnce` take the same path inside
+an ordinary `Except`-based `do` expression. Use `ExactExpression.add` and `sub` with a `mode` when
+the expression needs a directed cancellation sign. `Conversion.Proof` proves that each entry point
+satisfies the destination's `Quantization.Spec` relation. Those composition theorems use the
+supplied exact-domain operations, and that the maps and arithmetic hooks preserve numerical values
+has to be proved for each family.
 -/
 
 @[expose] public section
@@ -207,15 +207,13 @@ end Conversion
 namespace ExactExpression
 
 /--
-Decode `value`, the operand numbered `index`, into the exact domain used by an enclosing
-expression.
+Decode `value`, the operand numbered `index`, into the exact domain used by an enclosing expression.
 
-Finite inputs are mapped through `ExactMap`, whose instances must preserve value. The class does
-not check this; the instances FloatLib provides in `ExecFloat.ExactMap` have their value facts
-proved. The chosen exact domain determines which representation metadata survives, so mapping a
-`SignedRat` into `Rat` forgets its zero sign.
-Infinity and exceptional observations become position-indexed failures, so a longer expression
-still reports which operand was rejected.
+Finite inputs are mapped through `ExactMap`, whose instances must preserve value. The class doesn't
+check this, but the instances FloatLib provides in `ExecFloat.ExactMap` have their value facts
+proved. The chosen exact domain decides which representation metadata survives, so mapping a
+`SignedRat` into `Rat` forgets its zero sign. Infinity and exceptional observations become
+position-indexed failures, so a longer expression can report which operand was rejected.
 -/
 @[inline] def operand {Source : Type u} {SourceExact : Type v} {Exact : Type w}
     [ExactDecoder Source SourceExact] [ExactMap SourceExact Exact]
@@ -272,15 +270,15 @@ cannot fail, and `add` and `sub` also follow the destination's cancellation-sign
 end ExactExpression
 
 /--
-Evaluate an exact scalar expression and quantize its result once into `target`.
-
-The expression may contain any executable operation supported by its exact domain. A failed
-operand or checked division bypasses the quantizer and is returned unchanged.
-For signed-rational binary destinations that support signed zero, quantization preserves the
-supplied zero sign, but it cannot recover how that zero arose. Ordinary `SignedRat` addition and
-subtraction use their nearest-even cancellation convention. For directed cancellation, use
-`ExactExpression.add` and `sub` with the same `target` and `mode`. The options are those of
+Evaluate an exact scalar expression and quantize its result once into `target`, with the options of
 `convert`.
+
+The expression may contain any executable operation its exact domain supports. A failed operand or
+checked division bypasses the quantizer and is returned unchanged. For signed-rational binary
+destinations with signed zero, quantization keeps the supplied zero sign but can't recover how that
+zero arose, and ordinary `SignedRat` addition and subtraction use their nearest-even cancellation
+convention. For directed cancellation, use `ExactExpression.add` and `sub` with the same `target`
+and `mode`.
 -/
 @[inline] def roundOnce {target : Type u} {Exact : Type v}
     [quantizer : Quantizer target Exact] (expression : ExactExpression Exact)
@@ -298,12 +296,12 @@ type as `target`. Each decodes its operands exactly, embeds them in the destinat
 computes the exact result there, and rounds it once into `target`, with the `mode` and `context`
 options of `convert`.
 
-They are the finite part of IEEE 754's formatOf operations, not the complete operations. A
-non-finite operand fails with `.infinity` or `.exceptional` and its position, checked left to
-right, and `div` fails with `.divisionByZero` when the exact domain declares the divisor zero,
-where IEEE arithmetic would return an infinity or a NaN and raise a flag. The P3109 report
-arithmetic `Formats.P3109.Arithmetic.Mixed` is a different interface: it takes a `Destination`
-value and is total, carrying infinities and NaN through the report's closed arithmetic.
+These are the finite part of IEEE 754's formatOf operations and not the complete operations. A
+non-finite operand fails with `.infinity` or `.exceptional` and its position, checked left to right,
+and `div` fails with `.divisionByZero` when the exact domain declares the divisor zero. IEEE
+arithmetic would return an infinity or a NaN there and raise a flag. The P3109 report arithmetic
+`Formats.P3109.Arithmetic.Mixed` is a different interface. It takes a `Destination` value and is
+total, carrying infinities and NaN through the report's closed arithmetic.
 -/
 
 namespace Mixed

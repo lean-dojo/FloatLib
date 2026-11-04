@@ -12,6 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval.Outw
 /-!
 # Configured binary intervals
 
-Executable interval operations with configured endpoints and soundness theorems transported from
-the format-generic model. Import `Configured.Interval.Runtime` for the executable API alone.
+This module gathers the executable interval operations with configured endpoints and the
+soundness theorems transported from the format-generic model. For the executable API alone,
+import `Configured.Interval.Runtime`.
 -/

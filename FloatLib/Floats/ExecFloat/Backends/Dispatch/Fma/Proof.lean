@@ -14,9 +14,9 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Fma.Proof
 /-!
 # Correctness of fused multiply-add dispatch
 
-`dispatch_eq_spec` combines the word and fixed-limb refinements to identify the complete
-dispatcher with `Spec.fma`. For finite inputs, this contract rounds the exact product-plus-addend
-once. Runtime clients can import `Fma.Runtime` separately.
+`dispatch_eq_spec` combines the word and fixed-limb refinements to identify the complete dispatcher
+with `Spec.fma`. On finite inputs that contract rounds the exact product-plus-addend once.
+`Fma.Runtime` can be imported on its own.
 -/
 
 @[expose] public section

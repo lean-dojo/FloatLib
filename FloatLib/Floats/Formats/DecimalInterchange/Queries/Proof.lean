@@ -14,9 +14,9 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Numerical classification, cohorts and stored canonicality
 
-Zero, normal, and subnormal classification agrees with exact rational magnitudes and is
-preserved within a cohort. For a fixed encoding and format, canonical words are equal exactly
-when they decode to the same complete datum.
+Classifying a datum as zero, normal, or subnormal agrees with its exact rational magnitude, and
+every member of a cohort gets the same class. For a fixed encoding and format, two canonical words
+are equal if and only if they decode to the same complete datum.
 -/
 
 @[expose] public section
@@ -39,13 +39,13 @@ theorem finiteValue_abs (s : Bool) (c : Nat) (q : Int) :
     simp only [finiteValue, Bool.false_eq_true, ↓reduceIte, one_mul,
       neg_mul, abs_neg, abs_of_nonneg h]
 
-/-- A coefficient times a power of ten vanishes exactly when the coefficient does. -/
+/-- A coefficient times a power of ten vanishes if and only if the coefficient does. -/
 private theorem coefficient_mul_zpow_eq_zero_iff (c : Nat) (q : Int) :
     (c : ℚ) * (10 : ℚ) ^ q = 0 ↔ c = 0 := by
   have hp : (10 : ℚ) ^ q ≠ 0 := ne_of_gt (zpow_pos (by norm_num) _)
   simp [hp]
 
-/-- A finite value is zero exactly when its coefficient is zero, at every quantum and with either
+/-- A finite value is zero if and only if its coefficient is zero, at every quantum and with either
 sign. -/
 theorem finiteValue_eq_zero_iff (s : Bool) (c : Nat) (q : Int) :
     finiteValue s c q = 0 ↔ c = 0 := by
@@ -74,8 +74,8 @@ theorem isNormal_iff (f : Format) (d : Datum) :
   | infinity s => simp [isNormal, toRat?]
   | nan s t p => simp [isNormal, toRat?]
 
-/-- A datum is subnormal exactly when it is finite with a nonzero value below the least normal
-magnitude; signed zeros, infinities and NaNs are not subnormal. -/
+/-- A datum is subnormal if and only if it is finite with a nonzero value below the least normal
+magnitude, so signed zeros, infinities and NaNs are not subnormal. -/
 theorem isSubnormal_iff (f : Format) (d : Datum) :
     d.isSubnormal f = true ↔
       ∃ x : ℚ, d.toRat? = some x ∧ x ≠ 0 ∧ |x| < f.minNormal := by
@@ -115,7 +115,7 @@ theorem finite_classification (f : Format) (s : Bool) (c : Nat) (q : Int) :
     by_cases hm : f.minNormal ≤ (c : ℚ) * (10 : ℚ) ^ q <;>
       simp [hc, hm, lt_of_not_ge]
 
-/-- The class of a datum is one of the two signed zeros exactly when the datum is a zero, at any
+/-- The class of a datum is one of the two signed zeros if and only if the datum is a zero, at any
 quantum. -/
 theorem classify_zero_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeZero ∨ d.classify f = .positiveZero) ↔ d.isZero = true := by
@@ -127,7 +127,7 @@ theorem classify_zero_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isZero]
   | nan s t p => cases t <;> simp [classify, isZero]
 
-/-- The class of a datum is a signed normal exactly when the datum is normal. -/
+/-- The class of a datum is a signed normal if and only if the datum is normal. -/
 theorem classify_normal_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeNormal ∨ d.classify f = .positiveNormal) ↔
       d.isNormal f = true := by
@@ -140,7 +140,7 @@ theorem classify_normal_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isNormal]
   | nan s t p => cases t <;> simp [classify, isNormal]
 
-/-- The class of a datum is a signed subnormal exactly when the datum is subnormal. -/
+/-- The class of a datum is a signed subnormal if and only if the datum is subnormal. -/
 theorem classify_subnormal_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeSubnormal ∨ d.classify f = .positiveSubnormal) ↔
       d.isSubnormal f = true := by
@@ -152,7 +152,7 @@ theorem classify_subnormal_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isSubnormal]
   | nan s t p => cases t <;> simp [classify, isSubnormal]
 
-/-- The class of a datum is `signalingNaN` exactly when the datum is a signaling NaN. -/
+/-- The class of a datum is `signalingNaN` if and only if the datum is a signaling NaN. -/
 theorem classify_signalingNaN_iff (f : Format) (d : Datum) :
     d.classify f = .signalingNaN ↔ d.isSNaN = true := by
   cases d with
@@ -163,7 +163,7 @@ theorem classify_signalingNaN_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isSNaN]
   | nan s t p => cases t <;> simp [classify, isSNaN]
 
-/-- The class of a datum is `quietNaN` exactly when the datum is a quiet NaN. -/
+/-- The class of a datum is `quietNaN` if and only if the datum is a quiet NaN. -/
 theorem classify_quietNaN_iff (f : Format) (d : Datum) :
     d.classify f = .quietNaN ↔ d.isQNaN = true := by
   cases d with
@@ -174,7 +174,7 @@ theorem classify_quietNaN_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isQNaN]
   | nan s t p => cases t <;> simp [classify, isQNaN]
 
-/-- The class of a datum is a signed infinity exactly when the datum is infinite. -/
+/-- The class of a datum is a signed infinity if and only if the datum is infinite. -/
 theorem classify_infinite_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeInfinity ∨ d.classify f = .positiveInfinity) ↔
       d.isInf = true := by
@@ -186,8 +186,8 @@ theorem classify_infinite_iff (f : Format) (d : Datum) :
   | infinity s => cases s <;> simp [classify, isInf]
   | nan s t p => cases t <;> simp [classify, isInf]
 
-/-- The class of a datum is one of the two NaN classes exactly when the datum is a NaN, signaling or
-quiet. -/
+/-- The class of a datum is one of the two NaN classes if and only if the datum is a NaN,
+signaling or quiet. -/
 theorem classify_nan_iff (f : Format) (d : Datum) :
     (d.classify f = .signalingNaN ∨ d.classify f = .quietNaN) ↔ d.isNaN = true := by
   cases d with
@@ -223,8 +223,8 @@ namespace Encoding
     encoding.isCanonical f (encoding.canonicalize f w) = true := by
   simp [isCanonical, canonicalize_idempotent]
 
-/-- Two canonical encodings in the same encoding and format are equal precisely
-when they decode to the same complete datum. -/
+/-- Two canonical encodings in the same encoding and format are equal if and only if
+they decode to the same complete datum. -/
 theorem eq_iff_decode_eq (encoding : Encoding) (f : Format)
     {x y : BitVec f.bitWidth} (hx : encoding.isCanonical f x = true)
     (hy : encoding.isCanonical f y = true) :

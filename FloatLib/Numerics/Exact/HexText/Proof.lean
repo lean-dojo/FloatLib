@@ -11,11 +11,12 @@ public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 import Mathlib.Tactic.IntervalCases
 import all Init.Data.Repr
 
-/-! # Hexadecimal character preservation
+/-!
+# Hexadecimal character preservation
 
-The shared positional scanner recovers the printed hexadecimal coefficient;
-the decimal integer scanner recovers the binary exponent. The result preserves
-the entire dyadic record, including the sign of zero.
+The shared positional scanner recovers the printed hexadecimal coefficient and the decimal integer
+scanner recovers the binary exponent, so together they give back the entire dyadic record, the sign
+of zero included.
 -/
 
 @[expose] public section

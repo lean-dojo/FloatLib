@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky
 /-!
 # Direct packed-pair posit multiplication runtime
 
-The packed-pair multiplication kernel returns posit codes for configured values stored in two
-native limbs. Range and semantic refinement proofs live in `Mul.Proof`.
+This is multiplication for configured posits kept in two native limbs, with posit codes going in
+and coming out. Range and semantic refinement proofs are in `Mul.Proof`.
 -/
 
 @[expose] public section
@@ -30,7 +30,8 @@ Decode two packed operands, multiply their significands in four native limbs, an
 complete result encoding in two native limbs.
 
 The exact product is normalized with a sticky low bit before rounding. Significands, the product,
-and the result code stay in fixed-width carriers; exponents and bit counts use `Int` and `Nat`.
+and the result code stay in fixed-width carriers, while exponents and bit counts use `Int` and
+`Nat`.
 -/
 @[noinline] def mulCode
     (_heligible : NativeLimb.Eligible format)

@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
 /-!
 # Correct rounding of the binary Euclidean norm
 
-Exact dyadic multiplication and addition form the sum of squares. The arbitrary-mantissa
-square-root theorem then rounds its square root once. Neither the squares nor their sum must
-fit the output format, so intermediate overflow and underflow cannot change the result.
+The norm forms its sum of squares with exact dyadic multiplication and addition, and the
+arbitrary-mantissa square-root theorem then rounds its square root once. Neither the squares nor
+their sum has to fit the output format, so intermediate overflow and underflow cannot change the
+result.
 -/
 
 @[expose] public section

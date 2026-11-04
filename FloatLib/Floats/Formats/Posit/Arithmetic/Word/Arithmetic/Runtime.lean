@@ -14,14 +14,18 @@ public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.Runtime
 /-!
 # Native-word posit arithmetic runtime
 
-The stored-word entry points decode `UInt64` operands without constructing exact-width `BitVec`
-values and return complete result encodings directly. The model-valued kernels they refine are the
-width-generic direct kernels in `DirectDyadicArithmetic`; `addWords_eq_add` and its siblings in
-`Word.Arithmetic.Proof` state that refinement, so no second model-valued copy of the arithmetic is
-maintained here. The kernels that the configured backend executes are the packed variants
-`addWordsCodeFlatValid`, `subWordsCodeFlatValid`, `fmaWordsCodeFlatValid`,
-`PackedProduct.mulWordsCodeValid`, `PackedQuotient.divWordsCodeValid`, and
-`PackedSquareRoot.sqrtWordCodeValid`, together with the `PackedSignedSum.*WordValid` family.
+Posits that fit one `UInt64` get their stored-word entry points here, which decode the operands
+without building exact-width `BitVec` values and return complete result encodings. The
+model-valued kernels they refine are the width-generic direct kernels in `DirectDyadicArithmetic`.
+Since `addWords_eq_add` and its siblings in `Word.Arithmetic.Proof` state that refinement, we keep
+no second model-valued copy of the arithmetic in this file.
+
+The configured backend runs the packed variants:
+
+* `addWordsCodeFlatValid`, `subWordsCodeFlatValid`, and `fmaWordsCodeFlatValid`,
+* `PackedProduct.mulWordsCodeValid`, `PackedQuotient.divWordsCodeValid`, and
+  `PackedSquareRoot.sqrtWordCodeValid`,
+* the `PackedSignedSum.*WordValid` family.
 -/
 
 @[expose] public section
@@ -37,7 +41,7 @@ variable {format : Format}
 /--
 Decode two packed words, add their exact dyadic values, and return the complete result encoding.
 
-NaR propagation is represented directly by the unique sign-mask code. Ordinary results use the
+NaR propagates as the unique sign-mask code itself. Ordinary results use the
 encoded-word rounder, so callers that already own packed storage need not construct an
 intermediate exact-width model.
 -/
@@ -111,7 +115,7 @@ intermediate exact-width model.
       format.signMaskNat
 
 /--
-Decode two packed words directly, add their exact dyadic values, and round once.
+Decode two packed words, add their exact dyadic values, and round once.
 
 This wraps `addWordsCode` in the model carrier. Its refinement theorem requires each stored
 operand to fit the format width.

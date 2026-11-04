@@ -12,25 +12,24 @@ public import FloatLib.Numerics.Capabilities.Elementary
 /-!
 # `NF`: a rounded scalar type
 
-`FloatRep` (the record with a mantissa/exponent) is useful for *talking about the grid* and for
-stating format predicates like `FLTFormat`. Higher-level specifications are easier to state with
-a scalar carrier that already performs the rounding step.
-
-`NF β fexp rnd` is that scalar carrier:
+`FloatRep`, the record with a mantissa and an exponent, is good for *talking about the grid* and
+for stating format predicates like `FLTFormat`. Higher-level specifications are easier to state
+with a scalar carrier that already does the rounding step, and `NF β fexp rnd` is that carrier:
 
 - it stores a semantic value `val : ℝ`,
 - and every primitive arithmetic operation rounds back to the format using `round`.
 
-The public constructor remains available because proof developments sometimes embed an arbitrary
-real as a comparison value. Such a value need not be representable. `NF.IsRepresentable` records the
-grid invariant when a theorem needs it, and `NF.ofReal` and the arithmetic results establish it.
+The public constructor stays available, because proof developments sometimes embed an arbitrary
+real as a comparison value, and such a value need not be representable. `NF.IsRepresentable`
+records the grid invariant when a theorem needs it, and `NF.ofReal` and the arithmetic results
+establish it.
 
 Addition, for example, satisfies:
 
 `val(a + b) = round( val(a) + val(b) )`
 
-This is the standard textbook model used for floating-point error analysis: compute in reals, then
-incur a rounding error at each step (Higham/Goldberg style).
+That's the standard textbook model of floating-point error analysis, as in Higham and Goldberg:
+compute in the reals, and pay one rounding error at each step.
 
 Trust boundary:
 - `NF` and `FloatRep` model real values and rounding in Lean.
@@ -132,7 +131,7 @@ noncomputable def checkedDiv (a b : NF β fexp rnd) : Option (NF β fexp rnd) :=
   if b.val = 0 then none else some (a / b)
 
 omit [ValidRnd rnd] in
-/-- Checked division rejects exactly the zero-divisor case. -/
+/-- Checked division rejects the zero-divisor case and nothing else. -/
 @[simp] theorem checkedDiv_eq_none_iff (a b : NF β fexp rnd) :
     checkedDiv a b = none ↔ b.val = 0 := by
   simp [checkedDiv]
@@ -236,7 +235,7 @@ noncomputable def checkedSqrt (x : NF β fexp rnd) : Option (NF β fexp rnd) :=
     none
 
 omit [ValidRnd rnd] in
-/-- Checked square root rejects exactly the negative inputs. -/
+/-- Checked square root rejects the negative inputs and nothing else. -/
 @[simp] theorem checkedSqrt_eq_none_iff (x : NF β fexp rnd) :
     checkedSqrt x = none ↔ ¬0 ≤ x.val := by
   simp [checkedSqrt]
@@ -249,7 +248,7 @@ noncomputable def checkedLog (x : NF β fexp rnd) : Option (NF β fexp rnd) :=
     none
 
 omit [ValidRnd rnd] in
-/-- Checked logarithm rejects exactly the nonpositive inputs. -/
+/-- Checked logarithm rejects the nonpositive inputs and nothing else. -/
 @[simp] theorem checkedLog_eq_none_iff (x : NF β fexp rnd) :
     checkedLog x = none ↔ ¬0 < x.val := by
   simp [checkedLog]

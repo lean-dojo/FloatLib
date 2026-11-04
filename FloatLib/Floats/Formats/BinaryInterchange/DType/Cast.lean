@@ -34,7 +34,7 @@ open FixedInt Model
 Convert a fixed-width signed integer to `fmt` with IEEE status and ternary value, the kernel of
 `ExecDType.intToFloat fmt x (mode := mode) (status := true)`.
 
-The integer is decoded exactly to a dyadic before one destination rounding, and the ternary value
+The integer is decoded to an exact dyadic before one destination rounding, and the ternary value
 compares the delivered value with that integer.
 -/
 @[inline] def Internal.Status.intToFloat {width : Nat} (fmt : FloatFormat)
@@ -52,7 +52,7 @@ Convert a fixed-width signed integer to `fmt`, rounding once in `mode` (nearest-
 With `status := true` the result is the `IEEEOutcome` carrying the exception flags and the ternary
 value.
 
-The integer is decoded exactly to a dyadic before the one destination rounding. This works for
+The integer is decoded to an exact dyadic before the one destination rounding. This works for
 every source width and every binary-interchange destination format.
 -/
 @[macro_inline] def intToFloat {width : Nat} (fmt : FloatFormat)

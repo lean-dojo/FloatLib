@@ -11,14 +11,15 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Runtime
 /-!
 # Explicit decimal rounding attributes and sticky exception flags
 
-An arithmetic `Outcome` records the exceptions raised by one operation. An `Environment`
-accumulates those exceptions until a caller clears or restores the selected flags. Because
-this state is an ordinary value, exception behavior is available in pure Lean programs and proofs.
-Flag operations are defined in `FloatLib.Numerics.IEEEStatus`, shared with binary formats.
+Each arithmetic `Outcome` records the exceptions one operation raised, and an `Environment`
+collects them until a caller clears or restores the selected flags. Nothing here is mutable.
+Because the state is an ordinary value, you can use exception behavior in pure Lean programs and in
+proofs, and the flag operations themselves, defined in `FloatLib.Numerics.IEEEStatus`, are shared
+with the binary formats.
 
-The flag operations implement the default-handling state of IEEE 754-2019 §§5.7.4 and 7.
-They do not change the host floating-point environment. A scoped rounding attribute changes
-the direction used inside a computation while preserving the exceptions raised there.
+They implement the default-handling state of IEEE 754-2019 §§5.7.4 and 7, and they never touch the
+host floating-point environment. A scoped rounding attribute changes the direction used inside a
+computation and keeps the exceptions raised there.
 -/
 
 @[expose] public section

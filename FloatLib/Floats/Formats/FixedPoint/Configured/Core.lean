@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.FixedPoint.Exact.Runtime
 /-!
 # Configured exact fixed-point identity
 
-The encoded exact fixed-point family supplies the public `ExecFloat.FixedPoint` type. Executable
-operations, refinement proofs, planner metadata, and dispatch instances live in downstream
-modules.
+This module defines the public `ExecFloat.FixedPoint` type from the encoded exact fixed-point
+family, and nothing else. The executable operations, refinement proofs, planner metadata, and
+dispatch instances all live in modules that import it.
 -/
 
 @[expose] public section

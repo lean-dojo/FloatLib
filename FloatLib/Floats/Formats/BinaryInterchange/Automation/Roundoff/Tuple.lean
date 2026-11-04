@@ -11,41 +11,52 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Loop
 /-!
 # Loops whose state is a tuple in the `roundoff` analysis
 
-A registered loop whose state is a pair or a nondependent record, such as a running maximum beside a
-rescaled sum, is analyzed one component at a time. A component of the observed format is compared
-with a real reference under a bound, kept finite and of one sign when the step preserves it; a
-component whose type mentions no numerical carrier equals a shadow copy, which is part of the
-reference and so starts at index data and is updated to index data. A record is split into its
-fields, so a field of a record of binary32 values is a value of that format. The step is analyzed
-once for symbolic components, and the loop's relation law (`Loop.relation`) lifts the conjunction of
-these facts through the traversal. Only the components the observed one depends on through the step
-enter the relation. A component stays exact while the step keeps it exact from exact components, and
-a test (`<`, `≤`, `==`, `!=`) of exact finite values that a discrete component reads is the test of
-their references, when the conditions, indices and other data in those references are index data.
-Another test of the rounded state is the test of the references of its operands under the premise
-that the two agree, which the loop's condition carries, so the theorem holds for the executions
-whose decisions match the reference's. Both kinds are FloatLib's own tests under the observation
-(`ownTest`): the left side of the law that makes a test the test of the decoded values, with the
-observation's codec, so a reversed order, the structural equality of the stored word and a test
-under a second codec are neither. An agreement test also needs an analysis of each operand whose
-reference is a plain real expression (`plainReference`): real variables, numerals, casts of index
-data, the decoded values of index data, the four operations, negation, `max`, `min` and branches on
-comparisons of such expressions, through the reals' own dictionaries, the ones Mathlib declares
-(`realDictionary?`), whatever instances a section declares on the reals. A stored function read at
-the rounded state, an entry read at an index computed from rounded values and a contract's model,
-which may hide a rounded computation in a definition, are not. Each component of the observed format
-that such a reference reads, directly, through another or through the shadow copy of a discrete
-component that tests it, keeps a plain reference from its start and through the step, so a component
-that holds an entry chosen by rounding cannot enter the references of an agreement test either, not
-even through a flag that tests it. A loop analyzed inside another loop's step states no agreement
-premise there, since its references could read the enclosing loop's state, whose provenance only
-that loop could check; an estimate found outside the step, which reads no such state, is reused as
-it is. A real input stands for the value it names. The shadow copy's check (`indexClosed`) admits an
-agreement test although its operands are rounded, since the copy never reads it: the copy reads the
-test of the references in its place and mentions no rounded component, so a rounded value reaches
-the theorem only through the premise, as the decision it states, and not through the reference,
-beyond what references keep under the trust assumptions of the roundoff overview: a stored entry
-read at an index chosen by rounding.
+A registered loop whose state is a pair or a nondependent record, such as a running maximum beside
+a rescaled sum, is analyzed one component at a time:
+
+* A component of the observed format is compared with a real reference under a bound, and kept
+  finite and of one sign when the step preserves it.
+* A component whose type mentions no numerical carrier equals a shadow copy, which is part of the
+  reference and so starts at index data and is updated to index data.
+* A record is split into its fields, so a field of a record of binary32 values is a value of that
+  format.
+
+The step is analyzed once for symbolic components, and the loop's relation law (`Loop.relation`)
+lifts the conjunction of these facts through the traversal. Only the components the observed one
+depends on through the step enter the relation. A component stays exact while the step keeps it
+exact from exact components.
+
+Tests of the state come in two kinds. A test (`<`, `≤`, `==`, `!=`) of exact finite values that a
+discrete component reads is the test of their references, when the conditions, indices and other
+data in those references are index data. Another test of the rounded state is the test of the
+references of its operands under the premise that the two agree. That premise sits in the loop's
+condition, so the theorem holds for the executions whose decisions match the reference's. Both kinds
+are FloatLib's own tests under the observation (`ownTest`), meaning the left side of the law that
+makes a test the test of the decoded values, with the observation's codec. So a reversed order, the
+structural equality of the stored word and a test under a second codec are neither.
+
+An agreement test also needs an analysis of each operand whose reference is a plain real
+expression (`plainReference`). Such an expression is built from real variables, numerals, casts of
+index data, the decoded values of index data, the four operations, negation, `max`, `min` and
+branches on comparisons of such expressions, through the reals' own dictionaries, the ones Mathlib
+declares (`realDictionary?`), whatever instances a section declares on the reals. A stored function
+read at the rounded state, an entry read at an index computed from rounded values and a contract's
+model, which may hide a rounded computation in a definition, are not plain. Each component of the
+observed format that such a reference reads, directly, through another or through the shadow copy
+of a discrete component that tests it, keeps a plain reference from its start and through the step.
+So a component that holds an entry chosen by rounding cannot enter the references of an agreement
+test either, even through a flag that tests it.
+
+A loop analyzed inside another loop's step states no agreement premise there, since its references
+could read the enclosing loop's state, whose provenance only that loop could check. An estimate
+found outside the step, which reads no such state, is reused as it is. A real input stands for the
+value it names.
+
+The shadow copy's check (`indexClosed`) admits an agreement test although its operands are rounded,
+since the copy never reads it. The copy reads the test of the references in its place and mentions
+no rounded component. So a rounded value reaches the theorem only through the premise, as the
+decision it states, and not through the reference, beyond what references keep under the trust
+assumptions of the roundoff overview: a stored entry read at an index chosen by rounding.
 -/
 
 public meta section
@@ -104,7 +115,7 @@ def recordFields? (type : Lean.Expr) : MetaM (Option (Name × Array Lean.Expr)) 
 /-- The leaves of a loop state of type `type` at `path`, values of the observed format
 `floatType` and data whose type mentions no numerical carrier (`mentionsCarrier`), with the
 projection functions of the records between them. A record whose fields hold such values, also a
-record of one format or a wrapper of such a record, is split into its fields; any other leaf is
+record of one format or a wrapper of such a record, is split into its fields. Any other leaf is
 rejected. -/
 partial def components (floatType type : Lean.Expr) (path : Array Nat := #[]) :
     MetaM (Array Component × Array Lean.Expr) := do
@@ -393,14 +404,15 @@ partial def comparisons (term : Lean.Expr) (found : Array Lean.Expr := #[]) :
   | _ => found
 
 /-- Whether `comparison`, a test with head `head`, is FloatLib's own test of configured values up
-to unfolding, under the observation `observe`: at fresh operands and instance transparency it is the
-left side of the law that makes it the test of their real values
-(`ExecFloat.Binary.lt_iff_toReal_lt`, `le_iff_toReal_le`, `beq_eq_decide_toReal_eq`; `a != b`
-negates `a == b` through the same dictionary), and the law's right side decodes them by `observe`,
-so that the law's codec is the observation's. Fresh operands and instance transparency unfold no
-comparison and no rounded computation. A test through another dictionary, such as a reversed order
-or the structural equality of the stored word, under which the two zeros differ, or through
-another codec, is not one. -/
+to unfolding, under the observation `observe`. At fresh operands and instance transparency it must
+be the left side of the law that makes it the test of their real values
+(`ExecFloat.Binary.lt_iff_toReal_lt`, `le_iff_toReal_le`, `beq_eq_decide_toReal_eq`, and `a != b`
+negates `a == b` through the same dictionary). The law's right side must decode them by `observe`,
+so that the law's codec is the observation's.
+
+Fresh operands and instance transparency unfold no comparison and no rounded computation. A test
+through another dictionary, such as a reversed order or the structural equality of the stored word,
+under which the two zeros differ, or through another codec, is not one. -/
 def ownTest (head : Name) (observe comparison : Lean.Expr) : MetaM Bool := do
   let law := if head == ``LT.lt then ``ExecFloat.Binary.lt_iff_toReal_lt
     else if head == ``LE.le then ``ExecFloat.Binary.le_iff_toReal_le
@@ -673,7 +685,7 @@ namespace Analyze
 open Tuple
 
 /-- One attempt at the relation of a loop whose state is a tuple, under `facts`. The step is
-analyzed once for symbolic components; a fact the step does not keep is recorded in `drops`
+analyzed once for symbolic components. A fact the step does not keep is recorded in `drops`
 before the attempt fails, so that the next attempt drops it and analyzes every component again. -/
 def tupleAttempt (r : Recursor) (setting : Setting) (facts : Array Facts)
     (drops : IO.Ref (Option (Array Facts))) (fuel : Nat) : AnalyzeM Estimate := do

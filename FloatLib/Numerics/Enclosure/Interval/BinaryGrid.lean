@@ -12,20 +12,18 @@ public import Mathlib.Data.Rat.Defs
 /-!
 # Integer arithmetic on a binary interval grid
 
-At `precision` fractional bits, an integer coefficient `z` represents `z / 2^precision`.
-Intervals are the existing `Interval Int`, and each operation takes the scale as an argument
-instead of storing it in the interval. Coefficients have unbounded magnitude, so arithmetic cannot
-overflow.
+At `precision` fractional bits, an integer coefficient `z` represents `z / 2^precision`. Intervals
+are plain `Interval Int`, and each operation takes the scale as an argument instead of storing it in
+the interval. Coefficients have unbounded magnitude, so the arithmetic can't overflow.
 
 Addition, subtraction, and negation are exact. Multiplication rounds the smallest and largest
-integer products with signed shifts. Division uses four integer quotients and rejects a divisor
-interval containing zero. Values are decoded to rationals at the interface, never between
-arithmetic steps.
+integer products with signed shifts, and division uses four integer quotients and rejects a divisor
+interval that contains zero. Values become rationals only at the interface, never between arithmetic
+steps.
 
-The endpoint construction follows S. M. Rump,
-[Verification methods: Rigorous results using floating-point
-arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §§5.1–5.3.
-`BinaryGridProof` proves containment for arbitrary real members of the input intervals.
+The endpoint construction follows S. M. Rump, [Verification methods: Rigorous results using
+floating-point arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010),
+§§5.1-5.3. `BinaryGridProof` proves containment for arbitrary real members of the input intervals.
 -/
 
 @[expose] public section

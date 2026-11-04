@@ -13,19 +13,19 @@ public import FloatLib.Numerics.Enclosure.Constants.Runtime
 /-!
 # Configuration for format-generic transcendental execution
 
-IEEE 754 §9.2 recommends elementary operations with a correct-rounding contract, but it does not
-require them in every implementation or prescribe their algorithms. These kernels provide
-deterministic approximations. `Config` records their integer approximation data, and accuracy
-and correct rounding need their own proofs. The binary32 configuration is pinned for reproducible
-results, and other formats use a configuration generated under a `GenerationPolicy`.
+IEEE 754 §9.2 recommends elementary operations with a correct-rounding contract. It does not
+require them in every implementation, and it does not prescribe their algorithms. These kernels
+provide deterministic approximations. `Config` records their integer approximation data, while
+accuracy and correct rounding need proofs of their own. The binary32 configuration is pinned for
+reproducible results, and other formats use a configuration generated under a `GenerationPolicy`.
 
-Generated configurations depend on the fraction width only, never on the exponent range:
-trigonometric reduction and the reduction of large exponential arguments take their extra
-precision from the shared constants cache of `Numerics.Enclosure.Constants` at the size each
+Generated configurations depend on the fraction width only, never on the exponent range.
+Trigonometric reduction and the reduction of large exponential arguments take their extra
+precision from the shared constants cache of `Numerics.Enclosure.Constants`, at the size each
 argument needs. The generated `log 2` is its `ln2Faithful` read, proved within one unit.
 
-Generated data is an execution policy, not an accuracy theorem. Real-error claims are separate
-approximation contracts.
+Generated data is an execution policy and carries no accuracy theorem. Real-error claims are
+separate approximation contracts.
 -/
 
 @[expose] public section
@@ -72,16 +72,16 @@ structure Config where
   /-- Positive common denominator for `sinhCoeffsAsc`. -/
   sinhDenominator : Nat
   /--
-  Ascending exact numerator coefficients of the alternating Taylor series of sine in `x ^ 2`;
-  entry `i` is `(-1)^i * sinDenominator / (2i+1)!`. The kernel evaluates a prefix of the list
+  Ascending exact numerator coefficients of the alternating Taylor series of sine in `x ^ 2`.
+  Entry `i` is `(-1)^i * sinDenominator / (2i+1)!`. The kernel evaluates a prefix of the list
   whose length it chooses from the argument, and the whole list for tiny arguments.
   -/
   sinCoeffsAsc : List Int
   /-- Positive common denominator for `sinCoeffsAsc`. -/
   sinDenominator : Nat
   /--
-  Ascending exact numerator coefficients of the alternating Taylor series of cosine in `x ^ 2`;
-  entry `i` is `(-1)^i * cosDenominator / (2i)!`. The kernel evaluates a prefix of the list whose
+  Ascending exact numerator coefficients of the alternating Taylor series of cosine in `x ^ 2`.
+  Entry `i` is `(-1)^i * cosDenominator / (2i)!`. The kernel evaluates a prefix of the list whose
   length it chooses from the argument.
   -/
   cosCoeffsAsc : List Int
@@ -150,10 +150,10 @@ Number of odd Taylor terms of `sinh` selected for a fraction width.
 The search targets the first `n ≥ 1` with
 `2^(2n) * (2n+1)! ≥ 2^(fracWidth + sinhGuardBits)`, so for `|x| ≤ 1/2` the first omitted term
 is below `2^-(fracWidth + sinhGuardBits + 1)`. The small-argument branches of `sinh`, `cosh` and
-`tanh` share this series, and a target only four bits beyond the fraction width misrounded
-binary128 results near one half. The linear fuel budget is chosen to exceed the point where the
-power-of-two factor alone reaches the target. The corresponding analytic error argument is not
-formalized as a theorem in this library.
+`tanh` share this series. A target only four bits beyond the fraction width misrounded binary128
+results near one half. The linear fuel budget is chosen to exceed the point where the power-of-two
+factor alone reaches the target. This library does not formalize the corresponding analytic error
+argument as a theorem.
 -/
 def sinhTerms (fracWidth : Nat) : Nat :=
   sinhTermsAux (Model.pow2 (fracWidth + sinhGuardBits)) (fracWidth + sinhGuardBits) 1

@@ -19,14 +19,14 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Correctness of native storage for one-word floating-point formats
 
-The word conversions, field operations and packing of `Core.Runtime` are proved against the
+The word conversions, field operations, and packing of `Core.Runtime` are proved against the
 exact-width carrier under the real capacity requirement, so the results hold for every configured
-binary format that fits one machine word.
+binary format that fits one machine word. Arithmetic proofs reuse these facts and don't repeat the
+masking and truncation arguments for each operation.
 
-Arithmetic proofs reuse these facts and don't repeat masking and truncation arguments for each
-operation. The descriptor constants of `Core.Runtime` are machine words computed by shifts.
-`exponentMask_toNat`, `fractionMask_toNat`, `biasWord_toNat` and the threshold lemmas at the end
-of this module give their natural-number values under the one-word capacity bound.
+The descriptor constants of `Core.Runtime` are machine words computed by shifts.
+`exponentMask_toNat`, `fractionMask_toNat`, `biasWord_toNat` and the threshold lemmas at the end of
+this module give their natural-number values under the one-word capacity bound.
 -/
 
 @[expose] public section

@@ -13,14 +13,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 # Division specification
 
 This exact-rational reference operation defines the proof target for every validated
-`FloatFormat`.
+`FloatFormat`, and the word and arbitrary-width division kernels refine this same definition.
 
 Finite operands with a nonzero divisor are divided as an exact scaled rational and rounded to
-nearest with ties to even.
-Special operands and division by zero follow the descriptor's encoding policy. This module defines
-the value-only reference operation; explicit rounding directions and status flags belong to the
-separate directed and status APIs. Word and arbitrary-width division kernels refine this same
-reference definition.
+nearest with ties to even. Special operands and division by zero follow the descriptor's encoding
+policy. Only the value is defined here. Rounding directions and status flags belong to the
+directed and status APIs.
 -/
 
 @[expose] public section

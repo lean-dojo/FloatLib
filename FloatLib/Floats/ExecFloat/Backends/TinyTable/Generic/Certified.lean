@@ -11,9 +11,9 @@ public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Proof
 /-!
 # Specification-carrying generic byte-table kernels
 
-These structures retain the model operation used to generate each lazy table together with its
-refinement theorem. Their executable `run` methods delegate to the arity-specific direct lookup
-paths, while their equations compose the generic lookup proof with the reference definition.
+Each of these structures keeps the model operation that generated its lazy table, together with the
+refinement theorem. Their executable `run` methods go to the arity-specific direct lookup paths, and
+their equations compose the generic lookup proof with the reference definition.
 -/
 
 @[expose] public section

@@ -13,12 +13,10 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 /-!
 # Static-byte capability construction
 
-Static-byte candidates and first-order dispatchers form verified `ExecFloat` capabilities.
-Runtime planning remains in `Plan.Runtime`; the equations consumed here are isolated in
-`Plan.Proof`.
-
-The planner chooses between a table and a direct kernel. These constructors attach the
-corresponding refinement theorem and expose the result through the shared operation interfaces.
+Here static-byte candidates and first-order dispatchers become verified `ExecFloat` capabilities.
+The planner chooses between a table and a direct kernel, and these constructors attach the
+matching refinement theorem and expose the result through the shared operation interfaces.
+Runtime planning stays in `Plan.Runtime`, and the equations used here are in `Plan.Proof`.
 -/
 
 @[expose] public section
@@ -35,7 +33,7 @@ open FloatLib.Floats.ExecFloat
 The common table plan for a nominal static-byte format.
 
 The record supplies certified tables and profile choices for four binary operations and square
-root. FMA is separate: a package can offer a table candidate or use a model kernel directly.
+root. FMA is handled on its own: a package can offer a table candidate or use a model kernel.
 
 Concrete instances should be marked `instance_reducible`. The capability instances below can then
 specialize each projection to the same first-order table kernel that a hand-written per-format
@@ -259,7 +257,7 @@ namespace Internal
     run rfl
 
 /--
-Construct an addition capability directly from a certified byte table.
+Construct an addition capability from a certified byte table.
 
 The executable table lookup and its refinement proof are derived from the same certificate, so a
 format package cannot accidentally pair a kernel with the wrong theorem.
@@ -284,7 +282,7 @@ format package cannot accidentally pair a kernel with the wrong theorem.
           (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.add)
           width_le_eight table left right))
 
-/-- Construct a subtraction capability directly from a certified byte table. -/
+/-- Construct a subtraction capability from a certified byte table. -/
 @[always_inline, instance_reducible] def subTableCapability
     {F : Type u} [Family F]
     [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
@@ -305,7 +303,7 @@ format package cannot accidentally pair a kernel with the wrong theorem.
           (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sub)
           width_le_eight table left right))
 
-/-- Construct a multiplication capability directly from a certified byte table. -/
+/-- Construct a multiplication capability from a certified byte table. -/
 @[always_inline, instance_reducible] def mulTableCapability
     {F : Type u} [Family F]
     [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
@@ -326,7 +324,7 @@ format package cannot accidentally pair a kernel with the wrong theorem.
           (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.mul)
           width_le_eight table left right))
 
-/-- Construct a division capability directly from a certified byte table. -/
+/-- Construct a division capability from a certified byte table. -/
 @[always_inline, instance_reducible] def divTableCapability
     {F : Type u} [Family F]
     [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
@@ -347,7 +345,7 @@ format package cannot accidentally pair a kernel with the wrong theorem.
           (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.div)
           width_le_eight table left right))
 
-/-- Construct a square-root capability directly from a certified byte table. -/
+/-- Construct a square-root capability from a certified byte table. -/
 @[always_inline, instance_reducible] def sqrtTableCapability
     {F : Type u} [Family F]
     [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
@@ -432,10 +430,9 @@ Construct a policy-selected FMA capability from a certified table and a proved e
           width_le_eight run run_eq_spec left right addend))
 
 /-!
-The planned instances deliberately outrank the direct-family instances in
-`StaticByte.Backend.Construction`. A static-byte family without a `TablePlan` therefore keeps its
-ordinary family kernels. With a `TablePlan`, the planning profile chooses between a table and
-the exact baseline.
+The planned instances outrank the direct-family instances in `StaticByte.Backend.Construction` on
+purpose. So a static-byte family without a `TablePlan` keeps its ordinary family kernels, and with
+a `TablePlan` the planning profile chooses between a table and the exact baseline.
 -/
 
 /--

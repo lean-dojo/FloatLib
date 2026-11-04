@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Kernel
 /-!
 # Raw `UInt16` kernels for packed posits
 
-These entry points specialize the shared kernels to `UInt16` inputs and outputs. Configured
-runtime wrappers use the generic range theorems from `FixedWords.Kernels`.
+Here the shared kernels are specialized to `UInt16` inputs and outputs, one entry point per
+operation, and the configured runtime wrappers prove the results in range with the generic
+theorems from `FixedWords.Kernels`.
 -/
 
 @[expose] public section

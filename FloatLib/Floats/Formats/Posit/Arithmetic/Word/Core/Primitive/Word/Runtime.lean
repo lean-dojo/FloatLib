@@ -12,12 +12,13 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Native-word posit primitives
 
-Posit kernels use these primitives when a complete candidate encoding fits in one `UInt64`.
-Widths stay explicit because identical stored bits have different regime and fraction boundaries
-at different total widths.
+Posit kernels use these primitives when a complete candidate encoding fits in one `UInt64`. Each
+primitive takes the width as an argument, because the same stored bits have different regime and
+fraction boundaries at different total widths. A word holding 4 is `0100` as a 4-bit posit, which
+is 1, and `00000100` as an 8-bit posit, which is `2^-16`.
 
-The operations here avoid `BitVec` construction and arbitrary-precision arithmetic on packed hot
-paths. Proofs relating them to the exact-width posit model live in
+On these packed hot paths the operations avoid `BitVec` construction and arbitrary-precision
+arithmetic. Proofs relating them to the exact-width posit model are in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.Proof`.
 -/
 
@@ -50,7 +51,7 @@ instance (format : Format) : Decidable (CandidateEligible format) := by
   infer_instance
 
 /--
-Positive-code endpoint `format.signMaskNat`, represented directly in the native storage word.
+Positive-code endpoint `format.signMaskNat`, as a native storage word.
 
 The word is exact only for `Eligible` formats (`signMaskWord_toNat`). At width 65, which
 `CandidateEligible` admits, the shift amount 64 is reduced modulo the word size and the word is 1.
@@ -61,7 +62,7 @@ The word is exact only for `Eligible` formats (`signMaskWord_toNat`). At width 6
 /--
 Exact-width modulus represented modulo the native machine word.
 
-For widths below 64 this is `2 ^ format.bits`; for Posit64 it is zero, matching
+For widths below 64 this is `2 ^ format.bits`. For Posit64 it is zero, matching
 `UInt64.ofNat (2 ^ 64)`.
 -/
 @[inline] def modulusWord (format : Format) : UInt64 :=
@@ -81,8 +82,8 @@ For widths below 64 this is `2 ^ format.bits`; for Posit64 it is zero, matching
 /--
 Read one bit from a native word using least-significant-bit numbering.
 
-The explicit range check is required because `UInt64` shifts reduce their count modulo 64,
-whereas a bit read beyond the stored word must be `false`.
+The range check is needed because `UInt64` shifts reduce their count modulo 64, and a bit read
+beyond the stored word must be `false`.
 -/
 @[inline] def bitAt (value : UInt64) (index : Nat) : Bool :=
   if index < 64 then
@@ -97,7 +98,7 @@ whereas a bit read beyond the stored word must be `false`.
   else
     0xffffffffffffffff
 
-/-- Retain exactly the low `width` bits of a native word. -/
+/-- Keep the low `width` bits of a native word and clear the rest. -/
 @[inline] def lowBits (value : UInt64) (width : Nat) : UInt64 :=
   value &&& lowMask width
 

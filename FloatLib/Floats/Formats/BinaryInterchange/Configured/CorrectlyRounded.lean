@@ -14,17 +14,20 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Correctl
 
 This module lifts the total functions of `Model.Transcendentals.CorrectlyRounded` to
 `ExecFloat.Binary`: `exp`, `log`, `expMinus1`, `logPlus1`, and the weighted exponential `expMul`,
-which rounds `exp x * w` once. Each always returns a value. For an IEEE descriptor and a finite
-input in the domain whose exact result, in absolute value for `log`, `logPlus1`, and `expMul`,
-lies below `Certified.overflowThreshold`, the result is finite and is the nearest-even rounding
-of the real function. At or beyond the threshold it decodes to the infinity with the sign of the
-real result, and a finite logarithm or `logPlus1` comes from an input in the domain. The sign
-theorems state when rounding keeps the sign of the real result. At a zero the exponential is
-exactly one, and `expMinus1` and `logPlus1` return the zero. None of these theorems has a premise
-on the search `budget`, which only bounds the enclosure attempts before exact comparisons decide
-the rounding. The certified searches of `Configured.Transcendentals`,
-`ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1`, and `logPlus1`, can fail instead,
-and return `Except Certified.Failure`.
+which rounds `exp x * w` once. Each always returns a value.
+
+Take an IEEE descriptor and a finite input in the domain whose exact result lies below
+`Certified.overflowThreshold`, in absolute value for `log`, `logPlus1` and `expMul`. Then the
+result is finite and is the nearest-even rounding of the real function. At or beyond the threshold
+it decodes to the infinity with the sign of the real result, and a finite logarithm or `logPlus1`
+comes from an input in the domain. The sign theorems state when rounding keeps the sign of the
+real result. At a zero the exponential returns one, and `expMinus1` and `logPlus1` return the
+zero.
+
+None of these theorems has a premise on the search `budget`, which only bounds the enclosure
+attempts before exact comparisons decide the rounding. That is the difference from the certified
+searches of `Configured.Transcendentals`, `ExecFloat.Binary.Certified.exp`, `log`, `pow`,
+`expMinus1` and `logPlus1`, which can fail and return `Except Certified.Failure`.
 
 ```lean
 ExecFloat.Binary.CorrectlyRounded.exp x
@@ -32,9 +35,10 @@ ExecFloat.Binary.CorrectlyRounded.expMul x w (budget := { maxAttempts := 4 })
 ```
 
 Like `Configured.Transcendentals`, this is a named import outside `import FloatLib`. The
-`MathFunctions` instance there keeps the approximation kernels. Its `CorrectlyRounded.mathFunctions`
-dictionary, or the scope `FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath`, gives
-generic code these `exp` and `log` instead.
+`MathFunctions` instance there keeps the approximation kernels. This module's
+`CorrectlyRounded.mathFunctions` dictionary, or the scope
+`FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath`, gives generic code these `exp`
+and `log` instead.
 -/
 
 @[expose] public section
@@ -259,8 +263,8 @@ theorem toReal_expMul_eq_roundAt {value weight : Value} (hvalue : isFinite value
 /-! ## Overflow -/
 
 /--
-The exponential of a finite value is finite exactly when its exact result is below the overflow
-threshold.
+The exponential of a finite value is finite if and only if its exact result is below the
+overflow threshold.
 -/
 theorem isFinite_exp_iff {value : Value} (hvalue : isFinite value = true)
     {budget : Certified.Budget} (hformat : format.isIEEE = true := by ieee_format) :
@@ -271,7 +275,7 @@ theorem isFinite_exp_iff {value : Value} (hvalue : isFinite value = true)
   exact Model.Transcendentals.CorrectlyRounded.isFinite_exp_iff hformat hvalue
 
 /--
-`expMinus1` of a finite value is finite exactly when its exact result is below the overflow
+`expMinus1` of a finite value is finite if and only if its exact result is below the overflow
 threshold.
 -/
 theorem isFinite_expMinus1_iff {value : Value} (hvalue : isFinite value = true)
@@ -283,7 +287,7 @@ theorem isFinite_expMinus1_iff {value : Value} (hvalue : isFinite value = true)
   exact Model.Transcendentals.CorrectlyRounded.isFinite_expMinus1_iff hformat hvalue
 
 /--
-The logarithm of a finite positive value is finite exactly when its exact result is below the
+The logarithm of a finite positive value is finite if and only if its exact result is below the
 overflow threshold in magnitude.
 -/
 theorem isFinite_log_iff {value : Value} (hvalue : isFinite value = true)
@@ -296,7 +300,7 @@ theorem isFinite_log_iff {value : Value} (hvalue : isFinite value = true)
   exact Model.Transcendentals.CorrectlyRounded.isFinite_log_iff hformat hvalue hpositive
 
 /--
-`logPlus1` of a finite value above `-1` is finite exactly when its exact result is below the
+`logPlus1` of a finite value above `-1` is finite if and only if its exact result is below the
 overflow threshold in magnitude.
 -/
 theorem isFinite_logPlus1_iff {value : Value} (hvalue : isFinite value = true)
@@ -309,8 +313,8 @@ theorem isFinite_logPlus1_iff {value : Value} (hvalue : isFinite value = true)
   exact Model.Transcendentals.CorrectlyRounded.isFinite_logPlus1_iff hformat hvalue hdomain
 
 /--
-The weighted exponential of finite values is finite exactly when its exact result is below the
-overflow threshold in magnitude.
+The weighted exponential of finite values is finite if and only if its exact result is below
+the overflow threshold in magnitude.
 -/
 theorem isFinite_expMul_iff {value weight : Value} (hvalue : isFinite value = true)
     (hweight : isFinite weight = true) {budget : Certified.Budget}
@@ -612,7 +616,7 @@ theorem toReal_expMul_lt_zero {value weight : Value} (hvalue : isFinite value = 
 
 /-! ## Zero inputs -/
 
-/-- The exponential of a zero is exactly one. -/
+/-- The exponential of a zero has real value one. -/
 theorem toReal_exp_of_isZero {value : Value} (hzero : isZero value = true)
     {budget : Certified.Budget} (hformat : format.isIEEE = true := by ieee_format) :
     toReal (exp value budget) = 1 := by

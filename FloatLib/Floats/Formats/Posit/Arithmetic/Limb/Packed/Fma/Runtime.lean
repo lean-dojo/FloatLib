@@ -13,8 +13,8 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Direct packed-pair posit fused multiply-add runtime
 
-The packed-pair fused multiply-add kernel returns posit codes for configured values stored in
-two native limbs. Range and semantic refinement proofs live in `Fma.Proof`.
+Fused multiply-add for configured posits stored in two native limbs reads their codes and returns
+the result as a posit code. `Fma.Proof` has the range and semantic refinement proofs.
 -/
 
 @[expose] public section

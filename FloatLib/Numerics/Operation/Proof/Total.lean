@@ -13,12 +13,12 @@ public import FloatLib.Numerics.Core.Proof
 # Proof-indexed total operations
 
 `Total1`, `Total2`, and `Total3` describe operations whose semantics cover every encoded input,
-including exceptional numerical values. This file supplies the uniform ways to apply those
-contracts either to raw codes or to proof-indexed values.
+exceptional numerical values included. This file gives the uniform ways to apply those contracts, to
+raw codes or to proof-indexed values.
 
-The helpers are intentionally regular across arities. Generic automation can expose a denotation,
-rewrite it to an independently stated result, or run the same executable function while retaining
-its semantic index. Format families therefore do not need local copies of these proof bridges.
+We keep the helpers regular across arities on purpose. Generic automation can expose a denotation,
+rewrite it to an independently stated result, or run the same executable function while keeping its
+semantic index, and format families don't need local copies of these proof bridges.
 -/
 
 @[expose] public section

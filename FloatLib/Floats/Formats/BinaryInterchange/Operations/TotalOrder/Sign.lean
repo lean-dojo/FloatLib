@@ -12,15 +12,17 @@ import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 /-!
 # Exact absolute values and encoded sign operations
 
-The sign and quiet-NaN bits occupy distinct positions for every binary descriptor. Consequently
-encoded absolute value preserves signaling status (`isSNaN_abs`) and the fraction field that carries
-a NaN's payload (`fracField_abs`). In a signed-zero format it also clears the sign of every value,
-giving the exact-value bridge used by magnitude ordering (`toDyadic?_abs_of_supportsSignedZero`,
-`exactValue_abs_of_supportsSignedZero`). Without signed zeros it leaves every NaN and zero unchanged
+For every binary descriptor the sign bit and the quiet-NaN bit sit in different positions. So
+encoded absolute value keeps the signaling status (`isSNaN_abs`) and the fraction field that
+carries a NaN's payload (`fracField_abs`). In a signed-zero format it also clears the sign of every
+value, which gives magnitude ordering its exact-value bridge (`toDyadic?_abs_of_supportsSignedZero`,
+`exactValue_abs_of_supportsSignedZero`).
+
+Without signed zeros, absolute value leaves every NaN and zero unchanged
 (`abs_eq_self_of_not_supportsSignedZero_of_isNaN`,
-`abs_eq_self_of_not_supportsSignedZero_of_isZero`), so the unsigned-zero encoding keeps its reserved
-NaN word, whose set sign bit marks it, instead of turning it into the zero. The bridge therefore
-requires a format that supports signed zero.
+`abs_eq_self_of_not_supportsSignedZero_of_isZero`). The unsigned-zero encoding marks its reserved
+NaN word with a set sign bit, and absolute value keeps that word instead of turning it into the
+zero. The bridge therefore requires a format that supports signed zero.
 -/
 
 @[expose] public section
@@ -84,7 +86,7 @@ theorem abs_eq_self_of_not_supportsSignedZero_of_isZero {fmt : FloatFormat}
     abs x = x := by
   simp [abs, copySign, hfmt, hx]
 
-/-- In a signed-zero format, encoded absolute value clears exactly the decoded dyadic sign. -/
+/-- In a signed-zero format, encoded absolute value clears the decoded dyadic sign and no more. -/
 theorem toDyadic?_abs_of_supportsSignedZero {fmt : FloatFormat} {x : Model fmt}
     (hfmt : fmt.supportsSignedZero = true) {d : Numerics.Dyadic}
     (hx : toDyadic? x = some d) :

@@ -11,8 +11,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 /-!
 # Correctness of native binary32 storage operations
 
-The `UInt32` storage conversions are mutual inverses, and native sign-bit negation agrees with
-the generic binary32 model. Runtime clients can import `Base.Runtime` without these proofs.
+Storage conversions to and from `UInt32` are mutual inverses, and native sign-bit negation agrees
+with the generic binary32 model. `Base.Runtime` can be imported without these proofs.
 -/
 
 @[expose] public section

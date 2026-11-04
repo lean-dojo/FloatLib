@@ -12,13 +12,10 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Coercion lemmas for `ℝ → EReal`
 
-Several executable interval soundness proofs move between real bounds (proved in `ℝ`) and
-overflow-safe endpoint reasoning (done in `EReal`).
-
-The order-preserving embedding commutes with `min` and `max`.
-
-These lemmas are used for explicit rewriting, so importing this module does not change the
-default simplification of coerced bounds.
+Several soundness proofs for executable intervals prove their bounds in `ℝ` and then reason about
+the endpoints in `EReal`, where overflow is safe. Its lemmas say that the order-preserving embedding
+commutes with `min` and `max`. We rewrite with them by name, so importing this module doesn't change
+the default simplification of coerced bounds.
 -/
 
 @[expose] public section

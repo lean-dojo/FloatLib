@@ -15,12 +15,13 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Exact square-root bounds for P3109
 
-Integer square root after integer division gives the floor of the real square root of the
-rational quotient. Cross multiplication of squared nonnegative thresholds preserves its order
-exactly. These facts justify rounding even when the square root is irrational.
+Rounding `√2` correctly takes no approximation of it, only integers. The integer square root after
+integer division is the floor of the real square root of the rational quotient, and
+cross-multiplying squared nonnegative thresholds keeps their order. So comparisons decide the
+rounding even when the root is irrational.
 
-The precision bound proves that the rounded candidate fits the existing P3109 encoder for every
-valid descriptor, including precision one and subnormal results.
+The precision bound proves that the rounded candidate fits the P3109 encoder for every valid
+descriptor, precision one and subnormal results included.
 -/
 
 @[expose] public section
@@ -29,7 +30,7 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.Arithmetic
 
-/-- The square of the lower integer candidate does not exceed the rational radicand; a zero
+/-- The square of the lower integer candidate does not exceed the rational radicand, and a zero
 denominator makes the left side zero. -/
 theorem sqrtFloor_sq_le (numerator denominator : Nat) :
     sqrtFloor numerator denominator ^ 2 * denominator ≤ numerator := by
@@ -74,7 +75,7 @@ theorem sqrt_lt_threshold_iff (numerator denominator scale threshold : Nat)
   norm_cast
   rw [_root_.mul_comm (threshold ^ 2)]
 
-/-- A rational threshold equals the real root exactly when its square equals the radicand. -/
+/-- A rational threshold equals the real root if and only if its square equals the radicand. -/
 theorem sqrt_eq_threshold_iff (numerator denominator scale threshold : Nat)
     (hd : 0 < denominator) (hs : 0 < scale) :
     Real.sqrt ((numerator : Real) / denominator) = (threshold : Real) / scale ↔
@@ -96,8 +97,8 @@ theorem compareSqrt_eq_real (numerator denominator scale threshold : Nat)
     sqrt_lt_threshold_iff numerator denominator scale threshold hd hs,
     sqrt_eq_threshold_iff numerator denominator scale threshold hd hs]
 
-/-- The lower root candidate is strictly below the descriptor's significand limit; a zero radicand
-gives the candidate zero. -/
+/-- The lower root candidate is strictly below the descriptor's significand limit, and a zero
+radicand gives the candidate zero. -/
 theorem sqrtFloor_lt_precision (format : Format) (numerator denominator : Nat)
     (hd : denominator ≠ 0) :
     let quantum := sqrtQuantum format numerator denominator

@@ -14,10 +14,12 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 /-!
 # Rounding from a Certified Bracket
 
-The effective calculation layer identifies a unit interval `[m, m + 1)` and a location inside it.
-This file turns that finite location data into the integer selected by directed or nearest rounding
-and proves agreement with the rounded-real definitions. Every named rounding mode is covered:
-floor, ceiling, truncation, rounding away from zero, and nearest rounding with any tie choice.
+By the time we round, the calculation layer has found a unit interval `[m, m + 1)` and a location
+inside it. This file turns that finite data into the integer that directed or nearest rounding
+selects, and proves that it agrees with the rounded-real definitions. Every named rounding mode is
+covered: floor, ceiling, truncation, rounding away from zero, and nearest rounding with any tie
+choice. For `2.5` the interval is `[2, 3)` and the location is the midpoint, so nearest-even
+picks `2` and ties-away picks `3`.
 
 Nearest rounding with ties away from zero differs from every other nearest rounding only at an
 exact midpoint, where it agrees with `awayRound`.
@@ -58,7 +60,7 @@ theorem conditionalIncrement_bounds (increment : Bool) (m : ℤ) :
       conditionalIncrement increment m ≤ m + 1 := by
   cases increment <;> simp [conditionalIncrement]
 
-/-- Upward rounding increments exactly when the location is inexact. -/
+/-- Upward rounding increments if and only if the location is inexact. -/
 def roundUpLocation : Location → Bool
   | .exact => false
   | .inexact _ => true
@@ -70,7 +72,7 @@ def roundNearestLocation (chooseUp : ℤ → Bool) (m : ℤ) : Location → Bool
   | .inexact .eq => chooseUp m
   | .inexact .gt => true
 
-/-- Tie decision used by nearest-even rounding: increment exactly when the lower integer is odd. -/
+/-- Tie decision for nearest-even rounding: increment if and only if the lower integer is odd. -/
 def nearestEvenChoice (m : ℤ) : Bool := decide (¬Even m)
 
 /-- Choice-based nearest rounding with the parity decision is FloatLib's nearest-even mode. -/
@@ -225,7 +227,7 @@ theorem inbetweenInt_bounds {m : ℤ} {x : ℝ} {location : Location}
   push_cast at hbounds
   exact hbounds
 
-/-- The lower integer of a certified unit bracket is negative exactly on negative inputs. -/
+/-- The lower integer of a certified unit bracket is negative if and only if the input is. -/
 private theorem inbetweenInt_sign {m : ℤ} {x : ℝ} {location : Location}
     (hl : InbetweenInt m x location) : (m < 0 → x < 0) ∧ (¬m < 0 → 0 ≤ x) := by
   have hbounds := inbetweenInt_bounds hl

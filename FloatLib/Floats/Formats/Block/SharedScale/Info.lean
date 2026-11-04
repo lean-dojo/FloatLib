@@ -13,14 +13,13 @@ public import FloatLib.Floats.ExecFloat.Info
 /-!
 # Inspection for exact shared-scale blocks
 
-Shared-scale blocks are contextual numerical objects: the caller supplies one exponent and each
-lane is rounded on the resulting integer grid. Inspection therefore reports the lane count,
-unbounded mathematical carrier, and the exact `quantizeAt` theorem without pretending that a
-particular OCP MX encoding or scale-selection policy has been chosen.
+On a shared-scale block, `#float_info` reports the lane count, the unbounded mathematical carrier,
+and the exact `quantizeAt` theorem, which rounds each lane on the integer grid of the caller's one
+exponent. It doesn't pretend that a particular OCP MX encoding or scale-selection policy has been
+chosen. The printed nonclaims say so, and we keep them in the public output because they are what
+separates this reusable core from a concrete hardware format.
 
-The module is meta-only so vector runtime code does not import command elaboration. Its nonclaims
-are part of the public output because they distinguish this reusable core from a concrete hardware
-format.
+The module is meta-only, so vector runtime code never imports command elaboration.
 -/
 
 public meta section
@@ -32,8 +31,8 @@ open FloatLib.Floats.ExecFloat
 
 /--
 Build the shared-scale description used by both the raw block code and its configured
-`ExecFloat` wrapper. Lane semantics and contextual rounding live here; each carrier supplies only
-its own execution and wrapper-theorem entries.
+`ExecFloat` wrapper. Lane semantics and contextual rounding live here, and each carrier adds
+only its own execution and wrapper-theorem entries.
 -/
 meta def profile (lanes : Nat) : FormatProfile where
   family := "contextual shared-scale block"

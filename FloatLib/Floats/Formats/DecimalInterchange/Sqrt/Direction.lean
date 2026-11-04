@@ -10,9 +10,8 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Semantics
 /-!
 # Directed square-root bounds and tininess
 
-In the absence of overflow, the returned values bound the real square root in
-the requested direction; the downward bound also covers overflow. Decimal underflow tests the exact
-root before rounding.
+Without overflow, the returned values bound the real square root from the requested side, and the
+downward bound holds on overflow too. Decimal underflow tests the exact root, before rounding.
 -/
 
 @[expose] public section
@@ -36,7 +35,7 @@ theorem le_sqrtMagnitude_up (f : Format) {x : ℚ} (hx : 0 ≤ x)
   linarith
 
 /-- Rounding toward zero or toward negative, a square root of a nonnegative rational is finite and
-at most the real square root; the two modes agree because the root is nonnegative. An overflow
+at most the real square root, and the two modes agree because the root is nonnegative. An overflow
 delivers the greatest finite datum, which lies below the root. -/
 theorem sqrtMagnitude_directed_le (f : Format) (mode : RoundingMode)
     (hm : mode = .towardZero ∨ mode = .down) {x : ℚ} (hx : 0 ≤ x)
@@ -81,8 +80,8 @@ theorem sqrtMagnitude_error_lt_one (f : Format) (mode : RoundingMode)
   rw [he, abs_mul, abs_of_pos hu]
   exact (mul_lt_mul_of_pos_right h hu).trans_eq (one_mul _)
 
-/-- Underflow compares the exact mathematical root with the least normal magnitude; an overflowing
-root is never tiny. -/
+/-- Underflow compares the exact mathematical root with the least normal magnitude, and an
+overflowing root is never tiny. -/
 theorem sqrtMagnitude_underflow_iff (f : Format) (mode : RoundingMode)
     {x : ℚ} (hx : 0 ≤ x) (preferred : Int) :
     (sqrtMagnitude f mode x preferred).status.underflow = true ↔

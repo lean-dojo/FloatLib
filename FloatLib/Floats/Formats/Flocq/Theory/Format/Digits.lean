@@ -12,9 +12,10 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Integer Digits, Scaling, and Slices
 
-These definitions are the effective integer layer used by radix-based rounding algorithms.  Signed
-division and remainder use `Int.tdiv` and `Int.tmod`, matching Flocq's quotient and remainder toward
-zero rather than Lean's Euclidean `/` and `%` operations.
+Radix-based rounding algorithms compute on integers, and these definitions are that layer: digit
+counts, scaling, and slices. Signed division and remainder use `Int.tdiv` and `Int.tmod`, which
+take the quotient toward zero as Flocq does. Lean's `/` and `%` are Euclidean and give
+`-7 / 2 = -4`, where `Int.tdiv` gives `-3`.
 -/
 
 @[expose] public section
@@ -98,7 +99,7 @@ theorem scale_of_neg (β : Numerics.Radix) (n : ℤ) {k : ℤ} (hk : k < 0) :
   unfold scale
   split <;> simp
 
-/-- Extract `width` radix digits beginning at `start`; negative widths produce zero. -/
+/-- Extract `width` radix digits beginning at `start`. A negative width produces zero. -/
 def slice (β : Numerics.Radix) (n start width : ℤ) : ℤ :=
   if 0 ≤ width then
     Int.tmod (scale β n (-start)) (intPower β width)
@@ -202,7 +203,7 @@ theorem intCast_add_one_le_bpow_digits (β : Numerics.Radix) (n : ℤ) :
   simpa [Numerics.Radix.toReal] using (show ((n + 1 : ℤ) : ℝ) ≤ β.base ^ digits β n by
     exact_mod_cast hz)
 
-/-- The power bounds uniquely determine the digit count of an integer; they force it nonzero. -/
+/-- The power bounds uniquely determine the digit count of an integer and force it nonzero. -/
 theorem digits_unique (β : Numerics.Radix) {n : ℤ} {d : ℕ}
     (hlower : β.base ^ (d - 1) ≤ n.natAbs)
     (hupper : n.natAbs < β.base ^ d) : digits β n = d := by

@@ -14,9 +14,9 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 /-!
 # Direct two-limb posit candidate decoding
 
-The two-limb posit decoder reads encodings stored in native words. Regime scans stay in
-fixed-width words, and conversion to `Nat` is delayed until exact dyadic fields are constructed.
-Refinement theorems live in `Decode.Proof`.
+This decoder reads posit encodings stored in two native words. Regime scans run on the
+fixed-width words themselves, and nothing is converted to `Nat` until the exact dyadic fields are
+built. Its refinement theorems are in `Decode.Proof`.
 -/
 
 @[expose] public section
@@ -80,7 +80,7 @@ The executable path masks once and uses the native logarithm of the high or low 
 Count a leading run in the low `width` bits of a two-limb value.
 
 Zero runs use one masked native logarithm at every width. One runs use the complemented carrier
-through width 128; at wider widths the zero extension makes the leading bit zero immediately.
+through width 128. Beyond that, the zero extension makes the leading bit zero at once.
 -/
 @[inline] def countLeadingRun
     (value : FloatLib.Numerics.FixedWord.UInt128)
@@ -141,7 +141,7 @@ intermediate dyadic record.
 /--
 Decode a nonnegative candidate into the shared exact-dyadic carrier.
 
-This proof-facing view is defined through `withNonnegativeFields`; optimized arithmetic consumes
+This proof-facing view is defined through `withNonnegativeFields`, and optimized arithmetic uses
 the same decoder through its native continuation interface.
 -/
 @[inline] def nonnegativeDyadicAt
@@ -165,8 +165,8 @@ the same decoder through its native continuation interface.
 Unsigned magnitude of one complete two-limb posit encoding.
 
 Negative posit codes use exact-width two's complement. Complementation and increment stay in the
-two native limbs; `lowBits` removes the carrier bits above narrower formats. The result crosses to
-`Nat` only once, when `nonnegativeDyadicAt` constructs the shared exact significand.
+two native limbs, and `lowBits` removes the carrier bits above narrower formats. The result
+crosses to `Nat` only once, when `nonnegativeDyadicAt` constructs the shared exact significand.
 -/
 @[inline] def magnitudeWord
     (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128) :
@@ -180,7 +180,8 @@ two native limbs; `lowBits` removes the carrier bits above narrower formats. The
 Decode a known finite, nonzero posit code through the two-limb field decoder.
 
 The caller handles exceptional values. Sign extraction, magnitude extraction, and regime
-inspection use the two native limbs; the result stores the significand in the shared dyadic carrier.
+inspection use the two native limbs, and the result stores the significand in the shared dyadic
+carrier.
 -/
 @[inline] def decodeFinite
     (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128) :
@@ -192,7 +193,7 @@ inspection use the two native limbs; the result stores the significand in the sh
 /--
 Eliminate a complete stored posit word into native dyadic fields.
 
-NaR selects `onNaR`; zero and every finite value call the continuation. Sign extraction,
+NaR selects `onNaR`, while zero and every finite value call the continuation. Sign extraction,
 two's-complement magnitude recovery, regime decoding, and significand construction all remain
 inside the two-limb carrier.
 -/

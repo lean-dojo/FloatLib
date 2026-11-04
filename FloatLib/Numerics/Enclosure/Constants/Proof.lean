@@ -18,13 +18,14 @@ public import Mathlib.Analysis.Real.Pi.Bounds
 
 `piLevel_halfPi_spec`, `piLevel_twoOverPi_spec` and `ln2Fixed_spec` prove that the integers of
 `Constants.Runtime` are lower bounds within two units of `π/2`, `2/π` and `log 2` times `2 ^ bits`,
-for every `bits`. The proofs read the integers as the endpoints of the proved enclosures `piQuarter`
-and `logSeries 2` (`piQuarterBounds_eq`, `ln2Bounds_eq`), bound the enclosure widths, and check
-that the series degrees make those widths small at every precision.
+for every `bits`. Their proofs read the integers as the endpoints of the proved enclosures
+`piQuarter` and `logSeries 2` (`piQuarterBounds_eq`, `ln2Bounds_eq`), bound the enclosure widths,
+and check that the series degrees make those widths small at every precision.
 
 Shifting such a bound to fewer bits keeps it within two units (`LowerApprox.shiftRight`), so every
-read at any precision inherits the bound. The faithful read of `log 2` is within one unit and its
-grid read encloses it. The cache returns the uncached values (`piLevelAt_eq`, `ln2FixedAt_eq`).
+read at any precision inherits the bound. For `log 2`, the faithful read is within one unit, and its
+grid read encloses it. Through the cache you get the uncached values (`piLevelAt_eq`,
+`ln2FixedAt_eq`).
 -/
 
 @[expose] public section

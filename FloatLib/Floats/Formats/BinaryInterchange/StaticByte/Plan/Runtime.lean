@@ -12,11 +12,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 /-!
 # Static-byte planning runtime
 
-Nominal binary formats of at most eight bits use cost estimates, table candidates, profile
-selection, and dispatch specialized to static-byte storage.
-
-Correctness theorems live in `Plan.Proof`, while capability construction lives in
-`Plan.Construction`. This runtime layer can therefore be reused without importing either module.
+Nominal binary formats of at most eight bits plan with cost estimates, table candidates, profile
+selection, and dispatch specialized to static-byte storage. Correctness theorems are in
+`Plan.Proof` and capability construction is in `Plan.Construction`, so this runtime layer can be
+reused without importing either module.
 -/
 
 @[expose] public section
@@ -28,10 +27,11 @@ universe u
 namespace Plans
 
 /--
-Cost estimate for evaluating the exact baseline directly.
+Cost estimate for evaluating the exact baseline without a table.
 
-This is the mandatory proved implementation in table-backed plans. The constants are calibration
-inputs, not semantic facts; changing them can alter a plan without changing any refinement theorem.
+Every table-backed plan includes this proved implementation. The constants are calibration inputs
+with no semantic content, so changing them can alter a plan without changing any refinement
+theorem.
 The baseline decodes to the proof model only while it computes, so the persistent carrier it
 reports is the family's byte.
 -/
@@ -47,7 +47,7 @@ def exactEstimate (operation : FloatLib.Floats.ExecFloat.Backend.Operation) :
 Estimate a dense byte-result table from the format width and operation arity.
 
 Table construction evaluates a certified kernel once per entry. `residentBytes` counts the
-result bytes in the cached `ByteArray`; it excludes object and allocator overhead.
+result bytes in the cached `ByteArray` and excludes object and allocator overhead.
 
 The size comes from `operation.arity`, while the kernel's shape comes from the constructor that
 uses the estimate. Nothing ties the two together: `binaryTable name .sqrt ...` also typechecks and
@@ -167,10 +167,10 @@ def ternaryTable {F : Type u} [Family F]
 /--
 Whether the shared planner selects the exhaustive table over the exact baseline.
 
-Static-byte portfolios contain exactly one optional table candidate. Repeating the selector's
-single comparison as a `Bool` lets a monomorphic operation branch between two named first-order
-kernels without projecting an executable closure from `Certified`. The cost calculation remains
-identical to `Backend.selectCertified`, so planning reports and execution use the same choice.
+A static-byte portfolio has a single optional table candidate. Repeating the selector's one
+comparison as a `Bool` lets a monomorphic operation branch between two named first-order kernels
+without projecting an executable closure from `Certified`. The cost calculation is the same as in
+`Backend.selectCertified`, so planning reports and execution use the same choice.
 -/
 @[inline] def tablePreferred (format : FloatFormat)
     (policy : FloatLib.Floats.ExecFloat.Backend.Policy)
@@ -184,7 +184,7 @@ identical to `Backend.selectCertified`, so planning reports and execution use th
 Certified table choices for the three built-in planning profiles.
 
 Closed nominal formats provide these three bits once per operation. Their equality fields prove
-that the literals are exactly the result of the shared cost model. The compiler can then reduce a
+that the literals are the result of the shared cost model. The compiler can then reduce a
 built-in profile to a direct kernel while a custom profile retains the general runtime comparison.
 -/
 structure BuiltinSelection (format : FloatFormat)

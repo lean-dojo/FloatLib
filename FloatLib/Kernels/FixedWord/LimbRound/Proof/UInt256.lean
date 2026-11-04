@@ -20,8 +20,8 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified four-limb rounding
 
-These theorems connect four-limb shifts, sticky-bit normalization, and nearest-even rounding to
-their natural-number meanings. Multiplication and fused-operation backends can reuse this layer
+Four-limb shifts, sticky-bit normalization, and nearest-even rounding get their natural-number
+meanings here, and with them multiplication and fused-operation backends can reuse this layer
 without converting compiled arithmetic to `Nat`.
 -/
 
@@ -57,7 +57,7 @@ private theorem pair_lt (low high : UInt64) :
 
 /--
 Shifting three limbs right by at most one word gives two shifted limb pairs. The low result limb
-joins the top of `low` with the bottom bits of `middle`; the high one joins the rest of `middle`
+joins the top of `low` with the bottom bits of `middle`, and the high one joins the rest of `middle`
 with `high`.
 -/
 private theorem three_limbs_div_two_pow (low middle high shift : Nat) (hshift : shift ≤ 64) :

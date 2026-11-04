@@ -12,9 +12,10 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Runtime conversion source for configured logarithmic values
 
-Every exact logarithmic value is zero or a signed integral power of its radix and therefore has an
-exact rational observation. This module supplies source decoding only; no destination quantizer
-or rounding policy is installed.
+Every exact logarithmic value is zero or a signed integral power of its radix, so it always has an
+exact rational reading, and `2^-3` reads as `1/8`. That makes logarithmic values good conversion
+sources. This module supplies only that source decoding, with no destination quantizer and no
+rounding policy.
 -/
 
 @[expose] public section

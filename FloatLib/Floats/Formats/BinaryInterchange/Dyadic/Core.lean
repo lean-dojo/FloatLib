@@ -14,14 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 /-!
 # Exact dyadic decoding primitives
 
-Finite binary interchange values decode exactly to a sign, natural significand, and integral
-power-of-two exponent. This module defines the IEEE-layout decoder `ieeeToDyadic?` and the exact
-comparison used by arithmetic, conversions, and rounding. The descriptor-aware decoder is
-`toDyadic?` (`Dyadic.Decode`), which agrees with `ieeeToDyadic?` when `fmt.isIEEE`.
+A finite binary interchange value decodes without loss to a sign, a natural significand, and an
+integral power-of-two exponent. This module defines the IEEE-layout decoder `ieeeToDyadic?` and
+the exact comparison that arithmetic, conversions, and rounding use. The descriptor-aware decoder
+is `toDyadic?` (`Dyadic.Decode`), which agrees with `ieeeToDyadic?` when `fmt.isIEEE`.
 
-The decoding layer depends on no arithmetic operation, so addition, multiplication, FMA,
-conversion, and directed rounding share the same exact domain and each prove their own final
-packing step.
+Decoding depends on no arithmetic operation. So addition, multiplication, FMA, conversion, and
+directed rounding share the same exact domain, and each proves its own final packing step.
 -/
 
 @[expose] public section
@@ -80,10 +79,10 @@ def cmpDyadicAligned (a b : Numerics.Dyadic) : Ordering :=
 /--
 Exact comparison of two dyadics.
 
-Zero operands and opposite signs are decided directly. For nonzero operands of one sign, the
+Zero operands and opposite signs are decided at once. For nonzero operands of one sign, the
 leading bit positions `log2 significand + exponent` decide the magnitude order unless they
-coincide, and only then are the significands aligned. The alignment shift is therefore bounded by
-the significand widths, not by the distance between the exponents.
+coincide, and only then are the significands aligned. So the alignment shift is bounded by the
+significand widths, whatever the distance between the exponents.
 
 This lives with the decoding primitives because finite-value comparison does not depend on any
 rounding operation.
@@ -211,8 +210,8 @@ Decode an IEEE bit pattern into an exact dyadic.
 
 Every threshold is derived from `fmt`, and no fixed-width constants are used. The reading is the
 IEEE one: the layout-derived bias `fmt.bias` rather than `fmt.exponentBias`, and the IEEE NaN and
-infinity patterns. It is the value of `x` only when `fmt.isIEEE`; for a custom bias or a
-finite-only, maximum-NaN or unsigned-zero encoding use `toDyadic?`.
+infinity patterns. It is the value of `x` only when `fmt.isIEEE`. For a custom bias or a
+finite-only, maximum-NaN or unsigned-zero encoding, use `toDyadic?`.
 -/
 @[inline] def ieeeToDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
   if IEEE.isNaN x || IEEE.isInf x then

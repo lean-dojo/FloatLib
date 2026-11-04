@@ -13,13 +13,13 @@ public import FloatLib.Numerics.Operation.Proof.Finite
 /-!
 # Operation refinements for fixed-width signed integers
 
-Fixed-width arithmetic has three useful policies: wrapping returns centered modular arithmetic,
+Fixed-width arithmetic has three useful policies. Wrapping returns centered modular arithmetic,
 checked arithmetic returns a result only when the exact integer is representable, and saturating
 arithmetic clamps at the signed endpoints.
 
-This module exposes all three through the same generic `Operation` contracts used by the rest of
-the library. Algorithms can therefore state the policy they require without depending on
-`BitVec` internals, while execution still uses the compact two's-complement carrier.
+This module exposes all three through the same generic `Operation` contracts as the rest of the
+library. Algorithms can state the policy they need without depending on `BitVec` internals, and
+execution still uses the compact two's-complement carrier.
 
 A `Checked2On` contract covers only inputs whose exact result is in range, where the operation
 succeeds with that result. The other half of the checked policy, `none` on overflow, is

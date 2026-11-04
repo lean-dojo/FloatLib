@@ -13,9 +13,10 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Mathematical semantics of P3109 rational arithmetic
 
-Finite arithmetic is exact rational arithmetic, and rational embedding into the reals preserves
-the complete expression. The algebraic results describe arithmetic before rounding. The decoding
-theorems connect the public executable operations to one report projection of that exact result.
+On finite values, P3109 arithmetic is exact rational arithmetic, and embedding the rationals into
+the reals preserves the complete expression. The algebraic results here describe arithmetic
+before any rounding. Then the decoding theorems connect each public executable operation to one
+report projection of that exact result.
 -/
 
 @[expose] public section

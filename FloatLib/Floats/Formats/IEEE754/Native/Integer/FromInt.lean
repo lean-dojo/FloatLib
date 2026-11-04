@@ -18,16 +18,17 @@ import all Init.Data.SInt.Float32
 /-!
 # Native signed integers to binary floating point
 
-`ofInt_conversion_spec` shows that Lean's integer constructor gives the word and status of the
-reference binary conversion `runWith`, so it satisfies `specWith`, the graph of `runWith` with a
-nearest-value clause. `toReal_ofModel_ofInt_eq_roundAt` states the value without the reference
-conversion: a finite result is the nearest-even rounding of the integer.
-`finiteStatus_ofInt_underflow_false` shows that the conversion never signals underflow. Fixed-width
-native conversions then agree with `ExecDType.intToFloat` at nearest-even rounding.
+Three theorems pin down Lean's integer constructor. `ofInt_conversion_spec` shows that it gives the
+word and status of the reference binary conversion `runWith`, so it satisfies `specWith`, the graph
+of `runWith` with a nearest-value clause. `toReal_ofModel_ofInt_eq_roundAt` states the value with
+no reference conversion in sight: a finite result is the nearest-even rounding of the integer, so
+in binary32 `2^24 + 1` becomes `2^24`. And `finiteStatus_ofInt_underflow_false` shows that the
+conversion never signals underflow. Fixed-width native conversions then agree with
+`ExecDType.intToFloat` at nearest-even rounding.
 
 Lean defines the signed native casts through its logical floating-point models and exposes
 `ofNat`, `ofInt`, `Int.toFloat`, `Int.toFloat32`, and named
-floating-point constants. The proofs here use those signed-cast definitions.
+floating-point constants. Those signed-cast definitions are what the proofs here use.
 -/
 
 @[expose] public section
@@ -52,11 +53,11 @@ theorem ofModel_ofInt_eq_roundRat (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
 /--
 Lean's shared integer conversion gives the outcome of the reference conversion `runWith` for the
 integer: the word, stored through `pack`, and the status `finiteStatus` of the default context.
-It therefore satisfies `specWith`, whose nearest-value clause is the only part stated independently
-of `runWith`; the status fields are the classifier-based ones of `finiteStatus`
-(`finiteStatus_of_ieeeRoundingMode?_eq_some`). There `inexact` is set exactly when the delivered
-value does not decode to `n`, and `finiteStatus_ofInt_underflow_false` shows that `underflow` is
-never set. The `pack` adapter may return the model word or store it in a configured carrier.
+So it satisfies `specWith`, whose nearest-value clause is the only part stated independently of
+`runWith`. The status fields are the classifier-based ones of `finiteStatus`
+(`finiteStatus_of_ieeeRoundingMode?_eq_some`): `inexact` is set if and only if the delivered value
+does not decode to `n`, and `underflow` is never set (`finiteStatus_ofInt_underflow_false`). The
+`pack` adapter may return the model word or store it in a configured carrier.
 -/
 theorem ofInt_conversion_spec {Destination : Type u} (fmt : FloatFormat)
     (hfmt : fmt.isIEEE = true) (pack : Model fmt → Destination) (n : Int) :
@@ -73,7 +74,7 @@ theorem ofInt_conversion_spec {Destination : Type u} (fmt : FloatFormat)
 /--
 For a conventional IEEE descriptor, a finite result of Lean's integer constructor is the
 nearest-even rounding of the integer onto the format grid (`roundAt`, ties to even). This is a
-real-value statement; signed zeros and status are covered by `ofInt_conversion_spec`.
+real-value statement, and `ofInt_conversion_spec` covers signed zeros and status.
 -/
 theorem toReal_ofModel_ofInt_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (n : Int)
     (hfinite : isFinite (ofModel fmt (Float.Model.UnpackedFloat.ofInt fmt.toModel n)) = true) :
@@ -85,7 +86,7 @@ theorem toReal_ofModel_ofInt_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE =
 Under a conventional IEEE descriptor, converting an integer never signals underflow: the status
 that `ofInt_conversion_spec` gives has `underflow = false`. A nonzero integer has magnitude at
 least one, at or above the smallest normal value, so neither the integer nor its nearest-even
-rounding is tiny. Zero converts exactly.
+rounding is tiny. Zero converts to itself.
 -/
 theorem finiteStatus_ofInt_underflow_false (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (n : Int) :

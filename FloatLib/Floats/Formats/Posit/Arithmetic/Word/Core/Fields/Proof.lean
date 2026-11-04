@@ -16,9 +16,10 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Correctness of scalar-field posit decoding
 
-The machine-scalar decoder agrees with its natural-number reference view and the exact posit
-field model. Executable definitions live in
-`FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Fields.Runtime`.
+Here we prove that the machine-scalar decoder agrees with two things, its natural-number
+reference view and the exact posit field model. The width bounds are what make this work, because
+they keep every unsigned layout subtraction and every signed exponent operation exact.
+Executable definitions are in `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Fields.Runtime`.
 -/
 
 @[expose] public section
@@ -151,8 +152,8 @@ private theorem significand_eq (code fraction : UInt64) (fractionNat : Nat)
 The fully machine-scalar decoder refines the reference Posit field decoder.
 
 The continuation observes the signed machine exponent through `Int64.toInt`. The width bounds make
-every unsigned layout subtraction and every signed exponent operation exact; no modular behavior
-is exposed at the semantic boundary.
+every unsigned layout subtraction and every signed exponent operation exact, so no modular
+behavior shows at the semantic boundary.
 -/
 theorem withNonnegativeMachineFieldsAtPayload_eq_reference {α : Type}
     (payloadBits code : UInt64)
@@ -313,7 +314,7 @@ theorem withNonnegativeFields_eq_word {α : Type}
         continuation significand.toNat exponent :=
   rfl
 
-/-- Scalar nonnegative decoding is exactly record-producing nonnegative decoding. -/
+/-- Scalar nonnegative decoding agrees with record-producing nonnegative decoding. -/
 theorem withNonnegativeFields_eq {α : Type}
     (format : Format) (code : UInt64)
     (continuation : Nat → Int → α) :

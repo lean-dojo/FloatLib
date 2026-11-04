@@ -11,12 +11,10 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Ordinary posit values as exact rationals
 
-The NaR encoding has no rational denotation. Excluding it gives a subtype on which exact rational
-decoding is total.
-
-No alternate encoding is introduced: `Model.Ordinary format` is a proof-carrying view of the same
-encoded word. The full posit order still belongs to `Model format`; the rational coordinate here
-is available for every value of the subtype.
+NaR has no rational denotation, so leaving it out gives a subtype on which exact rational
+decoding is total. That subtype, `Model.Ordinary format`, is the same encoded word carried with a
+proof that it isn't NaR, and no alternate encoding is involved. Ordering stays with
+`Model format`, and what the subtype adds is a rational coordinate for every one of its values.
 -/
 
 @[expose] public section
@@ -49,7 +47,7 @@ meaning belongs to NaR, which the subtype excludes.
 @[inline] def toRat (value : Ordinary format) : Rat :=
   value.1.toRat?.get (toRat_isSome value)
 
-/-- Forgetting the subtype and decoding recovers exactly the total rational coordinate. -/
+/-- Forgetting the subtype and decoding gives back the total rational coordinate. -/
 @[simp] theorem model_toRat?_eq_some (value : Ordinary format) :
     value.1.toRat? = some value.toRat := by
   exact (Option.some_get (toRat_isSome value)).symm

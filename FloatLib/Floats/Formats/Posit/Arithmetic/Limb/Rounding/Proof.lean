@@ -14,10 +14,11 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 /-!
 # Refinement of two-limb posit rounding
 
-Significands that fit in 128 bits use two-limb guard/sticky rounding; larger significands use
-the arbitrary-width direct rounder. Both branches agree with the shared exact-dyadic rounding
-specification. The same refinement also proves that normalizing a four-limb product to a
-two-limb window with a sticky bit preserves the rounded result.
+Two-limb rounding has two branches. A significand that fits in 128 bits gets guard/sticky
+rounding on two limbs, and a larger one goes to the arbitrary-width direct rounder. Both branches
+agree with the shared exact-dyadic rounding specification. The same refinement also shows that
+squeezing a four-limb product into a two-limb window with a sticky bit doesn't change the rounded
+result.
 -/
 
 @[expose] public section
@@ -165,7 +166,7 @@ theorem ofNatBits_roundCodeNat
       format value.negative _ hpositive]
     rfl
 
-/-- Two-limb rounding is exactly the shared exact-dyadic rounder. -/
+/-- Two-limb rounding equals the shared exact-dyadic rounder. -/
 theorem round_eq_dyadic
     (format : Format) (heligible : NativeLimb.Eligible format)
     (value : FloatLib.Numerics.Dyadic) :
@@ -351,7 +352,7 @@ theorem GuardSticky.roundPositiveCode_normalizeJam128
     simpa [show shift + 127 + 1 = shift + 128 by omega] using hupper
 
 /--
-Signed two-limb rounding of a normalized jammed four-limb significand is exactly the shared
+Signed two-limb rounding of a normalized jammed four-limb significand equals the shared
 arbitrary-width result.
 -/
 theorem GuardSticky.roundCodeWord_normalizeJam128_toNat

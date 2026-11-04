@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 /-!
 # Native binary32 words and the generic model
 
-Field packing, decoding, and rounding of native binary32 words agree with the generic
-`Model FloatFormat.binary32` representation. The operation proofs build on these facts, and
-`Narrow.Agreement` combines them into agreement of the finite operations.
+Native binary32 words pack, decode, and round the same way as the generic
+`Model FloatFormat.binary32` representation, and the operation proofs build on these facts, which
+`Narrow.Agreement` combines into agreement of the finite operations.
 -/
 
 @[expose] public section

@@ -12,11 +12,11 @@ public import FloatLib.Kernels.FixedWord.CertifiedDivision.Runtime
 /-!
 # Two-word division runtime
 
-A radix-`2^32` quotient candidate is checked with an independent Euclidean certificate. A
-rejected candidate is replaced by the fixed-word restoring result, whose equality to the logical
-divider is proved in `CertifiedDivision.Proof`. The selected quotient and remainder are then
-rounded and packed. This module holds only the partial kernel for eligible two-word layouts, and
-the dispatcher handles every case outside its normal finite range.
+A radix-`2^32` quotient candidate is checked with an independent Euclidean certificate, and if the
+certificate rejects it, the fixed-word restoring result takes its place, and
+`CertifiedDivision.Proof` proves that result equal to the logical divider. Then the selected
+quotient and remainder are rounded and packed. Only the partial kernel for eligible two-word layouts
+is here, and the dispatcher handles every case outside its normal finite range.
 -/
 
 @[expose] public section

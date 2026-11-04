@@ -13,16 +13,16 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Proof
 /-!
 # Shared bounds for native-word quotient kernels
 
-The one-word and binary64 division backends use different packing code, but they normalize the
-same exact rational quotient. This module proves the representation-independent facts once:
+The one-word and binary64 division backends pack differently, but they normalize the same exact
+rational quotient, so we prove the representation-independent facts once:
 
-* the normalization shift is nonnegative, so an accepted normal specification is the scaled
-  rational rounding `roundRatScaled` (`roundRatScaled_eq_of_normalSpec`),
-* the rounded significand lies in `[2^fracWidth, 2^(fracWidth + 1)]`, and
+* the normalization shift is nonnegative, so an accepted normal specification is the scaled rational
+  rounding `roundRatScaled` (`roundRatScaled_eq_of_normalSpec`),
+* the rounded significand lies in `[2^fracWidth, 2^(fracWidth + 1)]`,
 * the restoring quotient and its carry bit fit in the `UInt64` kernel.
 
-The shift and significand bounds precede the representation-specific estimates. A direct shifted
-numerator fits below bit 63 when `2 * (fracWidth + 1) ≤ 63`; the quotient and a possible rounding
+Shift and significand bounds come before the representation-specific estimates. A shifted numerator
+fits below bit 63 when `2 * (fracWidth + 1) ≤ 63`, while the quotient and a possible rounding
 increment fit below bit 63 under the weaker condition `fracWidth ≤ 61`.
 -/
 
@@ -86,9 +86,9 @@ theorem roundRatScaled_eq_of_normalSpec
 The normalized numerator and its shift fit the signed-width budget used by the `UInt64` quotient
 kernel.
 
-The condition `2 * (fracWidth + 1) ≤ 63` is the representation boundary for this direct shifted
-numerator path. It is satisfied by binary32 and other narrow formats; wider one-word formats use
-the restoring loop without first materializing the whole shifted numerator.
+The condition `2 * (fracWidth + 1) ≤ 63` is the representation boundary for this shifted-numerator
+path. Binary32 and other narrow formats satisfy it, and wider one-word formats use the restoring
+loop without first materializing the whole shifted numerator.
 -/
 theorem normalShift_bounds
     (fmt : FloatFormat) (num den : UInt64)

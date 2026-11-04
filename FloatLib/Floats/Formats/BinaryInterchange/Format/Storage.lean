@@ -11,11 +11,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Properties
 /-!
 # Exact-width binary format storage
 
-Exact-width `BitVec` representations of layout masks derived from a validated `FloatFormat`.
-
-The definitions centralize sign, exponent, significand, and payload masks so packing code does not
-reconstruct them with ad hoc shifts. They describe logical layout only; selection of `UInt8`,
-`UInt16`, `UInt32`, `UInt64`, or arbitrary-width storage belongs to the configured execution layer.
+This module gives the layout masks of a validated `FloatFormat` as exact-width `BitVec` values.
+Sign, exponent, significand, and payload masks are defined once here, so packing code does not
+rebuild them with ad hoc shifts. They describe logical layout only. Choosing `UInt8`, `UInt16`,
+`UInt32`, `UInt64`, or arbitrary-width storage belongs to the configured execution layer.
 -/
 
 @[expose] public section

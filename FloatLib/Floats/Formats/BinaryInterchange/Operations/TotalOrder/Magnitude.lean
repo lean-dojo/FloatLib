@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Si
 /-!
 # Total ordering by magnitude
 
-Magnitude comparison is a total preorder on complete data: mutual comparison identifies the
-absolute data, including NaN signaling status and payload. It agrees with absolute numerical
-comparison on finite operands. In signed-zero formats, including every IEEE encoding, it is
-exactly `totalOrder (abs x) (abs y)`, as specified by IEEE 754-2019 §5.7.2.
+Magnitude comparison is a total preorder on complete data. If each of two values is at most the
+other, their absolute data agree, NaN signaling status and payload included. On finite operands it
+agrees with comparing absolute values numerically. In signed-zero formats, which include every
+IEEE encoding, it is `totalOrder (abs x) (abs y)`, as IEEE 754-2019 §5.7.2 specifies.
 -/
 
 @[expose] public section

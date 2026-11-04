@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Core
 /-!
 # Configured bounded fixed-point identity
 
-The encoded bounded fixed-point family supplies the public `ExecFloat.BoundedFixedPoint` type.
-Its runtime carrier is exactly `FixedInt width`; overflow policy belongs to explicitly named
-operations.
+The public `ExecFloat.BoundedFixedPoint` type comes from the encoded bounded fixed-point family. At
+runtime a value is a `FixedInt width` and nothing more. The overflow policy isn't stored anywhere,
+because each operation names its own.
 -/
 
 @[expose] public section
@@ -42,7 +42,7 @@ instance (radix : Radix) (fractionalDigits width : Nat) :
 
 end BoundedFixedPoint
 
-/-- Fixed-width radix-parametric fixed point with explicit overflow-policy operations. -/
+/-- Fixed-width radix-parametric fixed point, where every operation names its overflow policy. -/
 abbrev BoundedFixedPoint (radix : Radix) (fractionalDigits width : Nat) :=
   FloatLib.Floats.ExecFloat
     (BoundedFixedPoint.Family radix fractionalDigits width)

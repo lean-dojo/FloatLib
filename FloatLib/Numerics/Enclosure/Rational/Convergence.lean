@@ -13,9 +13,9 @@ public import Mathlib.Topology.Order.OrderClosed
 /-!
 # Convergence through rational interval operations
 
-Repeated squaring preserves endpoint convergence to a nonnegative target. Together with the
-containment lemmas, this lets an analytic kernel reduce its argument without losing either
-soundness or arbitrary accuracy.
+Repeated squaring preserves endpoint convergence to a nonnegative target. With the containment
+lemmas, that lets an analytic kernel reduce its argument and keep both soundness and arbitrary
+accuracy.
 -/
 
 @[expose] public section

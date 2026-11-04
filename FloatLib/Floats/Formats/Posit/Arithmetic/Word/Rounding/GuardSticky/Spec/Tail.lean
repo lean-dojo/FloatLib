@@ -17,9 +17,9 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Exact semantics of finite guard-and-sticky streams
 
-Normalized exponent/significand fields and retained stream prefixes denote the exact rational
-tail used in Posit rounding. These representation-independent lemmas are shared by native-word
-and fixed-limb Posit packers.
+Posit rounding works on an exact rational tail, and the lemmas here say what that tail is in terms
+of the normalized exponent/significand fields and the retained stream prefixes. They don't depend
+on any representation, so the native-word and fixed-limb Posit packers share them.
 -/
 
 @[expose] public section
@@ -76,7 +76,7 @@ theorem exactTailRaw_div_two_pow
   rw [Nat.mul_add_div (Nat.two_pow_pos leading)]
   rw [Nat.div_eq_of_lt hfraction, Nat.add_zero]
 
-/-- The low normalized-significand bits are precisely its explicit fraction. -/
+/-- The low normalized-significand bits are its explicit fraction. -/
 theorem significand_mod_two_pow
     (significand leading : Nat)
     (hlower : 2 ^ leading ≤ significand)
@@ -103,7 +103,7 @@ theorem significand_mod_two_pow
 Every suffix contained in the explicit fraction is shared by the complete tail and significand.
 
 The exponent contribution is a multiple of `2 ^ leading`, so reducing either value modulo a
-smaller power of two observes exactly the same fraction suffix.
+smaller power of two observes the same fraction suffix.
 -/
 theorem exactTailRaw_mod_eq_significand_mod
     (exponentField significand leading suffix : Nat)
@@ -295,7 +295,7 @@ The field-oriented suffix test is the sticky bit of the complete finite stream.
 
 The caller supplies the number of retained bits, while `tailHasNonzeroAfter` receives the number
 of bits consumed through the guard. Splitting on a zero or positive retained prefix isolates the
-only case where one exponent bit remains; every later suffix lies wholly inside the explicit
+only case where one exponent bit remains. Every later suffix lies wholly inside the explicit
 fraction.
 -/
 theorem tailHasNonzeroAfter_succ_eq_streamSticky

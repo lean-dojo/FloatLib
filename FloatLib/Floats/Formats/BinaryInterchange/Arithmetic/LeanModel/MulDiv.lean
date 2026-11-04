@@ -11,15 +11,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel
 /-!
 # Multiplication and division through Lean's floating-point model
 
-Lean's `roundWithAccuracy` requires an exponent that needs no left shift. That holds exactly when
+Lean's `roundWithAccuracy` requires an exponent that needs no left shift. That holds if and only if
 the exponent is at or below the format's minimum exponent or the mantissa has at least as many
 bits as the precision. Finite nonzero values unpacked from format words satisfy it, their products
 keep it, and `divCore` satisfies it for all nonzero mantissas. When the provisional quotient is
 zero, the sign, the selected exponent, and the remainder accuracy still determine the rounding.
 
-`toReal_ofModel_mul_toModel_eq_roundAt` and `toReal_ofModel_div_toModel_eq_roundAt` therefore
-need only a conventional IEEE descriptor and a finite result, plus a finite divisor for division.
-Arbitrary unpacked operands need not satisfy the precondition, so
+So `toReal_ofModel_mul_toModel_eq_roundAt` and `toReal_ofModel_div_toModel_eq_roundAt` need only
+a conventional IEEE descriptor and a finite result, plus a finite divisor for division. Arbitrary
+unpacked operands need not satisfy the precondition, which is why
 `toReal_ofModel_mul_finite_eq_roundAt` keeps its exponent hypothesis. These bridges are checked
 against the logical floating-point model shipped with Lean.
 -/
@@ -109,8 +109,8 @@ For a conventional IEEE descriptor and a finite result, Lean core's unpacked mul
 values unpacked from two format words has the same independent nearest-even real semantics as
 `Model.mul`.
 
-The finite result already excludes NaN and infinite factors; signed zeros are allowed. Unlike
-`toReal_ofModel_mul_finite_eq_roundAt`, there is no exponent premise: values unpacked from format
+The finite result already excludes NaN and infinite factors, and signed zeros are allowed. Unlike
+`toReal_ofModel_mul_finite_eq_roundAt`, there is no exponent premise. Values unpacked from format
 words satisfy the `roundWithAccuracy` precondition, while arbitrary unpacked operands need not.
 -/
 theorem toReal_ofModel_mul_toModel_eq_roundAt {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
@@ -171,7 +171,7 @@ semantics as `Model.div`.
 `hy` excludes a NaN or infinite divisor, and the finite result excludes a NaN or infinite dividend
 and a zero divisor. A finite dividend over an infinite divisor is a signed zero, but the equation
 would then hold only because `toReal` maps infinity to `0`, so that case stays outside. A zero
-dividend gives a signed zero; finite nonzero operands reduce to
+dividend gives a signed zero, and finite nonzero operands reduce to
 `toReal_ofModel_div_finite_eq_roundAt`.
 -/
 theorem toReal_ofModel_div_toModel_eq_roundAt {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)

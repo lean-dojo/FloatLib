@@ -13,11 +13,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
 /-!
 # Directed integer rounding of nonnegative rational quotients
 
-The quotient operations used by directed rational rounding satisfy format-independent order
-bounds. Floor rounding lies below the exact real quotient, ceiling rounding lies above it, and
-integer lower and upper thresholds are preserved in the expected directions. The ceiling is
-`Numerics.roundQuotient .up`. Whether a quotient is an exact tie, as nearest-away rounding needs to
-know, depends only on the rational it represents.
+Directed rational rounding takes nonnegative quotients to integers, and the order bounds it needs
+don't depend on any format. Floor rounding lies below the exact real quotient, ceiling rounding
+(`Numerics.roundQuotient .up`) lies above it, and integer lower and upper thresholds are
+preserved in the expected directions. Nearest-away rounding also needs to know whether a quotient
+is an exact tie, and that depends only on the rational the quotient represents.
 -/
 
 @[expose] public section

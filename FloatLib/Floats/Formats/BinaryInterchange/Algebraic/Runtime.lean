@@ -14,16 +14,16 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Runtime
 /-!
 # Single-round binary algebraic operations
 
-These operations evaluate exact expressions and round only the final result. The norm forms an
-exact dyadic sum of squares. Square roots use integer square root after exact target scaling,
-and other roots compare integer powers of rational boundaries without a refinement budget.
-All widths and complete descriptors use the same algorithms. Specialization on the descriptor
-lets compiled calls share format constants and remove inapplicable encoding branches. Integer
+Each operation here evaluates an exact expression and rounds only the final result. The norm forms
+an exact dyadic sum of squares. Square roots use integer square root after exact target scaling,
+and other roots compare integer powers of rational boundaries without a refinement budget. Every
+width and complete descriptor uses the same algorithms, and specializing on the descriptor lets
+compiled calls share format constants and drop encoding branches that cannot apply. Integer
 powers can materialize large exact integers, because the exponent is not capped.
 
 Signed zero, infinities and invalid arguments are handled before exact evaluation. A zero
-integer exponent returns one, including for a quiet NaN base, but signaling NaNs are quieted
-first. Degree zero is invalid for `rootN`.
+integer exponent returns one, even for a quiet NaN base, but signaling NaNs are quieted first.
+Degree zero is invalid for `rootN`.
 -/
 
 @[expose] public section
@@ -83,8 +83,9 @@ A signaling NaN takes precedence. Two zeros give positive zero, independently of
 Integer-exponent power with one final rounding.
 
 For nonzero finite bases, exponentiation takes place in the exact rationals, including negative
-exponents. Zero and infinity retain a negative sign exactly for an odd exponent. A signaling
-NaN is quieted before the zero-exponent rule, and otherwise the zero exponent returns one.
+exponents. For a zero or infinite base the result is negative if and only if the base is negative
+and the exponent is odd. A signaling NaN is quieted before the zero-exponent rule, and otherwise
+the zero exponent returns one.
 -/
 @[specialize fmt] def powInt {fmt : FloatFormat} (value : Model fmt) (exponent : Int) : Model fmt :=
   if isSNaN value then (chooseNaN1 value).getD (invalidResult fmt)
@@ -108,8 +109,8 @@ Integer root with one final rounding, including reciprocal roots for negative de
 
 Even degrees require a nonnegative input, while odd degrees use the signed real root.
 For positive degrees, negative zero gives negative zero for odd degrees and positive zero
-for even degrees. For negative degrees, either zero gives overflow with a negative sign
-exactly when the input is negative zero and the degree is odd. NaN inputs are quieted for every
+for even degrees. For negative degrees, either zero gives overflow, with a negative sign if and
+only if the input is negative zero and the degree is odd. NaN inputs are quieted for every
 degree, keeping their payload. Negative nonzero inputs with even degree, and every other input
 with degree zero, are invalid.
 -/

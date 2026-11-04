@@ -17,12 +17,13 @@ import Mathlib.Tactic.Linarith.Frontend
 /-!
 # Real-valued posit rounding specification
 
-The exact rational posit rounding specification has a noncomputable interpretation in `ℝ`. This
-interpretation belongs to the semantic proof layer: executable arithmetic continues to use the
-rational, dyadic, native-word, and fixed-limb kernels.
+Here the rational rounding specification gets a noncomputable reading in `ℝ`. With it a
+refinement theorem can say that a kernel correctly rounds `Real.sqrt` or another analytic function,
+and no runtime dependency ever evaluates a real number. This layer is for proofs. Executable
+arithmetic keeps using the rational, dyadic, native-word, and fixed-limb kernels.
 
-The real specification lets refinement theorems state correctness against conventional analytic
-operations such as `Real.sqrt`, without adding real-number evaluation to a runtime dependency.
+`round` is the signed real rounding, built on the positive-code search `roundPositiveCode` and its
+threshold lemmas. On a rational input it agrees with the executable rule, which is `round_ratCast`.
 -/
 
 @[expose] public section
@@ -32,8 +33,8 @@ namespace FloatLib.Floats.Formats.Posit.Model.RealRounding
 /--
 Real value of the posit word with unsigned code `code`.
 
-The intended domain is `code < format.signMaskNat`. In general the code is reduced modulo the
-format's modulus before decoding; zero and NaR map to zero, and other words retain their sign.
+The intended domain is `code < format.signMaskNat`. Any other code is reduced modulo the format's
+modulus before decoding. Zero and NaR map to zero, and other words keep their sign.
 -/
 noncomputable def nonnegativeRealAt (format : Format) (code : Nat) : ℝ :=
   (Model.nonnegativeRatAt format code : ℝ)

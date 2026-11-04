@@ -12,19 +12,20 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.SignedERealSemanti
 /-!
 # Signed bounds for conventional IEEE directed dyadic rounding
 
-The semantic contracts of `roundDyadicDown` and `roundDyadicUp` give outward bounds for signed
-dyadics. For every exact signed dyadic and conventional IEEE `FloatFormat`, executable downward
-rounding is an extended-real lower bound and executable upward rounding is an extended-real
-upper bound.
+Here the semantic contracts of `roundDyadicDown` and `roundDyadicUp` become outward bounds for
+signed dyadics. For every exact signed dyadic and conventional IEEE `FloatFormat`, executable
+downward rounding is an extended-real lower bound and executable upward rounding is an
+extended-real upper bound.
 
-Infinities are handled by the positive-magnitude results. Upward rounding of a negative input
-swaps the magnitude rounders and reverses order under negation. Downward rounding is the negation
-of upward rounding of the negated input (`roundDyadicDown_eq_neg_roundDyadicUp_neg`, in a format
-with signed zeros), so its non-NaN and lower-bound theorems follow from the upward ones.
+Infinities are handled by the positive-magnitude results. Upward rounding of a negative input swaps
+the magnitude rounders and reverses order under negation. In a format with signed zeros, downward
+rounding is the negation of upward rounding of the negated input
+(`roundDyadicDown_eq_neg_roundDyadicUp_neg`), so its non-NaN and lower-bound theorems follow from
+the upward ones.
 
-For every descriptor, the directed rounders, the nearest-even general rounder, and the packing
+For every descriptor, the directed rounders, the nearest-even general rounder and the packing
 helpers they share turn a nonnegative exact value into a value with a nonnegative real meaning. A
-value that is not finite denotes zero, which covers the NaN that a finite-unsigned-zero encoding
+value that is not finite denotes zero, and that covers the NaN a finite-unsigned-zero encoding
 delivers on overflow.
 -/
 
@@ -59,7 +60,7 @@ theorem nativeOverflow_true_eq_neg_false (fmt : FloatFormat) :
 
 /--
 Negating a positive packed word with in-range fields sets the sign of the same fields, unless the
-word is zero. This holds in every encoding; an unsigned-zero format keeps its single zero instead.
+word is zero. This holds in every encoding. At zero an unsigned-zero format keeps its single zero.
 -/
 private theorem neg_ofFields_false_of_isZero_eq_false (fmt : FloatFormat)
     (exponent fraction : Nat)
@@ -214,10 +215,10 @@ theorem Dyadic.toReal_neg (d : Numerics.Dyadic) : d.neg.toReal = -d.toReal := by
     simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hsign]
 
 /--
-Directed-down rounding is negated directed-up rounding of the negated dyadic, signed zeros
-included, in a format with signed zeros: the downward magnitude rounder exchanges with the upward
-one under negation. The signed-zero premise is what `roundDyadicMagnitudeUp_true_eq_neg_false`
-needs; the downward magnitude reflection holds in every encoding.
+In a format with signed zeros, directed-down rounding is negated directed-up rounding of the
+negated dyadic, signed zeros included, because negation exchanges the downward magnitude rounder
+with the upward one. Only `roundDyadicMagnitudeUp_true_eq_neg_false` needs the signed-zero
+premise. The downward magnitude reflection holds in every encoding.
 -/
 theorem roundDyadicDown_eq_neg_roundDyadicUp_neg (fmt : FloatFormat) (d : Numerics.Dyadic)
     (hsigned : fmt.supportsSignedZero = true) :

@@ -16,8 +16,8 @@ import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 # Correctness of packed native-word Posit division
 
 The packed divider is a storage adapter over the width-generic quotient-prefix kernel. These
-theorems connect its decoded field boundary to the model-valued quotient semantics and prove that
-both natural and `UInt64` results are complete in-range Posit encodings.
+theorems connect its decoded field boundary to the model-valued quotient semantics, and they show
+that both the natural and the `UInt64` results are complete in-range Posit encodings.
 -/
 
 @[expose] public section
@@ -67,7 +67,7 @@ private theorem shiftLeft_toCommon_toNat
   exact FixedWord.shiftLeft_toNat value _
     (hbounds.2.trans_le (Nat.pow_le_pow_right (by decide) (by omega)))
 
-/-- Native common-leading normalization is exactly the arbitrary-width normalization. -/
+/-- Native common-leading normalization equals the arbitrary-width normalization. -/
 private theorem normalizeWords_toNat
     (numerator denominator : UInt64)
     (hnumerator : numerator ≠ 0)
@@ -96,7 +96,7 @@ private theorem normalizeWords_toNat
 
 /-! ## Quotient-prefix refinement -/
 
-/-- Native remainder jamming is exactly the representation-independent sticky operation. -/
+/-- Native remainder jamming equals the representation-independent sticky operation. -/
 private theorem jamState_toNat
     (state : QuotientState UInt128) :
     (jamState state).toNat =
@@ -185,7 +185,7 @@ private theorem quotientSteps128_normalized_toNat
     Nat.div_add_mod'] using hdivision
 
 /--
-The native restoring loop generates exactly the arbitrary-width quotient prefix.
+The native restoring loop generates the same quotient prefix as the arbitrary-width one.
 -/
 private theorem quotientPrefixWord_toNat
     (format : Format) (heligible : NativeWord.Eligible format)

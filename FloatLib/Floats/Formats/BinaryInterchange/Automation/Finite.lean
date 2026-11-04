@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 /-!
 # Exact finite-operation automation for `Model`
 
-The exact-dyadic representation and checked finite-operation contracts are registered with the
-representation-independent `numerics` tactic. The runtime carrier remains `Model fmt`; the exact
-representation is a proof view used only by refinement.
+This file registers the exact-dyadic representation and the checked finite-operation contracts
+with the representation-independent `numerics` tactic. The runtime carrier stays `Model fmt`, and
+the exact representation is a proof view that only refinement uses.
 -/
 
 public meta section

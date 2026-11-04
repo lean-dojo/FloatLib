@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classificatio
 # Classification of configured binary values
 
 These non-signaling queries use the descriptor's interpretation through the
-existing exact model codec. The same interface covers every configured carrier,
+exact model codec. The same interface covers every configured carrier,
 including custom biases and exceptional-value policies.
 -/
 

@@ -18,13 +18,13 @@ finite entries, and select one whose denotation is closest to the target. This m
 that quantizer, `nearestCode`, together with the theorems that its result minimizes the distance
 `|x - c|` over all finite codewords `c` and that among the minimizers it is the lowest word.
 
-The tie policy is fixed and simple: the scan runs in ascending order of the unsigned word value,
-and a candidate replaces the current best only when it is strictly closer. A tie therefore
-resolves to the lower word. Applications that need a different tie rule, or a rule for reserved
-words, can still define their own quantizer against the same table.
+Ties follow one fixed, simple rule. The scan runs in ascending order of the unsigned word value,
+and a candidate replaces the current best only when it is strictly closer, so a tie resolves to
+the lower word. Applications that need a different tie rule, or a rule for reserved words, can
+define their own quantizer against the same table.
 
-The scalar type only needs subtraction, negation, and a linear order so that `|x - c|` is
-defined and comparable. No ordered-group axioms are used by the minimality proof.
+For the scalar type, subtraction, negation, and a linear order are enough to define and compare
+`|x - c|`, and the minimality proof uses no ordered-group axioms.
 -/
 
 @[expose] public section
@@ -47,7 +47,7 @@ def finiteEntries (book : Codebook width α) : List (Code book × α) :=
     | .finite value => some (BitVec.ofNat width bits, value)
     | _ => none
 
-/-- A word appears in `finiteEntries` with a value exactly when the table decodes it to that
+/-- A word appears in `finiteEntries` with a value if and only if the table decodes it to that
 value. -/
 theorem mem_finiteEntries_iff (book : Codebook width α) (code : Code book) (value : α) :
     (code, value) ∈ finiteEntries book ↔ book.denote code = .finite value := by
@@ -134,13 +134,12 @@ private def closerLazyDistance {book : Codebook width α} (x : α)
       if distance < previous then some (entry.1, .inr distance) else best
 
 /--
-The first finite codeword whose denotation minimizes `|x - c|`, scanning words in ascending
-unsigned order and replacing the current best only on a strict improvement. Ties resolve to the
-lower word. The result is `none` exactly when the table has no finite entry.
+The first finite codeword whose denotation minimizes `|x - c|`. Words are scanned in ascending
+unsigned order and the best is replaced only on a strict improvement, so ties resolve to the lower
+word. The result is `none` if and only if the table has no finite entry.
 
-The scan constructs no intermediate list and computes each distance at most once. The first
-entry retains its value until a second finite entry is found, so a single finite entry needs no
-distance calculation. Later entries carry the distance of the current best word.
+The scan builds no intermediate list and computes each distance at most once. A table with a single
+finite entry needs no distance calculation at all.
 -/
 def nearestCode (book : Codebook width α) (x : α) : Option (Code book) :=
   (Fin.foldl (2 ^ width) (fun best bits =>

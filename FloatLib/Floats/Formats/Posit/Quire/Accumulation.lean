@@ -12,16 +12,16 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Exact accumulation loops in a standard posit quire
 
-`Capacity` bounds one signed coefficient sum. This module turns those bounds into statements about
-the loops a program actually runs: folding `qMulAdd` over a list of posit pairs, or `qAddP` over a
-list of posits, starting from the zero quire.
+`Capacity` bounds one signed coefficient sum, and this module turns those bounds into theorems
+about the loops a program actually runs. Such a loop folds `qMulAdd` over a list of posit pairs, or
+`qAddP` over a list of posits, starting from the zero quire.
 
-Below the Posit Standard's term limits (`productSumTermLimit = 2^31` exact products, or
-`positSumTermLimit format = 2^(23 + 4n)` posit addends) every intermediate quire stays ordinary, so
-the loop never produces quire NaR and the final quire denotes the exact rational sum.
+Stay below the Posit Standard's term limits (`productSumTermLimit = 2^31` exact products, or
+`positSumTermLimit format = 2^(23 + 4n)` posit addends) and every intermediate quire is ordinary,
+so the loop never produces quire NaR and the final quire denotes the exact rational sum.
 
-The helpers `exactValues?` and `exactProducts?` collect the exact rational terms of a list; they
-are `some` exactly when no input is NaR, which is the only hypothesis a caller must supply besides
+Two helpers, `exactValues?` and `exactProducts?`, collect the exact rational terms of a list. They
+return `some` exactly when no input is NaR, and that is the one hypothesis a caller supplies besides
 the term count.
 
 ## References
@@ -121,9 +121,9 @@ private theorem natAbs_add_le_and_ordinary
 /--
 Loop invariant for exact product accumulation.
 
-The accumulator denotes `value` and its coefficient magnitude is bounded by `consumed` product
-bounds; after folding `pairs` with `consumed + pairs.length` below the product limit, the result
-denotes `value` plus the exact sum of the products.
+Suppose the accumulator denotes `value` and its coefficient magnitude is bounded by `consumed`
+product bounds. If `consumed + pairs.length` is below the product limit, folding `pairs` gives a
+quire that denotes `value` plus the exact sum of the products.
 -/
 theorem toRat?_foldMulAdd
     (pairs : List (FloatLib.Floats.Formats.Posit.Model format ×
@@ -173,10 +173,10 @@ theorem toRat?_foldMulAdd
       rw [List.sum_cons, add_assoc]
 
 /--
-Fewer than `2^31` exact products of ordinary posits accumulate exactly from the zero quire.
+Fewer than `2^31` exact products of ordinary posits accumulate from the zero quire without loss.
 
 `exactProducts? pairs = some products` says that no input is NaR and names the exact rational
-products; the final quire is ordinary and denotes their sum with no rounding at any step.
+products. The final quire is ordinary and denotes their sum, and no step rounds.
 -/
 theorem toRat?_foldMulAdd_zero
     (pairs : List (FloatLib.Floats.Formats.Posit.Model format ×
@@ -209,9 +209,9 @@ theorem isNaR_foldMulAdd_zero
 /--
 Loop invariant for exact posit accumulation.
 
-The accumulator denotes `value` and its coefficient magnitude is bounded by `consumed` posit
-bounds; after folding `addends` with `consumed + addends.length` below the addend limit, the result
-denotes `value` plus the exact sum of the addends.
+Suppose the accumulator denotes `value` and its coefficient magnitude is bounded by `consumed`
+posit bounds. If `consumed + addends.length` is below the addend limit, folding `addends` gives a
+quire that denotes `value` plus the exact sum of the addends.
 -/
 theorem toRat?_foldAddP
     (addends : List (FloatLib.Floats.Formats.Posit.Model format))
@@ -255,10 +255,10 @@ theorem toRat?_foldAddP
       rw [List.sum_cons, add_assoc]
 
 /--
-Fewer than `2^(23 + 4n)` ordinary posits accumulate exactly from the zero quire.
+Fewer than `2^(23 + 4n)` ordinary posits accumulate from the zero quire without loss.
 
 `exactValues? addends = some values` says that no input is NaR and names the exact rational
-addends; the final quire is ordinary and denotes their sum.
+addends. The final quire is ordinary and denotes their sum.
 -/
 theorem toRat?_foldAddP_zero
     (addends : List (FloatLib.Floats.Formats.Posit.Model format))

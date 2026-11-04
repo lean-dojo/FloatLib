@@ -16,33 +16,32 @@ public import FloatLib.Examples.Transcendentals
 /-!
 # FloatLib examples
 
-Each example starts from a concrete question, shows the code, and records selected `#eval` results
-in comments. Start with `BasicOperations`, which asks what `0.1 + 0.2` gives in binary32
-and how to prove something about it. The other modules can be read in any order:
+Each example starts from a question, shows the code that answers it, and records selected `#eval`
+results in comments. Start with `BasicOperations`, which asks what `0.1 + 0.2` gives in binary32 and
+how to prove something about it. After that, read the others in any order:
 
-* `CustomFormats` builds a custom 16-bit binary layout, a 12-bit posit, a decimal fixed-point
-  grid, and a P3109 type, and checks which calculations are exact in each.
-* `FormatComparison` evaluates one expression as native `Float`, `Float32`, FloatLib binary64
-  and binary32, and Posit32, then rounds one third to nearest even, toward zero, and toward
-  each infinity.
+* `CustomFormats` builds a custom 16-bit binary layout, a 12-bit posit, a decimal fixed-point grid,
+  and a P3109 type, and checks which calculations are exact in each.
+* `FormatComparison` evaluates one expression as native `Float`, `Float32`, FloatLib binary64 and
+  binary32, and Posit32, then rounds one third to nearest even, toward zero, and toward each
+  infinity.
 * `PositQuire` computes a dot product in a quire, with no rounding until the end, and proves when
   that accumulation is exact.
 * `SpecializedFormats` multiplies logarithmic numbers, looks up a codebook product, and quantizes
   shared-scale and OCP MX blocks.
-* `Transcendentals` computes `sin`, `cos`, and a composition of `exp`, `log`, and `tanh`, and
-  says what is and isn't promised about their accuracy.
+* `Transcendentals` computes `sin`, `cos`, and a composition of `exp`, `log`, and `tanh`, and says
+  what is and isn't promised about their accuracy.
 
-To try a sample in the editor, start a scratch file with `import FloatLib`. The `Transcendentals`
-example also needs `import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`,
-because `import FloatLib` doesn't install those functions. Copy the namespace openings and
-definitions you need, then add `#eval` followed by the value's name. Binary values print a decimal
-that reads back as the stored value, exact when that is short and otherwise normally the shortest
-one, and
-posits print their exact value.
-`toString`, string interpolation, and `IO.println` all use the same display API.
+To try a sample in the editor, start a scratch file with `import FloatLib`, copy the namespace
+openings and definitions you need, and add `#eval` followed by the value's name. `Transcendentals`
+also needs `import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`, because
+`import FloatLib` doesn't install those functions. A binary value prints as a decimal that reads
+back as the stored value. That decimal is exact when it's short and otherwise normally the shortest
+one, and posits print their exact value. `toString`, string interpolation, and `IO.println` all go
+through the same display API.
 
-From the repository root, build all examples with `lake build FloatLib.Examples`, or run the
-comparison with `lake -d tests exe check example`. Copy the examples into an application and
-change the inputs or format parameters to explore their behavior. Sample values are private, but
+From the repository root, `lake build FloatLib.Examples` builds all the examples and
+`lake -d tests exe check example` runs the comparison. You can copy the examples into an application
+and change the inputs or format parameters to see how they behave. Sample values are private, but
 the reusable functions, including `PositQuire.dotProduct`, are public.
 -/

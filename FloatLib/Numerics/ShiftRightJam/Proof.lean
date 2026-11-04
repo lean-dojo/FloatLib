@@ -14,26 +14,24 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Nearest-even rounding through guard and sticky bits
 
-The width-generic rounder `Numerics.roundShiftRightEven` inspects the guard bit, retained parity,
-and sticky bits. Kernels can therefore compress discarded bits before rounding a sum or fused
-multiply-add. The proofs below establish how far that compression may go and how it interacts
-with alignment and subtraction.
+Our width-generic rounder `Numerics.roundShiftRightEven` inspects the guard bit, retained parity,
+and sticky bits, so kernels can compress discarded bits before rounding a sum or fused multiply-add.
+Below we show how far that compression may go and how it interacts with alignment and subtraction.
 
 * `roundShiftRightEven_eq_guard_sticky`, from `Quantization.Deterministic.ShiftRight`, is the
   three-bit form of nearest-even rounding that these proofs build on.
-* `roundShiftRight_shiftRightJam` shows that jamming every bit below position `j` into one
-  sticky bit does not change a later rounding by at least `j + 2` bits, under every
-  `MagnitudeRounding` rule. `roundShiftRightEven_shiftRightJam` is its nearest-even case.
-  Applying this to an addition result needs a further argument relating that result to its
-  jammed value.
-* `roundShiftRightEven_mul_two_pow` and `roundShiftRightEven_mul_two_pow_of_le` relate rounding
-  of a scaled value to rounding of the original.
-* `shiftRightJam_add_mul_two_pow` and `shiftRightJam_mul_two_pow_sub` describe the jammed
-  quotient of an aligned sum or difference in terms of the two operands, and `log2_shiftRightJam`
-  locates its leading bit.
+* `roundShiftRight_shiftRightJam` shows that jamming every bit below position `j` into one sticky
+  bit doesn't change a later rounding by at least `j + 2` bits, under every `MagnitudeRounding`
+  rule. `roundShiftRightEven_shiftRightJam` is its nearest-even case. Applying this to an addition
+  result needs a further argument relating that result to its jammed value.
+* `roundShiftRightEven_mul_two_pow` and `roundShiftRightEven_mul_two_pow_of_le` relate rounding of a
+  scaled value to rounding of the original.
+* `shiftRightJam_add_mul_two_pow` and `shiftRightJam_mul_two_pow_sub` describe the jammed quotient
+  of an aligned sum or difference in terms of the two operands, and `log2_shiftRightJam` locates its
+  leading bit.
 
-These statements apply to natural numbers independently of their storage. The fixed-word and
-limb-array kernels use them to justify their rounding steps.
+These statements are about natural numbers, whatever their storage. Fixed-word and limb-array
+kernels use them to justify their rounding steps.
 -/
 
 @[expose] public section

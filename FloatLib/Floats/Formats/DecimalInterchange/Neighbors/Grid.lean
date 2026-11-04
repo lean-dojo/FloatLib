@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Exact
 /-!
 # Decimal grid gaps
 
-A least-quantum representation is either on the subnormal grid or has a full
-leading digit. Every finer-grid representation is below that leading digit;
-every coarser-grid representation occupies an integer point on the current grid.
-These two facts exclude all representable values between consecutive coefficients.
+Why is there nothing representable between consecutive coefficients? A least-quantum
+representation is either on the subnormal grid or has a full leading digit. Every representation
+on a finer grid stays below that leading digit, and every representation on a coarser grid sits on
+an integer point of the current grid. Between them, those two facts leave no room.
 -/
 
 @[expose] public section

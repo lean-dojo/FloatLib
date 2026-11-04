@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.FormatProof
 /-!
 # Range guarantees for the selected decimal grid
 
-The input's exact coefficient on the selected grid is less than `10 ^ precision`.
-Whenever it is coarser than the subnormal grid, it also retains a full leading
-digit. These bounds justify the later single-digit carry and overflow decisions.
+On the selected grid, the input's exact coefficient is less than `10 ^ precision`, and when the
+grid is coarser than the subnormal grid the coefficient also has a full leading digit. The
+single-digit carry and the overflow decisions later on rely on these two bounds.
 -/
 
 @[expose] public section

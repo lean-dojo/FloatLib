@@ -15,10 +15,11 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Refinement of two-limb posit arithmetic
 
-These kernels round exact dyadic results using two-limb candidates. Addition, subtraction,
-multiplication, and fused multiply-add are the shared exact-dyadic operations, so they agree with
-the rational posit specification. Pair-word division decodes the operands and delegates to the
-shared direct divider; `divWords_eq_div` relates that adapter to model division.
+The two-limb kernels round exact dyadic results with two-limb candidates, and this module proves
+them against the rational posit specification. Addition, subtraction, multiplication, and fused
+multiply-add are the shared exact-dyadic operations, so their agreement comes from the dyadic
+proofs. Pair-word division decodes its operands and hands them to the shared direct divider, and
+`divWords_eq_div` relates that adapter to model division.
 -/
 
 @[expose] public section
@@ -80,7 +81,7 @@ theorem mul_eq_spec (heligible : NativeLimb.Eligible format)
   rw [mul_eq_dyadic, DyadicArithmetic.mul_eq_spec]
 
 /--
-Pair-word division is exactly the shared direct divider applied to the corresponding model
+Pair-word division is the shared direct divider applied to the corresponding model
 values.
 -/
 theorem divWords_eq_div

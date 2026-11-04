@@ -11,14 +11,14 @@ public import FloatLib.Numerics.Enclosure.Expression.Basic
 /-!
 # Checking real inequalities on rational boxes
 
-`Expr.check` evaluates an interval expression and checks its decoded upper bound against zero.
-An inconclusive evaluation can subdivide the widest positive-width input interval at its exact
-rational midpoint. Both children must succeed. Precision and elementary-function approximation
-settings belong to the backend; the checker controls only the subdivision depth.
+`Expr.check` evaluates an interval expression and checks its decoded upper bound against zero. If
+that's inconclusive, it can split the widest positive-width input interval at its exact rational
+midpoint, and then both children must succeed. Precision and elementary-function approximation
+settings belong to the backend. The checker controls only the subdivision depth.
 
-Input coordinates have explicit rational bounds. A missing variable, failed endpoint conversion,
-or rejected operation makes a leaf fail. `CheckProof` proves that successful checks establish the
-inequality for every real assignment in the original box.
+Each input coordinate comes with rational bounds. A missing variable, a failed endpoint conversion,
+or a rejected operation makes a leaf fail. `CheckProof` proves that a successful check establishes
+the inequality for every real assignment in the original box.
 -/
 
 @[expose] public section
@@ -57,7 +57,7 @@ def Box.enclose? {α : Type*} (box : Box) (B : Backend α) :
     let rest ← Box.enclose? tail B
     pure (J :: rest)
 
-/-- Index and width of the widest positive-width coordinate; ties choose the first coordinate. -/
+/-- Index and width of the widest positive-width coordinate, taking the first one on a tie. -/
 def Box.widest? (box : Box) : Option (Nat × ℚ) :=
   match box with
   | [] => none

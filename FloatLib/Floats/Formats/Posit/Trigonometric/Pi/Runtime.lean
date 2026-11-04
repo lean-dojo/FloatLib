@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Exact.Trigonometric.Pi.Runtime
 /-!
 # Correctly rounded pi-scaled posit trigonometric functions
 
-The argument is multiplied by pi exactly, before the final posit rounding. Rational special
-values and tangent poles are classified exactly. The inverse functions divide the exact
-principal angle by pi, without first rounding that angle to a posit.
+In these functions the argument is multiplied by pi exactly, before the final posit rounding, and
+rational special values and tangent poles are classified exactly. In the inverse functions, the
+exact principal angle is divided by pi and never rounded to a posit first.
 
 These functions follow the Posit Standard (2022), §5.5.
 -/
@@ -33,7 +33,7 @@ def sinPi {format : Format} (value : Model format) : Model format :=
 def cosPi {format : Format} (value : Model format) : Model format :=
   Trigonometric.evaluate prepareCosPi value
 
-/-- Correctly rounded tangent of pi times the input; half-integer arguments produce NaR. -/
+/-- Correctly rounded tangent of pi times the input. Half-integer arguments produce NaR. -/
 def tanPi {format : Format} (value : Model format) : Model format :=
   match value.toRat? with
   | none => nar format
@@ -42,11 +42,11 @@ def tanPi {format : Format} (value : Model format) : Model format :=
       else ComparisonRounding.roundSigned format
         (prepareTanPi argument (format.bits.log2 + 2)).compare
 
-/-- Correctly rounded principal inverse sine divided by pi; its real domain is `[-1, 1]`. -/
+/-- Correctly rounded principal inverse sine divided by pi, with real domain `[-1, 1]`. -/
 def arcSinPi {format : Format} (value : Model format) : Model format :=
   Trigonometric.evaluateUnit prepareArcsinPi value
 
-/-- Correctly rounded principal inverse cosine divided by pi; its real domain is `[-1, 1]`. -/
+/-- Correctly rounded principal inverse cosine divided by pi, with real domain `[-1, 1]`. -/
 def arcCosPi {format : Format} (value : Model format) : Model format :=
   Trigonometric.evaluateUnit prepareArccosPi value
 

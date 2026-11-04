@@ -15,8 +15,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Fma.Runtime
 /-!
 # Executable word-specialized fused multiply-add dispatch
 
-Generic and word-specialized dispatchers compute fused multiply-add. Their refinement theorems
-live in `FmaWord.Proof`.
+Here are the generic and the word-specialized fused multiply-add dispatchers. Their refinement
+theorems live in `FmaWord.Proof`.
 -/
 
 @[expose] public section

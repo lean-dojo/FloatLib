@@ -15,21 +15,20 @@ import all Init.Data.UInt.Log2
 /-!
 # Limb arrays: value semantics of the accessors
 
-The accessors of `Core.Runtime` have value-level contracts in terms of the natural number `toNat`
-of a limb array. The contracts use three groups of lemmas.
+Each accessor of `Core.Runtime` gets a contract stated through `toNat`, the natural number a limb
+array denotes. The contracts rest on three groups of lemmas:
 
-* `segment` lemmas: `segment_eq_ofDigits` and `toNat_eq_ofDigits` identify the denotation with
-  Mathlib's little-endian base-`2^32` evaluation. Its append, bound, prefix, and injectivity
-  theorems apply to limb segments, including zero padding beyond the stored size.
-* Digit and bit extraction: `limb_toNat_eq` reads limb `i` as a base-`2^32` digit of `toNat`, and
-  `limb_testBit` reads a bit of a limb as a bit of `toNat`. Together with `Nat.eq_of_testBit_eq`
-  these turn every bitwise accessor into a statement about `Nat` bits.
-* The accessor theorems: `toNat_ofNat`, `ofNat_toNat`, `testBit_eq`, `bitsAt32_toNat`,
+* `segment` lemmas. `segment_eq_ofDigits` and `toNat_eq_ofDigits` identify the denotation with
+  Mathlib's little-endian base-`2^32` evaluation, so the append, bound, prefix, and injectivity
+  theorems of that evaluation apply to limb segments, zero padding beyond the stored size included.
+* Digit and bit extraction. `limb_toNat_eq` reads limb `i` as a base-`2^32` digit of `toNat`, and
+  `limb_testBit` reads a bit of a limb as a bit of `toNat`. With `Nat.eq_of_testBit_eq` these turn
+  every bitwise accessor into a statement about `Nat` bits.
+* The accessor theorems themselves: `toNat_ofNat`, `ofNat_toNat`, `testBit_eq`, `bitsAt32_toNat`,
   `toNat_lowBits`, `toNat_resize`, `anyBelow_eq_true_iff`, `toNat_orLowBit`, `compare_eq`,
   `isZero_eq_true_iff`, and `log2_eq`.
 
-The compiler certificate `toNat_eq_internal` replaces `toNat` in compiled code by its Horner
-loop.
+In compiled code, the compiler certificate `toNat_eq_internal` replaces `toNat` by its Horner loop.
 -/
 
 @[expose] public section
@@ -294,7 +293,10 @@ theorem limb_eq_of_toNat_eq {a b : LimbArray} (h : toNat a = toNat b) (i : Nat) 
   apply UInt32.toNat_inj.mp
   rw [limb_toNat_eq, limb_toNat_eq, h]
 
-/-- A value determined digit by digit. -/
+/--
+If the first `c` limbs are the base-`radix` digits of `n`, the segment of the first `c` limbs is
+`n % radix ^ c`.
+-/
 theorem segment_eq_mod_of_digits (v : LimbArray) (n : Nat) :
     ∀ c, (∀ j, j < c → (v.limb j).toNat = n / radix ^ j % radix) →
       segment v 0 c = n % radix ^ c := by
@@ -558,7 +560,7 @@ theorem testBit_eq (v : LimbArray) (k : Nat) : testBit v k = (toNat v).testBit k
     show (1 : UInt32).toNat = 2 ^ 1 - 1 by decide, Nat.and_two_pow_sub_one_eq_mod]
   simp
 
-/-- The mask of the low `r` bits. -/
+/-- `lowMask32 r` is `2 ^ r - 1`, the mask of the low `r` bits. -/
 theorem lowMask32_toNat (r : Nat) (hr : r < 32) : (lowMask32 r).toNat = 2 ^ r - 1 := by
   unfold lowMask32
   have hshift : ((1 : UInt32) <<< UInt32.ofNat r).toNat = 2 ^ r := by

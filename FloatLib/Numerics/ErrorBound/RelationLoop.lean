@@ -11,11 +11,12 @@ public import FloatLib.Numerics.ErrorBound.Loop
 /-!
 # Loops related to a shadow state
 
-A loop `input.foldl step initial` whose state is a tuple, such as a running maximum beside a
-rescaled sum, is compared at each step with a shadow state, `input.foldl reference shadow`, of
-real references and discrete data, and with budgets that a recurrence run alongside the loop
-accumulates (`List.foldBudget`). `List.fold_relation` lifts a relation that one step preserves,
-under a condition at the visited states, through the whole traversal.
+Some loops carry a tuple as their state, such as a running maximum beside a rescaled sum. A loop
+`input.foldl step initial` of that kind is compared at each step with a shadow state,
+`input.foldl reference shadow`, of real references and discrete data, and with budgets that a
+recurrence run alongside the loop accumulates (`List.foldBudget`). `List.fold_relation` lifts a
+relation that one step preserves, under a condition at the visited states, through the whole
+traversal.
 -/
 
 @[expose] public section

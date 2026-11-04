@@ -11,15 +11,14 @@ public import FloatLib.Kernels.LimbArray.Arithmetic.Runtime
 /-!
 # Limb arrays: shifts and nearest-even rounding
 
-Bit shifts of a `LimbArray` by an arbitrary count, with optional nearest-even rounding.
-A shift by `k` bits moves whole limbs by `k / 32` and then combines
-adjacent limbs to shift by the remaining `k % 32` bits; `Array.ofFn` builds each result limb from
-at most two source limbs.
+This module shifts a `LimbArray` by any number of bits, optionally rounding to nearest even. A shift
+by `k` bits moves whole limbs by `k / 32` and then combines neighbouring limbs to shift by the
+remaining `k % 32` bits, so `Array.ofFn` builds each result limb from at most two source limbs.
 
-`roundShiftRightEven` reads the guard bit and the sticky bits directly from the source array and
-increments the shifted quotient with one carry-propagating `addAt`; it never forms the halfway
-value `2^(shift - 1)` that the arbitrary-precision rounder compares against. `Shift.Proof` proves
-that it agrees with `Numerics.roundShiftRightEven`.
+`roundShiftRightEven` reads the guard bit and the sticky bits straight from the source array and
+increments the shifted quotient with one carry-propagating `addAt`. It never forms the halfway value
+`2^(shift - 1)` that the arbitrary-precision rounder compares against. `Shift.Proof` proves that it
+agrees with `Numerics.roundShiftRightEven`.
 -/
 
 @[expose] public section

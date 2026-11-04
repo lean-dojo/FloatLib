@@ -16,13 +16,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 /-!
 # Refinement of wide-limb division
 
-The limb decoder supplies the exact significands and their relative scale. The format's common
-scale offset cancels in division. Normal significands give the ratio exponent by one proved
-comparison, and every other finite case uses the exact rational exponent.
+A limb decoder supplies the exact significands and their relative scale, and the format's common
+scale offset cancels in division. For normal significands one proved comparison gives the ratio
+exponent, while every other finite case uses the exact rational exponent.
 
-The quotient rounder agrees with the reference in every rounding direction. Finite zero operands
-follow the same invalid-operation and signed-overflow rules. For non-finite inputs, division's
-value result is independent of the rounding direction.
+In every rounding direction, the quotient rounder agrees with the reference. Finite zero operands
+follow the same invalid-operation and signed-overflow rules, and for non-finite inputs the value
+result of division doesn't depend on the rounding direction.
 -/
 
 @[expose] public section

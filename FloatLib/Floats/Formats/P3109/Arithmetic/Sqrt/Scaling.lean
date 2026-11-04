@@ -13,10 +13,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 # Real meaning of square-root exponent selection
 
 If a positive radicand has leading binary exponent `L`, its square root has leading exponent
-`L / 2`, using integer floor division. Scaling the radicand by `2^(-2Q)` therefore scales its
-real square root by `2^(-Q)`. With the report's normal and subnormal quantum formula for `Q`, the
-scaled root lies in `[2^(P-1), 2^P)` for a normal result and below `2^(P-1)` for a subnormal one
-(`sqrt_scaled_bounds`), which connects the exact integer rounder to that formula.
+`L / 2` with integer floor division, so `8 = 2^3` has a root with leading exponent `1`. Scaling the
+radicand by `2^(-2Q)` scales its real square root by `2^(-Q)`. With the report's normal and
+subnormal quantum formula for `Q`, the scaled root lies in `[2^(P-1), 2^P)` for a normal result and
+below `2^(P-1)` for a subnormal one (`sqrt_scaled_bounds`), and that's what connects the exact
+integer rounder to the formula.
 -/
 
 @[expose] public section
@@ -70,7 +71,7 @@ theorem nonnegative_rat_eq_ratio (radicand : Rat) (h : 0 ≤ radicand) :
 
 /--
 At the chosen quantum, the root of the scaled radicand is the actual nonnegative root times
-`2^(-Q)`. The identity holds for every quantum (`sqrt_scaled_ratio`); `sqrt_scaled_bounds` is
+`2^(-Q)`. The identity holds for every quantum (`sqrt_scaled_ratio`), and `sqrt_scaled_bounds` is
 where the choice of `Q` matters.
 -/
 theorem sqrt_scaled_radicand (format : Format) (radicand : Rat) (h : 0 ≤ radicand) :

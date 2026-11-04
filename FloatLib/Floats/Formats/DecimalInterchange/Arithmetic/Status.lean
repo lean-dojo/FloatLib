@@ -11,11 +11,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Numerical inexactness and signed-zero arithmetic
 
-For finite operands and a finite result, inexactness means that the returned value differs from
-the exact rational expression, also when the result overflows to the greatest finite datum. A finite
-quotient already excludes a zero divisor. Zero results use the operation's sign rule and
-preferred quantum clamped to the destination range. Changing a zero's cohort
-alone does not raise inexact.
+Here the inexact flag gets its numerical meaning. For finite operands and a finite result, it is
+raised if and only if the returned value differs from the exact rational expression, and that
+includes a result that overflows to the greatest finite datum. A finite quotient rules out a zero
+divisor by itself. Zero results take the operation's sign rule and its preferred quantum, clamped
+to the destination range. Landing a zero in a different cohort doesn't raise inexact.
 -/
 
 @[expose] public section
@@ -23,7 +23,7 @@ alone does not raise inexact.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
-/-- Adding two finite datums raises inexact exactly when a finite result differs from the exact
+/-- Adding two finite datums raises inexact if and only if a finite result differs from the exact
 sum. -/
 theorem add_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
@@ -35,8 +35,8 @@ theorem add_inexact_iff (f : Format) (mode : RoundingMode)
   subst b
   exact project_inexact_iff f mode _ value _ _ hv
 
-/-- Subtracting two finite datums raises inexact exactly when a finite result differs from the exact
-difference. -/
+/-- Subtracting two finite datums raises inexact if and only if a finite result differs from the
+exact difference. -/
 theorem sub_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
     (hv : (sub f mode x y).value.toRat? = some value) :
@@ -51,8 +51,8 @@ theorem sub_inexact_iff (f : Format) (mode : RoundingMode)
   simp only [sub, Datum.negate, add, hn, ← sub_eq_add_neg] at hv ⊢
   exact project_inexact_iff f mode _ value _ _ hv
 
-/-- Multiplying two finite datums raises inexact exactly when a finite result differs from the exact
-product. -/
+/-- Multiplying two finite datums raises inexact if and only if a finite result differs from the
+exact product. -/
 theorem mul_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
     (hv : (mul f mode x y).value.toRat? = some value) :
@@ -63,7 +63,7 @@ theorem mul_inexact_iff (f : Format) (mode : RoundingMode)
   subst b
   exact project_inexact_iff f mode _ value _ _ hv
 
-/-- Dividing two finite datums raises inexact exactly when a finite result differs from the exact
+/-- Dividing two finite datums raises inexact if and only if a finite result differs from the exact
 quotient. A zero divisor gives a NaN or an infinity, so a finite result has a nonzero divisor. -/
 theorem div_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
@@ -80,8 +80,8 @@ theorem div_inexact_iff (f : Format) (mode : RoundingMode)
   simp only [div, hc, ↓reduceIte] at hv ⊢
   exact project_inexact_iff f mode _ value _ _ hv
 
-/-- A fused multiply-add of three finite datums raises inexact exactly when a finite result differs
-from the exact value of `a * b + c`. -/
+/-- A fused multiply-add of three finite datums raises inexact if and only if a finite result
+differs from the exact value of `a * b + c`. -/
 theorem fma_inexact_iff (f : Format) (mode : RoundingMode)
     (x y z : Datum) (a b c value : ℚ)
     (hx : x.toRat? = some a) (hy : y.toRat? = some b) (hz : z.toRat? = some c)
@@ -94,7 +94,7 @@ theorem fma_inexact_iff (f : Format) (mode : RoundingMode)
   subst c
   exact project_inexact_iff f mode _ value _ _ hv
 
-/-- Equal-sign zeros preserve their sign; opposite signs use the cancellation rule. -/
+/-- Adding zeros of equal sign keeps that sign, and opposite signs follow the cancellation rule. -/
 theorem add_zeros (f : Format) (mode : RoundingMode) (sx sy : Bool) (qx qy : Int) :
     add f mode (.finite sx 0 qx) (.finite sy 0 qy) =
       { value := .finite (zeroSumSign mode sx sy) 0
@@ -109,7 +109,7 @@ theorem mul_zero_left (f : Format) (mode : RoundingMode)
           (max f.minQuantum (min (qx + qy) f.maxQuantum)) } := by
   simp [mul, Datum.finiteValue, project_zero]
 
-/-- A zero divided by a nonzero finite datum is an exact zero with the XOR sign and no flags; its
+/-- A zero divided by a nonzero finite datum is an exact zero with the XOR sign and no flags. Its
 quantum is the difference of the operand quanta, clamped to the format range. -/
 theorem div_zero_numerator (f : Format) (mode : RoundingMode)
     (sx sy : Bool) (c : Nat) (hc : c ≠ 0) (qx qy : Int) :

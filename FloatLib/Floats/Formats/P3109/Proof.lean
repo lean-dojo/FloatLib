@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # P3109 representation proofs
 
-A validated P3109 descriptor defines an exact-width `NumericalSystem` and `ExecFloat` carrier.
-These theorems connect their denotations to P3109 decoding. Descriptor validation supplies the
-field-width, special-encoding, and storage conditions used by the proofs.
+Every validated P3109 descriptor defines an exact-width `NumericalSystem` and an `ExecFloat`
+carrier, and these theorems connect their denotations to P3109 decoding. The proofs lean on
+descriptor validation for the field-width, special-encoding, and storage conditions they need.
 -/
 
 @[expose] public section
@@ -289,7 +289,7 @@ theorem decodePositiveFinite_of_biasedExponent_ne_zero
     simp at biasedExponent_ne_zero
   simp [decodePositiveFinite, bits_ne_zero, biasedExponent_ne_zero]
 
-/-- Positive finite decoding has zero significand exactly at the all-zero code. -/
+/-- Positive finite decoding has a zero significand if and only if the code is all zeros. -/
 @[simp] theorem decodePositiveFinite_significand_eq_zero_iff
     (format : Format) (bits : Nat) :
     (format.decodePositiveFinite bits).significand = 0 ↔
@@ -376,7 +376,7 @@ theorem decode_ofNat_of_lt_modulus (format : Format) {bits : Nat} (h : bits < fo
     format.decode (BitVec.ofNat format.bitWidth bits) = format.decodeNat bits := by
   rw [decode, BitVec.toNat_ofNat, Nat.mod_eq_of_lt (show bits < 2 ^ format.bitWidth from h)]
 
-/-- The all-zero code denotes zero; no other code does
+/-- The all-zero code denotes zero, and no other code does
 (`significand_eq_zero_iff_of_decode_eq_finite`). -/
 @[simp] theorem decode_zero (format : Format) :
     format.decode (BitVec.ofNat format.bitWidth 0) = .finite .zero := by
@@ -499,13 +499,13 @@ variable {format : Formats.P3109.Format}
   rw [decode_eq_format_decode]
   exact format.decode_negativeInfinityBits signed extended
 
-/-- A P3109 value reads as `q` exactly when it decodes to a finite dyadic with value `q`. -/
+/-- A P3109 value reads as `q` if and only if it decodes to a finite dyadic with value `q`. -/
 theorem toRat?_eq_some_iff (value : ExecFloat.P3109 format) (q : Rat) :
     toRat? value = some q ↔ ∃ exact, decode value = .finite exact ∧ exact.toRat = q := by
   unfold toRat?
   cases decode value <;> simp
 
-/-- A P3109 value has no rational reading exactly when it decodes to NaN or an infinity. -/
+/-- A P3109 value has no rational reading if and only if it decodes to NaN or an infinity. -/
 theorem toRat?_eq_none_iff (value : ExecFloat.P3109 format) :
     toRat? value = none ↔ (decode value).isFinite = false := by
   unfold toRat?

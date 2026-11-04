@@ -13,9 +13,9 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 /-!
 # Correctness of one-word to two-limb Posit adapters
 
-These lemmas are needed only by operations that cross from `UInt64` storage to a `UInt128`
-intermediate. They live at that boundary so the ordinary one-word rounding proof remains
-independent of the complete two-limb proof stack.
+Some one-word operations carry an intermediate from `UInt64` storage into a `UInt128`, and these
+lemmas cover that crossing and nothing else. Keeping them at the boundary means the ordinary
+one-word rounding proof never depends on the complete two-limb proof stack.
 -/
 
 @[expose] public section

@@ -12,12 +12,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 /-!
 # Cost estimates for binary descriptor execution
 
-These engineering priors guide static candidate selection; they never affect semantics or
-refinement. The model follows the threshold selection used by GMP and the separation of planning
-from execution used by FFTW.
+These estimates are engineering priors. They guide static candidate selection and never affect
+semantics or refinement. Their model borrows the threshold selection of GMP and the separation of
+planning from execution in FFTW.
 
-Generated-code inspection and benchmark calibration remain necessary because Lean's compiler,
-target architecture, and workload can move useful thresholds.
+Lean's compiler, the target architecture, and the workload can all move the useful thresholds, so
+the estimates need generated-code inspection and benchmark calibration as well.
 -/
 
 @[expose] public section
@@ -30,8 +30,8 @@ open FloatLib.Floats.ExecFloat.Backend
 /--
 Coarse superlinear work estimate for exact significand arithmetic.
 
-This is intentionally cheap to reduce at specialization time. It is an engineering feature, not
-an asymptotic-complexity theorem.
+It is meant to be cheap to reduce at specialization time. It is an engineering feature and
+proves nothing about asymptotic complexity.
 -/
 @[inline] def quadraticWork (bits : Nat) : Nat :=
   bits * bits / 16
@@ -39,14 +39,15 @@ an asymptotic-complexity theorem.
 /--
 Width- and operation-sensitive estimate for the generic kernel of `format` and `operation`.
 
-The constants are calibrated with `benchmarks/scripts/format-comparison.sh`, in units of
-approximately 100 ns, separately for three width bands: at most 8 bits, at most 128 bits, and
-wider. Above 128 bits, fixed allocation costs dominate the measured range; limb-count terms
-account for the remaining arbitrary-precision work. Because the bands are fitted separately, the
-estimate is not monotone in the width: at 129 bits the wide band gives a much smaller value than
-the 128-bit band. Selection only compares candidates for one format and operation, so the jump
-does not reorder the candidates of a format, but these values should not be used to compare
-formats with each other.
+The constants are calibrated with `benchmarks/scripts/format-comparison.sh`, in units of about
+100 ns, with one fit for each of three width bands: at most 8 bits, at most 128 bits, and wider.
+Above 128 bits fixed allocation costs dominate the measured range, and limb-count terms account
+for the remaining arbitrary-precision work.
+
+Because each band has its own fit, the estimate is not monotone in the width. At 129 bits the
+wide band gives a much smaller value than the 128-bit band. Selection only compares candidates
+for one format and operation, so the jump never reorders a format's candidates. Do not use these
+values to compare formats with each other.
 -/
 def genericEstimate (format : FloatFormat) (operation : Operation) : Candidate :=
   let bits := format.bitWidth
@@ -142,8 +143,8 @@ def fixedLimbEstimate (operation : Operation) : Candidate where
 /--
 Estimate for a kernel over a runtime-sized buffer of 32-bit limbs.
 
-Measured addition and subtraction costs grow linearly in the limb count; multiplication and FMA
-include the quadratic schoolbook product. Both this kernel and the generic kernel allocate on
+Measured addition and subtraction costs grow linearly in the limb count, and multiplication and
+FMA include the quadratic schoolbook product. Both this kernel and the generic kernel allocate on
 every call. Their allocation estimates are equal, so selection compares the estimated times.
 Division and square root use arbitrary-precision integer arithmetic and retain the generic work
 estimate. Their direct limb-carrier entries account for field conversion within that work.
@@ -190,13 +191,13 @@ Estimate for a dense byte table over all encoded operands.
 
 One result occupies one byte because every caller (the `*TableCertified` constructors and
 `Configured.directByteEstimate` in the byte plan) holds a proof of `bitWidth ≤ 8`. The function
-itself takes no width hypothesis and leaves `storage` at its default; for a wider format
-`residentBytes` would understate the table. The selector's memory policy independently rejects
-tables that are valid but too large.
+itself takes no width hypothesis and leaves `storage` at its default, so for a wider format
+`residentBytes` would understate the table. The selector's memory policy rejects tables that are
+valid but too large on its own account.
 
-`execFloatBackendCalibration` showed table construction to be approximately linear in the number
-of encoded results for each operation. The operation-specific coefficient is therefore a more
-accurate and more stable prior than multiplying by the public generic-kernel estimate: table
+`execFloatBackendCalibration` showed table construction to be about linear in the number of
+encoded results for each operation. That makes an operation-specific coefficient a more accurate
+and more stable prior than a multiple of the public generic-kernel estimate, because table
 generation runs below the `ExecFloat` carrier boundary and has a different constant factor.
 -/
 def tableEstimate (format : FloatFormat) (operation : Operation) : Candidate :=

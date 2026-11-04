@@ -13,12 +13,12 @@ import FloatLib.Kernels.FixedWord.Quotient.Proof
 # Compiler certificates for restoring quotient loops
 
 The logical restoring loop is convenient for proofs, while the primitive-word accumulator avoids
-allocating a state at every generated quotient bit. This module proves the logical and accumulator
-forms of the one- and two-limb loops equal and registers the accumulator direction with `@[csimp]`.
+allocating a state at every generated quotient bit, so we prove the logical and accumulator forms of
+the one- and two-limb loops equal and register the accumulator direction with `@[csimp]`.
 
-The compiled scaled quotient also tries a floating-point candidate, checked in exact integer
-arithmetic, before the loop. Its certificate uses the loop's arithmetic specification from
-`Quotient.Proof`, imported here privately so executable clients get the rewrite without
+Before the loop, the compiled scaled quotient also tries a floating-point candidate and checks it in
+exact integer arithmetic. That certificate uses the loop's arithmetic specification from
+`Quotient.Proof`, which we import privately so executable clients get the rewrite without
 re-exporting that development.
 -/
 

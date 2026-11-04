@@ -13,7 +13,9 @@ public import FloatLib.Numerics.Capabilities.Radix
 
 A code is zero or a sign with an unbounded integer exponent at a fixed radix. This module keeps
 that representation, its executable rational decoder, and multiplication together. Multiplication
-handles zero, xors the signs, and adds the exponents; it introduces no rounding or overflow.
+lets zero absorb, xors the signs, and adds the exponents, so at radix 2 the codes for `-4` and
+`1/8` multiply to the code for `-1/2`. Nothing rounds or overflows, since the exponent is an
+unbounded integer.
 
 `Exact.Proof` supplies the real numerical system, erased proof views, and theorems connecting the
 rational decoder and multiplication kernel to their real semantics.

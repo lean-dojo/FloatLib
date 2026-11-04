@@ -12,12 +12,14 @@ public import Mathlib.Data.Rat.Defs
 /-!
 # Exact fixed-point representation and execution
 
-The code stores an unbounded integer coefficient with its radix and fractional precision in the
-type. Its exact rational decoder and coefficient operations are defined together here: addition,
-subtraction, and negation keep the scale; multiplication composes the two operand scales.
+An exact fixed-point code stores an unbounded integer coefficient and keeps its radix and
+fractional precision in the type. Its exact rational decoder and its coefficient operations are
+defined together here. Addition, subtraction, and negation keep the scale, and multiplication
+composes the two operand scales.
 
 No operation rounds or overflows. `Exact.Proof` defines the rational numerical system and proves
-these operations refine exact arithmetic. Bounded coefficient policies live in `FixedPoint.Bounded`.
+that these operations refine exact arithmetic, and the bounded coefficient policies live in
+`FixedPoint.Bounded`.
 -/
 
 @[expose] public section
@@ -49,7 +51,8 @@ open FloatLib.Numerics
     (value : Code radix fractionalDigits) : ℚ :=
   value.coefficient / (scale radix fractionalDigits : Nat)
 
-/-- Encode an integer coefficient directly. -/
+/-- Encode an integer coefficient as stored, with no scaling, so `314` at two decimal digits is
+`3.14`. -/
 @[inline] def ofInt (radix : Radix) (fractionalDigits : Nat) (coefficient : Int) :
     Code radix fractionalDigits :=
   ⟨coefficient⟩
@@ -70,8 +73,8 @@ open FloatLib.Numerics
   add left (neg right)
 
 /--
-Exact multiplication. Multiplying scales `p` and `q` produces scale `p + q`; no hidden rescaling
-or rounding occurs.
+Exact multiplication. Multiplying scales `p` and `q` produces scale `p + q`, with no hidden
+rescaling or rounding.
 -/
 @[inline] def mul {radix : Radix} {p q : Nat}
     (left : Code radix p) (right : Code radix q) : Code radix (p + q) :=

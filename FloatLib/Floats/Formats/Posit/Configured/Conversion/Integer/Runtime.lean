@@ -12,14 +12,15 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit conversions for fixed-width signed integers
 
-These adapters preserve the Section 6.4 MSB-only sentinel through any lawful posit model codec.
-The integer width is independent of the posit width. Integer-to-posit conversion rounds the
-exact signed value once using Section 4.1; posit-to-integer conversion uses nearest integer with
-ties to even, checking the signed range after rounding.
+`ofFixedInt` and `toFixedInt` convert between configured posits and signed integers, and the
+integer width has nothing to do with the posit width. Both keep the Section 6.4 MSB-only sentinel
+intact through any lawful posit model codec. Going from integer to posit rounds the exact signed
+value once, by Section 4.1, and going back rounds to the nearest integer with ties to even and
+checks the signed range after rounding.
 
-The signed minimum shares the sentinel word. These explicit adapters therefore differ from
-generic numerical conversion through an ordinary `FixedInt` decoder, which treats that word as
-a finite integer.
+The catch is that the signed minimum shares its word with the sentinel. On that one word these
+adapters differ from generic numerical conversion through an ordinary `FixedInt` decoder, which
+reads it as a finite integer.
 -/
 
 @[expose] public section

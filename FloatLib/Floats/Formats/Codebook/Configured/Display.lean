@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.Codebook.Configured.Core
 /-!
 # Value display of codebook formats
 
-A codebook value prints the table entry it denotes, so `toString` and `#eval` of a P3109 value
-show its exact dyadic value, `inf`, `-inf` or `nan` rather than its stored word.
+A codebook value prints as the table entry it denotes. For a P3109 value, `toString` and `#eval`
+show its exact dyadic value, `inf`, `-inf` or `nan`, and never the stored word.
 -/
 
 @[expose] public section

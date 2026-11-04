@@ -12,15 +12,15 @@ public import FloatLib.Floats.Formats.P3109.Projection.Correctness
 /-!
 # Real semantics and executable refinement of P3109 square root
 
-The reference rounder takes the floor of a real square root and runs the report's rounding
-decision (`sqrtRoundDecision`) by comparing that root with the decision's thresholds. The
-executable rounder computes the same result using natural-number square roots and products.
-Neither implementation first projects a rational approximation of the root.
+Two rounders appear here. The reference one takes the floor of a real square root and runs the
+report's rounding decision (`sqrtRoundDecision`) by comparing that root with the decision's
+thresholds. The executable one gets the same result from natural-number square roots and
+products. Neither first projects a rational approximation of the root.
 
-What `sqrtValue_eq_real` establishes is that the integer arithmetic is exact: both rounders share
-the quantum selection and the decision procedure, so a wrong quantum or tie rule would be shared
-too. That the decision selects the correctly rounded neighbour of `√x` in every mode is not proved
-here.
+`sqrtValue_eq_real` establishes that the integer arithmetic is exact. Both rounders share the
+quantum selection and the decision procedure, though, so a wrong quantum or tie rule would be
+shared too, and we don't prove here that the decision selects the correctly rounded neighbour of
+`√x` in every mode.
 
 `decode_projectSqrt` composes this equality with the report's saturation and encoding
 theorem. Reciprocal square root and hypotenuse reuse the same rounder after forming
@@ -128,7 +128,7 @@ theorem sameDatum_decode_sqrtCode (format : Format) (policy : ProjectionPolicy)
 
 /--
 On a positive finite input the reciprocal-square-root radicand is `1 / value`, whose real square
-root is the reciprocal of the positive root of `value`; composed with `decode_rsqrt`, the result is
+root is the reciprocal of the positive root of `value`. Composed with `decode_rsqrt`, the result is
 the reference rounding (`sqrtRealValue`) of that radicand. The other inputs are covered by
 `rsqrtRadicand_finite_of_nonpos` and the definition: NaN and `-∞` give NaN, and `+∞` gives the
 radicand zero, whose root is zero.
@@ -145,7 +145,7 @@ theorem rsqrtRadicand_finite_of_nonpos {value : Rat} (h : value ≤ 0) :
 
 /--
 On finite operands the hypotenuse radicand is the exact sum of squares, a nonnegative rational
-whose real square root is `√(left ^ 2 + right ^ 2)`; composed with `decode_hypot`, the result is
+whose real square root is `√(left ^ 2 + right ^ 2)`. Composed with `decode_hypot`, the result is
 the reference rounding (`sqrtRealValue`) of that radicand.
 -/
 theorem hypotRadicand_finite_real (left right : Rat) :

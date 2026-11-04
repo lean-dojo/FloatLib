@@ -12,9 +12,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Rounding.Runtime
 /-!
 # Native-word finite multiplication for generic binary32
 
-Finite binary32 significands occupy at most 24 bits, so their exact product fits in one `UInt64`.
-Both entry points return `none` for a NaN or infinity, and the caller applies the special-value
-policy. `Multiplication.Proof` has the proofs.
+Finite binary32 significands take at most 24 bits, so their exact product fits in one `UInt64`. Both
+entry points return `none` for a NaN or an infinity and leave the special-value policy to the
+caller. `Multiplication.Proof` has the proofs.
 -/
 
 @[expose] public section

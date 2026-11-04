@@ -16,16 +16,20 @@ public import Mathlib.Data.Nat.Sqrt
 /-!
 # Model square root of a normalized positive value
 
-The binary32, binary64, one-word, two-word, and wide-limb square-root kernels compute the same
-recipe: shift the significand so that its integer square root has exactly `fracWidth + 1` bits, take
-the integer root, round it by comparing the remainder with the root, and pack the result with a
-possible carry into the exponent field. This module proves once, for every IEEE format, that the
-recipe agrees with `Float.Model.UnpackedFloat.sqrt` on the proof model.
+The binary32, binary64, one-word, two-word, and wide-limb square-root kernels all follow one recipe:
 
-Each kernel proves that its word arithmetic computes this recipe, that the scaled radicand and
-encoded exponent satisfy the stated bounds, and that its scaling constants satisfy `htarget`
-and `hshift`. `Backends.SqrtArithmetic` supplies the shared affine exponent identities, and the
-word lemmas below (`sqrt_shiftLeft_bounds`, `sqrtRemainder_toNat`, `roundedRoot_toNat`,
+1. shift the significand so that its integer square root has exactly `fracWidth + 1` bits,
+2. take the integer root,
+3. round it by comparing the remainder with the root,
+4. pack the result, with a possible carry into the exponent field.
+
+This module proves once, for every IEEE format, that the recipe agrees with
+`Float.Model.UnpackedFloat.sqrt` on the proof model.
+
+Each kernel then proves that its word arithmetic computes this recipe, that the scaled radicand and
+encoded exponent satisfy the stated bounds, and that its scaling constants satisfy `htarget` and
+`hshift`. `Backends.SqrtArithmetic` supplies the shared affine exponent identities, and the word
+lemmas below (`sqrt_shiftLeft_bounds`, `sqrtRemainder_toNat`, `roundedRoot_toNat`,
 `mod_two_beq_zero_of_toNat_eq`, `sqrtCarry_toNat`) give the steps that every `UInt64` kernel
 repeats.
 -/
@@ -116,12 +120,13 @@ theorem mod_two_beq_zero_of_toNat_eq (position : UInt64) (value : Nat)
   rfl
 
 /--
-The carry step of a native square-root kernel. When the rounded root word `rounded` equals the
-carry word `carryBit`, worth `2 ^ (f + 1)`, the kernel adds one to the biased exponent word
-`exponent` and takes the hidden-bit word `hiddenBit`, worth `2 ^ f`, as the significand; otherwise
-it keeps `exponent` and `rounded`. The fraction word is the significand minus `hiddenBit`. If
-`rounded` has the value `root ≥ 2 ^ f` and `exponent` has a value `q` whose successor fits in a
-word, the exponent and fraction words have the values that
+The carry step of a native square-root kernel.
+
+When the rounded root word `rounded` equals the carry word `carryBit`, worth `2 ^ (f + 1)`, the
+kernel adds one to the biased exponent word `exponent` and takes the hidden-bit word `hiddenBit`,
+worth `2 ^ f`, as the significand. Otherwise it keeps `exponent` and `rounded`. The fraction word is
+the significand minus `hiddenBit`. If `rounded` has the value `root ≥ 2 ^ f` and `exponent` has a
+value `q` whose successor fits in a word, then the exponent and fraction words have the values that
 `ofModel_sqrt_finite_positive_eq_ofFields` packs.
 -/
 theorem sqrtCarry_toNat (f : Nat) (rounded exponent carryBit hiddenBit : UInt64) (root q : Nat)

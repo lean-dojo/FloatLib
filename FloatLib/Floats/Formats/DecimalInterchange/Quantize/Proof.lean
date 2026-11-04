@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 /-!
 # Quantize: range, fixed quantum, and numerical error
 
-The successful result has exactly the requested quantum, including signed zero.
-The coefficient is obtained by a single exact rational rounding on that grid.
-The range test is necessary and sufficient for a finite result.
+When quantize succeeds, the result has the requested quantum, signed zero included, and its
+coefficient comes from a single exact rational rounding on that grid. The range test is necessary
+and sufficient for a finite result.
 -/
 
 @[expose] public section
@@ -41,7 +41,7 @@ theorem quantize_valid (f : Format) (mode : RoundingMode) (x y : Datum) :
     | exact invalidResult_valid f
     | trivial
 
-/-- Invalid is raised precisely when the requested rounded representation does not fit. -/
+/-- Invalid is raised if and only if the requested rounded representation does not fit. -/
 theorem quantizeMagnitude_invalid_iff (f : Format) (mode : RoundingMode)
     (s : Bool) (x : ℚ) (q : Int) :
     (quantizeMagnitude f mode s x q).status.invalid = true ↔

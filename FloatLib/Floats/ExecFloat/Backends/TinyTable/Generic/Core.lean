@@ -11,8 +11,8 @@ public import Batteries.Data.ByteArray
 /-!
 # Finite byte encodings
 
-The generic byte-table backend represents a format through a finite encoding bijection. A format
-contributes only a proved bijection between its exact model and a nonempty set of at most 256
+The generic byte-table backend represents a format through a finite encoding bijection. All a format
+has to contribute is a proved bijection between its exact model and a nonempty set of at most 256
 ordinals. No IEEE, Posit, rounding, or exceptional-value policy is built into this layer.
 -/
 
@@ -32,8 +32,8 @@ theorem uget_eq_get (array : ByteArray) (index : USize)
 /--
 A proved finite encoding of an exact model.
 
-`radix_le_byte` is the only storage-specific assumption. The inverse laws make table generation
-and lookup representation-preserving; no numerical property is required.
+`radix_le_byte` is the only storage-specific assumption. The inverse laws make table generation and
+lookup representation-preserving, and no numerical property is needed.
 -/
 structure Encoding (Model : Type u) where
   /-- Number of valid code words. -/
@@ -80,7 +80,7 @@ private theorem toNat_ofNat_encode (value : Model) :
   rw [UInt8.toNat_ofNat', Nat.mod_eq_of_lt
     (Nat.lt_of_lt_of_le (encoding.encode value).isLt encoding.radix_le_byte)]
 
-/-- Decoding a directly encoded model value recovers that value. -/
+/-- Decoding the encoding of a model value recovers that value. -/
 @[simp] theorem decodeCode_encodeCode (value : Model) :
     encoding.decodeCode (encoding.encodeCode value) = value := by
   have hcode :

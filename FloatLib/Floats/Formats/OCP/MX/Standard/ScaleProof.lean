@@ -13,9 +13,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Loga
 /-!
 # Shared exponent selection for concrete OCP MX blocks
 
-The selected exponent is the binade exponent of the largest input magnitude minus the largest
-element power-of-two exponent. E8M0 bounds every scale that reaches element quantization.
-The binade theorem reuses the format-independent proof of the executable rational logarithm.
+Scale selection takes the binade exponent of the largest input magnitude and subtracts the
+largest power-of-two exponent of the element format. For an E4M3 block whose largest input is
+`15/8`, that's `0 - 8 = -8`. We prove that every scale reaching element quantization lies within
+E8M0's bounds, and the binade theorem reuses the format-independent proof of the executable
+rational logarithm.
 -/
 
 public section

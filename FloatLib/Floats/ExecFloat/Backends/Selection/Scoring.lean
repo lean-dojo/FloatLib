@@ -13,14 +13,14 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 # Deterministic backend scoring
 
 The selector combines a warm-call estimate with setup and resident-memory costs over an expected
-number of calls. Optional candidates must satisfy the memory ceilings before cost comparison;
-the mandatory baseline remains available regardless of its estimate. A fixed tie-break order
-makes selection deterministic for a given ordered candidate set.
+number of calls. Optional candidates must satisfy the memory ceilings before their costs are
+compared, while the mandatory baseline stays available whatever its estimate. A fixed tie-break
+order makes selection deterministic for a given ordered candidate set.
 
-These values are a transparent planning model, not benchmark measurements and not correctness
-evidence. Families calibrate relative costs for their candidates; users can inspect the resulting
-break-even point and replace the policy without changing the specification proved by those
-candidates.
+These numbers are a transparent planning model. They aren't benchmark measurements, and they aren't
+evidence of correctness either. Families calibrate relative costs for their candidates, and you can
+inspect the resulting break-even point and replace the policy without changing the specification
+those candidates prove.
 -/
 
 @[expose] public section
@@ -120,12 +120,12 @@ private theorem Candidate.score_le_of_warmCost_lt_of_coldCost_le
   omega
 
 /--
-A candidate with a strictly cheaper warm call and no larger cold cost is `better` than the
-incumbent under every policy.
+A candidate with a strictly cheaper warm call and no larger cold cost is `better` than the incumbent
+under every policy.
 
-For a positive expected call count the score is strictly lower. For a zero expected call count
-the scores are the cold costs; either the cold cost is strictly lower or the equal-score tie
-break, whose first key is the warm cost, decides in the candidate's favor.
+For a positive expected call count the score is strictly lower. For a zero expected call count the
+scores are the cold costs, so either the cold cost is strictly lower or the equal-score tie break,
+whose first key is the warm cost, decides in the candidate's favor.
 -/
 theorem Candidate.better_of_warmCost_lt_of_coldCost_le
     (policy : Policy) {candidate incumbent : Candidate}

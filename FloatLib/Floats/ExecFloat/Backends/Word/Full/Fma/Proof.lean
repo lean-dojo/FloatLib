@@ -16,14 +16,14 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 /-!
 # Verified scale-aligned binary64 fused multiply-add
 
-On the exact path the addend's scale is at most 62 bits above the product's, so shifting the
-addend significand by that difference places it at the product's scale. Their sum or difference
-needs at most 116 bits, and two native words hold it exactly before one nearest-even rounding.
-An addend below the product, or more than 62 bits above it, is aligned with a sticky bit instead
-(`fmaJammed?`), and the jammed magnitude rounds to the same result.
+On the exact path the addend's scale is at most 62 bits above the product's, so shifting the addend
+significand by that difference puts it at the product's scale. Their sum or difference needs at most
+116 bits, and two native words hold it exactly until the one nearest-even rounding. An addend below
+the product, or more than 62 bits above it, is aligned with a sticky bit instead (`fmaJammed?`), and
+the jammed magnitude rounds to the same result.
 
 Zero and subnormal operands, exact or deep cancellation, and results outside the normal rounder's
-range use the generic finite kernel. Non-finite operands are handled by the outer arithmetic
+range use the generic finite kernel. Non-finite operands are left to the outer arithmetic
 dispatcher.
 -/
 
@@ -163,8 +163,8 @@ private theorem fmaOperands_normal (x y z : Value)
       finiteMantissa_bounds _ _ hzZero (fracField_lt z)⟩⟩
 
 /--
-The native paths accept only operands without an all-ones exponent, which `decode?` maps to
-their fields; there `fmaFiniteComponents?` is the generic component kernel on those fields.
+The native paths accept only operands without an all-ones exponent, which `decode?` maps to their
+fields. On those operands `fmaFiniteComponents?` is the generic component kernel on those fields.
 -/
 private theorem fmaFiniteComponents?_eq_some_of_components (x y z result : Value)
     (hx : expField (toUInt64 x) ≠ 0x7ff)
@@ -665,8 +665,8 @@ private theorem shiftRightJam_bounds (n k a b : Nat) (hlower : 2 ^ (a + k) ≤ n
     · exact Nat.or_lt_two_pow hupper (Nat.one_lt_two_pow (by omega))
 
 /--
-A sticky magnitude of a dominated sum, as in `dominantSum_bounds`, has its leading bit in the
-range `53..115` of the binary64 product rounder; the exact sum keeps at least `a + k + 1` bits.
+A sticky magnitude of a dominated sum, as in `dominantSum_bounds`, has its leading bit in the range
+`53..115` of the binary64 product rounder, and the exact sum keeps at least `a + k + 1` bits.
 -/
 private theorem jammedSum_leading (same : Bool) (dominant other a b k : Nat)
     (magnitude : UInt128)
@@ -737,7 +737,7 @@ private theorem fmaComponents_addend_below
 /--
 With the addend's scale at or above the product's and the shifted addend larger than the product
 (`hdominant`), the generic kernel rounds the exact sum at the product's scale. The scale gap may be
-zero; its one use, `fmaJammedAbove_eq`, has a gap above 62.
+zero, though its one use, `fmaJammedAbove_eq`, has a gap above 62.
 -/
 private theorem fmaComponents_addend_above
     (xSign ySign zSign : Bool)
@@ -998,7 +998,7 @@ private theorem fmaJammed_refines
 /--
 Native finite binary64 FMA, with its fallback, equals the generic finite kernel on every input.
 
-Both sides are `none` exactly when an operand is not finite; on finite operands they return the
+Both sides are `none` exactly when an operand isn't finite, and on finite operands they return the
 same once-rounded value.
 -/
 theorem fmaFinite_eq (x y z : Value) :

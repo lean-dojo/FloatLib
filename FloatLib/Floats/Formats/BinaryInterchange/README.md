@@ -6,8 +6,9 @@ that the arithmetic specifications and proofs work with.
 
 Importing `FloatLib.Floats.Formats.BinaryInterchange` gives you executable arithmetic, and
 `.Semantics` adds the connection to rounded real operations. Our
-[theorem index](../../THEOREMS.md) collects the results. To see which implementation runs each
-operation, read the [backend guide](../../ExecFloat/Backends/README.md).
+[theorem index](../../THEOREMS.md) collects the results, and the
+[backend guide](../../ExecFloat/Backends/README.md) shows which implementation runs each
+operation.
 
 Custom field widths use the same interface. Here's a 71-bit format:
 
@@ -74,5 +75,5 @@ The other two finite-only policies reserve a NaN encoding, as the table shows.
 
 Ordinary notation rounds to nearest-even. For another direction, every operation takes
 `(mode := ...)`, and `(status := true)` returns the value with its flags and ternary value.
-`Model.Interval fmt` uses directed kernels. If a denominator contains zero, or the endpoints are
-NaN or unordered, the result is `whole fmt`.
+`Model.Interval fmt` uses directed kernels, and if a denominator contains zero, or the endpoints
+are NaN or unordered, you get `whole fmt`.

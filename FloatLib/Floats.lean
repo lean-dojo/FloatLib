@@ -15,12 +15,14 @@ public import FloatLib.Floats.Interval
 /-!
 # Executable numerical formats
 
-Binary, decimal, posit, P3109, fixed-point, logarithmic, codebook, block, complex, and interval APIs.
-`ExecFloat` provides the common carrier and operation contracts. Each family under `Formats`
-defines its encoding, mathematical interpretation, and arithmetic implementations.
+This is the part of FloatLib you compute with: the binary, decimal, posit, P3109, fixed-point,
+logarithmic, codebook, block, complex, and interval APIs. `ExecFloat` gives them a common carrier
+and common operation contracts, and each family under `Formats` defines its own encoding, its
+mathematical interpretation, and its arithmetic implementations. If you only need one family, import
+`FloatLib.Floats.Formats.<Family>`.
 
-Import `FloatLib.Floats.Formats.<Family>` for one family. New format-independent algorithms belong
-under `FloatLib.Kernels`; definitions and theorems about numerical systems belong under
+Code that doesn't depend on a format lives elsewhere. New format-independent algorithms belong under
+`FloatLib.Kernels`, and definitions and theorems about numerical systems belong under
 `FloatLib.Numerics`. Optional Arb comparisons are in `FloatLibTests.Arb.Oracle`.
 -/
 

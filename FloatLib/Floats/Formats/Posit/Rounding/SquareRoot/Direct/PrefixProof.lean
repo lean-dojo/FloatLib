@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.Runtime
 /-!
 # Exact semantics of arbitrary-width square-root prefixes
 
-The direct square-root kernel scales a positive dyadic by an even power of two, computes its
-integer square root, and jams whether the exact root continues beyond that integer prefix.
-This module proves the representation-independent integer facts. Posit-specific square-root
-refinement is kept in `Direct.Proof`.
+Direct square-root rounding scales a positive dyadic by an even power of two, takes its integer
+square root, and jams one bit that says whether the exact root goes on past that integer prefix.
+Everything proved here is a fact about integers that holds for any representation, and everything
+specific to posits is in `Direct.Proof`.
 -/
 
 @[expose] public section
@@ -140,7 +140,7 @@ theorem scaledRadicand_lt_succ_truncatedRoot_square
   simpa [pow_two] using
     Nat.lt_succ_sqrt' (scaledRadicand precision radicand)
 
-/-- The exact square remainder vanishes exactly for an integral scaled root. -/
+/-- The exact square remainder is zero if and only if the scaled root is an integer. -/
 theorem squareRemainder_eq_zero_iff
     (precision : Nat) (radicand : FloatLib.Numerics.Dyadic) :
     squareRemainder precision radicand = 0 ↔
@@ -206,12 +206,12 @@ def rootCellPoint
       (radicand.exponent.ediv 2 - Int.ofNat precision)
 
 /--
-The executable prefix rounds exactly like any proper rational continuation in the same integer
-root cell.
+The executable prefix rounds the same way as any proper rational continuation in the same
+integer root cell.
 
-Only exactness versus a nonzero continuation is observable after sticky-bit jamming. This theorem
-lets the square-root refinement proof choose convenient rational lower and upper witnesses around
-the mathematical root.
+After sticky-bit jamming, all you can observe is whether the root is exact or continues with
+something nonzero. So the square-root refinement proof is free to pick convenient rational lower
+and upper witnesses around the mathematical root.
 -/
 theorem roundCode_eq_fraction
     (format : Format) (radicand : FloatLib.Numerics.Dyadic)

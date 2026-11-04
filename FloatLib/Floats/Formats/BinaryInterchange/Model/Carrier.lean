@@ -14,13 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
 /-!
 # Descriptor-indexed binary-interchange proof model
 
-`Model fmt` is the bit-exact specification carrier for the binary-interchange family. Statically
-declared formats use `FloatLib.Floats.ExecFloat F`, whose runtime representation is selected by
-`EncodedFormat F`.
+`Model fmt` is the bit-exact specification carrier for the binary-interchange family. It stores a
+`BitVec fmt.bitWidth`, so descriptor-generic specifications and refinement proofs can quantify
+over a layout chosen at runtime.
 
-This model stores `BitVec fmt.bitWidth` so descriptor-generic specifications and refinement proofs
-can quantify over a runtime-selected layout. Concrete format packages bridge their direct runtime
-codes to this model at the proof boundary.
+Statically declared formats use `FloatLib.Floats.ExecFloat F`, whose runtime representation
+`EncodedFormat F` selects, and concrete format packages bridge their own runtime codes to this
+model at the proof boundary.
 
 ## References
 
@@ -232,7 +232,7 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
     Model fmt :=
   ofBits (mkBits fmt sign exp frac)
 
-/-- Positive zero. -/
+/-- Positive zero, the all-zero word. -/
 @[inline] def posZero (fmt : FloatFormat) : Model fmt :=
   ofNatBits 0
 
@@ -240,11 +240,11 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 @[inline] def negZero (fmt : FloatFormat) : Model fmt :=
   ofBits (FloatFormat.signMask fmt)
 
-/-- Positive one. -/
+/-- Positive one: sign clear, biased exponent equal to the bias, zero fraction. -/
 @[inline] def posOne (fmt : FloatFormat) : Model fmt :=
   ofFields fmt false fmt.exponentBias 0
 
-/-- Negative one. -/
+/-- Negative one: sign set, biased exponent equal to the bias, zero fraction. -/
 @[inline] def negOne (fmt : FloatFormat) : Model fmt :=
   ofFields fmt true fmt.exponentBias 0
 
@@ -278,7 +278,7 @@ theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
 @[inline] def zero (fmt : FloatFormat) (negative : Bool) : Model fmt :=
   if negative && fmt.supportsSignedZero then negZero fmt else posZero fmt
 
-/-- Signed infinity when the format supports it. -/
+/-- Signed infinity when the format supports it, and `none` otherwise. -/
 @[inline] def infinity? (fmt : FloatFormat) (negative : Bool) : Option (Model fmt) :=
   if fmt.supportsInfinity then some (if negative then negInf fmt else posInf fmt) else none
 
@@ -665,11 +665,10 @@ namespace Internal.Value
 The next representable value strictly greater than `x`, the kernel of `Model.nextUp x`.
 
 A quiet NaN and the positive endpoint are fixed. A signaling NaN becomes the corresponding quiet
-NaN, and the `invalid` signal IEEE 754-2019 §5.3.1 owes to a signaling operand is reported by
-`Model.nextUp x (status := true)` in `Operations.Runtime`. Formats without infinity saturate at
-their largest finite value. In an unsigned-zero encoding, the word immediately below the negative
-minimum subnormal is reserved for NaN, so that transition goes directly to the format's unique
-zero.
+NaN, and `Model.nextUp x (status := true)` in `Operations.Runtime` reports the `invalid` signal
+that IEEE 754-2019 §5.3.1 owes to a signaling operand. Formats without infinity saturate at their
+largest finite value. In an unsigned-zero encoding the word just below the negative minimum
+subnormal is reserved for NaN, so that step goes straight to the format's unique zero.
 -/
 @[inline] def nextUp {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
   if isNaN x then

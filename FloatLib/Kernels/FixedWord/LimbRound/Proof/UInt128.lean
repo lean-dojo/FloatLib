@@ -23,12 +23,10 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified two-limb rounding
 
-These theorems connect the native `UInt128` shifts, increments, and nearest-even rounding
-operations to their natural-number meanings.
-
-The runtime uses two `UInt64` limbs, and the proof model interprets them as one `Nat`.
-Carry propagation, cross-limb shifts, low-bit insertion, ties-to-even rounding, and the sticky
-combination of an aligned sum preserve that interpretation under the stated capacity bounds.
+At runtime a `UInt128` is two `UInt64` limbs, and the proof model reads them as one `Nat`, so these
+theorems connect the native `UInt128` shifts, increments, and nearest-even rounding operations to
+that reading. Carry propagation, cross-limb shifts, low-bit insertion, ties-to-even rounding, and
+the sticky combination of an aligned sum all preserve it under the stated capacity bounds.
 -/
 
 @[expose] public section
@@ -399,8 +397,8 @@ theorem UInt128.roundShiftRightEven128_toNat (value : UInt128) (shift : Nat)
 
 /--
 The two-word sticky combination is the natural-number jam of the exact aligned value. A sum needs
-`A + q` to fit in two words; a difference needs only `B ≤ A * 2^d`, so exact cancellation to zero
-is included.
+`A + q` to fit in two words. A difference needs only `B ≤ A * 2^d`, so exact cancellation to zero is
+included.
 -/
 theorem UInt128.jamCombine_toNat (sameSign exact : Bool) (A q : UInt128) (B d : Nat)
     (hq : q.toNat = B / 2 ^ d) (hexact : exact = decide (B % 2 ^ d = 0))

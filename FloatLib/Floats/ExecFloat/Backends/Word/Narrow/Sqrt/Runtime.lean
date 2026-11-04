@@ -14,9 +14,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 /-!
 # Native binary32 square root
 
-Positive finite inputs are scaled to a 47- or 48-bit radicand, so the exact floor square root and
-the nearest-even decision fit in `UInt64`. Around the kernel, `sqrt` keeps the IEEE NaN, infinity,
-negative-input and signed-zero behavior. `Sqrt.Proof` has the proofs.
+A positive finite input is scaled to a 47- or 48-bit radicand, so the exact floor square root and
+the nearest-even decision fit in `UInt64`. Around the kernel, `sqrt` keeps the IEEE behavior for
+NaN, infinity, negative inputs, and signed zero. `Sqrt.Proof` has the proofs.
 -/
 
 @[expose] public section

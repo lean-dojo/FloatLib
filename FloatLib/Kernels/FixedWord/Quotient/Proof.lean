@@ -19,10 +19,10 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Correctness of restoring quotient generation
 
-The one-word restoring loop computes the nearest-even rounding of a rational quotient under its
-capacity bounds. This module also proves the two-limb step and the one-word rational logarithm.
-`Quotient.Restoring128Proof` extends the step theorem to the two-limb loop. Floating-point kernels
-supply their own decoding, exponent handling, and packing.
+Under its capacity bounds, the one-word restoring loop computes the nearest-even rounding of a
+rational quotient. We also prove the two-limb step and the one-word rational logarithm here, and
+`Quotient.Restoring128Proof` extends the step theorem to the two-limb loop. Decoding, exponent
+handling, and packing are left to the floating-point kernels.
 -/
 
 @[expose] public section

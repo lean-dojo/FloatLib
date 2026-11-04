@@ -17,10 +17,10 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Exact integer-valued posit functions
 
-Integer rounding does not introduce a second numerical rounding error. An integral input is
-already representable. For a nonintegral input, the tapered fraction budget suffices to encode
-both neighboring integers, including a ceiling at the next power of two. The argument uses
-field-layout semantics and applies to every descriptor width.
+Rounding a posit to an integer never adds a second rounding error, and this module proves it. An
+integral input is already representable. For a nonintegral input, the tapered fraction budget is
+large enough to encode both neighboring integers, even a ceiling at the next power of two.
+Because the argument works from the field layout, it applies to every descriptor width.
 -/
 
 @[expose] public section
@@ -79,7 +79,7 @@ private theorem exists_code_nat (format : Format) (n : Nat)
   simpa using exists_code_scaled_nat format n n.log2 n.log2
     (Nat.log2_self_le hn) (Nat.lt_log2_self) hbudget
 
-/-- A power of two needs no explicit fraction positions. -/
+/-- A power of two needs no fraction positions. -/
 private theorem exists_code_two_pow (format : Format) (e : Nat)
     (hbudget : e / 4 + 4 ≤ format.payloadBits) :
     ∃ code < format.signMaskNat, nonnegativeRatAt format code = (2 : ℚ) ^ e := by
@@ -101,7 +101,7 @@ private theorem exists_code_one (format : Format) :
 
 /--
 A nonintegral positive binade has enough fraction positions for every integer up to its
-upper endpoint. That endpoint uses the separate fraction-free power-of-two construction.
+upper endpoint. That endpoint has its own fraction-free power-of-two construction.
 -/
 private theorem exists_code_integer_neighbor (format : Format) {code : Nat}
     (hcode : code < format.signMaskNat) (n : ℤ)
@@ -290,7 +290,7 @@ theorem exists_toRat?_integer_neighbor (value : Model format) {q : ℚ}
     simpa only [ite_true, hv, Int.cast_neg, neg_neg] using
       toRat?_signed_code format code hcode true
 
-/-- Rounding an integer between a finite value's floor and ceiling returns it exactly. -/
+/-- Rounding an integer between a finite value's floor and ceiling returns it unchanged. -/
 private theorem toRat?_roundRat_intCast_of_between (value : Model format) {q : ℚ}
     (hvalue : value.toRat? = some q) (n : ℤ)
     (hlower : q.floor ≤ n) (hupper : n ≤ q.ceil) :

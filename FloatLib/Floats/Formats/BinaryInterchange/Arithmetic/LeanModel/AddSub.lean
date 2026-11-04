@@ -13,12 +13,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 /-!
 # Addition and subtraction through Lean's floating-point model
 
-The exact dyadic addition used by FloatLib and Lean's unpacked addition align the operands at
-the smaller exponent before rounding once. Their agreement includes cancellation to positive
-zero and overflow to infinity. A descriptor must have the conventional IEEE encoding and bias.
+FloatLib's exact dyadic addition and Lean's unpacked addition both align the operands at the
+smaller exponent and then round once. We prove that they agree, cancellation to positive zero and
+overflow to infinity included, for a descriptor with the conventional IEEE encoding and bias.
 These bridges are checked against the logical floating-point model shipped with Lean.
 
-NaN payloads require care at the native boundary: FloatLib propagates a quieted payload, whereas
+NaN payloads need care at the native boundary, because FloatLib propagates a quieted payload and
 Lean's unpacked model has a single NaN.
 -/
 
@@ -112,7 +112,7 @@ private theorem round_addDyadic_eq_ofModel_add_finite
 
 /--
 For finite nonzero operands, dispatched addition commutes with Lean's unpacked addition and
-packing. The result may be zero or infinity; no finiteness assumption on the sum is needed.
+packing. The result may be zero or infinity, and no finiteness assumption on the sum is needed.
 -/
 theorem add_eq_ofModel_add_of_toModel_finite
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt)

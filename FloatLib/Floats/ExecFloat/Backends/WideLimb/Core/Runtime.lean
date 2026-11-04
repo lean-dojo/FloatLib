@@ -12,17 +12,17 @@ public import FloatLib.Kernels.LimbArray.Shift.Runtime
 /-!
 # Wide-limb storage runtime
 
-The wide-limb backend serves binary descriptors wider than 128 bits. A stored value is a
-`LimbArray` of exactly `limbCount fmt` little-endian 32-bit limbs whose bits at and above
-`fmt.bitWidth` are clear; `Value fmt` packages the array with that invariant, decided by one limb
-comparison in `topLimbFits`. Because the invariant is a Boolean test, the smart constructor
-`ofLimbs` checks a candidate array at runtime. `Core.Proof` proves that model conversion and field
-packing produce arrays that pass this check.
+Binary descriptors wider than 128 bits go to this wide-limb backend. A stored value is a `LimbArray`
+of `limbCount fmt` little-endian 32-bit limbs whose bits at and above `fmt.bitWidth` are clear, and
+`Value fmt` packages the array with that invariant, which one limb comparison in `topLimbFits`
+decides. Because the invariant is a Boolean test, the smart constructor `ofLimbs` checks a candidate
+array at runtime. `Core.Proof` proves that model conversion and field packing produce arrays that
+pass this check.
 
-Field access reads the sign bit, the exponent field, and the fraction limbs directly from the
-array. `pack` assembles a result from its sign, exponent word, and fraction limbs with two
-carry-free additions at the field offsets. The correspondence with `Model` is proved in
-`Core.Proof`; every arithmetic kernel of this backend is written over these accessors.
+Field access reads the sign bit, the exponent field, and the fraction limbs straight from the array.
+`pack` assembles a result from its sign, exponent word, and fraction limbs with two carry-free
+additions at the field offsets. Correspondence with `Model` is proved in `Core.Proof`, and every
+arithmetic kernel of this backend is written over these accessors.
 -/
 
 @[expose] public section
@@ -37,7 +37,7 @@ Structural capability required by the wide-limb kernels.
 The conventional IEEE encoding selects the exact binary semantics and default bias shared with the
 generic kernels. Widths above 128 bits are the formats no fixed-limb kernel serves. An exponent
 field of at most 32 bits lets the encoded exponent be read from one 32-bit window. Scale and
-position arithmetic uses `Nat`; the fraction width is unrestricted.
+position arithmetic uses `Nat`, and the fraction width is unrestricted.
 -/
 def Eligible (fmt : FloatFormat) : Prop :=
   fmt.isIEEE = true ∧ 128 < fmt.bitWidth ∧ fmt.expWidth ≤ 32
@@ -82,8 +82,8 @@ instance (fmt : FloatFormat) : Inhabited (Value fmt) :=
 /--
 Wrap a kernel output as a stored value.
 
-An array with the required size and clear spare bits is retained; any other array yields zero.
-`ofLimbs_val` proves the successful case from an explicit size equality and numerical bound.
+An array with the required size and clear spare bits is kept, and any other array gives zero.
+`ofLimbs_val` proves the successful case from a size equality and a numerical bound.
 -/
 @[inline] def ofLimbs (fmt : FloatFormat) (w : LimbArray) : Value fmt :=
   if h : w.size = limbCount fmt ∧ topLimbFits fmt w = true then
@@ -101,7 +101,7 @@ An array with the required size and clear spare bits is retained; any other arra
 
 /-! ## Field access -/
 
-/-- The stored sign bit. -/
+/-- The sign bit, which is the stored bit just above the exponent and fraction fields. -/
 @[inline] def signBit {fmt : FloatFormat} (v : Value fmt) : Bool :=
   v.1.testBit (fmt.expWidth + fmt.fracWidth)
 
@@ -133,7 +133,7 @@ An array with the required size and clear spare bits is retained; any other arra
 Pack a sign, an exponent word, and fraction limbs into a stored value.
 
 The exponent word is masked to the exponent field and the fraction to `fracWidth` bits, so the
-result is meaningful for every input; `Core.Proof.toModel_pack` states the exact model produced.
+result is meaningful for every input. `Core.Proof.toModel_pack` states the model it produces.
 -/
 def pack (fmt : FloatFormat) (sign : Bool) (exponent : UInt32) (fraction : LimbArray) :
     Value fmt :=

@@ -11,15 +11,17 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Core
 /-!
 # Rounding modes and a half-ULP error bound
 
-Rounding on `ℝ` reduces to integer rounding of a scaled mantissa, with the following operators
-and validity contracts:
+To round a real, scale it so the last digit you keep is the units digit, round that to an
+integer, and scale back. With three binary digits, `1.3` scales by `4` to `5.2`, nearest-even
+gives `5`, and the result is `5/4`. This module sets up that reduction with these operators and
+validity contracts:
 
 - rounding modes `rnd : ℝ → ℤ` (floor/ceil/trunc/nearest-even),
 - the validity typeclasses `ValidRnd` and `ValidRndToNearest`,
 - the core rounding operator `round`,
 - the standard bound `abs(round … x - x) ≤ ulp(x)/2` for round-to-nearest.
 
-These definitions are used by `NF` (the rounded scalar type) and by
+`NF` (the rounded scalar type) uses these definitions, and so does
 `BinaryInterchange.Model.roundAt`, which connects generic proofs to the finite semantics of a
 concrete binary descriptor.
 
@@ -115,11 +117,11 @@ add_decl_doc ValidRndToNearest.toValidRnd
 /--
 Round `x` to the integer grid with spacing `step`: the result is `rnd (x / step) * step`.
 
-`rnd` is the integer rounding rule applied to `x / step`. This fixed-scale operation is the common
-core of fixed-point arithmetic and affine quantization: the caller supplies the scale, where
-`round` chooses it from the magnitude of `x` through an exponent format. The proof argument
-`0 < step` is not used in the value; it only restricts callers to a positive spacing. Real division
-is total, so the same formula at a zero spacing would be the constant-zero map.
+This fixed-scale operation is the common core of fixed-point arithmetic and affine quantization.
+The caller supplies the scale here, where `round` chooses it from the magnitude of `x` through an
+exponent format. The proof argument `0 < step` never enters the value. It only keeps callers to a
+positive spacing, since real division is total and the same formula at zero spacing would be the
+constant-zero map.
 -/
 noncomputable def roundAtScale (rnd : ℝ → ℤ) (step : ℝ) (_hstep : 0 < step) (x : ℝ) : ℝ :=
   (rnd (x / step) : ℝ) * step
@@ -201,7 +203,7 @@ lemma nearestEven_eq_ceil_of_frac_gt_half (x : ℝ) (h : x - ⌊x⌋ > 1/2) :
   simp only [h1, ite_false, h, ite_true]
 
 /--
-Nearest-even tie-breaking: when the fractional part is exactly `1/2` and the floor is even,
+Nearest-even tie-breaking: when the fractional part is `1/2` and the floor is even,
 round down to the even integer.
 -/
 lemma nearestEven_eq_floor_of_frac_half_even (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) (h2 : Even ⌊x⌋) :
@@ -212,7 +214,7 @@ lemma nearestEven_eq_floor_of_frac_half_even (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) 
   simp only [h3, h4, ite_false, h2, ite_true]
 
 /--
-Nearest-even tie-breaking: when the fractional part is exactly `1/2` and the floor is odd,
+Nearest-even tie-breaking: when the fractional part is `1/2` and the floor is odd,
 round up to the even integer.
 -/
 lemma nearestEven_eq_ceil_of_frac_half_odd (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) (h2 : ¬Even ⌊x⌋) :
@@ -433,7 +435,7 @@ theorem generic_format_of_scaled_mantissa_int (x : ℝ) (n : ℤ)
     _ = (⌊scaledMantissa β fexp x⌋ : ℝ) *
           bpow β (cexp β fexp x) := by rw [h]; simp
 
-/-- A value is in the generic format exactly when its canonical scaled mantissa is an integer. -/
+/-- A value is in the generic format if and only if its canonical scaled mantissa is an integer. -/
 theorem generic_format_iff_scaled_mantissa_int (x : ℝ) :
     genericFormat β fexp x ↔ ∃ n : ℤ, scaledMantissa β fexp x = n := by
   constructor

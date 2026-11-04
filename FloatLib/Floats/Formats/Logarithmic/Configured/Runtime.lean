@@ -11,11 +11,12 @@ public import FloatLib.Floats.Formats.Logarithmic.Configured.Core
 /-!
 # Executable exact logarithmic operations
 
-Every value is zero or a signed integral power of the radix. Multiplication is the only
-arithmetic operation supplied; it is closed and exact because signs xor and exponents add.
-Addition and arbitrary real conversion would require rounding because integral powers of the
-radix are not closed under addition. Division by a nonzero value could subtract exponents
-exactly, but no division operation or zero-divisor policy is supplied.
+These are the executable operations on configured logarithmic values, each of which is zero or a
+signed integral power of the radix. Multiplication is the one arithmetic operation. It's closed and
+exact, since the signs xor and the exponents add. Addition and conversion from arbitrary reals are
+left out because they would need rounding, as integral powers of the radix aren't closed under
+addition. Division by a nonzero value could subtract exponents, but there's no division operation
+and no policy for a zero divisor.
 -/
 
 @[expose] public section

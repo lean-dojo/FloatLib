@@ -13,13 +13,13 @@ public import FloatLib.Numerics.Enclosure.Interval.Basic
 /-!
 # Intervals with configured binary endpoints
 
-`ExecFloat.Binary.Interval` stores endpoints in the same carrier as configured scalar values.
-All operations delegate to `Model.Interval`; packing and decoding change representation, not
-rounding or exceptional-value behavior. The format, storage plan, and codec are unrestricted.
+`ExecFloat.Binary.Interval` stores endpoints in the same carrier as configured scalar values, and
+all operations delegate to `Model.Interval`. Packing and decoding change the representation and
+leave rounding and exceptional-value behavior alone. Any format, storage plan and codec will do.
 
 Arithmetic uses outward rounding and the model's whole-range fallback for unordered bounds.
-`Valid` requires finite endpoints; `ValidExtended` also permits infinities. The real-enclosure
-theorems and lossless-conversion proofs are in `Configured.Interval.Proof`.
+`Valid` requires finite endpoints, and `ValidExtended` also permits infinities.
+`Configured.Interval.Proof` has the real-enclosure theorems and lossless-conversion proofs.
 -/
 
 @[expose] public section
@@ -51,7 +51,7 @@ local notation "Bounds" => Interval (format := format) (plan := plan) (code := c
 @[inline] def ofModel (I : Model.Interval format) : Bounds :=
   ⟨Binary.ofModel I.lo, Binary.ofModel I.hi⟩
 
-/-- Numerical membership; a NaN value or endpoint is unordered. -/
+/-- Numerical membership. A NaN value or endpoint is unordered. -/
 def mem (I : Bounds) (x : Value) : Prop :=
   Binary.toModel x ∈ I.toModel
 
@@ -62,7 +62,7 @@ instance : Membership (ExecFloat (Configured.Family format code plan)) Bounds wh
 /-- Both endpoints are finite and ordered. -/
 abbrev Valid (I : Bounds) : Prop := Model.Interval.Valid I.toModel
 
-/-- Both endpoints are non-NaN and ordered; infinities are permitted. -/
+/-- Both endpoints are non-NaN and ordered, and infinities are permitted. -/
 abbrev ValidExtended (I : Bounds) : Prop := Model.Interval.ValidExtended I.toModel
 
 /-- Degenerate interval, preserving even a signed zero or NaN encoding. -/
@@ -71,7 +71,7 @@ abbrev ValidExtended (I : Bounds) : Prop := Model.Interval.ValidExtended I.toMod
 /-- Complete numerical range: infinities where supported, maximal finite endpoints otherwise. -/
 @[inline] def whole : Bounds := ofModel (Model.Interval.whole format)
 
-/-- Executable numerical comparison; unordered comparisons return `false`. -/
+/-- Executable numerical comparison, which returns `false` when unordered. -/
 @[inline] def leB (x y : Value) : Bool := Model.Interval.leB (Binary.toModel x) (Binary.toModel y)
 
 /-- Keep ordered bounds, falling back to `whole` for NaNs or reversed endpoints. -/
@@ -94,13 +94,13 @@ abbrev ValidExtended (I : Bounds) : Prop := Model.Interval.ValidExtended I.toMod
 /-- Outward-rounded four-corner product enclosure. -/
 @[inline] def mul (I J : Bounds) : Bounds := ofModel (Model.Interval.mul I.toModel J.toModel)
 
-/-- Outward-rounded quotient; a denominator containing zero returns the whole range. -/
+/-- Outward-rounded quotient. A denominator containing zero returns the whole range. -/
 @[inline] def div (I J : Bounds) : Bounds := ofModel (Model.Interval.div I.toModel J.toModel)
 
 /-- Negate and exchange the endpoints. -/
 @[inline] def neg (I : Bounds) : Bounds := ofModel (Model.Interval.neg I.toModel)
 
-/-- Reciprocal enclosure; an interval containing zero returns the whole range. -/
+/-- Reciprocal enclosure. An interval containing zero returns the whole range. -/
 @[inline] def inv (I : Bounds) : Bounds := ofModel (Model.Interval.inv I.toModel)
 
 /-- Endpoint-grid image enclosure for `max x 0`. -/
@@ -109,7 +109,7 @@ abbrev ValidExtended (I : Bounds) : Prop := Model.Interval.ValidExtended I.toMod
 /-- Absolute-value enclosure, handling intervals crossing zero. -/
 @[inline] def abs (I : Bounds) : Bounds := ofModel (Model.Interval.abs I.toModel)
 
-/-- Directed square-root endpoints; real soundness additionally needs nonnegative input bounds. -/
+/-- Directed square-root endpoints. Real soundness also needs nonnegative input bounds. -/
 @[inline] def sqrt (I : Bounds) : Bounds := ofModel (Model.Interval.sqrt I.toModel)
 
 end Interval

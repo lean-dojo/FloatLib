@@ -14,12 +14,12 @@ public import FloatLib.Floats.ExecFloat.Info.Render
 /-!
 # Format inspection
 
-`#float_info` reports a numerical type's format, backends, and theorems.
-`#float_info!` lists every theorem name with its scope; `#float_help` lists the command options.
+`#float_info` reports a numerical type's format, backends, and theorems. `#float_info!` lists every
+theorem name with its scope, and `#float_help` lists the command options.
 
-`Info.Profile` defines report data and checks theorem references. `Info.Inspection` discovers
-capabilities and backend metadata, `Info.Render` formats the report, and `Info.Command` defines
-the syntax. Format families register renderers in their own `Info` modules.
+The work is split four ways. `Info.Profile` defines the report data and checks theorem references,
+`Info.Inspection` discovers capabilities and backend metadata, `Info.Render` formats the report, and
+`Info.Command` defines the syntax. Format families register renderers in their own `Info` modules.
 -/
 
 @[expose] public section

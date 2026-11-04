@@ -16,25 +16,23 @@ import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 The exponential turns an absolute error of its argument into a relative error of its value:
 `|exp x - exp x₀| ≤ (exp |x - x₀| - 1) * exp x₀`. The logarithm does the converse at a positive
-exact argument, turning a pure relative error `r < 1` into the absolute error `-log (1 - r)`.
-When the computed and the exact argument are both nonnegative, `log (1 + x)` preserves a mixed
-error with the same constants, and so does `exp x - 1` when both are nonpositive, where the
-relative condition number of both functions is at most one.
+exact argument, turning a pure relative error `r < 1` into the absolute error `-log (1 - r)`. When
+the computed and the exact argument are both nonnegative, `log (1 + x)` preserves a mixed error with
+the same constants, and so does `exp x - 1` when both are nonpositive, where the relative condition
+number of both functions is at most one.
 
 Arguments of the other sign need a margin. Where `1 + x` and `1 + x₀` are at least `m > 0`,
 `log (1 + x)` divides the propagated error by `m`, so a computed argument may fall below zero as
 long as it stays above `-1`. On a neighbourhood `|x₀| ≤ c` of zero, `exp x - 1` multiplies the
-relative error by `(1 + c) * exp (r * c + a)` and the absolute error by `exp (c + r * c + a)`.
+relative error by `(1 + c) * exp (r * c + a)` and the absolute error by `exp (c + r * c + a)`. A
+real power `x ^ b` of a positive base turns the errors of both arguments into a pure relative error,
+through `exp (b * log (x / x₀) + (b - b₀) * log x₀)`. With an exact exponent the base may be
+negative.
 
-A real power `x ^ b` of a positive base turns the errors of both arguments into a pure relative
-error, through `exp (b * log (x / x₀) + (b - b₀) * log x₀)`; with an exact exponent the base may
-be negative.
-
-An implementation of one of these functions is described by a contract
-`MixedError y (f x) u η`: its result `y` at the computed argument `x` has mixed error `(u, η)`.
-A correctly rounded result satisfies it with the unit roundoff and the underflow allowance of
-its format. `MixedError.trans_exp` and its siblings compose such a contract with the error of the
-argument.
+An implementation of one of these functions is described by a contract `MixedError y (f x) u η`: its
+result `y` at the computed argument `x` has mixed error `(u, η)`. A correctly rounded result
+satisfies it with the unit roundoff and the underflow allowance of its format.
+`MixedError.trans_exp` and its siblings compose such a contract with the error of the argument.
 -/
 
 @[expose] public section
@@ -367,9 +365,11 @@ theorem rpow {b b₀ s e : ℝ} (h : MixedError x x₀ r a) (hb : MixedError b b
     gcongr
     exact (abs_exp_sub_one_le_exp_abs_sub_one _).trans (by gcongr)
 
-/-- A real power with an exact exponent of a nonzero base whose computed value has mixed error
-`(r, a)` has a pure relative error, when the relative distance `ρ = r + a / |x₀|` is below one;
-the base may be negative. -/
+/--
+A real power with an exact exponent of a nonzero base whose computed value has mixed error `(r, a)`
+has a pure relative error, when the relative distance `ρ = r + a / |x₀|` is below one. The base may
+be negative.
+-/
 theorem rpow_const {b b₀ : ℝ} (h : MixedError x x₀ r a) (hb : MixedError b b₀ 0 0)
     (hx₀ : x₀ ≠ 0) (hsmall : r + a / |x₀| < 1) :
     MixedError (x ^ b) (x₀ ^ b₀) (Real.exp (|b₀| * -Real.log (1 - (r + a / |x₀|))) - 1) 0 := by

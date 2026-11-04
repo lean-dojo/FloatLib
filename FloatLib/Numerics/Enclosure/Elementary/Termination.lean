@@ -13,10 +13,10 @@ public import FloatLib.Numerics.Enclosure.Elementary.Irrational
 /-!
 # Termination of adaptive elementary comparison
 
-The Taylor degree doubles at each refinement. Positive rational arguments other than `1`
-have irrational logarithms, so the convergent enclosures eventually exclude any rational
-boundary. The exactly representable value `log 1 = 0` is handled before this search.
-The exponential argument is analogous, with `exp 0 = 1` handled separately.
+Each refinement doubles the Taylor degree. A positive rational argument other than `1` has an
+irrational logarithm, so the convergent enclosures eventually exclude any rational boundary.
+`log 1 = 0` is exactly representable and gets handled before this search. The exponential works the
+same way, with `exp 0 = 1` handled up front.
 -/
 
 public section

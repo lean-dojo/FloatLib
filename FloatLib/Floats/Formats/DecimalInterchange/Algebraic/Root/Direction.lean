@@ -10,8 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Proof
 /-!
 # Directed rounding of signed integer-degree roots
 
-Upward and downward coefficient rounding exchange roles for negative results.
-The resulting signed datum bounds the exact signed real root.
+Negative roots flip the directed modes. Rounding a negative result's coefficient up moves the
+signed value down, so upward and downward coefficient rounding swap roles, and with that swap the
+delivered signed datum lies on the side of the exact signed real root that each directed mode
+promises.
 -/
 
 @[expose] public section

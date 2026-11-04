@@ -13,10 +13,10 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 # Exponent-operation contracts
 
 `scale` changes the exact binary exponent before rounding, and `binaryExponent` reports the
-leading binary exponent. The finite contracts reduce each operation to the shared dyadic rounder
-and status calculation. Zero, infinity, and NaNs have their own equations, which return the
-exceptional integer or its negation. A finite nonzero answer lies in the descriptor's exponent
-range, so it never equals either of them.
+leading binary exponent. On finite inputs the contracts reduce each operation to the shared dyadic
+rounder and status calculation. Zero, infinity and NaNs have their own equations, which return the
+exceptional integer or its negation, and a finite nonzero answer never equals either of them
+because it lies in the descriptor's exponent range.
 -/
 
 @[expose] public section
@@ -178,7 +178,7 @@ theorem scale_status_of_infinity
         ternary := .eq } := by
   simp [scale, Internal.Status.scale, hvalue, outcomeWithInvalid]
 
-/-- `scale` quiets a NaN and raises `invalid` exactly for a signaling NaN. -/
+/-- `scale` quiets a NaN, and raises `invalid` if and only if that NaN is signaling. -/
 theorem scale_status_of_nan
     {fmt : FloatFormat} (value : Model fmt) (n : Int)
     (mode : IEEERoundingMode) (negative signaling : Bool) (payload : Nat)
@@ -245,7 +245,7 @@ theorem binaryExponent_status_of_infinity
         ternary := exactInfinityTernary false (nativeOverflow fmt false) } := by
   simp [binaryExponent, Internal.Status.binaryExponent, hvalue]
 
-/-- `binaryExponent` quiets a NaN and raises `invalid` exactly for a signaling NaN. -/
+/-- `binaryExponent` quiets a NaN, and raises `invalid` if and only if that NaN is signaling. -/
 theorem binaryExponent_status_of_nan
     {fmt : FloatFormat} (value : Model fmt)
     (negative signaling : Bool) (payload : Nat)

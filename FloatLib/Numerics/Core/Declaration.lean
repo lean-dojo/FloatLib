@@ -22,10 +22,10 @@ float_format MyFormat where
   denote := fun bits => ...
 ```
 
-The tag has no constructors and occupies no runtime field; values store `Code`.
-The generated semantic instance is `noncomputable` to allow real-valued denotations, while the
-code type and `ExecFloat` carrier remain executable. Define operation capabilities, exact
-observations, and conformance theorems separately.
+The tag has no constructors and occupies no runtime field, so values store just their `Code`, and
+its generated semantic instance is `noncomputable`, which allows real-valued denotations, while the
+code type and the `ExecFloat` carrier stay executable. Operation capabilities, exact observations,
+and conformance theorems are defined outside the declaration.
 -/
 
 @[expose] public section

@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Magnitude
 # Real meaning of Lean accuracy certificates
 
 Lean's logical floating-point model carries an `Accuracy` value alongside a truncated natural
-mantissa. This module states its intended real-number meaning, proves that right shifts preserve
-that meaning, and connects its nearest-even choice to the independent Flocq-style integer rounder.
+mantissa. We state its intended real-number meaning, prove that right shifts preserve it, and
+connect its nearest-even choice to the independent Flocq-style integer rounder.
 -/
 
 @[expose] public section

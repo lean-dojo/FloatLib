@@ -12,12 +12,13 @@ public import FloatLib.Numerics.Operation.Proof.Finite
 /-!
 # Rational semantics and correctness of exact fixed point
 
-A coefficient `m` with `d` fractional radix digits denotes `m / β^d`; the numerical system and
-erased proof views relate the runtime operations to rational arithmetic. Common-scale addition
-is exact; multiplication changes the scale to the sum of the operand fractional-digit counts.
+A coefficient `m` with `d` fractional radix digits denotes `m / β^d`, so `-7` with one binary
+digit is `-3.5`. The numerical system and the erased proof views relate the runtime operations to
+rational arithmetic. Common-scale addition is exact, and multiplication changes the scale to the
+sum of the operands' fractional-digit counts.
 
 Import `Exact.Runtime` for the representation and executable functions. The configured family
-uses the refinement theorems here to provide the same operations through `ExecFloat`.
+uses the refinement theorems here to offer the same operations through `ExecFloat`.
 -/
 
 @[expose] public section
@@ -92,20 +93,21 @@ theorem add_refines {radix : Radix} {fractionalDigits : Nat} :
       Code.add (fun left right : ℚ => left + right) := by
   exact Operation.Finite2.ofFinite Code.toRat_add
 
-/-- Fixed-point negation exactly refines rational negation. -/
+/-- Fixed-point negation is a finite refinement of rational negation. -/
 theorem neg_refines {radix : Radix} {fractionalDigits : Nat} :
     Operation.Finite1 (numericalSystem radix fractionalDigits)
       (numericalSystem radix fractionalDigits) Code.neg (fun value : ℚ => -value) := by
   exact Operation.Finite1.ofFinite Code.toRat_neg
 
-/-- Fixed-point subtraction exactly refines rational subtraction. -/
+/-- Fixed-point subtraction is a finite refinement of rational subtraction. -/
 theorem sub_refines {radix : Radix} {fractionalDigits : Nat} :
     Operation.Finite2 (numericalSystem radix fractionalDigits)
       (numericalSystem radix fractionalDigits) (numericalSystem radix fractionalDigits)
       Code.sub (fun left right : ℚ => left - right) := by
   exact Operation.Finite2.ofFinite Code.toRat_sub
 
-/-- Multiplication composes the two fixed scales and refines rational multiplication exactly. -/
+/-- Multiplication composes the two fixed scales and is a finite refinement of rational
+multiplication. -/
 theorem mul_refines {radix : Radix} {p q : Nat} :
     Operation.Finite2 (numericalSystem radix p) (numericalSystem radix q)
       (numericalSystem radix (p + q)) Code.mul (fun left right : ℚ => left * right) := by

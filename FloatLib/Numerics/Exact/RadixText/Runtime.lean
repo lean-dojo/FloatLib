@@ -11,10 +11,10 @@ public import Mathlib.Data.Nat.Digits.Defs
 /-!
 # Positional character conversion
 
-Printing and scanning share an explicit radix. The scanner accepts a digit decoder and leaves
-the first nondigit and its suffix unconsumed. Magnitude parsing adds a radix point and delegates
-exponent syntax to its caller; fractional digits each subtract `fractionScale` exponent units.
-Decimal and hexadecimal text use the same implementation with different syntax parameters.
+Printing and scanning take the radix as a parameter, so decimal and hexadecimal text use the same
+implementation with different syntax parameters. The scanner takes a digit decoder and leaves the
+first nondigit and its suffix unconsumed, while magnitude parsing adds a radix point and leaves
+exponent syntax to its caller, and each fractional digit subtracts `fractionScale` exponent units.
 -/
 
 @[expose] public section

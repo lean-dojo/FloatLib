@@ -29,19 +29,17 @@ open FloatLib.Floats.ExecFloat.Backend
 /--
 Estimated cost of adapting one packed public value to and from the proof model.
 
-The count scales with operation arity because every operand is decoded and one result is packed.
-The constants are calibration priors, and a direct carrier kernel sets this cost to zero.
+Every operand is decoded and one result packed, so the count scales with operation arity. The
+constants are calibration priors, and a direct carrier kernel sets the cost to zero.
 
-Byte and machine-word carriers are charged one unit per adapted value, on the same approximate
-100 ns scale as the tiny-format arithmetic estimates. Machine-word carriers decode with
-`BitVec.ofNatLT` from the stored range proof and pack with one narrowing conversion. The two-word
-carrier is charged two units, because above 64 bits each conversion builds or splits an
-arbitrary-precision natural number.
-
-The limb carrier converts each value through `LimbArray.toNat` and `LimbArray.ofNat`, one
-arbitrary-precision operation per limb, so its adapter cost grows with the limb count. Accepted
-wide-limb paths read the stored fields themselves and count any integer conversions in their
-work estimate. Declined calls use the model adapter for the exact fallback.
+Byte and machine-word carriers cost one unit per value, on the approximate 100 ns scale of the
+tiny-format arithmetic estimates. Machine words decode with `BitVec.ofNatLT` from the stored range
+proof and pack with one narrowing conversion. The two-word carrier costs two units, since above 64
+bits each conversion builds or splits an arbitrary-precision natural number. Limbs convert through
+`LimbArray.toNat` and `LimbArray.ofNat`, one arbitrary-precision operation per limb, so the cost
+grows with the limb count. Accepted wide-limb paths read the stored fields and count any integer
+conversions in their work estimate, and declined calls use the model adapter for the exact
+fallback.
 -/
 def modelMarshallingCost {format : FloatFormat}
     (plan : StoragePlan format) (operation : Operation) : Nat :=

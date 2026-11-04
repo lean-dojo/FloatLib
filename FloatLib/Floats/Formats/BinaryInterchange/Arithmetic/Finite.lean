@@ -14,27 +14,25 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 /-!
 # Executable exact-intermediate finite arithmetic
 
-Storage and accumulation may use different precisions. For example, `mulAddFinite?` can read FP8
-operands and accumulate their product in FP32. These operations separate the exact intermediate
-calculation from destination rounding:
+Storage and accumulation may use different precisions. `mulAddFinite?`, for example, can read FP8
+operands and accumulate their product in FP32. These operations keep the exact intermediate
+calculation apart from destination rounding. Inputs are decoded to exact dyadics, addition and
+multiplication happen in the exact integer intermediate, and the result is rounded once into the
+selected destination format and policy.
 
-* inputs are decoded to exact dyadics;
-* addition and multiplication occur in the exact integer intermediate;
-* the result is rounded once into the selected destination format and policy.
-
-The checked operations return `Option`. `none` means that an input was NaN or infinity, or that
-division encountered a zero denominator. A successful result can still overflow according to the
-selected output policy. Returning `none` avoids inventing arithmetic rules for storage formats
-whose standards specify encodings and conversions but no standalone arithmetic.
-A hardware-specific layer can add its documented exceptional-value behavior and prove refinement
-to these finite paths.
+The checked operations return `Option`, where `none` means that an input was NaN or infinity, or
+that division met a zero denominator. A successful result can still overflow according to the
+selected output policy. Returning `none` keeps us from inventing arithmetic rules for storage
+formats whose standards specify encodings and conversions but no standalone arithmetic. A
+hardware-specific layer can add its documented exceptional-value behavior and prove refinement to
+these finite paths.
 
 A sum, difference or fused multiply-add whose exact value is zero has no rounding to give its zero
-a sign, so `Policy.addDyadic` takes the sign from the rounding rule and the signs of the two
-summands, as IEEE 754-2019 Section 6.3 does for its rounding directions: in a format with signed
+a sign. So `Policy.addDyadic` takes the sign from the rounding rule and the signs of the two
+summands, as IEEE 754-2019 Section 6.3 does for its rounding directions. In a format with signed
 zero, `+1 + (-1)` is `-0` when the policy rounds toward negative infinity and `+0` under every
-other rule. A format without negative zero returns its one zero. The overflow and underflow
-choices of a policy never apply to an exact zero.
+other rule. A format without negative zero returns its one zero, and a policy's overflow and
+underflow choices never apply to an exact zero.
 -/
 
 @[expose] public section
@@ -52,17 +50,17 @@ open FloatLib.Numerics
 namespace Policy
 
 /--
-Sign of the zero of an exactly cancelling sum whose summands have the signs `leftSign` and
-`rightSign`, under the rounding rule `mode`.
+Sign of the zero of a sum whose exact value is zero, from the summand signs `leftSign` and
+`rightSign` and the rounding rule `mode`.
 
 For the five IEEE 754-2019 rounding directions (`.nearest`, `.nearestAway`, `.towardZero`, `.up`
-and `.down`) this is the rule of Section 6.3: an exact zero sum of operands with opposite signs is
-positive except toward negative infinity, where it is negative, and a sum of two zeros with the
-same sign keeps that sign. The other two rules are library extensions beyond the IEEE directions,
-so their signs are FloatLib's choice. `.away` is MPFR's `MPFR_RNDA`, rounding away from zero (not
-the IEEE `.nearestAway`), and gives `+0` on cancellation as MPFR does. `.stochastic` takes the sign
-of nearest rounding, since an exact zero leaves it nothing to randomize.
-`zeroSumSign_toRoundingMode` shows this agrees with `IEEERoundingMode.zeroSumSign`.
+and `.down`) this is the rule of Section 6.3. An exact zero sum of operands with opposite signs is
+positive except toward negative infinity, where it is negative, and two zeros of the same sign keep
+that sign. The other two rules go beyond the IEEE directions, so their signs are our choice.
+`.away` is MPFR's `MPFR_RNDA`, rounding away from zero (not the IEEE `.nearestAway`), and gives
+`+0` on cancellation as MPFR does. `.stochastic` takes the sign of nearest rounding, since an
+exact zero leaves it nothing to randomize. `zeroSumSign_toRoundingMode` shows this agrees with
+`IEEERoundingMode.zeroSumSign`.
 -/
 @[inline] def zeroSumSign (mode : RoundingMode) (leftSign rightSign : Bool) : Bool :=
   match mode with
@@ -76,8 +74,8 @@ of nearest rounding, since an exact zero leaves it nothing to randomize.
   cases mode <;> rfl
 
 /--
-Exact dyadic sum under the rounding rule `mode`: `Model.addDyadic`, except that an exactly
-cancelling sum gets the sign `zeroSumSign mode` of the two summand signs.
+Exact dyadic sum under the rounding rule `mode`. It is `Model.addDyadic`, except that a sum whose
+exact value is zero gets the sign `zeroSumSign mode` of the two summand signs.
 
 `Model.addDyadic` gives every exact zero sum the nearest-even sign, so the two agree except for
 cancellation under rounding toward negative infinity.
@@ -92,10 +90,10 @@ cancellation under rounding toward negative infinity.
 end Policy
 
 /--
-Add two finite values exactly and round once into their common format.
+Form the exact sum of two finite values and round it once into their common format.
 
-An exactly cancelling sum is the format's zero with the sign `Policy.zeroSumSign` gives the
-policy's rounding rule and the two summand signs (`addFinite?_eq_zero_of_toRat_add_eq_zero`).
+A sum whose exact value is zero gives the format's zero, with the sign `Policy.zeroSumSign` gives
+the policy's rounding rule and the two summand signs (`addFinite?_eq_zero_of_toRat_add_eq_zero`).
 -/
 def addFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (x y : Model fmt) : Option (Model fmt) := do
@@ -104,7 +102,7 @@ def addFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
   pure (Policy.roundDyadic fmt policy entropy (Policy.addDyadic policy.rounding dx dy))
 
 /--
-Subtract two finite values exactly and round once into their common format.
+Form the exact difference of two finite values and round it once into their common format.
 
 This is `addFinite?` of the negated right operand, so in a format with signed zero `x - x` is `-0`
 when the policy rounds toward negative infinity and `+0` otherwise. A format without negative zero
@@ -117,8 +115,8 @@ returns its one zero.
 /--
 Logical specification of finite multiplication.
 
-Compiled format-specific dispatchers may replace the public entry point, but tables and proofs use
-this definition directly so their initialization cannot recurse through the compiled dispatcher.
+Compiled format-specific dispatchers may replace the public entry point, but tables and proofs call
+this definition itself, so their initialization cannot recurse through the compiled dispatcher.
 -/
 def mulFiniteSpec? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (x y : Model fmt) : Option (Model fmt) := do
@@ -214,7 +212,7 @@ implementation.
   else
     mulFiniteSpec? fmt policy entropy x y
 
-/-- Multiply two finite values exactly and round once into their common format. -/
+/-- Form the exact product of two finite values and round it once into their common format. -/
 @[inline] def mulFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (x y : Model fmt) : Option (Model fmt) :=
   mulFiniteSpec? fmt policy entropy x y
@@ -247,8 +245,8 @@ This theorem installs the canonical operation in generated code while proofs con
 /--
 Exact finite `x * y + z`, followed by one rounding step.
 
-When `x * y + z` is exactly zero, the zero takes the sign `Policy.zeroSumSign` gives the policy's
-rounding rule, the sign of the exact product and the sign of `z`
+When the exact value of `x * y + z` is zero, the zero takes the sign `Policy.zeroSumSign` gives the
+policy's rounding rule, the sign of the exact product and the sign of `z`
 (`fmaFinite?_eq_zero_of_toRat_add_eq_zero`).
 -/
 def fmaFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
@@ -279,8 +277,8 @@ def divFinite? (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
 Fused multiply-add from one storage format into a potentially wider accumulator format.
 
 For example, `x` and `y` may be FP8 while `acc` is BF16, FP16, FP32, or a custom wider format.
-There is no intermediate rounding of the product. An exactly zero result is signed as in
-`fmaFinite?`, from the product sign and the accumulator sign
+There is no intermediate rounding of the product. A result whose exact value is zero is signed as
+in `fmaFinite?`, from the product sign and the accumulator sign
 (`mulAddFinite?_eq_zero_of_toRat_add_eq_zero`).
 -/
 def mulAddFinite? (storage accumulator : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)

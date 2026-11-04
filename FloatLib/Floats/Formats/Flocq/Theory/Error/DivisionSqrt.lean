@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Error.Directed
 /-!
 # Division and Square-Root Residuals
 
-Division and square-root residuals in FLX are exactly representable under the stated precision
-and operand hypotheses.  A division residual is controlled both relative to the dividend and
-relative to the product of the rounded quotient with the divisor; the two bounds place it on
-their common exponent grid.
+Round a quotient or a square root in FLX and the residual it leaves is exactly representable,
+given the stated precision and operand hypotheses. For division the residual is
+`x - round(x / y) * y`. It's bounded relative to the dividend and also relative to the rounded
+quotient times the divisor, and together the two bounds put it on their common exponent grid.
 -/
 
 @[expose] public section
@@ -110,7 +110,7 @@ theorem generic_format_FLX_sub_mul_of_bounds (prec : ℤ) (hprec : 0 < prec) {x 
     simp only [negProduct, hfaexp, hfbexp, cexp, flxExp]
     linarith
 
-/-- The residual `x - round(x / y) * y` is exactly FLX-representable. -/
+/-- The residual `x - round(x / y) * y` is FLX-representable. -/
 theorem div_round_residual_FLX (prec : ℤ) (hprec : 0 < prec)
     (rnd : ℝ → ℤ) [ValidRnd rnd] {x y : ℝ}
     (hx : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x)
@@ -175,8 +175,8 @@ For precision greater than one, the nearest-rounded square-root residual `x - q^
 FLX-representable, where `q` is the nearest-even rounding of `√x`.
 
 The hypothesis `1 < prec` makes the unit roundoff `u = β^(1 - prec) / 2` at most `1/4`.  The proof
-uses that bound to show `|x - q^2| < x`, which places the residual on the grid of `x`; with
-`prec = 1` the relative error of `q` can reach `1/2` and the argument does not apply.
+uses that bound to show `|x - q^2| < x`, which places the residual on the grid of `x`. With
+`prec = 1` the relative error of `q` can reach `1/2`, and the argument does not apply.
 -/
 theorem sqrt_round_residual_FLX (prec : ℤ) (hprec : 1 < prec) {x : ℝ}
     (hxFmt : @genericFormat β (flxExp prec) (flxValidExp prec (by linarith)) x) :

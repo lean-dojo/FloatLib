@@ -20,8 +20,8 @@ table, word, limb, and baseline instances live in `Configured.Plan.Instances`.
 
 Each instance names the fixed-format certificate it executes.
 `Plan.selectCertified_binary32AddCandidates` and its siblings prove that the planner selects this
-certificate under every `Policy`. The kernel that runs is therefore the proved kernel
-`#float_info` reports, whichever `PolicyFor` instance is in scope.
+certificate under every `Policy`. So the kernel that runs is the proved kernel `#float_info`
+reports, whichever `PolicyFor` instance is in scope.
 
 The guarded host operations live in `Configured.NativeFPU.Unchecked`, and no compiler
 substitution or certified candidate puts them behind these capabilities.
@@ -38,9 +38,9 @@ namespace ExecFloat.Binary
 /--
 Configured IEEE binary32 and binary64 operations name their first-order software kernels.
 
-These instances are attached to the public parameterized families, not to a storage-plan
-constructor, because Lean's typeclass index keeps `Binary.Family 8 23` and `Binary.Family 11 52`
-but does not always unfold their computed `forKnownWidth` plans during instance search. All six
+These instances are attached to the public parameterized families instead of a storage-plan
+constructor. Lean's typeclass index keeps `Binary.Family 8 23` and `Binary.Family 11 52` but does
+not always unfold their computed `forKnownWidth` plans during instance search. All six
 operations execute the proved fixed-format word kernels.
 -/
 @[always_inline] instance (priority := 400) binary32AddCapability

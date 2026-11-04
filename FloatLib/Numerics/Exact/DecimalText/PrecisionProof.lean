@@ -12,8 +12,8 @@ public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 /-!
 # Format-independent significant-digit representation laws
 
-Decimal carry preserves the exact rational value at every positive requested precision.
-Significant-digit conversion preserves the input sign and the numerical result of the caller's
+At every positive requested precision, the decimal carry preserves the exact rational value, and
+significant-digit conversion keeps the input sign, with a numerical result equal to the caller's
 magnitude rounding on the selected decimal grid.
 -/
 

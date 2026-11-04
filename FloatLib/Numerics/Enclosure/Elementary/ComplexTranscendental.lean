@@ -13,10 +13,10 @@ import Mathlib.Analysis.Complex.Basic
 /-!
 # Exponentials at purely imaginary rational arguments
 
-Correctly rounding trigonometric functions requires excluding exact rational boundaries.
-The real-exponential argument extends to imaginary integer arguments by using Gaussian
-integers. The polynomial `X² + m²` supplies both conjugate roots to mathlib's exponential
-approximation theorem, and a nonzero Gaussian integer has complex norm at least one.
+To round a trigonometric function correctly, we have to rule out exact rational boundaries. Gaussian
+integers extend the real-exponential argument to imaginary integer arguments. The polynomial
+`X² + m²` supplies both conjugate roots to Mathlib's exponential approximation theorem, and a
+nonzero Gaussian integer has complex norm at least one.
 -/
 
 public section

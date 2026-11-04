@@ -10,9 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.ToPro
 /-!
 # Binary conversion of zeros and NaNs
 
-The zero theorem covers every status flag. The NaN field theorems give the stored
-sign, the all-ones exponent and the quiet-bit-plus-payload fraction for every
-destination width.
+Two special cases of decimal-to-binary conversion get theorems of their own. Every decimal zero
+becomes the binary zero of the same sign, and that theorem covers every status flag. For NaNs, the
+field theorems give the stored sign, the all-ones exponent, and a fraction made of the quiet bit
+and the payload, at every destination width.
 -/
 
 @[expose] public section

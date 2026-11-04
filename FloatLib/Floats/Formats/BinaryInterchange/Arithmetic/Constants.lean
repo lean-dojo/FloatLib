@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 /-!
 # Correctness of finite constants
 
-The format-generic encodings of positive and negative one are finite normal values and decode to
-the corresponding real constants. These facts are useful for powers, reciprocals, and executable
-interval constructors.
+Powers, reciprocals and executable interval constructors all need the constants one and minus
+one. Here we prove that their format-generic encodings are finite normal values and decode to the
+corresponding real constants.
 -/
 
 @[expose] public section

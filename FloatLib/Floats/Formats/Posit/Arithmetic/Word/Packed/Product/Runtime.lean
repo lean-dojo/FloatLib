@@ -13,10 +13,10 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky
 /-!
 # Packed native-word Posit multiplication
 
-Decoding produces two `UInt64` significands and `FixedWord.mul64` computes their exact product.
-Products whose high limb is zero use the scalar guard-and-sticky rounder; genuinely two-limb
-products use the common two-limb rounder. The branch is an exact capacity test shared by every
-one-word Posit format, not a format-width special case.
+Decoding gives two `UInt64` significands, and `FixedWord.mul64` computes their exact product. If
+the high limb of that product is zero, the scalar guard-and-sticky rounder finishes the job, and a
+product that really needs two limbs goes to the common two-limb rounder. That branch is an exact
+capacity test which every one-word Posit format shares, and no format width gets a special case.
 
 `Product.Proof` identifies the fixed-carrier result with direct exact-dyadic packing.
 -/
@@ -83,8 +83,8 @@ live inputs are the format fields and two packed words.
 /--
 Multiply two proved-valid packed words and retain the result in `UInt64`.
 
-This is the carrier-facing sibling of `mulWordsCodeValid`. The decoder and arithmetic are shared;
-only the final result representation differs.
+This is the carrier-facing sibling of `mulWordsCodeValid`. The decoder and arithmetic are shared,
+and the two differ in the final result representation alone.
 -/
 @[inline] def mulWordsCodeWordValid
     {format : Format}

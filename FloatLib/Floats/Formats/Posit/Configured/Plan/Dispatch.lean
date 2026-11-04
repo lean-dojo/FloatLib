@@ -15,16 +15,19 @@ public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Word64
 /-!
 # Static Posit storage-plan dispatch
 
-Public posits choose their carrier from a type-static width. This module turns that chosen
-`StoragePlan` constructor into one independently certified capability per operation. Keeping the
-capabilities operation-indexed lets a monomorphic public call reduce to its first-order backend
-without allocating a package of unrelated function fields.
+A public posit picks its carrier from a width known in its type. This module turns the chosen
+`StoragePlan` constructor into one capability per operation, each certified on its own. We index
+the capabilities by operation so that a monomorphic public call reduces to its first-order backend
+and never allocates a package of unrelated function fields.
 
-An abstract or custom codec still receives the representation-independent candidate set. A closed
-public width reduces its carrier match at compile time. Packed-word, packed-pair, and wide plans
-then name their single proved kernel directly. Byte plans retain policy-sensitive selection
-between exhaustive tables and direct arithmetic because setup cost and residency depend on the
-width, operation arity, and workload policy.
+What a call ends up running depends on the plan:
+
+* An abstract or custom codec gets the representation-independent candidate set.
+* A closed public width reduces its carrier match at compile time, and packed-word, packed-pair,
+  and wide plans then name their single proved kernel.
+* Byte plans keep a policy-sensitive choice between exhaustive tables and direct arithmetic,
+  because setup cost and residency depend on the width, the operation's arity, and the workload
+  policy.
 -/
 
 @[expose] public section
@@ -35,12 +38,12 @@ open FloatLib.Floats.ExecFloat
 open FloatLib.Floats.ExecFloat.Backend
 
 /--
-Addition capability selected directly from a storage-plan constructor.
+Addition capability chosen by matching on the storage-plan constructor.
 
-The byte plan retains its policy-sensitive table portfolio. Every other built-in plan has one
-first-order winner, so its capability is constructed directly from that operation's kernel.
-This definition is deliberately inlined: a closed public width reduces the plan match at compile
-time and leaves only the named carrier kernel in the generated hot path.
+The byte plan keeps its policy-sensitive table portfolio. Every other built-in plan has one
+first-order winner, and its capability is built from that operation's kernel alone. We inline this
+definition on purpose, so a closed public width reduces the plan match at compile time and leaves
+only the named carrier kernel in the generated hot path.
 -/
 @[always_inline, instance_reducible] def addCapabilityForPlan
     (format : Format) (plan : StoragePlan format)
@@ -82,7 +85,7 @@ time and leaves only the named carrier kernel in the generated hot path.
         (dyadicEstimate (.wide : StoragePlan format) .add)
         Spec.add Backend.dyadicAdd Backend.dyadicAdd_eq_spec
 
-/-- Subtraction capability selected directly from a storage-plan constructor. -/
+/-- Subtraction capability chosen by matching on the storage-plan constructor. -/
 @[always_inline, instance_reducible] def subCapabilityForPlan
     (format : Format) (plan : StoragePlan format)
     [planning : PolicyFor (Family format (Code plan) plan)] :
@@ -123,7 +126,7 @@ time and leaves only the named carrier kernel in the generated hot path.
         (dyadicEstimate (.wide : StoragePlan format) .sub)
         Spec.sub Backend.dyadicSub Backend.dyadicSub_eq_spec
 
-/-- Multiplication capability selected directly from a storage-plan constructor. -/
+/-- Multiplication capability chosen by matching on the storage-plan constructor. -/
 @[always_inline, instance_reducible] def mulCapabilityForPlan
     (format : Format) (plan : StoragePlan format)
     [planning : PolicyFor (Family format (Code plan) plan)] :
@@ -164,7 +167,7 @@ time and leaves only the named carrier kernel in the generated hot path.
         (dyadicEstimate (.wide : StoragePlan format) .mul)
         Spec.mul Backend.dyadicMul Backend.dyadicMul_eq_spec
 
-/-- Division capability selected directly from a storage-plan constructor. -/
+/-- Division capability chosen by matching on the storage-plan constructor. -/
 @[always_inline, instance_reducible] def divCapabilityForPlan
     (format : Format) (plan : StoragePlan format)
     [planning : PolicyFor (Family format (Code plan) plan)] :
@@ -204,7 +207,7 @@ time and leaves only the named carrier kernel in the generated hot path.
         (dyadicEstimate (.wide : StoragePlan format) .div)
         Spec.div Backend.dyadicDiv Backend.dyadicDiv_eq_spec
 
-/-- Square-root capability selected directly from a storage-plan constructor. -/
+/-- Square-root capability chosen by matching on the storage-plan constructor. -/
 @[always_inline, instance_reducible] def sqrtCapabilityForPlan
     (format : Format) (plan : StoragePlan format)
     [planning : PolicyFor (Family format (Code plan) plan)] :
@@ -244,7 +247,7 @@ time and leaves only the named carrier kernel in the generated hot path.
         (dyadicEstimate (.wide : StoragePlan format) .sqrt)
         Spec.sqrt Backend.dyadicSqrt Backend.dyadicSqrt_eq_spec
 
-/-- Fused-multiply-add capability selected directly from a storage-plan constructor. -/
+/-- Fused-multiply-add capability chosen by matching on the storage-plan constructor. -/
 @[always_inline, instance_reducible] def fmaCapabilityForPlan
     (format : Format) (plan : StoragePlan format)
     [planning : PolicyFor (Family format (Code plan) plan)] :
@@ -290,9 +293,9 @@ end FloatLib.Floats.Formats.Posit.Configured.Plan
 namespace FloatLib.Floats.Formats.Posit.Configured
 
 /-!
-Built-in storage-plan instances have higher priority than the representation-independent instance.
-Their inline operation-specific constructors specialize a closed public width to one carrier and
-one first-order executor. Custom codecs retain the generic certified candidate portfolios below.
+Built-in storage-plan instances take priority over the representation-independent instance. Their
+inline constructors, one per operation, specialize a closed public width to one carrier and one
+first-order executor. Custom codecs keep the generic certified candidate portfolios below.
 -/
 
 @[always_inline] instance (priority := 1100) addPlannedCapability

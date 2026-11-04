@@ -15,8 +15,8 @@ public import FloatLib.Numerics.Quantization.Deterministic.Rational
 /-!
 # Exact and significant-digit text of binary values
 
-Exact decimal and hexadecimal output preserve every finite value. Requested precision is an
-arbitrary positive digit count. Both radices use the shared digit-grid and carry calculation.
+Exact decimal and hexadecimal output preserve every finite value, and requested precision is an
+arbitrary positive digit count. Both radices share one digit-grid and carry calculation.
 Exponents are unbounded integers, so output can raise inexact but cannot overflow or underflow.
 `Model.format` selects these digits through its `style` option.
 -/

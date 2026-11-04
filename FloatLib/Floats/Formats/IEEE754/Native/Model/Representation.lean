@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
 /-!
 # Canonical representations in Lean's floating-point model
 
-The bridge uses the conventional IEEE interpretation of the exponent and fraction widths.
-Packing an unpacked value need not preserve an arbitrary mantissa and exponent, but unpacking
-packed bits always gives a representable value. Repacking those values preserves every bit
-except the sign and payload of a noncanonical NaN.
+The bridge reads exponent and fraction widths the conventional IEEE way. Packing an arbitrary
+unpacked mantissa and exponent may change them, but unpacking packed bits always gives a
+representable value, and repacking that value keeps every bit except the sign and payload of a
+noncanonical NaN.
 -/
 
 @[expose] public section
@@ -97,7 +97,7 @@ theorem pack_unpack_eq (spec : Format) (bits : BitVec spec.numBits) :
         not_le.mpr hbound, hnormal, ite_true, BitVec.ofNat_toNat, BitVec.setWidth_eq, hfraction]
         using hcomponents
 
-/-- A valid packed value is recovered exactly after unpacking and repacking. -/
+/-- Unpacking and repacking a valid packed value gives it back unchanged. -/
 theorem pack_unpack_of_valid (spec : Format) (bits : BitVec spec.numBits)
     (hvalid : spec.Valid bits) :
     pack spec (unpack spec bits) = bits := by
@@ -121,7 +121,7 @@ theorem pack_unpack_of_valid (spec : Format) (bits : BitVec spec.numBits)
     simp [hindex] at hbit
   simp [pack, packedNaN, unpack, hquiet]
 
-/-- Unpacking forgets precisely the information discarded by NaN canonicalization. -/
+/-- Unpacking forgets the information NaN canonicalization discards, and nothing more. -/
 theorem unpack_pack_unpack (spec : Format) (bits : BitVec spec.numBits) :
     unpack spec (pack spec (unpack spec bits)) = unpack spec bits := by
   rw [pack_unpack_eq]
@@ -133,7 +133,7 @@ theorem unpack_pack_unpack (spec : Format) (bits : BitVec spec.numBits) :
     simp only [unpack, h.1, h.2, ite_true, ite_false]
   · rfl
 
-/-- Canonicalization fixes precisely the bit patterns admitted by Lean's packed model. -/
+/-- Canonicalization fixes a bit pattern if and only if Lean's packed model admits it. -/
 theorem canonicalizeModel_eq_self_iff {fmt : FloatFormat} (value : Model fmt) :
     canonicalizeModel value = value ↔ IsModelCanonical value := by
   constructor
@@ -144,7 +144,7 @@ theorem canonicalizeModel_eq_self_iff {fmt : FloatFormat} (value : Model fmt) :
     unfold canonicalizeModel ofModel toModel
     rw [pack_unpack_of_valid _ _ h, ofModelBits_toModelBits]
 
-/-- Canonical packed words round-trip exactly through the unpacked model. -/
+/-- Canonical packed words round-trip unchanged through the unpacked model. -/
 @[simp] theorem canonicalizeModel_eq_self {fmt : FloatFormat} (value : Model fmt)
     (h : IsModelCanonical value) : canonicalizeModel value = value :=
   (canonicalizeModel_eq_self_iff value).2 h
@@ -165,8 +165,8 @@ theorem canonicalizeModel_eq_self_iff {fmt : FloatFormat} (value : Model fmt) :
   unpack_pack_unpack _ _
 
 /--
-Equality after unpacking is exactly equality of canonical packed representations.
-Operation refinement proofs may therefore use either form of the representation relation.
+Two values are equal after unpacking if and only if their canonical packed representations are
+equal, so operation refinement proofs may use either form of the representation relation.
 -/
 theorem toModel_eq_iff_canonicalizeModel_eq {fmt : FloatFormat} (left right : Model fmt) :
     toModel left = toModel right ↔ canonicalizeModel left = canonicalizeModel right := by

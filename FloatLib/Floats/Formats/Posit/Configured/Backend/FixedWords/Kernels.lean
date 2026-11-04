@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Common
 /-!
 # Shared fixed-word posit kernels
 
-The public `UInt8`, `UInt16`, `UInt32`, and `UInt64` entry points are thin monomorphic wrappers
-around these always-inlined definitions. Arithmetic is performed by the same proved packed
-`UInt64` kernels for every carrier; only widening and narrowing vary.
+Every public `UInt8`, `UInt16`, `UInt32`, and `UInt64` entry point is a thin monomorphic wrapper
+around one of these always-inlined definitions, and all four carriers do their arithmetic in the
+same proved packed `UInt64` kernels. Only the widening and narrowing change.
 -/
 
 @[expose] public section

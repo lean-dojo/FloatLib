@@ -46,7 +46,7 @@ inductive MatrixShapeError where
   | dotLengthMismatch (rowLength columnLength : Nat)
   deriving Repr, DecidableEq
 
-/-- Column count from the first row; `0` if there are no rows. -/
+/-- Column count, read from the first row, or `0` when there are no rows. -/
 @[inline] def ncols {fmt : FloatFormat} (M : Matrix fmt) : Nat :=
   if h : 0 < M.size then M[0].size else 0
 
@@ -70,7 +70,7 @@ C[i][j] = dotSequential p (row i of A) (column j of B)
 - Entries of `C` are in `p.output`.
 
 On success, `C` has `A.size` rows and `ncols B` columns. Both inputs must be rectangular and the
-left row width must equal `B.size`; otherwise the corresponding `MatrixShapeError` is returned.
+left row width must equal `B.size`, or the corresponding `MatrixShapeError` is returned.
 -/
 def matmul (p : SitePolicy) (A B : Matrix p.storage) :
     Except MatrixShapeError (Matrix p.output) :=

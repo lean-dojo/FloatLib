@@ -20,13 +20,17 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Fixed-width bit runs in positive Posit encodings
 
-Representation lemmas describe bit runs in the nonnegative half of a Posit Standard encoding.
-Exact-width leading runs are reduced to `Nat.log2`; a run of one bits is reduced to the
-leading-zero run of the fixed-width complement using mathlib's `BitVec` complement theorems; and
-equal or ordered regime prefixes are related to the remaining encoded tail.
+A posit regime is a run of equal leading bits, so the order and rounding proofs need to know how
+such runs behave. This module proves those representation lemmas for the nonnegative half of a
+Posit Standard encoding. Three reductions do most of the work:
 
-These facts are independent of the storage carrier. Tail-order and rounding proofs use them
-alongside native execution backends.
+* an exact-width leading run reduces to `Nat.log2`,
+* a run of one bits is the leading-zero run of the fixed-width complement, by mathlib's `BitVec`
+  complement theorems,
+* equal or ordered regime prefixes are related to the remaining encoded tail.
+
+None of this depends on the storage carrier, and the tail-order and rounding proofs use these
+lemmas alongside the native execution backends.
 -/
 
 @[expose] public section
@@ -382,7 +386,7 @@ theorem regimeBit_ofNatBits (format : Format) {code : Nat}
   rw [magnitudeBits_ofNatBits_of_lt_signMask format code hcode]
 
 /--
-The regime bit of a nonnegative code is set exactly when the code is at least the code of one.
+The regime bit of a nonnegative code is set if and only if the code is at least the code of one.
 -/
 theorem regimeBit_ofNatBits_eq_true_iff (format : Format) {code : Nat}
     (hcode : code < format.signMaskNat) :
@@ -406,7 +410,7 @@ theorem regimeRunLength_ofNatBits (format : Format) {code : Nat}
 /--
 Unsigned code order below the sign mask induces nondecreasing signed regime values.
 
-Below the code of one, leading-zero runs shorten as codes rise; at and above it, leading-one runs
+Below the code of one, leading-zero runs shorten as codes rise. At and above it, leading-one runs
 lengthen.
 -/
 theorem regimeValue_ofNatBits_le_of_le
@@ -435,8 +439,8 @@ theorem regimeValue_ofNatBits_le_of_le
     exact countLeadingRun_true_mono hle hright
 
 /--
-Two decoded words have the same regime value exactly when both the regime bit and run length
-agree.
+Two decoded words have the same regime value if and only if both the regime bit and the run
+length agree.
 
 The positivity of every regime run separates the negative zero-run regimes from the nonnegative
 one-run regimes.
@@ -450,7 +454,7 @@ theorem regimeValue_eq_iff (left right : Model format) :
   unfold regimeValue
   cases left.regimeBit <;> cases right.regimeBit <;> simp <;> omega
 
-/-- A bounded word has a full leading-zero run exactly when the word is zero. -/
+/-- A bounded word has a full leading-zero run if and only if the word is zero. -/
 private theorem countLeadingRun_false_eq_width_iff
     {value width : Nat} (hvalue : value < 2 ^ width) :
     countLeadingRun value width false = width ↔ value = 0 := by
@@ -491,7 +495,7 @@ private theorem div_twoPow_after_false_run
 
 /--
 For a leading-one regime, division after its terminator leaves the fixed all-ones-then-zero
-prefix. The complement's logarithm is exactly the number of remaining low bits.
+prefix. The complement's logarithm is the number of remaining low bits.
 -/
 private theorem div_twoPow_after_true_run
     {value width : Nat} (hvalue : value < 2 ^ width)
@@ -557,7 +561,7 @@ private theorem div_twoPow_after_true_run
 Dividing a bounded magnitude by its trailing-field modulus leaves a prefix that depends only on the
 regime bit and run length.
 
-A zero-bit regime with a terminator leaves the prefix `1`; a one-bit regime with a terminator
+A zero-bit regime with a terminator leaves the prefix `1`. A one-bit regime with a terminator
 leaves the all-ones-then-zero prefix `2 ^ (run + 1) - 2`. Without a terminator the whole magnitude
 survives: it is `0` for the zero word and `2 ^ payloadBits - 1` for the all-ones word.
 -/

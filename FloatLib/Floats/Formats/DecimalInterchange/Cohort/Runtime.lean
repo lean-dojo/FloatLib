@@ -10,10 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Datum
 /-!
 # Selecting an exact result's cohort
 
-IEEE 754-2019 §5.2 selects the member nearest the preferred exponent. Starting
-at the smallest representable exponent, remove only exact trailing zeros, up to
-the preferred exponent or the largest stored quantum. Zero has a direct path,
-so a large distance between exponents does not cause a long recursion.
+For an exact result, IEEE 754-2019 §5.2 asks for the cohort member nearest the preferred exponent.
+We start at the smallest representable exponent and strip trailing zeros one at a time, stopping at
+the preferred exponent or at the largest stored quantum. Zero takes a shortcut. Without it, a large
+gap between the exponents would mean a long recursion.
 -/
 
 @[expose] public section

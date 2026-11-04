@@ -17,9 +17,10 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Refinement of direct packed-pair posit multiplication
 
-The packed multiplier forms a four-limb product and normalizes it to two limbs with a sticky
-bit. Its output is a valid posit code and re-encodes to the model-valued two-limb multiplication.
-The refinement uses exact dyadic multiplication and the shared rounding specification.
+The packed multiplier forms a four-limb product, then normalizes it to two limbs and a sticky
+bit. Here we show that its output is a valid posit code that re-encodes to the model-valued
+two-limb multiplication. The refinement goes through exact dyadic multiplication and the shared
+rounding specification.
 -/
 
 @[expose] public section

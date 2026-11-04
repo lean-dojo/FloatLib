@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 /-!
 # Bounded fixed-point rules for numerical automation
 
-Symbolic goals use the proved operation contracts. Concrete reduction unfolds the signed-word
-kernels only during the explicit closed-term phase.
+Automation handles bounded fixed point in two ways. A symbolic goal is solved with the proved
+operation contracts, and the signed-word kernels are unfolded only in the closed-term phase, when
+the operands are concrete.
 -/
 
 public meta section

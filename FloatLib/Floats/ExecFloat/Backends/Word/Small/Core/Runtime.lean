@@ -12,12 +12,11 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Native storage for one-word floating-point formats
 
-This module has the native storage operations for formats whose whole encoding fits in `UInt64`,
-and no refinement proofs, so native kernels can use it without importing the theorem modules.
-
-Field masks, the implicit bit, the conventional bias and the storage mask use `UInt64` shifts,
-which avoids arbitrary-precision powers when the descriptor is a runtime argument. `Core.Proof`
-gives their natural-number values under the one-word capacity bound.
+These are the native storage operations for formats whose whole encoding fits in `UInt64`. No
+refinement proofs are here, so native kernels can use them without importing the theorem modules.
+Field masks, the implicit bit, the conventional bias, and the storage mask are built with `UInt64`
+shifts, which avoids arbitrary-precision powers when the descriptor is a runtime argument.
+`Core.Proof` gives their natural-number values under the one-word capacity bound.
 -/
 
 @[expose] public section

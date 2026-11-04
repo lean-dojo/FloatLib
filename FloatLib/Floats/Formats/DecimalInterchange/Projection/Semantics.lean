@@ -10,19 +10,24 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Exact
 /-!
 # Signed projection guarantees
 
-The error bounds concern the actual rational value of the returned datum and assume that the
-returned overflow flag is false. The underflow law holds for every input. The inexact law holds
-whenever the returned datum has a rational value, saturation to the greatest finite datum included;
-an overflow to infinity has none, and `project_inexact_of_overflow` shows that every overflow is
-inexact. Directed bounds and midpoint decisions come from the integer-grid rounder.
+Each law here has its own scope:
+
+* the error bounds concern the actual rational value of the returned datum and assume that the
+  returned overflow flag is false
+* the underflow law holds for every input
+* the inexact law holds whenever the returned datum has a rational value, saturation to the
+  greatest finite datum included
+
+An overflow to infinity has no rational value, and `project_inexact_of_overflow` shows that every
+overflow is inexact. Directed bounds and midpoint decisions come from the integer-grid rounder.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
-/-- Projection raises overflow exactly when the precision-rounded quantum exceeds the format's
-largest quantum; overflow is tested after rounding. -/
+/-- Projection raises overflow if and only if the precision-rounded quantum exceeds the format's
+largest quantum, so overflow is tested after rounding. -/
 theorem projectMagnitude_overflow_iff (f : Format) (mode : RoundingMode) (s : Bool)
     (x : ℚ) (preferred : Int) :
     (projectMagnitude f mode s x preferred).status.overflow = true ↔
@@ -115,7 +120,7 @@ theorem projectMagnitude_inexact_iff (f : Format) (mode : RoundingMode) (s : Boo
 
 /--
 Whenever the result has a rational value, inexactness is equivalent to a change in numerical
-value. This includes saturation to the greatest finite datum; an overflow to infinity has no
+value. This includes saturation to the greatest finite datum. An overflow to infinity has no
 rational value and is covered by `project_inexact_of_overflow`.
 -/
 theorem project_inexact_iff (f : Format) (mode : RoundingMode)

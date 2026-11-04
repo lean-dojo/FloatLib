@@ -12,10 +12,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 /-!
 # Complete exact data determine binary encodings
 
-Finite decoding is injective because subnormal significands lie below the implicit leading bit,
-whereas normal significands include it. Within either class the exact dyadic recovers the fields.
-For exceptional values, the encoding policy and the stored sign and fraction complete
-the reconstruction. This injectivity transfers antisymmetry from complete exact data to words.
+Two different words never have the same complete exact data. Finite decoding is injective because
+subnormal significands lie below the implicit leading bit while normal significands include it,
+and within either class the exact dyadic recovers the fields. For exceptional values the encoding
+policy and the stored sign and fraction finish the reconstruction. Injectivity is what carries
+antisymmetry over from complete exact data to words.
 -/
 
 @[expose] public section
@@ -69,7 +70,7 @@ theorem exactValue_eq_nan_of_isNaN {fmt : FloatFormat} {x : Model fmt}
     cases he : fmt.encoding <;> simp_all [isNaN, isInf, IEEE.isNaN, IEEE.isInf]
   simp [exactValue, hdecode, hinf]
 
-/-- Infinity decoding retains exactly its sign. -/
+/-- An infinity decodes to the exact infinity of its own sign. -/
 theorem exactValue_eq_infinity_of_isInf {fmt : FloatFormat} {x : Model fmt}
     (hx : isInf x = true) : exactValue x = .infinity (signBit x) := by
   simp [exactValue, toDyadic?_eq_none_of_isInf_eq_true hx, hx]

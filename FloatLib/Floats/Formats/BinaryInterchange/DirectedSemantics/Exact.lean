@@ -16,20 +16,20 @@ import FloatLib.Numerics.Bitwise
 /-!
 # Rounding an exactly representable dyadic is the identity
 
-For a descriptor with `fmt.isIEEE = true`, a dyadic `m * 2^e` whose significand fits in the
-precision, whose exponent is at least the minimum subnormal exponent, and whose magnitude is at
-most the largest finite value is exactly representable. Rounding it in any of the six directions
-therefore returns a finite value with the same real denotation, and such a value is never a grid
-tie (`dyadicIsGridTie_eq_false_of_eq_mul_pow2`).
+Take a descriptor with `fmt.isIEEE = true` and a dyadic `m * 2^e` whose significand fits in the
+precision, whose exponent is at least the minimum subnormal exponent and whose magnitude is at
+most the largest finite value. That dyadic is exactly representable, so rounding it in any of the
+six directions returns a finite value with the same real denotation. Such a value is never a grid
+tie either (`dyadicIsGridTie_eq_false_of_eq_mul_pow2`).
 
-`Internal.Directed.roundDyadic_of_representable` is the statement used by IEEE `remainder`
-(whose exact result is always representable) and by `roundToIntegral` (whose rounded integer is
-always representable for every IEEE interchange format). The finite decoded value of any word
-satisfies the three hypotheses: the precision and exponent bounds by `toDyadic?_significand_lt`
-and `minSubnormalExponent_le_toDyadic?`, and the magnitude bound by
+IEEE `remainder` and `roundToIntegral` both use `Internal.Directed.roundDyadic_of_representable`.
+The exact result of `remainder` is always representable, and so is the rounded integer of
+`roundToIntegral` in every IEEE interchange format. Any finite decoded value of a word meets all
+three hypotheses. Its precision and exponent bounds come from `toDyadic?_significand_lt` and
+`minSubnormalExponent_le_toDyadic?`, and its magnitude bound from
 `abs_toReal_le_posMaxFinite_of_toDyadic?_some`, which holds in every encoding.
-`Internal.Directed.roundDyadic_toDyadic?` combines them: in an IEEE format, rounding a decoded
-word in any direction returns that word.
+`Internal.Directed.roundDyadic_toDyadic?` puts them together: in an IEEE format, rounding a
+decoded word in any direction returns that word.
 -/
 
 @[expose] public section
@@ -386,9 +386,8 @@ private theorem roundDyadicMagnitudeUp_of_representable
     simpa [roundDyadicPosUp] using congrArg Neg.neg hpos.2
 
 /--
-Every rounding direction fixes an exactly representable dyadic: the result is finite and its real
-value is the dyadic's own value. The significand may carry trailing zero bits beyond the
-precision, as `m * 2^k`.
+Every rounding direction fixes a representable dyadic. The result is finite and has the dyadic's
+own real value. The significand may carry trailing zero bits beyond the precision, as `m * 2^k`.
 -/
 theorem Internal.Directed.roundDyadic_of_eq_mul_pow2
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (mode : IEEERoundingMode)
@@ -453,8 +452,8 @@ theorem Internal.Directed.roundDyadic_of_eq_mul_pow2
         · exact roundDyadicMagnitudeUp_of_representable fmt hfmt true m k _ hm0 hm hexp hmax
 
 /--
-Every rounding direction fixes an exactly representable dyadic whose significand fits in the
-precision: the result is finite and its real value is the dyadic's own value.
+Every rounding direction fixes a representable dyadic whose significand fits in the precision.
+The result is finite and has the dyadic's own real value.
 -/
 theorem Internal.Directed.roundDyadic_of_representable
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (mode : IEEERoundingMode)
@@ -517,7 +516,7 @@ private theorem Dyadic.toReal_magnitude (d : Numerics.Dyadic) :
 /--
 No rounding direction classifies a dyadic within the largest finite magnitude as overflowing.
 Together with `Internal.Directed.roundDyadic_of_representable`, this clears the `overflow`
-indicator of `dyadicRoundingStatus` for exactly representable results.
+indicator of `dyadicRoundingStatus` for representable results.
 -/
 theorem dyadicRoundingOverflows_eq_false_of_abs_toReal_le_posMaxFinite
     (fmt : FloatFormat) (mode : IEEERoundingMode) (d : Numerics.Dyadic)

@@ -10,10 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Adjacency
 /-!
 # Infinite endpoints of decimal adjacency
 
-An infinite neighbor of a finite datum is justified by a bound on every finite
-datum in the format. Moving inward from infinity selects the extreme finite
-value, and no valid finite datum lies beyond it. At the infinities, `nextUp` and
-`nextDown` raise no flags.
+When the neighbor of a finite datum is infinite, the justification is a bound on every finite
+datum in the format. Going the other way, inward from infinity, gives the extreme finite value,
+and no valid finite datum lies beyond it. At the infinities, `nextUp` and `nextDown` raise no
+flags.
 -/
 
 @[expose] public section

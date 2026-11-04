@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtim
 # Branch equations for directed rational packing
 
 `roundRatMagnitudeDirectedScaled` checks the denominator and zero before choosing an overflow,
-underflow, subnormal, normal, or carry-out result. The equations below isolate its
-positive-magnitude branches for the directed bound proofs. Sign restoration is proved separately.
+underflow, subnormal, normal or carry-out result. The equations below pull out its
+positive-magnitude branches for the directed bound proofs, and sign restoration has its own proof.
 -/
 
 @[expose] public section

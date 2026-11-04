@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
 /-!
 # Double Rounding
 
-Directed rounding through a finer intermediate format gives the same answer as direct rounding to
-the coarser format.  The order-theoretic proof only needs inclusion of representable values, so it
-applies beyond the standard FIX, FLX, and FLT families.
+Round down to a finer format and then to a coarser one, and you get the same answer as rounding
+down to the coarser format at once. The same holds for every directed mode. The proof is
+order-theoretic and needs only that every value representable in the coarse format is
+representable in the fine one, so it applies beyond the standard FIX, FLX, and FLT families.
 -/
 
 @[expose] public section
@@ -75,7 +76,7 @@ theorem round_ceil_double {fexpFine fexpCoarse : ℤ → ℤ}
     (roundUpPoint_double (fun _ h => generic_inclusion hexp h)
       (round_ceil_point (fexp := fexpFine) x) (round_ceil_point x))
 
-/-- Increasing FLX precision preserves every exactly representable value. -/
+/-- Increasing FLX precision keeps every representable value representable. -/
 theorem generic_format_FLX_mono {coarsePrec finePrec : ℤ}
     (hcoarse : 0 < coarsePrec) (hfine : 0 < finePrec) (hprec : coarsePrec ≤ finePrec)
     {x : ℝ}

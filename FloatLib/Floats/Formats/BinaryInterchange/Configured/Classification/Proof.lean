@@ -53,7 +53,7 @@ theorem isCanonical_eq_model (x : Value) :
     isNormal (ofModel (plan := plan) (code := code) x) = Model.isNormal x := by
   simp [isNormal]
 
-/-- Packing a descriptor model keeps its canonicality; both sides are `true`. -/
+/-- Packing a descriptor model keeps its canonicality, since both sides are `true`. -/
 @[simp] theorem isCanonical_ofModel (x : Model format) :
     isCanonical (ofModel (plan := plan) (code := code) x) = Model.isCanonical x := by
   simp [isCanonical]
@@ -74,11 +74,11 @@ theorem classify_eq_iff (x : Value) (c : FloatLib.Numerics.IEEEClass) :
       | .positiveNormal => isNormal x = true ∧ signBit x = false :=
   Model.classify_eq_iff (toModel x) c
 
-/-- The signaling class is exactly the configured signaling predicate. -/
+/-- A value is in the signaling class if and only if the configured signaling predicate holds. -/
 @[simp] theorem classify_eq_signalingNaN_iff (x : Value) :
     classify x = .signalingNaN ↔ isSNaN x = true := classify_eq_iff x _
 
-/-- The quiet class is exactly the configured quiet-NaN predicate. -/
+/-- A value is in the quiet class if and only if the configured quiet-NaN predicate holds. -/
 @[simp] theorem classify_eq_quietNaN_iff (x : Value) :
     classify x = .quietNaN ↔ isQNaN x = true := classify_eq_iff x _
 
@@ -171,7 +171,7 @@ Every configured implicit-leading-bit binary word is canonical, including every 
 Canonicality agrees with lossless reconstruction from the full interchange word.
 
 Both sides hold for every value (`isCanonical_eq_true` and `ofNatBits_toNatBits`), so this
-explains why the constant predicate is right; it excludes no word.
+explains why the constant predicate is right. It excludes no word.
 -/
 theorem isCanonical_iff_word_roundtrip (x : Value) :
     isCanonical x = true ↔ ofNatBits (toNatBits x) = x := by

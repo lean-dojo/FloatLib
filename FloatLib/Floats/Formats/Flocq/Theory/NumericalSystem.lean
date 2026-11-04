@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Radix-parametric floats as numerical systems
 
-For any radix `β ≥ 2`, this module interprets `FloatRep β` as a numerical system with
-denotation `m * β^e`. The carrier stores a mantissa and exponent, with no bit-layout constraint.
+For any radix `β ≥ 2`, a `FloatRep β` becomes a numerical system here, with denotation
+`m * β^e`. The carrier is a mantissa and an exponent and nothing else, and no bit layout
+constrains either.
 -/
 
 @[expose] public section

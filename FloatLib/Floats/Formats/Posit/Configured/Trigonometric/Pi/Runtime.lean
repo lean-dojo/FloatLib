@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit pi-scaled trigonometric operations
 
-The `sinPi`, `cosPi`, and `tanPi` specifications use pi times the input; inverse operations
-return principal angles divided by pi. Each call encodes the model result through the lawful
-storage codec without further rounding.
+`sinPi`, `cosPi`, and `tanPi` take pi times the input, so `sinPi` of one half is one. The inverse
+operations return principal angles divided by pi. Each call encodes the model result through the
+lawful storage codec and rounds nothing more.
 -/
 
 @[expose] public section
@@ -39,15 +39,15 @@ local notation "Value" =>
 @[inline] def cosPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.cosPi value
 
-/-- Correctly rounded tangent of pi times the input; half-integers produce NaR. -/
+/-- Correctly rounded tangent of pi times the input. Half-integers produce NaR. -/
 @[inline] def tanPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.tanPi value
 
-/-- Correctly rounded inverse sine divided by pi; inputs outside `[-1, 1]` produce NaR. -/
+/-- Correctly rounded inverse sine divided by pi. Inputs outside `[-1, 1]` produce NaR. -/
 @[inline] def arcSinPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcSinPi value
 
-/-- Correctly rounded inverse cosine divided by pi; inputs outside `[-1, 1]` produce NaR. -/
+/-- Correctly rounded inverse cosine divided by pi. Inputs outside `[-1, 1]` produce NaR. -/
 @[inline] def arcCosPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcCosPi value
 

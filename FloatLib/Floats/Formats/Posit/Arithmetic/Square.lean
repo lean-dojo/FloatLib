@@ -15,13 +15,13 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Once-rounded posit squares
 
-The model square reuses exact dyadic multiplication. The public configured square reuses the
-selected certified multiplication kernel, including its packed carriers and width-generic
-fallback. Neither entry point adds a rounding step.
+A posit square is the posit times itself. Neither entry point here adds a rounding step. The
+model square reuses exact dyadic multiplication. The public configured square calls whichever
+certified multiplication kernel is selected, packed carriers and width-generic fallback included.
 
 `square_eq_mul` and `square_eq_spec` hold for any multiplication capability. For the built-in
-storage plans of `ExecFloat.Posit`, `toModel_square` identifies the decoded result with
-`Model.square`, and `square_eq_roundRat` with one rounding of the exact rational square.
+storage plans of `ExecFloat.Posit`, `toModel_square` says the decoded result is `Model.square`,
+and `square_eq_roundRat` says it is one rounding of the exact rational square.
 -/
 
 @[expose] public section
@@ -79,7 +79,7 @@ theorem square_eq_mul (value : Value) :
 /--
 Squaring returns the reference result of the multiplication capability in scope.
 
-This holds for any `ExecFloat.Mul` instance and says nothing about posit rounding by itself; the
+This holds for any `ExecFloat.Mul` instance and says nothing about posit rounding by itself. The
 reference operation is whatever the capability declares. `toModel_square` states the posit result
 for the built-in storage plans.
 -/

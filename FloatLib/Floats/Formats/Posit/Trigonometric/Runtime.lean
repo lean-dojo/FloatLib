@@ -13,12 +13,12 @@ public import FloatLib.Numerics.Exact.Trigonometric.Runtime
 /-!
 # Correctly rounded posit trigonometric operations
 
-Each finite input is decoded exactly. A prepared comparator then compares the mathematical
-function value with posit rounding boundaries, sharing its enclosure data across the search.
-Only the final result is rounded. Inverse sine and cosine reject inputs outside `[-1, 1]`;
-all six operations propagate NaR.
+A finite input is decoded exactly, and a prepared comparator then compares the function value
+with the posit rounding boundaries. Because the comparator is prepared once, its enclosure data is
+shared across the whole search. Nothing but the final result gets rounded. All six operations
+propagate NaR, and inverse sine and cosine reject inputs outside `[-1, 1]`.
 
-The radian functions and principal branches follow the Posit Standard (2022), §5.5.
+Radian functions and principal branches follow the Posit Standard (2022), §5.5.
 -/
 
 @[expose] public section
@@ -66,11 +66,11 @@ def cos {format : Format} (value : Model format) : Model format :=
 def tan {format : Format} (value : Model format) : Model format :=
   Trigonometric.evaluate prepareTan value
 
-/-- Inverse sine on its principal branch `[-π/2, π/2]`; invalid inputs produce NaR. -/
+/-- Inverse sine on its principal branch `[-π/2, π/2]`. Invalid inputs produce NaR. -/
 def arcSin {format : Format} (value : Model format) : Model format :=
   Trigonometric.evaluateUnit prepareArcsin value
 
-/-- Inverse cosine on its principal branch `[0, π]`; invalid inputs produce NaR. -/
+/-- Inverse cosine on its principal branch `[0, π]`. Invalid inputs produce NaR. -/
 def arcCos {format : Format} (value : Model format) : Model format :=
   Trigonometric.evaluateUnit prepareArccos value
 

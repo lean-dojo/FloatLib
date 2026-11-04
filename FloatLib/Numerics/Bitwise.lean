@@ -12,8 +12,8 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Natural-number bit lemmas
 
-Small format-independent facts about viewing natural numbers as bit strings. Floating-point and
-posit proofs share these results without depending on one another's representation layers.
+These are small facts about reading natural numbers as bit strings, with no format involved.
+Floating-point and posit proofs share them without depending on one another's representation layers.
 -/
 
 @[expose] public section

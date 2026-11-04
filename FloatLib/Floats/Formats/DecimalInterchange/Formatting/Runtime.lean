@@ -11,18 +11,21 @@ public import FloatLib.Numerics.Exact.DecimalText.Special
 /-!
 # Decimal character conversion
 
-Finite text uses the shared exact decimal scanner. The coefficient and quantum
-are kept separately until one destination rounding, with the written quantum as
-the preferred exponent. Exact output uses coefficient/exponent notation:
-`120e-2` and `12e-1` have equal values but preserve different representations.
+Decimal text keeps more than a value. Exact output uses coefficient and exponent notation, so
+`120e-2` and `12e-1` print differently although they're equal. Finite text goes through the
+shared exact decimal scanner, which keeps the coefficient and quantum apart until one destination
+rounding, with the written quantum as the preferred exponent.
 
-This binding accepts ASCII decimal syntax without whitespace, and case-insensitive
-`Inf`, `Infinity`, `NaN`, and `sNaN`, with an optional sign. NaN names may have
-decimal payload digits. Output preserves NaN sign, signaling state, and payload;
-reading an `sNaN` spelling creates a signaling NaN without raising invalid.
-Malformed text or an unrepresentable NaN payload produces positive quiet NaN
-with payload zero and the invalid flag. Finite conversion uses all five rounding
-modes and the projection layer's tininess-before-rounding policy.
+This binding accepts:
+
+* ASCII decimal syntax without whitespace
+* case-insensitive `Inf`, `Infinity`, `NaN`, and `sNaN`, with an optional sign
+* NaN names with decimal payload digits
+
+Output preserves NaN sign, signaling state, and payload, and reading an `sNaN` spelling creates a
+signaling NaN without raising invalid. Malformed text or an unrepresentable NaN payload produces
+positive quiet NaN with payload zero and the invalid flag. Finite conversion uses all five
+rounding modes and the projection layer's tininess-before-rounding policy.
 -/
 
 @[expose] public section
@@ -73,7 +76,7 @@ def characters : Datum → List Char
   | .nan negative signaling payload =>
       Numerics.SpecialText.nanCharacters negative signaling payload
 
-/-- Exact coefficient/quantum output; no rounding or floating-point exceptions occur. -/
+/-- Exact coefficient/quantum output, with no rounding and no floating-point exceptions. -/
 def formatExact (value : Datum) : String := String.ofList (characters value)
 
 end FloatLib.Floats.Formats.DecimalInterchange.Formatting

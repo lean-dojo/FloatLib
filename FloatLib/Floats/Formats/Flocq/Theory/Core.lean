@@ -12,15 +12,16 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 /-!
 # FloatRep core (Flocq-style rounded arithmetic)
 
-The rounded-real model separates representation, value, and format:
+The rounded-real model keeps three things apart:
 
-- represent a value with integer mantissa $m$ and exponent $e$,
-- interpret it as the real number $m\beta^e$,
-- describe the *format* via an exponent-selection function `fexp : ℤ → ℤ` and a rounding operator.
+- a value is represented by an integer mantissa $m$ and exponent $e$,
+- it is interpreted as the real number $m\beta^e$,
+- the *format* is described by an exponent-selection function `fexp : ℤ → ℤ` and a rounding
+  operator.
 
-This decomposition is the same one used by the Coq library **Flocq**. It makes many theorems
-reusable across formats (fixed-point, unbounded floats, and lower-exponent-bounded floats) and aligns well
-with ULP-style error bounds from numerical analysis.
+The Coq library **Flocq** uses the same split. Many theorems then serve fixed point, unbounded
+floats, and floats with a lower exponent bound alike, and they line up well with the ULP-style
+error bounds of numerical analysis.
 
 For executable, bit-level binary semantics (NaN/Inf/signed zero), see
 `FloatLib/Floats/Formats/BinaryInterchange/`.
@@ -53,7 +54,7 @@ namespace FloatRep
 
 variable {β : Numerics.Radix} (f : FloatRep β)
 
-/-- Structural zero test (mantissa is exactly `0`). -/
+/-- Structural zero test: the mantissa is `0`. -/
 def isZero : Prop := f.mantissa = 0
 
 /-- Sign of the mantissa (matches the sign of `toReal` since $\beta^e>0$). -/
@@ -133,9 +134,9 @@ noncomputable def magnitude (β : Numerics.Radix) (x : ℝ) : ℤ :=
 /--
 Validity predicate for exponent-selection functions.
 
-This is the exponent-validity condition used by Flocq. Properties that are not consequences of
-validity, such as monotonicity, are separate classes so generic results do not acquire unnecessary
-hypotheses.
+This is the exponent-validity condition used by Flocq. Properties that don't follow from
+validity, such as monotonicity, get classes of their own, so generic results don't pick up
+unnecessary hypotheses.
 -/
 class ValidExp (fexp : ℤ → ℤ) : Prop where
   /-- Exponent compatibility at successive magnitudes and below a negligible exponent. -/
@@ -159,7 +160,7 @@ def IsNegligibleExp (fexp : ℤ → ℤ) (n : ℤ) : Prop :=
 
 /--
 Select a witness $n\le\mathtt{fexp}(n)$ when the format has one. Unbounded formats such as FLX return
-`none`; lower-bounded formats such as FLT return `some n`.
+`none`, and lower-bounded formats such as FLT return `some n`.
 -/
 noncomputable def negligibleExp (fexp : ℤ → ℤ) : Option ℤ := by
   classical
@@ -177,7 +178,7 @@ theorem negligibleExp_spec {fexp : ℤ → ℤ} {n : ℤ}
     exact Classical.choose_spec hex
   next _ => simp at h
 
-/-- A format has no selected negligible exponent exactly when no negligible exponent exists. -/
+/-- A format has no selected negligible exponent if and only if no negligible exponent exists. -/
 theorem negligibleExp_eq_none_iff (fexp : ℤ → ℤ) :
     negligibleExp fexp = none ↔ ¬∃ n, IsNegligibleExp fexp n := by
   classical
@@ -196,7 +197,7 @@ theorem negligibleExp_value_unique {fexp : ℤ → ℤ} [ValidExp fexp] {n m : �
 /--
 Canonical exponent (`cexp` in Flocq terminology).
 
-Apply `fexp` to the input's magnitude; at zero this gives `fexp 0`. The `ValidExp` instance
+Apply `fexp` to the input's magnitude, which at zero gives `fexp 0`. The `ValidExp` instance
 restricts the API to valid exponent functions, although evaluating this expression needs only
 `fexp`.
 -/
@@ -238,7 +239,8 @@ This is the scale of the “one ulp” step at the exponent selected by `cexp`. 
 many standard bounds have the shape
 $|\operatorname{round}(x)-x|\le\operatorname{ulp}(x)/2$.
 
-At zero, a negligible exponent determines the spacing when one exists; otherwise the ULP is zero.
+At zero, a negligible exponent determines the spacing when one exists, and otherwise the ULP is
+zero.
 -/
 noncomputable def ulp (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp] (x : ℝ) : ℝ :=
   if x = 0 then

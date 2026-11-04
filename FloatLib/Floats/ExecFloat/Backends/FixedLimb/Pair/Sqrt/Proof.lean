@@ -18,16 +18,16 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.SquareRoot
 /-!
 # Correctness of two-word square root for normal inputs
 
-The normal path aligns a `fracWidth + 1`-bit significand in a `UInt256`, computes a restoring
-integer square root with `fracWidth + 1` base-four digits, and rounds from exact remainder
-information. `sqrtNormal_refines` identifies each accepted result with the public format-level
-square-root specification.
+On the normal path, a `fracWidth + 1`-bit significand is aligned in a `UInt256`, a restoring integer
+square root with `fracWidth + 1` base-four digits is computed, and the result is rounded from exact
+remainder information. `sqrtNormal_refines` identifies each accepted result with the public
+format-level square-root specification.
 
-The kernel accepts only eligible layouts with `fracWidth ≤ 124` and `fracWidth + 1 ≤ bias`. The
-first bound keeps the doubled remainder inside the two-word restoring state, and the second is the
-hypothesis under which `SqrtArithmetic.target_exponent` identifies the model's target exponent
-with the kernel's affine exponent formula. Exceptional, subnormal, and unsupported inputs are
-left to the operation dispatcher.
+Only eligible layouts with `fracWidth ≤ 124` and `fracWidth + 1 ≤ bias` are accepted. The first
+bound keeps the doubled remainder inside the two-word restoring state, and the second is the
+hypothesis under which `SqrtArithmetic.target_exponent` identifies the model's target exponent with
+the kernel's affine exponent formula. Exceptional, subnormal, and unsupported inputs are left to the
+operation dispatcher.
 -/
 
 @[expose] public section

@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Real
 /-!
 # Correctness of comparator-based posit rounding
 
-A comparator agreeing with real order makes exactly the same decisions as the real rounding
-specification. No assumption about irrationality, distance from a boundary, or search convergence
-is needed: exact equality is one of the comparator's three results.
+If a comparator agrees with the real order, rounding driven by it makes the same decisions as the
+real rounding specification (`roundSigned_eq_real`). That one hypothesis is all the proof uses. It
+needs no irrationality, no distance from a boundary and no convergence of a search, because
+equality is one of the comparator's three answers.
 -/
 
 @[expose] public section

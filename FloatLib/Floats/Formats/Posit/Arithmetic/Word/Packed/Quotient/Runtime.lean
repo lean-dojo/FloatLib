@@ -17,13 +17,15 @@ import FloatLib.Kernels.FixedWord.Quotient.Compiler
 /-!
 # Packed native-word Posit division
 
-Packed operands are decoded directly to sign, significand, and exponent fields. Quotient rounding
-normalizes them in one word, generates the destination-width quotient prefix with the shared
-two-limb restoring recurrence, and feeds that exact prefix to the common guard/sticky packer.
+Division decodes the packed operands straight to sign, significand, and exponent fields, and
+quotient rounding then normalizes them in one word, generates the destination-width quotient
+prefix with the shared two-limb restoring recurrence, and feeds that exact prefix to the common
+guard/sticky packer.
 
-The two-limb state is selected by intermediate capacity: a normalized one-word ratio can require
-one additional quotient digit, while its doubled remainder must never wrap. Significands and
-restoring-loop state stay in fixed-width carriers; exponents and digit counts use `Int` and `Nat`.
+Why a two-limb state, when the operands fit in one word? A normalized one-word ratio can need one
+more quotient digit, and its doubled remainder must never wrap, so intermediate capacity picks the
+two-limb state. Significands and restoring-loop state stay in fixed-width carriers, while exponents
+and digit counts use `Int` and `Nat`.
 -/
 
 @[expose] public section
@@ -81,7 +83,8 @@ structure Prefix where
 /--
 Generate the normalized quotient prefix needed by the destination format.
 
-Ratios below one consume one extra digit; ratios at least one begin with their known leading one.
+Ratios below one consume one extra digit, and ratios of at least one begin with their known
+leading one.
 The policy is identical for every one-word-eligible format and depends only on destination
 precision.
 -/
@@ -114,7 +117,7 @@ precision.
         Int.ofNat normalized.denominatorLeading -
         Int.ofNat steps }
 
-/-- Round a positive quotient directly from native decoded fields. -/
+/-- Round a positive quotient from native decoded fields. -/
 @[inline] def roundPositiveCodeWord
     (format : Format)
     (numeratorSignificand : UInt64) (numeratorExponent : Int)

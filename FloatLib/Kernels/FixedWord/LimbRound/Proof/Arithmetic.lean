@@ -17,9 +17,9 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Four-word subtraction, comparison, and widening
 
-These theorems give the natural-number meaning of the four-word complement, subtraction,
-comparison, low-bit and doubling helpers, and of the widening shift from two words to four. They
-are plain word arithmetic, independent of the rounding kernels in `LimbRound.Proof.UInt256`.
+Here are the natural-number meanings of the four-word complement, subtraction, comparison, low-bit
+and doubling helpers, and of the widening shift from two words to four. It's plain word arithmetic,
+independent of the rounding kernels in `LimbRound.Proof.UInt256`.
 -/
 
 @[expose] public section

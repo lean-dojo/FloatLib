@@ -12,12 +12,13 @@ public import Mathlib.Data.Nat.ModEq
 /-!
 # Bounded modular exponentiation
 
-Exponentiation by squaring for exact modular arithmetic without constructing the usually enormous
-unreduced power.
+This is exponentiation by squaring for exact modular arithmetic, without constructing the usually
+enormous unreduced power. 3^1000 has 478 decimal digits, for instance, while computing it modulo 7
+this way never multiplies anything above 6.
 
-This helper is representation-independent and is used when quantizers need a power only modulo a
-known denominator or code range. Reducing after every multiplication keeps intermediate naturals
-bounded while the accompanying equations preserve the exact mathematical residue.
+Nothing here depends on a representation. Quantizers use it when they need a power only modulo a
+known denominator or code range. Reducing after every multiplication keeps the intermediate naturals
+bounded, and the accompanying equations preserve the exact mathematical residue.
 -/
 
 @[expose] public section
@@ -27,8 +28,8 @@ namespace FloatLib.Numerics
 /--
 Compute `base ^ exponent` modulo `modulus` by exponentiation by squaring.
 
-Only residues smaller than `modulus` are multiplied, so a large exponent does not construct the
-usually enormous natural number `base ^ exponent`. Modulus zero has the explicit total result zero;
+Only residues smaller than `modulus` are multiplied, so a large exponent never constructs the
+usually enormous natural number `base ^ exponent`. Modulus zero gives the total result zero, and
 callers that need ordinary modular arithmetic should establish that the modulus is nonzero.
 -/
 def modularPow (base exponent modulus : Nat) : Nat :=

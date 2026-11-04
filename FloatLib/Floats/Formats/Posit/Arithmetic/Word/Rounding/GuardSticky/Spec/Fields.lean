@@ -12,13 +12,13 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Runtime
 /-!
 # Field-oriented guard-and-sticky Posit rounding
 
-Field-oriented rounding reads the finite exponent/fraction tail in place from its normalized
-fields. It is the representation-independent executable kernel: arbitrary-width backends run
-these `Nat` operations, while fixed-word and fixed-limb backends refine the same bit and suffix
-queries to native masks and shifts.
+Field-oriented rounding reads the finite exponent/fraction tail in place, straight from its
+normalized fields. It never concatenates the exponent and fraction into a larger temporary natural
+number the way `exactTailRaw` does.
 
-The field-oriented kernel never concatenates the exponent and fraction into a larger temporary
-natural number, as `exactTailRaw` does.
+This is the representation-independent executable kernel. Arbitrary-width backends run these
+`Nat` operations as they are, while fixed-word and fixed-limb backends refine the same bit and
+suffix queries to native masks and shifts.
 -/
 
 @[expose] public section

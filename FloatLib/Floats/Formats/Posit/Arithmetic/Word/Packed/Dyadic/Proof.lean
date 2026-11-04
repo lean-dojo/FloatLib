@@ -15,9 +15,10 @@ import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 /-!
 # Correctness of flattened packed-word exact-dyadic posit arithmetic
 
-The flattened packed-word kernels agree with the shared exact-dyadic operations, preserve the
-complete posit encoding range, and admit verified compiler substitutions. Executable definitions
-live in `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Runtime`.
+Three things are proved here about the flattened packed-word kernels. They agree with the shared
+exact-dyadic operations, they stay inside the complete posit encoding range, and they admit
+verified compiler substitutions. Executable definitions are in
+`FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Runtime`.
 -/
 
 @[expose] public section
@@ -77,7 +78,7 @@ theorem addWordsCodeFlat_eq
   exact withTwoDyadicFields_roundCodeNat_eq heligible left right _ _
     FloatLib.Numerics.Dyadic.addFields_eq
 
-/-- Valid-word addition is exactly flattened packed-word addition. -/
+/-- Valid-word addition equals flattened packed-word addition. -/
 theorem addWordsCodeFlatValid_eq
     {format : Format}
     (heligible : NativeWord.Eligible format)
@@ -121,7 +122,7 @@ theorem subWordsCodeFlat_eq
   exact withTwoDyadicFields_roundCodeNat_eq heligible left right _ _
     FloatLib.Numerics.Dyadic.subFields_eq
 
-/-- Valid-word subtraction is exactly flattened packed-word subtraction. -/
+/-- Valid-word subtraction equals flattened packed-word subtraction. -/
 theorem subWordsCodeFlatValid_eq
     {format : Format}
     (heligible : NativeWord.Eligible format)
@@ -165,7 +166,7 @@ theorem mulWordsCodeFlat_eq
   exact withTwoDyadicFields_roundCodeNat_eq heligible left right _ _
     FloatLib.Numerics.Dyadic.mulFields_eq
 
-/-- Valid-word multiplication is exactly flattened packed-word multiplication. -/
+/-- Valid-word multiplication equals flattened packed-word multiplication. -/
 theorem mulWordsCodeFlatValid_eq
     {format : Format}
     (heligible : NativeWord.Eligible format)
@@ -226,7 +227,7 @@ theorem fmaWordsCodeFlat_eq
                 NativeWordRounding.GuardSticky.DyadicTarget.roundCodeNat_eq_direct,
                 FloatLib.Numerics.Dyadic.fmaFields_eq]
 
-/-- Valid-word FMA is exactly flattened packed-word FMA. -/
+/-- Valid-word FMA equals flattened packed-word FMA. -/
 theorem fmaWordsCodeFlatValid_eq
     {format : Format}
     (heligible : NativeWord.Eligible format)

@@ -11,11 +11,11 @@ public import Mathlib.Topology.Compactification.OnePoint.ProjectiveLine
 /-!
 # One-point views of optional values
 
-Posits and quires both have a partial exact semantics `toRat? : Model → Option Rat` whose `none`
-case is the unique NaR word. Their intentional one-point projections send `some x` to the point
-`x` and `none` to the added point of `OnePoint`. This module defines that map once, as
-`Option.toOnePoint`, and proves the characterisations that the posit and quire projective views
-instantiate.
+Posits and quires both have a partial exact semantics `toRat? : Model → Option Rat`, and its
+`none` case is the unique NaR word. Their one-point projections, which you use on purpose, send
+`some x` to the point `x` and `none` to the added point of `OnePoint`. We define that map once, as
+`Option.toOnePoint`. This module proves the characterisations that the posit and quire projective
+views both instantiate.
 -/
 
 @[expose] public section
@@ -37,12 +37,12 @@ def toOnePoint : Option K → OnePoint K
 @[simp] theorem toOnePoint_none : (none : Option K).toOnePoint = OnePoint.infty :=
   rfl
 
-/-- The one-point view is a finite point exactly when the option holds that value. -/
+/-- The one-point view is a finite point if and only if the option holds that value. -/
 theorem toOnePoint_eq_coe_iff (option : Option K) (x : K) :
     option.toOnePoint = (x : OnePoint K) ↔ option = some x := by
   cases option <;> simp
 
-/-- The one-point view is the added point exactly when the option is `none`. -/
+/-- The one-point view is the added point if and only if the option is `none`. -/
 theorem toOnePoint_eq_infty_iff (option : Option K) :
     option.toOnePoint = OnePoint.infty ↔ option = none := by
   cases option <;> simp

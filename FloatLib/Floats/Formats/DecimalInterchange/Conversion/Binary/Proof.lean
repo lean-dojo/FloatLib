@@ -11,6 +11,7 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Speci
 /-!
 # Binary and decimal numeric conversion
 
-Both conversion directions, including exact rational semantics, decimal cohort
-selection, binary nearest-away rounding, special values and exception flags.
+Import this for numeric conversion between binary and decimal interchange in both directions,
+with all of its proofs: the exact rational semantics, decimal cohort selection, binary
+nearest-away rounding, special values, and exception flags.
 -/

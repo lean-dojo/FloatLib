@@ -12,15 +12,15 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Integer-to-decimal numerical contracts
 
-Integer sources are converted from their exact value, with preferred quantum
-zero. Every integer representable in the destination remains exact, including
-integers whose decimal representation requires a positive exponent. Other
-nonoverflowing results satisfy the decimal grid's error and direction bounds; the inexact and
-underflow laws and the toward-zero bound also cover overflow.
+An integer converts to decimal from its exact value, with preferred quantum zero. If the
+destination can represent the integer, the conversion is exact, and that includes integers that
+need a positive exponent, such as `10^20` in decimal32. Any other result that doesn't overflow
+meets the error and direction bounds of the decimal grid. The inexact and underflow laws and the
+toward-zero bound cover overflow as well.
 
-Custom descriptors may exclude quantum zero. Zero then takes the nearest
-allowed quantum, and a coarse minimum quantum can make a nonzero integer
-underflow. The standard presets satisfy the optional `HasQuantumZero` assumption.
+A custom descriptor may leave out quantum zero. Zero then takes the nearest allowed quantum, and a
+coarse minimum quantum can make a nonzero integer underflow. The standard presets all satisfy the
+optional `HasQuantumZero` assumption.
 -/
 
 @[expose] public section
@@ -57,8 +57,8 @@ private theorem magnitude_of_integer_representation (source : Int) (s : Bool)
   have he := congrArg abs (Option.some.inj hs)
   cases s <;> simpa [abs_mul, abs_of_nonneg hm] using he.symm
 
-/-- Representability suffices for exact conversion; no coefficient-size restriction is
-imposed on the integer itself. Changing its cohort does not raise an exception. -/
+/-- Representability is enough for exact conversion, and the integer itself may have any number
+of digits. Changing its cohort does not raise an exception. -/
 theorem convertFromInt_exact (destination : Format) (mode : RoundingMode) (source : Int)
     (s : Bool) (c : Nat) (q : Int) (hvalid : (Datum.finite s c q).Valid destination)
     (hs : (Datum.finite s c q).toRat? = some (source : ℚ)) :
@@ -122,7 +122,7 @@ theorem abs_convertFromInt_towardZero_le (destination : Format) (source : Int) :
       |value| ≤ |(source : ℚ)| :=
   abs_project_towardZero_le destination (source : ℚ) 0 false
 
-/-- Inexact reports a numerical change of a finite result, never a change of exponent alone; an
+/-- Inexact reports a numerical change of a finite result and never a change of exponent alone. An
 overflow to the greatest finite datum is inexact. -/
 theorem convertFromInt_inexact_iff (destination : Format) (mode : RoundingMode)
     (source : Int) (value : ℚ)

@@ -16,11 +16,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 /-!
 # Executable word-specialized square-root dispatch
 
-Executable square-root kernels and their format dispatcher live here. Correctness theorems are in
-`SqrtWord.Proof`, so runtime-only clients do not load the native refinement proofs.
+Here are the executable square-root kernels and their format dispatcher. Correctness theorems are in
+`SqrtWord.Proof`, so a program that only runs them doesn't load the native refinement proofs.
 
-Binary32 and binary64 use their native paths, other one-word IEEE formats use the shared word
-kernel, and every remaining format uses the general implementation. All of these implement one
+Binary32 and binary64 take their native paths, other one-word IEEE formats use the shared word
+kernel, and every remaining format uses the general implementation. All of them implement one
 square-root specification.
 -/
 

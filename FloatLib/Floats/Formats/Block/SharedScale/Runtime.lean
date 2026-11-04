@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.Block.SharedScale.Core
 /-!
 # Executable shared-scale quantization
 
-The kernel rounds each exact rational lane to a nearest-even integer significand at the
-caller-selected binary exponent.
+This is the executable kernel behind shared-scale quantization. It takes the caller's binary
+exponent and rounds each exact rational lane to a nearest-even integer significand on that grid.
 -/
 
 @[expose] public section
@@ -22,7 +22,7 @@ namespace FloatLib.Floats.Formats.Block
 open FloatLib.Numerics
 
 /--
-Quantize every rational lane at an explicitly supplied shared exponent.
+Quantize every rational lane at the shared exponent the caller supplies.
 
 Each lane is divided by `2 ^ exponent` and rounded to the nearest integer significand, ties to
 even. Significands are unbounded integers, so no lane saturates or overflows.

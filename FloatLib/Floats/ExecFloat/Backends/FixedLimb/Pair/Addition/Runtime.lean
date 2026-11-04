@@ -13,16 +13,16 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 /-!
 # Two-word finite addition and subtraction
 
-The two-word counterpart of `NativeSmallWordAdd`: both operands are decoded from their storage words
-into a sign, a compact finite scale, and a two-word significand. Scales at most `shiftLimit` apart
-are aligned exactly by a left shift, while larger gaps keep three guard positions and a sticky bit
-below the higher operand. The signed magnitudes are combined and rounded once to nearest even, and
-the normal result is packed into storage words. Every intermediate fits two words because an
-eligible significand has at most 126 bits. Refinement proofs live in `Addition.Proof`.
+This is the two-word counterpart of `NativeSmallWordAdd`. Both operands are decoded from their
+storage words into a sign, a compact finite scale, and a two-word significand. Scales at most
+`shiftLimit` apart are aligned exactly by a left shift, while larger gaps keep three guard positions
+and a sticky bit below the higher operand. Signed magnitudes are then combined and rounded once to
+nearest even, and the normal result is packed into storage words. Every intermediate fits two words,
+because an eligible significand has at most 126 bits. Refinement proofs live in `Addition.Proof`.
 
-The kernel returns `none` for exceptional or zero operands, a sticky alignment whose higher
-operand is subnormal, a magnitude below the normal threshold before rounding, and overflow after
-rounding. Exact cancellation returns positive zero.
+It returns `none` for exceptional or zero operands, a sticky alignment whose higher operand is
+subnormal, a magnitude below the normal threshold before rounding, and overflow after rounding.
+Exact cancellation returns positive zero.
 -/
 
 @[expose] public section

@@ -13,8 +13,8 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Addition.Proof
 # Verified wide-limb fused multiply-add
 
 An accepted result is the compact finite kernel `FiniteKernel.fma?` on the operand models
-(`fmaNormal?_refines`): the exact limb product is the product of the decoded significands, and the
-alignment core computes the unsigned-scale exact sum `FiniteScaleAdd.roundSum` that
+(`fmaNormal?_refines`). Here the exact limb product is the product of the decoded significands, and
+the alignment core computes the unsigned-scale exact sum `FiniteScaleAdd.roundSum` that
 `FiniteKernel.Internal.fmaComponents` evaluates. `toModel_fma` then closes with the reference
 operation.
 -/

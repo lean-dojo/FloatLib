@@ -13,11 +13,11 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 /-!
 # Correctness of Payne-Hanek reduction
 
-`reduceWindow_spec` proves that every window of at least two bits reduces `m * 2 ^ e`, for
-`m > 0`: `x * 2/π = 4 j + quadrant + (fraction + η) / 2 ^ scale` with `0 ≤ η < 2 m`
-(`QuarterTurns.Reduces`). The proof splits the cached `T ≤ 2/π * 2 ^ N < T + 2` into its bits above,
-inside and below the window: the bits above contribute a multiple of four, the window gives the
-fraction, and the bits below together with the error of `T` give `η`. The fraction has magnitude at
+`reduceWindow_spec` proves that every window of at least two bits reduces `m * 2 ^ e` for `m > 0`,
+which means `x * 2/π = 4 j + quadrant + (fraction + η) / 2 ^ scale` with `0 ≤ η < 2 m`
+(`QuarterTurns.Reduces`). Its proof splits the cached `T ≤ 2/π * 2 ^ N < T + 2` into its bits above,
+inside and below the window. The bits above contribute a multiple of four, the window gives the
+fraction, and the bits below together with the error of `T` give `η`. Its fraction has magnitude at
 most half a quarter turn (`abs_fraction_reduceWindow_le`).
 
 An accepted reduction has the sign of the true remainder and relative error at most `2 ^ -bits`
@@ -29,12 +29,12 @@ cosine of `x` are those of `r` rotated by the quadrant
 (`QuarterTurns.abs_argument_sub_le`), and its rotated sine and cosine are within the same bound of
 those of `x` (`QuarterTurns.Reduces.abs_sin_sub_rotate_le` and its cosine form).
 
-`reduce` returns the reduction of one of its attempts (`exists_reduce_eq_reduceWindow`),
-so it reduces its argument too (`reduce_spec`), with error `2 m` and a fraction of at most
-half a quarter turn. It returns an accepted reduction when some attempt within its fuel is accepted
-(`accepts_reduce`). `fuelWithin?` returns the largest count within its fuel whose window stays
-within its level limit (`fuelWithin?_isGreatest`), keeps every earlier attempt within that limit
-too (`fuelWithin?_spec`), and gives no fuel exactly when the first window exceeds it
+`reduce` returns the reduction of one of its attempts (`exists_reduce_eq_reduceWindow`), so it
+reduces its argument too (`reduce_spec`), with error `2 m` and a fraction of at most half a quarter
+turn. It returns an accepted reduction when some attempt within its fuel is accepted
+(`accepts_reduce`). As for `fuelWithin?`, it returns the largest count within its fuel whose window
+stays within its level limit (`fuelWithin?_isGreatest`), keeps every earlier attempt within that
+limit too (`fuelWithin?_spec`), and gives no fuel exactly when the first window exceeds it
 (`fuelWithin?_eq_none_iff`).
 -/
 

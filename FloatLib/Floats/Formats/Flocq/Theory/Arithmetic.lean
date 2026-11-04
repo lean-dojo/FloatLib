@@ -13,11 +13,12 @@ public import FloatLib.Numerics.Operation.Semantics
 /-!
 # Refinement contracts for exact integer-mantissa arithmetic
 
-The exact operations in `Calculation.Operations` refine real arithmetic through the shared
-numerical-system contracts. Negation and multiplication require only integer arithmetic on the
-stored mantissas and exponents.
+Through the shared numerical-system contracts, the exact operations of `Calculation.Operations`
+refine real arithmetic. Negation and multiplication need nothing but integer arithmetic on the
+stored mantissas and exponents: negate the mantissa, or multiply the mantissas and add the
+exponents.
 
-The real-valued decoder is proof-facing and erased from compiled kernels.
+The real-valued decoder exists for proofs and is erased from compiled kernels.
 -/
 
 @[expose] public section
@@ -26,7 +27,7 @@ namespace FloatLib.Floats.Formats.Flocq.FloatRep
 
 open FloatLib.Numerics
 
-/-- Executable mantissa negation exactly refines real negation. -/
+/-- Executable mantissa negation refines real negation with no rounding. -/
 theorem negExact_refines (β : Numerics.Radix) :
     Operation.Finite1 (numericalSystem β) (numericalSystem β)
       negExact (fun value : ℝ => -value) := by
@@ -36,7 +37,7 @@ theorem negExact_refines (β : Numerics.Radix) :
   rw [toReal_negExact]
   exact congrArg Neg.neg hx
 
-/-- Executable mantissa/exponent multiplication exactly refines real multiplication. -/
+/-- Executable mantissa and exponent multiplication refines real multiplication with no rounding. -/
 theorem mulExact_refines (β : Numerics.Radix) :
     Operation.Finite2 (numericalSystem β) (numericalSystem β)
       (numericalSystem β) mulExact (fun left right : ℝ => left * right) := by

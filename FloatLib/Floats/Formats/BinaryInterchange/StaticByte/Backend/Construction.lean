@@ -11,13 +11,13 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 /-!
 # Default static-byte capability construction
 
-This is the final wiring layer for byte-sized binary families. It packages each family-selected
-kernel with the refinement theorem from `Backend.Proof`, then installs the result as an ordinary
-`ExecFloat` capability.
+Byte-sized binary families get their final wiring here. Each family-selected kernel is packaged
+with its refinement theorem from `Backend.Proof` and installed as an ordinary `ExecFloat`
+capability.
 
-Construction is shared so the six operations do not each need a family-specific adapter.
-Every `Family` instance uses this construction and supplies its own certified kernel, which may
-use a table or compute the operation directly.
+The construction is shared, so the six operations do not each need a family-specific adapter.
+Every `Family` instance uses it and supplies its own certified kernel, which may use a table or
+compute the operation itself.
 -/
 
 @[expose] public section
@@ -88,7 +88,7 @@ instance (priority := 100) sqrtCapability
 
 /--
 Default fused multiply-add for a static-byte family: the family's certified byte kernel, refining
-`Spec.fma`. `TablePlan` has no FMA table, so a plan does not replace it; a package that wants a
+`Spec.fma`. `TablePlan` has no FMA table, so a plan does not replace it. A package that wants a
 table or model FMA declares its own `Fma` instance, such as `Plans.fmaTableCapability` or
 `Plans.modelFmaCapability`, which outranks this one.
 -/

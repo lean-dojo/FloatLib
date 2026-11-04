@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 /-!
 # Directed addition soundness for conventional IEEE formats
 
-Finite operands decode to exact dyadics. Their executable directed sum is the exact dyadic sum
-rounded outward, except that exact cancellation selects the IEEE rounding-mode-specific signed
-zero. Both signed zeros denote zero, so the same enclosure theorem covers cancellation and
-overflow for conventional IEEE descriptors.
+Finite operands decode to exact dyadics, and their executable directed sum is the exact dyadic sum
+rounded outward, except at exact cancellation, where IEEE picks a signed zero that depends on the
+rounding mode. Both signed zeros denote zero. So for conventional IEEE descriptors one enclosure
+theorem covers cancellation and overflow.
 -/
 
 @[expose] public section

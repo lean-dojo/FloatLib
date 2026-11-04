@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Core
 /-!
 # Runtime packing for configured posits
 
-`Code.toModel` and `Code.ofModel` form the canonical executable conversion pair for every static
-posit carrier. Closed plans reduce to primitive or fixed-limb operations; the wide branch is the
-identity on the exact-width proof model.
+`Code.toModel` and `Code.ofModel` are the canonical executable conversions between every static
+posit carrier and the model. For a closed plan they reduce to primitive or fixed-limb operations.
+On the wide branch the carrier is the exact-width proof model, so both are the identity.
 -/
 
 @[expose] public section

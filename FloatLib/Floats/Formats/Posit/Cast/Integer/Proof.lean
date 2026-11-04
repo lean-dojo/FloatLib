@@ -14,13 +14,14 @@ public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
 /-!
 # Exact semantics of posit integer conversions
 
-The integer sentinel has only its most significant bit set. Finite posit values first undergo
-exact nearest-even integer rounding; the signed range is checked on that rounded integer.
-Within range, decoding the output recovers the rounded integer, with error at most one half.
-At an exact halfway numerator/denominator remainder, that integer is even.
+A finite posit becomes a signed integer in two steps. It is rounded to the nearest integer, ties
+to even, and then the signed range is checked on that rounded integer. Within range, decoding the
+output recovers the rounded integer, so the error is at most one half, and at an exact halfway
+numerator/denominator remainder the integer is even. NaR and anything out of range become the
+integer sentinel, the word with only its most significant bit set.
 
-The sentinel characterization includes an in-range result equal to the signed minimum,
-whose encoding coincides with the overflow and NaR sentinel.
+The sentinel characterization also covers an in-range result equal to the signed minimum, because
+its encoding is the same word as the overflow and NaR sentinel.
 -/
 
 @[expose] public section
@@ -32,7 +33,7 @@ open FloatLib.Numerics.Representations
 
 variable {format : Format} {width : Nat}
 
-/-- The integer conversion sentinel has precisely its most significant bit set. -/
+/-- The integer conversion sentinel has its most significant bit set and no other bit. -/
 theorem integerSentinel_toNatBits (hwidth : 0 < width) :
     (FixedInt.minCode width).toNatBits = 2 ^ (width - 1) :=
   BitVec.toNat_intMin_of_pos hwidth
@@ -112,7 +113,7 @@ theorem toFixedInt_even_of_half (value : Model format) (hwidth : 0 < width) {q :
   rw [toInt_toFixedInt_of_inRange value hwidth hvalue hrange]
   exact roundRatEven_even_of_quotient_tie q hhalf
 
-/-- A finite posit that denotes an in-range integer converts to that integer exactly. -/
+/-- A finite posit that denotes an in-range integer converts to that same integer. -/
 theorem toFixedInt_eq_of_int (value : Model format) (hwidth : 0 < width) {integer : Int}
     (hvalue : value.toRat? = some (integer : Rat)) (hrange : FixedInt.InRange width integer) :
     toFixedInt width value hwidth = FixedInt.ofInt integer := by
@@ -120,7 +121,7 @@ theorem toFixedInt_eq_of_int (value : Model format) (hwidth : 0 < width) {intege
     toFixedInt_eq_of_inRange value hwidth hvalue (by simpa only [roundRatEven_intCast])
 
 /--
-An integer round trip is exact when its Section 4.1 posit rounding still denotes that integer.
+An integer round trip is exact when its Section 4.1 posit rounding denotes that same integer.
 The sentinel `FixedInt.minCode width` maps to NaR and back with no condition, so representability
 is required only of the other values.
 -/

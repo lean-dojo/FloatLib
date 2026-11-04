@@ -22,18 +22,20 @@ import Mathlib.Algebra.Order.Field.Basic
 
 `Format.roundFiniteToPrecision` expresses an exact finite dyadic in units of the descriptor
 quantum `2^Q`, with `Q = max(floor(log2 |X|), 1 - B) - P + 1`, and then chooses between the two
-integers bracketing the scaled magnitude. This module proves that the deterministic modes make
-the choice the report prescribes:
+integers bracketing the scaled magnitude. In `binary8p4se`, 232 has quantum 16 and sits halfway
+between 224 and 240. This module proves that the deterministic modes make the choice the report
+prescribes:
 
-* `towardZero` truncates: the result has the smaller magnitude and lies within one quantum;
-* `up` and `down` bracket the input from the requested side;
-* `nearestAway` and `nearest` stay within half a quantum, and on an exact tie
-  select the larger magnitude, respectively the candidate whose P3109 code is even;
+* `towardZero` truncates, so the result has the smaller magnitude and lies within one quantum
+* `up` and `down` bracket the input from the requested side
+* `nearestAway` stays within half a quantum and on a tie selects the larger magnitude
+* `nearest` stays within half a quantum and on a tie selects the candidate whose P3109 code is
+  even
 * `toOdd` stays within one quantum, and for `P > 1` it returns an odd significand whenever
-  nonzero bits were discarded.
+  nonzero bits were discarded
 
-The bounds concern rational denotations before saturation and cover every descriptor width,
-including `P = 1`. `Projection.Selection` and `Projection.Rational.Selection` prove the
+The bounds are about rational denotations before saturation and cover every descriptor width,
+`P = 1` included. `Projection.Selection` and `Projection.Rational.Selection` prove the
 stochastic selection formulas for every supplied random word.
 -/
 
@@ -263,7 +265,7 @@ private theorem roundFiniteToPrecision_exact_or_inexact
 /--
 Structural description of an exact tie under any rounding mode.
 
-The discarded fraction is exactly one half, so the input is `sign * (lower + 1/2) * 2^Q`, and
+The discarded fraction is one half, so the input is `sign * (lower + 1/2) * 2^Q`, and
 the result significand is `lower` or `lower + 1`, as `roundAway` decides when the remainder
 equals the half point `2^(d-1)`.
 -/
@@ -433,8 +435,8 @@ private theorem quantumExponent_neg (format : Format) (value : Numerics.Dyadic) 
     format.quantumExponent value.neg = format.quantumExponent value := rfl
 
 /-- Rounding toward negative infinity is rounding toward positive infinity of the negated input,
-negated, at the level of rational values and before saturation. Zero results agree as values; the
-stored sign of a zero is not compared. -/
+negated, at the level of rational values and before saturation. Zero results agree as values,
+and the stored sign of a zero is not compared. -/
 theorem roundFiniteToPrecision_down_toRat (format : Format) (value : Numerics.Dyadic) :
     (format.roundFiniteToPrecision .down value).toRat =
       -(format.roundFiniteToPrecision .up value.neg).toRat := by
@@ -596,10 +598,10 @@ theorem roundFiniteToPrecision_nearest_abs_sub_le
 
 open Internal in
 /--
-On an exact tie, `nearest` selects the candidate whose P3109 code is even.
+On a tie, `nearest` selects the candidate whose P3109 code is even.
 
-The input is exactly halfway between `lower * 2^Q` and `(lower + 1) * 2^Q` in magnitude, and the
-result has magnitude `lower * 2^Q` exactly when the lower code is even under the report's
+The input is halfway between `lower * 2^Q` and `(lower + 1) * 2^Q` in magnitude, and the result
+has magnitude `lower * 2^Q` if and only if the lower code is even under the report's
 `CodeIsEven` rule (including its `P = 1` special case).
 -/
 theorem roundFiniteToPrecision_nearest_tie

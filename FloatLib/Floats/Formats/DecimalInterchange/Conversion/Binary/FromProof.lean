@@ -13,10 +13,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 /-!
 # Binary-to-decimal conversion guarantees
 
-Finite decoding feeds one exact rational projection. The proofs transfer its
-error bounds, directed inequalities and exception conditions to the returned
-decimal datum. Neither the binary storage width nor the decimal encoding
-choice occurs in the numerical argument.
+Converting a finite binary value to decimal is one exact rational projection. We decode the binary
+input to a rational and project that onto the decimal format, so the proofs here carry the
+projection's error bounds, directed inequalities, and exception conditions over to the returned
+datum. The binary storage width and the choice of decimal encoding never enter the numerical
+argument.
 -/
 
 @[expose] public section
@@ -112,8 +113,8 @@ theorem fromBinary_down_le {fmt : FloatFormat} (f : Format)
   rw [fromBinary_eq_project f .down x a hx] at hfinite ⊢
   exact project_down_le f a 0 _ hfinite
 
-/-- A cohort change is not inexact; inexactness detects precisely a numerical change of a finite
-result, including an overflow to the greatest finite datum. -/
+/-- A cohort change is not inexact. The flag is raised if and only if a finite result changes
+numerically, including an overflow to the greatest finite datum. -/
 theorem fromBinary_inexact_iff {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
     (x : Model fmt) (a value : ℚ) (hx : Model.toRat? x = some a)
     (hv : (fromBinary f mode x).value.toRat? = some value) :
@@ -121,8 +122,8 @@ theorem fromBinary_inexact_iff {fmt : FloatFormat} (f : Format) (mode : Rounding
   rw [fromBinary_eq_project f mode x a hx] at hv ⊢
   exact project_inexact_iff f mode a value 0 _ hv
 
-/-- Decimal conversion of a finite binary value signals underflow precisely for an inexact tiny
-input; an overflowing input is never tiny. -/
+/-- Decimal conversion of a finite binary value signals underflow if and only if the input is tiny
+and the result inexact. An overflowing input is never tiny. -/
 theorem fromBinary_underflow_iff {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
     (x : Model fmt) (a : ℚ) (hx : Model.toRat? x = some a) :
     (fromBinary f mode x).status.underflow = true ↔

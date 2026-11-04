@@ -12,10 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Runtime
 /-!
 # Correct rounding of configured posit trigonometric operations
 
-The sine, cosine, tangent, and inverse-function theorems identify each configured result with
-one rounding of the real function, under the stated domain conditions. NaR propagation and
-out-of-domain results are proved separately. All results hold for every lawful storage codec
-and every valid posit width.
+For sine, cosine, tangent, and their inverses, theorems such as `sin_eq_real` identify each
+configured result with one rounding of the real function, under the stated domain conditions.
+NaR propagation and out-of-domain results get their own theorems, such as
+`arcSin_eq_nar_of_outside`. Everything holds for every lawful storage codec and every valid posit
+width.
 -/
 
 public section

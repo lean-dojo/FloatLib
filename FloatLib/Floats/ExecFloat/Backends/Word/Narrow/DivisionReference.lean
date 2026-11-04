@@ -11,14 +11,13 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 /-!
 # Exact-rational reference division for native binary32 words
 
-The exact-rational reference divider specifies the result against which the direct binary32 word
-divider is refined. It decodes finite binary32 operands, handles finite division by zero
-according to IEEE binary32, and delegates nonzero quotients to the exact rational rounder.
+This is the reference that the binary32 word divider is refined against. It decodes finite binary32
+operands, handles finite division by zero as IEEE binary32 prescribes, and passes nonzero quotients
+to the exact rational rounder.
 
-The optimized one-word divider and its proof live in `Narrow.Division.Runtime` and
-`Narrow.Division.Proof`. Keeping the reference
-operation independent prevents division-only clients from depending on the much larger
-addition/FMA implementation core.
+You'll find the optimized one-word divider and its proof in `Narrow.Division.Runtime` and
+`Narrow.Division.Proof`. We keep the reference operation on its own so that clients who only divide
+don't depend on the much larger addition/FMA implementation core.
 -/
 
 @[expose] public section

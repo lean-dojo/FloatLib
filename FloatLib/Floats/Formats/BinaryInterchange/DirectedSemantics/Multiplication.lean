@@ -13,11 +13,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 # Directed multiplication soundness for conventional IEEE formats
 
 For finite operands, `mul x y (mode := .down)` and `mul x y (mode := .up)` round the same exact
-dyadic product in opposite directions. The extended-real statements hold even when outward
-rounding overflows.
-
-The bounds hold for every descriptor satisfying `fmt.isIEEE = true`, with no restriction to named
-widths.
+dyadic product in opposite directions. Stated in the extended reals, the bounds hold even when
+outward rounding overflows, and they hold for every descriptor with `fmt.isIEEE = true`, whatever
+its widths.
 -/
 
 @[expose] public section

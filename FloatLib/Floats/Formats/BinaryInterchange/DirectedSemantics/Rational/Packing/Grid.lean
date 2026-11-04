@@ -13,11 +13,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Grid bounds for directed rational packing
 
-The executable packer rescales a rational to the subnormal or normal grid, then rounds its
-quotient to an integer. Rescaling by a power of two and restoring that scale preserves the exact
-value. The bounds below describe the scaled quotient and its floor and ceiling.
+The executable packer rescales a rational to the subnormal or normal grid and then rounds its
+quotient to an integer. Rescaling by a power of two and restoring that scale keeps the exact
+value, and the bounds below describe the scaled quotient with its floor and ceiling.
 
-`Packing.Branches` identifies the corresponding executable branches. `Packing.Downward` and
+`Packing.Branches` identifies the matching executable branches, and `Packing.Downward` and
 `Packing.Upward` use these inequalities to bound the packed results.
 -/
 

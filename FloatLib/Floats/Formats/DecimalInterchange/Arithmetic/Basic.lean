@@ -18,26 +18,29 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Inspection.Basic
 /-!
 # Decimal interchange arithmetic and its numerical guarantees
 
-Exact rational intermediates implement addition, subtraction, multiplication,
-division, and fused multiply-add. An integer square root and exact squared
-midpoint comparisons implement square root.
+This is the import for decimal arithmetic together with its proofs. Addition, subtraction,
+multiplication, division, and fused multiply-add compute with exact rational intermediates, and
+square root uses an integer square root and compares exact squared midpoints.
 
-The imported theorems establish destination validity, nearest and directed
-rounding bounds, exactness on every representable rational, signed-zero and
-preferred-cohort optimality for exact results, least-quantum cohorts for inexact
-results, and numerical inexactness. Quantize
-rounds directly to its requested quantum, with fixed-grid error and status proofs.
-For valid finite inputs in formats with nonnegative maximum quantum, integral
-rounding preserves `max(Q(x), 0)` and produces an integer. A custom format with
-negative maximum quantum returns invalid because it cannot store that preferred
-quantum. The two variants differ only in whether numerical inexactness raises a flag.
-Decimal tininess is tested before rounding, except that quantize never signals
-underflow. These guarantees cover the operations provided here;
-they are not a claim of complete IEEE 754 implementation or certification.
+The imported theorems prove that
+* every result is a valid datum of the destination format
+* nearest and directed rounding meet their error bounds
+* a result that is representable comes back with no rounding error
+* exact results get the right signed zero and the preferred cohort
+* inexact results get the cohort with the least quantum
+* the inexact flag means the value really differs from the exact one
 
-`Inspection.Basic` adds exact comparisons and their flags, numerical classification,
-total-order laws and tie rules, quantum queries, and bit-preserving sign operations.
+Quantize rounds straight to the quantum you ask for, with proofs of its fixed-grid error and its
+status. For valid finite inputs in a format whose maximum quantum is nonnegative, integral rounding
+keeps `max(Q(x), 0)` and returns an integer. A custom format with a negative maximum quantum can't
+store that preferred quantum, so it returns invalid. The two integral variants differ only in
+whether numerical inexactness raises a flag. Decimal tininess is tested before rounding, except
+that quantize never signals underflow. These guarantees are about the operations provided here,
+and we don't claim a complete or certified IEEE 754 implementation.
 
-Use `DecimalInterchange.Basic` separately for BID/DPD interchange codecs, or
-`Arithmetic.Operations` when only executable arithmetic is needed.
+`Inspection.Basic` adds exact comparisons and their flags, numerical classification, the
+total-order laws and tie rules, quantum queries, and the sign operations that keep every bit.
+
+For the BID and DPD interchange codecs, import `DecimalInterchange.Basic` on its own. If all you
+need is executable arithmetic, `Arithmetic.Operations` is enough.
 -/

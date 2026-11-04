@@ -11,8 +11,10 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Field
 /-!
 # Native-word posit decoding
 
-Candidate, finite, and total decoders read posit encodings stored in `UInt64`. Their storage and
-range refinements live in
+Posit words stored in a `UInt64` are decoded here. `decodeFinite` takes a word known to be finite
+and nonzero, and the total decoder `toDyadic?` takes any word, giving `none` for NaR and the
+canonical exact-dyadic zero for zero. Their storage and range refinements, along with those of the
+candidate decoder, are in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Decode.Proof`.
 -/
 

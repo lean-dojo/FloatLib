@@ -13,17 +13,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runti
 /-!
 # Executable complex numbers over an arbitrary binary format
 
-`ExecComplex fmt` stores one `Model fmt` for each Cartesian component. The format parameter is
-not fixed to binary32: the same definition supports binary16, bfloat16, binary64, binary128,
+`ExecComplex fmt` stores one `Model fmt` for each Cartesian component. Nothing ties the format
+to binary32, so the same definition supports binary16, bfloat16, binary64, binary128,
 binary256, and custom exponent/fraction widths.
 
 Complex multiplication uses four scalar multiplications followed by one subtraction and one
-addition. This evaluation order matters in floating-point arithmetic, and the semantic theorem in
-`Complex.Semantics` states it.
+addition. In floating point that order matters, so the semantic theorem in `Complex.Semantics`
+states it.
 
-Division uses the larger denominator component to form a ratio. Magnitude scales both components
-before squaring. These evaluation orders avoid squaring large unscaled components, but do not
-guarantee finite intermediates or correct rounding of the exact complex operation.
+Division uses the larger denominator component to form a ratio, and magnitude scales both components
+before squaring. Both choices avoid squaring large unscaled components, but they guarantee neither
+finite intermediates nor correct rounding of the exact complex operation.
 -/
 
 @[expose] public section
@@ -44,7 +44,7 @@ instance {fmt : FloatFormat} : Repr (ExecComplex fmt) where
 
 namespace ExecComplex
 
-/-- A complex value is finite exactly when both encoded components are finite. -/
+/-- A complex value is finite if and only if both encoded components are finite. -/
 @[inline] def isFinite {fmt : FloatFormat} (z : ExecComplex fmt) : Bool :=
   Model.isFinite z.re && Model.isFinite z.im
 
@@ -102,7 +102,7 @@ namespace Internal
 /--
 Ratio division with the real denominator component as pivot.
 
-Every multiplication, sum, difference, and quotient is rounded separately.
+Every multiplication, sum, difference, and quotient gets its own rounding.
 -/
 @[inline] def divRealDominant {fmt : FloatFormat}
     (x y : ExecComplex fmt) : ExecComplex fmt :=
@@ -137,18 +137,18 @@ Finite inputs alone do not exclude overflow, underflow, or a zero rounded denomi
     Internal.divRealDominant x y
 
 /--
-Magnitude computed by scaling before squaring and restoring the scale after square root.
+Magnitude, computed by scaling before squaring and restoring the scale after the square root.
 
-A zero scale returns positive zero on finite IEEE inputs. All finite arithmetic uses the component
-kernels, so the result need not be one rounding of the exact norm. An infinite component gives
-positive infinity even when the other component is a quiet NaN. If either component is a
-signaling NaN, or neither is infinite, nonfinite inputs use the scalar sum of absolute components
-and its NaN selection and quieting policy.
+All finite arithmetic uses the component kernels, so the result need not be one rounding of the
+exact norm, and a zero scale returns positive zero on finite IEEE inputs. An infinite component
+gives positive infinity even beside a quiet NaN. If either component is a signaling NaN, or
+neither is infinite, nonfinite inputs use the scalar sum of absolute components with its NaN
+selection and quieting policy.
 
-The format must also have enough range for the normalized intermediate sum. For example,
-`FloatFormat.custom 2 2 2 .ieee` maps `(0.5, 0.5)` to infinity because the normalized sum `2`
-overflows, although the nearest rounded exact norm is `0.75`. This custom bias also fails
-`fmt.isIEEE`, so the finite rounded-semantics theorem does not apply.
+The format also needs range for the normalized intermediate sum. `FloatFormat.custom 2 2 2 .ieee`
+maps `(0.5, 0.5)` to infinity because that sum, `2`, overflows, though the nearest rounded exact
+norm is `0.75`. This custom bias also fails `fmt.isIEEE`, so the finite rounded-semantics theorem
+does not apply.
 -/
 @[inline] def magnitude {fmt : FloatFormat} (z : ExecComplex fmt) : Model fmt :=
   if isFinite z then

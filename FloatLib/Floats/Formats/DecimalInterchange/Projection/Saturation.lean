@@ -10,11 +10,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Proof
 /-!
 # Saturated projection and exponent clamping
 
-At or above `10^(maxQuantum + precision)` every magnitude overflows, and the outcome depends only
-on the rounding direction and sign. Strictly between zero and half the least quantum, every
-magnitude rounds on the least-quantum grid to the same coefficient, with inexact and underflow.
-These two facts show that `projectScaled` computes the same outcome as projecting the unclamped
-magnitude.
+Huge and tiny magnitudes behave uniformly, and that's what lets `projectScaled` clamp them. At or
+above `10^(maxQuantum + precision)` every magnitude overflows, and the outcome depends only on the
+rounding direction and sign. Strictly between zero and half the least quantum, every magnitude
+rounds on the least-quantum grid to the same coefficient, with inexact and underflow. Together
+these show that `projectScaled` computes the same outcome as projecting the unclamped magnitude.
 -/
 
 @[expose] public section

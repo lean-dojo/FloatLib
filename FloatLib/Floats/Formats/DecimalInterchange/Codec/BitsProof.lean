@@ -10,8 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Runtime
 /-!
 # Exact-width decimal sign and payload extraction
 
-Packing a sign with a payload below `f.signBase` recovers both fields exactly. Payload
-extraction stays below that bound for every word of the format's bit width.
+Both codecs keep the sign in the top bit and everything else below it. These lemmas show that the
+split is clean: pack a sign with a payload below `f.signBase` and you read both fields back
+unchanged, and for every word of the format's bit width the extracted payload stays below that
+bound.
 -/
 
 @[expose] public section

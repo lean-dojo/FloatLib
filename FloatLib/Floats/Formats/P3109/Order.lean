@@ -16,9 +16,10 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Order of positive finite IEEE P3109 codes
 
-Positive finite codes are ordered by their unsigned natural-number representation. This module
-proves that the exact decoder preserves that order for every valid descriptor, including the
-subnormal-to-normal boundary and the `P = 1` case.
+Positive finite codes are ordered by their unsigned natural-number representation, so in
+`binary8p4se` code `0x08`, the first normal value, sits above `0x07`, the last subnormal one. This
+module proves that the exact decoder preserves that order for every valid descriptor, across the
+subnormal-to-normal boundary and in the `P = 1` case.
 -/
 
 @[expose] public section
@@ -94,8 +95,8 @@ private theorem decodePositiveFinite_succ_lt
 /--
 Increasing a positive finite P3109 code strictly increases its exact numerical value.
 
-The theorem is parameterized by the descriptor; no named width, precision, or format profile is
-enumerated.
+The theorem is parameterized by the descriptor and enumerates no named width, precision, or
+format profile.
 -/
 theorem decodePositiveFinite_strictMono (format : Format) :
     StrictMono (fun bits => (format.decodePositiveFinite bits).toRat) :=

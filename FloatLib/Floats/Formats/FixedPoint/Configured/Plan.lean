@@ -12,12 +12,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 /-!
 # Execution planning for exact fixed-point arithmetic
 
-The direct integer-coefficient operations are both the executable implementations and their
-reference specifications.
+For exact fixed point, each direct integer-coefficient operation is both the executable
+implementation and its own reference specification.
 
-Same-scale addition and subtraction need no rounding. This plan registers their direct
-implementations with `ExecFloat`; rational exactness is proved separately in `Configured.Proof`.
-Conversions and scale-composing multiplication use their own APIs.
+Same-scale addition and subtraction need no rounding, so this plan registers their direct
+implementations with `ExecFloat`. Their rational exactness is proved in `Configured.Proof`.
+Conversions and scale-composing multiplication have APIs of their own.
 -/
 
 @[expose] public section

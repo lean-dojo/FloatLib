@@ -14,15 +14,16 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Non-NaN results for conventional IEEE directed arithmetic
 
-Rounding may produce a finite value or an infinity, but never a NaN, in every rounding direction,
-nearest-even and nearest-away included: for dyadic rounding
+Rounding gives a finite value or an infinity and never a NaN. That holds in every rounding
+direction, nearest-even and nearest-away included, both for dyadic rounding
 (`Internal.Directed.isNaN_roundDyadic_eq_false`) and for scaled rational rounding with a nonzero
-denominator (`Internal.Directed.isNaN_roundRatScaled_eq_false`). Addition, subtraction,
-multiplication, and fused multiply-add of finite operands, and division of finite operands by a
-nonzero divisor, are therefore numbers in every direction. `Status.Proof` uses the addition,
-multiplication and fused multiply-add theorems, and the rational-rounding lemma for division, to
-state the invalid flag from operand classes alone. The downward and upward specializations at the
-end serve the IEEE interval soundness proofs.
+denominator (`Internal.Directed.isNaN_roundRatScaled_eq_false`). So addition, subtraction,
+multiplication and fused multiply-add of finite operands are numbers in every direction, and so
+is division of finite operands by a nonzero divisor.
+
+`Status.Proof` uses the addition, multiplication and fused multiply-add theorems, and the
+rational-rounding lemma for division, to state the invalid flag from operand classes alone. The
+downward and upward specializations at the end are there for the IEEE interval soundness proofs.
 -/
 
 @[expose] public section

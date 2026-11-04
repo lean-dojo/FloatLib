@@ -15,16 +15,16 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Semantics of interior Posit field layouts
 
-The native guard/sticky packer constructs an unsigned Posit from a regime prefix and a retained
-exponent/fraction tail. This module proves the representation-independent meaning of the two
-interior layouts:
+The native guard/sticky packer builds an unsigned Posit from a regime prefix and a retained
+exponent/fraction tail. A regime comes in one of two interior layouts, and this module proves what
+each one means, independent of any representation:
 
-* a positive regime is a run of ones followed by a zero terminator;
+* a positive regime is a run of ones followed by a zero terminator,
 * a negative regime is a run of zeros followed by a one terminator.
 
-Both the retained code and the standard's one-bit-wider rounding boundary use these layouts.
-Keeping the decoder argument here lets scalar, fixed-limb, division, and square-root kernels share
-one proof without depending on `UInt64`.
+The retained code and the standard's one-bit-wider rounding boundary both use these layouts. With
+the decoder argument in this one place, the scalar, fixed-limb, division, and square-root kernels
+share a single proof that doesn't depend on `UInt64`.
 -/
 
 @[expose] public section
@@ -184,7 +184,7 @@ theorem nonnegativeRatAt_negativeInterior
 Decode the successor of a code that starts with `run` one bits and whose retained tail is all ones.
 
 Adding one carries through the complete retained tail into the regime. For an interior run this
-produces the zero-tail base of the next positive regime; at the final run it produces `maxPos`.
+produces the zero-tail base of the next positive regime. At the final run it produces `maxPos`.
 This is the representation lemma needed to prove that the native lower candidate and its packed
 successor are adjacent Posits.
 -/
@@ -262,7 +262,7 @@ theorem nonnegativeRatAt_positiveInteriorCarry
 Decode the successor of a negative-regime code whose retained tail is all ones.
 
 The carry shortens the run of leading zeros, so the successor is the zero-tail base of the next
-larger regime. The `run = 1` case crosses the central regime boundary and is handled explicitly.
+larger regime. The `run = 1` case crosses the central regime boundary and gets a case of its own.
 -/
 theorem nonnegativeRatAt_negativeInteriorCarry
     (format : Format) (run : Nat)
@@ -342,8 +342,8 @@ private theorem nextPrecision_tail_facts
 /--
 Decode the standard one-bit-wider boundary above a positive-regime retained code.
 
-Doubling the retained code appends `0`; adding one changes only that new bit. Consequently the
-regime is unchanged and the trailing field is exactly `2 * tail + 1`.
+Doubling the retained code appends `0`, and adding one changes only that new bit. So the regime
+is unchanged and the trailing field is `2 * tail + 1`.
 -/
 theorem nonnegativeRatAt_positiveInteriorThreshold
     (format : Format) (run tail : Nat)

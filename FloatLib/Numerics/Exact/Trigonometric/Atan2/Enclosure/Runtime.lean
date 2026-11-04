@@ -11,10 +11,11 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 /-!
 # Rational reduction and enclosures for the complex argument
 
-The input order is `(x, y)` for `arg (x + i*y)`. A rational slope and an integer multiple of
-π/4 describe the principal branch `(-π, π]`. The negative real axis selects `+π`.
-At the origin this numerical helper uses the totalized mathematical value zero; format
-wrappers whose contract rejects the origin must do so before rounding.
+Inputs come in the order `(x, y)` for `arg (x + i*y)`, and a rational slope and an integer multiple
+of π/4 describe the principal branch `(-π, π]`, and the negative real axis selects `+π`.
+
+At the origin this numerical helper uses the totalized mathematical value zero, so a format wrapper
+whose contract rejects the origin has to do so before rounding.
 -/
 
 @[expose] public section

@@ -19,9 +19,10 @@ public import FloatLib.Kernels.FixedWord.SignedMagnitude.Proof
 /-!
 # Correctness of packed one-word Posit signed sums
 
-Scalar alignment and signed-magnitude arithmetic are used exactly when the intermediate fits one
-word. Capacity failures continue in the common proved two-limb engine. These theorems establish
-that every branch returns the same direct exact-dyadic code.
+A one-word signed sum takes the scalar path, with scalar alignment and signed-magnitude
+arithmetic, exactly when its intermediate fits one word. Otherwise it continues in the common
+two-limb engine, which is proved already. These theorems show that every branch returns the same
+direct exact-dyadic code.
 -/
 
 @[expose] public section

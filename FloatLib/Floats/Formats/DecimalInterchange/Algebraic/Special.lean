@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Algebraic special values and preferred zero cohorts
 
-Reciprocal square root keeps the zero sign at its pole, including negative zero.
-Hypotenuse lets infinity dominate quiet NaNs but still signals any signaling NaN.
-Exact zeros use the preferred quantum clamped to the destination format.
+These theorems pin down what the algebraic operations do at zeros, infinities, and NaNs.
+Reciprocal square root keeps the sign of zero at its pole, so `-0` goes to `-∞`. In a hypotenuse an
+infinity beats a quiet NaN, but a signaling NaN raises invalid either way. Exact zeros take the
+preferred quantum, clamped to the destination format.
 -/
 
 @[expose] public section
@@ -42,7 +43,7 @@ theorem sqrtMagnitude_zero (f : Format) (mode : RoundingMode) (preferred : Int) 
 
 namespace Arithmetic
 
-/-- The square of either signed zero is `+0` with no flags; its quantum is twice the operand
+/-- The square of either signed zero is `+0` with no flags. Its quantum is twice the operand
 quantum, clamped to the format's quantum range. -/
 theorem square_zero (f : Format) (mode : RoundingMode) (s : Bool) (q : Int) :
     square f mode (.finite s 0 q) =
@@ -76,7 +77,7 @@ theorem rsqrt_negative (f : Format) (mode : RoundingMode) (c : Nat) (q : Int)
     (hc : c ≠ 0) : rsqrt f mode (.finite true c q) = invalidResult := by
   simp [rsqrt, hc]
 
-/-- Both zero signs disappear in a hypotenuse; the finer operand cohort is preferred. -/
+/-- A hypotenuse of two zeros is `+0` whatever their signs, in the finer operand cohort. -/
 theorem hypot_zero (f : Format) (mode : RoundingMode) (sx sy : Bool) (qx qy : Int) :
     hypot f mode (.finite sx 0 qx) (.finite sy 0 qy) =
       { value := .finite false 0 (max f.minQuantum (min (min qx qy) f.maxQuantum)) } := by
@@ -126,7 +127,7 @@ theorem powInt_zero_neg (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int
   simp [powInt, hn]
 
 /-- A positive integer power of a signed zero is an exact zero with the sign of the power, negative
-only for `-0` with an odd exponent, and no flags; its quantum is the operand quantum times the
+only for `-0` with an odd exponent, and no flags. Its quantum is the operand quantum times the
 exponent, clamped to the format's quantum range. -/
 theorem powInt_zero_pos (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
     (hn : 0 < n) :

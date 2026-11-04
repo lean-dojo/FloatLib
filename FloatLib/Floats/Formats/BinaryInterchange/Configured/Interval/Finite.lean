@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Finite
 # Configured interval enclosures for finite-only encodings
 
 Finite-only formats saturate on overflow. Unlike an IEEE interval with infinite endpoints,
-their whole range cannot enclose every real number. These theorems transport the existing
-model results with explicit range hypotheses on the exact endpoint calculations.
+their whole range cannot enclose every real number. These theorems transport the model results
+with range hypotheses on the exact endpoint calculations.
 -/
 
 @[expose] public section

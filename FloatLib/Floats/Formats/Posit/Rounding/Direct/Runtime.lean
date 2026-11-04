@@ -13,14 +13,14 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Runtime
 /-!
 # Executable direct exact-dyadic posit packing
 
-Direct posit packing rounds the normalized exact-dyadic bit stream in one pass:
+The reference rounder searches for a code. Direct packing doesn't. It reads the normalized bit
+stream of an exact dyadic once and writes the posit fields as it goes:
 
-* the exact binary scale determines the standard two-bit-exponent regime;
-* the regime, exponent, and normalized fraction are emitted most-significant bit first;
-* one shared guard-and-sticky kernel performs nearest-even rounding at every width.
+* The exact binary scale gives the regime of the standard two-bit exponent.
+* Regime, exponent, and normalized fraction come out most significant bit first.
+* One guard-and-sticky kernel, shared by every width, does the nearest-even rounding.
 
-Direct packing avoids the reference rounder's search. Its equality to the exact model is proved
-in `Direct.Proof`.
+`Direct.Proof` proves that the result equals the exact model.
 -/
 
 @[expose] public section
@@ -30,10 +30,10 @@ namespace FloatLib.Floats.Formats.Posit.Model.DirectDyadicPacking
 open FloatLib.Numerics
 
 /--
-Round a positive exact dyadic directly from its normalized bit stream.
+Round a positive exact dyadic in one pass over its normalized bit stream.
 
-Interior values use one general guard/sticky kernel for every width. Regimes that consume the
-entire payload map directly to `maxPos` or `minPos`.
+Interior values go through one general guard/sticky kernel for every width. Regimes that use up the
+whole payload give `maxPos` or `minPos` at once.
 -/
 @[inline] def roundPositiveCode
     (format : Format) (target : FloatLib.Numerics.Dyadic) : Nat :=

@@ -15,9 +15,10 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Base
 /-!
 # Correct rounding of base-two and base-ten posit logarithms
 
-The inverse relation between logarithm and exponentiation transfers every exact boundary
-comparison to the rational-power kernel. The resulting theorem includes rational logarithms,
-irrational logarithms, exact ties, signed saturation, and invalid argument domains.
+Logarithm and exponentiation are inverse to each other, so every exact boundary comparison for a
+logarithm turns into a comparison in the rational-power kernel, and what comes out is one theorem
+covering rational and irrational logarithms, exact ties, signed saturation, and invalid argument
+domains.
 -/
 
 @[expose] public section

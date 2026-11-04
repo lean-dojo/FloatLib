@@ -13,13 +13,13 @@ import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 /-!
 # Correctness of signed-magnitude dyadic addition
 
-The runtime aligns dyadic significands and combines their natural-number magnitudes by sign.
-`Internal.addDyadic_eq` identifies this implementation with exact dyadic addition, including
-cancellation and the signed-zero rule.
+At runtime, dyadic significands are aligned and their natural-number magnitudes combined by sign.
+`Internal.addDyadic_eq` identifies this implementation with exact dyadic addition, cancellation and
+the signed-zero rule included.
 
-The `@[csimp]` theorem `addDyadic_eq_internal` supplies the equality used by the compiler
-substitution. The remaining public lemmas describe equal- and adjacent-exponent cases used by
-native arithmetic refinements.
+Its `@[csimp]` theorem `addDyadic_eq_internal` supplies the equality that the compiler substitution
+needs, and the remaining public lemmas describe the equal- and adjacent-exponent cases that native
+arithmetic refinements use.
 -/
 
 @[expose] public section

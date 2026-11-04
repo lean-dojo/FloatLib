@@ -17,15 +17,14 @@ public import FloatLib.Floats.Formats.Posit.Configured.ByteTable.Construction
 /-!
 # Certified candidates for byte-sized posits
 
-Byte carriers support exhaustive tables, packed-word arithmetic, width-generic integer arithmetic,
-and the exact reference implementation. This module assembles those four choices for each
-operation.
+A posit of at most eight bits can run four ways: from an exhaustive table, with packed-word
+arithmetic, with width-generic integer arithmetic, or through the exact reference implementation.
+This module puts those four choices together for each operation, and ties every one of them to the
+same configured specification. So the choice changes execution cost and memory residency, and
+never the posit arithmetic.
 
-Every candidate is connected to the same configured specification. Selection affects execution
-cost and memory residency only; it does not alter posit arithmetic.
-
-`ByteDispatch.Proof` proves that the tag-based executor uses the same selection metadata.
-Other storage plans are handled in `Configured.Plan.Dispatch`.
+`ByteDispatch.Proof` shows that the tag-based executor reads the same selection metadata. Other
+storage plans are handled in `Configured.Plan.Dispatch`.
 -/
 
 @[expose] public section

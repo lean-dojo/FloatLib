@@ -15,10 +15,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Proof
 /-!
 # Correctness of native one-word finite division
 
-The one-word quotient kernel computes only cases whose normalized quotient and rounding evidence
-fit its fixed-width budget. Every IEEE descriptor stored in one word meets this budget:
-the sign and at least two exponent bits leave at most 61 fraction bits. The refinement relates its
-logarithms, restoring quotient, guard/sticky information, and packed result to the complete
+The one-word quotient kernel only computes cases whose normalized quotient and rounding evidence fit
+its fixed-width budget. Every IEEE descriptor stored in one word meets that budget, because the sign
+and at least two exponent bits leave at most 61 fraction bits. The refinement relates the kernel's
+logarithms, restoring quotient, guard and sticky information, and packed result to the complete
 format-generic quotient rounder.
 
 Under `NativeSmallWord.StorageEligible`, `divNormal_refines_of_storage` identifies every accepted
@@ -76,8 +76,8 @@ private theorem encodedExponent_fit
 The one-word quotient rounder with the format's named normal exponent bounds in place of the
 machine-word bias.
 
-`roundNormalNative?` reads its bounds from `NativeSmallWord.biasInt` so that compiled code
-performs no `Nat` shift per call; this proof-facing twin is the same computation stated with
+`roundNormalNative?` reads its bounds from `NativeSmallWord.biasInt` so that compiled code does no
+`Nat` shift per call. This proof-facing twin is the same computation stated with
 `ieeeMinNormalExponent`, `ieeeMaxNormalExponent`, and `bias`, and `roundNormalNative_eq_bounds`
 identifies the two for every one-word format.
 -/

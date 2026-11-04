@@ -13,17 +13,19 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff
 # Local rounding of model operations
 
 `Analysis.MixedError` states each rounded model operation together with the propagation of its
-operands' errors. An error analysis that chooses the propagation rule itself needs the rounding
-alone: for an IEEE descriptor, a finite result has relative error `u` against the exact operation
-on the computed operands, with no absolute part for sums and differences and the underflow error
-for products, quotients, square roots and fused multiply-adds. A quotient keeps a finite divisor
-and a square root a finite operand in its domain. Finite operands whose exact result has an
-enclosure `(1 + r) * |x₀| + a` at most the largest finite value have a finite result, a quotient
-also needing a divisor that is not an executable zero. These are the descriptor-model
-counterparts of `Configured.MixedError.Rounding`.
+operands' errors. An error analysis that picks the propagation rule itself needs the rounding
+alone, and that is what this file gives, as the descriptor-model counterparts of
+`Configured.MixedError.Rounding`.
 
-Importing this module registers them with `roundoff`, which then proves mixed bounds with a
-relative error for model computations, as it does for configured ones. Without it a model
+For an IEEE descriptor, a finite result has relative error `u` against the exact operation on the
+computed operands. Sums and differences have no absolute part. Products, quotients, square roots
+and fused multiply-adds add the underflow error. A quotient keeps a finite divisor and a square
+root a finite operand in its domain. Finite operands whose exact result has an enclosure
+`(1 + r) * |x₀| + a` at most the largest finite value have a finite result, and a quotient also
+needs a divisor that is not an executable zero.
+
+Importing this module registers these theorems with `roundoff`, which then proves mixed bounds
+with a relative error for model computations, as it does for configured ones. Without it a model
 computation gets its absolute bound, read as a mixed bound with no relative part.
 -/
 

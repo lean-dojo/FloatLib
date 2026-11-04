@@ -10,26 +10,28 @@ public import Mathlib.Data.Int.Basic
 /-!
 # Decimal interchange layouts
 
-The named presets have the parameters of IEEE 754-2019, Table 3.6 and §3.5.2.
-The descriptor also permits custom layouts, without identifying them as standardized
-formats. Both BID and DPD represent the same datums, with an externally selected encoding.
-The quantum exponent bounds concern the stored coefficient, including its trailing
-zeros, rather than a normalized significand.
+A `Format` fixes three numbers: how many declets the layout has, how wide its exponent
+continuation is, and its bias. The presets `decimal32`, `decimal64`, and `decimal128` carry the
+parameters of IEEE 754-2019, Table 3.6 and §3.5.2. For `decimal64`, 5 declets give a precision of
+3 * 5 + 1 = 16 digits, and the word is 6 + 8 + 10 * 5 = 64 bits wide. You can also describe custom
+layouts, and nothing here calls them standardized formats.
+
+BID and DPD represent the same datums, and the encoding is chosen outside the word. The quantum
+exponent bounds apply to the stored coefficient, trailing zeros included, and not to a normalized
+significand.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
-/-- A decimal layout with one sign bit, five combination bits, an exponent
-continuation, and a sequence of ten-bit declets. The positive exponent width
-separates NaN signaling from payload bits. Bias is unrestricted: the codec does
-not require quantum zero to be representable. Precision is `3 * declets + 1`;
-this is an interchange descriptor, not a descriptor for every decimal precision.
-Custom layouts need not be IEEE formats.
+/-- A decimal interchange layout: one sign bit, five combination bits, an exponent continuation,
+and ten-bit declets. The exponent width is positive so that a bit separates NaN signaling from the
+payload. Any bias works, since the codec doesn't need quantum zero to be representable. Precision
+is always `3 * declets + 1`, and custom layouts need not be IEEE formats.
 
-A layout is written `{ declets := 2, exponentBits := 6, bias := 101 }`. With a numeral
-`exponentBits`, `decide` supplies the proof field, and a zero width fails with the message
+You write a layout as `{ declets := 2, exponentBits := 6, bias := 101 }`. With a numeral
+`exponentBits`, `decide` fills in the proof field, and a zero width fails with the message
 `a decimal format requires exponentBits ≥ 1`. -/
 structure Format where
   /-- Number of trailing groups of three decimal digits. -/
@@ -157,7 +159,7 @@ theorem minQuantum_le_maxQuantum (f : Format) : f.minQuantum ≤ f.maxQuantum :=
   dsimp only [minQuantum, maxQuantum]
   omega
 
-/-- The optional bias bounds say exactly that quantum zero is representable. -/
+/-- The optional bias bounds hold if and only if quantum zero is representable. -/
 theorem hasQuantumZero_iff (f : Format) :
     f.HasQuantumZero ↔ f.minQuantum ≤ 0 ∧ 0 ≤ f.maxQuantum := by
   constructor

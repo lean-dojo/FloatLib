@@ -13,8 +13,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Native.Instances
 /-!
 # Correctness of the fixed `UInt64` posit backend
 
-Each monomorphic `UInt64` operation first agrees with the shared carrier-generic packed kernel,
-then inherits that kernel's proof against the representation-independent specification.
+Each proof here takes two steps. The monomorphic `UInt64` operation is shown equal to the shared
+packed kernel, which is generic in the carrier, and then it inherits that kernel's proof against
+the representation-independent specification.
 -/
 
 @[expose] public section

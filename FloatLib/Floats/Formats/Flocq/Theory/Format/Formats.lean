@@ -11,14 +11,16 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Core
 /-!
 # Flocq-style formats (FIX / FLX / FLT)
 
-Exponent-selection functions `fexp : ℤ → ℤ` describe three real-valued format families:
+Three real-valued format families come from three exponent-selection functions `fexp : ℤ → ℤ`:
 
-- `FIX` is a fixed-exponent grid;
-- `FLX` has fixed precision and unbounded exponents;
+- `FIX` is a fixed-exponent grid,
+- `FLX` has fixed precision and unbounded exponents,
 - `FLT` has fixed precision, a lower exponent bound, and gradual underflow.
 
-`FLT` has no upper exponent bound or overflow. Executable binary formats with infinities,
-NaNs, and signed zeros are defined in `FloatLib/Floats/Formats/BinaryInterchange/`.
+With precision `prec`, `FLX` picks `e - prec` for magnitude `e` and `FLT` picks
+`max (e - prec) emin`, while `FIX` ignores `e` and always picks `emin`. `FLT` has no upper exponent
+bound, so it never overflows. Executable binary formats with infinities, NaNs, and signed zeros
+are defined in `FloatLib/Floats/Formats/BinaryInterchange/`.
 
 References:
 
@@ -70,12 +72,12 @@ def ofInt? (digits : ℤ) : Option FormatPrecision :=
   change (0 : ℤ) < ((precision : ℕ) : ℤ)
   exact_mod_cast precision.2
 
-/-- Natural precision validation fails exactly at zero. -/
+/-- Natural precision validation fails at zero and nowhere else. -/
 @[simp] theorem ofNat?_eq_none_iff (digits : ℕ) :
     ofNat? digits = none ↔ digits = 0 := by
   simp [ofNat?]
 
-/-- Integer precision validation fails exactly for nonpositive inputs. -/
+/-- Integer precision validation fails if and only if the input is nonpositive. -/
 @[simp] theorem ofInt?_eq_none_iff (digits : ℤ) :
     ofInt? digits = none ↔ digits ≤ 0 := by
   simp [ofInt?]
@@ -145,7 +147,7 @@ abbrev flxValidExp (prec : ℤ) (h : 0 < prec) : ValidExp (flxExp prec) where
       · linarith
       · intros l hl; exfalso; linarith [h, H]
 
-/-- `flxExp prec` satisfies the generic exponent axioms exactly when `prec` is positive. -/
+/-- `flxExp prec` satisfies the generic exponent axioms if and only if `prec` is positive. -/
 theorem validExp_FLX_iff (prec : ℤ) : ValidExp (flxExp prec) ↔ 0 < prec := by
   constructor
   · intro hvalid
@@ -190,7 +192,7 @@ def FLXFormat (prec : ℤ) (x : ℝ) : Prop :=
   0 < prec ∧
     ∃ f : FloatRep β, x = toReal f ∧ Int.natAbs f.mantissa < β.base ^ prec.toNat
 
-/-- Nonpositive precision is rejected by the explicit FLX format predicate. -/
+/-- With nonpositive precision, the bounded-mantissa predicate `FLXFormat` holds for no value. -/
 theorem not_flxFormat_of_nonpos (prec : ℤ) (hprec : prec ≤ 0) (x : ℝ) :
     ¬FLXFormat (β := β) prec x := by
   simp [FLXFormat, not_lt_of_ge hprec]
@@ -261,7 +263,7 @@ abbrev fltValidExp (emin prec : ℤ) (h : 0 < prec) : ValidExp (fltExp emin prec
             dsimp [fltExp]
             exact max_eq_right hle
 
-/-- `fltExp emin prec` satisfies the exponent axioms exactly for positive precision. -/
+/-- `fltExp emin prec` satisfies the exponent axioms if and only if the precision is positive. -/
 theorem validExp_FLT_iff (emin prec : ℤ) : ValidExp (fltExp emin prec) ↔ 0 < prec := by
   constructor
   · intro hvalid
@@ -332,7 +334,7 @@ def FLTFormat (emin prec : ℤ) (x : ℝ) : Prop :=
     ∃ f : FloatRep β, x = toReal f ∧
       Int.natAbs f.mantissa < β.base ^ prec.toNat ∧ emin ≤ f.exponent
 
-/-- Nonpositive precision is rejected by the explicit FLT format predicate. -/
+/-- With nonpositive precision, the bounded-mantissa predicate `FLTFormat` holds for no value. -/
 theorem not_fltFormat_of_nonpos (emin prec : ℤ) (hprec : prec ≤ 0) (x : ℝ) :
     ¬FLTFormat (β := β) emin prec x := by
   simp [FLTFormat, not_lt_of_ge hprec]

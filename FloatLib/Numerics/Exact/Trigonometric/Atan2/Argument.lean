@@ -13,8 +13,8 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 /-!
 # Principal-branch identities for the complex argument
 
-The tangent inverse is applied only after locating the argument in its open principal branch.
-These identities include the real and imaginary axes and Mathlib's totalization at the origin.
+We apply the inverse tangent only after locating the argument in its open principal branch. They
+also cover the real and imaginary axes and Mathlib's totalization at the origin.
 -/
 
 public section

@@ -12,31 +12,26 @@ import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 /-!
 # Directed rounding (down/up) for Flocq-style formats
 
-For interval propagation under a *discrete* numeric grid (float, fixed-point, quantization), one
-typically wants **directed rounding** at interval endpoints:
+When an interval is pushed through a computation on a discrete numeric grid (float, fixed-point,
+quantization), its endpoints need **directed rounding**:
 
-- `down x` is a representable value with
-  $\operatorname{down}(x)\le x$,
-- `up x` is a representable value with
-  $x\le\operatorname{up}(x)$.
+- `down x` is a representable value with $\operatorname{down}(x)\le x$,
+- `up x` is a representable value with $x\le\operatorname{up}(x)$.
 
-The `Rounder` interface that the enclosure proofs take records only the two inequalities, so the
-identity maps form a `Rounder` too. Representability belongs to the particular rounder:
+On IEEE-754 hardware these are the rounding modes toward $-\infty$ and toward $+\infty$. FloatLib
+gets the same directions from Flocq-style rounding on $\mathbb{R}$, using `round` with the
+floor/ceil rounding functions from `FloatLib/Floats/Formats/Flocq/Theory/Rounding/Core.lean`. These
+rounders work for any radix $\beta$ and any exponent selection function `fexp` satisfying
+`ValidExp`.
+
+Enclosure proofs take a `Rounder` interface that records only the two inequalities, so the identity
+maps form a `Rounder` too. Representability belongs to the particular rounder, and
 `genericFormat_roundDown` and `genericFormat_roundUp` show that `formatRounder`'s endpoints lie on
-the $(\beta,\mathtt{fexp})$ grid.
+the $(\beta,\mathtt{fexp})$ grid. `formatRounder` below gets its two inequalities from FloatLib's
+Flocq grid theorems.
 
-In IEEE-754 hardware this corresponds to the rounding modes toward $-\infty$ and toward
-$+\infty$. FloatLib represents these directions with Flocq-style
-rounding on $\mathbb{R}$ via `round` together with
-the floor/ceil rounding functions from `FloatLib/Floats/Formats/Flocq/Theory/Rounding/Core.lean`.
-
-The rounders work for any radix $\beta$ and exponent selection
-function `fexp` satisfying `ValidExp`.
-
-The format and rounding model follows S. Boldo and G. Melquiond,
-[Flocq: A Unified Library for Proving Floating-Point Algorithms
-in Coq](https://doi.org/10.1109/ARITH.2011.40), ARITH 2011. `formatRounder` below obtains the two
-inequalities from FloatLib's Flocq grid theorems.
+Our format and rounding model follows S. Boldo and G. Melquiond, [Flocq: A Unified Library for
+Proving Floating-Point Algorithms in Coq](https://doi.org/10.1109/ARITH.2011.40), ARITH 2011.
 -/
 
 @[expose] public section
@@ -87,11 +82,10 @@ theorem genericFormat_roundUp (x : ℝ) :
 /--
 A pair of real maps bracketing every real number from below and above.
 
-This is the only interface the enclosure proofs need: they use
-$\operatorname{down}(x)\le x\le\operatorname{up}(x)$ and nothing else. In particular the structure
-does not require `down x` or `up x` to lie on any representable grid, nor does it require
-monotonicity; the identity maps satisfy both bounds. Representability is a property of a
-particular instance such as `formatRounder`, whose outputs lie on the $(\beta,\mathtt{fexp})$ grid
+The enclosure proofs use $\operatorname{down}(x)\le x\le\operatorname{up}(x)$ and nothing else, so
+the structure asks neither that `down x` and `up x` lie on a representable grid nor that they be
+monotone. The identity maps satisfy both bounds. Representability is a property of an instance such
+as `formatRounder`, whose outputs lie on the $(\beta,\mathtt{fexp})$ grid
 (`genericFormat_roundDown`, `genericFormat_roundUp`).
 -/
 structure Rounder where

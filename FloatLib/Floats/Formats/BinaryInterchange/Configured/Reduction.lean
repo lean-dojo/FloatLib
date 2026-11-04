@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction.Tre
 /-!
 # Configured binary reductions
 
-Public entry point for executable configured `sum` and `dot` operations and their refinement
-theorems, together with error bounds for user-selected trees of rounded additions.
-Execution-only consumers of exact accumulation may import `Configured.Reduction.Runtime`.
+This is the public entry point for executable configured `sum` and `dot` operations and their
+refinement theorems, together with error bounds for user-selected trees of rounded additions.
+Code that only executes exact accumulation may import `Configured.Reduction.Runtime` instead.
 -/

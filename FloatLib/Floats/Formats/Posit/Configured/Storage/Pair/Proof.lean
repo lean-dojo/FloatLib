@@ -11,7 +11,8 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Pair.Runtime
 /-!
 # Correctness of two-limb posit packing
 
-Direct pair packing decodes to the supplied complete encoding.
+Both ways of packing a pair, `packWord` and `pack`, decode to the complete encoding they were
+given.
 -/
 
 @[expose] public section
@@ -32,7 +33,7 @@ variable {format : Format}
       Model.ofNatBits (format := format) word.toNat := by
   rfl
 
-/-- Direct pair packing denotes exactly the supplied complete encoding. -/
+/-- Direct pair packing decodes to the supplied complete encoding. -/
 @[simp, grind =] theorem toModel_pack
     (width_le : format.bits ≤ 128)
     (bits : Nat) (hbits : bits < format.modulus) :

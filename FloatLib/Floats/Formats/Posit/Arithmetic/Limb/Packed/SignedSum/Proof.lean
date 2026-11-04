@@ -16,9 +16,10 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.SignedSum.Run
 /-!
 # Correctness of packed two-limb Posit sums
 
-Native decoding, alignment, signed-magnitude accumulation, and rounding implement exact dyadic
-addition and subtraction. The capacity branch is used only when an aligned intermediate genuinely
-exceeds two limbs; it shares the same exact semantics.
+A packed two-limb sum decodes natively, aligns, accumulates signed magnitudes, and rounds. We
+show here that this whole pipeline is exact dyadic addition and subtraction. The capacity
+branch runs only when an aligned intermediate really is wider than two limbs. It has the same
+exact semantics.
 -/
 
 @[expose] public section

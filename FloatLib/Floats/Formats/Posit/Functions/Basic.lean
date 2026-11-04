@@ -15,12 +15,13 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Basic posit functions
 
-Absolute value, sign, integer rounding, and representation successor/predecessor from Section 5.2
-of the 2022 Posit Standard. Negation is defined with the model.
+Section 5.2 of the 2022 Posit Standard lists a handful of basic functions, and this module
+defines them: absolute value, sign, integer rounding, and the representation successor and
+predecessor. Negation is defined with the model.
 
-`next` and `prior` wrap over the complete bit vector, including NaR, as specified by the standard.
-Other posit-valued functions preserve NaR. Integer rounding uses exact rational decoding,
-`Rat.floor` or `Rat.ceil`, and the shared posit rounder.
+As the standard asks, `next` and `prior` wrap over the complete bit vector, so they step through NaR
+like any other word. Every other posit-valued function here preserves NaR. Integer rounding works
+from the exact rational value, with `Rat.floor` or `Rat.ceil` and the shared posit rounder.
 
 ## References
 

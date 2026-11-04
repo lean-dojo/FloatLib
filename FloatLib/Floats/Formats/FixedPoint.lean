@@ -29,11 +29,13 @@ public meta import FloatLib.Numerics.Capabilities.Radix
 /-!
 # Radix-parametric fixed-point formats
 
-This is the public entry point for exact and fixed-width fixed-point arithmetic. It exports the
-unbounded exact model, the common configured `ExecFloat.FixedPoint` carrier, bounded overflow
-policies, numerical automation, and `#float_info` support.
+A fixed-point number is an integer coefficient read at a fixed scale. With radix 10 and two
+fractional digits, the coefficient `314` means `3.14`. This module is the public entry point for
+both kinds the library has: the unbounded exact model, where no operation rounds or overflows, and
+fixed-width words with a named overflow policy. It exports those, the common configured
+`ExecFloat.FixedPoint` carrier, numerical automation, and `#float_info` support.
 
-The exact and bounded submodules can also be imported on their own for internal developments.
+For work inside the library, the exact and bounded submodules can also be imported on their own.
 
 ## References
 

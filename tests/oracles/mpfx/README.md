@@ -3,8 +3,8 @@
 MPFX is the C++ library from Saiki, Zorn, Richey, and Tatlock's "When Double Rounding is Correct"
 (arXiv:2610.09005). It computes a round-to-odd result in a `double` or `float` container, using
 either hardware arithmetic (`hw`) or error-free transformations (`eft`), and then rounds that
-result again to the target format. The scripts in this directory compare it with FloatLib, which
-gives the exact result and all five IEEE flags.
+result again to the target format. Here we compare it with FloatLib, which gives the exact
+result and all five IEEE flags.
 
 - `run.sh` checks one format, operation, and operand set in the four rounding directions required
   for binary formats.

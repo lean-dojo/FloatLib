@@ -13,10 +13,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 # Rounded-real meaning of Lean accuracy certificates
 
 Lean's unpacked-float model represents a positive real by a truncated natural mantissa, an
-exponent, and an `Accuracy` certificate. This module proves that `roundWithAccuracy` rounds that
-real exactly as the independent Flocq-style `roundAt` model whenever normalization only shifts
-right and the packed output remains finite. Agreement with `roundAt` requires a conventional
-IEEE descriptor. This bridge is used by square root and other non-dyadic kernels.
+exponent and an `Accuracy` certificate. We prove that `roundWithAccuracy` rounds that real the
+same way as the independent Flocq-style `roundAt` model, whenever normalization only shifts right
+and the packed output stays finite. Agreement with `roundAt` needs a conventional IEEE
+descriptor. Square root and the other non-dyadic kernels go through this bridge.
 -/
 
 @[expose] public section
@@ -151,7 +151,7 @@ theorem roundedMantissa_shiftToTargetExponent_eq_nearestEven
   simp [bpow, Numerics.binaryRadix, Numerics.Radix.toReal, div_eq_mul_inv]
 
 /--
-Lean's `roundWithAccuracy` precondition holds exactly when the exponent is at or below the
+Lean's `roundWithAccuracy` precondition holds if and only if the exponent is at or below the
 format's minimum exponent or the mantissa has at least as many bits as the precision.
 -/
 theorem le_targetExponent_totalExponent_iff (spec : Float.Model.Format)

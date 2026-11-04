@@ -12,11 +12,11 @@ public import FloatLib.Floats.Formats.Block.SharedScale.Runtime
 /-!
 # Executable configured shared-scale blocks
 
-These operations expose complete storage, exact decoding, and contextual quantization at a
-caller-selected exponent.
+These are the executable operations on configured blocks: reading the complete storage, decoding
+it exactly, and quantizing at an exponent the caller picks.
 
-The caller supplies the shared exponent, so different calibration strategies can use the same
-quantizer. Exponents and significands are unbounded integers; the vector type fixes the lane count.
+Because the caller supplies the shared exponent, one quantizer works for any calibration strategy.
+Exponents and significands are unbounded integers, and the vector type fixes the lane count.
 -/
 
 @[expose] public section
@@ -52,7 +52,7 @@ variable {lanes : Nat}
 @[inline] def decode (value : ExecFloat.SharedScale lanes) : Vector Rat lanes :=
   Formats.Block.decode value.toCode
 
-/-- Quantize every lane at an explicitly supplied shared exponent. -/
+/-- Quantize every lane at the shared exponent the caller supplies. -/
 @[inline] def quantizeAt (exponent : Int) (input : Vector Rat lanes) :
     ExecFloat.SharedScale lanes :=
   ofCode (Formats.Block.quantizeAt exponent input)

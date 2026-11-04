@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Exact.Hyperbolic.Runtime
 /-!
 # Correctly rounded posit hyperbolic functions
 
-The operations compare their exact real result with rational posit rounding boundaries.
-There is no intermediate posit rounding. NaR propagates, and inputs outside an inverse
-function's real domain produce NaR.
+Each operation compares its exact real result with rational posit rounding boundaries, so nothing
+is rounded to a posit before the end. NaR propagates. An input outside an inverse function's real
+domain, such as an argument below one for inverse hyperbolic cosine, produces NaR.
 
 ## Reference
 
@@ -70,7 +70,7 @@ def applyRat {format : Format} (operation : Rat → Model format) (value : Model
 
 end Hyperbolic
 
-/-- Correctly rounded hyperbolic tangent; NaR propagates. -/
+/-- Correctly rounded hyperbolic tangent. NaR propagates. -/
 def tanH {format : Format} (value : Model format) : Model format :=
   Hyperbolic.applyRat (Hyperbolic.tanhRat format) value
 
@@ -78,19 +78,19 @@ def tanH {format : Format} (value : Model format) : Model format :=
 def arcTanH {format : Format} (value : Model format) : Model format :=
   Hyperbolic.applyRat (Hyperbolic.artanhRat format) value
 
-/-- Correctly rounded hyperbolic sine; NaR propagates. -/
+/-- Correctly rounded hyperbolic sine. NaR propagates. -/
 def sinH {format : Format} (value : Model format) : Model format :=
   Hyperbolic.applyRat (Hyperbolic.sinhRat format) value
 
-/-- Correctly rounded hyperbolic cosine; NaR propagates. -/
+/-- Correctly rounded hyperbolic cosine. NaR propagates. -/
 def cosH {format : Format} (value : Model format) : Model format :=
   Hyperbolic.applyRat (Hyperbolic.coshRat format) value
 
-/-- Correctly rounded inverse hyperbolic sine; NaR propagates. -/
+/-- Correctly rounded inverse hyperbolic sine. NaR propagates. -/
 def arcSinH {format : Format} (value : Model format) : Model format :=
   Hyperbolic.applyRat (Hyperbolic.arsinhRat format) value
 
-/-- Correctly rounded inverse hyperbolic cosine; inputs below `1` produce NaR. -/
+/-- Correctly rounded inverse hyperbolic cosine. Inputs below `1` produce NaR. -/
 def arcCosH {format : Format} (value : Model format) : Model format :=
   Hyperbolic.applyRat (Hyperbolic.arcoshRat format) value
 

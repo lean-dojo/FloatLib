@@ -14,37 +14,38 @@ public import FloatLib.Numerics.Reduction
 /-!
 # Correctly rounded binary reductions
 
-`sum` decodes every operand exactly, adds in the shared dyadic domain, and rounds once into the
-requested destination format. `dot` does the same with exact products. Source and destination
-formats may differ, so the operations cover ordinary uniform reductions and mixed-precision
-accumulation with one API.
+`sum` decodes every operand without error, adds in the shared dyadic domain, and rounds once into
+the requested destination format. `dot` does the same with exact products. Source and
+destination formats may differ, so one API covers ordinary uniform reductions and
+mixed-precision accumulation.
 
-Exceptional inputs are deterministic:
+Exceptional inputs follow fixed, deterministic rules:
 
-* the first signaling NaN in traversal order is selected and quieted, ahead of every quiet NaN;
-* otherwise the first quiet NaN is selected;
-* opposite-signed infinities and `0 * ∞` raise invalid, even when a quiet NaN supplies the result;
-* one infinity sign is preserved; and
-* finite inputs are accumulated exactly and rounded once.
+* The first signaling NaN in traversal order is selected and quieted, ahead of every quiet NaN.
+* Otherwise the first quiet NaN is selected.
+* Opposite-signed infinities and `0 * ∞` raise invalid, even when a quiet NaN supplies the result.
+* Infinities of one sign keep that sign.
+* Finite inputs accumulate without error and are rounded once.
 
-NaN payloads are preserved when source and destination formats agree. Cross-format NaNs follow
-the ordinary `Model.cast` policy. An infinite result follows the destination's native overflow
-rule, matching casts: IEEE encodings preserve infinity, finite-with-NaN encodings return NaN,
-and fully finite encodings return the same-sign maximum. A destination without infinity raises
-overflow and inexact, and the ternary value is `.lt` for `+∞` and `.gt` for `-∞`. Empty
-reductions return positive zero. A sum of zeros with the same sign keeps that sign, and
-cancellation and mixed-sign zeros are negative only under rounding toward negative infinity. FNUZ
-destinations use positive zero.
+When source and destination formats agree, NaN payloads are preserved, and cross-format NaNs
+follow the ordinary `Model.cast` policy. An infinite result follows the destination's native
+overflow rule, as a cast does. IEEE encodings keep the infinity, finite-with-NaN encodings return
+NaN, and fully finite encodings return the maximum of the same sign. A destination without
+infinity also raises overflow and inexact, with ternary value `.lt` for `+∞` and `.gt` for `-∞`.
 
-There is no initial-addend argument. One product plus an addend is already IEEE FMA, and larger
-finite algebraic expressions can use `ExecFloat.roundOnce`. A repeated FMA chain is a different
-operation because it rounds every prefix. It agrees with `dot` only when those intermediate
-roundings are exact and the exceptional and signed-zero rules also agree.
+Empty reductions return positive zero. A sum of zeros with the same sign keeps that sign, while
+cancellation and mixed-sign zeros are negative only under rounding toward negative infinity.
+FNUZ destinations use positive zero.
 
-The binary reducer and a posit quire share the useful idea “exact products, then one final round,”
-but not the same machine model. This reducer uses an unbounded software dyadic accumulator and IEEE
-NaN, infinity, signed-zero, and status semantics. A posit quire is a fixed `16n`-bit accumulator
-with NaR and a coefficient-range condition.
+One product plus an addend is already IEEE FMA, and larger finite algebraic expressions can use
+`ExecFloat.roundOnce`, so there is no initial-addend argument. A repeated FMA chain is a
+different operation because it rounds every prefix. It agrees with `dot` only when those
+intermediate roundings are exact and the exceptional and signed-zero rules also agree.
+
+The binary reducer and a posit quire share a useful idea, “exact products, then one final
+round,” but their machine models differ. This reducer uses an unbounded software dyadic
+accumulator with IEEE NaN, infinity, signed-zero, and status semantics. A posit quire is a fixed
+`16n`-bit accumulator with NaR and a coefficient-range condition.
 -/
 
 @[expose] public section
@@ -57,7 +58,7 @@ namespace Reduction.Internal
 /--
 Accumulator state used by the transparent reduction kernels.
 
-The state records exact finite contributions separately from exceptional inputs, so NaN priority
+The state keeps exact finite contributions apart from exceptional inputs, so NaN priority
 and infinity cancellation can be resolved after traversal.
 -/
 structure State (destination : FloatFormat) where
@@ -253,8 +254,8 @@ namespace Internal
 Correctly rounded sum of an array with its IEEE status, the kernel of
 `Model.sum destination values (mode := mode) (status := true)`.
 
-Every finite source value is decoded exactly, the exact dyadic sum is formed without intermediate
-rounding, and the result is rounded once into `destination`.
+Every finite source value is decoded without error, the exact dyadic sum is formed with no
+intermediate rounding, and the result is rounded once into `destination`.
 -/
 def Status.sum (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode) :
@@ -280,9 +281,9 @@ def Value.sum (destination : FloatFormat) {source : FloatFormat}
 Correctly rounded dot product of two arrays with its IEEE status, the kernel of
 `Model.dot destination left right (mode := mode) (status := true)`.
 
-Each finite pair is multiplied in the exact dyadic domain, all products are added exactly, and
-the result is rounded once into `destination`. Unequal lengths are rejected before any arithmetic
-occurs.
+Each finite pair is multiplied in the exact dyadic domain, all products are added without
+rounding, and the result is rounded once into `destination`. Unequal lengths are rejected before
+any arithmetic occurs.
 -/
 def Status.dot (destination : FloatFormat)
     {leftFormat rightFormat : FloatFormat}
@@ -320,11 +321,11 @@ end Internal
 /--
 Correctly rounded sum of an array in `mode` (nearest-even by default).
 
-Every finite source value is decoded exactly, the exact dyadic sum is formed without intermediate
-rounding, and the result is rounded once into `destination`. With `status := true` the result is
-the `IEEEOutcome` carrying the exception flags and the ternary value of that one rounding.
-`Reduction.value_sum` states that its value is the sum, so every theorem about the status form
-describes the value.
+Every finite source value is decoded without error, the exact dyadic sum is formed with no
+intermediate rounding, and the result is rounded once into `destination`. With `status := true`
+the result is the `IEEEOutcome` carrying the exception flags and the ternary value of that one
+rounding. `Reduction.value_sum` states that its value is the sum, so every theorem about the
+status form describes the value.
 -/
 @[macro_inline] def sum (destination : FloatFormat) {source : FloatFormat}
     (values : Array (Model source)) (mode : IEEERoundingMode := .nearest)
@@ -348,11 +349,11 @@ describes the value.
 /--
 Correctly rounded dot product of two arrays in `mode` (nearest-even by default).
 
-Each finite pair is multiplied in the exact dyadic domain, all products are added exactly, and
-the result is rounded once into `destination`. Unequal lengths are rejected before any arithmetic
-occurs. With `status := true` the successful result is the `IEEEOutcome` carrying the exception
-flags and the ternary value. `Reduction.map_value_dot` states that its value and its errors are
-those of the value form.
+Each finite pair is multiplied in the exact dyadic domain, all products are added without
+rounding, and the result is rounded once into `destination`. Unequal lengths are rejected before
+any arithmetic occurs. With `status := true` the successful result is the `IEEEOutcome` carrying
+the exception flags and the ternary value. `Reduction.map_value_dot` states that its value and
+its errors are those of the value form.
 -/
 @[macro_inline] def dot (destination : FloatFormat)
     {leftFormat rightFormat : FloatFormat}

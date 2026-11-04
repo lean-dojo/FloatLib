@@ -14,10 +14,10 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
 /-!
 # Global rational sine and cosine bounds
 
-The rational polynomials are identified with real Taylor polynomials at zero. Mathlib's
-Lagrange remainder theorem applies at every real argument: every iterated derivative of sine
-or cosine has absolute value at most one. Thus no domain restriction or unproved reduction
-condition enters the containment theorem.
+We identify the rational polynomials with real Taylor polynomials at zero. Mathlib's Lagrange
+remainder theorem applies at every real argument, because every iterated derivative of sine or
+cosine has absolute value at most one. So the containment theorem has no domain restriction and no
+unproved reduction condition.
 -/
 
 public section

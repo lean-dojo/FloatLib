@@ -11,10 +11,10 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Runtime
 /-!
 # Rational enclosures at rational multiples of pi
 
-The angle is reduced modulo two exactly, before multiplication by an enclosed value of pi.
-Consequently both the Taylor argument and the error multiplier are bounded independently of
-large integer parts of the input. The radius includes the uncertainty in pi. These operations
-use neither a rounded value of pi nor an approximate rational-angle equality test.
+We reduce the angle modulo two exactly, before multiplying by an enclosed value of pi. So both the
+Taylor argument and the error multiplier stay bounded however large the integer part of the input
+is. Uncertainty in pi is part of the radius. Nowhere do these operations use a rounded value of pi
+or an approximate rational-angle equality test.
 -/
 
 @[expose] public section

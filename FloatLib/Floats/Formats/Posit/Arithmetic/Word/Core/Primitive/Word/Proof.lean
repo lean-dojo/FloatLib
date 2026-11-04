@@ -14,13 +14,11 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 /-!
 # Correctness of native-word posit primitives
 
-The `UInt64` primitives agree with the exact-width posit model and their natural-number
-specifications. Executable definitions live in
+Each `UInt64` primitive agrees with the exact-width posit model and with its natural-number
+specification. The lemmas cover masking, sign manipulation, modular negation, and bounded word
+conversion, and the higher posit kernels use them whenever a machine operation has to be related
+to an exact-width word or a natural number. You'll find the executable definitions in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.Runtime`.
-
-The lemmas cover masking, sign manipulation, modular negation, and bounded word conversion.
-Higher posit kernels use them to relate machine operations to exact-width words and natural
-numbers.
 -/
 
 @[expose] public section
@@ -78,11 +76,11 @@ theorem toNat_add_one_of_lt_signMask
   omega
 
 /--
-The native successor-range test is exactly the natural-code test used by the reference rounder.
+The native successor-range test agrees with the natural-code test of the reference rounder.
 
-This bridge belongs at the representation boundary because packed scalar and multi-limb target
-rounders need the same fact. Keeping it here prevents each arithmetic backend from unfolding
-machine-word addition and the format sign mask independently.
+It sits at the representation boundary because packed scalar and multi-limb target rounders both
+need it, and that way no arithmetic backend has to unfold machine-word addition and the format
+sign mask on its own.
 -/
 theorem successor_lt_signMaskWord_iff
     (format : Format) (heligible : Eligible format)

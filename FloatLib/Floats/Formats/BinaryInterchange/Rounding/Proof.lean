@@ -20,15 +20,15 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
 /-!
 # Correctness of nearest-even real rounding
 
-For conventional IEEE descriptors, `Model.roundDyadic` delegates normalization to Lean's generic
+For conventional IEEE descriptors, `Model.roundDyadic` hands normalization to Lean's generic
 logical float model. This module relates that executable result to the independent Flocq-style
-rounded-real semantics in `FloatLib.Floats.Formats.Flocq.FloatRep`. Exponent and fraction widths
-remain symbolic. The grid membership and preservation results also cover custom biases and
-encoding policies, but the executable rounding refinement requires `fmt.isIEEE = true`.
+rounded-real semantics in `FloatLib.Floats.Formats.Flocq.FloatRep`, with exponent and fraction
+widths kept symbolic. The grid membership and preservation results cover custom biases and
+encoding policies too, but the executable rounding refinement needs `fmt.isIEEE = true`.
 
-The rounded-real model has gradual underflow but no infinities. So refinement theorems assume that
-the executable result is finite, since an overflowing IEEE result cannot equal a real-valued
-rounding function.
+The rounded-real model has gradual underflow and no infinities. An overflowing IEEE result can't
+equal a real-valued rounding function, so the refinement theorems assume that the executable
+result is finite.
 
 ## References
 

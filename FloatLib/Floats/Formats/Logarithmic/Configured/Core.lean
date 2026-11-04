@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Logarithmic.Exact.Proof
 /-!
 # Configured exact logarithmic identity
 
-The encoded logarithmic family supplies the public `ExecFloat.Logarithmic` type. The
-representation contains only zero or a sign with an unbounded integer exponent; it does not
-impose a bit layout.
+This is where the public `ExecFloat.Logarithmic` type comes from, the encoded logarithmic family on
+the common carrier. A value is zero or a sign with an unbounded integer exponent, and no bit layout
+is imposed on either.
 -/
 
 @[expose] public section

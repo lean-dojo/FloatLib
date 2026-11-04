@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit two-coordinate arctangent
 
-The lawful storage codec preserves the model operations. Coordinates are ordered `(x, y)`
-according to the Posit Standard, and no extra rounding occurs at the carrier boundary.
+Both functions take their coordinates in the order `(x, y)`, as the Posit Standard does, so
+`arcTan2 x y` is the principal argument of `x + i*y`. The lawful storage codec keeps the model
+operations as they are, and the carrier boundary adds no rounding.
 -/
 
 @[expose] public section
@@ -30,11 +31,13 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Correctly rounded principal argument of `x + i*y` in radians; NaR and the origin are invalid. -/
+/-- Correctly rounded principal argument of `x + i*y` in radians. NaR and the origin are
+invalid. -/
 @[inline] def arcTan2 (x y : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.arcTan2 x y
 
-/-- Correctly rounded principal argument of `x + i*y` divided by pi; NaR and the origin are invalid. -/
+/-- Correctly rounded principal argument of `x + i*y` divided by pi. NaR and the origin are
+invalid. -/
 @[inline] def arcTan2Pi (x y : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.arcTan2Pi x y
 

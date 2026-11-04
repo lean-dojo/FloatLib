@@ -13,11 +13,13 @@ public import FloatLib.Numerics.Enclosure.Elementary.Proof
 /-!
 # Certified rounding from rational enclosures
 
-Monotonicity places the rounded real target between the rounded endpoints. If those endpoints
-agree, they also equal the target's rounded code. In particular, the exponential enclosure
-algorithm supplies an entirely internal analytic justification for an accepted result.
+Real posit rounding is monotone, so the rounded target lies between the rounded endpoints, and
+when the endpoints agree the target rounds to that same code
+(`eq_roundPositive_of_roundPositive?_eq_some`). For the exponential this means an accepted result of
+the enclosure algorithm carries its own analytic justification inside the library.
 
-These are acceptance theorems, not a claim that any fixed Taylor degree resolves every input.
+These theorems are about results that were accepted. They don't say that any fixed Taylor degree
+settles every input.
 -/
 
 @[expose] public section

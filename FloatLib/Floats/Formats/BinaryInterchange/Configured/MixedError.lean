@@ -14,22 +14,23 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 # Mixed error of configured binary arithmetic
 
 This module states the theorems of `Analysis.MixedError` for configured binary values, with
-`u = Model.unitRoundoffAt format` and `η = Model.underflowErrorAt format`: `+`, `-`, `*`, `/`,
-fused multiply-add, square root, negation, `max`, `min`, casts, and left-to-right sums over a list
-or with `Fin.foldl`, together with the exact results stated with `toRat?`. Each theorem decodes
-its operands and applies the corresponding descriptor-model theorem, so the constants are the
-same. As in `Configured.Real`, each theorem about a rounded operation asks, as an instance
-argument, that the selected capability compute the configured model operation, and instance
-search proves this for every capability the library declares.
+`u = Model.unitRoundoffAt format` and `η = Model.underflowErrorAt format`. They cover `+`, `-`,
+`*`, `/`, fused multiply-add, square root, negation, `max`, `min`, casts, and left-to-right sums
+over a list or with `Fin.foldl`, together with the exact results stated with `toRat?`. Each
+theorem decodes its operands and applies the corresponding descriptor-model theorem, so the
+constants are the same. As in `Configured.Real`, a theorem about a rounded operation asks, as an
+instance argument, that the selected capability compute the configured model operation, and
+instance search proves this for every capability the library declares.
 
 A cast theorem applies to every finite configured value that decodes to `Model.cast` of a
 configured value, such as `ofModel (Model.cast source format (toModel value))`.
 
-A sum of values with nonnegative real values is nonnegative, finite or not, since a value that is
-not finite has real value zero (`toReal_add_nonneg`). A finite left-to-right sum of such values
-is at least each of them (`le_toReal_foldl_add`). A product keeps the weak sign of its exact
-product (`toReal_mul_nonneg`, `toReal_mul_nonpos`), and a product of finite values is negative
-when its exact product is in range and below `-η` (`toReal_mul_lt_zero`).
+A few theorems are about signs. A sum of values with nonnegative real values is nonnegative,
+finite or not, since a value that is not finite has real value zero (`toReal_add_nonneg`). A
+finite left-to-right sum of such values is at least each of them (`le_toReal_foldl_add`). A
+product keeps the weak sign of its exact product (`toReal_mul_nonneg`, `toReal_mul_nonpos`), and
+a product of finite values is negative when its exact product is in range and below `-η`
+(`toReal_mul_lt_zero`).
 -/
 
 @[expose] public section
@@ -331,7 +332,8 @@ theorem mixedError_toReal_sub_of_sterbenz {left right : Value}
   rw [toModel_hSub]
   exact Model.mixedError_toReal_sub_of_sterbenz hformat hleft hright eleft eright hsign hlr hrl
 
-/-- Subtracting a finite configured value from itself is exactly zero, whatever its error. -/
+/-- Subtracting a finite configured value from itself has zero error against `x₀ - x₀`, whatever
+the value's own error. -/
 theorem mixedError_toReal_sub_self {left : Value} (hleft : isFinite left = true)
     (hformat : format.isIEEE = true := by ieee_format) :
     MixedError (toReal (left - left)) (x₀ - x₀) 0 0 :=

@@ -16,12 +16,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.TwoWordMul.Runtime
 /-!
 # Executable multiplication backends
 
-The generic path rounds exact finite products and handles every exceptional value. The
-dispatcher uses native binary32 or binary64, fixed-pair limbs, and parameterized one- or two-word
-kernels when their structural capabilities apply.
-
-Every specialized routine may decline, and a declined case goes to `generic`. `Mul.Proof` shows
-that the accepted fast-path results and `generic` all implement the same public specification.
+A generic path rounds exact finite products and handles every exceptional value, but when their
+structural capabilities apply, the dispatcher uses native binary32 or binary64, fixed-pair limbs,
+and parameterized one- or two-word kernels instead. Any specialized routine may decline, and a
+declined case goes to `generic`. `Mul.Proof` shows that the accepted fast-path results and `generic`
+all implement the same public specification.
 -/
 
 @[expose] public section
@@ -58,16 +57,18 @@ infinity policy.
             invalidResult fmt
 
 /--
-Word-specialized compiled implementation of `mul`.
+The word-specialized compiled implementation of `mul`. A structural capability selects each kernel,
+and every kernel may decline:
 
-A structural capability selects each kernel, and every kernel may decline. Binary32 uses the
-checked narrow backend. Binary64 first tries the parameterized two-word
-normal-product kernel, whose `64 x 64 -> 128` product and machine-word finishing stage suit its
-53-bit significands, and falls back to its fixed multiword kernel. Eligible pair layouts use the
-four-limb product kernel. Other conventional IEEE formats use parameterized one- and two-word
-normal-product kernels. Every declined route, including the end of the binary64 chain, falls back
-to `generic`. The dispatcher is specialized on the descriptor, as described in
-`Dispatch.Add.Runtime`.
+* Binary32 uses the checked narrow backend.
+* Binary64 first tries the parameterized two-word normal-product kernel, whose `64 x 64 -> 128`
+  product and machine-word finishing stage suit its 53-bit significands, and then its fixed
+  multiword kernel.
+* Eligible pair layouts use the four-limb product kernel.
+* Other conventional IEEE formats use parameterized one- and two-word normal-product kernels.
+
+Every declined route, the end of the binary64 chain included, falls back to `generic`. The
+dispatcher is specialized on the descriptor, as described in `Dispatch.Add.Runtime`.
 -/
 @[specialize fmt] def word {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   if h32 : FloatFormat.IsBinary32 fmt then

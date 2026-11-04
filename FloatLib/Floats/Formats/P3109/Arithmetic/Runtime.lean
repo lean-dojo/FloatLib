@@ -11,18 +11,18 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Runtime
 /-!
 # Exact rational arithmetic for P3109
 
-The closed operations in `Arithmetic` evaluate finite operands in `Rat`, retaining infinities
-and the report's single NaN. In particular, division by zero returns NaN, including infinity
-divided by zero. FMA and fused add-add form the complete exact expression before projection.
+The closed operations in `Arithmetic` evaluate finite operands in `Rat` and keep infinities and
+the report's single NaN. So division by zero returns NaN, even infinity divided by zero. FMA and
+fused add-add form the complete exact expression before projecting.
 
-Each `ExecFloat.P3109` operation projects into `(target := ...)`, by default the format of its
-operands, with `(mode := ...)` and `(saturation := ...)` options that default to nearest-even
+Each `ExecFloat.P3109` operation projects into `(target := ...)`, which defaults to the format of
+its operands, with `(mode := ...)` and `(saturation := ...)` options that default to nearest-even
 rounding and no saturation request. `unary`, `binary`, and `ternary` apply any exact closed
-operation to operands of independent descriptors. No IEEE exception flags or floating-point
-environment are used.
+operation to operands of independent descriptors. There are no IEEE exception flags and no
+floating-point environment.
 
-Exact rational intermediates can require large integers when the descriptor has a wide exponent
-range. This implementation does not promise a fixed workspace bound for arbitrary descriptors.
+With a wide exponent range, exact rational intermediates can need large integers, and we don't
+promise a fixed workspace bound for arbitrary descriptors.
 
 ## Reference
 

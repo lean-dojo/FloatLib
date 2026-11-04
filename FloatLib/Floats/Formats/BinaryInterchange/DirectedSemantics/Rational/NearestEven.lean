@@ -14,19 +14,22 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 # Nearest-even rounding of rational quotients
 
 Lean's logical floating-point model represents an inexact quotient by its integer quotient and an
-`Accuracy` value computed from the remainder (`quotientExtendedMantissa`). This module proves the
-facts about nearest-even quotient rounding `roundQuotientEven` that the rational rounding proofs
-use. It lies between the floor and ceiling quotients, it depends only on the represented rational,
-so a common scale factor does not change it, and it commutes with exact power-of-two scaling,
-which shifts of the extended mantissa realize. `roundQuotientEven_normal_bounds` keeps a
-normal-path result in a format's normalized mantissa interval, and
-`roundWithAccuracy_quotient_eq_finishRoundedMantissa` reduces the model's `roundWithAccuracy` of a
-quotient at a format's target exponent to one `roundQuotientEven` call.
+`Accuracy` value computed from the remainder (`quotientExtendedMantissa`). The rational rounding
+proofs need a few facts about nearest-even quotient rounding `roundQuotientEven`, and this module
+proves them:
 
-No theorem here is about `Model.roundRatScaled` itself; its real value is
+* it lies between the floor and ceiling quotients,
+* it depends only on the represented rational, so a common scale factor doesn't change it,
+* it commutes with exact power-of-two scaling, which shifts of the extended mantissa realize.
+
+`roundQuotientEven_normal_bounds` keeps a normal-path result in a format's normalized mantissa
+interval, and `roundWithAccuracy_quotient_eq_finishRoundedMantissa` reduces the model's
+`roundWithAccuracy` of a quotient at a format's target exponent to one `roundQuotientEven` call.
+
+None of these theorems is about `Model.roundRatScaled` itself. Its real value is
 `toReal_roundRatScaled_eq_roundAt` in `Rational.RoundingSemantics.Executable`, which uses these
-bounds. The quotient lemmas allow a zero numerator, the bounds lemma and the final reduction take a
-format or a model format, and the rest do not depend on one.
+bounds. Of the lemmas here, only the bounds lemma and the final reduction take a format or a model
+format, and the quotient lemmas allow a zero numerator.
 -/
 
 @[expose] public section
@@ -241,8 +244,8 @@ theorem roundQuotientEven_mul_pow2_den (numerator denominator shift : Nat) :
       simp [Numerics.RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq]
 
 /--
-Round a quotient at a chosen binary exponent either directly or by first restoring the quotient's
-exact external exponent.
+Rounding a quotient at a chosen binary exponent gives the same result as first restoring the
+quotient's exact external exponent and rounding that.
 -/
 theorem roundQuotientEven_shift_to_exponent
     (numerator denominator : Nat) (exponent targetExponent : Int)

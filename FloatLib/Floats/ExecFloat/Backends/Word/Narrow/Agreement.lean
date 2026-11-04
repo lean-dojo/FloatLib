@@ -21,12 +21,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 /-!
 # Agreement between native binary32 words and the generic model
 
-The narrow-word core implements finite binary32 arithmetic with `UInt32` and `UInt64`. This module
-proves that its finite operations equal the generic `Model FloatFormat.binary32` formulas, using
-the field, decoding and rounding bridge of `Narrow.ModelBridge`.
-
-The `Addition`, `Multiplication` and `Fma` proof modules connect their word kernels to these finite
-operations. Runtime clients can import the `Runtime` modules without these proofs.
+The narrow-word core implements finite binary32 arithmetic with `UInt32` and `UInt64`. We prove here
+that its finite operations equal the generic `Model FloatFormat.binary32` formulas, using the field,
+decoding, and rounding bridge of `Narrow.ModelBridge`. The `Addition`, `Multiplication` and `Fma`
+proof modules then connect their word kernels to these finite operations, and the `Runtime` modules
+can be imported without any of these proofs.
 -/
 
 @[expose] public section

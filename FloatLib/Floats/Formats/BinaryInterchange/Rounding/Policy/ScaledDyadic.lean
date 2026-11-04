@@ -15,17 +15,21 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Near
 /-!
 # Scaled-dyadic lemmas for the policy agreement proofs
 
-The general policy engine `roundRatGeneralOfDenNeZero` receives an exact dyadic
-`mantissa * 2^exponent` as the scaled rational `scaleByPowerOfTwo mantissa 1 exponent`. The
-lemmas here carry that representation through the engine's two quotient sites, the subnormal
-alignment and the normal significand, and identify each quotient with a shift primitive of the
-dyadic rounders: nearest-even with `roundMantissaAtExponentEven`, floor and ceiling with
-`roundMantissaAtExponentDown` and `roundMantissaAtExponentUp`.
+An exact dyadic `mantissa * 2^exponent` reaches the general policy engine
+`roundRatGeneralOfDenNeZero` as the scaled rational `scaleByPowerOfTwo mantissa 1 exponent`.
+These lemmas carry that representation through the engine's two quotient sites, the subnormal
+alignment and the normal significand. At each site they identify the quotient with a shift
+primitive of the dyadic rounders:
+
+* nearest-even with `roundMantissaAtExponentEven`,
+* floor with `roundMantissaAtExponentDown`,
+* ceiling with `roundMantissaAtExponentUp`.
 
 `roundRatGeneralOfDenNeZero_nearest_dyadic_eq` and
 `roundRatGeneralOfDenNeZero_directed_dyadic_eq` compare the engine with the nearest-even and the
 directed dyadic packers. `Rounding.Policy.Agreement` uses them for nearest-even rounding and the
-four directed modes, and `Rounding.Policy.NearestAwayAgreement` for nearest-away rounding.
+four directed modes, and `Rounding.Policy.NearestAwayAgreement` uses them for nearest-away
+rounding.
 -/
 
 @[expose] public section

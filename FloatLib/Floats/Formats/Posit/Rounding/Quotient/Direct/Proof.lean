@@ -17,10 +17,10 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Correctness of direct posit quotient packing
 
-The executable quotient path generates one destination-width normalized quotient prefix, jams
-the exact Euclidean remainder into its sticky bit, and feeds that stream to the shared direct
-Posit packer. This module proves that the result is the rounding of the exact rational quotient,
-with NaR for division by zero. The proof applies at every format width.
+On the executable path a quotient becomes one normalized prefix of destination width, the exact
+Euclidean remainder is jammed into its sticky bit, and the shared direct Posit packer rounds that
+stream. We prove here that the result is the rounding of the exact rational quotient at every format
+width. Division by zero gives NaR.
 -/
 
 @[expose] public section
@@ -171,8 +171,8 @@ private theorem quotientTarget_eq_fields
   ring
 
 /--
-The shared direct dyadic packer rounds a normalized quotient prefix exactly as the unmaterialized
-rational quotient fraction.
+The shared direct dyadic packer rounds a normalized quotient prefix the same way as the rational
+quotient fraction, which it never builds.
 -/
 theorem roundPositiveCode_prefix_eq_reference
     (format : Format) (targetExponent : Int)

@@ -12,12 +12,12 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Error.Directed
 /-!
 # Exactness of Multiplication Errors
 
-In the unbounded-exponent FLX format, the residual of a rounded product of two representable
-operands is itself representable. The rounding mode may be any valid monotone integer rounding.
+Multiply two representable values in the unbounded-exponent FLX format, round with any valid
+monotone integer rounding, and the residual of the product is itself representable.
 
-Working in FLX isolates the precision argument from overflow and underflow. Later bounded-format
-error theorems can combine this exact residual fact with their own range hypotheses rather than
-reproving the algebra of rounded multiplication for each exponent policy.
+We work in FLX so that the precision argument stays clear of overflow and underflow. A
+bounded-format error theorem can then combine this residual fact with its own range hypotheses,
+with no need to redo the algebra of rounded multiplication for each exponent policy.
 -/
 
 @[expose] public section
@@ -128,7 +128,7 @@ theorem mul_round_error_FLX_exists_repr (prec : ℤ) (hprec : 0 < prec)
     linarith
   exact ⟨errorFloat, herr, hcexp, rfl⟩
 
-/-- The residual of a valid rounded FLX product is exactly FLX-representable. -/
+/-- The residual of a valid rounded FLX product is FLX-representable. -/
 theorem mul_round_error_FLX (prec : ℤ) (hprec : 0 < prec)
     (rnd : ℝ → ℤ) [ValidRnd rnd] {x y : ℝ}
     (hx : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x)

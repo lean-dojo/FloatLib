@@ -16,9 +16,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 For a positive exact rational and a descriptor with `fmt.isIEEE = true`, the executable upward
 rounder returns positive infinity or a finite value no smaller than the input.
 
-Upward normal rounding may carry into a new exponent and may overflow. The branch lemmas cover
-both cases. The final `EReal` inequality includes positive infinity and supplies the upper bound
-used by the directed-rounding semantics.
+Upward normal rounding may carry into a new exponent and may overflow, and the branch lemmas
+cover both cases. The final `EReal` inequality allows positive infinity and gives the upper bound
+that the directed-rounding semantics uses.
 -/
 
 @[expose] public section

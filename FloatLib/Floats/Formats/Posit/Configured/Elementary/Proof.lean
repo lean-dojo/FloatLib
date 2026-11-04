@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Elementary.Runtime
 /-!
 # Real correctness of configured natural posit functions
 
-The configured operations inherit the model's real-rounding theorem at every supported width.
-The `Minus1` and `Plus1` statements include the exact subtraction or addition in the value
-being rounded.
+Configured `exp`, `expMinus1`, `log`, and `logPlus1` inherit the model's real-rounding theorem
+at every supported width, as `exp_eq_real` and its siblings state. In the `Minus1` and `Plus1`
+theorems the subtraction or addition is part of the real value being rounded. So it is exact.
 -/
 
 @[expose] public section

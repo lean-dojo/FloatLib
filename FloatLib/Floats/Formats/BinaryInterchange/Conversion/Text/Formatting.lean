@@ -13,15 +13,16 @@ public import FloatLib.Numerics.Exact.DecimalText.Special
 /-!
 # Binary external character output
 
-`format value` writes a decimal that reads back as `value`, normally the shortest one or the exact
-value when that is short, and `toString`, `repr` and `#eval` show the same text. The `style` option
-selects every other output: exact decimal and hexadecimal digits, a count of significant digits, and
-fixed or scientific notation with a count of places. Styles that round do so once, in the `mode`
-option, and `(status := true)` returns the text with the inexact indicator of that rounding.
-Exponents are unbounded, so output cannot overflow or underflow.
+`format value` writes a decimal that reads back as `value`. Normally that is the shortest such
+decimal, or the exact value when the exact value is short, and `toString`, `repr` and `#eval` show
+the same text. Its `style` option selects every other output: exact decimal and hexadecimal
+digits, a count of significant digits, and fixed or scientific notation with a count of places.
+Styles that round do so once, in the `mode` option, and `(status := true)` returns the text with
+the inexact indicator of that rounding. Exponents are unbounded, so output cannot overflow or
+underflow.
 
-The display writes `inf`, `-inf` and `nan`. The other styles keep the complete spellings of
-infinities and NaNs, including the sign, signaling state and payload of a NaN.
+In the display, infinities and NaNs are `inf`, `-inf` and `nan`. Other styles keep the complete
+spellings of infinities and NaNs, including the sign, signaling state and payload of a NaN.
 -/
 
 @[expose] public section
@@ -54,7 +55,7 @@ inductive TextStyle where
   | exact
   /-- This many significant decimal digits, as a significand and a decimal exponent. -/
   | significant (digits : ℕ+)
-  /-- Ordinary decimal notation with exactly this many digits after the point. -/
+  /-- Ordinary decimal notation with this many digits after the point. -/
   | fixed (places : Nat)
   /-- One digit before the point, this many after it, and an `e` exponent. -/
   | scientific (places : Nat)
@@ -98,19 +99,20 @@ end Internal.Status
 /--
 Write a value of any binary descriptor as text.
 
-By default this is the display: the exact value when it has at most `d` significant digits (`d` is
-17 for binary64), and otherwise the shortest decimal the search finds that `parse` reads back as
-`value`, with the exact value as the fallback. It uses fixed notation from `0.0001` up to `10^d` and
-an `e` exponent otherwise. `toString`, `repr` and `#eval` use it. `style` selects the exact decimal
-or hexadecimal digits, significant digits, or fixed or scientific notation, as the `TextStyle`
-table shows.
+By default this is the display, which `toString`, `repr` and `#eval` also use. It is the exact
+value when that has at most `d` significant digits (`d` is 17 for binary64), and otherwise the
+shortest decimal the search finds that `parse` reads back as `value`, with the exact value as the
+fallback. Fixed notation covers `0.0001` up to `10^d`, and other values get an `e` exponent.
+`style` selects the exact decimal or hexadecimal digits, significant digits, or fixed or
+scientific notation, as the `TextStyle` table shows.
 
 What `mode` does depends on the style. For the display it is the direction the text is read back
-in: the search keeps a candidate only if `parse` in `mode` returns `value`. The styles that round,
-`.significant`, `.fixed`, `.scientific` and `.hex (.significant n)`, round the printed digits once
-in `mode`. `.exact` and the exact `.hex` print every digit and ignore it. With `status := true` the
-result also carries the inexact indicator, raised when the printed digits do not denote the finite
-value exactly. Infinities and NaNs never raise it, and the display writes every NaN as `nan`.
+in, since the search keeps a candidate only if `parse` in `mode` returns `value`. The styles that
+round, `.significant`, `.fixed`, `.scientific` and `.hex (.significant n)`, round the printed
+digits once in `mode`. `.exact` and the exact `.hex` print every digit and ignore it. With
+`status := true` the result also carries the inexact indicator, raised when the printed digits do
+not denote the finite value. Infinities and NaNs never raise it, and the display writes every NaN
+as `nan`.
 -/
 @[inline] def format {fmt : FloatFormat} (value : Model fmt) (style : TextStyle := .shortest)
     (mode : IEEERoundingMode := .nearest) (status : Bool := false) :
@@ -124,7 +126,7 @@ value exactly. Infinities and NaNs never raise it, and the display writes every 
 /--
 Finite values print as a decimal that reads back as the same value, normally the shortest.
 Infinities print as `inf` and `-inf`, and every NaN prints as `nan`, without its sign, signaling
-state or payload; every other `TextStyle` of `format` keeps them.
+state or payload. Every other `TextStyle` of `format` keeps them.
 -/
 instance {fmt : FloatFormat} : ToString (Model fmt) where
   toString value := format value

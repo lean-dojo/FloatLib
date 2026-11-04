@@ -18,37 +18,38 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff
 /-!
 # Opt-in transcendentals for configured binary values
 
-This module adds deterministic `exp`, `log`, `sin`, `cos`, `sinCos`, `sinh`, `cosh`, and `tanh`
-approximations, the floating-point power `pow`, and the `MathFunctions` instance to
-`ExecFloat.Binary`. The approximations carry no general real-error bound. They use nearest-even
-arithmetic and IEEE-style exceptional values, and the lifting theorems below carry the model
-results through packing. `pow` is `Model.pow`, which is correctly rounded in the cases its
-documentation states and approximate otherwise.
+This module gives `ExecFloat.Binary` deterministic `exp`, `log`, `sin`, `cos`, `sinCos`, `sinh`,
+`cosh` and `tanh` approximations, the floating-point power `pow`, and the `MathFunctions`
+instance. The approximations carry no general real-error bound. They use nearest-even arithmetic
+and IEEE-style exceptional values, and the lifting theorems below carry the model results through
+packing. `pow` is `Model.pow`, which is correctly rounded in the cases its documentation states
+and approximate otherwise.
 
 Two other namespaces hold functions with different result types and guarantees.
-`ExecFloat.Binary.Certified` holds certified searches for `exp`, `log`, `pow`, `expMinus1`, and
+`ExecFloat.Binary.Certified` has certified searches for `exp`, `log`, `pow`, `expMinus1` and
 `logPlus1`. Each refines rational enclosures of the real function within its `budget` and returns
-`Except Certified.Failure Value`: either a result proved finite and equal to nearest-even rounding
-of the real function, or the reason there is none (an unsupported format, a nonfinite input, a
-domain or range failure, or a search that did not settle). A search can fail on a valid input,
-and it never falls back to the approximation. `Certified.expMinus1` and `Certified.logPlus1` form
-`exp x - 1` and `log (1 + x)` before rounding, retaining small results near zero. The module also
-imports `Configured.CorrectlyRounded`, whose `CorrectlyRounded.exp`, `log`, `expMinus1`,
-`logPlus1`, and `expMul` always return a value. For an IEEE descriptor and a finite input in the
-domain, a finite result is the nearest-even rounding of the real function. A non-finite input is
-outside that statement: `exp (-∞)` is a finite zero. `sin`, `cos`, `sinCos`, `sinh`, `cosh`, and
-`tanh` exist only as approximations.
+`Except Certified.Failure Value`. That is a result proved finite and equal to nearest-even
+rounding of the real function, or the reason there is none (an unsupported format, a nonfinite
+input, a domain or range failure, or a search that did not settle). A search can fail on a valid
+input, and it never falls back to the approximation. `Certified.expMinus1` and
+`Certified.logPlus1` form `exp x - 1` and `log (1 + x)` before rounding, so they keep small
+results near zero.
 
-The `MathFunctions` instance uses the approximation kernels. Generic code that should get the
-correctly rounded `exp` and `log` on IEEE descriptors opts in, in one of two ways. After
+The module also imports `Configured.CorrectlyRounded`, whose `CorrectlyRounded.exp`, `log`,
+`expMinus1`, `logPlus1` and `expMul` always return a value. For an IEEE descriptor and a finite
+input in the domain, a finite result is the nearest-even rounding of the real function. A
+non-finite input is outside that statement: `exp (-∞)` is a finite zero. `sin`, `cos`, `sinCos`,
+`sinh`, `cosh` and `tanh` exist only as approximations.
+
+Since the `MathFunctions` instance uses the approximation kernels, generic code that should get
+the correctly rounded `exp` and `log` on IEEE descriptors has to opt in. There are two ways. After
 `open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath`, the instance in
-that scope is `CorrectlyRounded.mathFunctions`. A library that builds its own
-dictionary passes `CorrectlyRounded.mathFunctions` by name, for example as the `MathFunctions`
-parent of its own class instance. `CorrectlyRounded.mathFunctions_exp_of_isIEEE` and
-`mathFunctions_log_of_isIEEE` then identify its `exp` and `log` with `CorrectlyRounded.exp` and
-`CorrectlyRounded.log`, whose theorems apply. In both cases `sin`, `cos`, `sinh`, `cosh`, and
-`tanh` stay the approximations, and a descriptor other than IEEE keeps the approximate `exp`
-and `log`.
+that scope is `CorrectlyRounded.mathFunctions`. A library that builds its own dictionary passes
+`CorrectlyRounded.mathFunctions` by name, for example as the `MathFunctions` parent of its own
+class instance. `CorrectlyRounded.mathFunctions_exp_of_isIEEE` and `mathFunctions_log_of_isIEEE`
+then identify its `exp` and `log` with `CorrectlyRounded.exp` and `CorrectlyRounded.log`, whose
+theorems apply. Either way `sin`, `cos`, `sinh`, `cosh` and `tanh` stay the approximations, and a
+descriptor other than IEEE keeps the approximate `exp` and `log`.
 
 ```lean
 ExecFloat.Binary.Certified.exp x
@@ -56,18 +57,18 @@ ExecFloat.Binary.Certified.pow x y (budget := { maxAttempts := 32 })
 ```
 
 Sine and cosine reduce their arguments by the Payne-Hanek reduction of
-`Numerics.Enclosure.ArgumentReduction`, reading at most `2^21` bits of `2 / pi`. In a format with at
-most 524,258 fraction bits, every finite argument below `2^(2^20)` stays within that limit.
-Arguments that would need more bits, such as the largest ones of a 31-bit exponent field, and
-reductions whose permitted windows are all rejected give the format's invalid result. These APIs
+`Numerics.Enclosure.ArgumentReduction`, reading at most `2^21` bits of `2 / pi`. In a format with
+at most 524,258 fraction bits, every finite argument below `2^(2^20)` stays within that limit.
+Arguments that would need more bits, such as the largest ones of a 31-bit exponent field, give the
+format's invalid result, and so do reductions whose permitted windows are all rejected. These APIs
 return no IEEE status flags. The optional Arb adapter supports directed rounding through an
 external library.
 
-`import FloatLib` keeps binary elementary functions opt-in. Certified `sqrt` and `abs`, the
+With `import FloatLib`, binary elementary functions stay opt-in. Certified `sqrt` and `abs`, the
 `MathFunctions` class, and its host `Float` and real instances are available by default.
 
-The module registers the default instance with `roundoff`: its methods decode through the model
-functions, and a finite value has a finite absolute value.
+Finally, the module registers the default instance with `roundoff`: its methods decode through the
+model functions, and a finite value has a finite absolute value.
 -/
 
 @[expose] public section
@@ -105,12 +106,12 @@ correctly rounded logarithm.
 /--
 The power `base ^ exponent` by `Model.pow`, with no general error bound.
 
-`Model.pow` gives zeros, infinities, and NaNs their IEEE 754 special cases. For an IEEE
-descriptor, a finite result for a nonzero base and an integral exponent is correctly rounded, and
-a positive base with any other exponent runs the certified search first. A certified range
-failure delivers positive overflow, and other failures fall back to `exp (exponent * log base)`.
-`Certified.pow` runs only the search, for a finite positive base and a finite exponent, and
-returns its failure instead of the fallback.
+Zeros, infinities and NaNs get their IEEE 754 special cases. For an IEEE descriptor, a finite
+result for a nonzero base and an integral exponent is correctly rounded, and a positive base with
+any other exponent runs the certified search first. A certified range failure gives positive
+overflow, and other failures fall back to `exp (exponent * log base)`. `Certified.pow` runs only
+the search, for a finite positive base and a finite exponent, and returns its failure instead
+of falling back.
 -/
 @[inline] def pow (base exponent : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.pow base exponent

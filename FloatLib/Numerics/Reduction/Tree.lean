@@ -11,9 +11,11 @@ public import Mathlib.Algebra.BigOperators.Group.List.Basic
 /-!
 # Parenthesized reductions
 
-`ReductionTree` records a nonempty reduction without choosing an arithmetic implementation.
-Unlike mathlib's `BinaryTree`, values occur at leaves, not internal nodes. An empty reduction
-needs a separately chosen identity and is deliberately not represented here.
+`ReductionTree` records a nonempty reduction without choosing an arithmetic implementation. Values
+sit at the leaves, unlike Mathlib's `BinaryTree`, which keeps them at internal nodes. (a + b) + (c +
+d) and ((a + b) + c) + d are two different trees over the same four leaves, and in floating point
+they can round differently. An empty reduction needs an identity chosen on its own and isn't
+represented here.
 -/
 
 @[expose] public section
@@ -35,7 +37,7 @@ def leaves : ReductionTree α → List α
   | .leaf x => [x]
   | .node a b => a.leaves ++ b.leaves
 
-/-- Evaluate the chosen schedule; the combining operation need not be associative. -/
+/-- Evaluate the chosen schedule. The combining operation need not be associative. -/
 def eval (combine : β → β → β) (value : α → β) : ReductionTree α → β
   | .leaf x => value x
   | .node a b => combine (a.eval combine value) (b.eval combine value)

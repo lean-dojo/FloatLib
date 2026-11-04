@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 /-!
 # Directed square-root bounds
 
-The integer square-root bracket used by `sqrt x (mode := .down)` and `sqrt x (mode := .up)`
-encloses the exact real square root after restoring its dyadic scale. For descriptors with
-`fmt.isIEEE = true`, directed dyadic rounding yields extended-real lower and upper bounds on
-finite nonnegative inputs, including negative zero.
+Once its dyadic scale is restored, the integer square-root bracket that `sqrt x (mode := .down)`
+and `sqrt x (mode := .up)` use encloses the exact real square root. For descriptors with
+`fmt.isIEEE = true`, directed dyadic rounding then gives extended-real lower and upper bounds on
+finite nonnegative inputs, negative zero included.
 -/
 
 @[expose] public section

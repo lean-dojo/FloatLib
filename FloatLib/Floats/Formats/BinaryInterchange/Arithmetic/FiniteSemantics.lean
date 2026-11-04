@@ -16,22 +16,24 @@ public import FloatLib.Numerics.Operation.Semantics
 /-!
 # Correctness of finite arithmetic
 
-The arithmetic layer decodes represented inputs to exact dyadics, performs one exact operation,
-and quantizes once under the selected output policy. These theorems expose that contract through
-the family-independent `NumericalSystem` and `Operation` interfaces.
+Finite arithmetic decodes represented inputs to exact dyadics, performs one exact operation, and
+quantizes once under the selected output policy. We state that contract here through the
+family-independent `NumericalSystem` and `Operation` interfaces.
 
 Subtraction needs one format-specific convention. IEEE, OCP E4M3, FP4, and FP6 retain signed zero,
 so negation toggles the sign of zero. FNUZ has only one zero encoding, so its exact semantic
 negation canonicalizes zero to positive zero.
 
-The exact sums of addition, subtraction and fused multiply-add are `Policy.addDyadic`, whose zero
-has the sign of IEEE 754-2019 Section 6.3 for the policy's rounding rule. The cancellation
-theorems (`addFinite?_eq_zero_of_toRat_add_eq_zero` and its multiply-add forms) state that signed
-zero at the encoding level. Division rounds a numerator and denominator whose signed quotient is
-the exact rational quotient (`divValue_eq_quantizedRatValue`). For nearest-even rounding in an
-IEEE format a finite quotient is the correctly rounded real quotient
-(`toReal_divFinite?_nearest`), and a zero dividend gives the zero signed by the exclusive or of
-the operand signs under every policy (`divFinite?_eq_zero_of_toRat_eq_zero`).
+Addition, subtraction and fused multiply-add form their exact sums with `Policy.addDyadic`, whose
+zero has the sign that IEEE 754-2019 Section 6.3 gives for the policy's rounding rule. The
+cancellation theorems (`addFinite?_eq_zero_of_toRat_add_eq_zero` and its multiply-add forms) state
+that signed zero at the encoding level.
+
+Division rounds a numerator and denominator whose signed quotient is the exact rational quotient
+(`divValue_eq_quantizedRatValue`). For nearest-even rounding in an IEEE format, a finite quotient
+is the correctly rounded real quotient (`toReal_divFinite?_nearest`). A zero dividend gives the
+zero signed by the exclusive or of the operand signs under every policy
+(`divFinite?_eq_zero_of_toRat_eq_zero`).
 -/
 
 @[expose] public section
@@ -73,8 +75,8 @@ private theorem map_roundRat_eq_some_quantizedRatValue
 /--
 Denotation of the quantized exact quotient.
 
-The sign is the exclusive or of the operand signs and the exponent difference is shifted into the
-numerator or the denominator; `divValue_eq_quantizedRatValue` proves that these denote the exact
+The sign is the exclusive or of the operand signs, and the exponent difference is shifted into the
+numerator or the denominator. `divValue_eq_quantizedRatValue` proves that these denote the exact
 quotient. `divFinite_refines` uses this value only for a nonzero divisor. For a zero divisor it is
 the placeholder `undefined`, which no theorem relates to IEEE division by zero.
 -/
@@ -152,7 +154,7 @@ theorem negExact_refines (fmt : FloatFormat) :
 
 /--
 Finite addition performs exact dyadic addition followed by one quantization. The exact sum is
-`Policy.addDyadic`, which signs an exactly cancelling sum by the policy's rounding rule.
+`Policy.addDyadic`, which signs a sum with exact value zero by the policy's rounding rule.
 -/
 theorem addFinite_refines (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat) :
     Operation.Checked2 (exactNumericalSystem fmt) (exactNumericalSystem fmt)
@@ -202,8 +204,9 @@ theorem mulAddFinite_refines (storage accumulator : FloatFormat)
   rfl
 
 /--
-Finite fused multiply-add has one quantization after the exact product and sum. An exactly zero
-result is signed from the product sign and the addend sign, as in `addFinite_refines`. It is
+Finite fused multiply-add has one quantization after the exact product and sum. A result whose
+exact value is zero is signed from the product sign and the addend sign, as in
+`addFinite_refines`. It is
 mixed-format multiply-add with all three operands and the result in `fmt`.
 -/
 theorem fmaFinite_refines (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat) :
@@ -320,7 +323,7 @@ private theorem roundDyadic_addDyadic_of_toRat_add_eq_zero (fmt : FloatFormat)
 Exact cancellation in finite addition (IEEE 754-2019 Section 6.3). When two finite values have an
 exact sum of zero, `addFinite?` returns the format's zero with the sign `Policy.zeroSumSign` gives
 the policy's rounding rule and the two stored signs, whatever the overflow and underflow choices.
-Toward negative infinity `+1 + (-1)` is `-0`; under every other rule it is `+0`, and two zeros of
+Toward negative infinity `+1 + (-1)` is `-0`, and under every other rule it is `+0`. Two zeros of
 one sign keep that sign. A format without a signed zero returns its one zero.
 -/
 theorem addFinite?_eq_zero_of_toRat_add_eq_zero (fmt : FloatFormat)
@@ -334,8 +337,8 @@ theorem addFinite?_eq_zero_of_toRat_add_eq_zero (fmt : FloatFormat)
   exact congrArg some (roundDyadic_addDyadic_of_toRat_add_eq_zero fmt policy entropy dx dy hsum)
 
 /--
-Exact cancellation in mixed-format multiply-add. When `x * y + acc` is exactly zero for finite
-operands, `mulAddFinite?` returns the accumulator format's zero that
+Exact cancellation in mixed-format multiply-add. When the exact value of `x * y + acc` is zero for
+finite operands, `mulAddFinite?` returns the accumulator format's zero that
 `addFinite?_eq_zero_of_toRat_add_eq_zero` gives a sum whose summands have the signs of the exact
 product, `Bool.xor (signBit x) (signBit y)`, and of `acc`.
 -/
@@ -356,8 +359,9 @@ theorem mulAddFinite?_eq_zero_of_toRat_add_eq_zero (storage accumulator : FloatF
 
 /--
 Exact cancellation in fused multiply-add: `mulAddFinite?_eq_zero_of_toRat_add_eq_zero` with the
-storage and accumulator formats both `fmt`. When `x * y + z` is exactly zero for finite operands,
-the result is the zero whose sign `Policy.zeroSumSign` gives from the policy's rounding rule, the
+storage and accumulator formats both `fmt`. When the exact value of `x * y + z` is zero for finite
+operands, the result is the zero whose sign `Policy.zeroSumSign` gives from the policy's rounding
+rule, the
 product sign `Bool.xor (signBit x) (signBit y)` and the sign of `z`.
 -/
 theorem fmaFinite?_eq_zero_of_toRat_add_eq_zero (fmt : FloatFormat)
@@ -370,7 +374,7 @@ theorem fmaFinite?_eq_zero_of_toRat_add_eq_zero (fmt : FloatFormat)
         (Bool.xor (signBit x) (signBit y)) (signBit z))) :=
   mulAddFinite?_eq_zero_of_toRat_add_eq_zero fmt fmt policy entropy hx hy hz hsum
 
-/-- Finite casts decode exactly and quantize once into the destination format. -/
+/-- A finite cast decodes to its exact value and quantizes it once into the destination format. -/
 theorem castFinite_refines (src dst : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat) :
     Operation.Checked1 (exactNumericalSystem src) (exactNumericalSystem dst)
       (Policy.castFinite? src dst policy entropy)

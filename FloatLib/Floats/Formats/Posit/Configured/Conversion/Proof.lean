@@ -16,15 +16,16 @@ import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 /-!
 # Configured posit conversion proofs
 
-The conversion relation specifies finite results through real posit rounding and the complete
-decoded model. Its status flags are `finiteStatus`, which `finiteStatus_eq` states in closed form
-against maxPos and minPos. The implementation proof uses the rational-to-real rounding bridge and
-codec inverse laws. The exponent size is fixed at two bits by the Posit Standard (2022), so width
-is the only descriptor parameter.
+Here we state what posit conversion should do and prove that `run` does it. The relation `spec`
+pins down finite results through real posit rounding and the complete decoded model, and its
+status flags are `finiteStatus`, which `finiteStatus_eq` gives in closed form against maxPos and
+minPos. For a 16-bit posit, for example, maxPos is `2 ^ 56`. The implementation proof goes through
+the rational-to-real rounding bridge and the codec inverse laws. Since the Posit Standard (2022)
+fixes the exponent size at two bits, width is the only descriptor parameter.
 
-Conversion to an equally wide or wider descriptor appends zero bits to the source word.
-The configured results follow from exact model widening and the codec inverse laws.
-Complete decoding and default conversion preserve zero and NaR as well as finite values.
+Converting to a descriptor at least as wide appends zero bits to the source word, which follows
+from exact model widening and the codec inverse laws. Complete decoding and default conversion
+preserve zero and NaR along with the finite values.
 -/
 
 @[expose] public section
@@ -87,12 +88,12 @@ theorem finiteStatus_eq (exact : Rat) (rounded : Model format) :
     Bool.beq_eq_decide_eq]
 
 /--
-Finite conversion follows real posit rounding; its status is `finiteStatus` of the input and the
-delivered model, characterized flag by flag in `finiteStatus_eq`.
+Finite conversion follows real posit rounding, and its status is `finiteStatus` of the input and
+the delivered model, characterized flag by flag in `finiteStatus_eq`.
 
 The real rounder uses the standard appended-bit boundary, minPos underflow, and maxPos saturation.
-Model equality retains the complete word. Infinity and exceptional observations obey their
-explicit policies. This proof-facing relation needs no real-number evaluation at runtime.
+Model equality keeps the complete word. Infinity and exceptional observations follow the policies
+in the context. Proofs use this relation, and nothing evaluates a real number at runtime.
 -/
 def spec :
     Quantization.Spec Context (NumericalValue Rat)
@@ -116,14 +117,14 @@ def spec :
       quantizeFinite exact :=
   rfl
 
-/-- Infinity observations are handled only by the explicit posit infinity policy. -/
+/-- Only the context's posit infinity policy decides how an infinity observation converts. -/
 @[simp, grind =] theorem run_infinity (context : Context) (negative : Bool) :
     run (format := format) (plan := plan) (code := code)
         context (.infinity negative) =
       quantizeInfinity context negative :=
   rfl
 
-/-- Exceptional observations are handled only by the explicit posit exceptional policy. -/
+/-- Only the context's exceptional policy decides how an exceptional observation converts. -/
 @[simp, grind =] theorem run_exceptional
     (context : Context) (exceptional : ExceptionalValue) :
     run (format := format) (plan := plan) (code := code)
@@ -196,8 +197,8 @@ A signaling NaN source also raises invalid, as IEEE 754-2019 §7.2 requires. -/
         { mappedSpecial := true, invalid := exceptional.isSNaN } :=
   rfl
 
-/-- Quantizing a decoded finite source into a wider codec appends exactly the additional zero bits.
-The statement concerns the successful value, not the conversion status. -/
+/-- Quantizing a decoded finite source into a wider codec appends the additional zero bits to its
+word. The theorem is about the successful value and says nothing about the conversion status. -/
 theorem quantizeFinite_widen (hw : source.bits ≤ target.bits)
     (value : FloatLib.Floats.ExecFloat (Configured.Family source sourceCode sourcePlan))
     (exact : Rat) (hfinite : decode value = .finite exact) :
@@ -225,7 +226,7 @@ private theorem run_default_model_value (value : Model format) :
       simp [run, quantizeFinite, Model.roundRat_toRat? value q hq, ConversionOutcome.value?]
 
 /-- Default conversion into a wider codec returns the source word with appended zero bits.
-This includes the unique zero and NaR words; the default exceptional-value policy preserves NaR. -/
+That includes the unique zero and NaR words, since the default exceptional policy keeps NaR. -/
 theorem run_default_widen (hw : source.bits ≤ target.bits)
     (value : FloatLib.Floats.ExecFloat (Configured.Family source sourceCode sourcePlan)) :
     (run (format := target) (plan := targetPlan) (code := targetCode)

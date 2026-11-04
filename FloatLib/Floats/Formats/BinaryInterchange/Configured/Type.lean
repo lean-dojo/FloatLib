@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 /-!
 # Parameterized binary `ExecFloat` types
 
-The public configured binary type identifies a format by its numerical parameters and storage
-plan. Numerical parameters select the descriptor and storage plan, and operation backends are
-registered in `Configured.NativeDispatch` and `Configured.Plan.Instances`.
+This module defines the public configured binary type, which identifies a format by its numerical
+parameters and storage plan. The numerical parameters select the descriptor and storage plan, while
+operation backends are registered elsewhere, in `Configured.NativeDispatch` and
+`Configured.Plan.Instances`.
 
 Tooling and serialization code can use these types without importing the complete value API.
 -/
@@ -182,28 +183,28 @@ abbrev LimbFamily
 end Binary
 
 /--
-An executable binary format selected by its numerical parameters.
+An executable binary format selected by its numerical parameters. The stored width is derived as
+`1 + exponentBits + fractionBits`, so no width parameter of its own can disagree with the layout,
+and storage and operation implementations are selected statically from the resulting format.
 
-`exponentBits` and `fractionBits` are the widths of the exponent and fraction fields, `encoding`
-chooses how the special bit patterns are read (`.ieee` by default), and `bias` is the exponent
-bias, by default the encoding's conventional bias for that exponent width. The next four
-arguments are proofs that `exponentBits ≥ 2`, `fractionBits ≥ 1`, the bias is positive, and the
-bias is at most the largest finite exponent field; `decide` discharges them for literal parameters.
+* `exponentBits` and `fractionBits` are the widths of the exponent and fraction fields.
+* `encoding` chooses how special bit patterns are read (`.ieee` by default).
+* `bias` is the exponent bias, by default the encoding's conventional one for that exponent width.
+* Four proofs follow: `exponentBits ≥ 2`, `fractionBits ≥ 1`, a positive bias, and a bias at most
+  the largest finite exponent field. `decide` discharges them for literal parameters.
+* `plan` is the storage plan. The default, `Configured.StoragePlan.forKnownWidth` at that width,
+  stores the encoding in the smallest of `UInt8`, `UInt16`, `UInt32` and `UInt64` that holds it,
+  in two `UInt64` words (`.pair`) for the 65- to 128-bit layouts that the two-word kernels serve,
+  and otherwise keeps the exact-width proof model (`.wide`). `ExecFloat.BinaryLimbs` chooses the
+  `.limbs` plan instead.
+* `code` is the type that stores the values, and it is not checked against `plan`.
 
-The stored width is derived as `1 + exponentBits + fractionBits`, so no separate width parameter
-can disagree with the layout. Storage and operation implementations are selected statically from
-the resulting format. `plan` is the storage plan. The default,
-`Configured.StoragePlan.forKnownWidth` at that width, stores the encoding in the smallest of
-`UInt8`, `UInt16`, `UInt32` and `UInt64` that holds it, in two `UInt64` words (`.pair`) for the
-65- to 128-bit layouts that the two-word kernels serve, and otherwise keeps the exact-width proof
-model (`.wide`). `ExecFloat.BinaryLimbs` chooses the `.limbs` plan instead. FloatLib's codec, and
-with it literals and arithmetic, is found for `forKnownWidth` plans and for `.limbs`. Another plan
-constructor written directly, such as `.word64 h` for a 32-bit format, still gives a well-formed
-type, but instance search does not find a codec for it. `code` is the type that stores the values
-and is not checked against `plan`: FloatLib provides the codec, and with it arithmetic, comparison
-and conversion, only for the default `Configured.Code plan`. Another type still gives a
-well-formed type, but its operations need a `ModelCodec plan (Model format) code` instance whose
-laws the user proves.
+FloatLib's codec, and with it literals and arithmetic, is found for `forKnownWidth` plans and for
+`.limbs`. Another plan constructor written by hand, such as `.word64 h` for a 32-bit format, still
+gives a well-formed type, but instance search does not find a codec for it. In the same way
+FloatLib provides the codec, and with it arithmetic, comparison and conversion, only for the
+default `code`, `Configured.Code plan`. Another type still gives a well-formed type, but its
+operations need a `ModelCodec plan (Model format) code` instance whose laws the user proves.
 -/
 abbrev Binary
     (exponentBits fractionBits : Nat)

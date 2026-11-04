@@ -11,10 +11,10 @@ public import FloatLib.Numerics.Repr
 /-!
 # Search budgets and failures of certified functions
 
-A certified function refines rational enclosures of a real result until both endpoints round to
-the same value in the destination format. `Budget` bounds that search, and the binary and decimal
-certified functions take it as `(budget := { maxAttempts := 4 })`. A binary certified function
-that returns no result says why with a `Failure`.
+A certified function keeps refining a rational enclosure of the real result until both endpoints
+round to the same value in the destination format. `Budget` puts a bound on that search, and the
+binary and decimal certified functions take it as `(budget := { maxAttempts := 4 })`. When a binary
+certified function returns no result, it says why with a `Failure`.
 -/
 
 @[expose] public section
@@ -24,10 +24,10 @@ namespace FloatLib.Floats.Certified
 open FloatLib.Numerics
 
 /--
-The search budget of a certified function: the first Taylor degree and the number of enclosure
-attempts. It bounds enclosure attempts, not total work or elapsed time. Exact comparisons outside
-the search, such as the screens for underflow and overflow, run to completion, and one attempt can
-take longer than the one before it.
+The search budget of a certified function, made of the first Taylor degree and the number of
+enclosure attempts. It limits the number of attempts and says nothing about total work or elapsed
+time. Exact comparisons outside the search, such as the screens for underflow and overflow, run to
+completion, and one attempt can take longer than the one before it.
 -/
 structure Budget where
   /-- First Taylor degree. Zero is promoted to one before refinement. -/

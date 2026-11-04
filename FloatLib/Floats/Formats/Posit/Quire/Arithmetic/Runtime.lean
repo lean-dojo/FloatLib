@@ -13,16 +13,14 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Executable standard posit quire operations
 
-Quire arithmetic implements the operations of Posit Standard (2022), §5.11. Every accumulation
-kernel works on the signed fixed-point coefficient. Posit operands decode to the shared exact
-dyadic carrier and are shifted directly to the quire's fixed scale. No operation normalizes
-through `Rat`.
+These are the quire operations of Posit Standard (2022), §5.11. Every accumulation kernel works
+on the signed fixed-point coefficient. A posit operand decodes to the shared exact dyadic carrier
+and is shifted straight to the quire's fixed scale, so no operation ever normalizes through `Rat`.
 
-The standard reserves the most-negative quire word for NaR. Consequently every checked result
-uses `Model.ofCoefficient`: NaR propagates, and either signed overflow or a result equal to the
-reserved word produces quire NaR.
-
-The exact coefficient, dyadic, and rational refinement theorems live in `Arithmetic.Proof`.
+Because the standard reserves the most negative quire word for NaR, every checked result goes
+through `Model.ofCoefficient`, where NaR propagates and a signed overflow or a result equal to the
+reserved word also gives quire NaR. You'll find the exact coefficient, dyadic, and rational
+refinement theorems in `Arithmetic.Proof`.
 
 ## References
 
@@ -39,12 +37,11 @@ variable {format : Format}
 /--
 Add an exact dyadic increment to an ordinary quire.
 
-This shared integer kernel underlies posit addition and fused product accumulation. The function
-is total and produces quire NaR in three cases: the accumulator is NaR, the increment's stored
-exponent is below the quire scale, or the exact coefficient sum is not an ordinary quire
-coefficient. The exponent check is sufficient for alignment; it can reject an otherwise aligned
-dyadic with trailing zeros in its significand. Decoded ordinary posits and their exact products
-always pass this check, so it only restricts direct callers of this kernel.
+Posit addition and fused product accumulation share this total integer kernel. It returns quire
+NaR when the accumulator is NaR, when the increment's stored exponent is below the quire scale, or
+when the exact coefficient sum isn't an ordinary quire coefficient. The exponent check suffices
+for alignment but can reject an aligned dyadic whose significand ends in zeros. Decoded ordinary
+posits and their exact products always pass it, so only direct callers notice.
 -/
 @[inline] def addDyadic
     (accumulator : Model format)
@@ -61,7 +58,7 @@ always pass this check, so it only restricts direct callers of this kernel.
 Convert a posit into the quire associated with the same descriptor, without rounding.
 
 Every ordinary posit, zero included, is an ordinary quire coefficient at the quire scale
-(`coefficientOfDyadic_ordinary`); posit NaR becomes quire NaR.
+(`coefficientOfDyadic_ordinary`), and posit NaR becomes quire NaR.
 -/
 @[inline] def pToQ
     (value : FloatLib.Floats.Formats.Posit.Model format) : Model format :=
@@ -71,14 +68,14 @@ Every ordinary posit, zero included, is an ordinary quire coefficient at the qui
   | none =>
       nar format
 
-/-- Negate an ordinary quire; quire NaR remains quire NaR. -/
+/-- Negate an ordinary quire. Quire NaR stays quire NaR. -/
 @[inline] def qNegate (value : Model format) : Model format :=
   if value.isNaR then
     nar format
   else
     ofCoefficient format (-value.coefficient)
 
-/-- Absolute value of an ordinary quire; quire NaR remains quire NaR. -/
+/-- Absolute value of an ordinary quire. Quire NaR stays quire NaR. -/
 @[inline] def qAbs (value : Model format) : Model format :=
   if value.isNaR then
     nar format
@@ -87,7 +84,7 @@ Every ordinary posit, zero included, is an ordinary quire coefficient at the qui
   else
     value
 
-/-- Add one posit exactly to a quire, producing NaR on exceptional input or quire overflow. -/
+/-- Add one posit to a quire without rounding, producing NaR on exceptional input or overflow. -/
 @[inline] def qAddP
     (accumulator : Model format)
     (addend : FloatLib.Floats.Formats.Posit.Model format) : Model format :=
@@ -96,7 +93,8 @@ Every ordinary posit, zero included, is an ordinary quire coefficient at the qui
   | none => nar format
 
 /--
-Subtract one posit exactly from a quire, producing NaR on exceptional input or quire overflow.
+Subtract one posit from a quire without rounding, producing NaR on exceptional input or quire
+overflow.
 -/
 @[inline] def qSubP
     (accumulator : Model format)
@@ -105,14 +103,14 @@ Subtract one posit exactly from a quire, producing NaR on exceptional input or q
   | some dyadic => addDyadic accumulator dyadic.neg
   | none => nar format
 
-/-- Add two quires exactly, returning quire NaR on NaR input or signed overflow. -/
+/-- Add two quires without rounding, returning quire NaR on NaR input or signed overflow. -/
 @[inline] def qAddQ (left right : Model format) : Model format :=
   if left.isNaR || right.isNaR then
     nar format
   else
     ofCoefficient format (left.coefficient + right.coefficient)
 
-/-- Subtract two quires exactly, returning quire NaR on NaR input or signed overflow. -/
+/-- Subtract two quires without rounding, returning quire NaR on NaR input or signed overflow. -/
 @[inline] def qSubQ (left right : Model format) : Model format :=
   if left.isNaR || right.isNaR then
     nar format

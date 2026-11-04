@@ -12,9 +12,10 @@ public import Mathlib.Tactic.SplitIfs
 /-!
 # The DPD combination field and exponent continuation
 
-The DPD combination field packs a leading digit below 10 and a high exponent below 3, and its
-accessors recover both. Bounded exponent continuation and trailing fields pack below the
-combinations reserved for infinity and NaN.
+In DPD, the five-bit combination field holds the leading digit, below 10, together with the high
+exponent bits, below 3. Both come back out through the accessors. When the exponent
+continuation and the trailing field are in range, the packed word stays below the combinations
+reserved for infinity and NaN.
 -/
 
 @[expose] public section
@@ -33,7 +34,7 @@ theorem leadingDigit_lt (field : Nat) : leadingDigit field < 10 := by
   unfold leadingDigit
   split_ifs <;> omega
 
-/-- The high exponent bits read from a finite combination field are below 3; the fourth pair is
+/-- The high exponent bits read from a finite combination field are below 3. The fourth pair is
 reserved. -/
 theorem highExponent_lt (field : Nat) (h : field < 30) : highExponent field < 3 := by
   unfold highExponent

@@ -17,13 +17,11 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of direct exact-dyadic posit packing
 
-The one-pass scale, regime, exponent, fraction, guard, and sticky calculation in
-`Direct.Runtime` refines the exact posit rounding specification at every width. It covers
-regimes that consume the payload, appended-bit threshold ties, finite-endpoint saturation, and
-negative results obtained through posit negation.
-
-Direct packing avoids the reference rounder's search. Their equality gives both algorithms the
-same semantics at every configured width.
+`Direct.Runtime` works out scale, regime, exponent, fraction, guard, and sticky bits in one pass,
+and we prove here that this calculation refines the exact posit rounding specification at every
+width. The proof covers regimes that use up the payload, ties at the appended-bit threshold,
+saturation at the finite endpoints, and negative results produced by posit negation. So direct
+packing has the reference rounder's semantics at every configured width without doing its search.
 -/
 
 @[expose] public section
@@ -35,8 +33,8 @@ open FloatLib.Numerics
 /-! ## Complete arbitrary-width rounding -/
 
 /--
-The scalar leading-exponent underflow check is exactly comparison with the format's minimum
-positive value.
+The scalar leading-exponent underflow check is the comparison with the format's minimum positive
+value.
 -/
 theorem isLessMinPositive_eq
     (format : Format) (target : FloatLib.Numerics.Dyadic)
@@ -136,7 +134,7 @@ private theorem negativeSaturatedUnderflows
       format (significand : Rat) targetExponent regime
       exponentField leading hsaturated hexponent hupperRat hscale
 
-/-- Direct positive rounding selects exactly the shared exact-dyadic code. -/
+/-- Direct positive rounding selects the same code as the shared exact-dyadic rounder. -/
 theorem roundPositiveCode_eq_dyadic
     (format : Format) (target : FloatLib.Numerics.Dyadic) :
     roundPositiveCode format target =

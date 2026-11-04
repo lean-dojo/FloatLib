@@ -19,19 +19,20 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 /-!
 # Correctness of IEEE exception status
 
-The executable status kernels in `Status.Runtime` satisfy cross-flag invariants and
-operation-level specifications. Import `BinaryInterchange.Status` for the combined public
-interface.
+Here we prove that the executable status kernels of `Status.Runtime` satisfy their cross-flag
+invariants and operation-level specifications. Import `BinaryInterchange.Status` for the combined
+public interface.
 
-The rounding-status classifiers compare an exact dyadic or scaled rational with the supplied
-rounded value. Operation wrappers compute that exact witness alongside the value-only operation.
-This file proves the ternary values in real order, cross-flag invariants, preservation of the
-ordinary result, and operation-specific invalid and divide-by-zero conditions. In a conventional
-IEEE format the invalid flag of addition, multiplication, fused multiply-add, and division depends
-only on the classes and signs of the operands (`add_invalid_of_isIEEE` and its siblings): finite
-operands never raise it, except zero over zero. The real-order
-tininess boundaries are in `Status.Tininess`. On a finite input with a clear sign bit, square root
-raises `inexact` exactly when its delivered value is not the real square root (`sqrt_inexact_iff`).
+A rounding-status classifier compares an exact dyadic or scaled rational with the supplied rounded
+value, and each operation wrapper computes that exact witness next to the value-only operation. We
+prove the ternary values in real order, the cross-flag invariants, preservation of the ordinary
+result, and the invalid and divide-by-zero conditions of each operation.
+
+In a conventional IEEE format the invalid flag of addition, multiplication, fused multiply-add and
+division depends only on the classes and signs of the operands (`add_invalid_of_isIEEE` and its
+siblings). Finite operands never raise it, except zero over zero. On a finite input with a clear
+sign bit, square root raises `inexact` if and only if its delivered value is not the real square
+root (`sqrt_inexact_iff`). The real-order tininess boundaries are in `Status.Tininess`.
 -/
 
 @[expose] public section
@@ -63,7 +64,7 @@ open FloatLib.Floats.Formats.Flocq
 /--
 `outcomeWithInvalid` carries the exceptional-result ternary convention `.eq`.
 
-This is a convention for NaNs, exact infinities, and placeholders, not a statement that the value
+That is the convention for NaNs, exact infinities and placeholders. It does not say that the value
 equals an exact real result.
 -/
 @[simp] theorem outcomeWithInvalid_ternary {fmt : FloatFormat}
@@ -130,19 +131,19 @@ theorem dyadicTernary_eq_compare {fmt : FloatFormat} (exact : Numerics.Dyadic)
   rw [dyadicTernary, dite_eq_left hfinite, cmpDyadic_eq_compare,
     toReal_eq_toReal_finiteDyadic hfinite]
 
-/-- A finite delivery has the dyadic ternary value `.lt` exactly when it is below the exact one. -/
+/-- A finite delivery has dyadic ternary value `.lt` just when it is below the exact one. -/
 theorem dyadicTernary_eq_lt_iff {fmt : FloatFormat} (exact : Numerics.Dyadic)
     {rounded : Model fmt} (hfinite : isFinite rounded = true) :
     dyadicTernary exact rounded = .lt ↔ toReal rounded < exact.toReal := by
   rw [dyadicTernary_eq_compare exact hfinite, compare_lt_iff_lt]
 
-/-- A finite delivery has the dyadic ternary value `.eq` exactly when it equals the exact value. -/
+/-- A finite delivery has dyadic ternary value `.eq` just when it equals the exact value. -/
 theorem dyadicTernary_eq_eq_iff {fmt : FloatFormat} (exact : Numerics.Dyadic)
     {rounded : Model fmt} (hfinite : isFinite rounded = true) :
     dyadicTernary exact rounded = .eq ↔ toReal rounded = exact.toReal := by
   rw [dyadicTernary_eq_compare exact hfinite, compare_eq_iff_eq]
 
-/-- A finite delivery has the dyadic ternary value `.gt` exactly when it is above the exact one. -/
+/-- A finite delivery has dyadic ternary value `.gt` just when it is above the exact one. -/
 theorem dyadicTernary_eq_gt_iff {fmt : FloatFormat} (exact : Numerics.Dyadic)
     {rounded : Model fmt} (hfinite : isFinite rounded = true) :
     dyadicTernary exact rounded = .gt ↔ exact.toReal < toReal rounded := by
@@ -178,7 +179,7 @@ theorem rationalTernaryScaled_eq_compare {fmt : FloatFormat} (sign : Bool)
   · rw [compare_gt_iff_gt.mpr hgreater, compare_lt_iff_lt.mpr hgreater]
     rfl
 
-/-- A finite delivery has the rational ternary value `.lt` exactly when it is below the rational. -/
+/-- A finite delivery has rational ternary value `.lt` just when it is below the rational. -/
 theorem rationalTernaryScaled_eq_lt_iff {fmt : FloatFormat} (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) {rounded : Model fmt}
     (hdenominator : denominator ≠ 0) (hfinite : isFinite rounded = true) :
@@ -187,7 +188,7 @@ theorem rationalTernaryScaled_eq_lt_iff {fmt : FloatFormat} (sign : Bool)
   rw [rationalTernaryScaled_eq_compare sign numerator denominator exponent hdenominator hfinite,
     compare_lt_iff_lt]
 
-/-- A finite delivery has the rational ternary value `.eq` exactly when it equals the rational. -/
+/-- A finite delivery has rational ternary value `.eq` just when it equals the rational. -/
 theorem rationalTernaryScaled_eq_eq_iff {fmt : FloatFormat} (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) {rounded : Model fmt}
     (hdenominator : denominator ≠ 0) (hfinite : isFinite rounded = true) :
@@ -196,7 +197,7 @@ theorem rationalTernaryScaled_eq_eq_iff {fmt : FloatFormat} (sign : Bool)
   rw [rationalTernaryScaled_eq_compare sign numerator denominator exponent hdenominator hfinite,
     compare_eq_iff_eq]
 
-/-- A finite delivery has the rational ternary value `.gt` exactly when it is above the rational. -/
+/-- A finite delivery has rational ternary value `.gt` just when it is above the rational. -/
 theorem rationalTernaryScaled_eq_gt_iff {fmt : FloatFormat} (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) {rounded : Model fmt}
     (hdenominator : denominator ≠ 0) (hfinite : isFinite rounded = true) :
@@ -235,7 +236,7 @@ theorem rationalTernaryScaled_eq_dyadicTernary {fmt : FloatFormat} (exact : Nume
         Numerics.Dyadic.signedSignificand, hnegative, bpow,
         FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
 
-/-- The exact-infinity ternary value is `.eq` exactly for the infinity itself. -/
+/-- The exact-infinity ternary value is `.eq` if and only if the delivery is the infinity itself. -/
 theorem exactInfinityTernary_eq_eq_iff {fmt : FloatFormat} (negative : Bool)
     (value : Model fmt) :
     exactInfinityTernary negative value = .eq ↔
@@ -321,7 +322,8 @@ theorem dyadicSqrtTernary_eq_compare {fmt : FloatFormat} (radicand : Numerics.Dy
 /--
 The common shape of `dyadicRoundingStatus` and `rationalRoundingStatusScaled`: the overflow
 classification first, then the underflow and inexact flags of a finite delivery, then an infinite
-delivery, and otherwise invalid. Only the proofs below use it; both builders unfold to it by `rfl`.
+delivery, and otherwise invalid. Only the proofs below use it, and both builders unfold to it by
+`rfl`.
 -/
 private def roundingStatusShape {fmt : FloatFormat} (rounded : Model fmt) (overflows tiny : Bool)
     (inexact : isFinite rounded = true → Bool) : Numerics.IEEEStatus :=
@@ -427,8 +429,8 @@ theorem dyadicRoundingStatus_inexact_of_underflow {fmt : FloatFormat}
   exact roundingStatusShape_inexact_of_underflow h
 
 /--
-Dyadic rounding reports overflow exactly when rounding crosses the format's overflow threshold or
-the supplied rounded result is an infinity.
+Dyadic rounding reports overflow just when rounding crosses the format's overflow threshold
+or the supplied rounded result is an infinity.
 -/
 @[simp] theorem dyadicRoundingStatus_overflow {fmt : FloatFormat}
     (mode : IEEERoundingMode) (exact : Numerics.Dyadic) (rounded : Model fmt) :
@@ -437,7 +439,7 @@ the supplied rounded result is an infinity.
         (!isFinite rounded && isInf rounded)) := by
   rw [dyadicRoundingStatus_eq_shape, roundingStatusShape_overflow]
 
-/-- For a finite result, dyadic overflow is exactly the exact-value overflow classification. -/
+/-- For a finite result, dyadic overflow is the exact-value overflow classification. -/
 theorem dyadicRoundingStatus_overflow_of_isFinite {fmt : FloatFormat}
     (mode : IEEERoundingMode) (exact : Numerics.Dyadic) (rounded : Model fmt)
     (hfinite : isFinite rounded = true) :
@@ -474,7 +476,7 @@ theorem rationalRoundingStatusScaled_inexact_of_underflow {fmt : FloatFormat}
   exact roundingStatusShape_inexact_of_underflow h
 
 /--
-Scaled rational rounding reports overflow exactly when rounding crosses the format's overflow
+Scaled rational rounding reports overflow just when rounding crosses the format's overflow
 threshold or the supplied rounded result is an infinity.
 -/
 @[simp] theorem rationalRoundingStatusScaled_overflow {fmt : FloatFormat}
@@ -486,7 +488,7 @@ threshold or the supplied rounded result is an infinity.
   rw [rationalRoundingStatusScaled_eq_shape, roundingStatusShape_overflow]
 
 /--
-For a finite result, scaled rational overflow is exactly the exact-value overflow classification.
+For a finite result, scaled rational overflow is the exact-value overflow classification.
 -/
 theorem rationalRoundingStatusScaled_overflow_of_isFinite {fmt : FloatFormat}
     (mode : IEEERoundingMode) (sign : Bool) (numerator denominator : Nat)
@@ -519,8 +521,8 @@ theorem rationalRoundingStatusScaled_not_underflow_of_overflow {fmt : FloatForma
   exact roundingStatusShape_not_underflow_of_overflow h
 
 /--
-The dyadic rounding-status builder sets invalid exactly when its overflow classifier is false and
-the supplied result is neither finite nor infinite.
+The dyadic rounding-status builder sets invalid if and only if its overflow classifier is false
+and the supplied result is neither finite nor infinite.
 -/
 @[simp] theorem dyadicRoundingStatus_invalid
     (fmt : FloatFormat) (mode : IEEERoundingMode) (exact : Numerics.Dyadic)
@@ -549,7 +551,7 @@ supplied result.
   rw [dyadicRoundingStatus_eq_shape, roundingStatusShape_divideByZero]
 
 /--
-The scaled rational rounding-status builder sets invalid exactly when its overflow classifier is
+The scaled rational rounding-status builder sets invalid if and only if its overflow classifier is
 false and the supplied result is neither finite nor infinite.
 -/
 @[simp] theorem rationalRoundingStatusScaled_invalid
@@ -695,11 +697,12 @@ theorem add_status_of_toDyadic
 /--
 Invalid-status classification for addition in every descriptor.
 
-Exceptional operands raise invalid exactly for a signaling NaN or opposite-signed infinities when
-no NaN was supplied. For finite operands the right side is the rounding status's own test on the
-delivered sum, invalid only for a NaN that does not replace an overflow. In a conventional IEEE
-format the rounded sum is never a NaN, and `add_invalid_of_isIEEE` states the flag from operand
-classes alone. That the finite branch is false in the other encodings is not proved.
+Exceptional operands raise invalid for a signaling NaN, or for opposite-signed infinities when no
+NaN was supplied, and in no other case. For finite operands the right side is the rounding
+status's own test on the delivered sum, which is invalid only for a NaN that does not replace an
+overflow. In a conventional IEEE format the rounded sum is never a NaN, and
+`add_invalid_of_isIEEE` states the flag from operand classes alone. We have not proved that the
+finite branch is false in the other encodings.
 -/
 theorem add_invalid
     {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
@@ -737,10 +740,10 @@ theorem mul_status_of_toDyadic
 /--
 Invalid-status classification for multiplication in every descriptor.
 
-Exceptional operands raise invalid exactly for a signaling NaN or an infinity-times-zero operation
-without an input NaN. For finite operands the right side is the rounding status's own test on the
-delivered product; `mul_invalid_of_isIEEE` shows it is false in a conventional IEEE format, and
-the other encodings are not covered.
+Exceptional operands raise invalid for a signaling NaN, or for infinity times zero without an
+input NaN, and in no other case. For finite operands the right side is the rounding status's own
+test on the delivered product. `mul_invalid_of_isIEEE` shows it is false in a conventional IEEE
+format, and the other encodings are not covered.
 -/
 theorem mul_invalid
     {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
@@ -787,7 +790,7 @@ Exceptional operands use the IEEE signaling-NaN, infinity-times-zero, and opposi
 For the implementation-defined quiet-NaN case, this library raises invalid for infinity times zero
 even when the addend is a quiet NaN, while an input NaN suppresses the opposite-infinity
 condition. For finite operands the right side is the rounding status's own test on the singly
-rounded result; `fma_invalid_of_isIEEE` shows it is false in a conventional IEEE format, and the
+rounded result. `fma_invalid_of_isIEEE` shows it is false in a conventional IEEE format, and the
 other encodings are not covered.
 -/
 theorem fma_invalid
@@ -866,8 +869,8 @@ Invalid-status classification for division in every descriptor.
 The finite branch distinguishes zero-over-zero, which is invalid, an exact zero quotient, and
 nonzero rational rounding, where the right side is the rounding status's own test on the delivered
 quotient. Exceptional operands use the signaling-NaN and infinity-over-infinity rules.
-`div_invalid_of_isIEEE` states the flag from operand classes alone in a conventional IEEE format;
-for the other encodings the rounding branch is not shown to be false.
+`div_invalid_of_isIEEE` states the flag from operand classes alone in a conventional IEEE format.
+For the other encodings the rounding branch is not shown to be false.
 -/
 theorem div_invalid
     {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
@@ -905,7 +908,7 @@ theorem div_invalid
 In a conventional IEEE format, rounding the exact result of finite operands always delivers a
 number, possibly an infinity (`isNaN_add_eq_false_of_isFinite` and its siblings), so the rounding
 status of a finite operation never reports invalid. The invalid flag is then determined by the
-classes and signs of the operands alone, as IEEE 754-2019 §7.2 specifies; overflow is reported by
+classes and signs of the operands alone, as IEEE 754-2019 §7.2 specifies. Overflow is reported by
 the `overflow` flag. -/
 
 /-- A number is finite or an infinity, so the rounding status's invalid test fails on it. -/
@@ -931,9 +934,9 @@ private theorem isZero_eq_false_of_toDyadic?_eq_none {fmt : FloatFormat} {x : Mo
     contradiction
 
 /--
-In a conventional IEEE format, addition raises invalid exactly for a signaling NaN operand or, when
-no operand is a NaN, for infinities of opposite signs. Finite operands never raise it, in every
-rounding direction.
+In a conventional IEEE format, addition raises invalid in two cases only: a signaling NaN operand,
+and infinities of opposite signs when no operand is a NaN. Finite operands never raise it, in
+every rounding direction.
 -/
 theorem add_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt) (mode : IEEERoundingMode) :
@@ -952,9 +955,9 @@ theorem add_invalid_of_isIEEE
   all_goals rfl
 
 /--
-In a conventional IEEE format, multiplication raises invalid exactly for a signaling NaN operand or,
-when no operand is a NaN, for an infinity times a zero. Finite operands never raise it, in every
-rounding direction.
+In a conventional IEEE format, multiplication raises invalid in two cases only: a signaling NaN
+operand, and an infinity times a zero when no operand is a NaN. Finite operands never raise it, in
+every rounding direction.
 -/
 theorem mul_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt) (mode : IEEERoundingMode) :
@@ -973,15 +976,15 @@ theorem mul_invalid_of_isIEEE
   all_goals rfl
 
 /--
-In a conventional IEEE format, fused multiply-add raises invalid exactly as stated by the
-exceptional branch of `fma_invalid`: a signaling NaN operand, an infinity times a zero, or, without
-a NaN operand, an infinite product and an opposite infinite addend. Finite operands never raise it,
-in every rounding direction.
+In a conventional IEEE format, fused multiply-add raises invalid in the cases of the exceptional
+branch of `fma_invalid` and in no others: a signaling NaN operand, an infinity times a zero, or,
+without a NaN operand, an infinite product and an opposite infinite addend. Finite operands never
+raise it, in every rounding direction.
 
 An infinity times a zero raises invalid even when the addend is a quiet NaN. That is FloatLib's
-policy, not a requirement of the standard: IEEE 754-2019 Section 7.2 leaves it implementation
-defined whether `fma(0, ∞, c)` signals invalid when `c` is a quiet NaN, so another conforming
-implementation may leave the flag clear there.
+policy. IEEE 754-2019 Section 7.2 leaves it implementation defined whether `fma(0, ∞, c)` signals
+invalid when `c` is a quiet NaN, so another conforming implementation may leave the flag clear
+there.
 -/
 theorem fma_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y z : Model fmt)
@@ -1008,10 +1011,10 @@ theorem fma_invalid_of_isIEEE
   all_goals rfl
 
 /--
-In a conventional IEEE format, division raises invalid exactly for a signaling NaN operand or, when
-no operand is a NaN, for two infinities or two zeros. A finite nonzero dividend over a zero divisor
-raises divide-by-zero instead (`div_divideByZero`), and every other quotient of finite operands
-rounds to a number, in every rounding direction.
+In a conventional IEEE format, division raises invalid in two cases only: a signaling NaN operand,
+and two infinities or two zeros when no operand is a NaN. A finite nonzero dividend over a zero
+divisor raises divide-by-zero instead (`div_divideByZero`), and every other quotient of finite
+operands rounds to a number, in every rounding direction.
 -/
 theorem div_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt) (mode : IEEERoundingMode) :
@@ -1042,7 +1045,7 @@ theorem div_invalid_of_isIEEE
       | simp [isZero_eq_false_of_toDyadic?_eq_none hx]
       | simp [isZero_eq_false_of_toDyadic?_eq_none hy]
 
-/-- Division raises divide-by-zero exactly for a finite nonzero numerator over finite zero. -/
+/-- Division raises divide-by-zero if and only if a finite nonzero numerator is divided by zero. -/
 theorem div_divideByZero
     {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode) :
     (div x y (mode := mode) (status := true)).status.divideByZero =
@@ -1105,9 +1108,9 @@ theorem sqrt_status_of_isInf {fmt : FloatFormat} {x : Model fmt} (mode : IEEERou
 
 /--
 On a finite input with a clear sign, the ternary value compares the squared delivery with the
-radicand, the result is inexact exactly when that comparison is not `.eq`, and an inexact result
+radicand, the result is inexact if and only if that comparison is not `.eq`, and an inexact result
 underflows when its encoding is zero or subnormal or its exact root lies below the underflow
-boundary. A zero is delivered exactly, with ternary value `.eq`.
+boundary. A zero is delivered without error, with ternary value `.eq`.
 -/
 theorem sqrt_status_of_toDyadic {fmt : FloatFormat} {x : Model fmt} {exact : Numerics.Dyadic}
     (mode : IEEERoundingMode) (hx : toDyadic? x = some exact)
@@ -1142,7 +1145,7 @@ theorem sqrt_status_of_toDyadic {fmt : FloatFormat} {x : Model fmt} {exact : Num
     cases ternary <;> cases tiny <;> simp [hformat]
   · cases ternary <;> cases tiny <;> simp [hformat]
 
-/-- Square root raises invalid exactly for an sNaN or a negative nonzero non-NaN input. -/
+/-- Square root raises invalid if and only if its input is an sNaN or a negative nonzero number. -/
 theorem sqrt_invalid {fmt : FloatFormat}
     (x : Model fmt) (mode : IEEERoundingMode) :
     (sqrt x (mode := mode) (status := true)).status.invalid =
@@ -1198,7 +1201,7 @@ theorem sqrt_invalid_of_negative_nonzero {fmt : FloatFormat}
 /-! ## Square-root inexactness -/
 
 /--
-Square root raises `inexact` exactly when its ternary value is not `.eq`, on every input. The
+On every input, square root raises `inexact` if and only if its ternary value is not `.eq`. The
 flag is computed from that value on a positive finite input, and the other cases raise neither.
 -/
 theorem sqrt_inexact_eq_ternary_bne_eq {fmt : FloatFormat} (x : Model fmt)
@@ -1235,13 +1238,13 @@ theorem sqrt_inexact_of_underflow {fmt : FloatFormat} {x : Model fmt}
         split at h <;> simp_all
 
 /--
-On a finite input with a clear sign bit, square root raises `inexact` exactly when the delivered
+On a finite input with a clear sign bit, square root raises `inexact` if and only if the delivered
 value is not the real square root of the input, in every rounding direction and for every
-descriptor. A zero is delivered exactly.
+descriptor. A zero is delivered without error.
 
 The flag is computed as the ternary value's difference from `.eq`
 (`sqrt_inexact_eq_ternary_bne_eq`), so on such an input the ternary value is `.eq`
-exactly when the delivered value is the real square root.
+if and only if the delivered value is the real square root.
 -/
 theorem sqrt_inexact_iff {fmt : FloatFormat} (mode : IEEERoundingMode)
     {x : Model fmt} (hfinite : isFinite x = true) (hsign : signBit x = false) :

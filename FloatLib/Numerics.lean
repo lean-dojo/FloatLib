@@ -30,15 +30,16 @@ public import FloatLib.Numerics.ShiftRightJam.Proof
 /-!
 # Representation-independent numerical semantics
 
-Numerical systems, exact dyadic and rational values, quantization contracts, reduction errors,
-mixed relative and absolute error bounds, and primitive representations used by the concrete
-formats.
+This layer holds the mathematics that FloatLib's formats share, stated without committing to an
+encoding: numerical systems, exact dyadic and rational values, quantization contracts, reduction
+errors, mixed relative and absolute error bounds, and the primitive representations that the
+concrete formats use.
 
 `At` and `AtFinite` attach erased proofs to a system's runtime carrier. Optional capabilities state
-the order, radix, rounding, error, or block-scaling assumptions needed by a theorem.
+the order, radix, rounding, error, or block-scaling assumptions that a theorem needs.
 
-Use these definitions when implementing a format or proving a result independent of its encoding.
-Application examples start with `import FloatLib`; concrete families are under
+Use these definitions when you implement a format or prove a result that doesn't depend on its
+encoding. Application examples start with `import FloatLib`, and the concrete families are under
 `FloatLib.Floats.Formats`.
 -/
 

@@ -18,10 +18,10 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 # Correctness of binary square root
 
 Lean's unpacked floating-point square root computes an integer square root and records whether the
-discarded real fraction is below or above one half. This module proves that certificate correct,
-connects the positive finite executable path to Lean's unpacked square-root model, proves that the
-square root of a finite nonnegative value never overflows, and concludes that the result for a
-conventional IEEE descriptor is one nearest-even rounding of the exact real square root.
+discarded real fraction is below or above one half. We prove that certificate correct and connect
+the positive finite executable path to Lean's unpacked square-root model. With one more fact, that
+the square root of a finite nonnegative value never overflows, the result for a conventional IEEE
+descriptor is one nearest-even rounding of the exact real square root.
 -/
 
 @[expose] public section
@@ -253,11 +253,11 @@ theorem toReal_ofModel_sqrt_finite_eq_roundAt
 /-!
 ## Square root never overflows
 
-The largest finite value of every IEEE descriptor exceeds one, so its square root is below it and
-the rounded result stays inside the finite range. The proof first shows that packing a model value
-whose biased exponent is in range yields a finite word, then that `roundWithAccuracy` of a
-certified real below `2^maxNormal` packs to such a value, and so does one in the top binade below
-the overflow threshold.
+Every IEEE descriptor's largest finite value exceeds one, so its square root is below it and the
+rounded result stays inside the finite range. The proof first shows that packing a model value
+whose biased exponent is in range yields a finite word. Then `roundWithAccuracy` of a certified
+real below `2^maxNormal` packs to such a value, and so does one in the top binade below the
+overflow threshold.
 -/
 
 /--
@@ -877,7 +877,7 @@ theorem toReal_sqrt_eq_roundAt
   · exact toReal_sqrt_eq_roundAt_of_nonzero x hfmt hfinite
       (Bool.eq_false_iff.mpr hzero) (hdomain.resolve_left hzero) hresult
 
-/-- The square root of a zero is exactly zero, for every descriptor. -/
+/-- The square root of a zero has real value zero, for every descriptor. -/
 theorem toReal_sqrt_of_isZero {fmt : FloatFormat} (x : Model fmt) (hzero : isZero x = true) :
     toReal (sqrt x) = 0 := by
   rw [sqrt_of_isZero hzero, toReal_eq_zero_of_isZero x hzero]

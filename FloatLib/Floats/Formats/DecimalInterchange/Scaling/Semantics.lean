@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
 /-!
 # Scaling accuracy and cohort independence of exponent queries
 
-The accuracy bounds use the delivered rational value and the public overflow
-flag. Exact cohort selection also applies when the original shifted quantum is
-outside the format range but another member of its cohort is representable.
+The accuracy bounds for scaling are stated with the delivered rational value and the public
+overflow flag. Exact cohort selection works even when the shifted quantum falls outside the format
+range, as long as another member of the cohort is representable. And `decimalExponent` gives the
+same answer for every member of a cohort.
 -/
 
 @[expose] public section

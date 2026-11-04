@@ -17,9 +17,9 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Deterministic nearest-even shift rounding
 
-Power-of-two nearest-even rounding shared by binary floating-point, fixed-point, and other
-quantized representations. Guard, parity, and sticky bits decide rounding without constructing
-a halfway marker.
+This is nearest-even rounding by a power of two, shared by binary floating point, fixed point, and
+other quantized representations. Guard, parity, and sticky bits decide the rounding, so no halfway
+marker is ever built.
 -/
 
 @[expose] public section
@@ -35,7 +35,7 @@ bit length, the quotient is zero and the remainder is the original value.
 @[inline] def shiftRightRemainder (value shift : Nat) : Nat :=
   value - Nat.shiftLeft (Nat.shiftRight value shift) shift
 
-/-- The bits discarded by a right shift are exactly the remainder modulo `2^shift`. -/
+/-- The bits discarded by a right shift are the remainder modulo `2^shift`. -/
 theorem shiftRightRemainder_eq_mod (value shift : Nat) :
     shiftRightRemainder value shift = value % 2 ^ shift := by
   simp only [shiftRightRemainder, Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow,
@@ -44,12 +44,12 @@ theorem shiftRightRemainder_eq_mod (value shift : Nat) :
 /--
 Round `value / 2^shift` to the nearest natural number, breaking exact halfway cases toward even.
 
-This is the power-of-two specialization of `roundQuotientEven`. It belongs in the common
-quantization layer because binary floats, P3109 formats, and fixed-point kernels all discard low
-binary digits in the same way. The guard bit decides whether rounding can increase the quotient.
-The first shift retains the guard bit alongside the quotient. Only a set guard bit with an even
-quotient requires checking whether shifting those retained bits back recovers the original value.
-One low-byte extraction supplies both the guard bit and the quotient's parity.
+This is `roundQuotientEven` for a power of two, and it lives in the common quantization layer
+because binary floats, P3109 formats, and fixed-point kernels all discard low binary digits the same
+way. The first shift keeps the guard bit next to the quotient, and the guard bit decides whether
+rounding can increase the quotient. Only a set guard bit with an even quotient needs a check that
+shifting the retained bits back recovers the original value. One low-byte extraction gives both the
+guard bit and the quotient's parity.
 -/
 @[inline] def roundShiftRightEven (value shift : Nat) : Nat :=
   if shift == 0 then
@@ -214,8 +214,8 @@ theorem roundShiftRightEven_eq_roundQuotientEven (value shift : Nat) :
   simp only [Nat.mul_lt_mul_left (by decide : 0 < (2 : Nat))]
 
 /--
-Shifting a value below `2 ^ shift` by `shift > 0` bits rounds to one exactly when the value is
-above half of `2 ^ shift`; an exact half rounds to the even quotient zero.
+Shifting a value below `2 ^ shift` by `shift > 0` bits rounds to one exactly when the value is above
+half of `2 ^ shift`. An exact half rounds to the even quotient zero.
 -/
 theorem roundShiftRightEven_of_lt_two_pow (value shift : Nat)
     (hshift : shift ≠ 0) (hvalue : value < 2 ^ shift) :

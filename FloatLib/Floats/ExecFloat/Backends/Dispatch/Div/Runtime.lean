@@ -16,12 +16,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Div.Runtime
 /-!
 # Executable division backends
 
-The width-generic divider and fixed-width dispatcher live here, and their correctness theorems
-in `Div.Proof`.
-
-The dispatcher selects native kernels by format capability. A selected kernel may decline when
-its operand or intermediate bounds fail, and the generic implementation then supplies the result,
-including the descriptor's exceptional-value policy.
+Here are the width-generic divider and the fixed-width dispatcher, whose correctness theorems are in
+`Div.Proof`. Native kernels are picked by format capability, and a picked kernel may decline when
+its operand or intermediate bounds fail, and then the generic implementation supplies the result,
+along with the descriptor's exceptional-value policy.
 -/
 
 @[expose] public section

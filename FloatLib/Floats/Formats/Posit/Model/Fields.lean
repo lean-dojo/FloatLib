@@ -12,9 +12,11 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Tapered posit field decoding
 
-Posit field decoding recovers the variable-length regime, tapered exponent, fraction,
-significand, and binary scale from a model word. The resulting `DecodedFields` structure is the
-common proof-facing boundary for exact semantics and optimized arithmetic.
+A posit word has no fixed field boundaries. Its regime is a run of equal bits whose length
+varies with the value, and the exponent and fraction get the bits that are left over. This module
+reads all of it from a model word: the regime, the tapered exponent, the fraction, the significand,
+and the binary scale. Proofs about exact semantics and proofs about optimized arithmetic both start
+from the resulting `DecodedFields` structure.
 -/
 
 @[expose] public section
@@ -28,7 +30,7 @@ namespace Model
 variable {format : Format}
 
 /--
-Count a leading run in exactly `width` low bits of `value`, starting at bit `width - 1`.
+Count the leading run in the low `width` bits of `value`, starting at bit `width - 1`.
 -/
 @[inline] def countLeadingRun (value : Nat) : (width : Nat) → Bool → Nat
   | 0, _ => 0
@@ -93,7 +95,7 @@ theorem regimeRunLength_pos (value : Model format) :
 
 /--
 The trailing field is what remains after the regime run and its terminator bit. A run filling the
-whole payload has no terminator, and the formula still gives zero by truncated subtraction.
+whole payload has no terminator, and the formula gives zero there too, by truncated subtraction.
 -/
 theorem trailingBits_eq (value : Model format) :
     value.trailingBits = format.payloadBits - value.regimeRunLength - 1 := by
@@ -292,8 +294,8 @@ theorem zero_or_nar_or_scale_eq_zero_of_bits_eq_two
     exact scale_ofNatBits_eq_zero_of_bits_eq_two hbits (Or.inr rfl)
 
 /--
-Complete decoded fields of a nonzero finite posit. The structure itself does not constrain its
-fields; `decodeFields` fills them from a word.
+Complete decoded fields of a nonzero finite posit. The structure itself puts no constraint on its
+fields, and `decodeFields` is what fills them from a word.
 -/
 structure DecodedFields (format : Format) where
   /-- Sign of the represented finite value. -/
@@ -312,8 +314,8 @@ structure DecodedFields (format : Format) where
   fractionBits : Nat
   /-- Explicit fraction field. -/
   fractionField : Nat
-  /-- Integer significand, including its implicit leading bit; positive in every `decodeFields`
-  result (`decodeFields_significand_pos`). -/
+  /-- Integer significand, including its implicit leading bit. It is positive in every
+  `decodeFields` result (`decodeFields_significand_pos`). -/
   significand : Nat
   /-- Binary exponent applied to `significand`. -/
   scale : Int
@@ -323,8 +325,8 @@ structure DecodedFields (format : Format) where
 Decode all fields of a nonzero finite posit word.
 
 The decoder is total and does not test for the two exceptional words. Its significand is always
-positive, so on zero and NaR it returns fields that `DecodedFields.toRat` reads as a nonzero value;
-`decodeExact` handles those two words before calling it.
+positive, so on zero and NaR it returns fields that `DecodedFields.toRat` reads as a nonzero value.
+That's why `decodeExact` handles those two words before calling it.
 -/
 @[inline] def decodeFields (value : Model format) : DecodedFields format where
   negative := value.signBit

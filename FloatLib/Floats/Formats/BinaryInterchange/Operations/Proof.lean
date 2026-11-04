@@ -18,7 +18,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof.RoundTo
 /-!
 # Contracts for standard binary operations
 
-The standard-operation contracts cover comparison, adjacent values, mixed-precision accumulation
-and matrix multiplication, IEEE remainder, integral rounding, exponent operations, and the
-`invalid` flags of selection operations.
+Import this file for the contracts of the standard operations: comparison, adjacent values,
+mixed-precision accumulation and matrix multiplication, IEEE remainder, integral rounding,
+exponent operations, and the `invalid` flags of the selection operations.
 -/

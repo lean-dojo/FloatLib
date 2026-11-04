@@ -13,8 +13,8 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 /-!
 # Exactness of shared native signed-magnitude arithmetic
 
-The format-independent `UInt64` signed-magnitude primitive implements exact dyadic addition
-under its capacity hypotheses. Equal signs require a no-overflow hypothesis; opposite signs
+Under its capacity hypotheses, the `UInt64` signed-magnitude primitive implements exact dyadic
+addition, and it does so for any format. Equal signs need a no-overflow hypothesis. Opposite signs
 reduce to an exact difference. The two-limb refinement is in `SignedMagnitude.UInt128.Proof`.
 -/
 
@@ -107,9 +107,9 @@ theorem addSignedMagnitudes_sign_eq_false_of_magnitude_eq_zero
 /--
 Native signed-magnitude addition denotes exact dyadic addition at a common exponent.
 
-The only capacity hypothesis is required by same-sign addition. Opposite-sign subtraction cannot
-overflow, while the nonzero hypotheses exclude the input-zero branches handled directly by
-format-specific kernels.
+Only same-sign addition needs the capacity hypothesis, because opposite-sign subtraction can't
+overflow. The nonzero hypotheses exclude the input-zero branches, which the format-specific kernels
+handle themselves.
 -/
 theorem signedMagnitudeDyadic_addSignedMagnitudes_eq_addFields
     (leftNegative rightNegative : Bool)

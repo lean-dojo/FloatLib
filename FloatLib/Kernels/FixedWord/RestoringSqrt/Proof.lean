@@ -18,10 +18,10 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Restoring square-root refinement
 
-The restoring loop returns the floor square root and square remainder of its input.
-The invariant relates the consumed radicand prefix to the partial root at each shift-and-subtract
-step. This refinement proof lets callers use the kernel without a runtime certificate check,
-provided the scaled radicand fits the fixed-word bound.
+We prove that the restoring loop returns the floor square root and square remainder of its input,
+using an invariant that relates the consumed radicand prefix to the partial root at each
+shift-and-subtract step. With this proof, callers can use the kernel without a runtime certificate
+check, as long as the scaled radicand fits the fixed-word bound.
 -/
 
 @[expose] public section

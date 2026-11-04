@@ -15,24 +15,24 @@ public import FloatLib.Numerics.Exact.SignedRat
 /-!
 # Binary-interchange conversion runtime
 
-Every binary-interchange family uses the same representation-independent conversion policy.
-A concrete carrier supplies only a `pack` function from its `Model format`, so configured
-machine-word formats and nominal static-byte formats share one exact quantizer.
+All binary-interchange families share one conversion policy that does not depend on the
+representation. A concrete carrier supplies only a `pack` function from its `Model format`, so
+configured machine-word formats and nominal static-byte formats use the same exact quantizer.
 
-The exact domain is `SignedRat`, so the sign of a zero input reaches the destination. Finite values
-are rounded once by `Model.Policy.roundRat`, with the sign bit taken from the signed rational and
-the magnitude from its value. Infinity and exceptional observations have their own policies
-because finite-only formats cannot preserve every IEEE value class. Status flags are computed from
-exact rational comparisons, never through a host floating-point value.
+The exact domain is `SignedRat`, which lets the sign of a zero input reach the destination. Finite
+values are rounded once by `Model.Policy.roundRat`, with the sign bit taken from the signed
+rational and the magnitude from its value. Infinity and exceptional observations get their own
+policies, because finite-only formats cannot preserve every IEEE value class. Status flags come
+from exact rational comparisons and never pass through a host floating-point value.
 
-A binary `Model` value is a conversion source as well. `modelDecoder` decodes it into `SignedRat`
+A binary `Model` value can be a conversion source too. `modelDecoder` decodes it into `SignedRat`
 the way the configured and static-byte carriers decode their stored model, so it keeps a negative
 zero and a NaN's sign, payload, and signaling class.
 
-`specWith pack` is the graph of `runWith pack` (`specWith_iff_eq_runWith`) together with a
-nearest-value clause for nearest-even/native-overflow/gradual-underflow conversion to conventional
-IEEE descriptors. The clause is stated without the runtime, and its proof uses the descriptor's
-real rounding semantics. It constrains only a delivered model with a finite rational denotation;
+`specWith pack` is the graph of `runWith pack` (`specWith_iff_eq_runWith`) plus a nearest-value
+clause for nearest-even/native-overflow/gradual-underflow conversion to conventional IEEE
+descriptors. The clause is stated without the runtime, and its proof uses the descriptor's real
+rounding semantics. It constrains only a delivered model with a finite rational denotation, and
 `runWith_nearest_of_abs_le_posMaxFinite` shows that the result is finite whenever the exact
 magnitude is at most the largest finite value. Overflow beyond that magnitude, tie selection,
 signed zero, status, and the other policies are fixed only by the equation with `runWith`.
@@ -167,16 +167,16 @@ A conversion with `(mode := m) (context := p)` runs in `p.withRounding m`, and
   addExact context left (-right)
 
 /--
-Overflow and tininess of the exact magnitude `numerator / denominator` from its significand rounded
-under `rounding` with an unbounded exponent range, as a pair `(overflow, tiny)`.
+Overflow and tininess of the exact magnitude `numerator / denominator`, read off its significand
+rounded under `rounding` with an unbounded exponent range, as a pair `(overflow, tiny)`.
 
 The denominator must be nonzero, as it is for every `Rat`. A zero numerator gives
-`(false, false)`: an exact zero neither overflows nor underflows. Otherwise the significand is the
-quotient scaled to `fracWidth + 1` significant bits and rounded by `Model.Policy.roundQuot`, with
-`sign` and `entropy` for the directions and stochastic rounding that need them. It overflows above
-the largest finite significand of the top binade. Below the normal range it is tiny unless
-rounding carries it up to the smallest normal value. `finiteStatus` uses this calculation for
-rounding modes without an `IEEERoundingMode` direction.
+`(false, false)`, since an exact zero neither overflows nor underflows. Otherwise the quotient is
+scaled to `fracWidth + 1` significant bits and rounded by `Model.Policy.roundQuot`, with `sign` and
+`entropy` for the directions and stochastic rounding that need them. That significand overflows
+above the largest finite significand of the top binade, and below the normal range it is tiny
+unless rounding carries it up to the smallest normal value. `finiteStatus` uses this calculation
+for rounding modes without an `IEEERoundingMode` direction.
 -/
 @[inline] def roundedSignificandStatus (format : FloatFormat) (rounding : RoundingMode)
     (entropy : Nat) (sign : Bool) (numerator denominator : Nat) : Bool × Bool :=
@@ -198,16 +198,16 @@ rounding modes without an `IEEERoundingMode` direction.
 /--
 Status derived from exact rational binary rounding.
 
-Overflow and tininess use the precision-rounded value with an unbounded exponent range. Merely
-exceeding the largest finite value does not signal overflow when rounding brings the value back
+Overflow and tininess use the precision-rounded value with an unbounded exponent range. So an
+exact value above the largest finite value does not signal overflow when rounding brings it back
 into range. Rounding modes with an `IEEERoundingMode` direction use the exact classifiers
 `rationalRoundingOverflows` and `rationalIsTinyAfterRoundingScaled`. Stochastic policies use
-`roundedSignificandStatus`, with their own integer rounding rule and the supplied entropy, at the
-same precision boundary.
+`roundedSignificandStatus` at the same precision boundary, with their own integer rounding rule
+and the supplied entropy.
 
 `rounded` must be the value that `Model.Policy.roundRat` delivers for `exact` under `context`, as in
 `quantizeFiniteWith`. The flags read it, and the direction classifiers count a delivered zero or
-subnormal as tiny, so a status computed for an unrelated pair has no meaning.
+subnormal as tiny, so a status computed for an unrelated pair means nothing.
 -/
 @[inline] def finiteStatus {format : FloatFormat}
     (context : Context) (exact : Rat) (rounded : Model format) :
@@ -321,7 +321,7 @@ def NearestFinite {format : FloatFormat} (exact : Rat) (rounded : Model format) 
 Complete conversion outcome, together with a runtime-free nearest-value clause for IEEE defaults.
 
 The first conjunct makes `specWith` the graph of `runWith` (`specWith_iff_eq_runWith`), so the
-clause adds no constraint of its own; its value is that `NearestFinite` is stated without the
+clause adds no constraint of its own. What it adds is that `NearestFinite` is stated without the
 runtime and proved through real rounding in `Conversion.Proof`. The clause says nothing about a
 nonfinite result, which `runWith_nearest_of_abs_le_posMaxFinite` excludes up to the largest finite
 magnitude. The real value of a finite result is also nearest-even rounding

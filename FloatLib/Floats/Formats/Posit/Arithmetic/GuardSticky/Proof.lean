@@ -21,16 +21,19 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Laws and correctness of carrier-generic guard-and-sticky rounding
 
-`LawfulTailCarrier` and `LawfulCandidateCarrier` state the natural-number meaning of the carrier
-operations that `GuardStickyCarrier` uses. Each law is as narrow as the shared kernel needs: the
-arithmetic laws hold only under the bounds the kernel establishes, so wrapping machine operations
-satisfy them. Concrete `UInt64` and `UInt128` records are proved lawful beside their kernels.
+The shared rounding kernel is written once for every carrier, so its proof has to know what each
+carrier operation that `GuardStickyCarrier` uses means as a natural number. `LawfulTailCarrier` and
+`LawfulCandidateCarrier` say that, and no more than the kernel needs. Every arithmetic law holds
+only under bounds the kernel itself establishes, which is why wrapping machine operations can
+satisfy them. We prove the concrete `UInt64` and `UInt128` records lawful next to their kernels.
 
-Given a lawful carrier of `capacity` bits and a format whose payload is shorter than `capacity`,
-the theorems below show that the shared kernel is an execution refinement of the arbitrary-width
-direct rounder: `tailBit_eq_spec` and `tailHasNonzeroAfter_eq_spec` for inspection,
-`lowerCandidateFromFields_toNat` for packing, and `roundNormalizedPositive_toNat_eq_direct` for
-the complete positive rounder against `DirectDyadicPacking.roundPositiveCode`.
+Take a lawful carrier of `capacity` bits and a format whose payload is shorter than `capacity`.
+Then the shared kernel is an execution refinement of the arbitrary-width direct rounder:
+
+* `tailBit_eq_spec` and `tailHasNonzeroAfter_eq_spec` cover reading the tail,
+* `lowerCandidateFromFields_toNat` covers packing,
+* `roundNormalizedPositive_toNat_eq_direct` covers the whole positive rounder, against
+  `DirectDyadicPacking.roundPositiveCode`.
 -/
 
 @[expose] public section
@@ -429,7 +432,7 @@ theorem roundInterior_toNat
 /--
 The shared normalized rounder is the arbitrary-width direct positive rounder.
 
-The significand must be nonzero; values below `minPos`, whose regime run fills the payload, round
+The significand must be nonzero. Values below `minPos`, whose regime run fills the payload, round
 to code 1 on both sides. The payload bound is what makes every intermediate fit the carrier.
 -/
 theorem roundNormalizedPositive_toNat_eq_direct

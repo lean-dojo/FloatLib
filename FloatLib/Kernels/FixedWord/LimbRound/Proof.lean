@@ -14,5 +14,5 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Proof.UInt256
 /-!
 # Verified fixed-limb rounding
 
-Generic shift-with-jam laws support the verified two- and four-limb rounding kernels.
+The verified two- and four-limb rounding kernels rest on generic shift-with-jam laws.
 -/

@@ -14,19 +14,19 @@ public import FloatLib.Numerics.Representations.FixedInt.Core
 /-!
 # Posit conversions to and from fixed-width signed integers
 
-These conversions implement the MSB-only sentinel specified in Section 6.4 of the Posit Standard
-(2022) for positive-width two's-complement integers. The sentinel is `FixedInt.minCode width`;
+These conversions implement the MSB-only sentinel from Section 6.4 of the Posit Standard (2022)
+for two's-complement integers of positive width, where the sentinel is `FixedInt.minCode width` and
 its signed interpretation is the least representable integer.
 
-Integer-to-posit conversion recognizes the sentinel before applying Section 4.1 posit rounding
-to the exact signed integer. Posit-to-integer conversion rounds the exact rational value to the
-nearest integer, with ties to even, then checks the signed range. Section 6.4 says to check the
-range after rounding but does not itself prescribe an integer tie rule; ties to even is the
-convention chosen here. NaR and an out-of-range rounded result produce the sentinel.
+From integer to posit, the sentinel is recognized first, and every other integer gets Section 4.1
+posit rounding of its exact signed value. From posit to integer, the exact rational value is
+rounded to the nearest integer, with ties to even, and then the signed range is checked. Section
+6.4 says to check the range after rounding, but it doesn't prescribe an integer tie rule, so ties
+to even is our choice. NaR and an out-of-range rounded result both produce the sentinel.
 
-An in-range rounded result equal to the signed minimum has the same bits as the sentinel.
-Converting those bits back to posit therefore produces NaR. These adapters do not change the
-ordinary numerical interpretation of `FixedInt`. Unsigned adapters are defined in
+That leaves one corner case. An in-range rounded result equal to the signed minimum has the same
+bits as the sentinel, so converting those bits back to a posit gives NaR. These adapters leave the
+ordinary numerical interpretation of `FixedInt` alone. Unsigned adapters live in
 `Integer.Unsigned`.
 
 ## References
@@ -44,7 +44,7 @@ open FloatLib.Numerics.Representations
 
 /--
 Convert a positive-width signed integer to posit, treating its MSB-only word as NaR.
-Every other word undergoes exactly one Section 4.1 rounding of its signed integer value.
+Every other word gets a single Section 4.1 rounding of its signed integer value.
 -/
 @[inline] def ofFixedInt (format : Format) {width : Nat} (value : FixedInt width)
     (_hwidth : 0 < width := by decide) : Model format :=
@@ -53,7 +53,7 @@ Every other word undergoes exactly one Section 4.1 rounding of its signed intege
 
 /--
 Round a posit to a positive-width signed integer, using nearest integer with ties to even.
-NaR and overflow after rounding produce the MSB-only word; no modular wraparound is used.
+NaR and overflow after rounding produce the MSB-only word. There is no modular wraparound.
 -/
 @[inline] def toFixedInt {format : Format} (width : Nat) (value : Model format)
     (_hwidth : 0 < width := by decide) : FixedInt width :=

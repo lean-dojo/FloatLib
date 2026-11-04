@@ -16,10 +16,10 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Posit semantics of direct quotient prefixes
 
-The representation-independent quotient-prefix bracket determines Posit regime, exponent,
-fraction, and appended-bit rounding thresholds. Exact quotient-and-remainder bounds show that
-truncation brackets the rational quotient and that jamming preserves its comparison with the
-rounding threshold.
+Here the quotient-prefix bracket, which holds for any representation, is read as a posit, where
+it fixes the regime, exponent, fraction, and appended-bit rounding threshold. Exact bounds on
+quotient and remainder then show two things: truncation brackets the rational quotient, and
+jamming keeps its comparison with the rounding threshold.
 -/
 
 @[expose] public section
@@ -34,8 +34,8 @@ open FloatLib.Floats.Formats.Posit.Model.StickyPrefix
 The exact scaled quotient is strictly below the successor of a lower candidate whose successor
 is either the next interior tail word or the zero-tail base of the next regime.
 
-Both regime signs supply the two successor values from their own layout lemmas; this lemma
-performs the common case split on whether the retained tail carries.
+Each regime sign supplies the two successor values from its own layout lemmas, and this lemma
+does the shared case split on whether the retained tail carries.
 -/
 private theorem quotientFraction_lt_lowerCandidateSuccessor_of_values
     (format : Format) (regime : Int)
@@ -255,7 +255,7 @@ private theorem lowerCodeForPositive_eq_lowerCandidateFromQuotient_of_value
   · exact fun _ => hsuccessor
 
 /--
-An interior positive-regime quotient prefix is exactly the rational model's greatest lower code.
+An interior positive-regime quotient prefix is the rational model's greatest lower code.
 -/
 theorem lowerCodeForPositive_eq_lowerCandidateFromQuotient_positive
     (format : Format) (regime : Int)
@@ -291,7 +291,7 @@ theorem lowerCodeForPositive_eq_lowerCandidateFromQuotient_positive
       hremainder)
 
 /--
-An interior negative-regime quotient prefix is exactly the rational model's greatest lower code.
+An interior negative-regime quotient prefix is the rational model's greatest lower code.
 -/
 theorem lowerCodeForPositive_eq_lowerCandidateFromQuotient_negative
     (format : Format) (regime : Int)

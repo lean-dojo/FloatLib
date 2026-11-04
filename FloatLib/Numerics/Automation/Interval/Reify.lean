@@ -16,14 +16,14 @@ public meta import Mathlib.Util.Qq
 /-!
 # Reification for interval proofs
 
-The interval tactic translates real arithmetic into the common expression language and proves
-its real interpretation equal to the original expression. Numerical constants carry `norm_num`
-certificates. Unrecognized subexpressions become atoms whose bounds are collected by `Bounds`.
-One state keeps atom indices, shared syntax, and the certificates needed for equality proofs.
+Our interval tactic translates real arithmetic into the common expression language and proves its
+real interpretation equal to the original expression. Numerical constants carry `norm_num`
+certificates, and unrecognized subexpressions become atoms whose bounds `Bounds` collects. One state
+keeps the atom indices, the shared syntax, and the certificates that the equality proofs need.
 
-These routines construct syntax and proof terms in Lean's metaprogramming layer. Definitional
-unfolding can enlarge quoted syntax, so the expression walks use `partial` with Lean's heartbeat
-and recursion-depth checks. The kernel checks the constructed evidence before a goal is closed.
+These routines build syntax and proof terms in Lean's metaprogramming layer. Definitional unfolding
+can enlarge quoted syntax, so the expression walks use `partial` with Lean's heartbeat and
+recursion-depth checks. The kernel checks the constructed evidence before a goal is closed.
 -/
 
 public section
@@ -202,8 +202,8 @@ private def binaryOperands (op : Q(BinaryOp)) (source : Q(ℝ)) :
 /--
 Prove that a source expression equals the real interpretation of its reified expression.
 
-The source and syntax follow the same arithmetic operations. A variable's source term must
-agree definitionally with its environment entry; no numerical evaluation of a real atom is used.
+The source and syntax follow the same arithmetic operations. A variable's source term must agree
+definitionally with its environment entry, and no real atom is ever evaluated numerically.
 -/
 partial def evalEquality (source : Q(ℝ)) (expression : Q(Interval.Expr))
     (values : Q(Nat → ℝ)) (cache : ReifyState)

@@ -13,21 +13,21 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 /-!
 # Standard operations beyond basic arithmetic
 
-Remainder, integral rounding, and exponent operations use exact dyadics and the same rounding
-modes, format policies, and exception status as the arithmetic primitives. Like the arithmetic
-operations, each has one name with options: `roundToIntegral x (mode := .up)`,
+Remainder, integral rounding and the exponent operations work on exact dyadics, with the same
+rounding modes, format policies and exception status as the arithmetic primitives. Like the
+arithmetic operations, each has one name with options: `roundToIntegral x (mode := .up)`,
 `scale x n (mode := .down) (status := true)`, `remainder x y (status := true)`. Integral rounding
 and scaling take a rounding direction. The rounded binary exponent always rounds to nearest-even,
-and remainder, `nextUp`, `nextDown`, `minimumNumber`, and `maximumNumber` are exact, so they take
+and remainder, `nextUp`, `nextDown`, `minimumNumber` and `maximumNumber` are exact, so these take
 only `status`. With `status := true`, `nextUp` and its three siblings report the `invalid` signal
 that a signaling NaN operand owes.
 
 Each public operation is a small `@[macro_inline]` selector that tests `status` before computing
-anything. The kernels it selects live in `Model.Internal.Status` and `Model.Internal.Value`.
-Integral rounding, scaling, and the rounded binary exponent carry `@[specialize fmt]`: a module
-that calls them with a closed format compiles a copy specialized to that descriptor term (calls
-that spell the same descriptor alike share it), and other callers run the compiled generic body.
-Their value kernels inline the status body and compute no flags or ternary value.
+anything, and the kernels it selects live in `Model.Internal.Status` and `Model.Internal.Value`.
+Integral rounding, scaling and the rounded binary exponent carry `@[specialize fmt]`. A module that
+calls them with a closed format compiles a copy specialized to that descriptor term, and calls
+that spell the same descriptor alike share it. Other callers run the compiled generic body. Their
+value kernels inline the status body and compute no flags or ternary value.
 -/
 
 @[expose] public section
@@ -146,7 +146,7 @@ namespace Internal.Status
 IEEE remainder with exception status, the kernel of
 `Model.remainder dividend divisor (status := true)`.
 
-For finite IEEE operands with a nonzero divisor, the remainder is exactly representable
+For finite IEEE operands with a nonzero divisor, the remainder is representable
 (`remainder_exact`), and this branch returns clear status and the ternary value `.eq`.
 NaNs propagate with signaling operands first, then the left operand. Otherwise, a zero divisor or
 infinite dividend raises `invalid`, while a finite dividend modulo infinity is unchanged. Every
@@ -215,9 +215,9 @@ at compile time. `roundToIntegral_status_of_finite` states the finite outcome wi
 overflow classification. A custom descriptor uses its declared overflow behavior, so an overflow
 result need not be integral.
 
-The ternary value compares the delivered value with the input, as MPFR's `mpfr_rint` does. It is
-therefore not determined by `inexact`: a saturating descriptor can deliver its own fractional
-input, with `inexact` raised and the ternary value `.eq`.
+The ternary value compares the delivered value with the input, as MPFR's `mpfr_rint` does, so
+`inexact` does not determine it. A saturating descriptor can deliver its own fractional input,
+with `inexact` raised and the ternary value `.eq`.
 -/
 @[specialize fmt] def roundToIntegral {fmt : FloatFormat} (value : Model fmt)
     (mode : IEEERoundingMode) : IEEEOutcome fmt :=
@@ -359,8 +359,8 @@ Return the leading binary exponent rounded into the same format, with exception 
 of `Model.binaryExponent value (status := true)`.
 
 This convenience operation uses nearest-even. It agrees with floating-result IEEE `logB`
-only when the source format can represent the exponent exactly, and `binaryExponentInt` provides
-the exact integer-result operation for every descriptor.
+only when the source format can represent the exponent, and `binaryExponentInt` provides the
+exact integer-result operation for every descriptor.
 
 For a nonzero finite dyadic `±m * 2^e` with `m > 0`, the exact result is `floor(log₂ m) + e`.
 Either infinity returns `nativeOverflow fmt false`, the format's positive overflow value. NaNs are
@@ -431,15 +431,16 @@ Leading binary exponent rounded into the source format, always to nearest-even.
 /-!
 ## Status of the quiet operations
 
-`nextUp`, `nextDown`, `minimumNumber`, and `maximumNumber` compute exact results without a
-status. IEEE 754-2019 §5.3.1 and §9.6 still require a signaling NaN operand to raise `invalid`,
-so with `status := true` each operation adds that indicator and changes nothing else. Their
-results are exact, so the ternary value is `.eq`.
+`nextUp`, `nextDown`, `minimumNumber` and `maximumNumber` compute exact results without a status.
+But IEEE 754-2019 §5.3.1 and §9.6 require a signaling NaN operand to raise `invalid`, so with
+`status := true` each operation adds that indicator and changes nothing else. The results are
+exact, so the ternary value is `.eq`.
 -/
 
 /--
 The next representable value strictly greater than `x`, IEEE 754-2019 §5.3.1 `nextUp`. With
-`status := true` the result is the `IEEEOutcome` with `invalid` set exactly for a signaling NaN.
+`status := true` the result is the `IEEEOutcome`, with `invalid` set if `x` is a signaling NaN and
+clear otherwise.
 -/
 @[macro_inline] def nextUp {fmt : FloatFormat} (x : Model fmt) (status : Bool := false) :
     match status with
@@ -451,7 +452,8 @@ The next representable value strictly greater than `x`, IEEE 754-2019 §5.3.1 `n
 
 /--
 The next representable value strictly less than `x`, IEEE 754-2019 §5.3.1 `nextDown`. With
-`status := true` the result is the `IEEEOutcome` with `invalid` set exactly for a signaling NaN.
+`status := true` the result is the `IEEEOutcome`, with `invalid` set if `x` is a signaling NaN and
+clear otherwise.
 -/
 @[macro_inline] def nextDown {fmt : FloatFormat} (x : Model fmt) (status : Bool := false) :
     match status with

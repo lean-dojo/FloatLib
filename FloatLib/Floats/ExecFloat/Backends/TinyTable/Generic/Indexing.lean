@@ -12,13 +12,13 @@ public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Construction
 /-!
 # Native indexing for exhaustive byte tables
 
-The index proof shows that row-major `USize` arithmetic neither wraps nor leaves a generated
-table. The only size bound is `encoding.radix ≤ 256`; the radix need not be a power of two or
+The index proof shows that row-major `USize` arithmetic neither wraps nor leaves a generated table.
+The only size bound is `encoding.radix ≤ 256`, and the radix doesn't have to be a power of two or
 come from a floating-point layout.
 
-The executable formulas remain direct native arithmetic and all bounds erase after compilation.
-Table lookup therefore has no runtime certificate check, while generation and dispatch can rely on
-the proved index envelope.
+The executable formulas stay plain native arithmetic, and all bounds are erased after compilation.
+So table lookup has no runtime certificate check, while generation and dispatch can rely on the
+proved index envelope.
 -/
 
 @[expose] public section
@@ -34,7 +34,7 @@ variable {Model : Type u}
     (radix : USize) (left right : UInt8) : USize :=
   left.toUSize * radix + right.toUSize
 
-/-- Native index for a unary byte table. -/
+/-- Native index for a unary byte table, which is the byte value itself. -/
 @[always_inline, inline] def unaryByteIndex (value : UInt8) : USize :=
   value.toUSize
 

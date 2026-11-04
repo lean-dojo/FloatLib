@@ -12,14 +12,14 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.
 /-!
 # One-word to two-limb Posit storage adapters
 
-The one-word kernels occasionally continue an exact intermediate in the common `UInt128`
-implementation. This module owns that representation boundary: format eligibility is widened from
-the storage word to the two-limb carrier, and a `UInt64` significand is zero-extended without
-changing its mathematical value.
+Now and then a one-word kernel continues an exact intermediate in the common `UInt128`
+implementation, and this module is the boundary it crosses. Here format eligibility widens from the
+storage word to the two-limb carrier, and a `UInt64` significand is zero-extended without changing
+its mathematical value.
 
-Keeping these adapters outside either rounding implementation prevents the scalar rounder from
-importing the two-limb arithmetic stack. The decision to cross this boundary remains local to the
-operation whose intermediate no longer fits one word.
+We keep these adapters outside both rounding implementations so the scalar rounder doesn't import
+the two-limb arithmetic stack. Only the operation whose intermediate no longer fits one word decides
+to cross.
 -/
 
 @[expose] public section

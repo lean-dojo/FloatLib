@@ -18,16 +18,17 @@ public import FloatLib.Numerics.Enclosure.Comparison.Cache
 /-!
 # Exact comparisons for pi-scaled trigonometric functions
 
-Exact rational-angle classifiers decide every rational special value before refinement.
-Sine and cosine first remove full turns exactly, so their classifiers and interval generators
-receive bounded angles even when the input has a very large integer part.
-All other direct values are irrational, and converging rational intervals separate every
-rational boundary. The inverse operations compare through their monotone principal branches;
-the branch endpoints are rational in units of pi, so no inverse enclosure is necessary.
+Exact rational-angle classifiers decide every rational special value before refinement, and sine and
+cosine first remove full turns exactly, so their classifiers and interval generators get bounded
+angles even when the input has a very large integer part.
 
-The numerical tangent helper agrees with Mathlib's totalized tangent, which is zero at a pole.
-A format operation must reject half-integer tangent arguments before using this helper when
-its contract requires an invalid result there. Inverse sine/cosine contracts require `[-1, 1]`.
+Every other value of the direct functions is irrational, and converging rational intervals separate
+it from every rational boundary. Inverse operations compare through their monotone principal
+branches, whose endpoints are rational in units of pi, so no inverse enclosure is needed.
+
+The numerical tangent helper agrees with Mathlib's totalized tangent, which is zero at a pole, so if
+a format operation's contract requires an invalid result at half-integer tangent arguments, it has
+to reject them before using this helper. Inverse sine and cosine require `[-1, 1]` by contract.
 -/
 
 @[expose] public section

@@ -13,14 +13,14 @@ public import FloatLib.Floats.Formats.Posit.Algebraic.Root.Proof
 /-!
 # Correct rounding from exact algebraic comparisons
 
-The certificate bridge proves nearest-even rounding for every interior target. Monotonicity
-and the even tie at half the least subnormal cover the complete underflow interval. A finite
-IEEE result excludes the explicit overflow branch, and a result that is not finite is the
-infinity of the requested sign. Thus the real theorem needs no search-budget or
-distance-from-boundaries premise, and includes exact ties and subnormal results.
+The certificate bridge proves nearest-even rounding for every interior target, and monotonicity
+with the even tie at half the least subnormal covers the complete underflow interval. A finite
+IEEE result excludes the overflow branch, and a result that is not finite is the infinity of the
+requested sign. So the real theorem needs no search-budget or distance-from-boundaries premise,
+and it includes exact ties and subnormal results.
 
-The real-refinement theorem uses a conventional IEEE descriptor, matching the existing logical
-rounding bridge. Runtime handling of custom descriptors is separate from this theorem.
+The real-refinement theorem uses a conventional IEEE descriptor, matching the logical rounding
+bridge, so runtime handling of custom descriptors lies outside this theorem.
 -/
 
 @[expose] public section
@@ -62,7 +62,7 @@ theorem roundAt_eq_zero_of_le_halfMinSubnormal (fmt : FloatFormat) (target : ℝ
 An exact oracle produces one nearest-even rounding of its signed real target.
 
 The sole numerical-domain premise is nonnegativity of the magnitude. Finiteness of the packed
-IEEE result excludes overflow; underflow to signed zero and all midpoint ties are covered.
+IEEE result excludes overflow, while underflow to signed zero and all midpoint ties are covered.
 -/
 theorem toReal_round_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (sign : Bool) (compare : Rat → Ordering) (target : ℝ) (hnonneg : 0 ≤ target)

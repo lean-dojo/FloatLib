@@ -12,12 +12,14 @@ public import Mathlib.Order.Compare
 /-!
 # Posit rounding from exact rational comparisons
 
-An exact result need not itself be rational. To round it, the posit search only needs to compare
-it with rational code values and appended-bit boundaries. This module shares that bounded search
-among algebraic and analytic operations whose comparisons can be decided exactly.
+Roots and logarithms need not have rational results, but rounding one to a posit never needs its
+value. All the search asks is how the target compares with rational code values and appended-bit
+boundaries, and this module runs that bounded search for every algebraic and analytic operation
+that can decide those comparisons exactly.
 
-`compareTarget q` reports the ordering of the mathematical target relative to the rational `q`.
-The proof layer states this requirement explicitly; an approximate comparator cannot discharge it.
+You supply `compareTarget`, and `compareTarget q` orders the mathematical target against the
+rational `q`. In the proofs we assume this is the true order. No approximate comparator can meet
+that assumption.
 -/
 
 @[expose] public section

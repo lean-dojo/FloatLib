@@ -16,12 +16,12 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Correctness of native one-word finite multiplication
 
-The one-word kernel declines with a high-bit sentinel outside its guarded normal-result region.
-The sentinel never collides with a valid packed result, and the main refinement identifies every
+Outside its guarded normal-result region, the one-word kernel declines with a high-bit sentinel. The
+sentinel never collides with a valid packed result, and the main refinement identifies every
 accepted result with the format-generic finite multiplication kernel.
 
-`Mul.Runtime` has a word-valued and an optional entry point. Because they agree, the dispatcher
-can use the sentinel form and fall back to the generic implementation on a decline.
+`Mul.Runtime` has a word-valued and an optional entry point. They agree, so the dispatcher can use
+the sentinel form and fall back to the generic implementation on a decline.
 -/
 
 @[expose] public section

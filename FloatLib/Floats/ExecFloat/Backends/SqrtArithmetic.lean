@@ -12,9 +12,9 @@ public import Mathlib.Data.Int.DivMod
 /-!
 # Shared arithmetic for fixed-width square-root refinements
 
-The binary32, binary64, and binary128 square-root kernels use the same affine exponent
-calculation with different format constants. This module records that calculation once so each
-backend proof only supplies its descriptor-specific constants.
+The binary32, binary64, and binary128 square-root kernels use the same affine exponent calculation
+with different format constants. We record that calculation once here, so each backend proof only
+supplies its descriptor-specific constants.
 -/
 
 @[expose] public section
@@ -213,8 +213,7 @@ theorem shift_amount
   omega
 
 /--
-Express the square-root shift directly in terms of the input position when the affine offset is
-even.
+Express the square-root shift in terms of the input position alone when the affine offset is even.
 -/
 theorem shift_amount_of_even_offset
     (leading scale inputShift outputOffset outputBias fractionBits : Nat)
@@ -235,8 +234,7 @@ theorem shift_amount_of_even_offset
   split <;> omega
 
 /--
-Express the square-root shift directly in terms of the input position when the affine offset is
-odd.
+Express the square-root shift in terms of the input position alone when the affine offset is odd.
 -/
 theorem shift_amount_of_odd_offset
     (leading scale inputShift outputOffset outputBias fractionBits : Nat)

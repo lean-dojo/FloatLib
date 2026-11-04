@@ -13,10 +13,10 @@ public import FloatLib.Numerics.Exact.DecimalText.Notation
 /-!
 # Exact user-facing posit formatting
 
-Ordinary posits print as exact decimals without redundant fractional zeros, so `1.5` prints as
-`1.5` and `6` as `6`. Values whose fixed notation would be longer, such as tiny magnitudes, use a
-decimal exponent instead. The unique exceptional word prints as `NaR`, the Posit Standard's
-name for it. At every width the output denotes the exact value.
+An ordinary posit prints as its exact decimal value with no redundant fractional zeros, so `1.5`
+prints as `1.5` and `6` as `6`. When fixed notation would be longer, as it is for tiny magnitudes,
+the output switches to a decimal exponent. As for the one exceptional word, it prints as `NaR`,
+the Posit Standard's name for it. At every width the printed string denotes the exact value.
 -/
 
 @[expose] public section

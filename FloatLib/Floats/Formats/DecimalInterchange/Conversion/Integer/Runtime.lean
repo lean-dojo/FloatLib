@@ -11,19 +11,19 @@ public import FloatLib.Numerics.Quantization.Integer.Runtime
 /-!
 # Decimal conversions to and from integers
 
-IEEE 754-2019 §§5.4.1, 5.8 and 7.2(j) require rounding to an integer before
-checking its destination range. In particular, a negative fraction can convert
-to unsigned zero, and a value just outside an endpoint can round into range.
+IEEE 754-2019 §§5.4.1, 5.8 and 7.2(j) say to round to an integer first and check the destination
+range afterwards. The order matters at the edges. A negative fraction such as `-0.4` can convert to
+unsigned zero, and a value just outside an endpoint can round into range.
 
-The ten operations, one per direction and exactness, share the exact coefficient
-rounder used by decimal integral rounding. No intervening decimal precision rounding
-occurs. The `Exact` variants signal inexact only on successful conversion. Every NaN,
-infinity, or rounded integer outside the destination range raises invalid instead,
-and the invalid result is integer zero.
+The ten operations, one for each direction with and without `Exact`, share the exact coefficient
+rounder of decimal integral rounding, and no decimal precision rounding happens in between. The
+`Exact` variants signal inexact only when a conversion succeeds. Every NaN, every infinity, and
+every rounded integer outside the destination range raises invalid, and the invalid result is
+integer zero.
 
-Signed destinations use the two's-complement `FixedInt` bounds.
-Unsigned destinations use the range of `BitVec`. Width zero denotes only zero
-in both cases. Integer sources have no signed zero and therefore convert to +0.
+Signed destinations use the two's-complement `FixedInt` bounds, and unsigned destinations use the
+range of `BitVec`. In both cases width zero holds only zero. An integer source has no signed zero,
+so it converts to +0.
 -/
 
 @[expose] public section

@@ -28,7 +28,7 @@ never computes flags, and then `mode`: nearest-even goes straight to the dispatc
 Square root also sends nearest-away to the nearest-even kernel, since an exact square root is
 never a tie.
 
-This module contains only executable definitions, and their refinement theorems live in
+This module holds only executable definitions, and their refinement theorems are in
 `Arithmetic.Proof` and `Status.Proof`.
 -/
 

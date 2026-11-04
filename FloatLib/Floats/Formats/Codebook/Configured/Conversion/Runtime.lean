@@ -13,12 +13,12 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Runtime conversion source for configured codebooks
 
-A configured codebook carries a complete finite-or-exceptional denotation table, so it can be an
-exact source for explicit conversion. As a destination, the only quantizer supplied is
-`nearest?`: it scans the table and returns the first finite codeword minimizing `|x - c|`, with
-ties resolved to the lower word (see `Formats.Codebook.nearestCode`). It is not installed as a
-generic conversion instance because reserved-word handling and alternative tie rules are
-properties of a particular codebook application.
+Every word of a configured codebook has a finite or exceptional entry in its table, so the
+codebook can be an exact source when you convert from it. Going the other way, the one quantizer
+supplied is `nearest?`. It scans the table and returns the first finite codeword minimizing
+`|x - c|`, so ties go to the lower word (see `Formats.Codebook.nearestCode`). We don't install it as
+a generic conversion instance, because how to treat reserved words and which tie rule to use depend
+on what a particular codebook is for.
 -/
 
 @[expose] public section

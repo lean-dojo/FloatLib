@@ -11,13 +11,12 @@ public import FloatLib.Numerics.Core.System
 /-!
 # Contracts for numerical operations
 
-Relations between executable functions and their denotations, starting with indexed inputs and
-specializing to unary, binary, and ternary functions. The contracts distinguish total, finite,
-checked, cast, and quantizer semantics. They live in `Prop` and add no runtime data.
+These relations connect executable functions to their denotations. They start with indexed inputs
+and specialize to unary, binary, and ternary functions, and they distinguish total, finite, checked,
+cast, and quantizer semantics. All of them live in `Prop` and add no runtime data.
 
-See `Operation.Status` for result flags, `Operation.Context` for rounding policies, and
-`Operation.Entropy` for explicit randomness. `Operation.Proof` contains application and
-composition lemmas.
+`Operation.Status` has result flags, `Operation.Context` rounding policies, and `Operation.Entropy`
+randomness passed as data. `Operation.Proof` contains the application and composition lemmas.
 -/
 
 @[expose] public section

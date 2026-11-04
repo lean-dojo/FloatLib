@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.OCP.MX.Standard.ScaleProof
 /-!
 # Exact decoding and destination quantization of standard MX blocks
 
-Finite lane decoding is exact multiplication by the shared power of two. Saturating block
-quantization minimizes each lane's absolute error among all finite words at the selected scale.
-The result applies at subnormal and binade boundaries as well as outside the element range.
+Decoding a finite lane multiplies it by the shared power of two, with no rounding. In the other
+direction, saturating block quantization gives each lane the smallest absolute error of any finite
+word at the selected scale, and that holds at subnormal and binade boundaries and outside the
+element range too.
 -/
 
 public section
@@ -34,7 +35,7 @@ open FloatLib.Numerics
   have hnonneg : ¬(2 : Rat) ^ exponent < 0 := not_lt.mpr (le_of_lt (zpow_pos (by norm_num) _))
   simp [scaleFinite, hnonneg]
 
-/-- `Block.ofArray?` rejects exactly the arrays whose size is not 32. -/
+/-- `Block.ofArray?` rejects an array if and only if its size is not 32. -/
 theorem Block.ofArray?_eq_none_iff {profile : Profile} (scale : E8M0)
     (values : Array (Element profile)) :
     Block.ofArray? scale values = none ↔ values.size ≠ 32 := by

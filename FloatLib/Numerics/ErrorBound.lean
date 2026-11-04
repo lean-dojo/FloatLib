@@ -25,14 +25,17 @@ import Mathlib.Tactic.Ring
 /-!
 # Absolute error propagation
 
-These lemmas compose absolute errors `|actual - reference| ≤ error` through exact real
-operations, independently of any number format. Each one adds the local error of an operation to
-the propagation of its operands' errors, as the `roundoff` analysis does node by node. A real
-power propagates the error of its base with an exact exponent, and both errors at a positive
-base. Branches
-keep the case the program selects, and an error below the reference's magnitude keeps the sign of
-the result. A rational enclosure of the reference bounds the error of any candidate. The last
-lemmas are the mixed-error branch rule and the order facts that analysis applies.
+These lemmas compose absolute errors `|actual - reference| ≤ error` through exact real operations,
+whatever the number format. Each one adds the local error of an operation to the propagated errors
+of its operands, as the `roundoff` analysis does node by node.
+
+- A real power propagates the error of its base with an exact exponent, and both errors at a
+  positive base.
+- Branches keep the case that the program selects.
+- An error below the reference's magnitude keeps the sign of the result.
+- A rational enclosure of the reference bounds the error of any candidate.
+
+Last come the mixed-error branch rule and the order facts that the analysis applies.
 -/
 
 @[expose] public section
@@ -339,8 +342,10 @@ theorem cosh_error {a x result inputError localError : ℝ}
     simpa only [Real.abs_sinh, Real.cosh_abs] using (Real.sinh_lt_cosh (x := |value|)).le
   simpa only [Real.deriv_cosh] using hsinh.trans (cosh_le_input_radius hvalue)
 
-/-- Analyze the branch the program actually selects. Conditions on an inactive branch are
-irrelevant; agreement with a different, real-valued branch test must be proved separately. -/
+/--
+Analyze the branch the program selects. Conditions on an inactive branch don't matter, and agreement
+with a different, real-valued branch test needs a proof of its own.
+-/
 theorem dite_error {α : Type*} (observe : α → ℝ) (condition : Prop) [Decidable condition]
     (yes : condition → α) (no : ¬condition → α)
     {yesReference yesError : condition → ℝ} {noReference noError : ¬condition → ℝ}
@@ -353,8 +358,10 @@ theorem dite_error {α : Type*} (observe : α → ℝ) (condition : Prop) [Decid
   · exact hyes h
   · exact hno h
 
-/-- An error strictly smaller than the reference's magnitude keeps the actual value nonzero: the
-margin is `|reference| - error > 0`, not a fixed tolerance. -/
+/--
+An error strictly smaller than the reference's magnitude keeps the actual value nonzero. The margin
+is `|reference| - error > 0`, which depends on the reference, so no fixed tolerance is involved.
+-/
 theorem nonzero_of_error_lt {actual reference error : ℝ}
     (herror : |actual - reference| ≤ error) (hsmall : error < |reference|) : actual ≠ 0 := by
   intro hzero

@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Runtime
 /-!
 # A division-free enclosure for tangent comparisons
 
-To compare `tan x` with a rational boundary `b`, it suffices to determine the sign of
-`sin x - b * cos x` and the sign of `cos x`. This linear combination of the reduced
-enclosures avoids dividing by an interval that may contain zero.
+To compare `tan x` with a rational boundary `b`, it's enough to know the sign of `sin x - b * cos x`
+and the sign of `cos x`. That linear combination of the reduced enclosures never divides by an
+interval that might contain zero.
 -/
 
 @[expose] public section

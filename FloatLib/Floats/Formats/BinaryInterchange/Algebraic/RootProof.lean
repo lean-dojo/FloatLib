@@ -14,12 +14,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 # Real rounding and exceptional policies for binary roots
 
 Reciprocal square root rounds the square root of the exact reciprocal radicand. Integer roots
-round the nonnegative root of the exact magnitude, inverting that magnitude before rounding
-for negative degrees. Negative odd roots restore the sign after choosing the real branch.
-The theorems include subnormal outputs and exact midpoint ties. Only IEEE overflow is excluded.
+round the nonnegative root of the exact magnitude, and for negative degrees they invert that
+magnitude before rounding. Negative odd roots restore the sign after choosing the real branch.
+Subnormal outputs and exact midpoint ties are included, and IEEE overflow is the one case left out.
 
-Zero policies are stated separately because the real numbers have neither signed zero nor
-infinity. In particular `rsqrt(-0)` has the negative overflow sign.
+The real numbers have neither signed zero nor infinity, so the zero policies get their own
+theorems. In particular `rsqrt(-0)` has the negative overflow sign.
 -/
 
 @[expose] public section
@@ -114,9 +114,9 @@ A finite integer root of a finite operand rounds the chosen real branch once.
 
 Negative degrees are reciprocal roots. The finite-result premise excludes the invalid and pole
 cases: degree zero, even roots of negative nonzero values, and negative-degree roots of zero. Zero
-to a positive degree gives a zero, whose real value matches the zero real root. The absolute value
-and the sign select the negative odd real branch, so the statement does not rely on the convention
-for real exponentiation of negative bases.
+to a positive degree gives a zero, matching the zero real root. The absolute value and the sign
+select the negative odd real branch, so the statement does not rely on the convention for real
+exponentiation of negative bases.
 -/
 theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)

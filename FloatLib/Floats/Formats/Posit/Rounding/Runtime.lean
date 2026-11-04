@@ -13,18 +13,20 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Order
 /-!
 # Executable exact rational-to-posit rounding
 
-The width-generic reference conversion searches the monotone positive encoding with at most
-`format.bits` bisection comparisons. Between adjacent `n`-bit codes `U` and `W`, the standard's
-exact boundary is the `(n + 1)`-bit posit whose encoding is `U1`; this is not generally the
-arithmetic midpoint of the decoded values. A tie at that boundary is resolved by the low bit of
-`U`. Negative inputs use whole-word two's-complement symmetry.
+This is the executable rounding specification for posits, the definition that every packed word
+and limb kernel is proved equal to. It rounds an exact rational at any width. Positive codes are
+ordered like their values, so a bisection over them finds the lower neighbour in at most
+`format.bits` comparisons.
 
-This implementation is the executable rounding specification. Packed word and limb kernels are
-proved equal to it. Search and round-trip theorems live in `Rounding.Proof`.
+Between adjacent `n`-bit codes `U` and `W`, the standard puts the boundary at the `(n + 1)`-bit
+posit whose encoding is `U1`, and in general that isn't the arithmetic midpoint of the two values.
+Take the two largest 8-bit posits, `0x7e` at `2^20` and `0x7f` at `2^24`. Their boundary is `2^22`,
+while the midpoint is `17 * 2^19`. A value on the boundary goes to `U` when the low bit of `U` is
+even and to `W` otherwise. Negative inputs use whole-word two's-complement symmetry.
 
-The Posit Standard (2022) also gives the extreme intervals explicit behavior: magnitudes above
-maxPos saturate to signed maxPos, while every nonzero magnitude below minPos rounds to signed
-minPos. Zero is represented exactly.
+At the two ends of the range the Posit Standard (2022) has rules of its own. Magnitudes above
+maxPos saturate to signed maxPos, every nonzero magnitude below minPos rounds to signed minPos, and
+zero stays zero. Nothing overflows. `Rounding.Proof` has the search and round-trip theorems.
 
 ## References
 
@@ -88,9 +90,9 @@ If `U` is the lower code, Section 4.1 defines the boundary as the value of the `
 /--
 Round a nonnegative exact rational to a nonnegative posit code.
 
-This helper is total, returning zero for nonpositive input. Its intended positive-input behavior
-matches Section 4.1 exactly: nonzero underflow selects minPos, overflow selects maxPos, and each
-interior interval uses the appended-bit boundary with ties to an even retained low bit.
+The helper is total and returns zero for nonpositive input. On positive input it follows
+Section 4.1. Nonzero underflow selects minPos, overflow selects maxPos, and every interior interval
+uses the appended-bit boundary, with ties going to an even retained low bit.
 -/
 @[inline] def roundPositiveCode (format : Format) (target : Rat) : Nat :=
   if target ≤ 0 then
@@ -174,14 +176,13 @@ roots without introducing an approximate square-root oracle.
   ofNatBits (roundSqrtCode format radicand)
 
 /--
-Round an exact rational to the configured posit using the Posit Standard rule.
+Round an exact rational to the configured posit by the Posit Standard rule.
 
-The magnitude is rounded to the nearest posit with ties to an even code, then the sign is restored
-by posit negation. There is no overflow or underflow: magnitudes above `maxPos` saturate to
-`maxPos`, and nonzero magnitudes below `minPos` round to `minPos`. The result is therefore never
-NaR, and it is zero only for a zero input.
-
-This conversion does not pass through `Float`, `Float32`, MPFR, or another destination format.
+The magnitude is rounded at the standard's appended-bit boundaries with ties to an even code, and
+posit negation restores the sign. Nothing overflows or underflows. Magnitudes above `maxPos`
+saturate to `maxPos` and nonzero magnitudes below `minPos` round to `minPos`, so the result is
+never NaR and is zero only for a zero input. No `Float`, `Float32`, MPFR, or other destination
+format is involved.
 -/
 @[inline] def roundRat (format : Format) (value : Rat) : Model format :=
   if value = 0 then

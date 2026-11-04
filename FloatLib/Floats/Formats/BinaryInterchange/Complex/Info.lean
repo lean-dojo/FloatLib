@@ -14,8 +14,8 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Command
 # Proof-aware inspection of binary complex values
 
 `#float_info` reports the component format, sign operations, arithmetic, squared magnitude,
-and scaled magnitude of `ExecComplex fmt`. The linked theorems describe intermediate rounding
-and list the required finiteness hypotheses.
+and scaled magnitude of `ExecComplex fmt`, and it links the theorems that describe intermediate
+rounding and list the required finiteness hypotheses.
 -/
 
 public meta section

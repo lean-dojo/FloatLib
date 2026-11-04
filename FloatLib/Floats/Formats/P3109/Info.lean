@@ -23,9 +23,10 @@ public import FloatLib.Floats.ExecFloat.Info
 /-!
 # Inspection reports for P3109 formats
 
-This optional meta module registers `#float_info` for `ExecFloat.P3109`. The report reads the
-closed descriptor and the installed arithmetic and conversion capabilities. It describes the
-P3109 format and hides the generic codebook carrier that stores its exact-width codes.
+`#float_info` on an `ExecFloat.P3109` type reads the closed descriptor and the installed
+arithmetic and conversion capabilities, and describes the P3109 format. It keeps quiet about the
+generic codebook carrier underneath, which stores the exact-width codes. This meta module is
+optional.
 -/
 
 public meta section

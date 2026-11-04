@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 /-!
 # Nearest Rounding with a Tie Choice
 
-`nearestChoice chooseUp` rounds to a nearest integer. At an exact midpoint, `chooseUp f`
-decides whether the lower integer `f` or the upper integer `f + 1` is selected. This is the native
-Lean counterpart of Flocq's `Znearest choice`. `nearestAwayChoice` is the tie rule of IEEE
-754-2019 roundTiesToAway.
+`nearestChoice chooseUp` rounds to a nearest integer, and only a tie needs a decision. At the
+midpoint between `f` and `f + 1`, `chooseUp f` says which one to take. Nearest-even chooses up
+when `f` is odd, so `3.5` goes to `4`. This is the native Lean counterpart of Flocq's
+`Znearest choice`, and `nearestAwayChoice` is the tie rule of IEEE 754-2019 roundTiesToAway.
 -/
 
 @[expose] public section

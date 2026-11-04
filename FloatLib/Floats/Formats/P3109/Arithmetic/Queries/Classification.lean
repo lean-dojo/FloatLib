@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Neighbors
 /-!
 # Exact meanings of P3109 value queries
 
-The executable predicates are connected to the exact decoder rather than to an approximate
-host conversion. The statements apply to every valid descriptor, including precision one.
+Each executable value query is tied to the exact decoder, with no approximate host conversion in
+between. The statements hold for every valid descriptor, precision one included.
 -/
 
 @[expose] public section

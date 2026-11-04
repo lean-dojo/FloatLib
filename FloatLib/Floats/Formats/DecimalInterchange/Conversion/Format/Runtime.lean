@@ -10,13 +10,14 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Runtime
 /-!
 # Conversion between decimal interchange formats
 
-`Conversion.convertFormat` rounds once to the destination precision and exponent
-range. The source quantum is the preferred quantum, including for signed zero.
-The operation acts on datums; BID and DPD are independent encoding choices.
+`Conversion.convertFormat` moves a datum from one decimal format to another, say from decimal128 to
+decimal64, and rounds once to the destination precision and exponent range. The source quantum is
+the preferred quantum, signed zero included. The operation works on datums, so BID or DPD is an
+encoding choice on either side that it never sees.
 
-NaNs are quieted, with invalid raised exactly for signaling NaNs. A payload that
-fits the destination is preserved; an oversized payload becomes zero. The sign
-is retained for every exceptional operand and for exact or rounded zero.
+NaNs are quieted, and only signaling NaNs raise invalid. A payload that fits the destination is
+kept, and an oversized one becomes zero. Every exceptional operand keeps its sign, and so does a
+zero, exact or rounded.
 
 ## References
 

@@ -12,8 +12,9 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Real semantics of reciprocal comparisons
 
-On each half-line, inversion is strictly decreasing, so comparing `t⁻¹` with a boundary `b` of the
-same sign is comparing `b⁻¹` with `t`. Boundaries of the other sign are decided by the sign of `t`.
+Inversion is strictly decreasing on each half-line, so comparing `t⁻¹` with a boundary `b` of the
+same sign is the same as comparing `b⁻¹` with `t`. A boundary of the other sign is decided by the
+sign of `t`.
 -/
 
 @[expose] public section

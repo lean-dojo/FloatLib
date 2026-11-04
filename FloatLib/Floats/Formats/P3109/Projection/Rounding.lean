@@ -15,11 +15,11 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Precision-grid proofs for P3109 projection
 
-P3109 rounds to a descriptor-dependent binary grid before applying saturation. This module proves
-that the width-independent rounding kernel always produces either zero or a finite value that
-fits the descriptor precision and minimum quantum, which is what the encoder needs. That the
-result keeps the selected quantum exponent, and how it relates to the input, is proved in
-`Projection.Direction` (`roundFiniteToPrecision_exponent`, `roundFiniteToPrecision_spec`).
+Before saturation, P3109 rounds to a binary grid that depends on the descriptor. The encoder needs
+the result on that grid, and this module proves it: the width-independent rounding kernel always
+produces zero or a finite value that fits the descriptor precision and minimum quantum.
+`Projection.Direction` proves the rest, that the result keeps the selected quantum exponent and
+how it relates to the input (`roundFiniteToPrecision_exponent`, `roundFiniteToPrecision_spec`).
 -/
 
 @[expose] public section

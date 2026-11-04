@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured base-two and base-ten posit logarithms
 
-The selected carrier reuses the exact model logarithm through its lawful codec. This preserves
-the once-rounded result and all exceptional-input behavior across packed words and wide carriers.
+Base-two and base-ten logarithms on a configured posit reuse the exact model logarithm through the
+carrier's lawful codec, so packed words and wide carriers alike get the once-rounded result and
+all of the model's behavior on exceptional inputs.
 -/
 
 @[expose] public section
@@ -30,11 +31,11 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Correctly rounded base-two logarithm; NaR and nonpositive inputs produce NaR. -/
+/-- Correctly rounded base-two logarithm. NaR and nonpositive inputs produce NaR. -/
 @[inline] def log2 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log2 value
 
-/-- Correctly rounded base-ten logarithm; NaR and nonpositive inputs produce NaR. -/
+/-- Correctly rounded base-ten logarithm. NaR and nonpositive inputs produce NaR. -/
 @[inline] def log10 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log10 value
 

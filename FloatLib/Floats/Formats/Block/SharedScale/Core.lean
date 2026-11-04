@@ -14,12 +14,13 @@ public import Init.Data.Vector.OfFn
 /-!
 # Shared-scale block model
 
-A block code represents `lanes` rational values with one binary exponent and one integer
-significand per lane. Quantization is contextual because the shared exponent is supplied by the
-caller rather than inferred by the universal format.
+A block code stores `lanes` rational values as one binary exponent and one integer significand
+per lane, and each lane means `significand * 2 ^ exponent`. With exponent `-3` and significands `5`
+and `-12`, the block holds `5/8` and `-3/2`. Quantization is contextual: the caller supplies the
+shared exponent, and the universal format never infers one.
 
-The organization follows the Open Compute Project microscaling model while remaining independent
-of a particular element width or scale-selection policy.
+The layout follows the Open Compute Project microscaling model, but it fixes no element width and
+no way of choosing the scale.
 
 ## Reference
 
@@ -67,7 +68,7 @@ instance (lanes : Nat) : FormatSemantics (SharedScale lanes) :=
 /--
 Exact block observation retaining the selected scale and stored significands.
 
-Forgetting this observation decodes the rational vector; it discards the choice of representation.
+Forgetting this observation decodes the rational vector and discards the choice of representation.
 -/
 def exactSemantics (lanes : Nat) : ExactSemantics (formatSystem (SharedScale lanes)) where
   Exact := SharedScaleCode lanes

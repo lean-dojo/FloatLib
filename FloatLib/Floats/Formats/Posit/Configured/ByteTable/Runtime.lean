@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Runtime
 /-!
 # Runtime support for byte-sized posit tables
 
-Byte-sized posit tables share a finite encoding and direct execution on their carrier. Certified
-table construction and correctness proofs are separate so consumers can depend on the smallest
-appropriate layer.
+All byte-sized posit tables share one finite encoding and execute on their configured carrier.
+This module holds just those two pieces. We keep certified table construction and the
+correctness proofs in their own modules, so a consumer can depend on the smallest layer that does
+the job.
 -/
 
 @[expose] public section
@@ -34,11 +35,11 @@ This wrapper stays intact until compiler simplification substitutes a native shi
 @[noinline] def byteRadix (format : Format) (_ : format.bits ≤ 8) : Nat :=
   format.modulus
 
-/-- Native radix computation; sixteen bits also represent the largest byte-table radix, 256. -/
+/-- Native radix computation. A `UInt16` shift is wide enough for the largest radix, 256. -/
 @[inline] private def byteRadixShift (format : Format) (_ : format.bits ≤ 8) : Nat :=
   ((1 : UInt16) <<< UInt16.ofNat format.bits).toNat
 
-/-- Every byte-table radix is computed exactly by the native shift. -/
+/-- The native shift gives the same radix as `byteRadix` for every byte-sized format. -/
 -- grind: no rule; this theorem selects an equivalent runtime implementation.
 @[local csimp] private theorem byteRadix_eq_byteRadixShift : byteRadix = byteRadixShift := by
   funext format width_le

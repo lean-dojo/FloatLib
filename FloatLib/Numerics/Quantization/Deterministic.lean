@@ -15,9 +15,9 @@ public import FloatLib.Numerics.Quantization.Deterministic.Rational
 /-!
 # Deterministic executable quantization primitives
 
-Deterministic quantization primitives include nearest-even quotient, shift, and rational
+Here are the deterministic quantization primitives: nearest-even quotient, shift, and rational
 rounding, the four magnitude rounding rules for shifts and quotients, and bounded modular
-exponentiation. Import an individual submodule when only one primitive family is needed.
+exponentiation. Import a single submodule if you need only one primitive family.
 -/
 
 @[expose] public section

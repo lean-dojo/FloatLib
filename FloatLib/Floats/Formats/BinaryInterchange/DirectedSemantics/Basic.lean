@@ -15,9 +15,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
 /-!
 # Basic lemmas for format-parameterized directed rounding
 
-Shared arithmetic facts support both directed dyadic and rational rounding proofs. Further
-lemmas give closed forms for the smallest positive subnormal and a strict power-of-two bound for
-the largest finite value. All statements are uniform in `FloatFormat`.
+Directed dyadic and rational rounding proofs both use the arithmetic facts collected here. There
+are also closed forms for the smallest positive subnormal and a strict power-of-two bound for the
+largest finite value. Every statement is uniform in `FloatFormat`.
 -/
 
 @[expose] public section
@@ -382,9 +382,9 @@ theorem abs_toReal_le_posMaxFinite_of_toDyadic?_some
     abs_toReal_le_posMaxFinite_of_isFinite x (isFinite_eq_true_of_toDyadic?_some hd)
 
 /--
-The leading bit of a nonzero decoded significand lies below the fraction width for a word with a
-zero exponent field, whose exponent is the least subnormal exponent, and exactly at the fraction
-width for a normal word, whose exponent is its unbiased field less the fraction width.
+For a word with a zero exponent field, whose exponent is the least subnormal exponent, the leading
+bit of a nonzero decoded significand lies below the fraction width. For a normal word, whose
+exponent is its unbiased field less the fraction width, it sits at the fraction width.
 -/
 theorem log2_significand_of_toDyadic?_some
     {fmt : FloatFormat} {x : Model fmt} {d : Numerics.Dyadic}

@@ -15,13 +15,13 @@ public import Mathlib.NumberTheory.Real.Irrational
 /-!
 # Rational trigonometric arguments and rounding boundaries
 
-At a nonzero rational argument, sine, cosine, and tangent are transcendental. If sine or
-cosine were algebraic, the identity `sin² x + cos² x = 1` would make both algebraic, and
-Euler's formula would contradict the transcendence of `exp (x * I)`. Tangent reduces to
-cosine through `cos² x = 1 / (1 + tan² x)`.
+At a nonzero rational argument, sine, cosine, and tangent are transcendental. If sine or cosine were
+algebraic, the identity `sin² x + cos² x = 1` would make both algebraic, and Euler's formula would
+contradict the transcendence of `exp (x * I)`. Tangent reduces to cosine through
+`cos² x = 1 / (1 + tan² x)`.
 
-The irrationality corollaries rule out exact rational rounding boundaries. The input zero
-must be handled separately by executable comparisons.
+The irrationality corollaries rule out exact rational rounding boundaries. Executable comparisons
+have to handle the input zero themselves.
 -/
 
 public section

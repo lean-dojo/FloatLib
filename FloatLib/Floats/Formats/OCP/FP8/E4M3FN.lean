@@ -11,14 +11,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # OCP FP8 E4M3FN
 
-`FloatLib.Floats.E4M3FN` is OCP E4M3FN with a direct `UInt8` runtime carrier, and `E4M3FN.Family`
-is its type-level identity. For addition, subtraction, multiplication, division, and square root,
-balanced and throughput planning select exhaustive byte tables, and latency planning selects the
-arithmetic kernels. Fused multiply-add uses the proved generic single-rounding kernel because an
-eight-bit ternary table would contain 16,777,216 entries.
+`FloatLib.Floats.E4M3FN` is OCP E4M3FN stored in one `UInt8`, and `E4M3FN.Family` is its
+type-level identity. With only 256 values, a binary operation fits in a table of 65,536 results.
+So for addition, subtraction, multiplication, division, and square root, balanced and throughput
+planning look the answer up in an exhaustive byte table, and latency planning runs the arithmetic
+kernels. Fused multiply-add is the exception. Its table would need 16,777,216 entries, one per
+triple of bytes, so it uses the proved generic single-rounding kernel.
 
-The binary-interchange descriptor specifies the format and its kernels. It is not stored in an
-`E4M3FN` value.
+The binary-interchange descriptor specifies the format and its kernels, and it lives in the type.
+An `E4M3FN` value stores only its byte.
 
 ## Reference
 

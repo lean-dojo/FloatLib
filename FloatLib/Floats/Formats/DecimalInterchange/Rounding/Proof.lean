@@ -11,11 +11,11 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Numerical guarantees for exact coefficient rounding
 
-The computed coefficient fixes nonnegative integers, brackets the exact
-magnitude, satisfies directed inequalities, and has at most half a grid unit
-of error in either nearest mode. Moving a value to a finer decimal grid
-multiplies its coefficient by a power of ten; the grid-refinement results and
-the cohort, square-root and remainder proofs share that identity.
+Here we prove what the coefficient rounder guarantees. It leaves nonnegative integers alone,
+brackets the exact magnitude, satisfies the directed inequalities, and has at most half a grid
+unit of error in either nearest mode. Moving a value to a finer decimal grid multiplies its
+coefficient by a power of ten, as `12` at quantum `-1` becomes `120` at quantum `-2`, and the
+grid-refinement results share that identity with the cohort, square-root and remainder proofs.
 -/
 
 @[expose] public section
@@ -237,7 +237,7 @@ private theorem abs_natCast_mul_sub (n : Nat) {x u : ℚ} (hu : 0 < u) :
   rw [heq, abs_mul, abs_of_pos hu]
 
 /-- Both nearest modes, applied on a grid of any positive unit `u`, have an error of at most half a
-unit. The decimal grids use `u = 10 ^ q`; binary conversion uses a power of two. -/
+unit. The decimal grids use `u = 10 ^ q`, and binary conversion uses a power of two. -/
 theorem roundMagnitude_scaled_error_le_half (mode : RoundingMode)
     (hm : mode = .nearest ∨ mode = .nearestAway) (s : Bool)
     {x u : ℚ} (hx : 0 ≤ x) (hu : 0 < u) :

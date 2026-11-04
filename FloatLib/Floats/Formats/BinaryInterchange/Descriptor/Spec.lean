@@ -15,8 +15,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.SquareRoot
 # Reference operations for binary descriptors
 
 These definitions lift the binary model specifications through the representation-preserving
-descriptor codec. Executable backend implementations and their refinement proofs live separately
-in `Descriptor.Backends`.
+descriptor codec, and `Descriptor.Backends` has the executable backends and their refinement proofs.
 -/
 
 @[expose] public section
@@ -43,7 +42,7 @@ def sub {format : FloatFormat} :=
 
 /--
 Reference multiplication on a binary descriptor: `Model.Spec.mul`, the exact dyadic product
-rounded once to nearest-even; a zero times a finite value is the format's zero with the XOR of
+rounded once to nearest-even. A zero times a finite value is the format's zero with the XOR of
 the operand signs.
 -/
 def mul {format : FloatFormat} :=

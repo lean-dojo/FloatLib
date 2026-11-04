@@ -13,8 +13,9 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Single-rounding semantics of posit algebraic functions
 
-The finite-input theorems identify the exact expression before rounding, including irrational
-square roots. Exceptional-input theorems give the NaR rules from the Posit Standard (2022), §5.1.
+Each of these functions rounds once, and the theorems here say what gets rounded. For finite
+inputs they identify the exact expression before rounding, even when it is an irrational square
+root, and for exceptional inputs they give the NaR rules from the Posit Standard (2022), §5.1.
 -/
 
 @[expose] public section

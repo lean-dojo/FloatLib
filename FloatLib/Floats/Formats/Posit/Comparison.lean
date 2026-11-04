@@ -12,16 +12,15 @@ public import Mathlib.Data.FinEnum
 /-!
 # Standard posit comparisons and finite enumeration
 
-The Posit Standard (2022) defines comparisons by regarding the complete encoded words as
-two's-complement signed integers. In particular, NaR compares as the least encoded value
-(`nar_le`, `nar_lt_iff_ne_nar`) and two NaR words compare equal. This is an ordering of *posit
-values*, including NaR; it is deliberately not presented as an order embedding into `Rat` or
+The Posit Standard (2022) compares two posits by reading each complete encoded word as a
+two's-complement signed integer. NaR, whose word is `100...0`, therefore comes out as the least
+value (`nar_le`, `nar_lt_iff_ne_nar`), and two NaR words compare equal. So this is an ordering of
+*posit values* with NaR included. We don't present it as an order embedding into `Rat` or
 `Real`, because NaR has no real denotation.
 
-This module transports Lean's proved `BitVec.toInt` order to `Model format`. It also exposes the
-exact equivalence with `BitVec format.bits` and derives Mathlib's `FinEnum`/`Fintype`
-infrastructure from that equivalence. Exhaustive proofs can therefore enumerate the model without
-maintaining a second list of encodings.
+This module transports Lean's proved `BitVec.toInt` order to `Model format`. It also gives the
+equivalence with `BitVec format.bits` and derives Mathlib's `FinEnum`/`Fintype` instances from it,
+so an exhaustive proof can enumerate the model without keeping a second list of encodings.
 
 ## References
 
@@ -47,13 +46,13 @@ def bitsEquiv (format : Format) : Model format ≃ BitVec format.bits where
 /--
 Canonical finite enumeration inherited from exact-width bit vectors.
 
-The enumeration is by unsigned word, which is useful for encoding tables and exhaustive
-conformance checks. The `LinearOrder` below is separately the standard's signed comparison order.
+The enumeration is by unsigned word, which suits encoding tables and exhaustive conformance
+checks. The `LinearOrder` below is a different order, the standard's signed comparison.
 -/
 instance : FinEnum (Model format) :=
   FinEnum.ofEquiv (BitVec format.bits) (bitsEquiv format)
 
-/-- The number of posit words is exactly `2 ^ format.bits`, including zero and NaR. -/
+/-- There are `2 ^ format.bits` posit words, counting zero and NaR. -/
 @[simp] theorem finEnum_card (format : Format) :
     FinEnum.card (Model format) = 2 ^ format.bits :=
   rfl
@@ -77,8 +76,8 @@ theorem signedCode_injective :
 The standard total order on posit words.
 
 This instance makes ordinary Lean notation (`<`, `≤`, `min`, `max`, sorting, intervals) agree
-with Posit Standard comparisons. NaR is included as the least word; numerical theorems that must
-exclude NaR should state that premise explicitly or use `toRat?`.
+with Posit Standard comparisons. NaR is in the order as the least word, so a numerical theorem
+that has to exclude NaR should state that premise or go through `toRat?`.
 
 The order is transported along `signedCode`, but the `DecidableEq` field reuses the derived
 instance so that the model has a single decidable equality.
@@ -92,19 +91,19 @@ instance : LinearOrder (Model format) where
     inferInstanceAs (Decidable (signedCode left < signedCode right))
   toDecidableEq := inferInstance
 
-/-- Standard equality comparison. -/
+/-- Standard equality comparison of the encoded words, under which NaR equals NaR. -/
 @[inline] def compareEqual (left right : Model format) : Bool :=
   left == right
 
-/-- Standard inequality comparison. -/
+/-- Standard inequality comparison, the negation of `compareEqual` on the encoded words. -/
 @[inline] def compareNotEqual (left right : Model format) : Bool :=
   left != right
 
-/-- Standard strict-less comparison, executed directly on the encoded words. -/
+/-- Standard strict-less comparison, computed on the encoded words as signed integers. -/
 @[inline] def compareLess (left right : Model format) : Bool :=
   left.bits.slt right.bits
 
-/-- Standard less-or-equal comparison, executed directly on the encoded words. -/
+/-- Standard less-or-equal comparison, computed on the encoded words as signed integers. -/
 @[inline] def compareLessEqual (left right : Model format) : Bool :=
   left.bits.sle right.bits
 
@@ -116,12 +115,12 @@ instance : LinearOrder (Model format) where
 @[inline] def compareGreaterEqual (left right : Model format) : Bool :=
   right.bits.sle left.bits
 
-/-- Boolean equality agrees exactly with equality in the posit model. -/
+/-- Boolean equality agrees with equality in the posit model. -/
 @[simp] theorem compareEqual_eq_true_iff (left right : Model format) :
     compareEqual left right = true ↔ left = right := by
   simp [compareEqual]
 
-/-- Boolean inequality agrees exactly with inequality in the posit model. -/
+/-- Boolean inequality agrees with inequality in the posit model. -/
 @[simp] theorem compareNotEqual_eq_true_iff (left right : Model format) :
     compareNotEqual left right = true ↔ left ≠ right := by
   simp [compareNotEqual]

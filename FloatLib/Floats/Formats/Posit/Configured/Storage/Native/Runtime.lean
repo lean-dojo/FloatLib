@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Native.Core
 /-!
 # Native-word runtime access for configured posits
 
-These wrappers expose the direct word view and certified packing operation used by fixed-word
-posit kernels.
+Fixed-word posit kernels read a carrier through its direct word view and write it back with a
+certified packing operation. These wrappers expose both.
 -/
 
 @[expose] public section

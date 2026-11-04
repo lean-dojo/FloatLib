@@ -14,22 +14,22 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Exact rationals with an IEEE sign
 
-A rational number has no negative zero, but every IEEE binary format does. Converting a value
-through `Rat` therefore forgets whether a zero was `-0` or `+0`. A cast or mixed-format
-operation cannot recover that sign from the rational value alone.
+A rational number has no negative zero, but every IEEE binary format does. So converting a value
+through `Rat` forgets whether a zero was `-0` or `+0`, and a cast or mixed-format operation can't
+recover that sign from the rational value alone.
 
 `SignedRat` is a rational together with the sign bit an IEEE format would store for it. For a
 nonzero value the sign bit is determined by the value, and the structure carries that fact as a
 proof field, so two `SignedRat`s are equal exactly when their values and sign bits agree. Only a
 zero has a free sign bit.
 
-The arithmetic operations implement the IEEE sign rules for exact results. A product or quotient
-has the exclusive-or of the operand signs. An exact zero sum is negative only when both operands
-are negative, which is the round-to-nearest rule. Callers use `addWithCancellationSign` to choose
-the sign of an exact cancellation for directed rounding.
+The arithmetic operations follow the IEEE sign rules for exact results. A product or quotient gets
+the exclusive-or of the operand signs. An exact zero sum is negative only when both operands are
+negative, which is the round-to-nearest rule, and for directed rounding callers choose the sign of
+an exact cancellation with `addWithCancellationSign`.
 
 Executable conversion uses this type as the exact domain of every binary destination. Rational
-sources such as posits and fixed point enter through `ofRat`, and binary sources decode through
+sources such as posits and fixed point come in through `ofRat`, and binary sources decode through
 `ofDyadic`, which keeps the dyadic sign.
 -/
 
@@ -40,11 +40,11 @@ namespace FloatLib.Numerics
 /--
 An exact rational together with the IEEE sign bit of its zero.
 
-`negative` is the sign bit. For a nonzero `value` it is forced to `decide (value < 0)`; for zero it
-distinguishes `-0` from `+0`.
+`negative` is the sign bit. For a nonzero `value` it is forced to `decide (value < 0)`, and for zero
+it tells `-0` from `+0`.
 -/
 structure SignedRat where
-  /-- The exact rational value; zero for both signed zeros. -/
+  /-- The exact rational value, which is zero for both signed zeros. -/
   value : Rat
   /-- The IEEE sign bit. -/
   negative : Bool
@@ -72,12 +72,12 @@ zero should represent the same rational number.
 @[inline] def sameValue (x y : SignedRat) : Bool :=
   x.value == y.value
 
-/-- `sameValue` compares exactly the underlying rational values. -/
+/-- `sameValue` compares the underlying rational values and nothing else. -/
 @[simp, grind =] theorem sameValue_eq_true_iff (x y : SignedRat) :
     sameValue x y = true ↔ x.value = y.value := by
   simp [sameValue]
 
-/-- A negative zero prints as `-0`; every other value prints as its rational value. -/
+/-- A negative zero prints as `-0`, and every other value prints as its rational value. -/
 protected def toString (x : SignedRat) : String :=
   if x.value = 0 ∧ x.negative then "-0" else toString x.value
 
@@ -89,7 +89,7 @@ instance : Repr SignedRat where
 
 /-! ## Constructors -/
 
-/-- The signed rational of a rational; zero receives the positive sign. -/
+/-- The signed rational of a rational. Zero gets the positive sign. -/
 @[inline] def ofRat (q : Rat) : SignedRat :=
   ⟨q, decide (q < 0), fun _ => rfl⟩
 
@@ -97,7 +97,7 @@ instance : Repr SignedRat where
 @[simp, grind =] theorem value_ofRat (q : Rat) : (ofRat q).value = q :=
   rfl
 
-/-- `ofRat` marks exactly the negative rationals; zero is positive. -/
+/-- `ofRat` marks the negative rationals and nothing else, so zero is positive. -/
 @[simp, grind =] theorem negative_ofRat (q : Rat) : (ofRat q).negative = decide (q < 0) :=
   rfl
 
@@ -161,8 +161,8 @@ instance : RatCast SignedRat where
 /--
 The signed rational of an exact dyadic, keeping the dyadic sign.
 
-`Dyadic.toRat` forgets the sign of a zero dyadic; this constructor is the sign-preserving
-replacement used when a binary format is decoded.
+`Dyadic.toRat` forgets the sign of a zero dyadic, so decoding a binary format goes through this
+sign-preserving constructor.
 -/
 def ofDyadic (d : Dyadic) : SignedRat :=
   ⟨d.toRat, d.negative, by
@@ -300,7 +300,7 @@ private theorem xor_negative_eq_decide {x y : SignedRat} {product : Rat}
     rcases lt_or_gt_of_ne hy with hy' | hy' <;>
     simp [hproduct, hx', hy', not_lt.mpr hx'.le, not_lt.mpr hy'.le]
 
-/-- Exact multiplication; the sign bit is the exclusive-or of the operand sign bits. -/
+/-- Exact multiplication. The sign bit is the exclusive-or of the operand sign bits. -/
 def mul (x y : SignedRat) : SignedRat :=
   ⟨x.value * y.value, x.negative ^^ y.negative, by
     intro hvalue
@@ -321,9 +321,9 @@ instance : Mul SignedRat where
   rfl
 
 /--
-Exact division; the sign bit is the exclusive-or of the operand sign bits.
+Exact division. The sign bit is the exclusive-or of the operand sign bits.
 
-Division by a zero value returns a zero value, following `Rat`; callers reject zero divisors
+Division by a zero value returns a zero value, following `Rat`, and callers reject zero divisors
 before quantizing.
 -/
 def div (x y : SignedRat) : SignedRat :=

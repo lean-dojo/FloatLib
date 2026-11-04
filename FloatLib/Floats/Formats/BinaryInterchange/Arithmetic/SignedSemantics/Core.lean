@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
 Negation usually changes only the stored sign bit. Formats with unsigned zero are the exception:
 their would-be negative-zero word is a reserved NaN, so semantic negation preserves both that NaN
-and the single zero encoding. This module separates raw sign toggling from policy-aware negation
-and transports the latter through dyadic decoding to the real semantics.
+and the single zero encoding. We keep raw sign toggling apart from policy-aware negation, and
+carry the latter through dyadic decoding to the real semantics.
 
 ## Reference
 
@@ -97,7 +97,7 @@ private theorem expMask_ne_signMask (fmt : FloatFormat) :
   rw [expMask_toNat, FloatFormat.signMask_toNat] at hnat
   exact (Nat.ne_of_lt (expMaskNat_lt_signMaskNat fmt)) hnat
 
-/-- Toggling an explicitly packed value changes only its supplied sign field. -/
+/-- Toggling the sign of a value packed from fields flips its sign field and keeps the rest. -/
 @[simp] theorem toggleSign_ofFields (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
     toggleSign (ofFields fmt sign exponent fraction) =
@@ -470,7 +470,8 @@ private theorem isZero_ofFields_zero_one (fmt : FloatFormat) (sign : Bool) :
     isInf (posMinSubnormal fmt) = false :=
   isInf_eq_false_of_isFinite_eq_true _ (isFinite_posMinSubnormal fmt)
 
-/-- The negative subnormal of least magnitude is explicit field packing with fraction one. -/
+/-- The negative subnormal of least magnitude packs a set sign bit, exponent zero and fraction one.
+-/
 theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
     negMinSubnormal fmt = ofFields fmt true 0 1 := by
   calc
@@ -520,7 +521,7 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
     neg (negMinSubnormal fmt) = posMinSubnormal fmt := by
   rw [← neg_posMinSubnormal fmt, neg_neg]
 
-/-- The largest finite encoding carries exactly the requested sign. -/
+/-- The largest finite encoding carries the requested sign. -/
 @[simp] theorem signBit_maxFinite (fmt : FloatFormat) (sign : Bool) :
     signBit (maxFinite fmt sign) = sign := by
   simp [maxFinite]

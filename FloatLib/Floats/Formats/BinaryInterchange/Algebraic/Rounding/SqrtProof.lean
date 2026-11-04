@@ -14,11 +14,11 @@ public import FloatLib.Kernels.IntegerRoot.Proof
 /-!
 # Correctness of rational integer-root certificates
 
-Integer division followed by integer root brackets the real root of a nonnegative rational.
-The shared Newton kernel supplies the exact floor root without repeated power checks.
-Uniqueness of the integer part identifies its result with the comparison search.
-The root's binade follows from the radicand's binary logarithm and Euclidean division.
-These facts preserve the complete encoded result for every descriptor.
+Integer division followed by integer root brackets the real root of a nonnegative rational, and
+the shared Newton kernel supplies the exact floor root without repeated power checks. Because the
+integer part is unique, its result is the one the comparison search finds. The root's binade
+follows from the radicand's binary logarithm and Euclidean division. Together these facts
+preserve the complete encoded result for every descriptor.
 -/
 
 @[expose] public section

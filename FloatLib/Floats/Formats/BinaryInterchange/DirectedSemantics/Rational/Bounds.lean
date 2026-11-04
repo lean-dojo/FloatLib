@@ -13,13 +13,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.SignedERealSemanti
 /-!
 # Signed bounds for conventional IEEE directed rational rounding
 
-Positive-magnitude rational packing bounds extend to signed rationals by exchanging the
-magnitude rounders under negation. Directed rounding swaps the lower and upper magnitude
-rounders for negative values, while executable negation transports the result to the negative
-half-line.
+Positive-magnitude rational packing bounds extend to signed rationals. For a negative value,
+directed rounding swaps the lower and upper magnitude rounders, and executable negation carries
+the result over to the negative half-line.
 
-The main theorems apply to conventional IEEE `FloatFormat`s, retain infinities as valid outward
-bounds in `EReal`, and establish that a nonzero denominator never produces NaN.
+The main theorems are about conventional IEEE `FloatFormat`s. They keep infinities as valid
+outward bounds in `EReal`, and they show that a nonzero denominator never produces a NaN.
 -/
 
 @[expose] public section

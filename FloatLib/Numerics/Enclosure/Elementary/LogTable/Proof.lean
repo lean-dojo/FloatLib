@@ -13,8 +13,8 @@ public import FloatLib.Numerics.Enclosure.Elementary.LogTable.Runtime
 # Containment for the cached logarithms of `j / 32`
 
 Each cached entry is `logUnreduced` on the grid of `Internal.logTableBits` fractional bits, so it
-encloses its logarithm (`containsReal_logUnreduced`), and outward coarsening keeps every real member
-on a coarser grid (`Interval.BinaryGrid.containsReal_coarsen`). `containsReal_logTableAt?` combines
+encloses its logarithm (`containsReal_logUnreduced`). Outward coarsening keeps every real member on
+a coarser grid (`Interval.BinaryGrid.containsReal_coarsen`), and `containsReal_logTableAt?` combines
 the two for every read the table answers.
 -/
 

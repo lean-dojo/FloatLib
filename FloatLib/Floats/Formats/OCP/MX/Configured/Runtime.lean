@@ -12,12 +12,13 @@ public import FloatLib.Floats.Formats.OCP.MX.Configured.Core
 /-!
 # Executable configured OCP MX operations
 
-E8M0 exposes checked scale decoding and construction. MX blocks expose their joint storage and a
-checked decoder that rejects non-finite element words and, for nonempty blocks, NaN scales.
+On the E8M0 side you get checked scale decoding and construction. An MX block gives you its joint
+storage and a checked decoder, which rejects non-finite element words and, when the block is
+nonempty, a NaN scale.
 
-These wrappers allow any array length and binary element descriptor. A successful block decode
-returns the exact dyadic value of every element after applying the shared scale. An empty block
-decodes to an empty array without inspecting its scale.
+These wrappers take any array length and any binary element descriptor. When a block decodes, you
+get the exact dyadic value of every element with the shared scale applied. An empty block decodes
+to an empty array without looking at its scale.
 -/
 
 @[expose] public section
@@ -63,7 +64,7 @@ namespace E8M0
 @[inline] def ofExponent? (exponent : Int) : Option ExecFloat.OCP.MX.E8M0 :=
   (Formats.OCP.MX.E8M0.ofExponent? exponent).map ofCode
 
-/-- Construct an E8M0 scale after explicitly clamping its exponent. -/
+/-- Construct an E8M0 scale, clamping the exponent into `[-127, 127]` first. -/
 @[inline] def ofExponentSaturating (exponent : Int) : ExecFloat.OCP.MX.E8M0 :=
   ofCode (Formats.OCP.MX.E8M0.ofExponentSaturating exponent)
 
@@ -116,7 +117,7 @@ this storage boundary, so application code can keep using the ordinary executabl
     Array (Model format) :=
   value.toCode.values
 
-/-- Decode each scaled element; an empty block succeeds without inspecting the scale. -/
+/-- Decode each scaled element. An empty block succeeds without inspecting the scale. -/
 @[inline] def decode? (value : ExecFloat.OCP.MX.Block format) :
     Option (Array Numerics.Dyadic) :=
   value.toCode.decode?

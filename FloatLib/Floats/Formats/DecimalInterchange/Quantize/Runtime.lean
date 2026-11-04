@@ -10,9 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Runtime
 /-!
 # Rounding to a specified decimal quantum
 
-IEEE 754-2019 §5.3.2 specifies quantize independently of ordinary projection:
-the target quantum is fixed, and a coefficient that does not fit produces invalid
-instead of changing that quantum. Underflow and overflow flags are never raised.
+Quantize rounds to a quantum you choose, and IEEE 754-2019 §5.3.2 specifies it apart from ordinary
+projection. The target quantum is fixed, so quantizing `1.23` to quantum `-1` gives `1.2`, and a
+coefficient that doesn't fit produces invalid, with the quantum left alone. Underflow and overflow
+flags are never raised.
 -/
 
 @[expose] public section

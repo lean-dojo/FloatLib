@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Exact
 /-!
 # Preferred cohorts of exact decimal results
 
-For every representable exact magnitude, projection selects the valid cohort
-member whose quantum exponent is closest to the requested preferred exponent.
-The conclusion compares the returned datum with every valid representation of
-that magnitude, including representations with a different coefficient.
+An exact result can usually be written several ways, like `1.20` and `1.2`, and IEEE 754 prefers
+one of them. For every representable exact magnitude, projection selects the valid cohort member
+whose quantum exponent is closest to the requested preferred exponent. The theorem compares the
+returned datum with every valid representation of that magnitude, representations with a
+different coefficient included.
 -/
 
 @[expose] public section
@@ -22,8 +23,8 @@ that magnitude, including representations with a different coefficient.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
 /-- Exact projection chooses the exponent closest to the preferred exponent over the whole cohort.
-The input coefficient and quantum need not be valid themselves; a valid representation `(e, t)` of
-the same value suffices. -/
+The input coefficient and quantum need not be valid themselves, as long as some valid
+representation `(e, t)` of the same value exists. -/
 theorem projectMagnitude_quantum_closest (f : Format) (mode : RoundingMode) (s : Bool)
     (c : Nat) (q preferred : Int) (d : Nat) (r : Int)
     (hout : (projectMagnitude f mode s ((c : ℚ) * (10 : ℚ) ^ q) preferred).value =

@@ -15,8 +15,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Runtime
 /-!
 # Nearest-even binary arithmetic kernels
 
-The six nearest-even kernels behind the default `Model.add`, `Model.sub`, `Model.mul`,
-`Model.div`, `Model.sqrt`, and `Model.fma` call the structural dispatchers selected for a
+Behind the default `Model.add`, `Model.sub`, `Model.mul`, `Model.div`, `Model.sqrt`, and
+`Model.fma` sit six nearest-even kernels, which call the structural dispatchers selected for a
 validated format descriptor. They sit below the directed and status kernels, which reuse them
 for nearest-even rounding, and the public operations in `Arithmetic.Runtime` select among the
 three.

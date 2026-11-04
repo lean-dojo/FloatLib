@@ -18,13 +18,15 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Projective
 /-!
 # Posit inspection
 
-`#float_info` reports posit storage, arithmetic capabilities, and applicable rounding and quire
-theorems. The descriptor and synthesized instances determine which width-dependent backends
-apply. A configured posit's report lists the theorems about its own values, chosen by its installed
-operations and its storage, then the theorems about the proof model `Model format` and about the
-associated quire, each reached from a configured value by a named function. The proof model's
-report lists the model theorems and then the quire theorems. The quire execution theorem list is
-shared with `Quire.Info`.
+Run `#float_info` on a posit type and you get its storage, its arithmetic capabilities, and the
+rounding and quire theorems that apply to it. Which width-dependent backends appear depends on the
+descriptor and the synthesized instances.
+
+A configured posit's report starts with the theorems about its own values, picked by its installed
+operations and its storage. Then come the theorems about the proof model `Model format` and about
+the associated quire, each reached from a configured value by a named function. For the proof
+model itself, the report lists the model theorems and then the quire theorems. `Quire.Info` uses
+the same list of quire execution theorems.
 -/
 
 @[expose] public section
@@ -591,7 +593,7 @@ meta def quireSurfaces : List TheoremSurface :=
 Describe posit representations, operation contracts, and applicable refinement theorems.
 
 A configured `carrier` gets the report of a configured posit, whose own theorem groups depend on
-the installed `operations` and on the packed kernels its storage uses; the default carrier is the
+the installed `operations` and on the packed kernels its storage uses. The default carrier is the
 proof model itself. Both reports list the quire theorems in their own section.
 -/
 meta def profile (bits : Nat) (storage : String) (carrier : Carrier := .model)

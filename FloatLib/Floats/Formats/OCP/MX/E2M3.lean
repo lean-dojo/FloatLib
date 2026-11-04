@@ -12,12 +12,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 # OCP MX E2M3
 
 `FloatLib.Floats.E2M3` is a six-bit finite floating element from the OCP microscaling
-specification, with type-level identity `E2M3.Family`. The runtime carrier is a `UInt8` with an
-erased proof that the code is below 64. For addition, subtraction, multiplication, division, and
-square root, balanced and throughput planning select exhaustive proved tables, and latency
-planning selects arithmetic kernels. Fused multiply-add keeps both a table and the generic proved
-kernel. Throughput planning selects the table, while balanced and latency-oriented planning avoid
-its larger lookup footprint.
+specification, with type-level identity `E2M3.Family`. A value is a `UInt8` together with an
+erased proof that the code is below 64.
+
+For addition, subtraction, multiplication, division, and square root, balanced and throughput
+planning read exhaustive proved tables and latency planning runs the arithmetic kernels. Fused
+multiply-add is the interesting case. Its table has `64^3 = 262,144` entries, so we keep both that
+table and the generic proved kernel. Throughput planning takes the table, and balanced and latency
+planning use the kernel to avoid the table's larger lookup footprint.
 
 ## Reference
 

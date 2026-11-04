@@ -12,11 +12,11 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Exact policy-aware numerical systems
 
-The adapter interprets every finite FP8, FP6, FP4, FNUZ, or IEEE code as an exact dyadic. It uses
-the complete `FloatFormat`, so an all-ones exponent can mean infinity, a finite value, or part of a
-NaN encoding according to the selected representation policy. A NaN is denoted by its diagnostic
-payload without the quiet bit, sign bit, and signaling class, as in the real-valued
-`numericalSystem`. `ExactValue.nan` separately retains the complete encoded fraction field.
+This adapter reads every finite FP8, FP6, FP4, FNUZ or IEEE code as an exact dyadic. It works from
+the complete `FloatFormat`, so an all-ones exponent can mean infinity, a finite value or part of a
+NaN encoding, depending on the selected representation policy. As in the real-valued
+`numericalSystem`, a NaN is denoted by its diagnostic payload without the quiet bit, together
+with its sign bit and signaling class. `ExactValue.nan` keeps the complete encoded fraction field.
 -/
 
 @[expose] public section
@@ -45,7 +45,7 @@ def exactNumericalSystem (fmt : FloatFormat) : NumericalSystem where
 abbrev ExactAtFinite (fmt : FloatFormat) (value : Numerics.Dyadic) :=
   (exactNumericalSystem fmt).AtFinite value
 
-/-- Exact decoding is precisely finite representation in the general interface. -/
+/-- In the general interface, a code represents a dyadic if and only if exact decoding gives it. -/
 theorem exactNumericalSystem_represents_iff {fmt : FloatFormat} (x : Model fmt)
     (value : Numerics.Dyadic) :
     (exactNumericalSystem fmt).Represents x value ↔ Model.toDyadic? x = some value := by
@@ -56,7 +56,7 @@ theorem exactNumericalSystem_represents_iff {fmt : FloatFormat} (x : Model fmt)
       split <;> simp
   | some decoded => simp [hdecode]
 
-/-- A represented finite value is exactly the result of decoding its code. -/
+/-- A represented finite value is the result of decoding its code. -/
 theorem toDyadic?_eq_some_of_exactRepresents {fmt : FloatFormat} {x : Model fmt}
     {value : Numerics.Dyadic}
     (hvalue : (exactNumericalSystem fmt).Represents x value) :

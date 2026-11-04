@@ -12,8 +12,8 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Proof contract for configured codebook decoding
 
-The installed `ExactDecoder` returns the selected codebook's table entry, including exceptional
-entries.
+Decoding a configured codebook value is a table lookup. The installed `ExactDecoder` returns the
+selected codebook's entry for the word, exceptional entries included.
 -/
 
 @[expose] public section

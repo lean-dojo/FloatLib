@@ -14,20 +14,19 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runti
 /-!
 # Standard interfaces for binary models
 
-The `Model fmt` instances supply Lean's ordinary numeric interfaces. Arithmetic, comparisons,
-and constants route directly through the format-generic executable kernels.
+These instances give `Model fmt` Lean's ordinary numeric interfaces. Arithmetic, comparisons and
+constants go straight to the format-generic executable kernels, and constants are built from
+exact integers and rounded as the descriptor says.
 
-Elementary functions, `Pow`, and `MathFunctions` are not installed here. Import
+Elementary functions, `Pow` and `MathFunctions` aren't installed here, so for those you import
 `FloatLib.Floats.Formats.BinaryInterchange.Transcendentals` (or
-`Configured.Transcendentals`) by name. Certified `sqrt` and `abs` remain on this path.
+`Configured.Transcendentals`) by name. Certified `sqrt` and `abs` stay on this path.
 
-Constants are constructed from exact integers and rounded according to the descriptor.
-
-Natural numbers enter through `NatCast`, following mathlib: the map rounds, so it is not a `Coe`.
-Numerals resolve the way they do for any mathlib type with `Zero`, `One`, and `NatCast`: `0` is
-`posZero fmt`, `1` is `posOne fmt`, and `2`, `3`, ... are `Nat.cast` through mathlib's
-`instOfNatAtLeastTwo`. There is no separate `OfNat` instance, so `(0 : Model fmt)` and `Zero.zero`
-are the same term.
+Natural numbers enter through `NatCast`, following mathlib. It isn't a `Coe`, because the map
+rounds. Numerals resolve the way they do for any mathlib type with `Zero`, `One` and `NatCast`:
+`0` is `posZero fmt`, `1` is `posOne fmt`, and `2`, `3`, ... are `Nat.cast` through mathlib's
+`instOfNatAtLeastTwo`. With no `OfNat` instance of its own, `(0 : Model fmt)` and `Zero.zero` are
+the same term.
 -/
 
 @[expose] public section
@@ -107,11 +106,11 @@ instance {fmt : FloatFormat} : BEq (Model fmt) where
     else
       left.bits == right.bits
 
-/-- Strict IEEE numerical order; unordered comparisons are false. -/
+/-- Strict IEEE numerical order. Unordered comparisons are false. -/
 instance {fmt : FloatFormat} : LT (Model fmt) where
   lt := lt
 
-/-- Non-strict IEEE numerical order; unordered comparisons are false. -/
+/-- Non-strict IEEE numerical order. Unordered comparisons are false. -/
 instance {fmt : FloatFormat} : LE (Model fmt) where
   le := le
 

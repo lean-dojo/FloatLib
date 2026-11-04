@@ -14,13 +14,13 @@ public import FloatLib.Floats.Formats.OCP.MX
 /-!
 # Specialized formats
 
-Not every quantity is best stored as a float. If our values are always powers of ten, a
-logarithmic number multiplies exactly. If a layer only ever holds `-1` and `+1`, a one-bit codebook
-is enough. If four neighbouring lanes share a magnitude, one exponent can serve all of them, which
-is what a shared-scale block and an OCP MX block do. Each section below constructs such a value,
-computes with it, and decodes the result.
+Not every quantity is best stored as a float. If our values are always powers of ten, a logarithmic
+number multiplies exactly. If a layer only ever holds `-1` and `+1`, a one-bit codebook is enough.
+If four neighbouring lanes share a magnitude, one exponent can serve all of them, which is what a
+shared-scale block and an OCP MX block do. Each section below constructs such a value, computes with
+it, and decodes the result.
 
-`BasicOperations` introduces the ordinary scalar interface. Each representation here has its own
+`BasicOperations` introduces the ordinary scalar interface, and each representation here has its own
 operations.
 -/
 

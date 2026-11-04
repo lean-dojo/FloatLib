@@ -13,12 +13,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 /-!
 # Symbolic finiteness conditions
 
-The executable arithmetic refinement theorems are stated over real values, but IEEE overflow is
-observable only on the encoded result. This module connects those views: an exact dyadic whose
-magnitude is at most the largest finite value of the destination format cannot round to infinity.
-
-The result is uniform in the exponent and fraction widths and is the common foundation for
-operation-specific no-overflow theorems.
+The executable arithmetic refinement theorems are stated over real values, but IEEE overflow shows
+up only in the encoded result. This module connects the two views with one fact: an exact dyadic
+whose magnitude is at most the largest finite value of the destination format cannot round to
+infinity. It holds uniformly in the exponent and fraction widths, and the operation-specific
+no-overflow theorems all build on it.
 -/
 
 @[expose] public section

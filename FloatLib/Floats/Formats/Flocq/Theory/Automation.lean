@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 /-!
 # FloatRep rules for numerical automation
 
-The rules expose exact negation and multiplication through the shared operation contracts.
-Concrete evaluation reduces only the executable integer carrier; real decoding remains proof-only.
+Numerical automation sees exact `FloatRep` negation and multiplication through the shared
+operation contracts. When it evaluates a concrete term it reduces only the executable integer
+carrier, and real decoding stays in proofs.
 -/
 
 public meta section

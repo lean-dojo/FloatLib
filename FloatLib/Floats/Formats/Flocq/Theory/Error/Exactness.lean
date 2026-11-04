@@ -13,9 +13,9 @@ public import FloatLib.Floats.Formats.Flocq.Calculation.Operations
 /-!
 # Exact Representations for Rounded Arithmetic
 
-The error theorems for addition, multiplication, division, and square root need more than a bound:
-they track the grid on which an intermediate value is exactly representable. The lemmas below are
-the common representation layer for those developments.
+A bound isn't enough for the error theorems on addition, multiplication, division, and square
+root. They also track the grid on which an intermediate value is exactly representable, and the
+lemmas below are the representation layer they share.
 -/
 
 @[expose] public section

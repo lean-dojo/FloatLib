@@ -12,14 +12,13 @@ public import FloatLib.Numerics.Quantization.Spec
 /-!
 # Explicit-entropy stochastic quantization
 
-A stochastic quantizer is represented as an ordinary relational specification whose context
-contains the incoming entropy and whose result contains the updated entropy. No hidden random
-source is available to the kernel, so executions can be replayed and proofs can state exactly
-which entropy transition was used.
+A stochastic quantizer is an ordinary relational specification whose context contains the incoming
+entropy and whose result contains the updated entropy. No hidden random source is available to the
+kernel, so executions can be replayed and proofs can say which entropy transition was used.
 
-Probability laws remain family-specific: some kernels consume a random bit, others a fixed-width
-word or a splittable generator. Those distributional guarantees are separate from the shared
-state-transition interface defined here.
+Probability laws stay family-specific. Some kernels consume a random bit, others a fixed-width word
+or a splittable generator, and those distributional guarantees are kept apart from the shared
+state-transition interface here.
 -/
 
 @[expose] public section
@@ -50,7 +49,7 @@ theorem implements_ofKernel {Context : Type u} {Entropy : Type v}
     (ofKernel run).Implements (fun state input => run state.1 state.2 input) :=
   Spec.implements_ofFunction _
 
-/-- Conformance to an entropy relation is exactly the pointwise transition property. -/
+/-- Conformance to an entropy relation is the pointwise transition property. -/
 theorem implements_ofRelation_iff {Context : Type u} {Entropy : Type v}
     {Exact : Type w} {Result : Type x}
     (relation : Context → Entropy → Exact → Result → Entropy → Prop)

@@ -12,164 +12,241 @@ public import FloatLib.Numerics.ErrorBound.SumLoop
 /-!
 # Numerical proofs from the implementation
 
-`roundoff` constructs an absolute-error proof directly from configured floating-point arithmetic.
-It preserves each operation and its selected capability, reuses FloatLib's primitive theorems,
-and shares the analysis of repeated subexpressions. No model-specific expression language or
-separately supplied implementation is involved.
+`roundoff` builds an absolute-error proof from configured floating-point arithmetic itself, so
+there is no model-specific expression language and no second copy of the implementation to supply.
+It keeps each operation and the capability selected for it, reuses FloatLib's primitive theorems,
+and shares the analysis of repeated subexpressions. The same analysis also proves mixed bounds
+`MixedError actual reference r a`, finiteness `isFinite value = true`, decoded exact values
+`toRat? value = some q`, signs of decoded values, and conjunctions of these.
 
-To inspect a generated reference and budget without writing them first, use the term form in
-a local proof: `have bound := by roundoff (ExecFloat.Binary.toReal (program input))`.
-Its range and domain premises must already be provable. The ordinary target form leaves any
-missing premises as proof goals. To generate a reusable conditional theorem, use
-`roundoff theorem name := fun input => ExecFloat.Binary.toReal (program input)`.
-The generated statement records the required conditions; applying it requires proving them.
-`roundoff mixed theorem` instead states a mixed bound against the exact computation on the decoded
-inputs, except at a contracted call whose model the analysis cannot read, as below. That reference
-reads a stored function at index data only and casts only index data to the reals, as the next
-paragraph defines it; a cast of an integer computed from numerical values is rejected. A stored
-container, such as a tensor, is read at any index through its own getter or a registered read: an
-index chosen by comparing stored values, as a pivot is, selects a stored value, but one computed
-from rounded values would keep that choice in the reference. A getter of another dictionary is
-analyzed as the function it is. When the observation is a configured
-`ExecFloat.Binary.toReal value`, the bound is preceded by `isFinite value = true`; a model
+It tries FloatLib's exact operations first, such as a finite `x - x`, products with zero or one and
+sums with zero, whose results are finite with no range condition. Then it composes each
+operation's local rounding with propagation through the exact real operation. A sum of same-sign
+values keeps a relative error weighted by its terms' magnitudes, while cancellation keeps an
+absolute one.
+
+Here is a dot product from our `roundoff` tests, where `Value` is the configured type
+`ExecFloat (Configured.Family format code plan)`:
+
+```lean
+def dot {n : Nat} (x y : Fin n → Value) : Value :=
+  Fin.foldl n (fun s j => s + x j * y j) 0
+
+roundoff mixed theorem dot_mixedError :=
+  fun {n : Nat} (x y : Fin n → Value) (hformat : format.isIEEE = true) =>
+    ExecFloat.Binary.toReal (dot x y)
+```
+
+The loop is analyzed once for a symbolic accumulator, so the theorem holds at every length `n`. Its
+reference is `List.foldl referenceStep 0 (List.finRange n)`, the exact dot product of the decoded
+entries. Its premise is a `List.AllSteps` condition on the states the loop visits, and it concludes
+`ExecFloat.Binary.isFinite output = true` together with the mixed bound.
+`List.abs_sub_le_of_sumFold` restates the generated bound of a summation loop like this one in
+closed form, and `List.abs_sub_le_of_sumFold_of_exact` that of a sum of exact terms. The
+descriptor, storage plan and scalar representation stay parameters. IEEE-format and finiteness
+conditions are proved from the context when possible and otherwise stay goals.
+
+## Tactic, term and theorem forms
+
+On an ordinary target, `roundoff` leaves any missing premises as proof goals. To inspect a
+generated reference and budget without writing them first, use the term form in a local proof:
+`have bound := by roundoff (ExecFloat.Binary.toReal (program input))`. Its range and domain
+premises must already be provable. To generate a reusable conditional theorem, use
+`roundoff theorem name := fun input => ExecFloat.Binary.toReal (program input)`. The generated
+statement records the required conditions, and you prove them when you apply it.
+
+`roundoff mixed theorem` states a mixed bound instead, against the exact computation on the decoded
+inputs, except at a contracted call whose model the analysis cannot read (see the contracts below).
+With `using` an equation whose left side is the inferred reference, written before `:=`, a mixed
+theorem states the bound against the right side. When the observation is a configured
+`ExecFloat.Binary.toReal value`, the bound is preceded by `isFinite value = true`. A model
 observation `Model.toReal`, or an observation under another function, states the mixed bound alone.
-Its statement names the recurrences and folds of loops, the output, reference and budgets, and other
-large repeated real terms by `let`; an absolute statement names its reference and budget. Both spell
-binary16, bfloat16, binary32 and binary64 by name in the format's constants, while values keep the
-program's spelling. With `using` an equation whose left side is the inferred reference, written
-before `:=`, a mixed theorem states the bound against the right side instead.
+
+The mixed reference reads a stored function only at index data and casts only index data to the
+reals, with index data as defined below. A cast of an integer computed from numerical values is
+rejected. A stored container, such as a tensor, is read at any index through its own getter or a
+registered read. An index chosen by comparing stored values, as a pivot is, selects a stored value,
+but one computed from rounded values would keep that choice in the reference. A getter of another
+dictionary is analyzed as the function it is.
+
+A mixed statement names the recurrences and folds of loops, the output, reference and budgets, and
+other large repeated real terms by `let`. An absolute statement names its reference and budget.
+Both spell binary16, bfloat16, binary32 and binary64 by name in the format's constants, while values
+keep the program's spelling.
+
+## Loops
 
 A loop of a registered kind (`Extension.loops`) over lists, arrays, vectors, `Fin n` and matrices,
-and over the containers another library registers, reuses one scalar invariant theorem, without
-unrolling its elements. A loop whose state is a pair or a nondependent record carries one relation
-of all its components instead (`List.fold_relation`): a bound for each value of the observed format,
-exact where the step keeps it exact, and equality with a shadow copy for data whose type mentions no
-numerical carrier. A record is split into its fields, so the fields of a record of binary32 values,
-or of a wrapper of one, are values of that format. A shadow copy is part of the reference: it starts
-at index data, and each step updates it to index data. It reads a test of exact finite values as the
-test of their references when the conditions, indices and other data in those references are index
-data too, and another test of rounded values, when it is FloatLib's own test under the
-observation's codec and the references of its operands, and of the components they read, are plain
-real expressions over decoded stored values, as the test of those references under the premise, in
-the step's condition, that the two agree. A library can register a relation that
-one step preserves, with lemmas that start it and read a bound off it (`Extension.stepRelations`):
-a loop whose step unfolds to the relation's step is then read through it, before the rules for the
-operations of its step are tried, and its budgets are the relation's budgets. Producers and
-operations on these containers are supported as far as registered laws expose them. A loop over a
-computed container is first fused into its step
-(`Loop.fusions`), so that the reference reads the inputs the producer reads. Otherwise the reference
-may read the loop's entries only when they are stored inputs or indices, from an index computation
-such as `List.range` or `List.finRange` whose length, start and step are themselves index data.
-Index data is built from literals, parameters, the fields and lengths of inputs, arithmetic on them
-and comparisons of stored values. It reads a stored value of a floating-point, rational or real
-type, Lean's own float models included and even through an alias of any reducibility, a local
-definition or a field of a record, only to compare, select or store it: through FloatLib's own order
-dictionaries, which take its own comparison, a registered read and the classes it names as trusted
-storage (`Read.trusts`), or a function generic in the value's type, which can only compare, select
-or store it, or hand it to the functions and dictionaries it takes. A numerical function, any term
-whose type at default transparency and with its local definitions expanded is a function type over
-such values, takes only index data whose types hold no number, and fully, however it is produced: a
-variable, a projection or a field of a record applied to arguments, or the value of any other
-constant at the arguments its type names, such as an entry that a getter reads from a container,
-applied to the arguments after those. A definition that takes a value that can hold one, a numerical
-function itself or a list, an array, an option, a pair or a record of them at any depth, also of an
-indexed family at its indices, or a function that takes a type and so can be applied at a numerical
-one, is read through its value and checked use by use, and rejected when that does not finish; a
-function written as `fun` is checked through its body, and is such a value when its result can hold
-one. It never looks into such a value, and a value computed from numerical values, such as the bound
-`x * x` against which comparisons could rebuild a rounded square, is not index data. Index data calls only definitions whose values are index
-data in turn, every constant of a value counting, also one that only its proofs use: an opaque
-constant or an axiom that is not a proof, whose value cannot be inspected, is rejected. Lean's core
-library is the one exception, and only for such constants, since the module system exports many core
-definitions without their values: an opaque constant or an axiom of a module that Lean's own library
-holds is index data when its type mentions no carrier, except `Classical.choice`, while a core
-definition whose value is exported is read through it like any other. A loop whose reference reads
-an entry of any other computed container, whatever its type, is rejected, and so is a loop over a
-computed container that is not index data whose reference ignores its entries but still folds over
-the container, since it takes a step for each entry. A registered sum (`Extension.sums`) is analyzed
-as the loop its laws write it as. The step's condition concerns the states the loop actually visits
-(`List.AllSteps`); other conditions can be contracts on all inputs. An entry of a stored function
-read at index data, and an entry of a stored container, is exact data. A selection
-`if m < x then x else m` of finite values, the step of C's maximum loop, is read as `max`; it is
-finite when its operands are, and a loop whose step keeps zero budgets zero is exact. Rounding to an
-integral value moves a value by at most one half to nearest and one otherwise, and a C integer cast
-reads that rounding. The conversion of an integer or a natural number has relative error `u` and
-keeps its sign. It is exact at magnitudes up to `2 ^ p`, `p = fracWidth + 1`, as a hypothesis can
-show. An `int8_t` cast keeps its integer when the integer's bound stays below `2 ^ 7`, a condition
-on the reals.
-`List.abs_sub_le_of_sumFold` restates the generated bound of a summation loop, such as a dot
-product, in closed form, and `List.abs_sub_le_of_sumFold_of_exact` that of a sum of exact terms.
-`[roundoff_rule]` registers an existing numerical bound or observation equality. It also accepts
-imported, polymorphic theorems and local registrations of the rule shapes it recognizes. An
-equality adds no local rounding error of its own; the computation on its right side is analyzed
-as usual. A registered theorem concluding that a Boolean test is `false`, such as the NaN or
-infinity test of a finite value, decides a branch guard on that test when the context discharges
-the theorem's premises and its instantiated proof keeps no unresolved obligation; only the other
-branch is then analyzed. Quantified input-error assumptions can be reused at each coordinate. A hypothesis stated
-like a generated theorem, such as the contract of a function the program takes, is used as a
-registered one is: its mixed bound by mixed analysis and its finiteness for finiteness goals.
-When the analysis reads the contract's model, the error of the call's argument is propagated
-through it, so that the reference is the model at the exact argument. A model it has no rule for,
-such as a real function the program takes, keeps the model at the decoded computed argument: the
-statement shows that argument, and its rounding is not part of the bound.
+and over the containers another library registers, reuses one scalar invariant theorem without
+unrolling its elements. Loops carry a relational invariant: the finiteness of the accumulator and a
+sign of its reference when these are established, and otherwise their absolute analysis. The step's
+condition concerns the states the loop actually visits (`List.AllSteps`), while other conditions can
+be contracts on all inputs. A registered sum (`Extension.sums`) is analyzed as the loop its laws
+write it as. A selection `if m < x then x else m` of finite values, the step of C's maximum loop, is
+read as `max`. It is finite when its operands are, and a loop whose step keeps zero budgets zero is
+exact.
 
-Trust assumptions. The kernel checks the displayed proposition from its hypotheses and
-dependencies, and the axiom audit lists the axioms it rests on. Neither shows that the displayed
-reference agrees with an exact-arithmetic specification written independently, and that agreement
-rests on what follows. Two conditions are checked by the analysis. A registered read counts as a
-stored read only when it uses the dictionaries of Lean's own getters or has a checked selection
-equality to such a read (`Read.isCertified`), and a value of a type parameter of the statement
-counts as possibly numerical, unless a dictionary of a class that a certified read trusts supplies
-its type. The rest is assumed. The opaque constants and axioms of the running Lean's own library,
-other than `Classical.choice`, hold no number when their types hold none. FloatLib's IEEE
-comparisons on a configured type compare its decoded models, while its decidable equality compares
-the stored values, so the two zeros differ and a NaN equals itself. A configured type's codec and
-storage plan define what its stored words mean. Lean's list, array and vector getters, with their
-forwarding instance for `Fin` indices, select stored entries, and the observers a read registers
-mean what they say about its storage. A class that a certified read names in `Read.trusts` is
-exempt as a whole, wherever its dictionaries occur, and is assumed to store and fetch entries
-without computing with them. A local value without a visible definition or a supplied error bound,
-such as one a `have` in a tactic proof introduces, is an input whatever computed it, and an entry
-that the genuine getter of an input option returns is a stored input. Some choices stay as the
-program makes them: a stored read keeps the program's index, also one chosen from rounded values, a
-branch whose condition the analysis cannot decide keeps the program's condition, and an exact test
-of a loop component can inherit such a choice through the component's reference, while an
-agreement test whose references depend on it is rejected.
+Producers and operations on these containers are supported as far as registered laws expose them.
+A loop over a computed container is first fused into its step (`Loop.fusions`), so that the
+reference reads the inputs the producer reads. Otherwise the reference may read the loop's entries
+only when they are stored inputs or indices, from an index computation such as `List.range` or
+`List.finRange` whose length, start and step are themselves index data. A loop whose reference reads
+an entry of any other computed container, whatever its type, is rejected. So is a loop over a
+computed container that is not index data whose reference ignores its entries but still folds over
+the container, since it takes a step for each entry.
+
+A loop whose state is a pair or a nondependent record carries one relation of all its components
+instead (`List.fold_relation`). That relation consists of a bound for each value of the observed
+format, exact where the step keeps it exact, and equality with a shadow copy for data whose type
+mentions no numerical carrier. A record is split into its fields, so the fields of a record of
+binary32 values, or of a wrapper of one, are values of that format. A shadow copy is part of the
+reference, so it starts at index data and each step updates it to index data.
+
+The shadow copy reads a test of exact finite values as the test of their references when the
+conditions, indices and other data in those references are index data too. It reads another test of
+rounded values as the test of its operands' references, under the premise in the step's condition
+that the two agree. It does so when that test is FloatLib's own test under the observation's codec
+and the references of its operands, and of the components they read, are plain real expressions over
+decoded stored values.
+
+A library can also register a relation that one step preserves, such as Kahan's bound on the sum
+minus its compensation, with lemmas that start it and read a bound off it
+(`Extension.stepRelations`). A loop whose step unfolds to the relation's step is then read through
+it before the rules for the operations of its step are tried, and the loop's budgets are the
+relation's budgets.
+
+## Index data
+
+Index data is built from literals, parameters, the fields and lengths of inputs, arithmetic on them
+and comparisons of stored values. It computes no numerical value, and these rules keep it that way:
+
+* It reads a stored value of a floating-point, rational or real type only to compare, select or
+  store it. Such types include Lean's own float models, and a type counts even through an alias of
+  any reducibility, a local definition or a field of a record. It does this through FloatLib's own
+  order dictionaries, which take FloatLib's own comparison, through a registered read and the
+  storage classes whose methods its laws pin (`Read.trusts`, `Read.laws`), or through a function
+  generic in the value's type, which can only compare, select or store it, or hand it to the
+  functions and dictionaries it takes.
+* A numerical function is any term whose type, at default transparency and with its local
+  definitions expanded, is a function type over such values. It is applied only fully and only to
+  index data whose types hold no number, however the function is produced: a variable, a projection
+  or a field of a record applied to arguments, or the value of any other constant at the arguments
+  its type names, such as an entry that a getter reads from a container, applied to the arguments
+  after those.
+* A value can hold a numerical function when it is one, a list, an array, an option, a pair or a
+  record of them at any depth, also of an indexed family at its indices, or a function that takes a
+  type and so can be applied at a numerical one. A definition that takes such a value is read
+  through its value and checked use by use, and rejected when that does not finish. A function
+  written as `fun` is checked through its body, and is such a value when its result can hold one.
+* Index data never looks into such a value. A value computed from numerical values, such as the
+  bound `x * x` against which comparisons could rebuild a rounded square, is not index data.
+* Index data calls only definitions whose values are index data in turn. Every constant of a value
+  counts, also one that only its proofs use, so an opaque constant or an axiom that is not a proof,
+  whose value cannot be inspected, is rejected.
+* Lean's core library is the one exception, and only for such constants, since the module system
+  exports many core definitions without their values. An opaque constant or an axiom of a module
+  that Lean's own library holds is index data when its type mentions no carrier, except
+  `Classical.choice`. A core definition whose value is exported is read through it like any other.
+
+An entry of a stored function read at index data, and an entry of a stored container, is exact
+data.
+
+## Literals, casts and primitive operations
+
+Inputs are decoded as stored. Floating-point literals and casts inside the computation carry
+conversion error relative to their exact real values, except a literal that the format represents,
+such as `127` in binary32, which converts without error. Closed conditions on a literal, such as its
+range, are decided. The conversion of an integer or a natural number has relative error `u` and
+keeps its sign. It is exact at magnitudes up to `2 ^ p`, `p = fracWidth + 1`, as a hypothesis can
+show. Rounding to an integral value moves a value by at most one half to nearest and one otherwise,
+and a C integer cast reads that rounding. An `int8_t` cast keeps its integer when the integer's
+bound stays below `2 ^ 7`, a condition on the reals.
+
+The primitive float rules require finite results, and division a finite divisor. Square root also
+requires a finite operand in its domain, which the sign of the operand establishes, and above zero
+it divides the error of its operand by about `2 √x₀`. A weak sign of a rounded value needs no
+finiteness, because a NaN or an infinity has real value zero. Finiteness of a result follows from a
+range condition on the enclosure of its exact value, an inequality on the inputs and budgets. A
+supplied error tolerance still has to bound the generated budget.
+
+## Elementary functions
 
 A call of FloatLib's correctly rounded exponential, logarithm, `expMinus1`, `logPlus1` or `expMul`
 on an IEEE descriptor contributes half an ulp of local error at its real result in the absolute
-analysis, and the unit roundoff with the underflow allowance in the mixed analysis, unless an
-exact case applies. A dictionary method gets this bound only when its selected implementation is
-identified with one of those functions: by a registered implementation equality
-(`Extension.bridges`), or because the selected instance unfolds to such a call. Another instance
-of the same class, whose implementation is neither, gets none. The
-domain and range conditions of FloatLib's rounding theorem become premises, and a premise that
-such a call is finite becomes the same conditions. Sine, cosine and the hyperbolic functions
-reuse FloatLib's rational enclosures instead. The distance from the actual candidate to the
-enclosure endpoints bounds its local error; input perturbations are propagated by the same
-registered real-error theorems.
+analysis, and the unit roundoff with the underflow allowance in the mixed analysis, unless an exact
+case applies. A dictionary method gets this bound only when its selected implementation is
+identified with one of those functions, either by a registered implementation equality
+(`Extension.bridges`) or because the selected instance unfolds to such a call. Another instance of
+the same class, whose implementation is neither, gets none. The domain and range conditions of
+FloatLib's rounding theorem become premises, and a premise that such a call is finite becomes the
+same conditions.
 
-The descriptor, storage plan and scalar representation remain parameters. IEEE-format and
-finiteness conditions are proved from the context when possible and otherwise remain goals.
-Inputs are decoded as stored. Floating-point literals and casts inside the computation carry
-conversion error relative to their exact real values, except a literal that the format
-represents, such as `127` in binary32, which converts exactly; closed conditions on a literal,
-such as its range, are decided. The primitive float rules require finite results, and division a
-finite divisor; square root also requires a finite operand in its domain, which the sign of the
-operand establishes. A weak sign of a rounded value needs no finiteness: a NaN or an infinity
-has real value zero. Above zero a square root divides the error of its operand by about `2 √x₀`.
-A supplied error tolerance still has to bound the generated budget.
+Sine, cosine and the hyperbolic functions reuse FloatLib's rational enclosures instead. The distance
+from the actual candidate to the enclosure endpoints bounds its local error, and input perturbations
+are propagated by the same registered real-error theorems.
 
-The same analysis also proves mixed bounds `MixedError actual reference r a`, finiteness
-`isFinite value = true`, decoded exact values `toRat? value = some q`, signs of decoded values,
-and conjunctions of these. It tries FloatLib's exact operations first, such as a finite `x - x`,
-products with zero or one and sums with zero; their results are finite with no range condition.
-The analysis then composes each operation's local rounding with propagation through the exact
-real operation: a sum of same-sign values keeps a relative error weighted by its terms'
-magnitudes, while cancellation keeps an absolute one. Finiteness of a result follows from a range
-condition on the enclosure of its exact value, an inequality on the inputs and budgets. Loops
-carry a relational invariant: the finiteness of the accumulator and a sign of its reference when
-these are established, and otherwise their absolute analysis.
+## Registered rules and hypotheses
+
+`[roundoff_rule]` registers an existing numerical bound or observation equality. It also accepts
+imported, polymorphic theorems and local registrations of the rule shapes it recognizes. An equality
+adds no local rounding error of its own, and the computation on its right side is analyzed as usual.
+A registered theorem concluding that a Boolean test is `false`, such as the NaN or infinity test of
+a finite value, decides a branch guard on that test when the context discharges the theorem's
+premises and its instantiated proof keeps no unresolved obligation. Only the other branch is then
+analyzed.
+
+Quantified input-error assumptions can be reused at each coordinate. A hypothesis stated like a
+generated theorem, such as the contract of a function the program takes, is used as a registered
+one is: its mixed bound by mixed analysis and its finiteness for finiteness goals. When the analysis
+reads the contract's model, the error of the call's argument is propagated through it, so that the
+reference is the model at the exact argument. A model it has no rule for, such as a real function
+the program takes, keeps the model at the decoded computed argument. The statement then shows that
+argument, and its rounding is not part of the bound.
+
+## Trust assumptions
+
+The kernel checks the displayed proposition from its hypotheses and dependencies, and the axiom
+audit lists the axioms it rests on. Neither shows that the displayed reference agrees with an
+exact-arithmetic specification written independently, and that agreement rests on what follows.
+The analysis checks three conditions. A registered read counts as a stored read only when it uses
+the dictionaries of Lean's own getters or has a checked selection equality to such a read
+(`Read.isCertified`). Registration checks that the laws a read registers (`Read.laws`) give each
+method of a class it trusts (`Read.trusts`) a defining equality, directly or through an observer
+with an injectivity law (`Read.checkLaws`). Such a class is storage only for a certified read whose
+laws use no constant that holds a number. Its dictionary is index data only as an input, a local
+definition of an accepted dictionary, or a constant whose optional decisions of equality reduce to
+`none` or `some` for generic arguments, applied to types, proofs, local variables without a visible
+value or their data fields, and checked index data. A value of a type parameter of the statement
+counts as possibly numerical, unless a dictionary of such a storage class supplies its type.
+
+The rest is assumed:
+
+* The opaque constants and axioms of the running Lean's own library, other than
+  `Classical.choice`, hold no number when their types hold none.
+* FloatLib's IEEE comparisons on a configured type compare its decoded models, while its decidable
+  equality compares the stored values, so the two zeros differ and a NaN equals itself.
+* A configured type's codec and storage plan define what its stored words mean.
+* Lean's list, array and vector getters, with their forwarding instance for `Fin` indices, select
+  stored entries.
+* The observers a read registers mean what they say about its storage.
+* Types that a storage class supplies, applications of its type families included, stay abstract to
+  index computations: their identity is not tested to produce data, and their values are not
+  transported to expose another representation. Registration screens the direct occurrences of the
+  class's own type projections in its proof fields and in the laws a read registers, and rejects
+  their use as terms, in equalities of types and as types of heterogeneous equalities. The screen
+  skips the arguments a constant takes as proofs, does not unfold the definitions it calls, and does
+  not follow one of its types through a constructed type, such as `ULift` of it.
+* Index data is not checked inside the types it mentions. Such a type, with the definitions and
+  dictionaries it uses, is assumed not to be chosen by a rounded value, as
+  `if x * x == x then Unit else Empty` is.
+* A local value without a visible definition or a supplied error bound, such as one a `have` in a
+  tactic proof introduces, is an input whatever computed it.
+* An entry that the genuine getter of an input option returns is a stored input.
+
+Some choices stay as the program makes them. A stored read keeps the program's index, also one
+chosen from rounded values. A branch whose condition the analysis cannot decide keeps the program's
+condition. An exact test of a loop component can inherit such a choice through the component's
+reference, while an agreement test whose references depend on it is rejected.
 -/
 
 public meta section
@@ -232,8 +309,8 @@ def inferBound (actual : Q(ℝ)) (mixed : Bool := false) :
   checkObligations proof pending.toArray
   return (proof, pending.toArray)
 
-/-- Infer a numerical statement for a local `have`, reusing the ordinary proof-producing pass.
-The term is a real observation of the computation; both its reference and budget are inferred. -/
+/-- Infer a numerical statement for a local `have` with the ordinary proof-producing pass. The
+term is a real observation of the computation, and both its reference and budget are inferred. -/
 elab "roundoff" "(" value:term ")" : tactic => withMainContext do
   let actual : Q(ℝ) ← Term.elabTermEnsuringType value q(ℝ)
   Term.synthesizeSyntheticMVarsNoPostponing
@@ -256,8 +333,8 @@ elab "roundoff" "(" value:term ")" : tactic => withMainContext do
   goal.assign proof
   replaceMainGoal []
 
-/-- Refuse a generated conditional theorem when a closed obligation computes to false.
-This is a bounded check, not a decision procedure for the consistency of arbitrary premises. -/
+/-- Refuse a generated conditional theorem when a closed obligation computes to false. The check
+is bounded, and it cannot decide whether arbitrary premises are consistent. -/
 def checkGeneratedConditions (pending : Array MVarId) : TacticM Unit := do
   for goal in pending do
     if ← goal.isAssigned then continue
@@ -282,12 +359,12 @@ partial def termSize (expression : Lean.Expr) (limit : Nat := 100000) : Nat :=
     | _ => count + 1
   go expression 0
 
-/-- Spell the formats of a generated statement by name: a descriptor rebuilt from the fields of a
+/-- Spell the formats of a generated statement by name. A descriptor rebuilt from the fields of a
 format is that format, and a literal descriptor of binary16, bfloat16, binary32 or binary64 is its
 name. A format is renamed only where the arguments that depend on it are renamed with it, such as
-in the unit roundoff or the largest finite value of the format; configured values, storage plans
-and proofs, and the formats they depend on, keep the program's spelling, so that the statement's
-terms have the types the program's do. The result is definitionally equal to `statement`. -/
+in the unit roundoff or the largest finite value of the format. Configured values, storage plans
+and proofs, and the formats they depend on, keep the program's spelling, so the statement's terms
+have the types the program's do. The result is definitionally equal to `statement`. -/
 partial def nameFormats (statement : Lean.Expr) : MetaM Lean.Expr := do
   let catalogue := #[``FloatFormat.binary16, ``FloatFormat.bfloat16, ``FloatFormat.binary32,
     ``FloatFormat.binary64]
@@ -346,7 +423,7 @@ partial def nameFormats (statement : Lean.Expr) : MetaM Lean.Expr := do
 /-- Replace each proof or instance argument in `statement` by the first one of the same type, so
 that terms differing only in these arguments, such as two spellings of one coordinate cast, are
 shared. A proof is replaced by proof irrelevance and an instance only by one it unifies with at
-instance transparency; proofs and instances are not entered, and those mentioning a variable bound
+instance transparency. Proofs and instances are not entered, and those mentioning a variable bound
 inside the statement are kept. The result is definitionally equal to `statement`. -/
 partial def canonicalArguments (statement : Lean.Expr) : MetaM Lean.Expr := do
   let first ← IO.mkRef ({} : Std.HashMap Lean.Expr Lean.Expr)
@@ -423,13 +500,13 @@ def realName (head : Name) : Name :=
   | ``Real.log => `logarithm
   | _ => `term
 
-/-- Name the parts of a generated statement that are hard to read when repeated in full: the
-recurrence functions of folds, the folds and their accumulated errors, with `decoded` large
+/-- Name the parts of a generated statement that are hard to read when repeated in full. These are
+the recurrence functions of folds, the folds and their accumulated errors, with `decoded` large
 repeated decoded values and coordinates, large repeated real terms, and the value, reference and
 budgets of the concluding bound, bound in this order. Each becomes a `let`, so the result is
 definitionally equal to `statement`. Without `full`, only the reference and budget of the
-concluding bound are named: an absolute statement repeats the decoded value of every
-intermediate result, and naming its parts one at a time is costly there. -/
+concluding bound are named. An absolute statement repeats the decoded value of every intermediate
+result, and naming its parts one at a time is costly there. -/
 partial def shareSubterms (statement : Lean.Expr) (threshold : Nat := 60) (full := true) :
     MetaM Lean.Expr := do
   let loops := (← extension).loops
@@ -761,7 +838,7 @@ syntax roundoffEquation := " using " ident
 
 /-- Construct the proof term inside Lean's ordinary declaration elaboration, which handles section
 variables, universes and declaration checking. The function's arguments retain their binders.
-With `mixed`, the inferred statement is a mixed bound; in both modes its repeated subterms are
+With `mixed`, the inferred statement is a mixed bound, and in both modes its repeated subterms are
 named. `using` an equation restates its reference first. -/
 elab "roundoff_proof% " mixed:(&"mixed")? computation:term equation:(roundoffEquation)? : term =>
     Term.withoutErrToSorry do

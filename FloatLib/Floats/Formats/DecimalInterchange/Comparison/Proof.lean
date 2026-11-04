@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Queries.Proof
 /-!
 # Ordered numerical semantics and exception guarantees of decimal comparisons
 
-Decimal comparison agrees with exact extended-rational order, treats either NaN as unordered,
-and respects cohorts. Quiet predicates raise `invalid` exactly for signaling NaNs; signaling
-predicates raise it for any NaN.
+These theorems tie decimal comparison to the exact order of values. It agrees with the order on
+the rationals extended by the two infinities, treats a NaN operand as unordered, and gives the same
+answer for every member of a cohort. Quiet predicates raise `invalid` for signaling NaNs and
+nothing else, while signaling predicates raise it for any NaN.
 -/
 
 @[expose] public section
@@ -22,8 +23,8 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 
 namespace Datum
 
-/-- A datum has no extended-rational value exactly when it is a NaN; infinities and both zeros have
-one. -/
+/-- A datum has no extended-rational value if and only if it is a NaN. Infinities and both zeros
+have one. -/
 @[simp] theorem numericValue?_eq_none_iff (x : Datum) :
     x.numericValue? = none ↔ x.isNaN = true := by
   cases x <;> simp [numericValue?, isNaN]
@@ -41,7 +42,7 @@ end Datum
 
 namespace Datum
 
-/-- Exactly the pairs containing a NaN are unordered. -/
+/-- A pair is unordered if and only if it contains a NaN. -/
 theorem compare_eq_none_iff (x y : Datum) :
     Datum.compare x y = none ↔ x.isNaN = true ∨ y.isNaN = true := by
   simp only [Datum.compare, ← Datum.numericValue?_eq_none_iff]
@@ -80,8 +81,8 @@ theorem compare_finite_lt_iff (s t : Bool) (c d : Nat) (q r : Int) :
       Datum.finiteValue s c q < Datum.finiteValue t d r := by
   simp [compare_eq_lt_iff, Datum.numericValue?]
 
-/-- Two finite datums compare equal exactly when their exact signed values are equal, whatever their
-cohorts. -/
+/-- Two finite datums compare equal if and only if their exact signed values are equal, whatever
+their cohorts. -/
 theorem compare_finite_eq_iff (s t : Bool) (c d : Nat) (q r : Int) :
     Datum.compare (.finite s c q) (.finite t d r) = some .eq ↔
       Datum.finiteValue s c q = Datum.finiteValue t d r := by
@@ -104,13 +105,14 @@ end Datum
 
 namespace Datum
 
-/-- A quiet comparison raises invalid exactly when an operand is a signaling NaN. -/
+/-- A quiet comparison raises invalid if and only if an operand is a signaling NaN. -/
 theorem compareQuiet_invalid_iff (p : Numerics.IEEEComparison.Predicate) (x y : Datum) :
     (x.compareQuiet p y).status.invalid = true ↔
       x.isSNaN = true ∨ y.isSNaN = true := by
   simp [compareQuiet]
 
-/-- A signaling comparison raises invalid exactly when an operand is a NaN, quiet or signaling. -/
+/-- A signaling comparison raises invalid if and only if an operand is a NaN, quiet or signaling.
+-/
 theorem compareSignaling_invalid_iff (p : Numerics.IEEEComparison.Predicate) (x y : Datum) :
     (x.compareSignaling p y).status.invalid = true ↔
       x.isNaN = true ∨ y.isNaN = true := by

@@ -15,13 +15,12 @@ public import FloatLib.Numerics.Core.Representation
 /-!
 # Universal numerical-system core
 
-Representation-independent semantics describe complete values, numerical systems, optional exact
-observations, and type-directed runtime representations. These interfaces assume no radix,
-exponent field, storage width, exceptional-value convention, or arithmetic backend.
+This core describes complete values, numerical systems, optional exact observations, and
+type-directed runtime representations, all without reference to a representation, and it assumes no
+radix, exponent field, storage width, exceptional-value convention, or arithmetic backend.
 
-Static format declaration syntax is exported separately from
-`FloatLib.Numerics.Core.Declaration`, keeping the semantic core independent of elaborator
-infrastructure.
+Static format declaration syntax is exported on its own from `FloatLib.Numerics.Core.Declaration`,
+which keeps the semantic core free of elaborator infrastructure.
 -/
 
 @[expose] public section

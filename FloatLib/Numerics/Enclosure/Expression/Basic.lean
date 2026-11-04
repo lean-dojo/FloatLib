@@ -12,14 +12,14 @@ public import Mathlib.Data.Rat.Defs
 /-!
 # Interval expressions and endpoint backends
 
-An expression records the numerical operations independently of its endpoint representation.
-`Backend` supplies executable enclosures; its real-containment contract is stated in `Real`.
-The same expression can therefore run with exact rational endpoints, an integer binary grid,
-or a format-specific outward rounder.
+An expression records numerical operations and says nothing about how endpoints are represented. A
+`Backend` supplies the executable enclosures, with its real-containment contract stated in `Real`,
+so the same expression can run with exact rational endpoints, on an integer binary grid, or through
+a format-specific outward rounder.
 
-Evaluation returns `none` when an input is missing or a backend cannot enclose an operation.
-In particular, a backend may reject division across zero or an interval outside a function's
-domain. Success is related to real evaluation by `Expr.containsReal_eval?`.
+Evaluation returns `none` when an input is missing or a backend can't enclose an operation. A
+backend may reject division across zero, for instance, or an interval outside a function's domain.
+`Expr.containsReal_eval?` relates a successful evaluation to real evaluation.
 -/
 
 @[expose] public section
@@ -153,20 +153,20 @@ theorem Expr.beq_eq_true_iff (a b : Expr) : a.beq b = true ↔ a = b := by
 instance : DecidableEq Expr := fun a b =>
   decidable_of_iff (a.beq b = true) (Expr.beq_eq_true_iff a b)
 
-/-- Build an addition expression; evaluation uses the selected backend. -/
+/-- Build an addition expression. Evaluation uses the selected backend. -/
 instance : Add Expr where
   add := .binary .add
 
-/-- Build a multiplication expression; evaluation uses the selected backend. -/
+/-- Build a multiplication expression. Evaluation uses the selected backend. -/
 instance : Mul Expr where
   mul := .binary .mul
 
 /--
 Executable interval operations for an endpoint representation.
 
-The decoder identifies the exact rational value of each usable endpoint. Operations may work
-directly on the representation without decoding intermediate results. `Backend.Sound` is the
-separate proof contract required to use an evaluation in a theorem.
+The decoder identifies the exact rational value of each usable endpoint. Operations may work on the
+representation itself, without decoding intermediate results. Using an evaluation in a theorem also
+needs `Backend.Sound`, the proof contract.
 -/
 structure Backend (α : Type*) where
   /-- Exact rational interpretation of a finite endpoint. -/
@@ -179,15 +179,15 @@ structure Backend (α : Type*) where
   binary? : BinaryOp → Interval α → Interval α → Option (Interval α)
   /-- Enclose a three-input operation, or reject an unavailable output range. -/
   ternary? : TernaryOp → Interval α → Interval α → Interval α → Option (Interval α)
-  /-- Enclose a registered operation; unavailable indices must fail. -/
+  /-- Enclose a registered operation. An unavailable index must fail. -/
   call? : Nat → List (Interval α) → Option (Interval α) := fun _ _ => none
 
 mutual
 /--
 Evaluate an expression with the selected backend and variable intervals.
 
-The environment may be partial. Missing variables and failed operations propagate as `none`;
-no default numerical value is substituted.
+The environment may be partial. Missing variables and failed operations propagate as `none`, and no
+default numerical value is substituted.
 -/
 def Expr.eval? {α : Type*} (e : Expr) (B : Backend α)
     (env : Nat → Option (Interval α)) : Option (Interval α) :=

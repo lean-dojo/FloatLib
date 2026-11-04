@@ -11,14 +11,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # Finite-only E5M2FNUZ
 
-`FloatLib.Floats.E5M2FNUZ` gives the ONNX finite, NaN-supporting, unsigned-zero E5M2 variant a
-distinct Lean type, with type-level identity `E5M2FNUZ.Family`. That identity prevents accidental
-interchange with OCP E5M2, whose infinity and signed zero behavior differs even though both formats
-occupy one byte.
+OCP E5M2 and the ONNX variant E5M2FNUZ both fit in one byte, but they disagree about infinity and
+the sign of zero. So `FloatLib.Floats.E5M2FNUZ` gets a Lean type of its own, the finite variant with
+a NaN code and an unsigned zero, and its type-level identity `E5M2FNUZ.Family` keeps you from
+passing one format where the other is expected.
 
-The runtime carrier is one `UInt8`. Balanced and throughput policies select exhaustive proved byte
-tables for addition, subtraction, multiplication, division, and square root. The latency policy uses
-the exact arithmetic baseline. Fused multiply-add uses the proved generic single-rounding kernel.
+Each value is one `UInt8`. Under the balanced and throughput policies, addition, subtraction,
+multiplication, division, and square root read exhaustive byte tables that come with proofs, and
+the latency policy computes them with the exact arithmetic baseline. Fused multiply-add uses the
+proved generic single-rounding kernel.
 
 ## Reference
 

@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 /-!
 # Logarithmic-system rules for numerical automation
 
-Multiplication is exact in the encoded sign/exponent representation. The real-valued decoder is
-proof-facing and remains absent from compiled kernels.
+This module hands the logarithmic rules to numerical automation. Multiplication is exact in the
+encoded sign and exponent form, so its refinement theorem and the product law for `toReal` go in
+as rules. The real-valued decoder is there for proofs and never appears in compiled kernels.
 -/
 
 public meta section

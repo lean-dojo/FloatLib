@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.OCP.MX.Standard.Proof
 /-!
 # Certified configured standard MX conversion
 
-The numerical nearest-even and shared-scale contracts back the common destination capability.
-SAT is the default in this implementation of the recommendation in §6.3, and the context also
-permits FP8 OVF conversion.
+Conversion into a standard MX block goes through the common destination capability, and the
+numerical nearest-even and shared-scale contracts are what certify it. Our implementation of the
+§6.3 recommendation defaults to SAT, and the conversion context also allows FP8 OVF conversion.
 -/
 
 @[expose] public section
@@ -38,7 +38,7 @@ namespace Conversion
 Configured conversion satisfies `spec` in both overflow modes. The stored block is checked against
 the independent nearest-even, shared-scale relation `Quantizes`. The status flags enter `spec` as
 `status exact rounded`, the function `run` itself calls, so their part of this theorem holds by
-definition and does not check the flags against a separate statement.
+definition and checks the flags against no independent statement.
 -/
 theorem implements_run :
     Quantization.Spec.Implements (spec (profile := profile)) (run (profile := profile)) := by

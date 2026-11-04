@@ -13,14 +13,14 @@ public import FloatLib.Numerics.ShiftRightJam.Proof
 /-!
 # Limb arrays: value semantics of the shifts
 
-The shifts of `Shift.Runtime` build each result limb from two source limbs, so their `toNat`
-statements are proved bit by bit: `shiftLeftLimb_testBit` and `shiftRightLimb_testBit` read one
-bit of a result limb as one bit of the source value, and `Nat.eq_of_testBit_eq` turns those
-readings into `toNat_shiftLeft` and `toNat_shiftRight`.
+Each result limb of a shift in `Shift.Runtime` is built from two source limbs, so we prove the
+`toNat` statements bit by bit. `shiftLeftLimb_testBit` and `shiftRightLimb_testBit` read one bit of
+a result limb as one bit of the source value, and `Nat.eq_of_testBit_eq` turns those readings into
+`toNat_shiftLeft` and `toNat_shiftRight`.
 
 `toNat_roundShiftRightEven` then combines the shift with the guard-and-sticky form of nearest-even
-rounding from `FloatLib.Numerics.ShiftRightJam.Proof`. The guard bit, sticky test, and quotient
-parity determine whether to increment the truncated quotient.
+rounding from `FloatLib.Numerics.ShiftRightJam.Proof`, where the guard bit, the sticky test, and the
+parity of the quotient decide whether the truncated quotient is incremented.
 -/
 
 @[expose] public section

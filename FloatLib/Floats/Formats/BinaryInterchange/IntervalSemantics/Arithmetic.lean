@@ -21,18 +21,18 @@ public import FloatLib.Floats.Interval.RealBounds
 /-!
 # Arithmetic enclosures for executable binary intervals
 
-Building on `IntervalSemantics.Order`, this module proves the enclosures for negation, addition,
-subtraction, multiplication, division, and reciprocal. The four-corner arguments for products and
-quotients are kept with the operations that consume them. `IntervalSemantics.Finite` supplies
-range-checked results for all-words-finite encodings.
+Building on `IntervalSemantics.Order`, we prove the enclosures for negation, addition,
+subtraction, multiplication, division, and reciprocal here, and we keep the four-corner arguments
+for products and quotients next to the operations that consume them. For all-words-finite
+encodings, `IntervalSemantics.Finite` supplies range-checked results.
 
 IEEE binary arithmetic starts with finite valid inputs and encloses exact real results in `EReal`,
-allowing overflow at the output. Negation also accepts infinite input endpoints. The validity
-theorems say which results can be passed to later interval operations. Division through zero and
-indeterminate candidate bounds use the whole interval.
+which allows overflow at the output. Negation also accepts infinite input endpoints. Validity
+theorems say which results can be passed to later interval operations, and division through zero
+and indeterminate candidate bounds use the whole interval.
 
-`Interval.Arithmetic` contains the executable definitions. `IntervalSemantics.Activations` builds
-ReLU, absolute-value, and square-root enclosures on the results here.
+`Interval.Arithmetic` contains the executable definitions, and `IntervalSemantics.Activations`
+builds ReLU, absolute-value, and square-root enclosures on the results here.
 -/
 
 @[expose] public section
@@ -123,11 +123,13 @@ theorem sub_validExtended {fmt : FloatFormat} (A B : Interval fmt) :
 The checked four-corner enclosure contains every real bracketed by the exact corner values.
 
 The corner operations `down` and `up` are applied to the endpoints of `A` and `B`. Each downward
-corner must lie below, and each upward corner above, the exact value `f` of the corresponding
-decoded endpoints, and neither may be a NaN. The bound hypotheses receive finiteness of both
-arguments and the identity of the right endpoint, so operations with a side condition on the right
-operand, such as a nonzero divisor, can discharge it per endpoint. The bracketed real orders the
-checked corners, so the bounds check keeps them in every format.
+corner must lie below the exact value `f` of the corresponding decoded endpoints, each upward
+corner must lie above it, and no corner may be a NaN.
+
+The bound hypotheses receive finiteness of both arguments and the identity of the right endpoint.
+So an operation with a side condition on the right operand, such as a nonzero divisor, can
+discharge it per endpoint. Because the bracketed real orders the checked corners, the bounds check
+keeps them in every format.
 -/
 theorem eRealMem_ofBounds_corners
     {fmt : FloatFormat} (A B : Interval fmt)

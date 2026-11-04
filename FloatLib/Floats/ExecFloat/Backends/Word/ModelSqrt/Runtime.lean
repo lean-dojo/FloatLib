@@ -12,9 +12,9 @@ public import Init.Data.Float.Model.Unpacked.Operations.Sqrt
 /-!
 # Executable native-backed unpacked floating-point square root
 
-The unpacked-float square-root implementation reduces the radicand to the rounding scale before
-calling the proved integer-root dispatcher. The original core remains available with its exact
-logical-model contract.
+Before calling the proved integer-root dispatcher, the unpacked-float square root reduces the
+radicand to the rounding scale. The original core remains available, with its exact logical-model
+contract.
 -/
 
 @[expose] public section

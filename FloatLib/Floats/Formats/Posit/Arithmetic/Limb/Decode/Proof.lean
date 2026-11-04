@@ -21,13 +21,14 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Refinement of direct two-limb posit decoding
 
-The two-limb backend inspects a packed 128-bit code without first rebuilding an arbitrary-precision
-natural. This module proves each primitive observation (zero detection, individual bits, regime
-length, fields, and the resulting dyadic value) equal to the exact-width posit model.
+The two-limb backend reads a packed 128-bit code as it is, without first rebuilding an
+arbitrary-precision natural. Everything it observes has to match the exact-width posit model, and
+this module proves that for each primitive observation: zero detection, individual bits, regime
+length, fields, and the resulting dyadic value.
 
-The proofs are separate from `Decode.Runtime`, so importing the decoder does not import these
-dependencies. Arithmetic refinements use `toDyadic?_eq_model` for stored words and the
-continuation laws for kernels that consume native significands directly.
+We keep these proofs out of `Decode.Runtime`, so importing the decoder doesn't import their
+dependencies. Arithmetic refinements use `toDyadic?_eq_model` for stored words, and the
+continuation laws for kernels that take native significands without converting them.
 -/
 
 @[expose] public section
@@ -249,8 +250,8 @@ end PackedBitPrimitives
 section NonnegativeFieldDecoding
 
 /--
-Running a continuation directly over native nonnegative fields agrees with constructing the
-proof-facing dyadic and projecting those same fields.
+Running a continuation on the native nonnegative fields agrees with first constructing the
+proof-facing dyadic and then projecting those same fields.
 -/
 private theorem withNonnegativeFields_eq_nonnegativeDyadicAt
     {α : Type}
@@ -277,8 +278,8 @@ private theorem withNonnegativeFields_eq_nonnegativeDyadicAt
 /--
 Direct two-limb candidate decoding agrees with the exact posit field decoder.
 
-The hypotheses are exactly the rounding-search invariant: the candidate is nonzero, lies below
-the sign code, and the descriptor's positive candidate range fits in two limbs.
+The hypotheses are the rounding-search invariant: the candidate is nonzero, lies below the sign
+code, and the descriptor's positive candidate range fits in two limbs.
 -/
 private theorem nonnegativeDyadicAt_eq_decodeFields
     (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128)
@@ -554,7 +555,7 @@ private theorem decodeFinite_eq_decodeFields
     (Model.ofNatBits (format := format) magnitude.toNat)
     value hmagnitudeModel
 
-/-- The direct decoder recognizes the unique NaR encoding exactly. -/
+/-- On the unique NaR encoding, the direct decoder agrees with the model. -/
 private theorem toDyadic?_eq_model_of_nar
     (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128)
     (heligible : Eligible format)
@@ -580,7 +581,7 @@ private theorem beq_signMaskWord_eq_false
     simpa [signMaskWord_toNat format heligible] using
       congrArg FloatLib.Numerics.FixedWord.UInt128.toNat equality)
 
-/-- The direct decoder recognizes the unique zero encoding exactly. -/
+/-- On the unique zero encoding, the direct decoder agrees with the model. -/
 private theorem toDyadic?_eq_model_of_zero
     (format : Format) (code : FloatLib.Numerics.FixedWord.UInt128)
     (heligible : Eligible format)
@@ -752,8 +753,8 @@ private theorem map_withTwoDyadicFields
 /--
 Eliminating two native words is the nested exact-dyadic decoder.
 
-The theorem keeps operation proofs over mathematical significands while the runtime continuation
-receives `UInt128` fields directly.
+The theorem keeps operation proofs over mathematical significands, while the runtime continuation
+receives the `UInt128` fields themselves.
 -/
 private theorem withTwoDyadicFields_eq_match_toDyadic?
     {α : Type}
@@ -809,7 +810,7 @@ private theorem withTwoDyadicFields_eq_match_toDyadic?
 Projecting a carrier-valued two-input decoder agrees with an exact mathematical continuation
 whenever the carrier continuation satisfies the supplied pointwise refinement law.
 
-Native binary kernels retain `UInt128` significands; their refinements use the corresponding
+Native binary kernels keep `UInt128` significands, and their refinements use the corresponding
 `Nat` values.
 -/
 theorem map_withTwoDyadicFields_eq_match_toDyadic?

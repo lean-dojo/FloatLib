@@ -14,13 +14,13 @@ import FloatLib.Numerics.Enclosure.Elementary.Irrational
 /-!
 # Eventual acceptance of converging posit enclosures
 
-Every comparison in posit rounding has a rational boundary. Consequently the rounded code is
-locally constant at an irrational target, and converging rational endpoints eventually agree.
-The result separates two mathematical obligations: the enclosure algorithm converges, and its
-target avoids the exact boundaries. For the exponential both are discharged at every nonzero
-rational argument (`eventually_roundPositive?_exp`). Other functions, and exact cases such as
-`exp 0 = 1`, still need a function-specific irrationality theorem or exact-case handler before
-this gives a total elementary operation.
+Every comparison in posit rounding is against a rational boundary, so near an irrational target
+the rounded code doesn't change, and rational endpoints converging to it eventually agree. That
+leaves a caller two things to prove: the enclosure algorithm converges, and its target misses every
+rational boundary. For the exponential both hold at every nonzero rational argument
+(`eventually_roundPositive?_exp`). Any other function, or an exact case such as `exp 0 = 1`, needs
+its own irrationality theorem or exact-case handler before this gives a total elementary
+operation.
 -/
 
 @[expose] public section
@@ -104,9 +104,9 @@ theorem eventually_roundPositiveCode_eq (format : Format) {x : ℝ} (hx : Irrati
 /--
 Converging rational endpoints eventually certify the posit rounding of an irrational target.
 
-Containment is not required for this eventual statement: convergence puts both endpoints in a
-neighborhood on which rounding is constant. Containment separately certifies every accepted
-result, including any accepted before that neighborhood is reached.
+This eventual statement doesn't need containment, because convergence alone puts both endpoints
+in a neighborhood where rounding is constant. Containment is what certifies each accepted result,
+including any accepted before that neighborhood is reached.
 -/
 theorem eventually_roundPositive?_eq_some (format : Format)
     {intervals : Nat → RationalInterval} {x : ℝ} (hx : Irrational x)

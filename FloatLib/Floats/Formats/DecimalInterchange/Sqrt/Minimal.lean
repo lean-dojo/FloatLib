@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Semantics
 /-!
 # Least-quantum cohorts of inexact square roots
 
-The comparison is between the actual rounded root and every valid representation
-of that rounded value. It does not assume that the mathematical root is rational.
+An inexact root gets the least quantum in its cohort. The theorem compares the actual rounded root
+with every valid representation of that rounded value, and it doesn't assume the mathematical
+root is rational.
 -/
 
 @[expose] public section

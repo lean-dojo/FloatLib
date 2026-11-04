@@ -13,17 +13,17 @@ import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
 /-!
 # Agreement between policy and directed dyadic rounding
 
-`roundDyadicGeneral` and `Internal.Directed.roundDyadic` are independent executable algorithms. The
-first embeds a dyadic into the rational policy engine, and the second uses dedicated shift-based
-dyadic packers. This file proves that their complete packed results agree for each
-`IEEERoundingMode` when overflow is native and underflow is gradual. The proof includes signed zero,
-subnormal carry, custom exponent bias, finite-only encodings, and native overflow words, so it is
-more than an equality of real denotations.
+There are two independent executable algorithms for rounding a dyadic. `roundDyadicGeneral`
+embeds it into the rational policy engine, and `Internal.Directed.roundDyadic` uses dedicated
+shift-based dyadic packers. We prove that their complete packed results agree for each
+`IEEERoundingMode` when overflow is native and underflow is gradual. That covers signed zero,
+subnormal carry, custom exponent bias, finite-only encodings and native overflow words, so it says
+more than that the real denotations are equal.
 
-The ordinary `roundDyadic` entry point dispatches these policies to the directed engine, so the
-agreement says that the dispatch does not change any result. Stochastic, saturating, and
-flush-to-zero policies are specified by the general policy implementation. The scaled-dyadic
-lemmas behind the proof are in `Rounding.Policy.ScaledDyadic`, and the nearest-away case is
+The ordinary `roundDyadic` entry point sends these policies to the directed engine, and the
+agreement means that this dispatch changes no result. Stochastic, saturating and flush-to-zero
+policies are specified by the general policy implementation. The scaled-dyadic lemmas behind the
+proof are in `Rounding.Policy.ScaledDyadic`, and the nearest-away case is
 `Rounding.Policy.NearestAwayAgreement`.
 
 -/

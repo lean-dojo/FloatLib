@@ -13,9 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized -
 /-!
 # Correctness of packed field access
 
-The packed-field laws describe how `Model.ofFields` decodes. The results are uniform in the
-format and isolate the bit-layout reasoning needed by rounding, status-flag, and interval
-proofs.
+These packed-field laws say how `Model.ofFields` decodes. They are uniform in the format, and they
+keep in one place the bit-layout reasoning that rounding, status-flag and interval proofs need.
 -/
 
 @[expose] public section
@@ -24,7 +23,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
 /--
-The sign bit is set exactly for storage words in the upper half of the format's code space.
+The sign bit is set if and only if the storage word is in the upper half of the format's code space.
 -/
 theorem signBit_eq_true_iff_signMaskNat_le
     {fmt : FloatFormat} (x : Model fmt) :
@@ -40,7 +39,8 @@ theorem signBit_eq_true_iff_signMaskNat_le
   rw [Nat.testBit_eq_true_iff_two_pow_le_of_lt hfit, FloatFormat.signMaskNat_eq_two_pow]
 
 /--
-The sign bit is clear exactly for storage words in the lower half of the format's code space.
+The sign bit is clear if and only if the storage word is in the lower half of the format's code
+space.
 -/
 theorem signBit_eq_false_iff_toNatBits_lt_signMaskNat
     {fmt : FloatFormat} (x : Model fmt) :
@@ -61,7 +61,7 @@ theorem signBit_eq_false_iff_toNatBits_lt_signMaskNat
       (signBit_eq_true_iff_signMaskNat_le x).1 htrue
     omega
 
-/-- In-range fields have the bit pattern of the zero of sign `zeroSign` exactly when they are its
+/-- In-range fields have the bit pattern of the zero of sign `zeroSign` if and only if they are its
 fields. -/
 private theorem ofFields_bits_eq_zeroFields_iff
     (fmt : FloatFormat) (sign zeroSign : Bool) (exponent fraction : Nat)
@@ -411,10 +411,10 @@ theorem toDyadic?_ofFields_normal (fmt : FloatFormat) (sign : Bool)
 /-! ## Closed-form real semantics -/
 
 /--
-Closed-form real value of a packed subnormal: a zero exponent field and a nonzero fraction, in
+Closed-form real value of a packed subnormal, a zero exponent field with a nonzero fraction, in
 every encoding. A zero fraction gives `posZero` or `negZero` (`ofFields_false_zero_zero`,
-`ofFields_true_zero_zero`), and in a format without a signed zero `negZero` is the NaN; for formats
-with one, `toReal_signedZero` gives value zero.
+`ofFields_true_zero_zero`). In a format without a signed zero `negZero` is the NaN, and in a
+format with one `toReal_signedZero` gives value zero.
 -/
 theorem toReal_ofFields_subnormal (fmt : FloatFormat) (sign : Bool)
     (fraction : Nat) (hfractionPos : fraction ≠ 0)

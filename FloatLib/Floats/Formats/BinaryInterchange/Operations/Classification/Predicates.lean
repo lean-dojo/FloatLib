@@ -13,9 +13,10 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 /-!
 # Binary classification predicates
 
-The finite classes partition every descriptor's finite values. In particular, subnormal
-fields remain finite under every exceptional-value policy, whereas zero fields alone do not
-imply zero in FNUZ. The finite hypothesis in `isZero_iff_fields_of_isFinite` excludes its NaN.
+For every descriptor, the finite classes partition the finite values. Subnormal fields are finite
+under every exceptional-value policy. Zero fields alone do not mean zero in FNUZ, whose
+negative-zero word is its NaN, so `isZero_iff_fields_of_isFinite` has a finite hypothesis to
+exclude that NaN.
 -/
 
 @[expose] public section
@@ -53,7 +54,7 @@ theorem isNormal_iff_fields (x : Model fmt) :
     isNormal x = true ↔ isFinite x = true ∧ expField x ≠ 0 := by
   simp [isNormal]
 
-/-- Normal values are exactly the finite values that are neither zero nor subnormal. -/
+/-- A value is normal if and only if it is finite and neither zero nor subnormal. -/
 theorem isNormal_iff (x : Model fmt) :
     isNormal x = true ↔
       isFinite x = true ∧ isZero x = false ∧ isSubnormal x = false := by

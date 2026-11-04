@@ -16,10 +16,11 @@ import FloatLib.Floats.Formats.Codebook.Arithmetic.Proof
 /-!
 # Configured catalog-codebook operations
 
-Named codebooks expose only the arithmetic justified by their complete denotation. The bipolar
-table has total negation and multiplication; the ternary table uses checked operations because
-one word is reserved. The `decode_*` theorems state the exact integer meaning of each operation on
-configured values, from the table-level refinements in `Codebook.Arithmetic.Proof`.
+A named codebook gets only the arithmetic its complete denotation justifies. Every bipolar word is
+`-1` or `+1`, so negation and multiplication are total there. The ternary table has a reserved
+word, which makes its operations checked: they can reject an operand. On configured values, the
+`decode_*` theorems give the exact integer meaning of each operation, building on the table-level
+refinements in `Codebook.Arithmetic.Proof`.
 -/
 
 @[expose] public section
@@ -82,15 +83,15 @@ def mulEstimate : Backend.Candidate where
   steadyCost := 1
 
 /-- Bipolar multiplication candidate for common `ExecFloat` dispatch. Its reference is the kernel
-`bipolar1.mul` itself, so the certificate only records that the planner runs that kernel; the
-semantic correctness of the kernel is `decode_mul`. -/
+`bipolar1.mul` itself, so the certificate records only that the planner runs that kernel. The
+kernel's semantic correctness is `decode_mul`. -/
 def mulCertified : Backend.Certified bipolar1.mul :=
   Backend.Certified.reference mulEstimate bipolar1.mul
 
 end Plan
 
 /-- Bipolar multiplication joins common `ExecFloat` dispatch with the kernel `bipolar1.mul` as both
-implementation and specification; its exact integer meaning is `decode_mul`. -/
+implementation and specification. `decode_mul` gives its exact integer meaning. -/
 @[always_inline] instance
     [planning : Backend.PolicyFor
       (Codebook.Family Formats.Codebook.Catalog.bipolar1)] :

@@ -13,15 +13,15 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 /-!
 # Capability instances for configured binary formats
 
-Representation-independent instances serve custom carriers. Higher-priority instances for
+This module installs the operation capabilities of configured binary formats, with
+representation-independent instances for custom carriers. Higher-priority instances for
 `Configured.Code` expose byte tables after dependent elimination of the selected storage plan, and
-give the other non-limb plans a direct entry point to the selected structural or generic kernel.
-A closed `ExecFloat.Binary` call can therefore specialize that kernel to its descriptor.
+give the other non-limb plans a direct entry point to the selected structural or generic kernel. So
+a closed `ExecFloat.Binary` call can specialize that kernel to its descriptor.
 
-The priorities encode capability preference and carry no numerical meaning, because every
-candidate must supply the same refinement contract before it can be selected. All of this wiring
-lives in this module, so storage-specific instances do not leak into the rest of the configured
-API.
+Priorities encode capability preference and carry no numerical meaning, because every candidate
+must supply the same refinement contract before it can be selected. All of this wiring lives in
+this module, which keeps storage-specific instances out of the rest of the configured API.
 -/
 
 @[expose] public section
@@ -79,7 +79,7 @@ instance (priority := 100) fmaCapability
 Higher-priority built-in-carrier instances match `Code plan` before inspecting the plan. This
 works for every statically computed precision, including a `forKnownWidth` expression that has not
 yet reduced to a storage constructor during typeclass indexing. The dependent candidate helpers
-then add direct byte tables exactly when the selected plan is `.byte`.
+then add direct byte tables when the selected plan is `.byte`, and only then.
 
 Families with a custom carrier use the representation-independent instances above.
 -/
@@ -87,7 +87,7 @@ Families with a custom carrier use the representation-independent instances abov
 /-!
 ## First-order entry points
 
-A machine-word or pair plan calls its structural kernel directly when that candidate wins
+A machine-word or pair plan goes straight to its structural kernel when that candidate wins
 against the generic kernel under the policy in scope. Non-byte, non-limb plans also expose a
 direct call when the generic kernel wins. Byte tables, limb candidates, and the remaining
 structural routes execute the memoized selection.

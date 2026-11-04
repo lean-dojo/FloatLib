@@ -12,8 +12,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 /-!
 # Execution planning for exact logarithmic multiplication
 
-The direct sign-and-exponent kernel is both the executable implementation and its reference
-specification.
+The planner has one candidate for logarithmic multiplication, the direct sign-and-exponent kernel.
+That kernel is both what runs and its own reference specification, and its agreement with real
+multiplication is `toReal_mul` in `Configured.Proof`.
 -/
 
 @[expose] public section

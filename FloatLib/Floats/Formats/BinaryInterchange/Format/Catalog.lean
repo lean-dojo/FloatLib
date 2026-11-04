@@ -31,7 +31,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.FloatFormat
 /--
 Structural equality of two binary-interchange layouts.
 
-Backend capabilities should depend on these computational fields rather than descriptor names.
+Backend capabilities should depend on these computational fields and never on descriptor names.
 The proof fields in `FloatFormat` are propositions, so matching the stored layout recovers full
 descriptor equality.
 -/

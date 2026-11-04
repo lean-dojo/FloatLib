@@ -11,8 +11,10 @@ public import FloatLib.Floats.Formats.Codebook.Catalog.Runtime
 /-!
 # Executable arithmetic for catalog codebooks
 
-The illustrative catalog encodings have direct executable bit kernels. Refinement against their
-numerical systems is proved in `Arithmetic.Proof`.
+The catalog encodings are small illustrations, and each one gets executable kernels that work on
+the stored bits. Bipolar multiplication, for instance, is an XNOR: equal bits give the word for
+`+1` and different bits give the word for `-1`. `Arithmetic.Proof` proves that these kernels refine
+the encodings' numerical systems.
 -/
 
 @[expose] public section

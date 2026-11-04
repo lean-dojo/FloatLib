@@ -14,10 +14,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CorePro
 /-!
 # Exact encoding of external P3109 results
 
-Report precision rounding and saturation produce representable dyadics. The binary encoder
-therefore preserves every finite projected value, including a significand carry. The executable
-result decodes to that exact rational, with no second rounding. Exceptional results use the
-specified signed infinity or canonical quiet NaN, and zero is encoded with positive sign.
+Report precision rounding and saturation produce representable dyadics, so the binary encoder
+keeps every finite projected value, a significand carry included. The executable result decodes to
+that exact rational, and nothing is rounded twice. Exceptional results use the specified signed
+infinity or the canonical quiet NaN, and zero is encoded with a positive sign.
 -/
 
 @[expose] public section
@@ -28,7 +28,7 @@ namespace FloatLib.Floats.Formats.P3109.Arithmetic.External
 
 open BinaryInterchange
 
-/-- A grid value in the external finite range is encoded exactly, including a binade carry. -/
+/-- A grid value in the external finite range is encoded without change, binade carry included. -/
 theorem encode_finite (format : FloatFormat) (hformat : format.isIEEE = true)
     (value : Numerics.Dyadic) (hgrid : FitsGrid format value)
     (hbound : |value.toReal| ≤ Model.toReal (Model.posMaxFinite format)) :

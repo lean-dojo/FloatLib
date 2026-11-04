@@ -11,9 +11,10 @@ public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
 /-!
 # Checked integer quantization
 
-Acceptance is equivalent to representability of the rounded integer, rather
-than representability of the rational input. The same characterization covers
-arbitrary inclusive intervals and either word signedness.
+Acceptance is equivalent to the rounded integer being representable, which is a different condition
+from the rational input being representable. In a signed 8-bit range with nearest rounding, 127.4 is
+accepted because it rounds to 127, and 127.6 is rejected because it rounds to 128. This
+characterization covers arbitrary inclusive intervals and both signed and unsigned words.
 -/
 
 @[expose] public section

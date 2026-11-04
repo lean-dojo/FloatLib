@@ -19,8 +19,8 @@ import Mathlib.Data.Rat.Cast.Order
 # Verified native-word rounding
 
 The one-word nearest-even shift and quotient kernels agree with the shared arbitrary-precision
-definitions. The compiler substitutions therefore change only the representation used for
-bounded inputs, not the numerical result. `jamCombine_toNat` gives the sticky combination of an
+definitions. That's why the compiler substitutions can change only the representation used for
+bounded inputs and never the numerical result. `jamCombine_toNat` gives the sticky combination of an
 aligned sum or difference its `shiftRightJam` value.
 -/
 
@@ -232,8 +232,8 @@ definition otherwise.
 
 /--
 The word sticky combination is the natural-number jam of the exact aligned value. A sum needs
-`A + q` to fit in the word; a difference needs only `B ≤ A * 2^d`, so exact cancellation to zero
-is included.
+`A + q` to fit in the word. A difference needs only `B ≤ A * 2^d`, so exact cancellation to zero is
+included.
 -/
 theorem jamCombine_toNat (sameSign exact : Bool) (A q : UInt64) (B d : Nat)
     (hq : q.toNat = B / 2 ^ d) (hexact : exact = decide (B % 2 ^ d = 0))

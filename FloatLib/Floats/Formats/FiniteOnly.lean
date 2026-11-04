@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.FiniteOnly.E5M2FNUZ
 /-!
 # Finite-only floating-point formats
 
-Nominal, byte-backed executable packages for formats that do not represent infinity. The FNUZ
-variants exported here retain a NaN code and use unsigned zero, following the ONNX float8
-conventions.
+These are the 8-bit formats with no infinity at all. Each one is its own nominal type, stored in a
+single byte and run through the common executable interface. Both formats exported here are FNUZ
+variants from the ONNX float8 conventions, so they keep one NaN code and have only an unsigned zero.
 
 ## Reference
 

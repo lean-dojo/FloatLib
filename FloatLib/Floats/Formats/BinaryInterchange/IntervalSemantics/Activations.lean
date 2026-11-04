@@ -21,8 +21,8 @@ shared endpoint order and negation facts come from `IntervalSemantics.Arithmetic
 ReLU and absolute value work for every descriptor and accept ordered non-NaN endpoints, including
 infinities from an earlier operation. Their finite-input theorems specialize the same proofs.
 Square root uses directed IEEE rounding and requires finite valid input bounds with a nonnegative
-lower endpoint. These differences appear in the theorem statements rather than in a second
-interval carrier or an implicit execution mode.
+lower endpoint. These differences show up in the theorem statements. There is no second
+interval carrier and no implicit execution mode.
 -/
 
 @[expose] public section

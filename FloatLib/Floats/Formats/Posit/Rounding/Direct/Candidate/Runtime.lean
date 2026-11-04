@@ -15,9 +15,9 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Executable direct posit candidate generation
 
-Direct candidate generation constructs a proposed lower posit code from a normalized exact
-dyadic. It contains only executable field extraction and packing. The accompanying proof module
-records the field and range properties reused by the direct guard-and-sticky rounder.
+From a normalized exact dyadic, `lowerCandidate` builds a proposed lower posit code by extracting
+its fields and packing them. This module holds that executable part and nothing else. Its proof
+module records the field and range facts that the direct guard-and-sticky rounder reuses.
 -/
 
 @[expose] public section
@@ -95,11 +95,11 @@ boundary. The function saturates above maxPos and truncates below minPos.
         tailPrefix exponentField significand leading trailing
 
 /--
-Construct the unsigned lower posit candidate directly from a positive exact dyadic.
+Construct the unsigned lower posit candidate from a positive exact dyadic, without a search.
 
-The function is total. Zero and negative carriers return zero; magnitudes above maxPos produce
-the all-ones positive payload; magnitudes below minPos produce zero. The public rounder handles
-the standard's nonzero-underflow-to-minPos rule before consulting this candidate.
+The function is total. Zero and negative carriers return zero, magnitudes above maxPos give the
+all-ones positive payload, and magnitudes below minPos give zero. The public rounder applies the
+standard's rule that nonzero underflow goes to minPos before it looks at this candidate.
 -/
 @[inline] def lowerCandidate (format : Format) (target : FloatLib.Numerics.Dyadic) : Nat :=
   if target.significand == 0 || target.negative then

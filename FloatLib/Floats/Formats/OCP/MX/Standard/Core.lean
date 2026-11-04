@@ -16,17 +16,17 @@ public import Init.Data.Vector.OfFn
 # Concrete OCP MX block representations
 
 `Profile` lists the six concrete element encodings in Table 1 of the OCP *Microscaling Formats
-(MX) Specification*, version 1.0, September 2023. `Block` stores exactly 32 elements and an E8M0
-scale. The existing arbitrary-length `MX.BlockCode` remains a separate raw interchange API.
+(MX) Specification*, version 1.0, September 2023. A `Block` holds 32 elements and one E8M0 scale.
+For raw interchange there's also the arbitrary-length `MX.BlockCode`, which is a different API.
 
-INT8 uses two's complement with six fractional bits (§5.3.4). This profile uses the permitted
-asymmetric range, including code `0x80`, which denotes `-2`. It does not reinterpret the bytes
-as sign-magnitude integers. Physical placement of the scale and element words is unspecified
-by the standard and by this structure.
+INT8 is two's complement with six fractional bits (§5.3.4), so code `0x40` is `1` and code `0x80`
+is `-2`. We use the permitted asymmetric range, which includes `0x80`, and never reinterpret the
+bytes as sign-magnitude integers. Neither the standard nor this structure says where the scale and
+element words sit in memory.
 
-Decoding follows §5.1: a NaN scale poisons every lane; otherwise element infinities and NaNs
-survive unchanged. For finite products beyond binary32's range, this implementation retains
-the exact rational product, one of the implementation choices left open by that section.
+Decoding follows §5.1. A NaN scale poisons every lane, and otherwise element infinities and NaNs
+survive unchanged. When a finite product goes beyond binary32's range, we keep the exact rational
+product, which is one of the implementation choices that section leaves open.
 
 Reference:
 <https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf>.
@@ -52,7 +52,8 @@ def width : Profile → Nat
   | .e3m2 | .e2m3 => 6
   | .e2m1 => 4
 
-/-- Binary descriptor for floating elements; INT8 is a fixed-point two's-complement encoding. -/
+/-- Binary descriptor for floating elements. INT8 has none, being a fixed-point two's-complement
+encoding. -/
 def floatFormat? : Profile → Option FloatFormat
   | .e5m2 => some .e5m2
   | .e4m3 => some .e4m3fn
@@ -105,7 +106,7 @@ end Element
 
 /-- OCP MX 1.0 concrete blocks have one scale and exactly 32 elements of one profile. -/
 structure Block (profile : Profile) where
-  /-- Shared eight-bit E8M0 scale; every byte, including NaN, is an admissible encoding. -/
+  /-- Shared eight-bit E8M0 scale. Every byte, NaN included, is an admissible encoding. -/
   scale : E8M0
   /-- Element count and storage width are part of the type. -/
   values : Vector (Element profile) 32
@@ -117,7 +118,7 @@ def scaleFinite (exponent : Int) (value : SignedRat) : SignedRat :=
 
 namespace Block
 
-/-- Accept an array exactly when it has the standard lane count. -/
+/-- Accept an array when it has the standard lane count of 32, and return `none` otherwise. -/
 def ofArray? {profile : Profile} (scale : E8M0) (values : Array (Element profile)) :
     Option (Block profile) :=
   if h : values.size = 32 then some ⟨scale, ⟨values, h⟩⟩ else none
@@ -129,14 +130,15 @@ def decodeLane {profile : Profile} (block : Block profile) (lane : Fin 32) :
   | none => .exceptional .nan
   | some exponent => (Element.decode block.values[lane.val]).map (scaleFinite exponent)
 
-/-- Complete lane-wise observation; exceptional elements do not erase their finite neighbors. -/
+/-- Complete lane-wise observation, in which exceptional elements leave their finite neighbors
+intact. -/
 def decode {profile : Profile} (block : Block profile) :
     Vector (NumericalValue SignedRat) 32 :=
   Vector.ofFn (decodeLane block)
 
 /--
 Whole-block finite observation for generic conversion. A block with any non-finite lane is
-reported as NaN here; `decode` retains each lane's individual classification and sign.
+reported as NaN here, while `decode` retains each lane's individual classification and sign.
 -/
 def decodeFinite {profile : Profile} (block : Block profile) :
     NumericalValue (Vector SignedRat 32) :=

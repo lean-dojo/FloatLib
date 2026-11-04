@@ -15,8 +15,10 @@ public import Mathlib.Tactic.NormNum
 /-!
 # Codebook rules for numerical automation
 
-Named tiny codebooks register their exact lookup semantics and proved arithmetic. Closed
-bit-pattern evaluation is deliberately separated from symbolic refinement.
+This module hooks the named tiny codebooks into numerical automation, registering their exact
+lookup semantics and their proved arithmetic. We keep closed bit-pattern evaluation apart from
+symbolic refinement on purpose. The definitions that evaluation unfolds carry
+`numerics_reduction`, and the refinement theorems are Aesop rules in the `Numerics` rule set.
 -/
 
 public meta section

@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit algebraic functions
 
-These functions use the exact rational algebraic kernels through the selected carrier's model
-codec. Storage selection does not introduce additional rounding. NaR and invalid real domains
-have the same behavior as the model operations.
+Reciprocal square root, `hypot`, `fMM`, `rootN`, `powInt`, and `compound` run the exact rational
+algebraic kernels through the model codec of the selected carrier. Picking a storage plan adds no
+rounding. NaR and inputs outside the real domain behave as they do in the model operations.
 -/
 
 @[expose] public section
@@ -33,11 +33,11 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Reciprocal square root, rounded once; nonpositive inputs and NaR produce NaR. -/
+/-- Reciprocal square root, rounded once. Nonpositive inputs and NaR produce NaR. -/
 @[inline] def rSqrt (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.rSqrt value
 
-/-- Euclidean hypotenuse, rounded once after an exact sum of squares; NaR propagates. -/
+/-- Euclidean hypotenuse, rounded once after an exact sum of squares. NaR propagates. -/
 @[inline] def hypot (left right : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.hypot left right
 
@@ -53,7 +53,7 @@ roots of negative inputs, negative-degree roots of zero, and NaR inputs produce 
   ModelCodec.liftUnary (Model := Model format) (plan := plan)
     (fun x => Model.rootN x degree) value
 
-/-- Fixed integer power, rounded once; NaR and zero to negative powers produce NaR. -/
+/-- Fixed integer power, rounded once. NaR and zero to a negative power produce NaR. -/
 @[inline] def powInt (value : Value) (exponent : Int) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan)
     (fun x => Model.powInt x exponent) value

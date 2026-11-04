@@ -10,19 +10,18 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Runtime
 /-!
 # Adjacent decimal values
 
-IEEE 754-2019 §5.3.1 requires the nearest strictly greater or smaller value,
-selecting the least quantum in its cohort. Normalizing the input to its finest
-grid makes this a coefficient step. At a power of ten, the downward step uses
-the finer grid. No rounding direction is consulted.
+IEEE 754-2019 §5.3.1 asks for the nearest strictly greater or smaller value, with the least
+quantum in its cohort. Normalize the input to its finest grid and that's a coefficient step, so in
+decimal32 `nextUp` of `1` is `1.000001`. At a power of ten the downward step uses the finer grid,
+and `nextDown` of `1` is `0.9999999`. No rounding direction is consulted.
 
-The adjacency and output-validity guarantees assume `x.Valid f`, as stated in
-`Neighbors.Proof` and `Neighbors.Adjacency`. A raw `Datum` does not carry its
-format; callers must establish this invariant before using these neighbor
-operations. The normalization step need not preserve an out-of-format input.
+The adjacency and output-validity guarantees assume `x.Valid f`, as `Neighbors.Proof` and
+`Neighbors.Adjacency` state. A raw `Datum` doesn't carry its format, so you have to establish this
+invariant before using these neighbor operations, and the normalization step need not preserve an
+out-of-format input.
 
-Crossing the finite range or reaching a subnormal raises no exception. Only
-signaling NaNs raise invalid; NaN propagation otherwise follows the arithmetic
-payload policy.
+Crossing the finite range or reaching a subnormal raises no exception. Only signaling NaNs raise
+invalid, and otherwise NaN propagation follows the arithmetic payload policy.
 -/
 
 @[expose] public section

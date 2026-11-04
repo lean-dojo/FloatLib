@@ -11,26 +11,26 @@ public import FloatLib.Numerics.Enclosure.Constants.Runtime
 /-!
 # Payne-Hanek reduction modulo π/2
 
-An argument `x = m * 2 ^ e` with `m > 0` is reduced modulo `π/2` from a window of the bits of
-`2/π`. Let `T` be the cached lower bound of `2/π * 2 ^ N` at a level of `Constants` with
+An argument `x = m * 2 ^ e` with `m > 0` is reduced modulo `π/2` from a window of the bits of `2/π`.
+Let `T` be the cached lower bound of `2/π * 2 ^ N` at a level of `Constants` with
 `N ≥ e + window + 6` bits, so that `x * 2/π` exceeds `m * T * 2 ^ (e - N)` by less than
 `2 m * 2 ^ (e - N)`. The bits of `T` of weight `2 ^ (N - e + 2)` and above contribute multiples of
 four, which change neither the quadrant nor the remainder, and the bits below the window contribute
 less than `m` units of its last place. So the reduction multiplies `m` by the `window` bits of `T`
-below that weight and keeps the product modulo `2 ^ window`: one shift of `T`, one product and one
-remainder, whatever the size of `x * 2/π`. The level is chosen from `e`: the window needs
-`b = max e 0 + window + 6` bits of `2/π`, and the level read holds at most `max 64 (2 b)` bits,
-computed once, on first use.
+below that weight and keeps the product modulo `2 ^ window`. That's one shift of `T`, one product
+and one remainder, whatever the size of `x * 2/π`. We choose the level from `e`, since the window
+needs `b = max e 0 + window + 6` bits of `2/π`, and the level read holds at most `max 64 (2 b)`
+bits, computed once, on first use.
 
 The result is a quadrant `q` and a fraction `F` with `x * 2/π = 4 j + q + (F + η) / 2 ^ scale` for
 an integer `j` and some `η` with `0 ≤ η < error = 2 m` (`ArgumentReduction.Proof`). The fraction has
 magnitude at most half a quarter turn. When `QuarterTurns.accepts bits` holds, `F` has the sign of
 `F + η` and relative error at most `2 ^ -bits`. A rejected reduction is retried with a doubled
-window: the error stays `2 m` units while the units shrink, so some window is accepted for every
+window. Since the error stays `2 m` units while the units shrink, some window is accepted for every
 nonzero argument (`ArgumentReduction.Termination`). `reduce` bounds the number of doublings and
 returns its first accepted attempt or else its last one, so it needs no search with a termination
-proof. Callers check `QuarterTurns.accepts` on its result. `fuelWithin?` gives the most doublings
-whose windows stay within a level of the cache.
+proof, and callers check `QuarterTurns.accepts` on its result. `fuelWithin?` gives the most
+doublings whose windows stay within a level of the cache.
 
 `QuarterTurns.argumentNumerator` multiplies the fraction by the cached lower bound of `π/2` to give
 the reduced argument in radians, and `rotate` gives the sine and cosine of `x` from those of the

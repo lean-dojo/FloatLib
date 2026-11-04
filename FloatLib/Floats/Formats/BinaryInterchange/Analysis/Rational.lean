@@ -16,14 +16,15 @@ public import FloatLib.Numerics.ErrorBound
 /-!
 # Rational values of binary floats
 
-A finite value decodes to an exact rational, and its total real observation is that rational;
-an exceptional value decodes as `0` in both. For an IEEE descriptor, a finite conversion of a
-rational is its rounding to nearest, with the error bound of one rounding, and a rational of
-magnitude at most the largest finite value converts to a finite value. A rational that the format
-represents, as the decoding of its conversion shows, converts exactly. These facts let an
-error analysis treat stored values as exact data and literal constants as one rounding. A
-certified rational enclosure of a real reference bounds the error of a finite candidate, and
-clearing the sign of a finite value is exact.
+This file is what lets an error analysis treat stored values as exact data and literal constants
+as one rounding. A finite value decodes to an exact rational, and its total real observation is
+that rational. An exceptional value decodes as `0` in both.
+
+For an IEEE descriptor, a finite conversion of a rational is its rounding to nearest, with the
+error bound of one rounding, and a rational of magnitude at most the largest finite value converts
+to a finite value. A rational that the format represents, as the decoding of its conversion shows,
+converts with no error. Two smaller facts round it out: a certified rational enclosure of a real
+reference bounds the error of a finite candidate, and clearing the sign of a finite value is exact.
 -/
 
 public section
@@ -33,7 +34,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 open FloatLib.Numerics
 
 /-- Exact rational decoding agrees with the total real observation. Exceptional values decode
-as zero here; numerical API entry points must separately establish finiteness. -/
+as zero here, so numerical API entry points must establish finiteness on their own. -/
 theorem cast_toRat_eq_toReal {format : FloatFormat} (input : Model format) :
     (((toRat? input).getD 0 : Rat) : ℝ) = toReal input := by
   cases decoded : toDyadic? input with
@@ -61,8 +62,8 @@ theorem toReal_ofRat_eq_roundAt {format : FloatFormat} (value : Rat)
   rw [roundRat, toReal_roundRatScaled_eq_roundAt
     format _ value.num.natAbs value.den 0 hformat hfinite, signedScaledRatToReal_rat]
 
-/-- A rational whose conversion decodes back to it converts exactly: a literal such as `127`
-carries no conversion error. -/
+/-- A rational whose conversion decodes back to it converts with no error. A literal such as
+`127` carries no conversion error. -/
 theorem toReal_ofRat_of_toRat? {format : FloatFormat} (value : Rat)
     (hexact : toRat? (ofRat format value) = some value) :
     toReal (ofRat format value) = (value : ℝ) :=
@@ -87,10 +88,10 @@ theorem containsReal_point_toRat {format : FloatFormat} (input : Model format) :
   apply (Interval.containsReal_some_iff _ _).mpr
   simp only [Interval.point, cast_toRat_eq_toReal, le_refl, and_self]
 
-/-- Compare a finite implementation result with a certified rational enclosure. Both finite
-premises remain part of the numerical interface; the statement does not relate `input` to
-`candidate`. The rational budget can be evaluated separately from the proof, without assuming that
-the implementation is correctly rounded. -/
+/-- Bounds the error of a finite implementation result by a certified rational enclosure. Both
+finiteness premises are part of the numerical interface, and the statement does not relate
+`input` to `candidate`. The rational budget can be evaluated apart from the proof, without
+assuming that the implementation is correctly rounded. -/
 theorem abs_toReal_sub_le_of_containsReal {inputFormat outputFormat : FloatFormat}
     (input : Model inputFormat) (candidate : Model outputFormat)
     (_hinput : isFinite input = true) (_hcandidate : isFinite candidate = true)

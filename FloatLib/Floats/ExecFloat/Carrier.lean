@@ -14,18 +14,19 @@ public import FloatLib.Numerics.Core.Representation
 `ExecFloat F` is the public runtime carrier selected by an `EncodedFormat F`. Neither this carrier
 nor `EncodedFormat` assumes a floating radix or an IEEE layout, and its runtime representation is
 the family-chosen `FormatCode F` type. Only proof-side definitions need a semantic interpretation,
-so noncomputable real semantics cannot disable code generation for the carrier.
+so noncomputable real semantics can't switch off code generation for the carrier.
 
-The nominal format tag is a proposition attached through `Subtype`. Lean specifies that a subtype
-is represented identically to its carrier in compiled code, so a static format using `UInt32`
-still crosses generated entry points as a native 32-bit word. See the source documentation on
-`Subtype` in Lean's `Init.Prelude`:
+Its nominal format tag is a proposition attached through `Subtype`. Lean specifies that a subtype is
+represented identically to its carrier in compiled code, so a static format using `UInt32` still
+crosses generated entry points as a native 32-bit word. See the source documentation on `Subtype` in
+Lean's `Init.Prelude`:
 <https://github.com/leanprover/lean4/blob/v4.35.0/src/Init/Prelude.lean#L697-L699>.
-Static format packages may therefore choose `UInt8`, `UInt32`, `UInt64`, fixed limb records, or
-another direct carrier, while dynamic packages may choose descriptor-bearing or runtime-sized
-storage without changing the universal API.
 
-The checks under `benchmarks/scripts/checks/` validate the carrier specialization used by public
+That's what lets a static format package choose `UInt8`, `UInt32`, `UInt64`, fixed limb records, or
+another plain carrier, while a dynamic package chooses descriptor-bearing or runtime-sized storage,
+and neither has to change the universal API.
+
+Checks under `benchmarks/scripts/checks/` validate the carrier specialization used by public
 operations. Lean's runtime and specialization behavior are specified by the Lean reference manual:
 <https://lean-lang.org/doc/reference/latest/>.
 -/

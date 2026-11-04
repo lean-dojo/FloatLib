@@ -12,23 +12,23 @@ public import Mathlib.Data.BitVec
 /-!
 # Fixed-width signed integers
 
-`FixedInt width` stores a two's-complement integer in exactly `width` bits.  The policy is explicit
-in every arithmetic name:
+`FixedInt width` stores a two's-complement integer in `width` bits, and every arithmetic name says
+its overflow policy:
 
-* `wrapAdd`, `wrapSub`, and `wrapMul` compute modulo `2^width`;
-* checked operations return `none` on signed overflow;
+* `wrapAdd`, `wrapSub`, and `wrapMul` compute modulo `2^width`,
+* checked operations return `none` on signed overflow,
 * saturating operations clamp to the signed range.
 
-The wrapping kernels operate directly on `BitVec`. Checked operations use Lean's signed-overflow
-tests. Saturating operations compute the exact `Int` result, clamp it to the signed range, and
-encode it.
+In 8 bits, 100 + 100 wraps to -56, the checked sum is `none`, and the saturating sum is 127. The
+wrapping kernels work on `BitVec` itself. Checked operations use Lean's signed-overflow tests.
+Saturating operations compute the exact `Int` result, clamp it to the signed range, and encode it.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.Representations
 
-/-- A two's-complement integer stored in exactly `width` bits. -/
+/-- A two's-complement integer stored in `width` bits. -/
 structure FixedInt (width : Nat) where
   /-- Complete two's-complement bit pattern. -/
   bits : BitVec width

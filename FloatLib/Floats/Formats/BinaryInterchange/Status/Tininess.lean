@@ -19,7 +19,7 @@ destination precision with an unbounded exponent range gives a magnitude below t
 normal. The executable classifiers in `Status.Runtime` decide this with exact comparisons against
 three positive boundaries, `underflowPredecessor`, `underflowMidpoint` and `minNormalDyadic`.
 
-This file states those classifiers in real order: for exact dyadics
+Here we restate those classifiers in real order: for exact dyadics
 (`dyadicIsTinyAfterRounding_eq_true_iff`), for scaled rationals
 (`rationalIsTinyAfterRoundingScaled_eq_true_iff`), and for the square-root boundary test, which
 can never fire when the exponent range is wide compared with the precision
@@ -35,7 +35,7 @@ open FloatLib.Floats.Formats.Flocq
 
 /-! ## Underflow boundaries and the dyadic classifier -/
 
-/-- The direct result classifier recognizes exactly finite zero and subnormal encodings. -/
+/-- The classifier on the delivered result accepts just the finite zero and subnormal encodings. -/
 @[simp] theorem isTinyAfterRounding_eq_true_iff {fmt : FloatFormat}
     (rounded : Model fmt) :
     isTinyAfterRounding rounded = true ↔
@@ -43,7 +43,7 @@ open FloatLib.Floats.Formats.Flocq
   simp [isTinyAfterRounding]
 
 /--
-The underflow midpoint is exactly halfway between the unbounded-grid predecessor and the smallest
+The underflow midpoint lies halfway between the unbounded-grid predecessor and the smallest
 normal value.
 
 Both gaps are one `2^(minSubnormalExponent - 2)` step. The equalities pin down the

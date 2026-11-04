@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
 /-!
 # Deterministic rational precision-rounding guarantees
 
-These results derive direction, error bounds, and tie selection from the proved rational
-formula. They hold before saturation, which handles overflow on its own.
-The common quantum-level results apply to both P3109 descriptors and external binary formats.
+From the proved rational formula we derive the direction of each mode, its error bound, and its
+tie selection. All of it holds before saturation, which handles overflow on its own, and the
+quantum-level results apply to P3109 descriptors and external binary formats alike.
 -/
 
 @[expose] public section
@@ -243,7 +243,7 @@ theorem roundAt_up (quantum : Int) (parity : Nat → Bool) (value : Rat) :
 
 /-- Rounding toward negative infinity is rounding toward positive infinity reflected through zero,
 at the same quantum and parity, for every rational including zero. This is the value before
-saturation; range handling is separate. -/
+saturation, and range handling comes after. -/
 theorem roundAt_down_eq_neg_roundAt_up_neg (quantum : Int) (parity : Nat → Bool) (value : Rat) :
     roundAt .down quantum parity value = -roundAt .up quantum parity (-value) := by
   have hs : scaledMagnitude (-value) quantum = scaledMagnitude value quantum := by

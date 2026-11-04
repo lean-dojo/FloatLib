@@ -12,12 +12,12 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 /-!
 # Rational tangent values at rational multiples of pi
 
-Niven's cosine theorem and the double-angle identity restrict rational tangent values to
-`-1`, `0`, and `1`. The other cosine cases would make a rational square equal to three.
-This also classifies the exact rational values of inverse tangent divided by pi.
+Niven's cosine theorem and the double-angle identity leave only `-1`, `0`, and `1` as rational
+tangent values, because the other cosine cases would make a rational square equal to three. This
+also classifies the exact rational values of inverse tangent divided by pi.
 
-The theorem uses mathlib's total tangent, which is zero at poles. Format operations with an
-invalid-result policy at poles must check for them before using this totalized value.
+The theorem uses Mathlib's total tangent, which is zero at poles, so a format operation with an
+invalid-result policy at poles has to check for them before using this totalized value.
 -/
 
 public section

@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Proof
 /-!
 # Adjacency of the public decimal neighbor operations
 
-The quantified bounds compare the delivered result with every valid finite
-datum, including other cohorts and either sign of zero. The endpoint theorems
-cover infinite results separately.
+Adjacency means that nothing valid lies in between, so the bounds here compare the delivered
+result with every valid finite datum, other cohorts and both signs of zero included. Infinite
+results get endpoint theorems of their own.
 -/
 
 @[expose] public section

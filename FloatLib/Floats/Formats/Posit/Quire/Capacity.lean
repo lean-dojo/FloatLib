@@ -16,15 +16,17 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Standard posit quire capacity
 
-The Posit Standard (2022) `16n`-bit quire satisfies two finite-term capacity guarantees:
+Each `16n`-bit quire of the Posit Standard (2022) comes with two capacity guarantees:
 
-* fewer than `2^(23 + 4n)` ordinary posit addends cannot overflow the associated quire; and
-* fewer than `2^31` exact products of two ordinary posits cannot overflow it.
+* Fewer than `2^(23 + 4n)` ordinary posit addends can't overflow the associated quire.
+* Fewer than `2^31` exact products of two ordinary posits can't overflow it.
 
-The proof first bounds one posit relative to `minPos`, then transports that bound to the quire's
-fixed scale. A list-level absolute-value argument proves that every signed sum within the stated
-exclusive term limit remains an `OrdinaryCoefficient`, excluding both two's-complement overflow
-and the reserved quire-NaR word.
+Both limits are exclusive. With products, `2^31` copies of the largest posit squared come to
+`2^(16n - 1)` coefficient units, one past the largest ordinary quire coefficient. First the proof
+bounds one posit relative to `minPos` and carries that bound to the quire's fixed scale. Then an
+absolute-value argument over lists shows that every signed sum within the term limit stays an
+`OrdinaryCoefficient`, so it neither overflows in two's complement nor lands on the reserved
+quire-NaR word.
 
 `Accumulation` applies these coefficient bounds to the executable accumulation loops.
 

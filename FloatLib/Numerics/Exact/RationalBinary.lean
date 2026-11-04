@@ -11,14 +11,13 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Exact rational scaling by powers of two
 
-Binary formats repeatedly need the same small collection of exact operations: locate a positive
-rational between consecutive powers of two, move a binary exponent into a numerator or
-denominator, and compare a signed rational with a dyadic without constructing an enormous shifted
-integer.
+Binary formats keep needing the same few exact operations. They locate a positive rational between
+consecutive powers of two, move a binary exponent into a numerator or a denominator, and compare a
+signed rational with a dyadic without constructing an enormous shifted integer.
 
-These operations belong to the exact numerical layer rather than to any one floating-point
-format. IEEE interchange, P3109, posits, and application-defined binary quantizers may therefore
-share them without importing one another's encoding or exceptional-value policy.
+We put these operations in the exact numerical layer and in no particular floating-point format, so
+IEEE interchange, P3109, posits, and application-defined binary quantizers can share them without
+importing one another's encoding or exceptional-value policy.
 -/
 
 @[expose] public section
@@ -85,9 +84,9 @@ namespace RationalBinary
 /--
 Compute `⌊log₂(numerator / denominator)⌋`.
 
-The intended mathematical preconditions are positive numerator and denominator. Keeping the
-kernel total makes it convenient inside executable quantizers; proofs establish the preconditions
-where logarithmic bounds are used.
+It is meant for a positive numerator and denominator. We keep the kernel total because that's
+convenient inside executable quantizers, and proofs establish the preconditions where logarithmic
+bounds are used.
 -/
 @[inline] def floorLog2 (numerator denominator : Nat) : Int :=
   let initial :=
@@ -169,9 +168,9 @@ theorem scaleByPowerOfTwo_snd_ne_zero
 /--
 Compare `(numerator / denominator) * 2^exponent`, with the supplied sign, against a dyadic.
 
-A zero denominator returns `none`. After multiplying the denominator by the dyadic significand,
-a leading-position test often decides the result. Only equal leading positions require exponent
-alignment; that shift is then bounded by the integer operand widths.
+A zero denominator returns `none`. After multiplying the denominator by the dyadic significand, a
+leading-position test often decides the result. Only equal leading positions need exponent
+alignment, and that shift is then bounded by the integer operand widths.
 -/
 def compareDyadicScaled? (negative : Bool) (numerator denominator : Nat)
     (exponent : Int) (value : Dyadic) : Option Ordering :=

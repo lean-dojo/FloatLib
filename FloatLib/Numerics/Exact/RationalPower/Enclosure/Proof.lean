@@ -16,9 +16,9 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 # Containment and refinement of rational-power logarithm bounds
 
 The logarithm enclosures contain the exact logarithms, and their endpoints converge as the degree
-grows. Scaling and subtraction preserve both properties. Doubling the degree therefore separates
-the logarithm difference from zero whenever the power differs from the target, and the comparison
-that relies on this decides the equality case beforehand.
+grows. Scaling and subtraction preserve both properties. So doubling the degree separates the
+logarithm difference from zero whenever the power differs from the target, and the comparison that
+relies on this decides the equality case first.
 -/
 
 @[expose] public section

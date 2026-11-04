@@ -13,20 +13,21 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 /-!
 # Public P3109 arithmetic capabilities
 
-Every valid P3109 descriptor supplies addition, subtraction, multiplication, division, square
-root, and fused multiply-add through common `ExecFloat` dispatch. Each has one exact arithmetic
-kernel followed by the report projection. The caller's backend planning policy is kept.
+With these instances, every valid P3109 descriptor gets addition, subtraction, multiplication,
+division, square root, and fused multiply-add through common `ExecFloat` dispatch. Each one is an
+exact arithmetic kernel followed by the report projection, and the caller's backend planning
+policy is kept.
 
-Context-free operations use FloatLib's nearest-even, no-saturation projection policy. Other
-rounding modes, stochastic random words, saturation, and mixed-format destinations are available
-through the `mode`, `saturation`, and `target` options of `ExecFloat.P3109.add` and its siblings.
-These operations neither raise nor synthesize IEEE exception flags.
+Without context, an operation uses FloatLib's nearest-even, no-saturation projection policy. For
+other rounding modes, stochastic random words, saturation, or mixed-format destinations, use the
+`mode`, `saturation`, and `target` options of `ExecFloat.P3109.add` and its siblings. None of
+these operations raises or synthesizes IEEE exception flags.
 
-Literals round once from their exact rational value with the same default policy, and `==` is
-numerical equality: NaN compares unequal to every value, itself included.
+Literals round once from their exact rational value under the same default policy, and `==` is
+numerical equality, so NaN compares unequal to every value, itself included.
 
-The rational real-embedding and decoding proofs are in `Arithmetic.Proof`. The irrational-root
-refinement and decoding proofs are in `Arithmetic.Sqrt.Proof`.
+The rational real-embedding and decoding proofs are in `Arithmetic.Proof`, and the irrational-root
+refinement and decoding proofs in `Arithmetic.Sqrt.Proof`.
 -/
 
 @[expose] public section
@@ -40,8 +41,8 @@ namespace Plan
 /--
 Planner metadata for the exact arithmetic implementation.
 
-The storage class describes the encoded operand, not an intermediate-size bound. Exact rational
-arithmetic can allocate integers whose sizes depend on the descriptor's exponent range.
+The storage class describes the encoded operand and gives no bound on intermediate sizes. Exact
+rational arithmetic can allocate integers whose sizes depend on the descriptor's exponent range.
 -/
 def estimate (format : Formats.P3109.Format) (operation : Backend.Operation) :
     Backend.Candidate where

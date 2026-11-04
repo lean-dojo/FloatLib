@@ -12,8 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Proof
 /-!
 # Configured posit conversion refinement
 
-The conversion equations hold for every width, storage plan and lawful codec.
-Encoding and decoding add no rounding.
+A configured posit keeps its value in the carrier its storage plan picked, so conversion has to go
+through that carrier. These equations show the detour changes nothing: for every width, storage
+plan, and lawful codec, configured conversion equals the model conversion, because encoding and
+decoding add no rounding.
 -/
 
 @[expose] public section
@@ -28,12 +30,12 @@ variable {format : Posit.Format} {plan : Posit.Configured.StoragePlan format} {c
 
 local notation "Value" => ExecFloat (Posit.Configured.Family format code plan)
 
-/-- Configured posit-to-decimal conversion is exactly the model conversion. -/
+/-- Configured posit-to-decimal conversion equals the model conversion. -/
 @[simp] theorem fromConfiguredPosit_eq (target : Format) (mode : RoundingMode) (x : Value) :
     fromConfiguredPosit target mode x =
       fromPosit target mode (ExecFloat.Posit.toModel x) := rfl
 
-/-- The encoded result decodes exactly to the model decimal-to-posit conversion. -/
+/-- Decoding the encoded result gives the model decimal-to-posit conversion. -/
 @[simp] theorem toModel_toConfiguredPosit (x : Datum) :
     ExecFloat.Posit.toModel (toConfiguredPosit x : Value) = toPosit format x := by
   simp [toConfiguredPosit]

@@ -13,9 +13,9 @@ import Mathlib.Analysis.Real.Pi.Bounds
 /-!
 # Correctness of rational trigonometric period reduction
 
-The approximate remainder is bounded independently of the input. Its distance from a true
-period translate is bounded by the explicit rational reduction error. Periodicity and the
-Lipschitz estimates then transfer the Taylor enclosure to the original argument.
+Whatever the input, the approximate remainder stays bounded, and its distance from a true period
+translate is bounded by the rational reduction error. Periodicity and the Lipschitz estimates then
+carry the Taylor enclosure back to the original argument.
 -/
 
 public section
@@ -117,7 +117,7 @@ theorem abs_trigReducedArgument_sub_period_le (x : ℚ) (degree : Nat) :
   exact mul_le_mul_of_nonneg_left (sub_le_sub_right hhi _)
     (mul_nonneg (by norm_num) (abs_nonneg _))
 
-/-- The sine error introduced by rational period reduction is explicitly bounded. -/
+/-- Bound on the sine error that rational period reduction introduces. -/
 theorem abs_sin_sub_reduced_le (x : ℚ) (degree : Nat) :
     |Real.sin (x : ℝ) - Real.sin (trigReducedArgument x degree : ℝ)| ≤
       (trigReductionError x degree : ℝ) := by
@@ -126,7 +126,7 @@ theorem abs_sin_sub_reduced_le (x : ℚ) (degree : Nat) :
   rw [Real.sin_sub_int_mul_two_pi, abs_sub_comm] at h
   exact h.trans (abs_trigReducedArgument_sub_period_le x degree)
 
-/-- The cosine error introduced by rational period reduction is explicitly bounded. -/
+/-- Bound on the cosine error that rational period reduction introduces. -/
 theorem abs_cos_sub_reduced_le (x : ℚ) (degree : Nat) :
     |Real.cos (x : ℝ) - Real.cos (trigReducedArgument x degree : ℝ)| ≤
       (trigReductionError x degree : ℝ) := by

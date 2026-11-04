@@ -28,9 +28,10 @@ public import FloatLib.Numerics.Order.Comparison
 /-!
 # Format-independent exact numerical values
 
-Exact carriers, comparisons, and decimal text conversion are shared across numerical families.
-Signed zeros keep their arithmetic sign rules, while encoding layouts and destination rounding
-belong to the individual formats.
+This is where FloatLib keeps values exact, before any format rounds them. The exact carriers, the
+comparisons, and decimal text conversion are shared across numerical families, and signed zeros keep
+their arithmetic sign rules, while encoding layouts and destination rounding belong to the
+individual formats.
 -/
 
 @[expose] public section

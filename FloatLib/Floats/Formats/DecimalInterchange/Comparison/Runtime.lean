@@ -12,12 +12,12 @@ public import Mathlib.Order.WithBot
 /-!
 # Exact decimal comparisons
 
-IEEE 754-2019 §5.6.1 requires 22 comparison operations, and `Datum.compareQuiet` and
-`Datum.compareSignaling` take them as a predicate argument, so `x.compareQuiet .lessEqual y` is
-`compareQuietLessEqual`. Comparison uses exact rational values extended by two infinities. It
-ignores finite cohorts and equates signed zeros. NaNs are unordered. Quiet comparisons raise
-invalid only for signaling NaNs, and signaling comparisons raise invalid for either kind of NaN.
-No other exception is raised.
+IEEE 754-2019 §5.6.1 requires 22 comparison operations. `Datum.compareQuiet` and
+`Datum.compareSignaling` take the operation as a predicate argument, so
+`x.compareQuiet .lessEqual y` is `compareQuietLessEqual`. Values are compared as exact rationals
+extended by the two infinities, so finite cohorts don't matter and the two signed zeros are equal.
+NaNs are unordered. Quiet comparisons raise invalid only for signaling NaNs, signaling comparisons
+raise it for either kind of NaN, and no comparison raises any other exception.
 -/
 
 @[expose] public section
@@ -27,7 +27,8 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 /-- Exact ordered values, with negative and positive infinity at the endpoints. -/
 abbrev NumericValue := WithBot (WithTop ℚ)
 
-/-- Ordered numerical meaning. NaN is absent, rather than assigned an ordered value. -/
+/-- The ordered numerical value of a datum, or `none` for a NaN, which has no place in the order.
+-/
 def Datum.numericValue? : Datum → Option NumericValue
   | .finite s c q => some ↑(↑(Datum.finiteValue s c q) : WithTop ℚ)
   | .infinity s => some (if s then ⊥ else ⊤)

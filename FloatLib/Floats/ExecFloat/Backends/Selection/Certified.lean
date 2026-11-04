@@ -11,14 +11,14 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Scoring
 /-!
 # Certified backend selection
 
-`Certified spec` packages an executable kernel with both an engineering estimate and an equation
-showing that it implements `spec`. The operation type is abstract, so the same mechanism handles
-unary, binary, ternary, stateful, and family-specific kernels.
+`Certified spec` packages an executable kernel with an engineering estimate and an equation showing
+that it implements `spec`. The operation type is abstract, so the same mechanism handles unary,
+binary, ternary, stateful, and family-specific kernels.
 
-Selection is a deterministic fold over already certified alternatives and a mandatory exact
-baseline. The cost heuristic decides only which implementation to run; it never participates in
-the arithmetic proof. Erasing proofs yields the same estimate selected by inspection tools, so the
-reported plan cannot silently diverge from execution.
+Selection is a deterministic fold over alternatives that are already certified, plus a mandatory
+exact baseline. The cost heuristic only decides which implementation runs. It never takes part in
+the arithmetic proof. Erasing proofs gives the same estimate that the inspection tools select, so
+the reported plan can't quietly diverge from execution.
 -/
 
 @[expose] public section
@@ -47,7 +47,7 @@ namespace Certified
 /--
 Use the specification itself as the complete executable baseline.
 
-The baseline runs `spec` directly. Specialized candidates can refine the same specification and
+The baseline runs `spec` itself. Specialized candidates can refine the same specification and
 compete with the supplied estimate.
 -/
 def reference {α : Type u} (estimate : Candidate) (spec : α) : Certified spec where
@@ -199,11 +199,11 @@ theorem foldl_considerCertified_eq_of_not_better {α : Type u} {spec : α}
       exact ih fun other' hother' => hrest other' (List.mem_cons_of_mem _ hother')
 
 /--
-An admissible head alternative that beats the baseline and is beaten by no later alternative is
-the selected certificate, under the given policy.
+An admissible head alternative that beats the baseline and is beaten by no later alternative is the
+selected certificate, under the given policy.
 
-This is the lemma a statically specialized capability uses to name the planner's winner directly
-while remaining provably consistent with the advertised candidate set.
+A statically specialized capability uses this lemma to name the planner's winner outright while
+staying provably consistent with the advertised candidate set.
 -/
 theorem selectCertified_cons_of_dominant {α : Type u} {spec : α}
     (policy : Policy) (dominant : Certified spec) (rest : List (Certified spec))

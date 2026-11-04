@@ -13,10 +13,10 @@ import Mathlib.Analysis.Real.Pi.Bounds
 /-!
 # Convergence with rational period reduction
 
-The integer quotient need not stabilize. Its magnitude has an input-dependent bound, so the
-vanishing quarter-period uncertainty still makes the reduction error tend to zero. Meanwhile
-the Taylor radius is uniformly bounded by `4^(n+1)/(n+1)!`. These estimates prove endpoint
-convergence for the executable reduced kernels at every rational input.
+Nothing forces the integer quotient to settle down. Its magnitude has a bound that depends on the
+input, though, so the vanishing quarter-period uncertainty makes the reduction error tend to zero
+anyway. Meanwhile the Taylor radius is uniformly bounded by `4^(n+1)/(n+1)!`, and together these
+estimates prove endpoint convergence for the executable reduced kernels at every rational input.
 -/
 
 public section

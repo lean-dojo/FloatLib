@@ -12,16 +12,15 @@ public import Mathlib.Algebra.Group.Nat.Defs
 /-!
 # Native and arbitrary-precision integer square-root runtime
 
-Bounded integer square root uses an overflow-free average and Newton iteration. In compiled
-code, `sqrtChecked` replaces it with a floating-point candidate checked by exact squares. Their
-`Nat.sqrt` refinements are proved in `IntegerSquareRoot.Proof`.
+On a bounded input the integer square root is Newton's iteration with an overflow-free average.
+Compiled code swaps that for `sqrtChecked`, which takes a floating-point candidate and checks it
+with exact squares, and `IntegerSquareRoot.Proof` proves that both refine `Nat.sqrt`.
 
-Larger inputs use a checked Newton candidate with increasing precision. The refinement follows
-CPython 3.13's `Modules/mathmodule.c`, "Integer square root". A final square certificate supplies
-the root and remainder, and a rejected candidate falls back to full-precision iteration.
-
-The full-precision integer Newton iteration is Algorithm 1.13 (`SqrtInt`) in Richard P. Brent and
-Paul Zimmermann, *Modern Computer Arithmetic* (2010), §1.5.1.
+Larger inputs use a checked Newton candidate with increasing precision, following "Integer square
+root" in CPython 3.13's `Modules/mathmodule.c`, and a final square certificate supplies the root and
+remainder, and if it rejects the candidate we fall back to full-precision iteration. That
+full-precision integer Newton iteration is Algorithm 1.13 (`SqrtInt`) in Richard P. Brent and Paul
+Zimmermann, *Modern Computer Arithmetic* (2010), §1.5.1.
 -/
 
 @[expose] public section

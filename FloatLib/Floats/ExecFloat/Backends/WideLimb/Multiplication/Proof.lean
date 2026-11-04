@@ -14,11 +14,11 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Finite.Proof
 # Verified wide-limb multiplication
 
 An accepted normal product is the compact finite kernel `FiniteKernel.mul?` on the models of the
-operands (`mulNormal?_refines`): the operands decode to their limb significands
+operands (`mulNormal?_refines`). Operands decode to their limb significands
 (`Core.Proof.decode?_toModel`), the schoolbook product is exact (`LimbArray.toNat_mul`), and the
-limb rounder is the exact rounder (`Round.Proof`). The total operation then equals `Model.Spec.mul`
-because both its branches do: the accepted branch through `Finite.Proof.spec_mul_of_mul?_eq_some`,
-the declined branch through the codec laws.
+limb rounder is the exact rounder (`Round.Proof`). So the total operation equals `Model.Spec.mul`
+because both its branches do, the accepted branch through `Finite.Proof.spec_mul_of_mul?_eq_some`
+and the declined branch through the codec laws.
 -/
 
 @[expose] public section

@@ -12,8 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Proof
 /-!
 # IEEE exception status
 
-Public API for executable IEEE exception-status kernels and their correctness theorems.
-
+This module collects the executable IEEE exception-status kernels and their correctness theorems.
 Import `FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime` for the executable definitions
-without these proofs, or import this module for both.
+without the proofs, or this module for both.
 -/

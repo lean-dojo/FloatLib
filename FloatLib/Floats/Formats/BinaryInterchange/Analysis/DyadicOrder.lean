@@ -12,11 +12,11 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Order theory for exact dyadics
 
-The executable `cmpDyadic` comparison agrees with real order. The proof reduces it to
-`cmpDyadicAligned`, which is the exact-dyadic comparator `Numerics.Dyadic.compare`; that comparator
-orders the rational denotations (`Numerics.Dyadic.compare_eq_compare_toRat`), and the cast to the
-reals preserves the order. `Dyadic.toReal_eq_signedSignificand_shiftLeft` states the alignment of a
-significand at a smaller exponent in the reals.
+Here we show that the executable `cmpDyadic` comparison agrees with real order. The proof reduces
+it to `cmpDyadicAligned`, which is the exact-dyadic comparator `Numerics.Dyadic.compare`. That
+comparator orders the rational denotations (`Numerics.Dyadic.compare_eq_compare_toRat`), and the
+cast to the reals preserves the order. `Dyadic.toReal_eq_signedSignificand_shiftLeft` states the
+alignment of a significand at a smaller exponent in the reals.
 -/
 
 @[expose] public section
@@ -87,17 +87,17 @@ theorem cmpDyadic_eq_compare (a b : Numerics.Dyadic) :
   simpa only [cmp_eq_compare] using
     ((Rat.cast_strictMono (K := ℝ)).cmp_map_eq a.toRat b.toRat).symm
 
-/-- Executable dyadic comparison returns `.lt` exactly when the real values are ordered. -/
+/-- Executable dyadic comparison returns `.lt` if and only if the real values are ordered. -/
 theorem cmpDyadic_lt_iff (a b : Numerics.Dyadic) :
     cmpDyadic a b = .lt ↔ a.toReal < b.toReal := by
   rw [cmpDyadic_eq_compare, compare_lt_iff_lt]
 
-/-- Executable dyadic comparison returns `.eq` exactly when the real values are equal. -/
+/-- Executable dyadic comparison returns `.eq` if and only if the real values are equal. -/
 theorem cmpDyadic_eq_iff (a b : Numerics.Dyadic) :
     cmpDyadic a b = .eq ↔ a.toReal = b.toReal := by
   rw [cmpDyadic_eq_compare, compare_eq_iff_eq]
 
-/-- Executable dyadic comparison returns `.gt` exactly when the real values are reversed. -/
+/-- Executable dyadic comparison returns `.gt` if and only if the real values are reversed. -/
 theorem cmpDyadic_gt_iff (a b : Numerics.Dyadic) :
     cmpDyadic a b = .gt ↔ b.toReal < a.toReal := by
   rw [cmpDyadic_eq_compare, compare_gt_iff_gt]

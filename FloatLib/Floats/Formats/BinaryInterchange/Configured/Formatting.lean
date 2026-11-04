@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatti
 
 /-! # External character output for configured binary values
 
-Storage selection affects neither the characters nor the exception indicators.
-The descriptor model supplies the shortest, exact, significant-digit, fixed, scientific and
-hexadecimal algorithms.
+This module writes configured binary values as text, and storage selection affects neither the
+characters nor the exception indicators. The descriptor model supplies the shortest, exact,
+significant-digit, fixed, scientific and hexadecimal algorithms.
 -/
 
 @[expose] public section

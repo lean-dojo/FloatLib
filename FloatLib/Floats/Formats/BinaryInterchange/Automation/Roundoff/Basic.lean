@@ -22,14 +22,14 @@ public meta import Lean.Compiler.CSimpAttr
 An analyzed node yields an `Estimate`: a real reference, an absolute or mixed bound against it and
 its proof, and possibly the finiteness of the computed value. A `Session` holds the rules, the
 normalizers and the memo tables of one `roundoff` call, and an `Analysis` the results and open
-premises of one branch or loop scope. Proof search runs in transactions: a failed one leaves no
+premises of one branch or loop scope. Proof search runs in transactions. A failed one leaves no
 assignments, messages or scope state behind, while the session's memo tables, such as
 `Session.analysisFailures`, keep what it recorded.
 
-The correctly rounded primitives are described by contracts whose implementations, the dictionary
-methods equal to them, are registered by the modules that define those dictionaries. Registered
-containers are recognized from their types and reads. `Recursor` collects the functions of the
-recursive analysis, so that its parts can be stated in separate modules.
+Contracts describe the correctly rounded primitives. Their implementations, the dictionary methods
+equal to them, are registered by the modules that define those dictionaries. Registered containers
+are recognized from their types and reads. `Recursor` collects the functions of the recursive
+analysis, so that its parts can live in different modules.
 -/
 
 public meta section
@@ -96,8 +96,8 @@ def roundings : Array Name := #[
 
 /-- FloatLib's selections between two configured values, such as C's maximum step
 `if m < x then x else m`, read as `max` or `min` of their real values. They apply only to a
-branch on a loop's rounded accumulator, whose cases the branch rules cannot carry through the loop;
-every other branch keeps its two cases. -/
+branch on a loop's rounded accumulator, whose cases the branch rules cannot carry through the loop.
+Every other branch keeps its two cases. -/
 def selectionRules : Array Name := #[
   ``ExecFloat.Binary.toReal_ite_lt_eq_max, ``ExecFloat.Binary.toReal_ite_lt_eq_min,
   ``ExecFloat.Binary.toReal_ite_le_eq_max, ``ExecFloat.Binary.toReal_ite_le_eq_min]
@@ -142,8 +142,8 @@ def Bound.isExact : Bound → Bool
 /-- The result for one analyzed node: a real reference, a proof of `bound` against it, and,
 when it is derived, the finiteness of the floating-point value that `actual` decodes. An exact
 value is a bound whose parts are the literal zero (`Bound.isExact`). A range rule that needs an
-enclosure of `actual` reads it off the bound with `MixedError.abs_le`. Proof construction data
-only; the executed container program is never replaced by this record. -/
+enclosure of `actual` reads it off the bound with `MixedError.abs_le`. The record is only proof
+construction data and never replaces the executed container program. -/
 structure Estimate where
   /-- The real value the bound compares the actual value with. -/
   reference : Q(ℝ)
@@ -192,10 +192,10 @@ def depthsCaught : CoreM Nat := do
   | some count => count.get
   | none => pure 0
 
-/-- A failed speculative derivation leaves no assignments or errors behind; the session's `IO.Ref`
-tables keep what it recorded. A derivation fails when it logs an error; errors of earlier tactics
-in the same declaration do not count. Recursive
-source analysis keeps the declaration's budget rather than sharing a local matching budget. -/
+/-- A failed speculative derivation leaves no assignments or errors behind, while the session's
+`IO.Ref` tables keep what it recorded. A derivation fails when it logs an error, and errors of
+earlier tactics in the same declaration do not count. Recursive source analysis keeps the
+declaration's budget and does not share a local matching budget. -/
 def transaction? {α : Type} (action : TacticM (Option α)) (catchLimits : Bool := false) :
     TacticM (Option α) := do
   let saved ← saveState
@@ -245,14 +245,17 @@ def literalHeads : Array Name :=
   #[``OfNat.ofNat, ``OfScientific.ofScientific, ``Real.pi]
 
 /-- A correctly rounded FloatLib primitive and the theorems that analyze its calls.
-`implementations` equate a dictionary method, with the instance it is stated for, to the
-primitive; they are registered as `Extension.bridges`. `rounding` identifies the primitive's result
-with the nearest-even rounding of its real reference and `finite` proves it finite, both under the
-domain and range conditions in their premises. `exact` give the result exactly at special inputs,
-such as a zero; they apply only when their premises are proved and are tried before `rounding`.
-`finiteWithoutRange` prove the result finite from a sign of the input or from a zero input
-instead, with no range condition, and are tried before `finite`. `signs` are the primitive's
-theorems on the sign of its result. -/
+
+* `implementations` equate a dictionary method, with the instance it is stated for, to the
+  primitive. They are registered as `Extension.bridges`.
+* `rounding` identifies the primitive's result with the nearest-even rounding of its real
+  reference, and `finite` proves it finite, both under the domain and range conditions in their
+  premises.
+* `exact` give the exact result at special inputs, such as a zero. They apply only when
+  their premises are proved and are tried before `rounding`.
+* `finiteWithoutRange` prove the result finite from a sign of the input or from a zero input
+  instead, with no range condition, and are tried before `finite`.
+* `signs` are the primitive's theorems on the sign of its result. -/
 structure PrimitiveContract where
   /-- The correctly rounded primitive. -/
   primitive : Name
@@ -358,8 +361,8 @@ partial def containsContainer (environment : Environment) (containers : Array Na
       | _ => return false
   | _ => return false
 
-/-- Decide `containsContainer`, skipping the constants in `containerFree`. A negative answer adds every
-constant the search visited: none of them reaches a container type either. -/
+/-- Decide `containsContainer`, skipping the constants in `containerFree`. A negative answer adds
+every constant the search visited: none of them reaches a container type either. -/
 def hasContainer (containerFree : IO.Ref NameSet) (type : Lean.Expr) : CoreM Bool := do
   let containers := (← extension).containers
   let (found, visited) := (containsContainer (← getEnv) containers type).run (← containerFree.get)
@@ -388,7 +391,7 @@ partial def containerProducerHeads (containerFree : IO.Ref NameSet) (expression 
   return names
 
 /-- The position of the container in `value`, a registered read of one entry. Only the
-canonical reads count unless `getters`; with `strict` the read must have its registered number of
+canonical reads count unless `getters`. With `strict` the read must have its registered number of
 arguments, and with `certified` it must select stored entries (`Read.isCertified`). A class method
 read through another dictionary (`Read.selects`) is no read. -/
 def Read.position? (reads : Array Read) (value : Lean.Expr) (getters : Bool := false)
@@ -550,7 +553,7 @@ def ruleKind (type : Lean.Expr) : RuleKind :=
     .order
   else .numerical
 /-- A registered numerical theorem prepared for matching. Its local rounding premise is
-specialized and its container reads are normalized; universes and remaining metavariables are
+specialized and its container reads are normalized. Universes and remaining metavariables are
 abstracted so each use instantiates them afresh. -/
 structure Rule where
   /-- The registered theorem, or the hypothesis it comes from. -/
@@ -559,11 +562,11 @@ structure Rule where
   exact : Bool
   /-- The prepared statement, its universes and remaining metavariables abstracted. -/
   prepared : AbstractMVarsResult
-  /-- Position among the candidates for one computation; mixed analysis tries lower first. -/
+  /-- Position among the candidates for one computation. Mixed analysis tries lower first. -/
   order : Nat := 0
 
-/-- Compare rules by theorem name and `exact` flag, not by prepared statement, so the index keeps
-one copy of a theorem registered twice. -/
+/-- Compare rules by theorem name and `exact` flag, ignoring the prepared statement, so the index
+keeps one copy of a theorem registered twice. -/
 instance : BEq Rule :=
   ⟨fun left right => left.name == right.name && left.exact == right.exact⟩
 
@@ -622,7 +625,7 @@ structure Derivation where
   locals : Thunk (Array FVarId)
 
 /-- Whether `term` mentions a local variable satisfying `wanted`, visiting each distinct subterm
-once; `Expr.hasAnyFVar` visits a shared subterm once per occurrence. -/
+once. `Expr.hasAnyFVar` visits a shared subterm once per occurrence. -/
 def mentions (term : Lean.Expr) (wanted : FVarId → Bool) : Bool :=
   (term.findExt? fun child =>
     if !child.hasFVar then .done
@@ -661,7 +664,7 @@ abbrev CarrierCache := IO.Ref (Std.HashMap (Name × Nat) Bool)
 /-- The rules, normalizers and memo tables of one `roundoff` call. The simp sets depend only on
 the environment and each normalizer adds its local hypotheses, while `bounds` is normalized under
 the main goal's hypotheses and `failures` is keyed by the facts of a scope. Only `Session.prepare`
-builds a session; its fields are the engine's own and change with it. -/
+builds a session, and its fields are the engine's own and change with it. -/
 structure Session where
   /-- Producers that program normalization keeps intact. -/
   boundaries : NameSet
@@ -715,7 +718,7 @@ structure Session where
   replayed only inside a step. -/
   nested : Bool := false
   /-- Exact operations and mixed-error rules, indexed like `bounds`. Only mixed analysis uses
-  them; absolute rules remain its fallback. -/
+  them, and absolute rules stay its fallback. -/
   mixedBounds : DiscrTree Rule := {}
   /-- Registered theorems concluding that a floating-point value is finite. -/
   finiteness : DiscrTree Rule := {}
@@ -785,10 +788,10 @@ structure Session where
   variables of the local context and the term. -/
   factsOf : IO.Ref (Std.HashMap (Array FVarId × Lean.Expr) (Array FVarId))
   /-- For each local variable whose type is a pair with a unit second component, its pair of first
-  projection and unit (`Session.unitPair`); `none` for any other variable. -/
+  projection and unit (`Session.unitPair`), and `none` for any other variable. -/
   unitPairs : IO.Ref (Std.HashMap FVarId (Option Lean.Expr))
   /-- Sign goals that `positivity` did not prove, with the facts of their scope
-  (`Session.scopeFacts`); it uses no other hypothesis. -/
+  (`Session.scopeFacts`). It uses no other hypothesis. -/
   positivityFailures : IO.Ref (Std.HashMap Lean.Expr (Array (Array FVarId)))
   /-- Sign goals whose search failed, with the local context and the largest depth that failed.
   Unlike the signs of a scope, they outlive a rolled-back attempt. -/
@@ -856,7 +859,7 @@ structure Analysis where
 abbrev AnalyzeM := ReaderT Session (StateRefT Analysis TacticM)
 
 /-- The functions of the recursive analysis, as in `Analyze`. Each part of the analysis takes this
-record and reaches the others through it, so that the parts can be stated in separate modules;
+record and reaches the others through it, so that the parts can live in different modules.
 `Analyze.recursor` ties them together. -/
 structure Recursor where
   /-- The analysis function `Analyze.build`. -/

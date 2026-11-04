@@ -11,22 +11,22 @@ public import FloatLib.Numerics.Quantization.Integer.Runtime
 /-!
 # Posit conversions for unsigned integer words
 
-Posit Standard (2022) §6.4 reserves the MSB-only integer word on input for NaR,
-including unsigned integer formats. Every other input denotes its unsigned
-natural-number value and receives one §4.1 posit rounding.
+Posit Standard (2022) §6.4 reserves the MSB-only integer word on input for NaR, and that includes
+unsigned integer formats, while every other input denotes its unsigned natural-number value and
+gets one §4.1 posit rounding.
 
-On output, the exact posit value is rounded to an integer before checking the
-full unsigned range. NaR and a rounded result outside that range deliver the
-MSB-only word. Nearest-even integer rounding follows the signed adapter's
-explicit policy; §6.4 does not specify an integer tie rule.
+On output, the exact posit value is rounded to an integer first, and only then is the full
+unsigned range checked. NaR and a rounded result outside that range deliver the MSB-only word.
+Ties go to the even integer, the same policy as the signed adapter, because §6.4 doesn't specify
+an integer tie rule.
 
-The number `2^(width-1)` is still a valid unsigned output. Its representation
-coincides with the sentinel, so converting that word back produces NaR.
-In particular, testing the source sign instead of the rounded integer would
-incorrectly reject negative fractions that round to zero.
+Even `2^(width-1)` is a valid unsigned output, but its representation is the sentinel, so converting
+that word back produces NaR. Rounding before the range check matters for small negatives. If we
+tested the sign of the source in place of the rounded integer, negative fractions that round to zero
+would be rejected by mistake.
 
-All widths use the same range-parameterized quantization kernel as decimal
-integer conversion. `BitVec` supplies the carrier, without per-width algorithms.
+All widths use the same range-parameterized quantization kernel as decimal integer conversion.
+`BitVec` supplies the carrier, so there are no per-width algorithms.
 
 ## References
 
@@ -46,7 +46,7 @@ open FloatLib.Numerics
   if value = BitVec.intMin width then nar format
   else roundRat format (value.toNat : Rat)
 
-/-- Round first and check the unsigned range; failures deliver the MSB-only word. -/
+/-- Round first, then check the unsigned range. Failures deliver the MSB-only word. -/
 @[inline] def toUnsigned {format : Format} (width : Nat) (value : Model format)
     (_hwidth : 0 < width := by decide) : BitVec width :=
   match value.toRat? with

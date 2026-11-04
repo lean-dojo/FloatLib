@@ -11,12 +11,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Inde
 /-!
 # Side conditions of `roundoff`
 
-Inexpensive side conditions are tried by bounded tactics: hypotheses about the same relation,
-budget simplification, reflexivity, decision, registered helper lemmas, the conditions of a loop
-that hold at every step, and semantic comparison of configured computations. A premise that a
-correctly rounded call is finite becomes that primitive's domain and range conditions. A
-condition that fails is remembered with the facts of its scope, and one that cannot be proved stays
-open for the caller.
+Bounded tactics try the inexpensive side conditions: hypotheses about the same relation, budget
+simplification, reflexivity, decision, registered helper lemmas, the conditions of a loop that hold
+at every step, and semantic comparison of configured computations. A premise that a correctly
+rounded call is finite becomes that primitive's domain and range conditions. A condition that fails
+is remembered with the facts of its scope, and one that cannot be proved stays open for the caller.
 -/
 
 public meta section
@@ -433,9 +432,9 @@ partial def mayHaveHead (name : Name) : Lean.Expr → Bool
 
 /-- `kabstract expression pattern` for a closed constant application `pattern`, with each distinct
 subterm of `expression` visited once where `kabstract` walks it as a tree. `kabstract` compares with
-`pattern` the subterms without loose bound variables that have its head and arity; when each of them
-is `pattern` itself, the outermost of them are abstracted directly, which is what `kabstract` does,
-and otherwise `kabstract` runs. The result is the expression `kabstract` returns. -/
+`pattern` the subterms without loose bound variables that have its head and arity. When each of them
+is `pattern` itself, the outermost of them are abstracted here, which is what `kabstract` does, and
+otherwise `kabstract` runs. The result is the expression `kabstract` returns. -/
 def abstractOccurrences (expression pattern : Lean.Expr) : MetaM Lean.Expr := do
   let expression ← instantiateMVars expression
   let some name := pattern.getAppFn.constName? | kabstract expression pattern
@@ -450,9 +449,8 @@ def abstractOccurrences (expression pattern : Lean.Expr) : MetaM Lean.Expr := do
 
 /-- Instantiate the primitive theorem `rule`, whose conclusion observes one primitive call, at
 `source`. The source is that primitive or the dictionary method of one of `contract`'s
-implementation theorems; the method must unify with that theorem's, selected instance
-included. Return the proof,
-transported to `source`, and its open premises. -/
+implementation theorems, and the method must unify with that theorem's, selected instance
+included. Return the proof, transported to `source`, and its open premises. -/
 def instantiatePrimitive (contract : PrimitiveContract) (rule : Name)
     (source : Lean.Expr) : MetaM (Option (Lean.Expr × Array MVarId)) := do
   let law ← mkConstWithFreshMVarLevels rule
@@ -519,7 +517,7 @@ partial def require (session : Session) (goal : MVarId) : TacticM (Array MVarId)
   premises.foldlM (fun remaining premise => return remaining ++ (← require session premise)) #[]
 
 /-- Compare the generated real reference with existing container code. All normalization steps
-are proved equalities; the floating-point execution and its error budget remain unchanged. -/
+are proved equalities, and the floating-point execution and its error budget stay unchanged. -/
 def referenceEquality (session : Session) (goal : MVarId) : TacticM Bool := do
   if ← discharge session goal then return true
   let result? ← attempt? 10000 do
@@ -555,7 +553,7 @@ def rewriteSimp (estimate : Estimate) (actual source : Lean.Expr) (carry : Bool)
   rewriteActual estimate (← normalized.getProof' actual)
 
 /-- A premise that chooses between rules: a real order or equality, or an executable zero. A
-mixed analysis proves it or tries the next rule; it never becomes a caller obligation. -/
+mixed analysis proves it or tries the next rule, and it never becomes a caller obligation. -/
 def isSelection (type : Lean.Expr) : MetaM Bool := do
   let type := type.consumeMData
   if type.isAppOfArity ``LE.le 4 || type.isAppOfArity ``LT.lt 4 then
@@ -572,12 +570,18 @@ def isEnclosure (bound : Lean.Expr) : Bool :=
     (((bound.getArg! 4).getArg! 4).getArg! 4).nat? == some 1 &&
     ((bound.getArg! 4).getArg! 5).isAppOf ``abs
 
-/-- A premise that bounds a value by a constant of its format: the overflow threshold, the
-largest finite value or the underflow allowance; a condition on the format alone, relating its
-unit roundoff to sizes, such as `(1 + u) ^ (n - 1) < 2`; or a bound of the enclosure of a mixed
-bound by a constant, such as the range of an integer type a cast keeps. Such a range condition is
-proved or becomes an obligation rather than selecting between rules. Only a condition on the format
-alone with no variable, for a given format and length, must be proved. -/
+/-- A range premise, one of
+
+* a bound of a value by a constant of its format: the overflow threshold, the largest finite value
+  or the underflow allowance,
+* a condition on the format alone, relating its unit roundoff to sizes, such as
+  `(1 + u) ^ (n - 1) < 2`,
+* or a bound of the enclosure of a mixed bound by a constant, such as the range of an integer type
+  a cast keeps.
+
+Such a range condition is proved or becomes an obligation, and it does not select between rules.
+Only a condition on the format alone with no variable, for a given format and length, must be
+proved. -/
 def isRange (type : Lean.Expr) : Bool :=
   (type.find? fun term => term.isAppOf ``Model.Transcendentals.Certified.overflowThreshold ||
     term.isAppOf ``Model.posMaxFinite || term.isAppOf ``Model.underflowErrorAt).isSome ||
@@ -700,7 +704,7 @@ def generatedFinite? (session : Session) (rule : Name) (arguments : Array Lean.E
     return some (← mkExpectedTypeHint (← instantiateMVars (mkAppN law premises)) expected)
 
 /-- Run an analysis step speculatively. On failure, its assignments, messages and changes to the
-scope's state (`Analysis`: cached estimates and obligations) are undone; the session's memo
+scope's state (`Analysis`: cached estimates and obligations) are undone, while the session's memo
 tables, such as `Session.analysisFailures`, keep what it recorded. -/
 def speculate? {α : Type} (action : AnalyzeM α) : AnalyzeM (Option α) := do
   let session ← read
@@ -724,8 +728,8 @@ def inputReference? (type : Lean.Expr) : MetaM (Option (Array MVarId)) := do
   withLocalDeclD name domain fun point => wanted (body.instantiate1 point)
 
 /-- Supply an input-error premise about every value of a variable from the analysis of the input at
-a fresh one. Its conditions are required of every value; no cached result mentioning the variable
-escapes. -/
+a fresh one. Its conditions are required of every value, and no cached result mentioning the
+variable escapes. -/
 def forallInput? (type : Lean.Expr) (deriveInput : Q(ℝ) → AnalyzeM Estimate) :
     AnalyzeM (Option Lean.Expr) := do
   let .forallE name domain body info := type | return none

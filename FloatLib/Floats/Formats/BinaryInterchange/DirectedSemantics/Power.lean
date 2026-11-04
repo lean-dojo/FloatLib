@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 /-!
 # Real binary-power semantics
 
-Rational and directed rounding share this low-level real binary-power API. The file deliberately
-does not import executable arithmetic, allowing native kernels to reuse the logarithm proofs
-without an import cycle through `Model.Arithmetic`.
+Rational and directed rounding share this low-level real binary-power API. It doesn't import
+executable arithmetic, on purpose, so native kernels can reuse the logarithm proofs without an
+import cycle through `Model.Arithmetic`.
 -/
 
 @[expose] public section
@@ -26,7 +26,7 @@ open FloatLib.Floats.Formats.Flocq
 
 section
 
-/-- Binary power as a real number. -/
+/-- The binary power `2 ^ exponent` as a real number, Flocq's `bpow` at radix two. -/
 noncomputable abbrev bpow (exponent : Int) : ℝ :=
   FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix exponent
 

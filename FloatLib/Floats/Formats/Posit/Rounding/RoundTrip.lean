@@ -13,9 +13,10 @@ import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
 /-!
 # Exact posit decoding and rounding round trips
 
-Rounding an exactly decoded finite posit recovers its original word at every descriptor width.
-The sign/magnitude lemmas isolate whole-word two's-complement symmetry so character conversion,
-integer functions, and changes of precision can reuse the same decoding argument.
+Decode a finite posit to its exact rational, round that rational back, and you get the original
+word, at every descriptor width (`roundRat_toRat?`). On the way we split each word into a sign and
+an unsigned magnitude, and those lemmas hold the whole-word two's-complement symmetry, so character
+conversion, integer functions, and changes of precision all reuse one decoding argument.
 -/
 
 @[expose] public section

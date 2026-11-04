@@ -17,10 +17,11 @@ import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 # Checked square roots of two-word radicands
 
 `approxRoot` proposes the floor root of a two-word radicand from a native-word root of its leading
-bits and one Newton step, the refinement of `IntegerSquareRoot.approxRoot`. `checkRoot?` accepts the
-candidate, or its predecessor, only after an exact two-word square check, so no correctness argument
-depends on the candidate. `rootAndRemainder` replaces the restoring loop for radicands below
-`2 ^ 128` and keeps the loop otherwise. `CheckedSqrt.Proof` shows it equals the loop on every input.
+bits and one Newton step, refining `IntegerSquareRoot.approxRoot`. `checkRoot?` accepts the
+candidate, or its predecessor, only after an exact two-word square check. So correctness never
+depends on the candidate. For radicands below `2 ^ 128`, `rootAndRemainder` replaces the restoring
+loop, and it keeps the loop otherwise. `CheckedSqrt.Proof` shows that it equals the loop on every
+input.
 -/
 
 @[expose] public section

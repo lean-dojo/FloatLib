@@ -14,11 +14,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 /-!
 # Lean native floating-point interoperability
 
-Explicit conversions connect every configured binary format to Lean's runtime `Float32` and
-`Float` types: `toFloat`, `ofFloat`, `toFloat32`, and `ofFloat32` round once in a `mode` option
-when the two formats differ, and move the interchange word unchanged between `Binary64` and
-`Float` and between `Binary32` and `Float32`. Lean names its IEEE binary64 runtime type `Float`,
-and there is no core type named `Float64`.
+Four conversions connect every configured binary format to Lean's runtime `Float32` and `Float`
+types: `toFloat`, `ofFloat`, `toFloat32`, and `ofFloat32`. When the two formats differ they round
+once in a `mode` option, and between `Binary64` and `Float`, or `Binary32` and `Float32`, they move
+the interchange word unchanged. Lean names its IEEE binary64 runtime type `Float`, and there is no
+core type named `Float64`.
 
 At the conversion boundary:
 
@@ -31,15 +31,15 @@ At the conversion boundary:
   `0x7fc00000`). Payload-preserving transport therefore stays in the `ofBits32`/`toBits32` and
   `ofBits64`/`toBits64` APIs.
 
-The conversions themselves do not choose an arithmetic backend. Configured binary32 and binary64
-arithmetic uses proved software kernels by default. Applications may opt into
-`Configured.NativeFPU.Unchecked` for guarded host arithmetic, but those functions are outside the
+Choosing an arithmetic backend isn't the conversions' job. Configured binary32 and binary64
+arithmetic uses proved software kernels by default. You can opt into
+`Configured.NativeFPU.Unchecked` for guarded host arithmetic, but those functions sit outside the
 proof-carrying planner and depend on the compiler and host runtime.
 
-The companion `Native.Integer` module connects integer conversion to FloatLib's rounding
-specifications. `Native.AddSub` proves agreement for finite operands, and `Native.Sqrt` covers every
-input after NaN canonicalization. Import `FloatLib.Floats.Formats.IEEE754` or `FloatLib` to include
-these proofs alongside the conversions.
+Companion modules hold the proofs. `Native.Integer` connects integer conversion to FloatLib's
+rounding specifications, `Native.AddSub` proves agreement for finite operands, and `Native.Sqrt`
+covers every input after NaN canonicalization. Import `FloatLib.Floats.Formats.IEEE754` or
+`FloatLib` to get these proofs along with the conversions.
 
 ## References
 
@@ -105,10 +105,10 @@ namespace ExecFloat.Binary
 namespace Internal.Native
 
 /-!
-The general paths of the native conversions: a value of another format crosses through
-`Model.cast` to or from the native word. They call the compiled status kernel of the cast and keep
-its value, which is the value of `Model.cast` (`Model.value_cast`), so the conversions of every
-format share the code of the cast library instead of inlining a copy of it.
+These are the general paths of the native conversions, where a value of another format crosses
+through `Model.cast` to or from the native word. They call the compiled status kernel of the cast
+and keep its value, which is the value of `Model.cast` (`Model.value_cast`). That way the
+conversions of every format share the cast library's code, and none inlines its own copy.
 -/
 
 /-- The value of `Model.cast src dst value (mode := mode)`. -/
@@ -151,11 +151,10 @@ local notation "Value" =>
 Convert a configured value to Lean's native binary64 `Float`, rounding once in `mode`
 (nearest-even by default) when the format has values that binary64 cannot hold.
 
-A binary64 value crosses as its interchange word, through Lean's public `Float.ofBits`. Every
-other format is cast to binary64 by `Model.cast` first, which is exact for binary32, binary16, and
-bfloat16. Both the logical model of `Float.ofBits` and its compiled primitive canonicalize a
-noncanonical NaN payload, so a NaN with a payload does not round-trip through this function. Use
-`toBits64` for payload-preserving serialization inside FloatLib.
+A binary64 value crosses as its interchange word, through Lean's public `Float.ofBits`, and every
+other format is first cast to binary64 by `Model.cast`, which is exact for binary32, binary16, and
+bfloat16. `Float.ofBits` canonicalizes NaN payloads, in its logical model and when compiled, so a
+NaN payload doesn't survive this function. Use `toBits64` for payload-preserving serialization.
 -/
 @[inline] def toFloat (value : Value) (mode : Model.IEEERoundingMode := .nearest) : Float :=
   match plan, value with
@@ -185,11 +184,10 @@ destination receives `Model.cast` of that word.
 Convert a configured value to Lean's native `Float32`, rounding once in `mode` (nearest-even by
 default) when the format has values that binary32 cannot hold.
 
-A binary32 value crosses as its interchange word, through Lean's public `Float32.ofBits`. Every
-other format is cast to binary32 by `Model.cast` first, which is exact for binary16 and bfloat16.
-Both the logical model of `Float32.ofBits` and its compiled primitive canonicalize a noncanonical
-NaN payload, so a NaN with a payload does not round-trip through this function. Use `toBits32`
-for payload-preserving serialization inside FloatLib.
+A binary32 value crosses as its interchange word, through Lean's public `Float32.ofBits`, and
+every other format is first cast to binary32 by `Model.cast`, which is exact for binary16 and
+bfloat16. `Float32.ofBits` canonicalizes NaN payloads, in its logical model and when compiled, so
+a NaN payload doesn't survive this function. Use `toBits32` for payload-preserving serialization.
 -/
 @[inline] def toFloat32 (value : Value) (mode : Model.IEEERoundingMode := .nearest) : Float32 :=
   match plan, value with

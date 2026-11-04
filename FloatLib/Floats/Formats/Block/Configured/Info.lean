@@ -13,8 +13,9 @@ public import FloatLib.Floats.Formats.Block.SharedScale.Info
 /-!
 # Inspection for configured shared-scale blocks
 
-This optional meta module registers `#float_info` for `ExecFloat.SharedScale`. Runtime block
-construction and quantization remain independently importable without editor elaborators.
+Import this meta module when you want `#float_info` to describe `ExecFloat.SharedScale`. It's
+optional. Block construction and quantization import fine without it, so runtime code never pulls
+in editor elaborators.
 -/
 
 public meta section

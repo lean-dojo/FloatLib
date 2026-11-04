@@ -12,13 +12,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Activa
 /-!
 # Semantics of arbitrary-format executable intervals
 
-Public entry point for semantic membership, four-corner endpoint selection, and outward-rounded
-arithmetic and activation soundness over `Model.Interval fmt`.
+Import this module for what `Model.Interval fmt` means: semantic membership, four-corner
+endpoint selection, and the soundness of outward-rounded arithmetic and activations.
 
-Read `Core` and `Order` for finite and extended-real membership, then `MinMax` for endpoint
-selection. `Arithmetic` groups negation, the four binary operations, and reciprocal; `Activations`
-groups ReLU, absolute value, and square root. `Finite` supplies range-checked arithmetic for
-all-words-finite encodings. Individual theorems state their IEEE and finiteness requirements.
+Start with `Core` and `Order` for finite and extended-real membership, then read `MinMax` for
+endpoint selection. `Arithmetic` groups negation, the four binary operations, and reciprocal, and
+`Activations` groups ReLU, absolute value, and square root. For all-words-finite encodings,
+`Finite` supplies range-checked arithmetic. Each theorem states its own IEEE and finiteness
+requirements.
 -/
 
 @[expose] public section

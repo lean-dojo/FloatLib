@@ -38,9 +38,10 @@ public meta import FloatLib.Floats.Formats.Posit.Info
 /-!
 # Posit numerical formats
 
-The public entry point is `ExecFloat.Posit (bits := n)`. It denotes the Posit Standard (2022)
-layout at any valid static width and uses the common `ExecFloat` carrier and capability hierarchy.
-Its associated exact accumulator is `ExecFloat.Posit.Quire (bits := n)`.
+You reach posits through one type, `ExecFloat.Posit (bits := n)`. It is the Posit Standard
+(2022) layout at any valid static width, and it runs on the common `ExecFloat` carrier and
+capability hierarchy that the other formats share. Every width also comes with an exact
+accumulator, `ExecFloat.Posit.Quire (bits := n)`.
 
 ## References
 
@@ -51,10 +52,10 @@ Its associated exact accumulator is `ExecFloat.Posit.Quire (bits := n)`.
 
 ## Arithmetic
 
-This module exposes the exact specifications for the six universal arithmetic
-operations. Certified exact-dyadic, native-word, and two-limb rounding backends are exposed here;
-static selection lives under `Posit.Configured`.
-`square` reuses the selected multiplication kernel and its refinement theorem.
+This module exposes the exact specifications of the six universal arithmetic operations, along
+with the certified exact-dyadic, native-word, and two-limb rounding backends. Picking a backend
+for a static width happens under `Posit.Configured`. `square` gets no kernel of its own, because it
+reuses the selected multiplication kernel and its refinement theorem.
 -/
 
 @[expose] public section

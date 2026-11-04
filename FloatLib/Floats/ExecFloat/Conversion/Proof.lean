@@ -11,15 +11,15 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Proof contracts for explicit conversion and mixed arithmetic
 
-The preparation theorems compose the supplied decoder, exact-domain operations, and destination
-quantization relation. They establish one quantizer call on successful preparation and preserve
-preparation failures: `ConversionProof.preparedSpec_roundOnce` for an exact expression, and
-`Mixed.preparedSpec_add`, `preparedSpec_sub`, `preparedSpec_mul`, `preparedSpec_div`, and
-`preparedSpec_fma` for the mixed operations. Numerical preservation by `ExactMap`, the arithmetic
-instances and the context-dependent addition and subtraction hooks is left to family-specific
-laws.
+The preparation theorems compose the supplied decoder, the exact-domain operations, and the
+destination quantization relation. A successful preparation leads to one quantizer call, and a
+preparation failure is preserved. `ConversionProof.preparedSpec_roundOnce` covers an exact
+expression, and `Mixed.preparedSpec_add`, `preparedSpec_sub`, `preparedSpec_mul`,
+`preparedSpec_div`, and `preparedSpec_fma` cover the mixed operations. Whether `ExactMap`, the
+arithmetic instances, and the context-dependent addition and subtraction hooks preserve numerical
+values is left to family-specific laws.
 
-Runtime-only clients may import `Conversion.Runtime`, and `FloatLib.Floats.ExecFloat` exports both
+If you only run conversions, import `Conversion.Runtime`. `FloatLib.Floats.ExecFloat` exports both
 execution and these contracts.
 -/
 

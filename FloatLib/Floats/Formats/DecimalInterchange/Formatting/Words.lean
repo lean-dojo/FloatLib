@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Formatting.PrecisionPro
 /-!
 # Decimal character conversion for BID and DPD words
 
-The encoding and width select only the source/destination codec. Parsing,
-precision rounding, and status handling use the shared datum operations.
-Exact output followed by input recovers the canonical word: redundant encodings
-are not character-level representation information.
+Text conversion for BID and DPD words is the datum conversion with a codec at each end. The
+encoding and width choose only that codec, and parsing, precision rounding, and status handling
+use the shared datum operations. Exact output followed by input gives back the canonical word,
+because a redundant encoding carries nothing that text can show.
 -/
 
 @[expose] public section

@@ -18,9 +18,9 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
 /-!
 # Correctness of exact-dyadic posit arithmetic
 
-These theorems prove that exact-dyadic addition, subtraction, multiplication, division, square
-root, and fused multiply-add equal the independent rational `Model.Spec` operations. The
-executable definitions live in `Dyadic.Runtime`.
+Each exact-dyadic kernel of `Dyadic.Runtime` is proved equal here to its `Model.Spec` operation,
+which is written independently over the rationals, and that covers all six of them: addition,
+subtraction, multiplication, division, square root, and fused multiply-add.
 -/
 
 @[expose] public section

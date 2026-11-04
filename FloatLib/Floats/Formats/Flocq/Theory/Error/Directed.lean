@@ -13,9 +13,9 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 /-!
 # Error Bounds for General Rounding Modes
 
-A valid rounding mode selects one of the two adjacent representable values.  Consequently its
-absolute error is at most one ULP.  Nearest rounding sharpens this to half an ULP; this file records
-the one-ULP result needed for directed and toward-zero modes.
+A valid rounding mode picks one of the two representable values next to its input, so its absolute
+error is at most one ULP. Nearest rounding sharpens that to half an ULP. Directed and toward-zero
+modes get only the one-ULP bound, and that's the result recorded here.
 -/
 
 @[expose] public section
@@ -83,7 +83,7 @@ theorem relative_error_round_FLX_of_valid (prec : ℤ) (hprec : 0 < prec)
 
 /--
 General FLX rounding admits a multiplicative error model with a one-ULP relative bound. Zero rounds
-exactly, with `δ = 0`.
+to itself, with `δ = 0`.
 -/
 theorem round_relative_error_FLX_of_valid (prec : ℤ) (hprec : 0 < prec)
     (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :

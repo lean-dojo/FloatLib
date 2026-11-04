@@ -11,10 +11,10 @@ public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
 /-!
 # Real powers and logarithms with a specified base
 
-Real powers use `exp (log x * y)` on strictly positive base intervals. Both the base and the
-exponent may vary. Logarithms with a specified base divide the argument's logarithm by the
-base's logarithm; the latter enclosure must exclude zero. All intermediate bounds are rational.
-`PowersProof` proves containment for every real member of the input intervals.
+A real power is `exp (log x * y)` on a strictly positive base interval, and both the base and the
+exponent may vary. A logarithm with a specified base divides the argument's logarithm by the base's,
+whose enclosure must exclude zero. All intermediate bounds are rational. `PowersProof` proves
+containment for every real member of the input intervals.
 -/
 
 @[expose] public section

@@ -15,7 +15,7 @@ public import Mathlib.Analysis.SpecialFunctions.Artanh
 /-!
 # Containment for inverse hyperbolic functions
 
-Each successful enclosure follows the corresponding real logarithmic identity. Domain checks
+Each successful enclosure follows the corresponding real logarithmic identity, and the domain checks
 for inverse hyperbolic cosine and tangent apply to every real member of the input interval.
 -/
 

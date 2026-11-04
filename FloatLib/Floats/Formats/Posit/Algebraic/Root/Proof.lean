@@ -14,11 +14,11 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Correct rounding of integer posit roots
 
-Raising nonnegative values to a positive integer power preserves order, so exact power comparisons
-agree with comparison against the real root. The shared comparator-rounding theorem then supplies
-correct rounding. The root-characterization theorem applies to any nonnegative real root.
-Its real-power corollary supplies a root for every nonnegative rational radicand and
-positive degree.
+On nonnegative values, raising to a positive integer power preserves order. So comparing exact
+powers gives the same answer as comparing with the real root, and the shared comparator-rounding
+theorem turns that into correct rounding. The root-characterization theorem works for any
+nonnegative real root, and its real-power corollary provides one for every nonnegative rational
+radicand and positive degree.
 -/
 
 @[expose] public section
@@ -102,7 +102,7 @@ private theorem round_radicand_eq_roundPositive (r : Rat) (degree : Int)
 /--
 A nonnegative finite integer root rounds the exact real power `q ^ (1 / degree)`.
 
-The degree is nonzero; a zero radicand additionally requires positive degree. Negative degrees
+The degree is nonzero, and a zero radicand also needs a positive degree. Negative degrees
 are covered by inverting the exact rational radicand, before any rounding.
 -/
 theorem rootN_eq_roundPositive (value : Model format) {q : Rat} (degree : Int)
@@ -121,8 +121,8 @@ theorem rootN_eq_roundPositive (value : Model format) {q : Rat} (degree : Int)
 /--
 For a negative finite input and odd integer degree, the signed real root is rounded once.
 
-Its magnitude is `(-q) ^ (1 / degree)`. This statement specifies the real branch explicitly,
-including negative odd degrees, without relying on real powers of a negative base.
+Its magnitude is `(-q) ^ (1 / degree)`. The statement writes out the real branch, negative odd
+degrees included, so it doesn't rely on real powers of a negative base.
 -/
 theorem rootN_eq_neg_roundPositive (value : Model format) {q : Rat} (degree : Int)
     (hvalue : value.toRat? = some q) (hq : q < 0) (hodd : degree % 2 ≠ 0) :

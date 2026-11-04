@@ -13,8 +13,8 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 /-!
 # Dispatch instance for exact logarithmic multiplication
 
-The ordinary `ExecFloat` multiplication interface selects the certified direct logarithmic
-kernel.
+With this instance in scope, ordinary `ExecFloat` multiplication on logarithmic values runs the
+certified direct kernel, which xors the signs and adds the exponents.
 -/
 
 @[expose] public section

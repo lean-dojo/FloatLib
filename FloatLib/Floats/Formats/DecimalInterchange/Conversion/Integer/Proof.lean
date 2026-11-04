@@ -12,10 +12,10 @@ public import FloatLib.Numerics.Quantization.Integer.Proof
 /-!
 # Decimal-to-integer numerical and exception contracts
 
-Successful conversions deliver the specified rounded integer. Failure is
-characterized by non-finiteness or a rounded value outside the destination range.
-The integer-grid theorems give error and tie guarantees, and the packing
-theorems show that the checked result survives fixed-width storage exactly.
+When a decimal-to-integer conversion succeeds, it delivers the specified rounded integer. It fails
+if and only if the source isn't finite or the rounded value falls outside the destination range.
+The integer-grid theorems give the error and tie guarantees, and the packing theorems show that the
+checked result survives fixed-width storage unchanged.
 -/
 
 @[expose] public section
@@ -65,7 +65,7 @@ theorem convertToInteger_invalid_iff (destination : IntegerFormat) (mode : Round
         simp [convertToInteger_cases, hs, hr, invalidOutcome]
 
 /-- When the source is finite and its rounded integer fits the destination, the conversion delivers
-that integer; only the `Exact` variants raise inexact, and only on a numerical change. -/
+that integer. Only the `Exact` variants raise inexact, and only on a numerical change. -/
 theorem convertToInteger_of_inRange (destination : IntegerFormat) (mode : RoundingMode)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value) (hr : destination.InRange (roundInteger mode value)) :
@@ -75,7 +75,7 @@ theorem convertToInteger_of_inRange (destination : IntegerFormat) (mode : Roundi
           signalInexact && decide ((roundInteger mode value : ℚ) ≠ value) } } := by
   simp [convertToInteger_cases, hs, hr]
 
-/-- A successful result denotes the rounded integer exactly. -/
+/-- A successful result is the rounded integer. -/
 theorem convertToInteger_value (destination : IntegerFormat) (mode : RoundingMode)
     (signalInexact : Bool) (source : Datum) (value : ℚ)
     (hs : source.toRat? = some value)
@@ -107,7 +107,8 @@ theorem convertToInteger_value_independent (destination : IntegerFormat) (mode :
   simp only [convertToInteger_cases]
   split <;> first | rfl | split <;> rfl
 
-/-- Inexact is precisely a numerical change on a successful exact-variant conversion. -/
+/-- On a successful conversion with an `Exact` variant, inexact is raised if and only if the value
+changes. -/
 theorem convertToInteger_inexact_iff (destination : IntegerFormat) (mode : RoundingMode)
     (source : Datum) (value : ℚ) (hs : source.toRat? = some value)
     (hv : (convertToInteger destination mode true source).status.invalid = false) :
@@ -194,7 +195,7 @@ theorem convertToFixedInt_toInt (width : Nat) (mode : RoundingMode)
       (convertToInteger (.signed width) mode signalInexact source).value :=
   FixedInt.toInt_ofInt_eq_self (convertToInteger_inRange (.signed width) mode signalInexact source)
 
-/-- Unsigned packing preserves the checked integer exactly, including invalid delivery as zero. -/
+/-- Unsigned packing keeps the checked integer, including the invalid result zero. -/
 theorem convertToUnsigned_toNat (width : Nat) (mode : RoundingMode)
     (signalInexact : Bool) (source : Datum) :
     ((convertToUnsigned width mode signalInexact source).1.toNat : Int) =

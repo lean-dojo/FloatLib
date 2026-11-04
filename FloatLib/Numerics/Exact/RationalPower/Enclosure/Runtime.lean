@@ -13,11 +13,11 @@ public import FloatLib.Numerics.Enclosure.Elementary.Runtime
 
 For a positive base and target, `base ^ exponent` lies below the target exactly when
 `exponent * log base - log target` is negative. Rational enclosures of the two logarithms give an
-enclosure of this difference, and raising their degree narrows it. A comparison never needs an
-integer power of the base or the target.
+enclosure of this difference, and raising their degree narrows it, so a comparison never needs an
+integer power of the base or of the target.
 
-The interval can separate a nonzero difference from zero but cannot certify equality, which
-`RationalPower.powEq` decides.
+The interval can separate a nonzero difference from zero, but it can't certify equality.
+`RationalPower.powEq` decides that.
 -/
 
 @[expose] public section

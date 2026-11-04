@@ -13,12 +13,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classificatio
 /-!
 # Exact semantic classification of binary data
 
-The field-based classifier refines the complete exact interpretation for every descriptor.
-Finite classes depend on numerical zero and the normal threshold, retaining the sign of zero.
-Infinity signs and NaN signaling status come from the same exact interpretation.
+The classifier reads stored fields, and for every descriptor we prove that it refines the complete
+exact interpretation of the word. A finite class depends on whether the value is zero and on the
+normal threshold, and a zero keeps its sign. Infinity signs and NaN signaling status come from
+the same exact interpretation.
 
-This entry point also exports all ten predicate characterizations, real/rational threshold
-theorems, the finite-class partition, and canonical stored-field reconstruction.
+Importing this file also brings in all ten predicate characterizations, the real and rational
+threshold theorems, the finite-class partition and the reconstruction of canonical stored fields.
 -/
 
 @[expose] public section

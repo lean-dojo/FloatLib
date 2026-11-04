@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Exact.RadixText.Runtime
 /-!
 # Exact hexadecimal external character sequences
 
-IEEE 754 §5.12.3 uses a hexadecimal significand and a mandatory decimal binary
-exponent: `-0x1.ap+3` denotes `-13`. The positional scanner, signs and exponent
-integer parser are shared with decimal input. No host floating point is used.
+IEEE 754 §5.12.3 writes a hexadecimal significand and a mandatory binary exponent in decimal, so
+`-0x1.ap+3` denotes `-13`. We share the positional scanner, the signs, and the exponent integer
+parser with decimal input. No host floating point is used.
 -/
 
 @[expose] public section
@@ -49,7 +49,7 @@ def parseCharacters (characters : List Char) : Option Dyadic := do
 /-- Parse a hexadecimal external character sequence without discarding signed zero. -/
 def parse (text : String) : Option Dyadic := parseCharacters text.toList
 
-/-- Exact IEEE hexadecimal spelling; the significand is integral and the exponent is binary. -/
+/-- Exact IEEE hexadecimal spelling, with an integral significand and a binary exponent. -/
 def characters (value : Dyadic) : List Char :=
   (if value.negative then ['-'] else []) ++ ['0', 'x'] ++
     RadixText.naturalDigits value.significand 16 ++

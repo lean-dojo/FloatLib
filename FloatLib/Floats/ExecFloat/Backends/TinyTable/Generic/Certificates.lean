@@ -11,9 +11,9 @@ public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Indexing
 /-!
 # Byte-table lookup certificates
 
-These theorems identify each native array read with the encoded result used to generate that
-entry. Runtime definitions use the equations to prove that the returned byte is a valid code;
-`Generic.Proof` then establishes equality of the decoded result with the model operation.
+These theorems identify each native array read with the encoded result that generated that entry.
+Runtime definitions use the equations to prove that the returned byte is a valid code, and
+`Generic.Proof` then shows that the decoded result equals the model operation.
 -/
 
 @[expose] public section

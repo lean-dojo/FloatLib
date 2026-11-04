@@ -11,13 +11,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proo
 /-!
 # Boundary behavior of adjacent-value operations
 
-These theorems describe `nextUp` and `nextDown` at NaNs, zeros, infinities, and saturating finite
-endpoints. They also extend the exact rank-step results from `Adjacent.Proof.Core` to one-sided
-rank inequalities and to the absence of a rank strictly between a value and its neighbor, which
-hold at the fixed endpoints too. Through the rank order of `adjacencyRank_lt_adjacencyRank_iff`
-these become statements about values: away from its fixed points `nextUp` strictly increases a
-number and `nextDown` strictly decreases it, and no non-NaN value lies strictly between a number
-and either neighbor (`no_value_between_nextUp`, `no_value_between_nextDown`).
+`Adjacent.Proof.Core` shows that an ordinary step of `nextUp` or `nextDown` moves the rank by one.
+This file covers the rest: what the two operations do at NaNs, zeros, infinities and saturating
+finite endpoints. It also turns the rank steps into one-sided rank inequalities and shows that no
+rank lies strictly between a value and its neighbor, which holds at the fixed endpoints too.
+
+Through the rank order of `adjacencyRank_lt_adjacencyRank_iff` these become facts about values.
+Away from its fixed points `nextUp` strictly increases a number and `nextDown` strictly decreases
+it, and no non-NaN value lies strictly between a number and either neighbor
+(`no_value_between_nextUp`, `no_value_between_nextDown`).
 -/
 
 @[expose] public section
@@ -74,7 +76,7 @@ theorem nextDown_of_isZero {fmt : FloatFormat} (x : Model fmt)
   simp [nextDown, Internal.Value.nextDown, hx, hnan, hinf]
 
 /--
-An unsigned-zero format steps directly from its negative subnormal of least magnitude to zero,
+An unsigned-zero format steps from its negative subnormal of least magnitude straight to zero,
 skipping the reserved sign-mask NaN word.
 -/
 theorem nextUp_negMinSubnormal_of_not_supportsSignedZero
@@ -127,7 +129,7 @@ theorem nextDown_negInf_of_supportsInfinity
 /-! ## Rank inequalities including saturating endpoints -/
 
 /--
-For a non-NaN value, `nextUp` either fixes it or advances its adjacency rank by exactly one. The
+For a non-NaN value, `nextUp` either fixes it or advances its adjacency rank by one. The
 fixed points are positive infinity and the largest finite value of a format without infinity.
 -/
 theorem nextUp_eq_self_or_adjacencyRank_nextUp
@@ -161,7 +163,7 @@ theorem nextUp_eq_self_or_adjacencyRank_nextUp
 /--
 For every non-NaN value, `nextUp` never decreases the adjacency rank.
 
-Ordinary values advance exactly one rank. Positive infinity and the largest finite value of a
+Ordinary values advance by one rank. Positive infinity and the largest finite value of a
 format without infinity are fixed points, so the inequality becomes equality at those endpoints.
 -/
 theorem adjacencyRank_le_nextUp
@@ -174,7 +176,7 @@ theorem adjacencyRank_le_nextUp
 
 /--
 No adjacency rank lies strictly between a non-NaN value and its `nextUp` result, including the
-fixed endpoints. The statement is about ranks only; `no_value_between_nextUp` is its reading for
+fixed endpoints. The statement is about ranks, and `no_value_between_nextUp` is its reading for
 values.
 -/
 theorem no_rank_between_nextUp
@@ -190,7 +192,7 @@ theorem no_rank_between_nextUp
     omega
 
 /--
-For a non-NaN value, `nextDown` either fixes it or retreats its adjacency rank by exactly one. The
+For a non-NaN value, `nextDown` either fixes it or retreats its adjacency rank by one. The
 fixed points are negative infinity and the most negative finite value of a format without
 infinity.
 -/
@@ -225,7 +227,7 @@ theorem nextDown_eq_self_or_adjacencyRank_nextDown
 /--
 For every non-NaN value, `nextDown` never increases the adjacency rank.
 
-Ordinary values retreat exactly one rank. Negative infinity and the most negative finite value of
+Ordinary values retreat by one rank. Negative infinity and the most negative finite value of
 a format without infinity are fixed points, so the inequality becomes equality at those endpoints.
 -/
 theorem adjacencyRank_nextDown_le
@@ -238,7 +240,7 @@ theorem adjacencyRank_nextDown_le
 
 /--
 No adjacency rank lies strictly between a `nextDown` result and its non-NaN input, including the
-fixed endpoints. The statement is about ranks only; `no_value_between_nextDown` is its reading for
+fixed endpoints. The statement is about ranks, and `no_value_between_nextDown` is its reading for
 values.
 -/
 theorem no_rank_between_nextDown

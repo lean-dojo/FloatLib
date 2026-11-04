@@ -13,13 +13,13 @@ public import Mathlib.Algebra.Group.Int.Defs
 /-!
 # Representation semantics of fixed-width signed integers
 
-The executable two's-complement carrier has a `NumericalSystem` interpretation. The
-representation laws characterize the signed interval, encoding and decoding, and the clamp used
-by saturating arithmetic.
+Here the executable two's-complement carrier gets a `NumericalSystem` interpretation, and its
+representation laws describe the signed interval, encoding and decoding, and the clamp that
+saturating arithmetic uses.
 
-Keeping this adapter separate from arithmetic is useful: generic operation contracts only need to
-know what a code denotes, while the implementation remains free to use `BitVec` overflow
-instructions and fixed-width storage.
+We keep this adapter apart from the arithmetic, because generic operation contracts only need to
+know what a code denotes, while the implementation stays free to use `BitVec` overflow instructions
+and fixed-width storage.
 -/
 
 @[expose] public section
@@ -71,7 +71,7 @@ theorem maxValue_eq (width : Nat) :
     maxValue width = (2 ^ (width - 1) : Int) - 1 := by
   simp [maxValue]
 
-/-- The signed storage interval is nonempty; at width zero it is the single value zero. -/
+/-- The signed storage interval is nonempty, and at width zero it is the single value zero. -/
 theorem minValue_le_maxValue {width : Nat} :
     minValue width ≤ maxValue width :=
   BitVec.toInt_intMin_le _

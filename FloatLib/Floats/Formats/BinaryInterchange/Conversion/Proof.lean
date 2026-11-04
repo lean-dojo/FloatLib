@@ -17,24 +17,24 @@ import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgre
 /-!
 # Binary-interchange conversion proofs
 
-Every configured and static-byte carrier adapter shares these conversion equations and numerical
-contract. For default IEEE finite rounding, the nearest-value clause follows from the real rounding
-bridge and the generic nearest-point theorem. Complete outcome equality keeps all word, status,
-and policy guarantees.
+Every configured and static-byte carrier adapter shares these conversion equations and the
+numerical contract. For default IEEE finite rounding, the nearest-value clause follows from the
+real rounding bridge and the generic nearest-point theorem. Complete outcome equality keeps all
+word, status, and policy guarantees.
 
 For a rounding mode with an `IEEERoundingMode` direction,
-`finiteStatus_of_ieeeRoundingMode?_eq_some` gives the conversion status from that direction's exact
-classifiers. For nearest-away rounding, `finiteStatus_of_nearestAway` names them:
+`finiteStatus_of_ieeeRoundingMode?_eq_some` gives the conversion status from that direction's
+exact classifiers. For nearest-away rounding, `finiteStatus_of_nearestAway` names them:
 `rationalNearestAwayOverflowsScaled` and `rationalIsTinyAfterRoundingScaled` with the nearest-even
-tininess boundary.
+tininess boundary. Stochastic rounding uses the significand-based calculation
+`roundedSignificandStatus` instead.
 
-The significand-based calculation `roundedSignificandStatus` serves stochastic rounding. For
-nearest-away rounding, `roundedSignificandStatus_nearestAway` shows that it matches the
-nearest-away overflow classifier
-and the comparison with `underflowMidpoint`. The tininess classifier also counts a tiny delivered
-value, so `finiteStatus_eq_roundedSignificandStatus_of_nearestAway` adds the engine's result: for
-the value that `Model.Policy.roundRat` delivers, the two calculations give the same status under
-every overflow and underflow policy.
+For nearest-away rounding, `roundedSignificandStatus_nearestAway` shows that this calculation
+matches the nearest-away overflow classifier and the comparison with `underflowMidpoint`. The
+tininess classifier also counts a tiny delivered value, so
+`finiteStatus_eq_roundedSignificandStatus_of_nearestAway` adds the engine's result. For the value
+that `Model.Policy.roundRat` delivers, the two calculations give the same status under every
+overflow and underflow policy.
 -/
 
 @[expose] public section
@@ -224,8 +224,8 @@ theorem implements_runWith {format : FloatFormat} {Destination : Type u}
 Default IEEE conversion of an exact value whose magnitude is at most the largest finite value
 delivers a finite nearest value, so the nearest clause of `specWith` is not vacuous there.
 
-Above that magnitude the result may be the largest finite value or an infinity; this theorem does
-not say where the boundary lies.
+Above that magnitude the result may be the largest finite value or an infinity, and this theorem
+does not say where the boundary lies.
 -/
 theorem runWith_nearest_of_abs_le_posMaxFinite {format : FloatFormat} {Destination : Type u}
     (pack : Model format → Destination) (context : Context) (exact : SignedRat)
@@ -245,7 +245,7 @@ theorem runWith_nearest_of_abs_le_posMaxFinite {format : FloatFormat} {Destinati
   · simp only [runWith, quantizeFiniteWith, hpolicy,
       Model.Policy.roundRat_nearest_eq_execFloat _ _ _ _ _ exact.value.den_nz]
 
-/-- An outcome satisfies `specWith` exactly when it is the outcome of `runWith`. -/
+/-- An outcome satisfies `specWith` if and only if it is the outcome of `runWith`. -/
 theorem specWith_iff_eq_runWith {format : FloatFormat} {Destination : Type u}
     (pack : Model format → Destination) (context : Context) (input : NumericalValue SignedRat)
     (outcome : FloatLib.Floats.ExecFloat.ConversionOutcome Destination) :
@@ -331,7 +331,7 @@ private theorem scaleByPowerOfTwo_div_eq (numerator denominator : Nat) (exponent
   simp [Model.scaledRatToReal, Model.bpow, Formats.Flocq.bpow, binaryRadix, Radix.toReal]
 
 /--
-Nearest-away rounding of a scaled quotient exceeds a bound exactly when twice the scaled real
+Nearest-away rounding of a scaled quotient exceeds a bound if and only if twice the scaled real
 quotient reaches twice the bound plus one.
 -/
 private theorem lt_roundQuotient_nearestAway_scaled_iff (bound numerator denominator : Nat)
@@ -540,9 +540,9 @@ private theorem nearestAway_significandTiny_iff (format : FloatFormat)
 
 /--
 With nearest-away rounding, the significand-based status calculation matches the nearest-away
-overflow classifier and the comparison with `underflowMidpoint`: a nonzero magnitude overflows
-exactly when `rationalNearestAwayOverflowsScaled` says so, at or above the top finite midpoint, and
-it is tiny exactly below `underflowMidpoint`.
+overflow classifier and the comparison with `underflowMidpoint`. A nonzero magnitude overflows if
+and only if `rationalNearestAwayOverflowsScaled` says so, at or above the top finite midpoint, and
+it is tiny if and only if it lies below `underflowMidpoint`.
 
 `finiteStatus` sends nearest-away rounding to the classifiers, as `finiteStatus_of_nearestAway`
 states. The tininess classifier also counts a tiny delivered value, and
@@ -599,9 +599,9 @@ theorem finiteStatus_of_ieeeRoundingMode?_eq_some {format : FloatFormat} (contex
 /--
 Nearest-away conversion status is the status of the nearest-away classifiers.
 
-The top finite midpoint overflows, and a magnitude is tiny exactly below `underflowMidpoint` or
-when the delivered value is tiny, as for nearest-even rounding. This holds under every overflow and
-underflow policy.
+The top finite midpoint overflows, and a magnitude is tiny if and only if it lies below
+`underflowMidpoint` or the delivered value is tiny, as for nearest-even rounding. This holds under
+every overflow and underflow policy.
 -/
 theorem finiteStatus_of_nearestAway {format : FloatFormat} (context : Context)
     (hrounding : context.quantization.rounding = .nearestAway) (exact : Rat)

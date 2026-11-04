@@ -12,9 +12,9 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Significant-digit rounding on an arbitrary radix grid
 
-Decimal and hexadecimal output share the grid calculation, one integer rounding,
-and carry. The radix and rounding callback are explicit; there are no format
-widths or exponent limits here. Meaningful radix semantics require `1 < radix`.
+Decimal and hexadecimal output share the grid calculation, the one integer rounding, and the carry.
+Both the radix and the rounding callback are parameters, and there are no format widths or exponent
+limits here. A radix only has a meaning when `1 < radix`.
 -/
 
 @[expose] public section

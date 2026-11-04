@@ -15,10 +15,10 @@ public import FloatLib.Numerics.Representations.FixedInt.Automation
 /-!
 # Concrete non-floating numerical representations
 
-This package contains executable code types that use the universal `NumericalSystem` and
-operation-contract interfaces but are not floating-point formats. Keeping them separate from
-`Numerics.Core` preserves the format-independent foundation, while keeping them outside
-`Floats.Formats` avoids classifying Boolean masks and fixed-width integers as floats.
+These are executable code types that use the universal `NumericalSystem` and operation-contract
+interfaces but aren't floating-point formats. Keeping them out of `Numerics.Core` keeps the
+foundation format-independent, and keeping them out of `Floats.Formats` avoids classifying Boolean
+masks and fixed-width integers as floats.
 -/
 
 @[expose] public section

@@ -22,13 +22,14 @@ public import FloatLib.Kernels.FixedWord.SignedMagnitude.UInt128.Proof
 /-!
 # Verified fixed-word kernels
 
-Reusable one-, two-, and four-limb algorithms live here independently of any concrete numerical
-format. Runtime modules provide executable kernels; proof modules refine them to natural-number
-semantics. Binary floating-point and posit backends import this layer and supply their own
-decoding, rounding policy, and packing. Declarations use the
-`FloatLib.Numerics.FixedWord` namespace because they operate on the primitive fixed-word
-representations used throughout the numerical library. Their implementations and proofs are
-grouped here so different formats can reuse them.
+These are the one-, two-, and four-limb algorithms, written once for every numerical format. Runtime
+modules hold the executable kernels and proof modules refine them to natural-number semantics, while
+binary floating-point and posit backends import this layer and supply their own decoding, rounding
+policy, and packing.
+
+Its declarations sit in the `FloatLib.Numerics.FixedWord` namespace, because they work on the
+primitive fixed-word representations that the whole numerical library uses. We keep their
+implementations and proofs together here so that different formats can reuse them.
 -/
 
 @[expose] public section

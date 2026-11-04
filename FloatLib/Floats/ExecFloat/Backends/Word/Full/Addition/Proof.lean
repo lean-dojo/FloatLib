@@ -13,14 +13,14 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
 /-!
 # Verified equal-exponent binary64 addition
 
-The binary64 addition kernel handles same-sign normal operands with equal exponents entirely in
-`UInt64`. Their exact 54-bit significand sum is rounded once to nearest-even and packed.
-Unequal exponents, opposite signs, subnormals, and overflow boundaries are left to the
-generic finite kernel. Exceptional values are handled by the outer operation dispatcher.
+When two binary64 operands are normal and have the same sign and the same exponent, their addition
+never leaves `UInt64`, and their exact 54-bit significand sum is rounded once to nearest even and
+packed. Unequal exponents, opposite signs, subnormals, and overflow boundaries go to the generic
+finite kernel, and the outer operation dispatcher handles exceptional values.
 
-The subtraction dispatcher composes this adder with the signed Sterbenz backend: same-sign nearby
-operands use exact native subtraction, opposite-sign operands reuse native addition, and every
-declined case falls back to the generic kernel.
+For subtraction, the dispatcher composes this adder with the signed Sterbenz backend. Same-sign
+nearby operands use exact native subtraction, opposite-sign operands reuse native addition, and
+every declined case falls back to the generic kernel.
 -/
 
 @[expose] public section

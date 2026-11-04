@@ -15,9 +15,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.TwoWordMul.Runtime
 /-!
 # Structural routes for binary descriptor execution
 
-A structural route identifies the specialized kernel family entered by an operation's executable
-dispatcher. The route and its cost metadata are kept separate from certified candidate
-construction so configured-format planning can use them without importing tiny-table proofs.
+A structural route names the specialized kernel family that an operation's executable dispatcher
+enters. Routes and their cost metadata live apart from certified candidate construction, so
+configured-format planning can use them without importing tiny-table proofs.
 -/
 
 @[expose] public section
@@ -30,7 +30,7 @@ open FloatLib.Floats.ExecFloat.Backend
 /--
 The structural implementation entered by an operation's executable dispatcher.
 
-This classifies the route that will actually run; it is not a second list of competing algorithms.
+It classifies the route that will actually run and is no second list of competing algorithms.
 Several routes share one dispatcher function, but retain distinct cost metadata because their
 specialized kernels have different performance.
 -/
@@ -67,7 +67,7 @@ def pairKernelEligible (format : FloatFormat) : Bool :=
 Select the single structural route entered by the executable dispatcher.
 
 The branch order mirrors the corresponding `Model.*Backend` implementation. Returning `none`
-means that the operation proceeds directly to its width-generic kernel.
+means that the operation goes straight to its width-generic kernel.
 -/
 def structuralRoute? (format : FloatFormat) : Operation → Option StructuralRoute
   | .add | .sub =>

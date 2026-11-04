@@ -12,9 +12,9 @@ public import Mathlib.Data.Nat.Basic
 /-!
 # Primitive carriers for fixed-word posit kernels
 
-The four built-in posit carriers differ only in how they widen to and narrow from `UInt64`.
-`Carrier` records that relationship once. It is passed only to always-inlined helpers; the public
-raw kernels remain monomorphic so their native calling conventions are unchanged.
+The four built-in posit carriers differ only in how they widen to `UInt64` and narrow back.
+`Carrier` records that relationship once for all of them. We pass it only to always-inlined
+helpers, so the public raw kernels stay monomorphic and keep their native calling conventions.
 -/
 
 @[expose] public section
@@ -25,10 +25,10 @@ namespace FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords
 Arithmetic view of one primitive unsigned carrier.
 
 `capacity` is the width that narrowing and natural-number construction reduce modulo. The fields
-do not bound every value of `α` below `2 ^ capacity`; they only bound the results of `narrow` and
+don't bound every value of `α` below `2 ^ capacity`. They bound the results of `narrow` and
 `ofNat`, and `toNat_toUInt64` bounds every value below `2 ^ 64`. The four built-in carriers do
-store exactly `capacity` bits. The kernels never need that bound: each input carries its own
-posit range certificate `toNat value < format.modulus`.
+store exactly `capacity` bits, but the kernels never need that bound, because each input carries
+its own posit range certificate `toNat value < format.modulus`.
 -/
 structure Carrier (α : Type) (capacity : Nat) where
   /-- Observe the encoded natural number. -/

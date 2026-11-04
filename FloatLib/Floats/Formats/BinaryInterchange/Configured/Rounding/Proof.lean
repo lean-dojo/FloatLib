@@ -17,26 +17,27 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 /-!
 # Packing correctness for configured binary arithmetic
 
-The decoding bridge theorems `toModel_add` through `toModel_sqrt` and their
-`IEEEOutcome.toModel_add` through `IEEEOutcome.toModel_sqrt` companions state that decoding a
-configured result recovers the single descriptor-model operation used to compute it, with the same
-rounding direction and, for the outcomes, the same flags and ternary value. They let proofs
-transfer results from the model without depending on the configured storage plan.
-`toModel_hAdd`, `toModel_hSub`, `toModel_hMul`, `toModel_hDiv`, `toModel_neg`, and
-`toModel_execFloat_sqrt` do the same for the notation `+`, `-`, `*`, `/`, unary `-`, and the
-generic `ExecFloat.sqrt`, so `simp` turns a goal about `toModel (a + b)` into one about
-`Model.add`. The projection theorems `value_add` through `value_sqrt` mirror the model's: the
-value of an operation with `status := true` is the value of the same operation without it.
+Decoding a configured result recovers the single descriptor-model operation used to compute it.
+The bridge theorems `toModel_add` through `toModel_sqrt` state this with the same rounding
+direction, and their `IEEEOutcome.toModel_add` through `IEEEOutcome.toModel_sqrt` companions keep
+the same flags and ternary value too. With them a proof can transfer results from the model
+without depending on the configured storage plan. `toModel_hAdd`, `toModel_hSub`, `toModel_hMul`,
+`toModel_hDiv`, `toModel_neg`, and `toModel_execFloat_sqrt` do the same for the notation `+`, `-`,
+`*`, `/`, unary `-`, and the generic `ExecFloat.sqrt`, so `simp` turns a goal about
+`toModel (a + b)` into one about `Model.add`. The projection theorems `value_add` through
+`value_sqrt` mirror the model's: the value of an operation with `status := true` is the value of
+the same operation without it.
 
-A nearest-even call without status runs the format's selected capability. A capability certifies
-its kernels against its own reference operation, so the value theorems take the instance argument
-`ExecFloat.Capability.HasSpec cap Configured.Spec.add` (and its siblings): the selected capability's
-reference is the configured model operation. Instance search proves it for every capability
-instance in the library, generic, automatic, and first-order binary32 and binary64, since each
-declares that reference. A custom capability whose reference operation is only propositionally
-the model operation must declare the instance itself. A capability with another reference
-operation gets neither the decoding nor the projection theorems, because its default call and its
-`status := true` call can then deliver different values.
+A nearest-even call without status runs the format's selected capability, and a capability
+certifies its kernels against its own reference operation. So the value theorems take the
+instance argument `ExecFloat.Capability.HasSpec cap Configured.Spec.add` (and its siblings), which
+says that the selected capability's reference is the configured model operation. Instance search
+proves it for every capability instance in the library, generic, automatic, and first-order
+binary32 and binary64, since each declares that reference. A custom capability whose reference
+operation is only propositionally the model operation must declare the instance itself. A
+capability with another reference operation gets neither the decoding nor the projection
+theorems, because its default call and its `status := true` call can then deliver different
+values.
 -/
 
 @[expose] public section

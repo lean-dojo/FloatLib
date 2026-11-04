@@ -11,13 +11,13 @@ public import FloatLib.Numerics.Enclosure.Comparison.Runtime
 /-!
 # Sharing enclosures between rounding comparisons
 
-A rounding search compares one mathematical value with many boundaries. Its enclosures depend
-on the requested accuracy, not on the boundary, so recomputing the same Taylor polynomial at
-every bisection step is unnecessary.
+A rounding search compares one mathematical value with many boundaries. Its enclosures depend on the
+requested accuracy and not on the boundary, so there's no reason to recompute the same Taylor
+polynomial at every bisection step.
 
-`cacheIntervals` delays a finite prefix with Lean's pure `Thunk` type. A requested entry is
-computed once and shared by subsequent comparisons. Entries beyond the prefix are computed
-normally; the cache size never limits the mathematical search. The cache is explicit data:
+`cacheIntervals` delays a finite prefix with Lean's pure `Thunk` type. A requested entry is computed
+once and shared by the comparisons that follow. Entries beyond the prefix are computed normally, so
+the cache size never limits the mathematical search. We keep the cache as plain data, because
 returning a curried function here would let eta expansion move allocation into each lookup.
 -/
 

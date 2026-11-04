@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.FixedPoint.Configured.Conversion.Proof
 /-!
 # Exact fixed-point conversion instances
 
-Unbounded configured fixed point supports exact-rational destination quantization with a
-canonical context.
+You can convert an exact rational into unbounded configured fixed point, and the destination
+instance here does it with a canonical context, since there's no overflow policy to choose.
 -/
 
 @[expose] public section

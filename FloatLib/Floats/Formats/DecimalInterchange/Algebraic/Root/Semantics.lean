@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Public integer-root semantics
 
-For a negative degree, the exact rational magnitude is inverted before rounding.
-The real specification is the signed root of that magnitude. Negative nonzero
-operands require an odd degree. Zero signs and preferred exponents are specified
-separately because a rational value does not retain either.
+This file says in real numbers what `rootN` should return and proves that it does. For a negative
+degree, the exact rational magnitude is inverted before rounding, and the specification is the
+signed real root of that magnitude. A negative nonzero operand needs an odd degree. A rational
+value forgets both the sign of zero and the exponent, so zero signs and preferred exponents get
+theorems of their own.
 -/
 
 @[expose] public section
@@ -75,7 +76,8 @@ theorem abs_integerRoot (n : Int) (a : ℚ) :
       exact_mod_cast integerRootRadicand_nonneg n a)
   split <;> simp [abs_of_nonneg hp]
 
-/-- Every nonzero finite operand in the real domain takes exactly one root-rounding path. -/
+/-- Every nonzero finite operand in the real domain goes through `rootMagnitude`, with some
+preferred quantum. -/
 theorem rootN_eq_rootMagnitude (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1) :
@@ -156,7 +158,7 @@ private theorem rootN_of_not_path (f : Format) (mode : RoundingMode) (x : Datum)
     linarith
   · simp [rootN, hn, hc, show n % 2 = 0 by omega, invalidResult, Datum.toRat?_eq]
 
-/-- Without overflow, a root of a finite datum raises inexact exactly when a finite result differs
+/-- Without overflow, a root of a finite datum raises inexact if and only if a finite result differs
 from the signed real root. Degree zero and a negative operand at an even degree give a NaN, and a
 zero operand gives an exact zero or a pole, so a finite result needs no domain premise. -/
 theorem rootN_inexact_iff (f : Format) (mode : RoundingMode)
@@ -175,7 +177,7 @@ theorem rootN_inexact_iff (f : Format) (mode : RoundingMode)
   simpa only [integerRoot_cast] using rootMagnitude_inexact_iff f mode (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) value preferred hfinite hv
 
-/-- A root of a finite datum raises underflow exactly when the real root is below the least normal
+/-- A root of a finite datum raises underflow if and only if the real root is below the least normal
 magnitude in absolute value and the result is inexact. Outside the real domain, at degree zero and
 at a zero operand the root raises neither flag, and an overflowing root is never tiny. -/
 theorem rootN_underflow_iff (f : Format) (mode : RoundingMode)
@@ -232,7 +234,7 @@ theorem abs_rootN_towardZero_le (f : Format)
   exact abs_rootMagnitude_towardZero_le f (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred
 
-/-- Positive-degree zero is exact. Even degrees clear its sign; odd degrees preserve it. -/
+/-- Positive-degree zero is exact. Even degrees clear its sign and odd degrees keep it. -/
 theorem rootN_zero_pos (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
     (hn : 0 < n) :
     rootN f mode (.finite s 0 q) n =

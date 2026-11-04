@@ -15,7 +15,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 /-!
 # Finite-operand helpers for directed arithmetic
 
-Finite-operand classification facts support the format-generic directed arithmetic proofs.
+This module collects the classification facts about finite operands that the format-generic
+directed arithmetic proofs use.
 -/
 
 @[expose] public section
@@ -61,19 +62,19 @@ theorem toReal_mulDyadic_of_toDyadic?_some
 
 /-! ## Signed zero of an exactly cancelling sum -/
 
-/-- The signed zero chosen for an exactly cancelling sum denotes zero. -/
+/-- The signed zero chosen for an exact zero sum denotes zero. -/
 @[simp] theorem toReal_zeroForExactSum
     (fmt : FloatFormat) (mode : IEEERoundingMode) (leftSign rightSign : Bool) :
     toReal (zeroForExactSum fmt mode leftSign rightSign) = 0 := by
   cases mode <;> simp [zeroForExactSum]
 
-/-- The signed zero chosen for an exactly cancelling sum is not a NaN. -/
+/-- The signed zero chosen for an exact zero sum is not a NaN. -/
 @[simp] theorem isNaN_zeroForExactSum_eq_false
     (fmt : FloatFormat) (mode : IEEERoundingMode) (leftSign rightSign : Bool) :
     isNaN (zeroForExactSum fmt mode leftSign rightSign) = false := by
   cases mode <;> simp [zeroForExactSum]
 
-/-- The signed zero chosen for an exactly cancelling sum denotes zero in the extended reals. -/
+/-- The signed zero chosen for an exact zero sum denotes zero in the extended reals. -/
 @[simp] theorem toEReal_zeroForExactSum
     (fmt : FloatFormat) (mode : IEEERoundingMode) (leftSign rightSign : Bool) :
     toEReal (zeroForExactSum fmt mode leftSign rightSign) = 0 := by
@@ -81,17 +82,17 @@ theorem toReal_mulDyadic_of_toDyadic?_some
 
 /-! ## Directed operations on finite operands
 
-For modes other than nearest-even, finite addition and multiplication reduce to rounding an exact
-dyadic intermediate, and finite division with a nonzero divisor rounds an exact scaled rational.
-Exact cancellation has its own signed-zero rule. Square root in a directed mode instead rounds
-the appropriate endpoint of a dyadic bracket around the exact root, and both nearest modes use the
-nearest-even `sqrt`. These characterisations are shared by the enclosure, non-NaN, and
+In modes other than nearest-even, finite addition and multiplication reduce to rounding an exact
+dyadic intermediate, and finite division by a nonzero divisor rounds an exact scaled rational.
+Exact cancellation has its own signed-zero rule. Square root works differently: a directed mode
+rounds the appropriate endpoint of a dyadic bracket around the exact root, and both nearest modes
+use the nearest-even `sqrt`. These characterisations are shared by the enclosure, non-NaN and
 finite-format proofs.
 -/
 
 /--
 For finite operands, a directed addition is the directed rounding of the exact dyadic sum, or the
-rounding direction's signed zero when the sum cancels exactly.
+rounding direction's signed zero when the exact sum is zero.
 -/
 theorem add_eq_of_toDyadic?_some
     {fmt : FloatFormat} (mode : IEEERoundingMode) (hmode : mode ≠ .nearest)

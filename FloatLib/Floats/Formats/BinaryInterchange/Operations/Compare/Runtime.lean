@@ -12,16 +12,16 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 /-!
 # Executable binary comparisons
 
-Comparison first handles NaNs and signed infinities, then compares finite values through their
-exact dyadic denotations. This gives every `FloatFormat` one numerical order without assuming a
-particular storage width or relying on host floating-point comparison.
+Comparison handles NaNs and signed infinities first and then compares finite values through their
+exact dyadic denotations, which gives every `FloatFormat` one numerical order with no assumption
+about storage width and no use of the host's floating-point comparison.
 
-NaNs are unordered. The minimum and maximum operations apply their NaN-selection and
-signed-zero rules around the same comparator. Both the deprecated IEEE 754-2008 `minNum`/`maxNum`
-and the IEEE 754-2019 `minimumNumber`/`maximumNumber` operations are provided, and they differ
-only in how a signaling NaN operand is treated. With `status := true`, `minimum` and `maximum`
-also report the `invalid` signal that a signaling NaN operand owes. `minimumNumber` and
-`maximumNumber` take the same option in `Operations.Runtime`.
+NaNs are unordered. Minimum and maximum apply their NaN-selection and signed-zero rules around the
+same comparator. We provide both the deprecated IEEE 754-2008 `minNum`/`maxNum` and the IEEE
+754-2019 `minimumNumber`/`maximumNumber`, which differ only in how they treat a signaling NaN
+operand. With `status := true`, `minimum` and `maximum` also report the `invalid` signal that a
+signaling NaN operand owes, and `minimumNumber` and `maximumNumber` take the same option in
+`Operations.Runtime`.
 -/
 
 @[expose] public section
@@ -117,8 +117,8 @@ def Internal.Value.maximum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
 /--
 IEEE 754-2019 §9.6 `minimum`, the operation behind `min x y`: the lesser operand, with
 `minimum(-0,+0) = -0`, or a quiet NaN chosen by `chooseNaN2` when an operand is a NaN. With
-`status := true` the result is the `IEEEOutcome`, which raises `invalid` exactly for a signaling
-NaN operand (§6.2).
+`status := true` the result is the `IEEEOutcome`, which raises `invalid` if and only if an operand
+is a signaling NaN (§6.2).
 -/
 @[macro_inline] def minimum {fmt : FloatFormat} (x y : Model fmt) (status : Bool := false) :
     match status with
@@ -131,8 +131,8 @@ NaN operand (§6.2).
 /--
 IEEE 754-2019 §9.6 `maximum`, the operation behind `max x y`: the greater operand, with
 `maximum(-0,+0) = +0`, or a quiet NaN chosen by `chooseNaN2` when an operand is a NaN. With
-`status := true` the result is the `IEEEOutcome`, which raises `invalid` exactly for a signaling
-NaN operand (§6.2).
+`status := true` the result is the `IEEEOutcome`, which raises `invalid` if and only if an operand
+is a signaling NaN (§6.2).
 -/
 @[macro_inline] def maximum {fmt : FloatFormat} (x y : Model fmt) (status : Bool := false) :
     match status with
@@ -189,11 +189,11 @@ namespace Internal.Value
 /--
 IEEE 754-2019 §9.6 `minimumNumber`, the kernel of `Model.minimumNumber x y`.
 
-If exactly one operand is a NaN, quiet or signaling, the other operand is returned, so a signaling
-NaN is not propagated. When both operands are NaNs the result is a quiet NaN chosen by
-`bothNaNNumber`. On two numbers this is `minimum`, so `minimumNumber(-0, +0) = -0`. The invalid
-signal owed to a signaling operand is reported by `Model.minimumNumber x y (status := true)` in
-`Operations.Runtime`, since the value alone carries no status.
+If one operand is a NaN, quiet or signaling, and the other is not, the other operand is returned,
+so a signaling NaN does not propagate. Two NaN operands give a quiet NaN chosen by
+`bothNaNNumber`. On two numbers this is `minimum`, so `minimumNumber(-0, +0) = -0`. The value
+carries no status, so the invalid signal owed to a signaling operand is reported by
+`Model.minimumNumber x y (status := true)` in `Operations.Runtime`.
 -/
 def minimumNumber {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   if isNaN x then
@@ -206,8 +206,8 @@ def minimumNumber {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
 /--
 IEEE 754-2019 §9.6 `maximumNumber`, the kernel of `Model.maximumNumber x y`.
 
-If exactly one operand is a NaN, quiet or signaling, the other operand is returned, so a signaling
-NaN is not propagated. When both operands are NaNs the result is a quiet NaN chosen by
+If one operand is a NaN, quiet or signaling, and the other is not, the other operand is returned,
+so a signaling NaN does not propagate. Two NaN operands give a quiet NaN chosen by
 `bothNaNNumber`. On two numbers this is `maximum`, so `maximumNumber(-0, +0) = +0`. The invalid
 signal owed to a signaling operand is reported by `Model.maximumNumber x y (status := true)` in
 `Operations.Runtime`.

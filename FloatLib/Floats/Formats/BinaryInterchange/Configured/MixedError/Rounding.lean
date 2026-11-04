@@ -14,15 +14,18 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Pr
 # Local rounding of configured operations
 
 FloatLib states each rounded configured operation together with the propagation of its operands'
-errors. An error analysis that chooses the propagation rule itself needs the rounding alone: for
-an IEEE descriptor, under the selected capability's specification (`HasSpec`), a finite result has
-relative error `u` against the exact operation on the computed operands, with no absolute part for
-sums and differences and the underflow error for products, quotients and square roots. A quotient
-keeps a finite divisor and a square root a finite operand in its domain. Here are those local
-steps, finiteness from a range condition on an enclosure of the exact result, and the finiteness
-of FloatLib's exact operations, which needs no range condition. A finite conversion of a rational
-is its rounding, so C's `(float) n` of an integer or a natural number has relative error `u`, and
-none when its magnitude is at most `2 ^ p`, with `p = fracWidth + 1`.
+errors. An error analysis that chooses the propagation rule itself needs the rounding alone, and
+this module states it. For an IEEE descriptor, under the selected capability's specification
+(`HasSpec`), a finite result has relative error `u` against the exact operation on the computed
+operands. Sums and differences have no absolute part, while products, quotients and square roots
+carry the underflow error. A quotient keeps a finite divisor and a square root a finite operand in
+its domain.
+
+Next to those local steps sit finiteness from a range condition on an enclosure of the exact
+result, and the finiteness of FloatLib's exact operations, which needs no range condition. A
+finite conversion of a rational is its rounding. So C's `(float) n` of an integer or a natural
+number has relative error `u`, and none when its magnitude is at most `2 ^ p`, with
+`p = fracWidth + 1`.
 
 A range condition bounds the enclosure `(1 + r) * |x₀| + a` of the exact operation on the
 computed operands by the largest finite value. It is an inequality on inputs and budgets, never

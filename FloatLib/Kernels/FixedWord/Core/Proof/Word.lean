@@ -21,9 +21,9 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified single-word primitives for executable numerical arithmetic
 
-Native-word shifts, bit operations, and restoring square-root state have exact natural-number
-interpretations. Nearest-even rounding is proved in `Core.Proof.Rounding`; wider two-limb values
-and exact `64 × 64 → 128` multiplication are proved in `Core.Proof.UInt128`.
+This file gives native-word shifts, bit operations, and the restoring square-root state their exact
+natural-number interpretations, while nearest-even rounding is proved in `Core.Proof.Rounding`, and
+wider two-limb values and exact `64 × 64 → 128` multiplication in `Core.Proof.UInt128`.
 -/
 
 @[expose] public section
@@ -416,8 +416,8 @@ def place (index : Nat) : Nat :=
 /--
 Value reconstructed from the first `steps` digits of any machine-word base-four source.
 
-Concrete radicand layouts provide only their digit reader; the positional recurrence and loop
-proof are shared across one-word and multi-word square-root kernels.
+Each radicand layout provides only its digit reader, and the one-word and multi-word square-root
+kernels share the positional recurrence and the loop proof.
 -/
 def digitsValue {α : Type} (digitAt : α → Nat → UInt64) (source : α) : Nat → Nat
   | 0 => 0
@@ -425,7 +425,7 @@ def digitsValue {α : Type} (digitAt : α → Nat → UInt64) (source : α) : Na
       (digitAt source steps).toNat * place steps +
         digitsValue digitAt source steps
 
-/-- Base-four digit selected from a machine word; indices below 32 avoid shift-count wraparound. -/
+/-- Base-four digit selected from a machine word. Indices below 32 avoid shift-count wraparound. -/
 def wordDigit (value : UInt64) (index : Nat) : Nat :=
   ((value >>> UInt64.ofNat (2 * index)) &&& 3).toNat
 
@@ -599,8 +599,8 @@ theorem lowBitsWord_toNat (value width : UInt64) :
 Masking a native word to a `Nat`-indexed low-bit field agrees with reduction modulo the
 corresponding power of two.
 
-This theorem bridges kernels whose control flow uses `Nat` to the shared machine-indexed
-`lowBitsWord` primitive; the executable data path remains on unboxed `UInt64` values.
+It connects kernels whose control flow uses `Nat` to the shared machine-indexed `lowBitsWord`
+primitive, while the executable data path stays on unboxed `UInt64` values.
 -/
 theorem uint64_lowBits_toNat (value : UInt64) (shift : Nat)
     (hshift : shift < 64) :
@@ -639,12 +639,14 @@ theorem shiftRightWord_toNat (value shift : UInt64) :
       Nat.div_eq_of_lt (value.toNat_lt.trans_le (Nat.pow_le_pow_right (by decide) hshiftNat))]
 
 /--
-Machine-width leading-zero counting, read as a natural number, with its machine subtraction and
-increment interpreted exactly; the field is still the machine word `lowBitsWord value width`.
-`countLeadingZerosWord_toNat_eq_log2` states the count through `value.toNat % 2 ^ width.toNat`.
+Machine-width leading-zero counting read as a natural number, with its machine subtraction and
+increment given their exact natural-number meaning. The field is still the machine word
+`lowBitsWord value width`, and `countLeadingZerosWord_toNat_eq_log2` states the count through
+`value.toNat % 2 ^ width.toNat`.
 
-The nonzero branch proves that `log2 + 1` is at most the retained field width before interpreting
-the machine subtraction. This is the capacity invariant that rules out unsigned wraparound.
+In the nonzero branch the proof first shows that `log2 + 1` is at most the retained field width, and
+only then interprets the machine subtraction. That capacity invariant is what rules out unsigned
+wraparound.
 -/
 theorem countLeadingZerosWord_toNat
     (value width : UInt64) :

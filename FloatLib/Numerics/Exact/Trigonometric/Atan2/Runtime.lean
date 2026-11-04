@@ -17,15 +17,15 @@ public import FloatLib.Numerics.Exact.Trigonometric.Pi.Runtime
 /-!
 # Exact comparisons for two-coordinate arctangent
 
-The input order is `(x, y)`, giving the principal argument of `x + i*y` in `(-π, π]`. C and MPFR
+We take the input as `(x, y)`, for the principal argument of `x + i*y` in `(-π, π]`. C and MPFR
 write `atan2 (y, x)`, so a wrapper in that convention swaps the coordinates once, before preparing
 the comparator. The point `(-1, 0)` has argument π, which makes `prepareAtan2 (-1) 0` an exact π
-comparator. Ordinary comparisons share reduced arctangent and π enclosures across rounding
+comparator, and ordinary comparisons share reduced arctangent and π enclosures across rounding
 boundaries. Comparisons in units of π use the exact rational quadrant shift and the pi-scaled
 arctangent comparator, including its rational special values.
 
-Both comparators use zero as the value at the origin, matching Mathlib's totalized argument.
-Posit wrappers must reject `(0, 0)` before rounding, as required by the Posit Standard.
+Both comparators use zero as the value at the origin, as Mathlib's totalized argument does, and
+Posit wrappers have to reject `(0, 0)` before rounding, because the Posit Standard requires it.
 
 ## Reference
 

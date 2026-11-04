@@ -12,15 +12,15 @@ public import FloatLib.Numerics.Exact.RationalBinary
 /-!
 # Exact rational rounding
 
-Division produces an exact rational rather than a dyadic. These routines round
-`(num / den) * 2^exponent` directly, using integer quotient rounding and descriptor-derived normal,
-subnormal, and overflow thresholds.
+Division produces an exact rational, which in general is not a dyadic. These routines round
+`(num / den) * 2^exponent` as it stands, using integer quotient rounding and descriptor-derived
+normal, subnormal, and overflow thresholds.
 
-The leading exponent is computed before scaling, and a quotient below half the least subnormal is
-recognized from that exponent alone, so a format with a very wide exponent range does not
-materialize an enormous shifted numerator or denominator. Conventional IEEE descriptors use the
-proof-facing thresholds where convenient; custom biases and finite encodings follow the general
-path with the same one-rounding contract.
+We compute the leading exponent before scaling, and a quotient below half the least subnormal is
+recognized from that exponent alone, so a format with a very wide exponent range never
+materializes an enormous shifted numerator or denominator. Conventional IEEE descriptors use the
+proof-facing thresholds where convenient, and custom biases and finite encodings follow the
+general path with the same one-rounding contract.
 -/
 
 @[expose] public section
@@ -33,20 +33,18 @@ open FloatLib.Numerics
 /-! ## Exact rationals for division -/
 
 /--
-Round exact rational `(num/den) * 2^exponent` in a conventional IEEE descriptor.
+Round the exact rational `(num/den) * 2^exponent` in a conventional IEEE descriptor.
 
-The explicit `isIEEE` proof ensures that the layout-derived bias and exponent bounds agree with
-the descriptor. Use `roundRatScaled` for a custom bias or a finite encoding; it selects the
+The `isIEEE` argument ensures that the layout-derived bias and exponent bounds agree with the
+descriptor. For a custom bias or a finite encoding, use `roundRatScaled`, which selects the
 appropriate rounder from the complete descriptor.
 
-This is the division analogue of `roundDyadic`: the overflow, subnormal, and normal cases are the
-same, and the mantissa is obtained by `roundQuotientEven` instead of the integer
-`roundShiftRightEven`.
-
-The normal-path mantissa scale is `fracWidth - ⌊log₂(num/den)⌋`: the external exponent cancels, so
-wide-exponent formats do not materialize an enormous shifted numerator or denominator. A quotient
-below half the least subnormal returns signed zero before any shift. A zero denominator is not a
-rational value and returns the format's invalid-operation result.
+This is the division analogue of `roundDyadic`, with the same overflow, subnormal, and normal
+cases and a mantissa from `roundQuotientEven` in place of the integer `roundShiftRightEven`. The
+normal-path mantissa scale is `fracWidth - ⌊log₂(num/den)⌋`, in which the external exponent
+cancels, so wide-exponent formats do not materialize an enormous shifted numerator or denominator.
+A quotient below half the least subnormal returns signed zero before any shift. A zero denominator
+is not a rational value and returns the format's invalid-operation result.
 -/
 @[inline] def ieeeRoundRatScaled (fmt : FloatFormat) (sign : Bool) (num den : Nat)
     (exponent : Int) (_hfmt : fmt.isIEEE = true) : Model fmt :=

@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 /-!
 # Native-word addition for generic binary32
 
-The nonzero finite path extracts fields and packs the result with `UInt32` and `UInt64`. Both
-entry points return `none` when either operand is a NaN or infinity, and the caller applies the
-IEEE policy for those. `Addition.Proof` has the proofs.
+On the nonzero finite path, fields are extracted and the result is packed with `UInt32` and
+`UInt64`. Both entry points return `none` when either operand is a NaN or an infinity, and the
+caller applies the IEEE policy for those. `Addition.Proof` has the proofs.
 -/
 
 @[expose] public section

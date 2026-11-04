@@ -12,12 +12,12 @@ import FloatLib.Kernels.FixedWord.CheckedSqrt.Proof
 /-!
 # Compiler certificate for checked four-word square roots
 
-`Internal.rootAndRemainder` proposes the floor root of a four-word radicand from a
-floating-point root and two Newton corrections and accepts it only after an exact four-word square
+`Internal.rootAndRemainder` proposes the floor root of a four-word radicand from a floating-point
+root and two Newton corrections, and it accepts that root only after an exact four-word square
 check. The logical `rootAndRemainder` keeps the restoring loop for such radicands, so no
-floating-point operation appears in a definition the kernel may evaluate. The two agree on every
-input (`Internal.rootAndRemainder_eq` in `CheckedSqrt.Proof`), so `@[csimp]` installs the checked
-path in compiled code. The proof module is imported privately, so executable clients get the
+floating-point operation appears in a definition the kernel may evaluate, and because the two agree
+on every input (`Internal.rootAndRemainder_eq` in `CheckedSqrt.Proof`), `@[csimp]` can install the
+checked path in compiled code. We import the proof module privately, so executable clients get the
 rewrite without re-exporting that development.
 -/
 

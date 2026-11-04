@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 /-!
 # Interval multiply-add with one outward rounding
 
-The product bounds and the addend are combined before rounding either endpoint. A finite
-endpoint format can therefore enclose a small final result even when the intermediate product
-would exceed its range. These operations enclose the real expression `x * y + z`.
+These operations enclose the real expression `x * y + z`, and they combine the product bounds with
+the addend before rounding either endpoint. So a finite endpoint format can enclose a small final
+result even when the intermediate product would exceed its range.
 -/
 
 @[expose] public section

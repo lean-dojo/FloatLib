@@ -14,6 +14,6 @@ public import FloatLib.Numerics.Representations.FixedInt.Semantics.Refinement
 /-!
 # Fixed-width signed integers
 
-The executable two's-complement carrier is accompanied by its numerical-system adapter,
-representation laws, arithmetic correctness theorems, and operation refinements.
+This executable two's-complement carrier comes with its numerical-system adapter, representation
+laws, arithmetic correctness theorems, and operation refinements.
 -/

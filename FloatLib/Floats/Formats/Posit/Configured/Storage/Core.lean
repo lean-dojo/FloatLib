@@ -14,13 +14,14 @@ public import FloatLib.Numerics.Core.Representation
 /-!
 # Static carriers for configured posits
 
-A configured posit descriptor is independent of its persistent representation. `StoragePlan`
-records a carrier and its width bound. `StoragePlan.forKnownWidth` chooses the first fitting
-primitive word or two-limb carrier, using the exact-width model above 128 bits.
+A configured posit descriptor says nothing about how values are stored, and `StoragePlan` fills
+that in with a carrier and its width bound. `StoragePlan.forKnownWidth` picks the first primitive
+word or two-limb carrier that fits, so a 12-bit posit lands in a `UInt16`. Above 128 bits it uses
+the exact-width model.
 
-Storage evidence and subtype bounds are propositions and are erased by Lean. Closed formats
-therefore retain primitive `UInt8`, `UInt16`, `UInt32`, `UInt64`, or two-limb payloads without
-introducing a catalog of named posit types.
+Storage evidence and subtype bounds are propositions, and Lean erases them. So a closed format
+keeps a plain `UInt8`, `UInt16`, `UInt32`, `UInt64`, or two-limb payload at runtime, without a
+catalog of named posit types.
 -/
 
 @[expose] public section

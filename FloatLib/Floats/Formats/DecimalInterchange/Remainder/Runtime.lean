@@ -10,14 +10,14 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Runtime
 /-!
 # Exact decimal remainder
 
-IEEE 754-2019 §5.3.1 uses the nearest integer quotient, with even ties, regardless
-of the current rounding direction. Aligning the integer coefficients at the
-smaller quantum makes the computation exact, even for a quotient too large to
-represent as a decimal floating-point number. The result retains that preferred
-quantum. An exact zero keeps the dividend's sign (§6.3).
+IEEE 754-2019 §5.3.1 defines remainder with the nearest integer quotient, ties to even, whatever
+the current rounding direction. We align the integer coefficients at the smaller quantum, and then
+the computation is exact, even when the quotient is too large to represent as a decimal
+floating-point number. The result keeps that preferred quantum, and an exact zero keeps the
+dividend's sign (§6.3).
 
-The default status has no underflow or inexact flag, including tiny exact
-remainders. Alternate exception handling is outside this pure result API.
+The default status never has an underflow or inexact flag, not even for a tiny exact remainder.
+Alternate exception handling is outside this pure result API.
 -/
 
 @[expose] public section

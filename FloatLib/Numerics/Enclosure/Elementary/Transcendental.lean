@@ -16,14 +16,14 @@ import Mathlib.Data.Nat.Prime.Int
 /-!
 # Exponentials of nonzero rational arguments are transcendental
 
-The elementary rounding kernels also encounter algebraic boundaries, for example when a
-hyperbolic function is written in terms of an exponential. Irrationality alone does not rule
-out equality with those boundaries.
+Some of the boundaries that the elementary rounding kernels meet are algebraic numbers, for example
+when a hyperbolic function is written in terms of an exponential, and irrationality alone doesn't
+rule out equality with those.
 
-The proof uses mathlib’s Lindemann–Weierstrass polynomial approximation at finitely many
-integer roots at once. An assumed integer linear relation between their
-exponentials gives a nonzero integer whose absolute value tends to zero. Applying this to the
-powers in a polynomial proves transcendence.
+The proof uses Mathlib's Lindemann-Weierstrass polynomial approximation at finitely many integer
+roots at once. Suppose there is an integer linear relation between their exponentials. It gives a
+nonzero integer whose absolute value tends to zero, which is impossible. Applying this to the powers
+in a polynomial proves transcendence.
 -/
 
 public section
@@ -34,7 +34,7 @@ open Filter Polynomial
 open scoped Topology BigOperators
 
 /--
-Some prime above any bound makes a weighted Lindemann–Weierstrass error `c ^ p / (p - 1)!` smaller
+Some prime above any bound makes a weighted Lindemann-Weierstrass error `c ^ p / (p - 1)!` smaller
 than one.
 -/
 theorem exists_prime_mul_pow_div_factorial_lt_one (weight c : ℝ) (bound : ℕ) :
@@ -73,7 +73,7 @@ theorem int_mul_add_prime_mul_ne_zero {p : ℕ} (hp : p.Prime) {n a₀ : ℤ} (t
     omega
 
 /--
-The cancellation estimate of the Lindemann–Weierstrass argument, in any normed field: if
+The cancellation estimate of the Lindemann-Weierstrass argument, in any normed field: if
 `a₀ + ∑ a k * x k = 0` and each `n * x k` is within `E` of `p * y k`, then
 `n * a₀ + p * ∑ a k * y k` has norm at most `(∑ ‖a k‖) * E`.
 -/

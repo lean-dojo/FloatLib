@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky
 /-!
 # Correctness of exact-target guard-and-sticky dispatch
 
-The executable capacity test changes representation only. Both branches are proved equal to the
-shared arbitrary-width direct packer.
+The executable capacity test decides which representation the result is computed in, and nothing
+else. We prove that both branches equal the shared arbitrary-width direct packer.
 -/
 
 @[expose] public section

@@ -16,7 +16,10 @@ A theorem concluding that a Boolean test is false, such as the NaN test of a fin
 a branch guard on that test. These checks read the generated statements: a guard that a registered
 theorem refutes from the context leaves one branch, while one it refutes only with an open
 obligation leaves both. A refutation whose premise is an automatic argument, as configured theorems
-take their format proof, is read as the proposition the premise states.
+take their format proof, is read as the proposition the premise states. A registered rule stated
+like a generated theorem whose finiteness part normalization decides is not indexed by that part,
+and a rule whose input premise bounds every entry of the container a read reads is not applied to
+that read.
 -/
 
 @[expose] public section
@@ -88,5 +91,67 @@ example (x : Value) (hformat : format.isIEEE = true) (hx : ExecFloat.Binary.isFi
     square_or_zero_automatic_mixedError x hformat hx
 
 end Automatic
+
+section Index
+
+omit [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] in
+/-- A rule stated like a generated theorem whose finiteness part is its own premise: normalizing
+that part with the premise leaves no equality to index it by. -/
+theorem entry_mixedError (xs : Array Value) (i : Nat) (h : i < xs.size)
+    (hfinite : ExecFloat.Binary.isFinite xs[i] = true) :
+    ExecFloat.Binary.isFinite xs[i] = true ∧
+      MixedError (ExecFloat.Binary.toReal xs[i]) (ExecFloat.Binary.toReal xs[i]) 0 0 :=
+  ⟨hfinite, MixedError.of_eq rfl⟩
+
+attribute [local roundoff_rule] entry_mixedError
+
+/-- Its finiteness part is not indexed, and the mixed analysis of another computation still
+succeeds. -/
+roundoff mixed theorem index_guard_mixedError :=
+  fun (x y : Value) (hformat : format.isIEEE = true) => ExecFloat.Binary.toReal (x + y)
+
+end Index
+
+section Pointwise
+
+/-- The entries of a pair in the other order. -/
+def flip (xs : Vector Value 2) : Vector Value 2 := xs.reverse
+
+omit [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] in
+/-- Entry `i` of a flipped pair is within the budget of entry `i.rev` of its input. -/
+theorem flip_error (xs : Vector Value 2) (reference error : Fin 2 → ℝ)
+    (h : ∀ i : Fin 2, |ExecFloat.Binary.toReal xs[i] - reference i| ≤ error i) (i : Fin 2) :
+    |ExecFloat.Binary.toReal (flip xs)[i] - reference i.rev| ≤ error i.rev := by
+  simpa [flip, Fin.rev] using h i.rev
+
+omit [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] in
+/-- A rule that bounds a read of a vector by a bound on every entry of the same vector. -/
+theorem entry_error (xs : Vector Value 2) (reference error : Fin 2 → ℝ)
+    (h : ∀ i : Fin 2, |ExecFloat.Binary.toReal xs[i] - reference i| ≤ error i) (i : Fin 2) :
+    |ExecFloat.Binary.toReal xs[i] - reference i| ≤ error i :=
+  h i
+
+attribute [local roundoff_rule] flip_error
+
+open Lean Elab Command in
+-- With `entry_error` registered too, the analysis of a flipped pair's sum rejects it at each read
+-- instead of supplying its premise from an analysis of the same read, so it costs about the same.
+run_cmd do
+  let analyze (name : Name) : CommandElabM Nat := do
+    let start ← IO.getNumHeartbeats
+    elabCommand (← `(command| roundoff theorem $(mkIdent name) :=
+      fun (x : Vector Value 2) =>
+        ExecFloat.Binary.toReal ((flip x)[(0 : Fin 2)] + (flip x)[(1 : Fin 2)])))
+    return ((← IO.getNumHeartbeats) - start) / 1000
+  let alone ← analyze `flip_sum_error
+  elabCommand (← `(command| attribute [local roundoff_rule] entry_error))
+  let both ← analyze `flip_sum_entry_error
+  if both > 2 * alone then
+    throwError "flip_sum_entry_error used {both} heartbeats, flip_sum_error {alone}"
+
+/-- Both analyses state the same theorem. -/
+example : @flip_sum_error = @flip_sum_entry_error := rfl
+
+end Pointwise
 
 end FloatLibTests.Conformance.BinaryInterchange.RoundoffGuards

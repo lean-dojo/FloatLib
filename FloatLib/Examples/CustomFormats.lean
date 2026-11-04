@@ -14,14 +14,14 @@ public import FloatLib.Floats.Formats.Posit.Configured
 /-!
 # Custom formats
 
-Suppose a sensor sends 16-bit words that look like binary16 but reserve the all-ones exponent and
-fraction pattern for NaN and have no infinities. How do we compute with those words in Lean,
-and how do we check that a calculation in them is exact? A configured format is an ordinary
-Lean type: we choose its parameters once in an `abbrev`, then use literals, operators, and
-conversions at that type.
+Suppose a sensor sends 16-bit words that look like binary16, except that the all-ones exponent and
+fraction pattern is reserved for NaN and there are no infinities. Computing with those words in
+Lean, and checking that a calculation in them is exact, works as it does for any other format. A
+configured format is an ordinary Lean type, so we choose its parameters once in an `abbrev` and then
+use literals, operators, and conversions at that type.
 
-The four sections below build a custom binary layout, a posit width, a decimal fixed-point grid,
-and a P3109 format. They are independent, and `BasicOperations` introduces the shared interface.
+Four independent sections below build a custom binary layout, a posit width, a decimal fixed-point
+grid, and a P3109 format. `BasicOperations` introduces the interface they share.
 -/
 
 @[expose] public section

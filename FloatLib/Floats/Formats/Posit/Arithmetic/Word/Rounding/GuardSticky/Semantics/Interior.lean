@@ -14,10 +14,10 @@ import Mathlib.Tactic.NormNum.Inv
 /-!
 # Correctness of interior guard-and-sticky Posit rounding
 
-Lower-candidate semantics and the one-bit-wider threshold connect the shared guard/sticky
-decision theorem to direct field rounding. The resulting refinement states that direct field
-rounding agrees with the standard appended-bit rounding specification for both positive and
-negative regimes.
+Here the shared guard/sticky decision theorem meets direct field rounding. Lower-candidate
+semantics and the one-bit-wider threshold connect the two, and the resulting refinement says that
+direct field rounding agrees with the standard appended-bit rounding specification in positive and
+negative regimes alike.
 -/
 
 @[expose] public section
@@ -29,9 +29,10 @@ open FloatLib.Numerics
 /-!
 ## Rational midpoint semantics
 
-Rational targets need not be dyadic. A finite stream can nevertheless determine their rounded
-code when its comparisons with the stream midpoint agree with the target's comparisons with the
-standard one-bit-wider threshold. The theorem below states those two order equivalences.
+A rational target need not be dyadic, a quotient like 1/3 for instance. A finite stream can
+determine its rounded code anyway, provided the stream compares with its midpoint the same way the
+target compares with the standard one-bit-wider threshold. That pair of order equivalences is
+the theorem below.
 -/
 
 /--
@@ -118,10 +119,10 @@ theorem roundInteriorCode_eq_rationalMidpointDecision
 /-!
 ## Interior rounding
 
-The preceding layout and semantic lemmas identify both adjacent encoded values and their
-one-bit-wider rounding threshold. The helper below shares the positive- and negative-regime
-argument: a complete stream is already exact, while a truncated stream is decided solely by its
-guard, sticky, and retained parity bits.
+The layout and semantic lemmas above pin down both adjacent encoded values and their one-bit-wider
+rounding threshold. The helper below carries the argument for positive and negative regimes at
+once. A complete stream is already exact, and a truncated stream is decided by its guard, sticky,
+and retained parity bits alone.
 -/
 
 private theorem roundInteriorCode_eq_chooseNearest_of_semantics
@@ -327,8 +328,8 @@ theorem roundInteriorCode_eq_chooseNearest_positive
 /--
 Direct guard/sticky rounding in an interior negative regime selects the exact nearest-even code.
 
-The proof is shared with the positive-regime theorem; only the tapered regime layout and retained
-payload count differ.
+The proof is shared with the positive-regime theorem, and the two differ in the tapered regime
+layout and the retained payload count alone.
 -/
 theorem roundInteriorCode_eq_chooseNearest_negative
     (format : Format) (targetExponent regime : Int)
@@ -438,7 +439,7 @@ theorem roundInteriorCode_eq_roundPositiveCode_positive
 Interior negative-regime guard/sticky rounding is the complete exact-dyadic positive rounder.
 
 This is the tapered-layout counterpart of
-`roundInteriorCode_eq_roundPositiveCode_positive`; both expose the same format-independent
+`roundInteriorCode_eq_roundPositiveCode_positive`, and both expose the same format-independent
 semantic boundary to native-word and fixed-limb kernels.
 -/
 theorem roundInteriorCode_eq_roundPositiveCode_negative

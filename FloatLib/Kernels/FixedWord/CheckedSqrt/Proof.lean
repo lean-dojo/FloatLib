@@ -17,8 +17,8 @@ public import Mathlib.Data.Nat.Sqrt
 # Correctness of checked square roots
 
 An accepted candidate is the floor square root with its exact remainder (`checkRoot?_spec`,
-`acceptRootWide?_spec`), and `rootAndRemainder` and `Internal.rootAndRemainder` equal the
-restoring loop on every input.
+`acceptRootWide?_spec`). Both `rootAndRemainder` and `Internal.rootAndRemainder` equal the restoring
+loop on every input, which is what the compiler substitution in `CheckedSqrt.Compiler` relies on.
 -/
 
 @[expose] public section

@@ -10,9 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Remainder.Proof
 /-!
 # Midpoint parity of the delivered remainder
 
-The exact-value identity and half-divisor bound establish the nearest integer
-quotient. If the returned remainder has half the divisor's magnitude, the quotient
-in the exact-value identity is even.
+The exact-value identity and the half-divisor bound make the quotient a nearest integer, and this
+file handles the tie. If the returned remainder has half the divisor's magnitude, the quotient in
+the exact-value identity is even, as with `7` by `2`, where the remainder `-1` goes with the even
+quotient `4`.
 -/
 
 @[expose] public section
@@ -20,7 +21,7 @@ in the exact-value identity is even.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
-/-- If a finite delivered remainder has exactly half the divisor's magnitude, its quotient is even.
+/-- If a finite delivered remainder has half the divisor's magnitude, its quotient is even.
 A zero divisor gives a NaN, so a finite result has a nonzero divisor. -/
 theorem remainder_even_at_midpoint (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : Int)
     (v : ℚ)

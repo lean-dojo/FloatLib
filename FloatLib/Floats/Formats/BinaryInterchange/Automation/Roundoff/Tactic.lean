@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Anal
 /-!
 # The `roundoff` tactic
 
-The tactic decodes an exact equality, derives an absolute or mixed error bound, or proves a
+`roundoff` decodes an exact equality, derives an absolute or mixed error bound, or proves a
 finiteness, decoded-value or sign property of a computed result. Container reads are normalized
 first, loops are written as their registered traversals, and the obligations the analysis leaves
-become goals. A mixed or property target keeps one goal per proposition (`deduplicate`); an
+become goals. A mixed or property target keeps one goal per proposition (`deduplicate`), while an
 absolute-error target lists its obligations as they arose, possibly with repeats. A generated
 theorem states each condition once.
 -/
@@ -102,7 +102,7 @@ def signedValue? (target : Lean.Expr) : Option Lean.Expr :=
     else if right.nat? == some 0 then some left else none
   else none
 
-/-- Keep one goal per proposition and local context; later duplicates are closed by the first. -/
+/-- Keep one goal per proposition and local context. Later duplicates are closed by the first. -/
 def deduplicate (goals : List MVarId) : MetaM (List MVarId) := do
   let mut kept : Array (MVarId × Lean.Expr) := #[]
   for goal in goals do
@@ -160,8 +160,8 @@ def signByCalls? (session : Session) (target : Lean.Expr) :
     ← instantiateMVars sign])
 
 /-- Prove a property target by mixed analysis, returning the obligations it leaves. Finiteness
-and range conditions concern the inputs; a mixed bound's budget comparison and a strict sign's
-margin remain goals when they are not proved. -/
+and range conditions concern the inputs. A mixed bound's budget comparison and a strict sign's
+margin stay goals when they are not proved. -/
 def proveProperty (session : Session) (property : Property) (goal : MVarId) :
     TacticM (List MVarId) := goal.withContext do
   let session ← session.index (mixed := true)
@@ -379,7 +379,7 @@ def relaxMinimum (session : Session) (goal : MVarId) : TacticM Bool := goal.with
     return some ()
   return closed?.isSome
 
-/-- The `roundoff` tactic. Conjunctions are split and each conjunct is proved separately. -/
+/-- The `roundoff` tactic. Conjunctions are split and each conjunct gets its own proof. -/
 partial def roundoffTactic : TacticM Unit := do
   -- A goal that `have` leaves wraps its statement in metadata, which the classification of the
   -- target would not see through.

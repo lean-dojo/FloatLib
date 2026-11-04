@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
 /-!
 # Correctness of the standard posit quire model
 
-The standard quire model has raw-word round-trip laws, an exact characterization of the reserved
-NaR word, ordinary coefficient bounds, and rational semantics for integer dyadic conversion.
+We prove four kinds of fact about the standard quire model here: raw words round-trip, the
+reserved NaR word gets an exact characterization, ordinary coefficients are bounded, and integer
+dyadic conversion has rational semantics.
 
 ## References
 
@@ -173,7 +174,7 @@ theorem ordinaryCoefficient_of_natAbs_lt
   · exact lt_of_lt_of_le (neg_lt_neg hcast) hlower
   · omega
 
-/-- Encoding an ordinary coefficient preserves it exactly. -/
+/-- Encoding an ordinary coefficient and reading it back gives the same coefficient. -/
 theorem coefficient_ofCoefficient_of_ordinary
     {value : Int} (hvalue : OrdinaryCoefficient format value) :
     (ofCoefficient format value).coefficient = value := by

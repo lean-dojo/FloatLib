@@ -12,13 +12,13 @@ public import Mathlib.Order.Compare
 /-!
 # Quotient and offset comparisons in ordered fields
 
-Comparing a quotient with a boundary is equivalent to testing a linear residual against zero.
-A negative denominator reverses the ordering. These identities let interval-based comparisons
-use subtraction and multiplication without constructing quotient intervals.
+Comparing a quotient with a boundary is the same as testing a linear residual against zero, with the
+ordering reversed for a negative denominator. These identities let interval-based comparisons use
+subtraction and multiplication without building quotient intervals.
 
-Comparing `x - c` with a boundary is comparing `x` with the boundary plus `c`. The `Minus1`
-functions use this to compare an unrounded value with shifted boundaries, so the subtraction is
-never rounded on its own.
+Comparing `x - c` with a boundary is comparing `x` with the boundary plus `c`. Functions named
+`Minus1` use this to compare an unrounded value with shifted boundaries, so the subtraction is never
+rounded on its own.
 -/
 
 public section

@@ -12,17 +12,17 @@ public import FloatLib.Numerics.IEEEStatus
 /-!
 # IEEE exception status for format-parameterized `Model`
 
-The value operations are pure and take their rounding mode as an argument. This module pairs
+Value operations are pure and take their rounding mode as an argument, and this module pairs
 their results with the five IEEE exception indicators and a ternary value. Tininess is detected
-after rounding, and underflow is raised exactly when a tiny result is inexact.
+after rounding. Underflow is raised just when a result is both tiny and inexact.
 
 Overflow is classified from the precision-rounded result with an unbounded exponent range, as in
 IEEE 754-2019 §7.4 and the GNU MPFR manual's exception definition:
 <https://doi.org/10.1109/IEEESTD.2019.8766229> and
 <https://www.mpfr.org/mpfr-current/mpfr.html#Exceptions>.
 
-The ternary value follows MPFR's return-value convention
-(<https://www.mpfr.org/mpfr-current/mpfr.html#Rounding-Modes>): it compares the delivered value
+For the ternary value we follow MPFR's return-value convention
+(<https://www.mpfr.org/mpfr-current/mpfr.html#Rounding-Modes>). It compares the delivered value
 with the exact result, so `.lt` means the delivered value is below it. Each producer computes it
 by an exact comparison with the exact witness its status uses, and integral rounding compares with
 its input, as `mpfr_rint` does. For the producers built on `dyadicRoundingOutcome` and
@@ -32,7 +32,7 @@ threshold, reads the inexact flag from it (`dyadicRoundingOutcome_eq_internal`,
 comparison (`sqrt_inexact_iff`). Only integral rounding computes `inexact` apart from its
 ternary value.
 
-The arithmetic producers are the status kernels `Model.Internal.Status.add` through
+Arithmetic producers are the status kernels `Model.Internal.Status.add` through
 `Model.Internal.Status.sqrt`, and user code calls them as `Model.add x y (status := true)` and its
 siblings in `Arithmetic.Runtime`. Results without an exact real counterpart have fixed
 conventions, documented at `IEEEOutcome.ternary`.
@@ -56,19 +56,21 @@ structure IEEEOutcome (fmt : FloatFormat) where
   The delivered value compared with the exact result, as MPFR's ternary value: `.lt` when the
   delivered value is below the exact result, `.eq` when they are equal, `.gt` when it is above.
 
-  Results that have no exact real counterpart follow fixed conventions. A NaN from a NaN operand
-  or an invalid operation, an exceptional placeholder such as the positive zero that a fully
-  finite format delivers for an invalid operation, and an infinity that is itself the exact result
-  all have `.eq`. A finite exact value delivered as an overflow infinity has `.gt` when it is
-  positive and `.lt` when it is negative. The NaN that replaces the infinity in a format without
-  one gets the same value by convention. An exact infinity delivered as a saturated finite value
-  has `.lt` for `+∞` and `.gt` for `-∞`, and so, by convention, has an exact infinity delivered as
-  that overflow NaN. These NaN conventions do not order the NaN itself.
+  Results with no exact real counterpart follow fixed conventions:
 
-  The structure does not tie inexactness to a nonzero ternary value. A saturated integral
-  rounding can return its own input with `inexact` raised, and a division by zero that delivers a
-  saturated value raises only `divideByZero`, so any relation between the two holds only for
-  particular operations.
+  * `.eq` for a NaN from a NaN operand or an invalid operation, for an exceptional placeholder
+    such as the positive zero that a fully finite format delivers for an invalid operation, and
+    for an infinity that is itself the exact result.
+  * `.gt` for a positive finite exact value delivered as an overflow infinity, and `.lt` for a
+    negative one. By convention the NaN that replaces the infinity in a format without one gets
+    the same value.
+  * `.lt` for `+∞` and `.gt` for `-∞` when an exact infinity is delivered as a saturated finite
+    value, and by convention also when it is delivered as that overflow NaN.
+
+  These NaN conventions do not order the NaN itself. Nor does the structure tie inexactness to a
+  nonzero ternary value. A saturated integral rounding can return its own input with `inexact`
+  raised, and a division by zero that delivers a saturated value raises only `divideByZero`, so
+  any relation between the two holds only for particular operations.
   -/
   ternary : Ordering
   deriving DecidableEq
@@ -135,10 +137,10 @@ exponent range.
 Most tiny results show up as zero or subnormal encodings. A result delivered as `minNormal`
 needs a mode-sensitive boundary:
 
-* both nearest modes use the midpoint between `minNormal` and its unbounded-grid predecessor,
-  which itself rounds to `minNormal`;
-* a direction that rounds the magnitude up is tiny up to and including that predecessor;
-* a direction that truncates the magnitude is tiny for every magnitude strictly below `minNormal`.
+* Both nearest modes use the midpoint between `minNormal` and its unbounded-grid predecessor,
+  which itself rounds to `minNormal`.
+* A direction that rounds the magnitude up is tiny up to and including that predecessor.
+* A direction that truncates the magnitude is tiny for every magnitude strictly below `minNormal`.
 -/
 def dyadicIsTinyAfterRounding (fmt : FloatFormat) (mode : IEEERoundingMode)
     (exact : Numerics.Dyadic) (rounded : Model fmt) : Bool :=
@@ -170,8 +172,8 @@ def dyadicMagnitudeOverflows (fmt : FloatFormat) (exact : Numerics.Dyadic) : Boo
 /--
 Positive midpoint between the largest finite value and the next magnitude on the same binary grid.
 
-Nearest-even overflow is decided at this boundary. The midpoint itself overflows exactly when the
-largest finite significand is odd, because the conceptual next significand is then even.
+Nearest-even overflow is decided at this boundary. The midpoint itself overflows if and only if
+the largest finite significand is odd, because the conceptual next significand is then even.
 -/
 def overflowMidpoint (fmt : FloatFormat) : Numerics.Dyadic :=
   let maximum := maxFiniteDyadic fmt
@@ -262,12 +264,12 @@ def dyadicRoundingStatus (fmt : FloatFormat) (mode : IEEERoundingMode) (exact : 
 /--
 Ternary value of delivering `rounded` for the exact dyadic result `exact`.
 
-A finite delivery is compared exactly with `exact` by `cmpDyadic`, the bounded comparison that
+A finite delivery is compared with `exact` by `cmpDyadic`, the exact bounded comparison that
 `dyadicRoundingStatus` uses for inexactness. A non-finite delivery stands for the overflow of a
-finite exact value and gets the sign of `exact`: `.gt` for a positive and `.lt` for a negative
-value. For an infinity of the sign of `exact`, which is what an overflowing rounding delivers, this
-is the order. For any other non-finite argument, such as the NaN that replaces the infinity in a
-format without one, it is only the convention of `IEEEOutcome.ternary`.
+finite exact value and gets the sign of `exact`, so `.gt` for a positive and `.lt` for a negative
+value. For an infinity of the sign of `exact`, which an overflowing rounding delivers, that is the
+true order. For any other non-finite argument, such as the NaN that replaces the infinity in a
+format without one, it is the convention of `IEEEOutcome.ternary` and nothing more.
 -/
 def dyadicTernary {fmt : FloatFormat} (exact : Numerics.Dyadic) (rounded : Model fmt) :
     Ordering :=
@@ -296,10 +298,10 @@ The status and the ternary value of delivering `value` for `exact`, from one com
 
 A finite delivery is decoded once and compared with `exact` once, and that comparison is the
 ternary value of `dyadicTernary`. In the finite branch without overflow, inexactness is its
-difference from `.eq`: `dyadicRoundingStatus` compares in the other orientation, and the two tests
-agree by `cmpDyadic_swap`. The overflow test still comes first in the status and raises `inexact`
-by itself, the non-finite branch is that of `dyadicRoundingStatus` and `dyadicTernary`, and
-tininess is computed only for an inexact result.
+difference from `.eq`. `dyadicRoundingStatus` compares in the other orientation, and the two tests
+agree by `cmpDyadic_swap`. The overflow test comes first in the status and raises `inexact` by
+itself. The non-finite branch is that of `dyadicRoundingStatus` and `dyadicTernary`, and tininess
+is computed only for an inexact result.
 -/
 def Internal.Status.dyadicRoundingClassification (fmt : FloatFormat) (mode : IEEERoundingMode)
     (exact : Numerics.Dyadic) (value : Model fmt) : Numerics.IEEEStatus × Ordering :=
@@ -525,11 +527,11 @@ def rationalRoundingStatusScaled (fmt : FloatFormat) (mode : IEEERoundingMode) (
 Ternary value of delivering `rounded` for the exact signed rational
 `±(numerator / denominator) * 2^exponent`, where `sign` is the sign.
 
-A finite delivery is compared exactly with the rational by `compareDyadicScaled?`, the comparison
-that `rationalRoundingStatusScaled` uses for inexactness, with its orientation reversed: that
-comparator orders the rational before the delivered value. A non-finite delivery gets the sign,
-as in `dyadicTernary`. With a zero denominator, which no operation passes, a finite delivery gives
-`.eq`.
+A finite delivery is compared with the rational by `compareDyadicScaled?`, the exact comparison
+that `rationalRoundingStatusScaled` uses for inexactness, with its orientation reversed because
+that comparator orders the rational before the delivered value. A non-finite delivery gets the
+sign, as in `dyadicTernary`. With a zero denominator, which no operation passes, a finite delivery
+gives `.eq`.
 -/
 def rationalTernaryScaled {fmt : FloatFormat} (sign : Bool) (numerator denominator : Nat)
     (exponent : Int) (rounded : Model fmt) : Ordering :=
@@ -564,9 +566,9 @@ comparison.
 A finite delivery is decoded once and compared with the rational by `compareDyadicScaled?` once.
 Inexactness is whether that comparison differs from `some .eq`, as in
 `rationalRoundingStatusScaled`, and the ternary value reverses its orientation, as in
-`rationalTernaryScaled`. Inexactness is not read off the ternary value: with a zero denominator the
-comparator returns `none`, which is inexact and still has the ternary value `.eq`. The overflow
-test still comes first in the status, the non-finite branch is that of both classifiers, and
+`rationalTernaryScaled`. Inexactness is not read off the ternary value, because with a zero
+denominator the comparator returns `none`, which is inexact but has the ternary value `.eq`. The
+overflow test comes first in the status, the non-finite branch is that of both classifiers, and
 tininess is computed only for an inexact result.
 -/
 def Internal.Status.rationalRoundingClassificationScaled (fmt : FloatFormat)
@@ -745,9 +747,9 @@ Finite operands compare the delivered value with the exact dyadic `x * y + z`. A
 operand gives an exact infinity or a NaN, with the ternary value `.eq`.
 
 IEEE 754-2019 Section 7.2 leaves it implementation defined whether `fma(0, ∞, c)` signals invalid
-when `c` is a quiet NaN. This implementation signals invalid for that case: the invalid product
-`0 × ∞` is reported whether or not the addend is a quiet NaN, whereas `add` and `mul` only
-report an operand-generated invalid operation when no operand is a NaN.
+when `c` is a quiet NaN. This implementation signals invalid in that case. It reports the invalid
+product `0 × ∞` whether or not the addend is a quiet NaN, while `add` and `mul` report an
+operand-generated invalid operation only when no operand is a NaN.
 -/
 def fma {fmt : FloatFormat} (x y z : Model fmt)
     (mode : IEEERoundingMode) : IEEEOutcome fmt :=
@@ -777,9 +779,9 @@ end Internal.Status
 /--
 Ternary value of delivering `rounded` for the square root of the nonnegative dyadic `radicand`.
 
-For nonnegative `a` and `b`, `a < √b` holds exactly when `a * a < b`, and likewise for equality.
-So the delivery, which is the rounded root, is decoded once and squared exactly, and the square is
-compared with `radicand`: the comparison is exact and never evaluates the square root of
+For nonnegative `a` and `b`, `a < √b` holds if and only if `a * a < b`, and likewise for equality.
+So the delivery, which is the rounded root, is decoded once and squared without rounding, and the
+square is compared with `radicand`. The comparison is exact and never evaluates the square root of
 `radicand`. It is meaningful only for a nonnegative radicand and a nonnegative delivery, which
 `Internal.Status.sqrt` ensures before calling it. A non-finite delivery gets `.gt`, the overflow
 convention of `dyadicTernary` for a positive exact value.
@@ -829,20 +831,21 @@ kernel of `Model.sqrt x (mode := mode) (status := true)`.
 
 A NaN raises invalid only when it is signaling. Among the other inputs with a set sign bit, a
 zero raises nothing and every other value raises invalid. An input with a clear sign bit is
-decoded once: `+∞` and `+0` raise nothing, and a positive finite input compares the delivered root
-through its exact square with `dyadicSqrtTernary`. That comparison is the ternary value, and
-the result is inexact exactly when it is not `.eq`, that is, when the delivered value is not the
-real square root (`sqrt_inexact_iff`). Tininess is tested only for an inexact result:
-a zero or subnormal delivery is tiny, and otherwise `dyadicSqrtIsTinyAfterRounding`
-decides. That comparison is skipped when `fmt.fracWidth + 1 < fmt.exponentBias`, because then the
-least positive radicand already exceeds the square of every boundary
-(`dyadicSqrtIsTinyAfterRounding_eq_false`). NaNs, zeros, `+∞`, and the invalid square
-root of a negative value have the ternary value `.eq`. `sqrt_status_of_toDyadic` and its
-siblings restate the outcome case by case.
+decoded once. Then `+∞` and `+0` raise nothing, and a positive finite input compares the delivered
+root through its exact square with `dyadicSqrtTernary`. That comparison is the ternary value, and
+the result is inexact if and only if it is not `.eq`, that is, when the delivered value is not
+the real square root (`sqrt_inexact_iff`).
 
-A module that calls it with a closed format compiles a copy specialized to that descriptor term by
-`@[specialize fmt]` (calls that spell the same descriptor alike share it), and other callers run the
-compiled generic body.
+Tininess is tested only for an inexact result. A zero or subnormal delivery is tiny, and otherwise
+`dyadicSqrtIsTinyAfterRounding` decides. That comparison is skipped when
+`fmt.fracWidth + 1 < fmt.exponentBias`, because then the least positive radicand already exceeds
+the square of every boundary (`dyadicSqrtIsTinyAfterRounding_eq_false`). NaNs, zeros, `+∞` and
+the invalid square root of a negative value have the ternary value `.eq`.
+`sqrt_status_of_toDyadic` and its siblings restate the outcome case by case.
+
+A module that calls it with a closed format compiles a copy specialized to that descriptor term
+by `@[specialize fmt]`, and calls that spell the same descriptor alike share it. Other callers run
+the compiled generic body.
 -/
 @[specialize fmt] def sqrt {fmt : FloatFormat} (x : Model fmt)
     (mode : IEEERoundingMode) : IEEEOutcome fmt :=

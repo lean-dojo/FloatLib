@@ -13,9 +13,8 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 # Binary adapter for format-independent interval arithmetic
 
 The generic finite interval API uses exact rational decoding and directed binary rounding.
-It returns `none` if an endpoint is exceptional or no finite enclosure is produced. The richer
-`Binary.Interval` operations remain available when an IEEE whole-range infinity fallback is
-desired instead.
+It returns `none` if an endpoint is exceptional or no finite enclosure is produced. When you want
+an IEEE whole-range infinity fallback, the richer `Binary.Interval` operations are there.
 -/
 
 @[expose] public section
@@ -30,7 +29,7 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 /--
 Checked finite outward rounding for the configured binary carrier, including finite encodings.
 
-Directed model rounding supplies candidates; exact rational comparisons certify the accepted
+Directed model rounding supplies candidates. Exact rational comparisons certify the accepted
 enclosure and reject inappropriate saturation at the range boundary.
 -/
 def intervalRounding :

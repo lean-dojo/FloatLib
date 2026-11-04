@@ -16,10 +16,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # Binary-interchange inspection command
 
-Resolve configured, descriptor, static-byte, and proof-model carriers for `#float_info`.
-Their reports share the descriptor profile in `Info.Profile`, which chooses rounding entries and
-theorem groups by carrier. Storage, the planning policy, and the installed operations come from
-the elaborated type and its instances.
+This module resolves configured, descriptor, static-byte, and proof-model carriers for
+`#float_info`. Their reports share the descriptor profile in `Info.Profile`, which chooses rounding
+entries and theorem groups by carrier. Storage, the planning policy, and the installed operations
+come from the elaborated type and its instances.
 -/
 
 @[expose] public section

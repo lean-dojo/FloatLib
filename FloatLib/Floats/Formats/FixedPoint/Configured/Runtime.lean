@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Quantization.Deterministic
 /-!
 # Executable exact fixed-point operations
 
-Same-scale addition, negation, and subtraction are exact. Multiplication composes the two scales
-in its result type rather than silently selecting a rounding policy.
+Same-scale addition, negation, and subtraction never round. Multiplication composes the two
+scales in its result type, so two values with two fractional digits each multiply to a value with
+four, and no rounding policy gets chosen silently.
 -/
 
 @[expose] public section

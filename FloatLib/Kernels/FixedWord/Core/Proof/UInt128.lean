@@ -19,13 +19,11 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified two-word values and exact wide multiplication
 
-The natural-number meaning of `UInt128` is injective, and the native `64 × 64 → 128`
-multiplication kernel computes the full product in two 64-bit output limbs. Neither fact depends
-on a floating-point family, so multiplication, division, and square-root backends share the same
-native/arbitrary-precision boundary.
-
-Later proofs reason about the mathematical value of the pair instead of reopening carry code at
-every use site.
+Two facts carry most of the two-word reasoning. The natural-number meaning of `UInt128` is
+injective, and the native `64 × 64 → 128` multiplication kernel computes the full product in two
+64-bit output limbs. Neither depends on a floating-point family, so the multiplication, division,
+and square-root backends all share one native/arbitrary-precision boundary, and later proofs can
+reason about the mathematical value of the pair without reopening the carry code at every use site.
 -/
 
 @[expose] public section

@@ -14,21 +14,21 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Shortest decimal text of binary values
 
-The display of a finite binary value is normally the shortest decimal that reads back as the same
-value.
-A value whose exact decimal has at most `d` significant digits, where `d` digits always identify
-a value of the format (17 for binary64, 9 for binary32, 5 for binary16, 4 for bfloat16), prints
-exactly instead, so `65504` stays `65504` in binary16 and `3.75` stays `3.75` in an 8-bit format.
+A finite binary value normally prints as the shortest decimal that reads back as the same value.
+Short exact values are the exception. A value whose exact decimal has at most `d` significant
+digits, where `d` digits always identify a value of the format (17 for binary64, 9 for binary32,
+5 for binary16, 4 for bfloat16), prints that exact decimal instead, so `65504` stays `65504` in
+binary16 and `3.75` stays `3.75` in an 8-bit format.
 
 The digits come from exact integer arithmetic on the interval of decimals that round to the value.
-The coarsest decimal grid `10^q` meeting that interval is found by starting from its width and
-climbing, and the grid point nearest to the value is chosen, ties to even. The candidate is then
-converted by the parser's own decimal conversion. It is printed only if that conversion returns the
-value, and otherwise the exact decimal expansion is printed, so reading the text back returns the
-value by construction (`Model.parse_format_of_isFinite`).
+We find the coarsest decimal grid `10^q` meeting that interval by starting from its width and
+climbing, and choose the grid point nearest to the value, ties to even. The parser's own decimal
+conversion then converts the candidate. It is printed only if that conversion returns the value,
+and otherwise the exact decimal expansion is printed, so reading the text back returns the value
+by construction (`Model.parse_format_of_isFinite`).
 
-Fixed notation is used from `0.0001` up to `10^d`, and smaller and larger values use one leading
-digit and an `e` exponent.
+Fixed notation covers `0.0001` up to `10^d`. Smaller and larger values use one leading digit and
+an `e` exponent.
 -/
 
 @[expose] public section
@@ -58,7 +58,7 @@ structure Range where
 The range of magnitudes that round in `mode` to the value `significand * 2^exponent`.
 
 Neighbors lie one unit `2^exponent` away, except below the first value of a binade, where the
-step is half as large (`binadeBottom`). Nearest-even includes both midpoints exactly when the
+step is half as large (`binadeBottom`). Nearest-even includes both midpoints if and only if the
 significand is even, and the directed modes take the half-open gap on the side they round from.
 -/
 def range (mode : IEEERoundingMode) (negative : Bool) (significand : Nat) (exponent : Int)

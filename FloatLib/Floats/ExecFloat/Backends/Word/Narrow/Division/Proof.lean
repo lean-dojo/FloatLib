@@ -14,12 +14,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Quotient.Proof
 /-!
 # Correctness of native-word division for binary32
 
-These proofs connect the native logarithm, quotient rounding and finite divider to the generic
-exact-rational specification. Runtime clients can import `Division.Runtime` without them.
+These proofs connect the native logarithm, quotient rounding, and finite divider to the generic
+exact-rational specification. `Division.Runtime` can be imported without them.
 
-For significands below `2^24` the scaling shifts and rounded quotient fit in `UInt64`, and those
-bounds connect native quotient-and-remainder rounding to exact rational rounding, with ties,
-subnormal results and overflow included.
+For significands below `2^24`, the scaling shifts and the rounded quotient fit in `UInt64`, and
+those bounds connect native quotient-and-remainder rounding to exact rational rounding, with ties,
+subnormal results, and overflow included.
 -/
 
 @[expose] public section

@@ -17,7 +17,7 @@ public meta import Mathlib.Util.Qq
 /-!
 # Finite aggregates for interval reification
 
-Concrete finite sums and norms are expanded into scalar arithmetic with equality certificates.
+We expand concrete finite sums and norms into scalar arithmetic with equality certificates.
 Splitting `Fin` and range sums in halves keeps the resulting additions balanced.
 -/
 
@@ -99,7 +99,7 @@ def expandAggregateSum (e : Lean.Expr) : MetaM (Option Simp.Result) := do
     if error.isInterrupt || error.isRuntime then throw error
     return none
 
-/-- Expand a nonnegative finite supremum; coercions then expose real maxima. -/
+/-- Expand a nonnegative finite supremum. Coercions then expose real maxima. -/
 def expandAggregateSup (e : Lean.Expr) : MetaM (Option Simp.Result) := do
   let .const ``Finset.sup [_, u] := e.getAppFn | return none
   let #[_, αExpr, _, _, sExpr, fExpr] := e.getAppArgs | return none
@@ -179,7 +179,7 @@ def decideAggregateGuard? (p : Lean.Expr) : MetaM (Option Lean.Expr) := do
     if error.isInterrupt || error.isRuntime then throw error
     return none
 
-/-- Scalar coercions preserve arithmetic; truncated subtraction becomes a maximum. -/
+/-- Scalar coercions preserve arithmetic, and truncated subtraction becomes a maximum. -/
 def aggregateScalarTheorems : MetaM SimpTheorems := do
   let names := #[
     ``NNReal.coe_zero, ``NNReal.coe_one, ``NNReal.coe_natCast, ``NNReal.coe_ofNat,

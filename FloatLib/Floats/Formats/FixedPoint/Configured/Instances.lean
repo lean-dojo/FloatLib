@@ -13,8 +13,9 @@ public import FloatLib.Floats.ExecFloat.Core.Capability
 /-!
 # Literal and dispatch instances for exact fixed point
 
-Literals use exact integer embedding or one rational ties-to-even rounding step. Same-scale
-addition and subtraction dispatch to their certified direct kernels.
+A natural-number literal lands on the grid with no rounding. A decimal or scientific literal takes
+one rational rounding step, ties to even, so `2.5` with no fractional digits becomes `2`.
+Same-scale addition and subtraction dispatch to their certified direct kernels.
 -/
 
 @[expose] public section
@@ -28,7 +29,7 @@ variable {radix : Radix} {fractionalDigits : Nat}
 instance : Neg (ExecFloat.FixedPoint radix fractionalDigits) where
   neg := FixedPoint.neg
 
-/-- Natural literals are embedded exactly into the configured fixed-point grid. -/
+/-- Natural literals land on the configured fixed-point grid with no rounding. -/
 instance (value : Nat) :
     OfNat (ExecFloat.FixedPoint radix fractionalDigits) value where
   ofNat :=

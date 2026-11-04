@@ -11,12 +11,12 @@ module
 # Backend-selection metadata
 
 Candidate metadata records the operation, storage shape, algorithm family, warm and cold costs,
-allocations, and memory use. It is deliberately format-independent so binary, posit, and future
-families can report plans through one interface.
+allocations, and memory use. It doesn't depend on a format, so binary, posit, and later families can
+report plans through one interface.
 
-Estimates do not establish numerical correctness or eligibility. The family supplies eligible
-candidates with refinement proofs; selection and inspection use this metadata to compare their
-estimated costs.
+Estimates say nothing about numerical correctness or eligibility. The family supplies eligible
+candidates with refinement proofs, and selection and inspection use this metadata only to compare
+their estimated costs.
 -/
 
 @[expose] public section
@@ -131,8 +131,8 @@ inductive KernelClass where
   /--
   Family-defined algorithm class.
 
-  The label is shown by inspection tools. `tieRank` is used only after equal total scores; custom
-  ranks start at seven, above every built-in class.
+  The label is shown by inspection tools. `tieRank` is used only after equal total scores, and
+  custom ranks start at seven, above every built-in class.
   -/
   | custom (label : String) (tieRank : Nat)
   deriving DecidableEq, Repr
@@ -170,12 +170,12 @@ end KernelClass
 Static engineering estimate for one certified candidate.
 
 All work units are relative and family-calibrated. `steadyCost`, `marshallingCost`, `allocations`,
-and `temporaryBytes` estimate one warm call. Marshalling covers carrier-to-working-representation
-conversion and repacking of the result; keeping it separate prevents a fast arithmetic kernel
-behind expensive `Nat` or proof-model conversion from appearing artificially cheap.
+and `temporaryBytes` estimate one warm call. Marshalling covers conversion from the carrier to the
+working representation and repacking of the result. We count it on its own so that a fast arithmetic
+kernel behind an expensive `Nat` or proof-model conversion doesn't look artificially cheap.
 
 `setupCost` and `setupAllocations` estimate one-time initialization such as lazy table generation.
-`residentBytes` and `temporaryBytes` also participate in hard memory limits.
+`residentBytes` and `temporaryBytes` also take part in hard memory limits.
 -/
 structure Candidate where
   /-- Stable family-defined name shown by inspection and benchmark tools. -/

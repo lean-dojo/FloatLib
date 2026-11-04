@@ -12,8 +12,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
 # Executable normalization for directed dyadic rounding
 
 These helpers scale a positive mantissa to a requested leading-bit position. Downward
-normalization discards low bits, while upward normalization rounds them toward positive infinity
-and may carry into the next bit.
+normalization drops the low bits. Upward normalization rounds them toward positive infinity and
+may carry into the next bit.
 -/
 
 @[expose] public section

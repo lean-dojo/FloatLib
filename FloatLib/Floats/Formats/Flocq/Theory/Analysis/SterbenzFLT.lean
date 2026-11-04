@@ -13,14 +13,13 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Error.Multiplication
 /-!
 # Sterbenz's Lemma for Gradual Underflow
 
-Sterbenz exact subtraction extends from the unbounded-exponent family `FLX` to the
-gradual-underflow family `FLT`. The latter is the format used by the rounded-real binary32
-model.
+Sterbenz exact subtraction carries over from the unbounded-exponent family `FLX` to the
+gradual-underflow family `FLT`, which is the format behind the rounded-real binary32 model.
 
-The proof splits on the magnitude of the exact difference. Every `FLT` operand lies on the
-minimum-exponent grid, so a sufficiently small difference is representable by closure of that
-grid under subtraction. A larger difference follows from the `FLX` Sterbenz theorem and the
-normal-range inclusion from `FLX` to `FLT`.
+The proof splits on the size of the exact difference. Every `FLT` operand lies on the
+minimum-exponent grid, and that grid is closed under subtraction, so a small enough difference is
+representable. A larger one follows from the `FLX` Sterbenz theorem and the inclusion of the
+normal range of `FLX` in `FLT`.
 
 ## Reference
 

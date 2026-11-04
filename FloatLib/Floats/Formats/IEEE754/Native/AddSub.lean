@@ -18,15 +18,15 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 /-!
 # Native addition and subtraction
 
-These theorems relate FloatLib's addition and subtraction to the logical floating-point model
-shipped with Lean. Finite inputs include both signed zeros. The result is unrestricted, so
-cancellation, subnormal rounding and overflow to infinity are covered, and the equations hold on
-the complete packed word through the native adapters.
+On finite inputs, FloatLib's addition and subtraction give the same packed word as the logical
+floating-point model that ships with Lean. Finite includes both signed zeros, and the result is
+unrestricted, so cancellation, subnormal rounding and overflow to infinity are all covered. Through
+the native adapters, the equations hold on the complete packed word.
 
-The finite-input hypotheses exclude NaNs and infinities, because FloatLib preserves NaN details
-that Lean canonicalizes and its subtraction also negates the right operand's NaN sign. Negation
-alone agrees with Lean's model on every word. These model equalities do not verify the machine
-instructions used by compiled native code.
+The finite-input hypotheses leave out NaNs and infinities, because FloatLib keeps NaN details that
+Lean canonicalizes, and FloatLib's subtraction also negates the right operand's NaN sign. Negation
+on its own agrees with Lean's model on every word. None of these model equalities verifies the
+machine instructions that compiled native code runs.
 
 The configured operations are the first-order binary32 and binary64 instances of
 `Configured.NativeDispatch`, the ones a client that imports `Configured` elaborates, so `rw` and

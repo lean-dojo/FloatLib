@@ -11,7 +11,8 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Native.Runtime
 /-!
 # Correctness of native-word posit packing
 
-The capability law immediately identifies direct native packing with exact model construction.
+Direct native packing builds the same value as exact model construction, and `toModel_pack`
+follows at once from the capability law.
 -/
 
 @[expose] public section

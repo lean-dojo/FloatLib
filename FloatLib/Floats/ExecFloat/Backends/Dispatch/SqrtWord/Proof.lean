@@ -16,12 +16,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Packing
 /-!
 # Correctness of word-specialized square-root dispatch
 
-Binary32 and binary64 have their own word kernels. Other descriptors use native one-word decoding
-when eligible, or the generic square-root kernel. `word_eq_spec` proves that all these routes
-agree with `Model.Spec.sqrt` for every input.
-
-The fixed-format theorems cover the NaN, infinity, signed-zero, and negative-input cases, and the
-positive finite cases reuse the corresponding kernel refinements.
+Binary32 and binary64 have word kernels of their own. Other descriptors use native one-word decoding
+when eligible, or else the generic square-root kernel, and `word_eq_spec` proves that all these
+routes agree with `Model.Spec.sqrt` for every input. Fixed-format theorems cover the NaN, infinity,
+signed-zero, and negative-input cases, and the positive finite cases reuse the matching kernel
+refinements.
 -/
 
 @[expose] public section

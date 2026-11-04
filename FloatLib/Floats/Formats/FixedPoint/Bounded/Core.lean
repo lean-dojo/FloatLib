@@ -13,20 +13,20 @@ public import Mathlib.Data.Rat.Defs
 /-!
 # Bounded fixed-point execution
 
-A bounded fixed-point code stores its coefficient in `FixedInt width` and interprets that signed
-integer at a fixed radix scale. Arithmetic names state their overflow policy explicitly:
+A bounded fixed-point code stores its coefficient in `FixedInt width` and reads that signed integer
+at a fixed radix scale. Every arithmetic name says which overflow policy it uses:
 
-* wrapping addition and subtraction use direct `BitVec` arithmetic;
+* wrapping addition and subtraction use `BitVec` arithmetic on the words
 * wrapping multiplication sign-extends or truncates both inputs to the destination width before
-  multiplying;
-* checked operations return `none` when the exact coefficient is out of range;
-* saturating operations clamp the exact coefficient to the destination range.
+  multiplying
+* checked operations return `none` when the exact coefficient is out of range
+* saturating operations clamp the exact coefficient to the destination range
 
-Multiplication composes scales: the coefficient product of operands with `p` and `q` fractional
-digits is read at `p + q` fractional digits. These kernels take plain `FixedInt` words, so the
-composition appears in the decoding theorems (`toRat_wrapMul`) and in the result type of the
-configured `ExecFloat.BoundedFixedPoint.mul`. The destination width is independent of the two
-input widths.
+Multiplication composes scales. In radix 10, multiply `1.5` with one fractional digit (coefficient
+`15`) by `0.25` with two (coefficient `25`), and the coefficient product `375` is read at three
+fractional digits, giving `0.375`. These kernels take plain `FixedInt` words, so the composition
+shows up in the decoding theorems (`toRat_wrapMul`) and in the result type of the configured
+`ExecFloat.BoundedFixedPoint.mul`. The destination width is independent of the two input widths.
 -/
 
 @[expose] public section
@@ -39,10 +39,10 @@ namespace FloatLib.Floats.Formats.FixedPoint.Bounded
 /--
 A signed `width`-bit coefficient interpreted with a fixed radix scale.
 
-The definition is reducible and has exactly the `FixedInt width` runtime representation. The radix
-and scale arguments are kept in elaborated type expressions so that `#float_info` can identify
-the numerical format, but they are not enforced: codes of different scales unify with each other
-and with `FixedInt width`, and `toRat` takes the radix and scale as explicit arguments.
+The definition is reducible, and at runtime it is a `FixedInt width`. The radix and scale
+arguments stay in elaborated type expressions so that `#float_info` can identify the numerical
+format, but nothing enforces them. Codes of different scales unify with each other and with
+`FixedInt width`, and `toRat` takes the radix and scale as explicit arguments.
 -/
 @[reducible] def Code (_radix : Radix) (_fractionalDigits : Nat) (width : Nat) :=
   FixedInt width

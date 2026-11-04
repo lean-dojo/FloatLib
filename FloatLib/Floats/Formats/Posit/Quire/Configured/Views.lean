@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Quire.Semantics.Projective
 /-!
 # Optional mathematical views of configured posit quires
 
-These wrappers expose real and projective-line denotations through the configured API. They are
-kept outside `Configured.Runtime` because executable rational quire arithmetic does not require
-classical real-number or projective-geometry dependencies.
+These wrappers give configured quires their real and projective-line meanings. We keep them out
+of `Configured.Runtime` because executable rational quire arithmetic has no need for classical real
+numbers or projective geometry.
 -/
 
 @[expose] public section

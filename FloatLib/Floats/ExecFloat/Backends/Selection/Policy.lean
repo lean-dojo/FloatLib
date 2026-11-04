@@ -10,13 +10,13 @@ module
 /-!
 # Backend-selection policy
 
-A policy says how much one-time setup may be amortized, how allocations and memory are charged,
-and which resource ceilings are absolute. The built-in latency, balanced, and throughput profiles
-are format-independent starting points rather than claims about a particular machine.
+A policy says how much one-time setup may be amortized, how allocations and memory are charged, and
+which resource ceilings are absolute. The built-in latency, balanced, and throughput profiles are
+format-independent starting points, and they make no claim about any particular machine.
 
-`PolicyFor` makes the choice static at the format carrier. Users can select another profile with a
-scoped instance, while the encoded value type and arithmetic semantics remain unchanged. This
-also keeps execution and `#float_info` on the same plan.
+`PolicyFor` makes the choice static at the format carrier. You can pick another profile with a
+scoped instance, and the encoded value type and arithmetic semantics stay the same. That also keeps
+execution and `#float_info` on the same plan.
 -/
 
 @[expose] public section
@@ -83,8 +83,8 @@ Sustained-throughput policy.
 
 The five-million-call horizon admits a larger one-time setup cost when the selected kernel has a
 materially faster steady state. The resident-memory ceiling admits every exhaustive table over a
-byte-sized carrier; the cost model still rejects a large table when its setup cannot amortize at
-this horizon. Wider carriers remain governed by the same fixed resource bound.
+byte-sized carrier. The cost model can still reject a large table when its setup can't amortize at
+this horizon. Wider carriers stay under the same fixed resource bound.
 -/
 def throughput : Policy where
   expectedCalls := 5000000
@@ -131,10 +131,10 @@ inductive PolicyProfile where
 /--
 Static planning policy associated with a format carrier.
 
-This class changes backend choice, not numerical semantics or the `ExecFloat` value type. Concrete
-format families may depend on it when constructing operation capabilities. A local or scoped
-instance can therefore request a latency or throughput plan without wrapping values or changing
-user arithmetic.
+This class changes which backend runs and leaves the numerical semantics and the `ExecFloat` value
+type alone. Concrete format families may depend on it when constructing operation capabilities, so a
+local or scoped instance can request a latency or throughput plan without wrapping values or
+changing user arithmetic.
 -/
 class PolicyFor (F : Type u) where
   /-- Static or application-defined profile used to choose kernels for `F`. -/
@@ -157,7 +157,8 @@ namespace PlanningLatency
 /--
 Select first-call-oriented plans for every capability that consumes `PolicyFor`.
 
-Opening this scope changes execution planning, not the numerical type or its semantics.
+Opening this scope changes execution planning and leaves the numerical type and its semantics as
+they are.
 -/
 scoped instance policy (F : Type u) : PolicyFor F where
   profile := .latency

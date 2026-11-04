@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Runtime
 /-!
 # Exactly rounded posit algebraic functions
 
-Reciprocal square root, hypotenuse, and fused triple multiplication evaluate their rational
-intermediates exactly and round only the final result. In particular, an intermediate product
-cannot overflow or underflow the posit format. Square roots use exact comparisons with squared
-posit rounding boundaries, including the standard's appended-bit tie rule.
+Reciprocal square root, hypotenuse, and fused triple multiplication keep their rational
+intermediates exact and round the final result alone. So no intermediate product can overflow or
+underflow the posit format. A square root is decided by exact comparisons with squared posit
+rounding boundaries, and the standard's appended-bit tie rule is part of that comparison.
 
 ## Reference
 
@@ -39,13 +39,13 @@ rounding without first rounding either the reciprocal or the square root.
   | none => nar format
   | some q => if q ≤ 0 then nar format else roundSqrtRat format q⁻¹
 
-/-- Hypotenuse `sqrt (a² + b²)`, rounded once; either NaR input produces NaR. -/
+/-- Hypotenuse `sqrt (a² + b²)`, rounded once. A NaR in either input produces NaR. -/
 @[inline] def hypot (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some a, some b => roundSqrtRat format (a * a + b * b)
   | _, _ => nar format
 
-/-- Fused triple multiplication `a * b * c`, rounded once; any NaR input produces NaR. -/
+/-- Fused triple multiplication `a * b * c`, rounded once. Any NaR input produces NaR. -/
 @[inline] def fMM (left right third : Model format) : Model format :=
   match left.toRat?, right.toRat?, third.toRat? with
   | some a, some b, some c => roundRat format (a * b * c)

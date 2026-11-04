@@ -11,17 +11,17 @@ public import Mathlib.Data.Nat.NthRoot.Defs
 /-!
 # Integer roots by seeded Newton iteration
 
-Mathlib's `Nat.nthRoot` runs Newton's method from the radicand itself. For a large radicand and a
-large degree the first steps then shrink the guess by a factor of only `(n - 1) / n` each. This
-module starts instead from a power of two read off the radicand's binary logarithm. For a positive
-radicand that seed lies above the root and within a factor of two of it.
-Zero and one return themselves for every positive degree, before any seed is built or raised to a
-power that could be enormous when the degree is large.
+Mathlib's `Nat.nthRoot` runs Newton's method from the radicand itself, and for a large radicand and
+a large degree each of the first steps shrinks the guess by a factor of only `(n - 1) / n`. We start
+from a power of two read off the radicand's binary logarithm, which for a positive radicand lies
+above the root and within a factor of two of it. Zero and one return themselves for every positive
+degree, before any seed is built or raised to a power that could be enormous when the degree is
+large.
 
-In `FloatLib.Kernels`, `IntegerRoot.root` answers degrees zero and one immediately, uses a
-native-word square root for degree two, and calls this kernel for every degree from three.
-Format-independent exact arithmetic, which cannot depend on the kernels, uses it directly. The
-proof module identifies the result with `Nat.nthRoot`.
+In `FloatLib.Kernels`, `IntegerRoot.root` answers degrees zero and one at once, uses a native-word
+square root for degree two, and calls this kernel for every degree from three. Format-independent
+exact arithmetic can't depend on the kernels, so it uses this module itself. Its proof module
+identifies the result with `Nat.nthRoot`.
 -/
 
 @[expose] public section

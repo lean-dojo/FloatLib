@@ -15,14 +15,14 @@ public import FloatLib.Numerics.Order.Comparison
 /-!
 # Real semantics of rational powers and fused minus-one exponentials
 
-For nonnegative bases in the stated domain, the executable result equals Section 4.1
-rounding of the exact real power. Negative bases with integral exponents round the exact rational
-integer power. NaR, zero to a nonpositive power, and negative bases with nonintegral exponents
-have their own exceptional-value theorems.
+For a nonnegative base in the stated domain, the executable result equals Section 4.1 rounding of
+the exact real power. A negative base with an integral exponent rounds the exact rational integer
+power, while NaR, zero to a nonpositive power, and a negative base with a nonintegral exponent each
+get their own exceptional-value theorem.
 
-The proofs establish correctness, including ties and saturation. Exact boundary equality makes
-the logarithm search terminate at every boundary, but no theorem bounds its running time near a
-tie.
+These proofs cover correctness, ties and saturation included. Running time is another matter.
+Because equality with a boundary is decided exactly, the logarithm search terminates at every
+boundary, but no theorem bounds how long it runs near a tie.
 -/
 
 @[expose] public section
@@ -41,7 +41,7 @@ private theorem rpow_ratCast_of_den_eq_one (base exponent : Rat) (hinteger : exp
   have he : (exponent : ℝ) = (exponent.num : ℝ) := by simp [Rat.cast_def, hinteger]
   rw [he, Real.rpow_intCast, Rat.cast_zpow]
 
-/-- Exact boundary comparisons round a positive-base real power exactly once. -/
+/-- Exact boundary comparisons round a positive-base real power once. -/
 theorem roundPositiveRatPower_eq_roundPositive (base exponent : Rat) (hbase : 0 < base) :
     roundPositiveRatPower format base exponent =
       RealRounding.roundPositive format ((base : ℝ) ^ (exponent : ℝ)) := by

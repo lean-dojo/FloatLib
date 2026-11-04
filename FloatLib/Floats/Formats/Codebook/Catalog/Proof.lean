@@ -11,7 +11,8 @@ public import FloatLib.Floats.Formats.Codebook.Catalog.Runtime
 /-!
 # Denotation theorems for named tiny codebooks
 
-These lemmas expose the exact meaning of each catalog word without adding runtime code.
+One lemma per catalog word states what that word means, such as `00 ↦ 0` for the ternary code.
+They add no runtime code.
 -/
 
 @[expose] public section

@@ -13,20 +13,22 @@ public import FloatLib.Numerics.Exact.RationalPower.Runtime
 /-!
 # Once-rounded powers with rational exponents
 
-Powers are compared with rational posit boundaries by `RationalPower.compare`. It decides
-equality with a boundary exactly, from the exact-root classification of the power and capped
-exponentiation, and separates every other boundary with logarithm enclosures of increasing
-degree. No boundary is raised to a power, and the base's root is raised to the exponent's
-numerator only by capped exponentiation, which stops once a partial power exceeds the boundary's
-numerator or denominator. Large exponent numerators and denominators create no large integers.
-A negative base with an integral exponent uses the same magnitude comparison and takes its sign
-from the exponent's parity. Integer exponents of magnitude at most the posit width use exact
-rational exponentiation, so simple integer powers do not pay for logarithm intervals.
+To round a power with a rational exponent, `RationalPower.compare` places it against the
+rational posit boundaries. Equality with a boundary is decided exactly, from the exact-root
+classification of the power and capped exponentiation, and every other boundary is separated by
+logarithm enclosures of increasing degree. We never raise a boundary to a power. Capped
+exponentiation alone raises the base's root to the exponent's numerator, and it stops once a
+partial power exceeds the boundary's numerator or denominator, so large exponent numerators and
+denominators create no large integers.
 
-The minus-one exponentials compare the power with `candidate + 1`. Thus subtraction is fused:
-the power is never first rounded to a posit, even when the result is very close to zero.
+Some cases take a shorter path. A negative base with an integral exponent uses the same magnitude
+comparison and takes its sign from the exponent's parity. Integer exponents of magnitude at most
+the posit width use exact rational exponentiation, so simple integer powers don't pay for
+logarithm intervals. For the minus-one exponentials we compare the power with `candidate + 1`,
+which fuses the subtraction, so the power is never rounded to a posit first, even when the result
+is very close to zero.
 
-NaR propagates. Zero to a nonpositive exponent produces NaR. A negative base requires an integral
+NaR propagates, and zero to a nonpositive exponent produces NaR. A negative base needs an integral
 exponent, because every other dyadic exponent gives a nonreal power. Finite posit exponents are
 dyadic, so this condition covers the real domain for negative posit bases.
 

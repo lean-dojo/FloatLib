@@ -11,10 +11,9 @@ public import Mathlib.Algebra.Field.Rat
 /-!
 # Integer destination ranges
 
-A range check follows exact rational-to-integer rounding. The caller supplies
-the integer rounder and the policy for failure, allowing IEEE invalid results
-and Posit integer sentinels to share the same numerical range calculation.
-Signed and unsigned words are instances of an inclusive integer interval.
+A range check follows exact rational-to-integer rounding. Callers supply the integer rounder and the
+failure policy, so IEEE invalid results and Posit integer sentinels share the same numerical range
+calculation. Signed and unsigned words are both instances of an inclusive integer interval.
 -/
 
 @[expose] public section
@@ -27,7 +26,7 @@ open Representations
 structure IntegerRange where
   /-- Inclusive lower endpoint of the accepted integer interval. -/
   lower : Int
-  /-- Inclusive upper endpoint; an endpoint below `lower` gives an empty interval. -/
+  /-- Inclusive upper endpoint. An endpoint below `lower` gives an empty interval. -/
   upper : Int
   deriving DecidableEq, Repr
 
@@ -62,7 +61,7 @@ def IntegerFormat.maxValue : IntegerFormat → Int
   | .signed width => FixedInt.maxValue width
   | .unsigned width => (2 : Int) ^ width - 1
 
-/-- Inclusive numerical range; width zero denotes only zero for either signedness. -/
+/-- Inclusive numerical range. Width zero denotes only zero, signed or unsigned. -/
 def IntegerFormat.range (destination : IntegerFormat) : IntegerRange :=
   ⟨destination.minValue, destination.maxValue⟩
 

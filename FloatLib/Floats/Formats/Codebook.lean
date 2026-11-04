@@ -19,14 +19,15 @@ public meta import FloatLib.Floats.Formats.Codebook.Info
 /-!
 # Exact-width lookup numerical systems
 
-This is the public entry point for lookup-table numerical formats. It exports the generic
-codebook representation, the supplied catalog, proved catalog arithmetic, the configured
-`ExecFloat.Codebook` carrier, numerical automation, and `#float_info` support.
+A codebook format is a lookup table. Each stored word means whatever its table entry says, so the
+two-bit ternary code in the catalog maps `00`, `01` and `10` to `0`, `+1` and `-1` and keeps `11`
+reserved. The table is the whole format specification, and FloatLib never infers arithmetic from
+the bit width or the element type.
 
-Import narrower submodules when defining another codebook family internally.
-
-A codebook is defined by its complete denotation table, so the table is the authoritative format
-specification. FloatLib does not infer arithmetic from bit width or element type.
+This module is the public entry point. It exports the generic codebook representation, the
+supplied catalog with its proved arithmetic, the configured `ExecFloat.Codebook` carrier, numerical
+automation, and `#float_info` support. If you're defining another codebook family inside the
+library, import the narrower submodules.
 
 ## Reference
 

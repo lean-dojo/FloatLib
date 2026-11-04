@@ -27,21 +27,21 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff
 /-!
 # FloatLib's rules for `roundoff`
 
-The codec laws let the analysis read a configured value through the model operation that
-computes it, and a split of an optional value keeps its payload as computed. The registrations
-below give `roundoff` FloatLib's own numerical theorems: the rounding of each configured and model
-operation, the propagation of absolute and mixed errors through exact real operations, rational
-and integer conversions, rounding to an integral value and C's integer casts, and the finiteness
-and order facts that range conditions and signs need. The range of an `int8_t` cast is a condition
-on the bound of the integer it casts, so it reads as a bound on the real reference.
+The registrations below give `roundoff` FloatLib's own numerical theorems: the rounding of each
+configured and model operation, the propagation of absolute and mixed errors through exact real
+operations, rational and integer conversions, rounding to an integral value and C's integer casts,
+and the finiteness and order facts that range conditions and signs need. With the codec laws, the
+analysis reads a configured value through the model operation that computes it, and a split of an
+optional value keeps its payload as computed. An `int8_t` cast's range is a condition on the bound
+of the integer it casts, so it reads as a bound on the real reference.
 
 FloatLib's containers are registered here too. An entry of a list, an array or a vector is read by
-`GetElem.getElem`, and an entry of a function on `Fin n` or of a matrix by application; an entry of
-a stored input is exact data. A loop over a list carries the invariant of `List.fold_error` and
-`List.fold_mixedError`, or the relation of `List.fold_relation` when its state is a tuple, and loops
-over `Fin n`, arrays and vectors are first written as loops over their lists. A loop over a map or a
-pointwise combination of such containers is a loop over the containers it reads, with the producer
-in its step. The sums of a list and of a function on `Fin n` are such loops.
+`GetElem.getElem`, and an entry of a function on `Fin n` or of a matrix by application. An entry
+of a stored input is exact data. A loop over a list carries the invariant of `List.fold_error` and
+`List.fold_mixedError`, or the relation of `List.fold_relation` when its state is a tuple. Loops
+over `Fin n`, arrays and vectors are first written as loops over their lists. A loop over a map or
+a pointwise combination of such containers is a loop over the containers it reads, with the
+producer in its step. So are the sums of a list and of a function on `Fin n`.
 -/
 
 public section
@@ -244,7 +244,7 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Roundoff
 open Lean
 
 /-- FloatLib's containers. An entry of a list, an array or a vector is read by `GetElem.getElem`
-through its own dictionary, at a natural number or an index of `Fin n`; a getter of another
+through its own dictionary, at a natural number or an index of `Fin n`. A getter of another
 dictionary is analyzed as the function it is. A loop over a list carries the invariant of
 `List.fold_error` and `List.fold_mixedError`, or the relation of `List.fold_relation` when its state
 is a tuple, and loops over `Fin n`, arrays and vectors are written as loops over their lists first.

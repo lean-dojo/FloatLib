@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Native.Core
 /-!
 # Native-word instances for configured posit carriers
 
-The four primitive storage plans implement the direct `UInt64` capability. Each conversion is
-proved exact from the plan's static width bound.
+The byte, `UInt16`, `UInt32`, and `UInt64` storage plans all implement the direct `UInt64`
+capability. Each conversion is proved exact from the plan's static width bound.
 -/
 
 @[expose] public section

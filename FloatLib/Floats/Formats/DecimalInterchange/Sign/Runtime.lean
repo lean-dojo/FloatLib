@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Runtime
 /-!
 # Decimal sign operations
 
-IEEE 754-2019 §5.5.1 specifies bit operations, including on noncanonical
-representations. `Bits.copy`, `negate`, `abs`, and `copySign` preserve every bit
-below the sign. They neither quiet signaling NaNs nor report exceptions.
-The corresponding datum operations retain the quantum and NaN metadata.
+IEEE 754-2019 §5.5.1 makes the sign operations bit operations, and they apply to noncanonical
+representations too. `Bits.copy`, `negate`, `abs`, and `copySign` preserve every bit below the
+sign. They don't quiet signaling NaNs and they don't report exceptions. The corresponding datum
+operations keep the quantum and the NaN metadata.
 -/
 
 @[expose] public section

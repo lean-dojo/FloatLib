@@ -15,7 +15,7 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 # Configured binary-family runtime conversion
 
 The storage codec converts between a configured `ExecFloat` value and its binary proof model.
-The selected codec and its storage plan remain type-static.
+Both the selected codec and its storage plan stay type-static.
 -/
 
 @[expose] public section

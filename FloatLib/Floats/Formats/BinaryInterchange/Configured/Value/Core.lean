@@ -15,7 +15,7 @@ public import FloatLib.Numerics.Exact.SignedRat
 # Representation interface for configured binary values
 
 A configured binary format chooses its storage plan statically, but numerical programs should not
-need separate APIs for byte, word, fixed-limb, and wide carriers. This module exposes one
+need one API per carrier, byte, word, fixed-limb or wide. This module exposes one
 storage-independent boundary for packing, exact decoding, classification, and special values.
 
 `toModel` and `ofModel` convert through the logical `Model` without loss. The module does not

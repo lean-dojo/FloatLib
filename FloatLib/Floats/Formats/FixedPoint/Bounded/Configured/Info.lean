@@ -13,13 +13,12 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Info
 /-!
 # Inspection for configured bounded fixed point
 
-This optional meta module registers `#float_info` for the promoted
-`ExecFloat.BoundedFixedPoint` wrapper. It reports the selected coefficient width and radix scale,
-then lists the theorem-backed guarantees for the three overflow options.
+Run `#float_info` on the promoted `ExecFloat.BoundedFixedPoint` wrapper and you see the selected
+coefficient width and radix scale, then the guarantees for the three overflow options with the
+theorems behind them. The theorems about the configured operations you call come first, followed
+by the raw family's theorems about the code that `toCode` reaches.
 
-Keeping inspection optional keeps elaborator support out of ordinary runtime imports. The report
-lists the theorems about the configured operations that users call, then the raw family's
-theorems about the code that `toCode` reaches.
+This meta module is optional, which keeps elaborator support out of ordinary runtime imports.
 -/
 
 public meta section

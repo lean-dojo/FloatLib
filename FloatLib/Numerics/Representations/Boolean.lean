@@ -11,7 +11,7 @@ public import FloatLib.Numerics.Core.System
 /-!
 # Booleans as a numerical system
 
-Boolean masks have no exceptional encodings: every runtime `Bool` denotes itself.
+Boolean masks have no exceptional encodings, and every runtime `Bool` denotes itself.
 -/
 
 @[expose] public section

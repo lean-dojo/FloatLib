@@ -22,7 +22,7 @@ To check those saved files:
 bash tests/oracles/verify-main-result.sh
 ```
 
-This checks hashes, provenance, the consistency of statuses and counts, and the saved SQLite
+It verifies hashes, provenance, the consistency of statuses and counts, and the saved SQLite
 databases. Then it redraws the summaries and figures in temporary space and compares them byte for
 byte. You need Git, Python, and Matplotlib. Nothing is rebuilt: the verifier never compiles FloatLib
 or reruns an external tool. Benchmark evidence has its own [verifier](../benchmarks/README.md).
@@ -35,7 +35,7 @@ python3 tests/oracles/render_release_result.py \
   /path/to/local-output/external-figures
 ```
 
-The renderer only reads saved data. It doesn't validate or regenerate any numerical
+The renderer just reads saved data, and it doesn't validate or regenerate any numerical
 answer. Point it at an output directory outside `tests/results/`. For the ecosystem summary,
 `render_ecosystem_result.py` takes the same two arguments. The verifier redraws both summaries
 and compares the bytes with the saved files. Raw logs and provenance records keep the names and
@@ -67,7 +67,7 @@ from the saved results. Running today's script won't replay an old snapshot. To 
 need its linked source and environment records.
 
 You'll need Linux command-line tools, Git, Make, and C/C++ compilers. TestFloat and SoftPosit
-currently pick their upstream Linux x86-64 build directories. For MPFR you need its development
+use their upstream Linux x86-64 build directories. For MPFR you need its development
 files (version 4.1.0 or newer) and `pkg-config`. On the Python side you need `matplotlib`, `onnx`,
 `numpy`, and `python-flint`, and the release profile also wants the `z3` executable. Arb is optional
 in `tests/verify.sh`, but both of these profiles require it.
@@ -149,9 +149,9 @@ python3 -I tests/oracles/coremath_words.py expm1.wc /tmp/expm1-words.txt
 bash tests/oracles/mpfx/run.sh --mpfx-dir /path/to/mpfx --work /tmp/mpfx 11 50 sqrt tiny 200000
 ```
 
-That binary16 command checks one shard of input pairs, so it doesn't cover every binary16 pair. CI
-checks 17 left operands for both addition and multiplication and pairs each with all 65,536 right
-encodings: **2,228,224 ordered pairs**. Those operands cover signed zeros, subnormal boundaries,
+That binary16 command covers one shard of input pairs, so it doesn't reach every binary16 pair.
+CI takes 17 left operands for both addition and multiplication and pairs each with all 65,536
+right encodings, which makes **2,228,224 ordered pairs**. Those operands cover signed zeros, subnormal boundaries,
 adjacent normal values, both largest finite magnitudes, infinities, and quiet/signaling NaNs. For
 the `quick` and `release` profiles it's 16 left operands, or **2,097,152 ordered pairs**. Our saved
 release evidence predates this expansion and records two rows, or 131,072 pairs.
@@ -171,14 +171,14 @@ arguments near `2^(2^20)`, which FloatLib reduces with the `2^20`- and `2^21`-bi
 `2 / pi`.
 
 A run fails on any difference that the [known-failures
-list](oracles/data/transcendental-known-failures.tsv) doesn't name, on a listed case whose kind,
-FloatLib encoding or FloatLib ternary changes, on a listed case that now matches, and on any value
-difference in a domain FloatLib declares correctly rounded. Those domains are `pi`, and `pow` with
+list](oracles/data/transcendental-known-failures.tsv) doesn't name. It also fails when a listed
+case changes its kind, FloatLib encoding or FloatLib ternary, when a listed case now matches, and
+on any value difference in a domain FloatLib declares correctly rounded. Those domains are `pi`, and `pow` with
 an integral exponent, in nearest rounding for formats with the IEEE encoding and the conventional
 exponent bias. For `pow` that means a finite base whenever FloatLib's result is finite, except
-where both results are zeros, since the theorem fixes the value but not the sign of a zero. A run
-fails, too, when a shard is missing, when the shards disagree about the invocation or its manifest
-is incomplete, and when its requests differ from those the
+where both results are zeros, since the theorem fixes the value but not the sign of a zero. The
+bookkeeping can fail a run as well: a missing shard, shards that disagree about the invocation, a
+shard whose manifest is incomplete, or requests that differ from those the
 [census](oracles/data/transcendental-census.json) records for the same random count, tier and
 exhaustive16 setting. The script tells the report which options
 it gave the emitter, so an emitter that misreports them fails, and the release check in `check.sh`
@@ -231,12 +231,12 @@ protocols.
 
 Our maintained overlap with TestFloat covers arithmetic in binary16, binary32, binary64, and
 binary128, plus round-to-integral, quiet and signaling comparisons, cross-format binary conversions,
-and the BF16 conversions exposed by the pinned TestFloat interface. It checks nearest-even, toward
+and the BF16 conversions exposed by the pinned TestFloat interface. It covers nearest-even, toward
 zero, toward positive infinity, and toward negative infinity, together with the invalid,
 divide-by-zero, overflow, underflow, and inexact flags.
 
-Non-NaN outputs are compared bit for bit. For NaNs we compare the class and still check signaling
-and invalid behavior, but we don't claim strict agreement on payload selection.
+Non-NaN outputs are compared bit for bit. For NaNs we compare the class and test signaling and
+invalid behavior too, but we don't claim strict agreement on payload selection.
 
 We kept the level-2 subset small on purpose. Each selected function runs its complete level-2
 generator, but three rows don't make a complete level-2 matrix. Very large level-2 combinations need
@@ -256,7 +256,7 @@ hexadecimal value tables, and the P3109 emitter works from the format descriptor
 
 ### P3109 arithmetic with FLoPS
 
-In the [FLoPS comparison](../benchmarks/external/flops/README.md) we check addition, multiplication,
+In the [FLoPS comparison](../benchmarks/external/flops/README.md) we test addition, multiplication,
 division, and FMA for `Binary4p2sf`, `Binary8p4se`, and `Binary8p3se`, with nearest-even rounding
 and no saturation. All 529,152 arithmetic cases and the 192 exact timing fixtures agree bit for bit.
 Then the same runner times both compiled libraries on identical result-dependent inputs. It's a
@@ -302,22 +302,22 @@ record the operands and neighboring encodings: the 32-bit cases expose inconsist
 handling, and the 16-bit FMA cases lose sticky information that should decide the rounding. On those
 inputs, FloatLib's executable agrees with its exact specification.
 
-That analysis backs the recorded `external-limitation` classification, but the raw comparison still
-fails. Later checks at more widths are in the [website's validation
-chapter](../site/content/chapters/19-external-validation.md). Don't substitute its broader counts
+That analysis backs the recorded `external-limitation` classification, but the raw comparison fails
+all the same. Later checks at more widths are in the [website's validation
+chapter](../site/content/chapters/14-external-validation.md). Don't substitute its broader counts
 into the older result manifest.
 
 ### SMT and transcendentals
 
-SMT-LIB floating-point values expose one abstract NaN, so QF_FP comparisons check NaNs by class and
+SMT-LIB floating-point values expose one abstract NaN, so QF_FP comparisons treat NaNs by class and
 can't check payload identity. Where the theory exposes the bits, the adapter records bit-for-bit
 agreement.
 
 Our saved transcendental row is `observational-complete`, since it predates the known-failure gate
 and recorded every result and difference without failing. MPFR supplies the correctly rounded
 references, while CORE-MATH, OpenLibm, and RLIBM support different functions and rounding contracts
-and stay observational. Today's command gates FloatLib against MPFR by case identity. Because MPFR
-has a single NaN, the Lean fixtures check signaling-NaN and payload behavior instead. Since the
+and stay observational. Today's command gates FloatLib against MPFR by case identity. MPFR has a
+single NaN, so the Lean fixtures cover signaling-NaN and payload behavior. Since the
 known-failure list is empty, a passing run of the gate has no listed differences: no case differs
 from MPFR in its encoding, its NaN class or its ternary sign. Those observational comparisons are
 why a release run is recorded as `qualified-pass`. To accept the evidence, the verifier requires a
@@ -335,7 +335,7 @@ nearest-even mode it also records whether the planner-selected kernel behind the
 returns a different encoding. Our [reference](oracles/exhaustive16_reference.cpp) compares each
 value and all five flags with SoftFloat (binary16, binary32) or with MPFR set to the format's
 precision and exponent range (bfloat16, which SoftFloat lacks), detecting tininess after rounding.
-Binary16 runs against both references, so every pair also checks the MPFR emulation against
+Binary16 runs against both references, so every pair also tests the MPFR emulation against
 SoftFloat.
 
 Across the 12,288 blocks that's 154,618,822,656 results, and none shows a value, flag, kernel, or
@@ -425,7 +425,7 @@ Our saved direct-comparison bundle has these coverage limits:
 
 These limits belong to that comparison and don't describe the library as it stands now. Later
 decimal, posit, and other checks are in the [validation
-chapter](../site/content/chapters/19-external-validation.md). Even exhaustive testing at one finite
+chapter](../site/content/chapters/14-external-validation.md). Even exhaustive testing at one finite
 width can't establish a theorem over every descriptor, and scalar arithmetic checks don't give you a
 verified GEMM implementation.
 

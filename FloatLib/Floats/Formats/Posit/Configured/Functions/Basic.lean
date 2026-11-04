@@ -12,11 +12,12 @@ public import FloatLib.Floats.Formats.Posit.Functions.Basic
 /-!
 # Basic posit functions on the public configured carrier
 
-Every function uses the universal carrier/model codec. Static storage selection therefore does
-not alter numerical behavior, while users retain one `ExecFloat.Posit (bits := n)` type.
+Here are `next`, `prior`, `abs`, `sign`, `nearestInt`, `ceil`, and `floor`. Each one lifts its
+model operation through the universal carrier/model codec, so the static choice of storage never
+changes a number, and you keep a single `ExecFloat.Posit (bits := n)` type.
 
-The public functions lift the corresponding model operations. The codec inverse laws ensure
-that decoding a result recovers the model result.
+The codec inverse laws make decoding a result give back the model result. The simp lemmas that
+follow, such as `prior_next` and `abs_nar`, cover the round trip and the zero and NaR cases.
 -/
 
 @[expose] public section
@@ -41,7 +42,7 @@ local notation "Value" =>
 @[inline] def prior (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.prior value
 
-/-- Standard posit absolute value; NaR stays NaR. -/
+/-- Standard posit absolute value. NaR stays NaR. -/
 @[inline] def abs (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.abs value
 

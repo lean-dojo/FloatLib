@@ -12,19 +12,18 @@ public import Mathlib.Order.Interval.Set.ProjIcc
 /-!
 # Saturating quantization
 
-`clamp` restricts an exact scalar to declared finite endpoints. `spec` requires a code denoting
-that clamped scalar exactly; it does not round an interior input onto a representable grid.
-The relation has no result when the clamped scalar is unrepresentable, even if both endpoints
-are representable. A concrete family must establish representability to obtain a total kernel.
-
-The definitions are independent of radix, storage width, and overflow encodings.
+`clamp` restricts an exact scalar to declared finite endpoints, and `spec` requires a code that
+denotes the clamped scalar itself. It doesn't round an interior input onto a representable grid. The
+relation has no result when the clamped scalar isn't representable, even if both endpoints are, so a
+concrete family has to establish representability to get a total kernel. None of these definitions
+depends on radix, storage width, or overflow encodings.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.Quantization.Saturating
 
-/-- Clamp to `[lower, upper]` when `lower ≤ upper`; otherwise return `lower`. -/
+/-- Clamp to `[lower, upper]` when `lower ≤ upper`, and return `lower` otherwise. -/
 @[inline] def clamp {α : Type} [LinearOrder α] (lower upper value : α) : α :=
   max lower (min upper value)
 

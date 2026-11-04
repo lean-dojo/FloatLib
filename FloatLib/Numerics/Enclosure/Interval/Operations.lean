@@ -11,12 +11,12 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 /-!
 # Powers and set operations for finite intervals
 
-Absolute values and even powers account for an interval crossing zero. Natural powers use
-mathlib's binary exponentiation on exact endpoints and round only the final bounds. Hull and
-intersection select existing endpoint encodings, so they introduce no further rounding.
+Absolute values and even powers take care of an interval that crosses zero. Natural powers use
+Mathlib's binary exponentiation on exact endpoints and round only the final bounds. Hull and
+intersection pick among the endpoint encodings they are given, so they add no rounding.
 
-As in `Interval.Runtime`, `none` reports an unavailable finite enclosure. Reciprocal requires
-a range strictly on one side of zero; intersection also fails when the ranges are disjoint.
+As in `Interval.Runtime`, `none` reports that no finite enclosure is available. Reciprocal needs a
+range strictly on one side of zero, and intersection also fails when the ranges are disjoint.
 -/
 
 @[expose] public section
@@ -39,8 +39,8 @@ def squareBounds (I : Interval β) : Interval β :=
 /--
 Exact natural-power bounds for an ordered interval, evaluated by repeated squaring.
 
-The zeroth power is `[1, 1]`, including at zero. Even positive powers use the absolute-value
-range; odd powers preserve endpoint order.
+The zeroth power is `[1, 1]`, including at zero. Even positive powers use the absolute-value range,
+and odd powers preserve endpoint order.
 -/
 def powBounds (I : Interval β) (n : ℕ) : Interval β :=
   if n = 0 then point 1
@@ -96,7 +96,8 @@ def hull? (R : OutwardRounding α β) (I J : Interval α) : Option (Interval α)
 /--
 Intersection of two finite intervals, retaining the selected input encodings.
 
-Disjoint, reversed, or undecodable bounds return `none`; touching endpoints give a point interval.
+Disjoint, reversed, or undecodable bounds return `none`, and touching endpoints give a point
+interval.
 -/
 def intersect? (R : OutwardRounding α β) (I J : Interval α) : Option (Interval α) :=
   match I.decode? R.decode, J.decode? R.decode with

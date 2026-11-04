@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Basi
 /-!
 # Program normalization for `roundoff`
 
-The analysis reads a computation as written. Normalization exposes its source code step by step:
-control flow reduces only when its actual discriminant computes, branches and optional values are
-split without replacing their payloads by fresh inputs, and registered producers and container
+The analysis reads a computation as written, and normalization exposes its source code step by
+step. Control flow reduces only when its actual discriminant computes. Branches and optional values
+are split without replacing their payloads by fresh inputs. Registered producers and container
 storage stay folded. Simp sets built from the environment and the registered extensions read
-container entries through the producers that compute them, fuse source maps into loops, decode
-real observations through the selected scalar methods, and compare configured computations by
-their FloatLib meanings.
+container entries through the producers that compute them, fuse source maps into loops, decode real
+observations through the selected scalar methods, and compare configured computations by their
+FloatLib meanings.
 -/
 
 public meta section
@@ -76,8 +76,8 @@ def programCanUnfold (intact : NameSet) (conditionals : Bool) (config : Meta.Con
       (← extension).storage.any (·.isPrefixOf info.name) then return false
   canUnfoldDefault config info
 
-/-- Reduce control flow only when its actual discriminant computes. Selected branches retain
-their numerical operations; unknown options and flags never become fresh exact inputs. -/
+/-- Reduce control flow only when its actual discriminant computes. Selected branches keep their
+numerical operations, and unknown options and flags never become fresh exact inputs. -/
 def reduceControl? (containerProducers : NameSet) (value : Lean.Expr) :
     MetaM (Option Lean.Expr) := do
   let some name := value.getAppFn.constName? | return none
@@ -220,7 +220,7 @@ def optionMatch? (source : Expr) : MetaM (Option (Expr × Expr)) := do
   check proof
   return some (normalized, proof)
 /-- A generic producer may be a definitionally trivial wrapper around one of its data
-arguments. Remove only such identity wrappers; ordinary container producers remain protected. -/
+arguments. Remove only such identity wrappers. Ordinary container producers stay protected. -/
 def identityProducer? (containerProducers : NameSet) (value : Lean.Expr) :
     MetaM (Option Lean.Expr) :=
   withoutModifyingState do
@@ -240,7 +240,7 @@ def identityProducer? (containerProducers : NameSet) (value : Lean.Expr) :
       if ← withNewMCtxDepth <| withDefault <| isDefEq value argument then return some argument
     return none
 /-- Expose source code before simplification visits its arguments. Definitional reduction
-also works under dependent projections; observational equalities retain their explicit proofs.
+also works under dependent projections, and observational equalities keep their proof terms.
 A producer with a registered read (`Extension.readRules`), in `reads`, stays folded when its
 shape is not literal, so that its read applies. -/
 def programStep (boundaries containerProducers reads : NameSet) (containerFree : IO.Ref NameSet) :
@@ -321,13 +321,18 @@ def programStep (boundaries containerProducers reads : NameSet) (containerFree :
   return .continue
 
 /-- `procedure` with its steps kept in `memo`, by term and configuration, for the other
-simplifications of the call that meet the same term, while `active` holds: `Session.normalize` sets
+simplifications of the call that meet the same term, while `active` holds. `Session.normalize` sets
 it in a local context without metavariables. The step of `programStep` depends only on the term
-and the configuration when, in addition, the term has no metavariable, no unfolding predicate is
-set, no local definition is tracked or chosen for unfolding, no instance problem or universe
-approximation is in progress, and the step does not consult the registered `Extension.symbolic`
-tests, which may read the context: `consults` names those terms. Otherwise the step is computed
-afresh. -/
+and the configuration when, in addition,
+
+* the term has no metavariable,
+* no unfolding predicate is set,
+* no local definition is tracked or chosen for unfolding,
+* no instance problem or universe approximation is in progress,
+* and the step does not consult the registered `Extension.symbolic` tests, which may read the
+  context. `consults` names those terms.
+
+Otherwise the step is computed afresh. -/
 def memoizeStep (memo : IO.Ref (Std.HashMap (Lean.Expr × UInt64) Simp.DStep))
     (active : IO.Ref Bool) (consults : Lean.Expr → Bool) (procedure : Simp.DSimproc) :
     Simp.DSimproc := fun value => do
@@ -375,7 +380,7 @@ def sumReads : MetaM (Array (Name × Name)) := do
 
 /-- Read an entry that is a sum by the laws `reads` (`sumReads`), the first that applies. A law is
 unified with the entry at default transparency, so that the proofs a producer carries, such as of
-its axes or of its shape, match whatever statement they were elaborated at; instance arguments the
+its axes or of its shape, match whatever statement they were elaborated at. Instance arguments the
 entry does not fix are synthesized. -/
 def readSum (reads : Array (Name × Name)) : Simp.Simproc := fun entry => do
   let some position ← readPosition? entry | return .continue
@@ -444,8 +449,8 @@ def optionGet? (expression : Expr) : MetaM (Option (Expr × Expr)) := do
   let some (_, _, result) := (← inferType proof).eq? | return none
   return some (result, proof)
 
-/-- A paired observation also supplies its component observations. Derive these proofs directly
-from the existing equality rather than requiring two wrapper lemmas for every adapter. -/
+/-- A paired observation also supplies its component observations. Derive these proofs from the
+existing equality, so that no adapter needs two wrapper lemmas. -/
 def projectedObservations (name : Name) : MetaM (Array Lean.Expr) := do
   let declaration ← getConstInfo name
   let rule := mkConst name (declaration.levelParams.map Level.param)
@@ -496,7 +501,7 @@ def addLocalRewrites (theorems : SimpTheorems) : MetaM SimpTheorems := do
   return theorems
 
 /-- Observational equalities remove representation plumbing. Compiler equalities recover the
-source computation, including its operation order. Scalar accuracy is handled separately. -/
+source computation, including its operation order. Scalar accuracy is handled elsewhere. -/
 def addProgramRewrites (theorems : SimpTheorems) (rewrites : Array (Name × Bool)) :
     MetaM SimpTheorems := do
   let mut theorems := theorems
@@ -796,9 +801,10 @@ def simpCaches (state : Simp.State) : Simp.State :=
 /-- Simplify `term` with the normalizer `kind`, given as `context` and `procedures` for the current
 local context. A term without metavariables shares the normalizer's caches in this context, by its
 variables and instances, so the subterms that the analysis normalizes again at each level are
-simplified once, while no local declaration has a metavariable that an assignment could change and
-the Meta context sets no unfolding predicate, no tracked or chosen local definitions, no instance
-problem and no universe approximation; otherwise it is simplified afresh. -/
+simplified once. That sharing needs no local declaration to have a metavariable that an assignment
+could change, and the Meta context to set no unfolding predicate, no tracked or chosen local
+definitions, no instance problem and no universe approximation. Otherwise the term is simplified
+afresh. -/
 def Session.normalize (session : Session) (kind : Name) (term : Lean.Expr)
     (context : Simp.Context) (procedures : Simp.SimprocsArray) : MetaM Simp.Result := do
   if term.hasMVar || !(← isCacheableContext) then
@@ -818,7 +824,7 @@ def Session.normalize (session : Session) (kind : Name) (term : Lean.Expr)
 
 /-- Simplify `term` with the identities of zero and one in `context`, built in the current local
 context. A term without metavariables shares the session's caches of tidied terms in this context,
-by its variables and instances, where `isCacheableContext` holds; otherwise it is simplified afresh.
+by its variables and instances, where `isCacheableContext` holds. Otherwise it is simplified afresh.
 No result is shared across local contexts: Lean's default discharger can close a premise of a
 registered read rewrite with a local hypothesis. The caches are not keyed by `context`, so every
 caller of one session passes the same simplification theorems, as the analysis does with the
@@ -915,7 +921,7 @@ partial def pointwiseGoal (goal : MVarId) : MetaM MVarId := goal.withContext do
   pointwiseGoal body
 
 /-- Prove equal observations of implementations with the same floating-point semantics.
-Congruence stops at one application layer; scalar values are compared by exact decoding. -/
+Congruence stops at one application layer, and scalar values are compared by exact decoding. -/
 def semanticEquality (session : Session) (goal : MVarId) : TacticM Bool := do
   let target ← goal.getType
   unless target.isAppOfArity ``Eq 3 do return false
@@ -943,7 +949,7 @@ def semanticEquality (session : Session) (goal : MVarId) : TacticM Bool := do
   return succeeded?.isSome
 
 /-- Transport an error proof across a proved normalization of its actual computation. The
-finiteness fact still concerns the normalized value; a consumer checks that it is the value it
+finiteness fact still concerns the normalized value, and a consumer checks that it is the value it
 needs. -/
 def rewriteActual (estimate : Estimate) (equality : Lean.Expr) : MetaM Estimate := do
   let reference := estimate.reference
@@ -955,8 +961,9 @@ def rewriteActual (estimate : Estimate) (equality : Lean.Expr) : MetaM Estimate 
   return { estimate with proof := (← mkAppM ``Eq.mpr #[proposition, estimate.proof]) }
 
 /-- The proof of `motive after` from a proof of `motive before` and `equality : before = after`,
-for a proposition `motive` about a real number. The term is built directly: the app builder would
-instantiate the metavariables of the whole proof, such as its open obligations, on each call. -/
+for a proposition `motive` about a real number. The term is built by hand, because the app builder
+would instantiate the metavariables of the whole proof, such as its open obligations, on each call.
+-/
 def transportReal (motive before after equality proof : Lean.Expr) : Lean.Expr :=
   mkApp4 (mkConst ``Eq.mp [0]) (motive.beta #[before]) (motive.beta #[after])
     (mkApp6 (mkConst ``congrArg [1, 1]) q(ℝ) (mkSort 0) before after motive equality) proof

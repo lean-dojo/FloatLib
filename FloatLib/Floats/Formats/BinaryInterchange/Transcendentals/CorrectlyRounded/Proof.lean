@@ -16,23 +16,23 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Pi.Proof
 /-!
 # Correct rounding of the total binary exponential and logarithm
 
-For an IEEE descriptor and a finite input in the function's domain, `CorrectlyRounded.exp`,
-`log`, `expMinus1`, `logPlus1`, and `expMul` return a finite value exactly when the real result,
-in absolute value for `log`, `logPlus1`, and `expMul`, lies below `Certified.overflowThreshold`,
-and every finite value they return is the nearest-even rounding of the real result. There is no
-premise on the search budget or on the distance from a rounding boundary: a search result is
-correctly rounded by its enclosure, and otherwise the exact comparators order the real result
-against every candidate (`AlgebraicRounding.toReal_round_eq_roundAt`). The threshold itself
-rounds to the first power of two past the finite range (`roundAt_overflowThreshold`), so no
-finite value is the rounding of a real at or beyond it.
+Take an IEEE descriptor and a finite input in the function's domain. Then
+`CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and `expMul` return a finite value if and
+only if the real result (in absolute value for `log`, `logPlus1` and `expMul`) lies below
+`Certified.overflowThreshold`, and every finite value they return is the nearest-even rounding of
+the real result. Nothing is assumed about the search budget or the distance from a rounding
+boundary. A search result is correctly rounded by its enclosure, and otherwise the exact
+comparators order the real result against every candidate
+(`AlgebraicRounding.toReal_round_eq_roundAt`). The threshold itself rounds to the first power of
+two past the finite range (`roundAt_overflowThreshold`), so no finite value is the rounding of a
+real at or beyond it.
 
-At or beyond the threshold the result is the infinity with the sign of the real result, and a
-finite logarithm or `logPlus1` of a finite input comes from an input in the domain. So on a
-finite input in the domain every finite result is correctly rounded, and every other result is
-that infinity.
+At or beyond the threshold the result is the infinity with the sign of the real result. A finite
+logarithm or `logPlus1` of a finite input comes from an input in the domain. So on a finite input
+in the domain every finite result is correctly rounded, and every other result is that infinity.
 
-The standard model then bounds each error by `unitRoundoffAt fmt` times the magnitude of the
-exact result plus `underflowErrorAt fmt`. Rounding keeps the sign of an exact result beyond
+From there the standard model bounds each error by `unitRoundoffAt fmt` times the magnitude of
+the exact result plus `underflowErrorAt fmt`. Rounding keeps the sign of an exact result beyond
 `underflowErrorAt fmt`, and a nonzero finite input is at least twice that in magnitude, so
 `expMinus1` of a negative input is negative and `logPlus1` of a positive input is positive.
 Whenever the certified search of `exp`, `expMinus1`, `log`, or `logPlus1` returns a result, the
@@ -44,7 +44,7 @@ total function returns the same encoding.
   `toReal_logPlus1_eq_roundAt`, `toReal_expMul_eq_roundAt`: correct rounding when the exact result
   is below the overflow threshold, and `toReal_exp_of_isFinite` and its siblings for every finite
   result.
-* `isFinite_exp_iff` and its siblings: the result is finite exactly when the exact result is
+* `isFinite_exp_iff` and its siblings: the result is finite if and only if the exact result is
   below the overflow threshold.
 * `exp_eq_nativeOverflow` and its siblings: when the exact result reaches the threshold, the
   result is a signed infinity.
@@ -584,7 +584,7 @@ theorem isFinite_exp (hfmt : fmt.isIEEE = true) {input : Model fmt}
   exact isFinite_expRat hfmt (hreal ▸ hrange) budget
 
 /--
-The exponential of a finite input is finite exactly when its exact result is below the overflow
+The exponential of a finite input is finite if and only if its exact result is below the overflow
 threshold.
 -/
 theorem isFinite_exp_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
@@ -635,7 +635,7 @@ theorem isFinite_expMinus1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
     exact isFinite_expMinus1Rat hfmt (hreal ▸ hrange) budget
 
 /--
-`expMinus1` of a finite input is finite exactly when its exact result is below the overflow
+`expMinus1` of a finite input is finite if and only if its exact result is below the overflow
 threshold.
 -/
 theorem isFinite_expMinus1_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
@@ -682,7 +682,7 @@ theorem isFinite_log (hfmt : fmt.isIEEE = true) {input : Model fmt}
   exact isFinite_logRat hfmt hargument (hreal ▸ hrange) budget
 
 /--
-The logarithm of a finite positive input is finite exactly when its exact result is below the
+The logarithm of a finite positive input is finite if and only if its exact result is below the
 overflow threshold in magnitude.
 -/
 theorem isFinite_log_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
@@ -736,7 +736,7 @@ theorem isFinite_logPlus1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
     exact isFinite_logRat hfmt hpositive (by simpa [hreal] using hrange) budget
 
 /--
-`logPlus1` of a finite input above `-1` is finite exactly when its exact result is below the
+`logPlus1` of a finite input above `-1` is finite if and only if its exact result is below the
 overflow threshold in magnitude.
 -/
 theorem isFinite_logPlus1_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
@@ -791,7 +791,7 @@ theorem isFinite_expMul (hfmt : fmt.isIEEE = true) {input weight : Model fmt}
     exact isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt _)
 
 /--
-The weighted exponential of finite operands is finite exactly when its exact result is below the
+The weighted exponential of finite operands is finite if and only if its exact result is below the
 overflow threshold in magnitude.
 -/
 theorem isFinite_expMul_iff (hfmt : fmt.isIEEE = true) {input weight : Model fmt}

@@ -16,16 +16,14 @@ public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Proof
 /-!
 # Refinement of format-parameterized binary arithmetic
 
-The executable model operations agree with the independent descriptor-aware specifications for
-every validated `FloatFormat`.
-
-These theorems connect the arithmetic dispatchers to the format's specifications before a result
-is transported to configured storage. Each dispatcher proof covers its optimized backends and
-generic fallback.
+For every validated `FloatFormat`, the executable model operations agree with the independent
+descriptor-aware specifications. These theorems connect the arithmetic dispatchers to the
+format's specifications before a result is transported to configured storage, and each
+dispatcher proof covers its optimized backends and generic fallback.
 
 The `Internal.Directed.add_eq` family and its status counterparts state that each kernel computes
-the public operation with the same options, so proofs that unfold a kernel can return to the
-public form.
+the public operation with the same options. A proof that unfolds a kernel can use them to get back
+to the public form.
 -/
 
 @[expose] public section

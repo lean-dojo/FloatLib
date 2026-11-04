@@ -15,14 +15,14 @@ public import Mathlib.Analysis.Complex.ExponentialBounds
 /-!
 # Real rounding certificates for decimal exp-minus-one and log-plus-one
 
-Every returned datum is valid and finite, and its real value equals radix-ten Flocq
-nearest-even rounding of the exact real function. The theorems fix the real value only: they do
-not say which member of the cohort is returned, nor the sign of a zero result, except for the
-signed-zero passthrough below. These conclusions follow from rational enclosure bounds and the
-decimal projection bridge, independently of whether refinement eventually succeeds.
+Whenever these kernels return a datum, it is valid and finite, and its real value is the radix-ten
+Flocq nearest-even rounding of the exact real function. That's all the theorems fix. They don't
+say which member of the cohort comes back or what sign a zero result has, apart from the
+signed-zero passthrough below. The conclusions follow from rational enclosure bounds and the
+decimal projection bridge, whether or not refinement eventually succeeds.
 
-These are partial-correctness theorems: they describe a result whenever the kernel returns
-`some`, and no theorem says which inputs succeed. The one proved success is the signed-zero
+So these are partial-correctness theorems. They describe a result whenever the kernel returns
+`some`, and no theorem says which inputs succeed. The one success we prove is the signed-zero
 passthrough, `expMinus1_of_isZero` and `logPlus1_of_isZero`.
 
 The datum interfaces require a valid finite input, preserve signed zero and its quantum, and
@@ -470,23 +470,23 @@ theorem logPlus1_of_isZero {f : Format} {input : Datum}
     logPlus1 f input budget = some input := by
   simp [logPlus1, hvalid, hzero]
 
-/-- Invalid decimal representations are explicitly rejected by exponential-minus-one. -/
+/-- Exponential-minus-one rejects invalid decimal representations. -/
 theorem expMinus1_eq_none_of_not_valid {f : Format} {input : Datum}
     (hvalid : ¬input.Valid f) (budget : Budget) : expMinus1 f input budget = none := by
   simp [expMinus1, hvalid]
 
-/-- Invalid decimal representations are explicitly rejected by logarithm-plus-one. -/
+/-- Logarithm-plus-one rejects invalid decimal representations. -/
 theorem logPlus1_eq_none_of_not_valid {f : Format} {input : Datum}
     (hvalid : ¬input.Valid f) (budget : Budget) : logPlus1 f input budget = none := by
   simp [logPlus1, hvalid]
 
-/-- Every infinity and NaN is explicitly rejected by exponential-minus-one. -/
+/-- Exponential-minus-one rejects every infinity and NaN. -/
 theorem expMinus1_eq_none_of_not_isFinite {f : Format} {input : Datum}
     (hfinite : input.isFinite = false) (budget : Budget) :
     expMinus1 f input budget = none := by
   cases input <;> simp_all [Datum.isFinite, expMinus1, Datum.isZero, Datum.toRat?]
 
-/-- Every infinity and NaN is explicitly rejected by logarithm-plus-one. -/
+/-- Logarithm-plus-one rejects every infinity and NaN. -/
 theorem logPlus1_eq_none_of_not_isFinite {f : Format} {input : Datum}
     (hfinite : input.isFinite = false) (budget : Budget) :
     logPlus1 f input budget = none := by
@@ -520,7 +520,7 @@ theorem expMinus1TailBound_pos (f : Format) : 0 < expMinus1TailBound f :=
 theorem expMinus1TailBound_lt_one (f : Format) : expMinus1TailBound f < 1 :=
   zpow_lt_one_of_neg₀ (by norm_num) (by omega)
 
-/-- The explicit overflow cutoff is positive even when all allowed quanta are negative. -/
+/-- The overflow cutoff is positive even when all allowed quanta are negative. -/
 theorem expMinus1UpperBound_pos (f : Format) : 0 < expMinus1UpperBound f :=
   zpow_pos (by norm_num) _
 
@@ -540,7 +540,7 @@ theorem lt_upperBound_of_expMinus1Rat_eq_some {f : Format}
   · simp only [Rat.cast_add, Rat.cast_one] at hlarge
     linarith
 
-/-- Real results beyond the explicit finite-range cutoff are rejected for every search budget. -/
+/-- Real results beyond the finite-range cutoff are rejected for every search budget. -/
 theorem expMinus1Rat_eq_none_of_upperBound_le {f : Format} {argument : ℚ}
     (hlarge : (expMinus1UpperBound f : ℝ) ≤ Real.exp (argument : ℝ) - 1)
     (budget : Budget) : expMinus1Rat f argument budget = none := by

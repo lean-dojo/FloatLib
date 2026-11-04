@@ -12,8 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Functions.IntegerProof
 /-!
 # Exact configured posit integer functions
 
-Every lawful storage codec transports the model's exact integer semantics. Floor, ceiling, and
-nearest-even results are exactly representable at the input posit width.
+Floor, ceiling, and nearest-even rounding to an integer keep the model's exact semantics through
+every lawful storage codec. Their results are exactly representable at the input posit width.
+`nearestInt_spec` gives the nearest-even rule with its half-unit error, and `floor_of_int` and its
+siblings show that an integer-valued input comes back unchanged.
 -/
 
 @[expose] public section

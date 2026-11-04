@@ -13,8 +13,8 @@ public import FloatLib.Numerics.Exact.IntegerRoot.Proof
 /-!
 # Exactness of seeded integer roots
 
-The square-root kernel and the seeded Newton iteration both return the floor root, so the
-dispatcher agrees with `Nat.nthRoot` in every degree.
+Both the square-root kernel and the seeded Newton iteration return the floor root, so the dispatcher
+agrees with `Nat.nthRoot` in every degree.
 -/
 
 @[expose] public section

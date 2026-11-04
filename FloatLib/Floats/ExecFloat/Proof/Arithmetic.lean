@@ -13,18 +13,18 @@ public import FloatLib.Floats.ExecFloat.Spec.Arithmetic
 /-!
 # Arithmetic refinement equations
 
-The six `*_eq_spec` theorems rewrite `ExecFloat.add`, `ExecFloat.sub`, `ExecFloat.mul`,
-`ExecFloat.div`, `ExecFloat.sqrt`, and `ExecFloat.fma` to the format's reference operations. They
-follow from the selected capability's refinement proof. The four `*_notation_eq_spec` theorems
-state the same equations for `left + right`, `left - right`, `left * right`, and `left / right`.
-Rewriting, `simp`, and `grind` match terms up to reducible unfolding, and notation elaborates to
-`HAdd.hAdd` and its siblings rather than to `ExecFloat.add`, so both forms are registered. The
-equations hold for built-in and user-defined formats under any supported planning policy.
+Six `*_eq_spec` theorems rewrite `ExecFloat.add`, `ExecFloat.sub`, `ExecFloat.mul`, `ExecFloat.div`,
+`ExecFloat.sqrt`, and `ExecFloat.fma` to the format's reference operations, and they follow from the
+selected capability's refinement proof. Four `*_notation_eq_spec` theorems state the same equations
+for `left + right`, `left - right`, `left * right`, and `left / right`. Rewriting, `simp`, and
+`grind` match terms up to reducible unfolding, and notation elaborates to `HAdd.hAdd` and its
+siblings and not to `ExecFloat.add`, so we register both forms. These equations hold for built-in
+and user-defined formats under any supported planning policy.
 
 Each equation is an equality of `ExecFloat F` values, that is of stored codes, and it holds for
-every operand, exceptional values included. The executable result is therefore the reference
-result exactly, including the sign of a zero and, in formats that have NaNs, the NaN returned.
-These operations return a value only and carry no exception flags.
+every operand, exceptional values included. So the executable result is the reference result down to
+the sign of a zero and, in formats that have NaNs, the NaN returned. These operations return a value
+only and carry no exception flags.
 -/
 
 @[expose] public section

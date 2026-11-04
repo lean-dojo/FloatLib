@@ -15,12 +15,12 @@ public import FloatLib.Floats.Formats.OCP.MX.E8M0.Semantics
 /-!
 # Inspection reports for OCP E8M0 and raw MX blocks
 
-This optional meta module registers `#float_info` for the raw E8M0 scale and `BlockCode` types.
-Executable decoding remains in `Core`, `Semantics`, and `Block`, so runtime-only clients do not
-depend on command elaboration or report rendering.
+`#float_info` for the raw E8M0 scale and `BlockCode` types is registered here, in an optional meta
+module. Executable decoding lives in `Core`, `Semantics`, and `Block`, so a client that only runs
+code never depends on command elaboration or report rendering.
 
-Reports distinguish scale decoding from joint block decoding and list their refinement theorems.
-The raw block type admits arbitrary lengths and element descriptors.
+A report tells scale decoding apart from joint block decoding and lists the refinement theorems
+for each. The raw block type takes any length and any element descriptor.
 -/
 
 @[expose] public section

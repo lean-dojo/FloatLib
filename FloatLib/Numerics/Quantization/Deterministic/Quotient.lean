@@ -11,9 +11,10 @@ public import Mathlib.Data.Nat.ModEq
 /-!
 # Deterministic nearest-even quotient rounding
 
-Format-independent nearest-even rounding for a natural quotient and remainder. The executable
-decision uses only quotient parity and the remainder, so optimized kernels can recover the same
-result without constructing a large scaled numerator.
+Nearest-even rounding for a natural quotient and remainder works the same for every format. Its
+executable decision uses only the quotient's parity and the remainder, so optimized kernels can get
+the same result without building a large scaled numerator. For 7 / 2 the quotient is 3 and twice the
+remainder equals the divisor, a tie, so the odd 3 goes up to 4. For 5 / 2 the even 2 stays.
 -/
 
 @[expose] public section

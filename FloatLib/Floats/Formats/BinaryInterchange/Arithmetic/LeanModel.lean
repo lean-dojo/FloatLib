@@ -12,11 +12,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Accuracy.Proof
 /-!
 # Agreement with Lean's floating-point arithmetic
 
-`Model` retains IEEE NaN payloads, while Lean's `UnpackedFloat` has a single canonical NaN.
-The bridges in this module therefore compare the real semantics of finite results for descriptors
-satisfying `fmt.isIEEE = true`. They connect Lean's arithmetic algorithms to the same independent
-`roundAt` specification used for `Model`, without identifying representation policies that
-deliberately differ.
+`Model` keeps IEEE NaN payloads, while Lean's `UnpackedFloat` has a single canonical NaN. So the
+bridges in this module compare the real semantics of finite results, for descriptors with
+`fmt.isIEEE = true`. They connect Lean's arithmetic algorithms to the same independent `roundAt`
+specification that `Model` uses, without identifying representation policies that differ on
+purpose.
 -/
 
 @[expose] public section

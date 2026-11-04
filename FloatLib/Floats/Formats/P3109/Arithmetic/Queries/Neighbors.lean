@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Order
 /-!
 # Correctness of P3109 neighboring values
 
-The exact numerical ordering of non-NaN values is a consecutive integer interval. The upper
-and lower neighbor operations move by one in that interval, returning NaN exactly when the
-requested neighbor does not exist. Infinite endpoints obey the same order as finite values.
+Leave out NaN, and the values of a P3109 format, in numerical order, line up with a consecutive
+interval of integers. The upper and lower neighbor operations move one step in that interval, and
+they return NaN if and only if the requested neighbor doesn't exist. Infinite endpoints follow the
+same order as finite values.
 -/
 
 @[expose] public section
@@ -236,7 +237,7 @@ theorem not_nextLessThan_less (value candidate : ExecFloat.P3109 format)
   have := (less_iff_orderIndex value.nextLessThan candidate).mp hless
   omega
 
-/-- The upper-neighbor result is NaN exactly when the numerical order has no greater datum. -/
+/-- The upper-neighbor result is NaN if and only if the numerical order has no greater datum. -/
 theorem nextGreaterThan_isNaN_iff (value : ExecFloat.P3109 format) :
     value.nextGreaterThan.isNaN = true ↔
       ¬ ∃ candidate : ExecFloat.P3109 format, value.less candidate = true := by
@@ -258,7 +259,7 @@ theorem nextGreaterThan_isNaN_iff (value : ExecFloat.P3109 format) :
         exact False.elim (hnone ⟨value.nextGreaterThan,
           (less_iff_orderIndex value value.nextGreaterThan).mpr ⟨hfinite, hn, by omega⟩⟩)
 
-/-- The lower-neighbor result is NaN exactly when the numerical order has no lesser datum. -/
+/-- The lower-neighbor result is NaN if and only if the numerical order has no lesser datum. -/
 theorem nextLessThan_isNaN_iff (value : ExecFloat.P3109 format) :
     value.nextLessThan.isNaN = true ↔
       ¬ ∃ candidate : ExecFloat.P3109 format, candidate.less value = true := by

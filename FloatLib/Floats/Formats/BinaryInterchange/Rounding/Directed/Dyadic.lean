@@ -13,25 +13,25 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
 /-!
 # Directed rounding of exact dyadics
 
-Exact signed dyadics round into a binary format under each `IEEERoundingMode`. Toward-zero,
-toward-positive, and toward-negative rounding are implemented by one pair of magnitude rounders,
-`roundDyadicMagnitudeDown` and `roundDyadicMagnitudeUp`, that the sign of the value selects
-between. Nearest-even delegates to `Model.roundDyadic`.
+This module rounds an exact signed dyadic into a binary format under each `IEEERoundingMode`.
+Rounding toward zero, toward positive and toward negative share one pair of magnitude rounders,
+`roundDyadicMagnitudeDown` and `roundDyadicMagnitudeUp`, and the sign of the value picks which
+one runs. Nearest-even delegates to `Model.roundDyadic`.
 
-Two further rounders are built from the same pieces. `roundDyadicAway` (MPFR's
-`MPFR_RNDA`) always rounds the magnitude up. `roundDyadicNearestAway` (IEEE 754-2019
-`roundTiesToAway`) is nearest-even except at an exact tie on the format's grid, which
-`dyadicIsGridTie` detects and which then rounds away from zero.
+Two more rounders come from the same pieces. `roundDyadicAway` (MPFR's `MPFR_RNDA`) always rounds
+the magnitude up. `roundDyadicNearestAway` (IEEE 754-2019 `roundTiesToAway`) is nearest-even
+except at an exact tie on the format's grid, which `dyadicIsGridTie` detects and which then rounds
+away from zero.
 
-Overflow follows `directedOverflow`: a magnitude carried upward becomes the format's native
-overflow value and a magnitude carried downward becomes the largest finite value. The policy
-entry point `Policy.roundDyadic` in `Rounding.Policy.Runtime` delegates to
-`Internal.Directed.roundDyadic` for the six directions with native overflow and gradual underflow.
-`Policy.roundDyadicGeneral` is a separate rational core whose agreement with these rounders is
-proved in `Rounding.Policy.Agreement`.
+Overflow follows `directedOverflow`. A magnitude carried upward becomes the format's native
+overflow value, and one carried downward becomes the largest finite value. In
+`Rounding.Policy.Runtime`, the policy entry point `Policy.roundDyadic` delegates to
+`Internal.Directed.roundDyadic` for the six directions with native overflow and gradual
+underflow. `Policy.roundDyadicGeneral` is an independent rational core, and
+`Rounding.Policy.Agreement` proves that it agrees with these rounders.
 
-Every threshold is derived from `FloatFormat`. The magnitude helpers require a positive
-mantissa, and the signed entry points handle zero before selecting a magnitude helper.
+Every threshold comes from `FloatFormat`. Because the magnitude helpers need a positive mantissa,
+the signed entry points handle zero before choosing one.
 -/
 
 @[expose] public section
@@ -151,16 +151,15 @@ def roundDyadicAway (fmt : FloatFormat) (value : Numerics.Dyadic) : Model fmt :=
     roundDyadicMagnitudeUp fmt value.negative value.significand value.exponent
 
 /--
-Whether an exact dyadic lies exactly halfway between two adjacent values of the binary grid of
-`fmt` with gradual underflow and no upper exponent bound.
+Whether an exact dyadic lies halfway between two adjacent values of the binary grid of `fmt`, with
+gradual underflow and no upper exponent bound.
 
-A magnitude whose leading bit has exponent `L` lies on a grid of spacing
-`2^(max fmt.minSubnormalExponent (L - fmt.fracWidth))`: the subnormal spacing below the normal
-range and the spacing of its own binade above it, as `roundDyadic` rounds. The value is a tie
-when the bits below that spacing are exactly one half of it, as `Numerics.shiftRightIsTie` tests.
-Zero is never a tie, and neither is a magnitude below half the least subnormal, whose guard bit is
-clear. The grid continues past the largest finite value, so the midpoint between that value and
-the next grid value is a tie, and so are ties in binades above the finite range.
+If the leading bit has exponent `L`, the grid spacing is
+`2^(max fmt.minSubnormalExponent (L - fmt.fracWidth))`, the spacing `roundDyadic` rounds to. The
+value is a tie when the bits below that spacing are one half of it, as `Numerics.shiftRightIsTie`
+tests. Zero is never a tie, and neither is a magnitude below half the least subnormal, whose
+guard bit is clear. The grid continues past the largest finite value, so the midpoint between
+that value and the next grid value is a tie, and so are ties in binades above the finite range.
 -/
 def dyadicIsGridTie (fmt : FloatFormat) (value : Numerics.Dyadic) : Bool :=
   match value.exponent -
@@ -180,9 +179,9 @@ Round an exact dyadic to nearest with ties away from zero, IEEE 754-2019 `roundT
 
 Off a grid tie the nearer neighbour is unique and this is nearest-even rounding, `roundDyadic`. At
 a tie both neighbours are equally near and the magnitude rounds up, as `roundDyadicAway`
-computes. Overflow and underflow therefore behave as in nearest-even rounding, except that a tie
-at the overflow midpoint overflows whatever the parity of the largest finite significand, and the
-midpoint between zero and the least subnormal rounds to that subnormal.
+computes. So overflow and underflow behave as in nearest-even rounding, with two exceptions. A
+tie at the overflow midpoint overflows whatever the parity of the largest finite significand, and
+the midpoint between zero and the least subnormal rounds to that subnormal.
 -/
 def roundDyadicNearestAway (fmt : FloatFormat) (value : Numerics.Dyadic) : Model fmt :=
   if dyadicIsGridTie fmt value then roundDyadicAway fmt value else roundDyadic fmt value

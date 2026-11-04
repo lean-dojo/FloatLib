@@ -19,24 +19,23 @@ import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
 # Agreement between the policy engine and nearest-away dyadic rounding
 
 `Policy.roundDyadic` sends a nearest-away policy with native overflow and gradual underflow to
-the dyadic rounder `roundDyadicNearestAway` through `Internal.Directed.roundDyadic .nearestAway`.
-This file proves the general rational engine `roundDyadicGeneral` equal to that rounder on every
-descriptor, so the two implementations agree and the dispatch changes no result. The packed
-results agree, including signed zero, subnormal carry, ties at the overflow midpoint, and
-finite-only overflow words. `Rounding.Policy.Agreement` uses the theorem for its nearest-away
-case.
+the dyadic rounder `roundDyadicNearestAway`, through `Internal.Directed.roundDyadic .nearestAway`.
+We prove that the general rational engine `roundDyadicGeneral` equals that rounder on every
+descriptor, so the dispatch changes no result. The packed results agree everywhere, signed zero,
+subnormal carry, ties at the overflow midpoint and finite-only overflow words included.
+`Rounding.Policy.Agreement` uses the theorem for its nearest-away case.
 
-The proof compares the engine with itself under two other rounding modes.
-`roundRatGeneralOfDenNeZero_congr_rounding` says that the engine depends on its rounding mode only
-through the overflow direction, the decision for values below half the least subnormal, and the
-one quotient that the input's leading exponent selects. Off a grid tie that quotient is not a tie
+To prove it, we compare the engine with itself under two other rounding modes. By
+`roundRatGeneralOfDenNeZero_congr_rounding`, the engine depends on its rounding mode only through
+the overflow direction, the decision for values below half the least subnormal, and the one
+quotient that the input's leading exponent selects. Off a grid tie that quotient isn't a tie
 either, so nearest-away and nearest-even choose the same integer and the nearest-even agreement of
-`Rounding.Policy.ScaledDyadic` applies. At a grid tie the value is never below half the least
-subnormal, nearest-away takes the ceiling of the tied quotient, and the engine agrees with the
-directed policy that rounds the magnitude up, whose packed result is `roundDyadicMagnitudeUp`.
+`Rounding.Policy.ScaledDyadic` applies. A grid tie is never below half the least subnormal. There
+nearest-away takes the ceiling of the tied quotient, and the engine agrees with the directed
+policy that rounds the magnitude up, whose packed result is `roundDyadicMagnitudeUp`.
 
 For status, `rationalNearestAwayOverflowsScaled_eq_true_iff` and
-`rationalIsTinyAfterRoundingScaled_nearest_eq` give the classifiers their real meaning, and
+`rationalIsTinyAfterRoundingScaled_nearest_eq` give the classifiers their real meaning.
 `isTinyAfterRounding_roundRatGeneralOfDenNeZero_nearestAway_eq_false` shows that the engine, which
 `Policy.roundRat` uses for nearest-away conversions, never delivers a tiny result at or above
 `underflowMidpoint`.
@@ -81,8 +80,8 @@ theorem dyadicIsGridTie_eq_false_of_far_below (fmt : FloatFormat) (value : Numer
     simp [shiftRightIsTie, Nat.testBit_eq_false_of_lt hbits]
 
 /--
-A dyadic scaled to a target exponent gives an exact quotient tie exactly when the bits below that
-exponent are one half of its unit.
+A dyadic scaled to a target exponent gives an exact quotient tie if and only if the bits below
+that exponent are one half of its unit.
 -/
 private theorem two_mul_mod_scaleByPowerOfTwo_dyadic_iff (mantissa : Nat)
     (exponent targetExponent : Int) :
@@ -103,7 +102,7 @@ private theorem two_mul_mod_scaleByPowerOfTwo_dyadic_iff (mantissa : Nat)
       rw [hpow]
       omega
 
-/-- A dyadic is a grid tie exactly when it is a quotient tie scaled to its grid exponent. -/
+/-- A dyadic is a grid tie if and only if it is a quotient tie scaled to its grid exponent. -/
 theorem dyadicIsGridTie_eq_true_iff (fmt : FloatFormat) (value : Numerics.Dyadic) :
     dyadicIsGridTie fmt value = true ↔
       2 * ((Numerics.RationalBinary.scaleByPowerOfTwo value.significand 1
@@ -186,11 +185,10 @@ private theorem roundQuot_awayFromZero_eq_roundQuotDirected (sign : Bool)
 The general engine depends on its rounding mode only through the overflow direction, the decision
 below half the least subnormal, and the one quotient that it rounds.
 
-For a fixed input, two rounding modes give the same packed result when they agree on
-`overflowRoundsMagnitudeUp`, on `tinyRoundsMagnitudeUp?` for a value below half the least
-subnormal, and on `roundQuot` at the quotient that the leading exponent selects: the subnormal
-alignment below the normal range and the significand quotient within it. The entropy may differ
-as well.
+For a fixed input, two rounding modes and two entropies give the same packed result when the
+modes agree on `overflowRoundsMagnitudeUp`, on `tinyRoundsMagnitudeUp?` for a value below half the
+least subnormal, and on `roundQuot` at the quotient the leading exponent selects. That quotient is
+the subnormal alignment below the normal range and the significand quotient within it.
 -/
 theorem roundRatGeneralOfDenNeZero_congr_rounding (fmt : FloatFormat)
     (overflow : OverflowMode) (underflow : UnderflowMode) (rounding rounding' : RoundingMode)
@@ -251,8 +249,8 @@ theorem roundRatGeneralOfDenNeZero_congr_rounding (fmt : FloatFormat)
 /-! ## The quotient sites of an exact dyadic -/
 
 /--
-At the engine's subnormal quotient, an exact dyadic below the normal range is a quotient tie
-exactly when it is a grid tie.
+At the engine's subnormal quotient, an exact dyadic below the normal range is a quotient tie if
+and only if it is a grid tie.
 -/
 private theorem subnormalQuotient_tie_iff (fmt : FloatFormat) (sign : Bool) (mantissa : Nat)
     (exponent : Int)
@@ -280,8 +278,8 @@ private theorem subnormalQuotient_tie_iff (fmt : FloatFormat) (sign : Bool) (man
   exact hcombine
 
 /--
-At the engine's normal quotient, an exact dyadic in the normal range is a quotient tie exactly
-when it is a grid tie.
+At the engine's normal quotient, an exact dyadic in the normal range is a quotient tie if and
+only if it is a grid tie.
 -/
 private theorem normalQuotient_tie_iff (fmt : FloatFormat) (sign : Bool) (mantissa : Nat)
     (exponent : Int) (hmantissa : mantissa ≠ 0)

@@ -12,13 +12,13 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
 /-!
 # Guard-and-sticky rounding for exact dyadic targets
 
-Some packed arithmetic kernels construct an exact `Dyadic` result because their aligned sum may
-require arbitrary precision. This bridge uses the fixed-carrier kernel when the significand fits
-in one word and the shared arbitrary-width direct packer otherwise.
+Some packed arithmetic kernels build an exact `Dyadic` result, because their aligned sum may need
+arbitrary precision. This bridge rounds that result with the fixed-carrier kernel when the
+significand fits in one word, and with the shared arbitrary-width direct packer when it doesn't.
 
-The capacity check is on the result, not the source format. Consequently the same kernel remains
-correct for every posit format through 64 bits. Both branches implement the same field-oriented
-guard-and-sticky semantics.
+The capacity check looks at the result and ignores the source format, which is why the same kernel
+is correct for every posit format through 64 bits. Both branches implement the same
+field-oriented guard-and-sticky semantics.
 -/
 
 @[expose] public section

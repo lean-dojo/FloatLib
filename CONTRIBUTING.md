@@ -17,27 +17,27 @@ floatlib_lake build
 ```
 
 To build a single module, add its name to the last command. The helper keeps build
-products outside the checkout, and `FLOATLIB_BUILD_DIR` sets where they go. The
-[first guide chapter](site/content/chapters/01-using-the-library.md) has examples to start
-from, and the [source map](README.md#source-files) shows which directory each kind of code
-belongs in.
+products outside the checkout, in a directory you can choose with `FLOATLIB_BUILD_DIR`. For
+examples to start from, see the
+[first guide chapter](site/content/chapters/01-using-the-library.md), and the
+[source map](README.md#source-files) shows which directory each kind of code belongs in.
 
 ## Code and proofs
 
-We build on mathlib and follow its
+FloatLib builds on mathlib and follows its
 [style](https://leanprover-community.github.io/contribute/style.html),
 [naming](https://leanprover-community.github.io/contribute/naming.html), and
 [documentation conventions](https://leanprover-community.github.io/contribute/doc.html).
 Before adding a definition or lemma, look for an existing one. Keep related results
 together, explain the mathematical idea, and state the hypotheses a caller needs. Each
-public operation has one name. Its variants are options of that name, such as
-`Model.sqrt x (mode := .up) (status := true)`, so there are no suffixed copies. A choice that
-decides whether a result can be missing, or which algorithm runs and what it guarantees, gets its
-own name instead: a `?` name for a partial variant, or the same short name in a namespace that
-states the contract, such as `ExecFloat.Mixed.mul` or `ExecFloat.Binary.Certified.exp`. When you
-rename a declaration, update every use along with it, because we don't keep aliases or
-deprecated names. Finished proofs should have no `sorry`, `admit`, or new project-local
-axioms.
+public operation has one name, and its variants are options of that name, such as
+`Model.sqrt x (mode := .up) (status := true)`, so you won't find suffixed copies. A choice
+that decides whether a result can be missing, or which algorithm runs and what it guarantees,
+is different and gets its own name: a `?` name for a partial variant, or the same short name
+in a namespace that states the contract, such as `ExecFloat.Mixed.mul` or
+`ExecFloat.Binary.Certified.exp`. We don't keep aliases or deprecated names, so when you
+rename a declaration, update every use along with it. Finished proofs should have no
+`sorry`, `admit`, or new project-local axioms.
 
 An optimized backend needs a proof that it agrees with the reference specification,
 rounding and exceptional values included, and the
@@ -47,10 +47,9 @@ calls it affects (the [benchmark guide](benchmarks/README.md) has the commands).
 
 ## Sending a change
 
-Keep the change focused. Tell us the problem, what you changed, and which checks you ran,
-and for an arithmetic bug, include an input that shows it. If the public API changes,
-update the examples and docs, and remove temporary checks and generated files before you
-send it.
+Keep the change focused. Tell us the problem, what you changed, and which checks you ran, and
+for an arithmetic bug, include an input that shows it. If the public API changes, update the
+examples and docs, and remove temporary checks and generated files before you send it.
 
 ```bash
 bash tests/verify.sh     # library checks

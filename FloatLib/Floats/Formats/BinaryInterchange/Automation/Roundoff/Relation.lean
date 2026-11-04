@@ -14,11 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Tupl
 Some loops keep a relation that their components do not keep one at a time, such as Kahan's sum
 minus its compensation, which stays close to the exact sum while each component alone drifts. A
 library registers such a relation with the lemma that one step preserves it, lemmas that start it
-and lemmas that read a bound off it (`StepRelation`). An observation that a reader concludes about
-is matched against the computation: the reader's state must be a registered loop with a relation
-law, the loop's step must unfold to the relation's step and its initial value must be one that an
-initial lemma states. The law lifts the relation through the traversal under the condition of the
-preservation at every visited state, which becomes a premise of the bound.
+and lemmas that read a bound off it (`StepRelation`).
+
+An observation that a reader concludes about is matched against the computation. The reader's
+state must be a registered loop with a relation law, the loop's step must unfold to the relation's
+step, and its initial value must be one that an initial lemma states. That law then lifts the
+relation through the traversal under the condition of the preservation lemma at every visited
+state, which becomes a premise of the bound.
 -/
 
 public meta section
@@ -239,7 +241,7 @@ def stepRelationBound? (relation : StepRelation) (reader : Name) (actual : Q(ℝ
 
 /-- The estimate of `actual` read off a registered step relation of a loop it observes. The
 observation must contain a registered loop with a relation law, or a reduction that the registered
-conversions write as one; the first reader that matches and whose relation the loop's step and
+conversions write as one. The first reader that matches and whose relation the loop's step and
 initial value admit gives the estimate. Readers come before the registered rules, so a reader of a
 sum such as `s.1 + s.2` takes precedence over the rules for its operations. -/
 def relationBound? (actual : Q(ℝ)) : AnalyzeM (Option Estimate) := do

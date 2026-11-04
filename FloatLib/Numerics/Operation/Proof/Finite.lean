@@ -12,16 +12,14 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Proof-indexed finite operations
 
-Application lemmas for finite-operation contracts, including acceptance predicates on input and
-output codes, such as a floating-point result remaining finite.
+These are application lemmas for finite-operation contracts, including acceptance predicates on
+input and output codes, such as a floating-point result staying finite.
 
-`Finite1`, `Finite2`, and `Finite3` state that running a code-level operation on represented
-finite inputs produces the specified finite scalar result. This module turns those contracts into
-the forms users normally need: a denotation equation or a new proof-indexed value.
-
-The `If` families require a proof of the acceptance predicate for the actual input and output
-codes. Given that proof and the input denotations, the refinement contract determines the
-output's finite scalar value.
+`Finite1`, `Finite2`, and `Finite3` state that running a code-level operation on represented finite
+inputs produces the specified finite scalar result. This module turns those contracts into the forms
+users normally need, a denotation equation or a new proof-indexed value. Its `If` families require a
+proof of the acceptance predicate for the actual input and output codes, and given that proof and
+the input denotations, the refinement contract determines the output's finite scalar value.
 -/
 
 @[expose] public section

@@ -11,12 +11,11 @@ public import FloatLib.Numerics.Core.ExactSemantics
 /-!
 # Encoded numerical formats
 
-`EncodedFormat F` assigns a code type and finite scalar domain to a format identity `F`.
-Codes can be machine words, limb records, blocks, codebook indices, or runtime-sized values.
-
-`FormatSemantics F` supplies the denotation separately. A real-valued denotation can then be
-noncomputable while storage and arithmetic remain executable. Together the classes define a
-`NumericalSystem`; optional capabilities add laws and operations as needed.
+`EncodedFormat F` assigns a code type and finite scalar domain to a format identity `F`. Codes can
+be machine words, limb records, blocks, codebook indices, or runtime-sized values, while
+`FormatSemantics F` supplies the denotation on its own, so a real-valued denotation can be
+noncomputable while storage and arithmetic stay executable. Together the two classes define a
+`NumericalSystem`, and optional capabilities add laws and operations as needed.
 
 These interfaces also cover representations without a radix/exponent description. For the
 radix-based generic-format approach, see Boldo and Melquiond, *Flocq: A Unified Library for Proving

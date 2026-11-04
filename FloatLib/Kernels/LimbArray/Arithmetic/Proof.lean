@@ -13,22 +13,22 @@ public import FloatLib.Kernels.FixedWord.Core.Proof.Word
 /-!
 # Limb arrays: value semantics of the arithmetic kernels
 
-Every loop of `Arithmetic.Runtime` is specified by a `segment` invariant: processing the limbs
-from `index` onward changes the segment starting at `index` by the intended amount and leaves the
-limbs below `index` untouched. The invariants are proved by induction on the loop's remaining
-count, and the `toNat` statements follow by splitting `toNat` into the segment below `index`, the
-segment the loop wrote, and the untouched segment above it.
+Every loop of `Arithmetic.Runtime` is specified by a `segment` invariant. Processing the limbs from
+`index` onward changes the segment starting at `index` by the intended amount and leaves the limbs
+below `index` untouched. We prove the invariants by induction on the loop's remaining count, and the
+`toNat` statements then follow by splitting `toNat` into the segment below `index`, the segment the
+loop wrote, and the untouched segment above it.
 
-* `toNat_addWordAt` and `toNat_addAt`: adding a word at a limb or bit position, provided the
-  result still fits the stored limbs;
-* `toNat_add`: `add a b carry` denotes `toNat a + toNat b + carry`, with no side condition because
-  the result has one limb more than the wider operand;
+* `toNat_addWordAt` and `toNat_addAt`: adding a word at a limb or bit position, provided the result
+  still fits the stored limbs.
+* `toNat_add`: `add a b carry` denotes `toNat a + toNat b + carry`. There is no side condition,
+  because the result has one limb more than the wider operand.
 * `toNat_sub`: `sub a b borrow` denotes `toNat a - toNat b - borrow` whenever that difference is
-  nonnegative and the borrow is at most one;
+  nonnegative and the borrow is at most one.
 * `toNat_mul`: `mul a b` denotes `toNat a * toNat b`.
 
-`limb_setIfInBounds` describes array updates; `uint64_low_toNat` and `uint64_high_toNat`
-split each intermediate into a result limb and a carry.
+`limb_setIfInBounds` describes array updates, and `uint64_low_toNat` and `uint64_high_toNat` split
+each intermediate into a result limb and a carry.
 -/
 
 @[expose] public section
@@ -101,8 +101,8 @@ private theorem uint64_mul_toNat_eq {x y : UInt64} {a b : Nat} (hx : x.toNat = a
 /--
 The three-way split of a value around a written segment.
 
-Limbs past the stored size read as zero, so the split also holds when the segment runs past the
-end of the array; the top part is then empty.
+Limbs past the stored size read as zero, so the split also holds when the segment runs past the end
+of the array. The top part is then empty.
 -/
 theorem toNat_split (v : LimbArray) (i c : Nat) :
     toNat v = segment v 0 i + radix ^ i * segment v i c +

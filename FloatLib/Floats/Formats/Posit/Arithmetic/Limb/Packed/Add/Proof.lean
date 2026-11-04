@@ -15,8 +15,8 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Refinement of direct packed-pair posit addition
 
-Direct addition of packed posit pairs produces a valid encoding and agrees with the
-representation-independent two-limb addition kernel.
+We prove two things about direct addition of packed posit pairs: the result is a valid encoding,
+and it agrees with the representation-independent two-limb addition kernel.
 -/
 
 @[expose] public section

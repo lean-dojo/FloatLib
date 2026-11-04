@@ -20,9 +20,10 @@ public import Mathlib.Analysis.Real.Pi.Bounds
 `toReal_pi_eq_roundAt` proves that `Model.pi` is the nearest-even rounding of `Real.pi` in every
 IEEE descriptor, and `isFinite_pi` that it is finite. The cached enclosure contains `π * 2 ^ bits`
 by `halfPiLower_spec`, so an accepted enclosure gives the rounding by
-`toReal_eq_roundAt_of_roundScaled?_eq_some`. The comparator fallback compares `atan 1 = π / 4`
-exactly, and its result is finite because `π < 3.15` lies below the overflow threshold of every
-IEEE descriptor: the smallest, `ieee 2 1`, has largest finite value 3 and threshold 3.5.
+`toReal_eq_roundAt_of_roundScaled?_eq_some`. The comparator fallback makes exact comparisons with
+`atan 1 = π / 4`. Its result is finite because `π < 3.15` lies below the overflow threshold of
+every IEEE descriptor, and even the smallest, `ieee 2 1`, has largest finite value 3 and threshold
+3.5.
 `isFinite_round_of_lt_overflow` states that threshold argument for any exact comparator.
 -/
 

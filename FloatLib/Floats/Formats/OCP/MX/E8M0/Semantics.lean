@@ -14,11 +14,10 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Numerical semantics of E8M0 scaling
 
-E8M0 is an exponent-only scale rather than a sign/exponent/fraction float. Its runtime carrier
-remains one byte. The contracts in this module relate that byte and the existing exact decoders to
-the same `NumericalSystem` and `Operation` interfaces used by ordinary floats and other numerical
-representations. A finite code denotes a positive power of two, and scaling by it multiplies
-exact values.
+E8M0 has no sign and no fraction, only an exponent, and at runtime it's one byte. The contracts
+here connect that byte and its exact decoders to the `NumericalSystem` and `Operation` interfaces
+that ordinary floats and the other numerical representations use. A finite code denotes a positive
+power of two, so scaling by code `130` multiplies an exact value by `8`.
 -/
 
 @[expose] public section
@@ -42,7 +41,7 @@ def numericalSystem : NumericalSystem where
 abbrev AtFinite (value : Numerics.Dyadic) :=
   numericalSystem.AtFinite value
 
-/-- Finite E8M0 representation is exactly successful dyadic decoding. -/
+/-- A scale represents a dyadic value if and only if decoding it returns that value. -/
 theorem numericalSystem_represents_iff (scale : E8M0)
     (value : Numerics.Dyadic) :
     numericalSystem.Represents scale value ↔ toDyadic? scale = some value := by
@@ -68,8 +67,8 @@ exponent. For a decoded scale, a positive power of two, it is the exact product 
 @[inline] def scaledValue (scale value : Numerics.Dyadic) : Numerics.Dyadic :=
   { value with exponent := value.exponent + scale.exponent }
 
-/-- Adding a scale's exponent multiplies the exact value by two to that exponent; the scale's sign
-and significand are not read. -/
+/-- Adding a scale's exponent multiplies the exact value by two to that exponent. The scale's sign
+and significand are never read. -/
 private theorem toRat_scaledValue (scale value : Numerics.Dyadic) :
     (scaledValue scale value).toRat = value.toRat * 2 ^ scale.exponent := by
   rcases value with ⟨negative, significand, exponent⟩
@@ -101,8 +100,8 @@ theorem toRat_scaledValue_of_toDyadic?_eq_some {scale : E8M0} {scaleValue : Nume
   rw [toRat_scaledValue, mul_comm]
   simp [Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand]
 
-/-- E8M0 scaling multiplies the exact value by the decoded scale, and fails exactly on the NaN
-scale. -/
+/-- E8M0 scaling multiplies the exact value by the decoded scale, and it fails on the NaN scale and
+nowhere else. -/
 theorem map_toRat_scaleDyadic? (scale : E8M0) (value : Numerics.Dyadic) :
     (scaleDyadic? scale value).map Numerics.Dyadic.toRat =
       (toDyadic? scale).map fun scaleValue => scaleValue.toRat * value.toRat := by

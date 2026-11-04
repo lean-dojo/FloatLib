@@ -13,9 +13,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Proof
 /-!
 # Value, range, and error of rational projection
 
-The precision rounder can produce at most one carry. Carry normalization and
-preferred-cohort selection preserve its exact value. Every result, including a
-directed overflow result, is representable in its destination format.
+Rounding to precision can carry at most once. In decimal32, `9999999.5` rounds to `10000000`,
+which needs an eighth digit until it is renormalized to `1000000e1`. Carry normalization and
+preferred-cohort selection keep the exact value, and every result is representable in its
+destination format, a directed overflow result included.
 -/
 
 @[expose] public section
@@ -70,7 +71,7 @@ theorem roundedPair_quantum_ge_min (f : Format) (mode : RoundingMode) (s : Bool)
     f.minQuantum ≤ (roundedPair f mode s x).2 := by
   exact (roundingQuantum_ge_min f x).trans (f.le_carry_quantum _ _)
 
-/-- Carry normalization preserves the computed value exactly. -/
+/-- Carry normalization leaves the computed value unchanged. -/
 theorem roundedPair_value (f : Format) (mode : RoundingMode) (s : Bool) (x : ℚ) :
     ((roundedPair f mode s x).1 : ℚ) * (10 : ℚ) ^ (roundedPair f mode s x).2 =
       (mode.roundAt s x (roundingQuantum f x) : ℚ) *
@@ -169,7 +170,7 @@ theorem project_valid (f : Format) (mode : RoundingMode) (x : ℚ)
     (project f mode x preferred negativeZero).value.Valid f :=
   projectMagnitude_valid f mode _ (abs_nonneg x) preferred
 
-/-- On the finite path, the datum denotes exactly the rounded coefficient-grid value. -/
+/-- On the finite path, the datum denotes the rounded coefficient-grid value. -/
 theorem projectMagnitude_value (f : Format) (mode : RoundingMode) (s : Bool)
     (x : ℚ) (preferred : Int)
     (hq : (roundedPair f mode s x).2 ≤ f.maxQuantum) :

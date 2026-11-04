@@ -12,8 +12,8 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Proof contracts for configured OCP MX decoding
 
-OCP MX values reach generic algorithms through the shared `ExactDecoder` capability. The bridge
-lemmas below show that decoding an E8M0 scale or a shared-scale block is exactly the corresponding
+Generic algorithms see OCP MX values through the shared `ExactDecoder` capability. The bridge
+lemmas below show that decoding an E8M0 scale or a shared-scale block gives the same result as its
 numerical-system denotation.
 -/
 

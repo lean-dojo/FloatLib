@@ -12,9 +12,9 @@ public import FloatLib.Kernels.FixedWord.Product.Runtime
 /-!
 # Shared native signed-magnitude arithmetic
 
-Binary interchange and posit arithmetic both decode finite values into a sign and an unsigned
-significand. These one- and two-word operations combine aligned magnitudes, retaining the sign
-of the larger magnitude on subtraction and choosing positive zero on exact cancellation.
+Binary interchange and posit arithmetic both decode a finite value into a sign and an unsigned
+significand, so they can share these one- and two-word operations on aligned magnitudes. A
+subtraction keeps the sign of the larger magnitude. Exact cancellation gives positive zero.
 -/
 
 @[expose] public section
@@ -24,8 +24,8 @@ namespace FloatLib.Numerics.FixedWord
 /--
 Add or subtract two unsigned magnitudes according to their independent signs.
 
-Exact cancellation returns positive zero. Same-sign callers must establish separately that the
-sum fits in `UInt64`; opposite-sign subtraction cannot overflow.
+Exact cancellation returns positive zero. A same-sign caller has to show on its own that the sum
+fits in `UInt64`, while opposite-sign subtraction can't overflow.
 -/
 @[inline] def addSignedMagnitudes
     (leftNegative rightNegative : Bool)
@@ -42,8 +42,8 @@ sum fits in `UInt64`; opposite-sign subtraction cannot overflow.
 /--
 Add or subtract two unsigned two-limb magnitudes according to their independent signs.
 
-Exact cancellation returns positive zero. Same-sign addition discards the carry from `add128`,
-so callers must establish that the sum fits in `UInt128`; opposite-sign subtraction cannot overflow.
+Exact cancellation returns positive zero. Same-sign addition discards the carry from `add128`, so
+callers must show that the sum fits in `UInt128`. Opposite-sign subtraction can't overflow.
 -/
 @[inline] def addSignedMagnitudes128
     (leftNegative rightNegative : Bool)

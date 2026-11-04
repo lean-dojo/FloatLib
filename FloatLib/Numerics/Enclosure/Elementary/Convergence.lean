@@ -15,9 +15,9 @@ public import Mathlib.Topology.Algebra.Order.Floor
 /-!
 # Refinement of rational Taylor enclosures
 
-The computed error radii tend to zero as the degree increases. These results justify arbitrary
-accuracy of the enclosures; deciding a rounded result also requires handling exact rounding
-boundaries.
+As the degree increases, the computed error radii tend to zero, so the enclosures can be made as
+accurate as you like. That alone doesn't decide a rounded result. Exact rounding boundaries need
+handling too.
 -/
 
 @[expose] public section

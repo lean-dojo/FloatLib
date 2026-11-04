@@ -10,9 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Proof
 /-!
 # Exactness on every representable decimal
 
-These theorems cover every valid coefficient and quantum in any `Format`,
-in all five rounding directions. A change of representation within a cohort is not inexact:
-only a change in numerical value can raise that exception.
+If the exact value is representable, projecting it raises no inexact, whatever the format and in
+all five rounding directions. These theorems cover every valid coefficient and quantum. Moving to
+another member of the cohort doesn't count as inexact either, since only a change in numerical
+value can raise that exception.
 -/
 
 @[expose] public section
@@ -20,7 +21,7 @@ only a change in numerical value can raise that exception.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
 /-- A coefficient below the bound, at a quantum no finer than the least one, needs no grid coarser
-than its own quantum; the largest quantum plays no role. -/
+than its own quantum, and the largest quantum plays no role. -/
 private theorem roundingQuantum_coefficient_le (f : Format) {c : Nat} {q : Int}
     (hc : c < f.coefficientBound) (hq : f.minQuantum ≤ q) :
     roundingQuantum f ((c : ℚ) * (10 : ℚ) ^ q) ≤ q := by
@@ -46,7 +47,7 @@ theorem roundedPair_exact_value (f : Format) (mode : RoundingMode) (s : Bool)
   exact mode.roundAt_exact_value s c (roundingQuantum_le_of_valid f s c q h)
 
 /-- Every representation of an exact magnitude that fits the precision and the least quantum is at
-or above its initial projection grid; the largest quantum plays no role. -/
+or above its initial projection grid, and the largest quantum plays no role. -/
 theorem roundedPair_quantum_minimal_of_exact (f : Format) (mode : RoundingMode)
     (s : Bool) (x : ℚ) (d : Nat) (r : Int)
     (hd : d < f.coefficientBound) (hrmin : f.minQuantum ≤ r)

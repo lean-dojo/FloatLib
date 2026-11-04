@@ -12,15 +12,15 @@ public import Init.Data.UInt.Log2
 /-!
 # Shared fixed-word runtime primitives
 
-Fixed-format and fixed-limb backends share a native-integer toolbox for bounded arithmetic. It
-implements nearest-even shifts and quotients, two-word arithmetic, and restoring square-root
-state without committing to a floating-point format.
+This is the native-integer toolbox that fixed-format and fixed-limb backends share for bounded
+arithmetic, and it implements nearest-even shifts and quotients, two-word arithmetic, and the
+restoring square-root state, without committing to a floating-point format.
 
-The common case stays in `UInt64` or `UInt128`, so a specialized backend does not pay for
-arbitrary-precision arithmetic to manipulate a few limbs. Every boundary where truncation or
+The common case stays in `UInt64` or `UInt128`, so a specialized backend doesn't pay for
+arbitrary-precision arithmetic just to move a few limbs around. Every place where truncation or
 overflow could matter is visible in the code, and `Core.Proof` relates these routines to their
-unbounded-natural specifications. Wider inputs use the general numerical kernel rather than an
-approximate host operation.
+specifications over unbounded naturals. Wider inputs go to the general numerical kernel. They never
+go to an approximate host operation.
 -/
 
 @[expose] public section
@@ -85,10 +85,10 @@ test, and no halfway marker or remainder is constructed.
 Round the native quotient `num / den` to nearest, with ties to even.
 
 Since `num % den < den`, comparing the remainder with `den - remainder` decides `2 * remainder`
-against `den` without leaving the word, because the subtraction cannot underflow and nothing is
-doubled. For `den = 0` the kernel returns `0`. This differs from `Numerics.roundQuotientEven num 0`,
-which inherits Lean's `n / 0 = 0` and `n % 0 = n` and so returns `1` for nonzero `num`. So
-`roundQuotientEven_toNat` assumes `den ≠ 0`.
+against `den` inside the word: the subtraction can't underflow and nothing is doubled. With
+`den = 0` the kernel returns `0`, but `Numerics.roundQuotientEven num 0` inherits Lean's `n / 0 = 0`
+and `n % 0 = n` and returns `1` for nonzero `num`. That's why `roundQuotientEven_toNat` assumes
+`den ≠ 0`.
 -/
 @[inline] def roundQuotientEven (num den : UInt64) : UInt64 :=
   if den == 0 then
@@ -190,12 +190,11 @@ The parity test stays in `UInt64`, so fixed-carrier rounding kernels avoid a con
 /--
 Floor binary logarithm from at most four word stages and a packed lookup, with zero mapped to zero.
 
-Zero and one return immediately. Other four-bit values go straight to the packed lookup, and
-larger byte-sized values need only the final stage. For larger words, each preceding stage halves
-the range of possible leading-bit positions. The remaining four-bit value indexes a two-bit entry
-in the scalar constant `0xffffaa50`. All work stays in machine words, with no loop whose length
-grows with the position of the leading bit.
-`Core.Proof.Word` proves equality with `UInt64.log2` on the entire word range.
+Zero and one return at once, other four-bit values go straight to the packed lookup, and byte-sized
+values need only the final stage. On larger words each earlier stage halves the range of possible
+leading-bit positions. The four-bit value that remains indexes a two-bit entry in the scalar
+constant `0xffffaa50`. Everything stays in machine words, and no loop grows with the position of the
+leading bit. `Core.Proof.Word` proves equality with `UInt64.log2` on the entire word range.
 -/
 @[inline] def log2Word (value : UInt64) : UInt64 :=
   -- 0xffffaa50 packs floor(log2 n) for n = 0..15, with the zero entry defined as zero:

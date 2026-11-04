@@ -12,18 +12,19 @@ public import FloatLib.Numerics.Quantization.Deterministic.MagnitudeRounding
 /-!
 # IEEE rounding modes for `Model`
 
-This type provides the five rounding-direction attributes of IEEE 754-2019: the two nearest modes,
-which differ only at an exact tie, and the three directed modes. It also provides rounding away
-from zero, GNU MPFR's `MPFR_RNDA`, which IEEE 754 does not define. The broader quantization-policy
-vocabulary `Numerics.RoundingMode` also contains stochastic rounding.
+`IEEERoundingMode` is the rounding direction that executable rounding and its proofs share. It has
+the five rounding-direction attributes of IEEE 754-2019, which are the two nearest modes (they
+differ only at an exact tie) and the three directed ones, plus rounding away from zero. IEEE 754
+doesn't define that last one, but GNU MPFR does, as `MPFR_RNDA`. Stochastic rounding lives in the
+broader quantization-policy vocabulary `Numerics.RoundingMode`, which has these directions too.
 
-This is the shared mode definition for executable rounding and its proofs. The helpers beside it
-state how each direction treats the magnitude of a result, overflow, negation, and an exactly
-cancelling sum. `IEEERoundingMode.magnitudeRounding` names the `Numerics.MagnitudeRounding` rule
-that a direction applies to the magnitude of a result of known sign.
+Next to the type sit helpers that say how each direction treats the magnitude of a result,
+overflow, negation and a sum that cancels to an exact zero. For instance,
+`IEEERoundingMode.magnitudeRounding` names the `Numerics.MagnitudeRounding` rule that a direction
+applies to the magnitude of a result whose sign is known.
 
-The constructors are `nearest` (ties to even), `nearestAway`, `towardZero`, `up`, `down`, and
-`away`, written with a leading dot, as in `(mode := .up)`. `open FloatLib.Rounding` names the type
+You write the constructors `nearest` (ties to even), `nearestAway`, `towardZero`, `up`, `down` and
+`away` with a leading dot, as in `(mode := .up)`, and `open FloatLib.Rounding` names the type
 `IEEERoundingMode` without its namespace.
 
 ## References
@@ -109,7 +110,7 @@ instance : ToString IEEERoundingMode where
 The quantization-policy rounding mode with the same direction.
 
 `Numerics.RoundingMode` also contains stochastic rounding, which has no constructor in
-`IEEERoundingMode`, so this map is an embedding, not a bijection.
+`IEEERoundingMode`, so this map is an embedding that misses stochastic rounding.
 -/
 def toRoundingMode : IEEERoundingMode → Numerics.RoundingMode
   | .nearest => .nearest
@@ -123,12 +124,10 @@ def toRoundingMode : IEEERoundingMode → Numerics.RoundingMode
 Whether this mode, read as a directed rounding, moves an inexact result of the given sign away
 from zero.
 
-This is the directed magnitude-up predicate. Rounding toward positive infinity increases the
-magnitude of positive results, rounding toward negative infinity that of negative results,
-rounding away from zero that of every result, and rounding toward zero never does. The two nearest
-modes are not directed and give `false` for both signs. Tininess detection relies on that answer
-at the midpoint just below the smallest normal number, which both nearest modes take up to the
-normal number.
+Upward rounding does so for positive results, downward rounding for negative ones and `away` for
+every result. Rounding toward zero never does. Neither nearest mode is directed, so both give
+`false` for either sign, and tininess detection relies on that at the midpoint just below the
+smallest normal number, which both nearest modes take up to the normal number.
 -/
 @[inline] def roundsAwayFromZero (mode : IEEERoundingMode) (negative : Bool) : Bool :=
   match mode with
@@ -141,8 +140,8 @@ normal number.
 Whether an overflowing result of the given sign takes the format's native overflow value instead
 of saturating at the largest finite magnitude, as `directedOverflow` reads it.
 
-Both nearest modes always do. A directed mode, rounding away from zero included, does so exactly
-when it rounds that sign away from zero (IEEE 754-2019 Section 7.4). The native overflow value is
+Both nearest modes always do, and a directed mode (rounding away from zero included) does if and
+only if it rounds that sign away from zero (IEEE 754-2019 Section 7.4). The native overflow value is
 the signed infinity in IEEE encodings, a NaN in finite encodings that have one, and the largest
 finite value otherwise (`nativeOverflow`).
 -/
@@ -186,13 +185,13 @@ def negate : IEEERoundingMode → IEEERoundingMode
 @[simp] theorem negate_away : IEEERoundingMode.away.negate = .away := rfl
 
 /--
-Sign that IEEE 754 gives the zero of an exactly cancelling sum whose operands have the signs
-`leftSign` and `rightSign`.
+Sign that IEEE 754 gives an exact zero sum whose operands have the signs `leftSign` and
+`rightSign`.
 
-IEEE 754-2019 Section 6.3 makes an exact zero sum of operands with opposite signs positive in
-every rounding direction except toward negative infinity, where it is negative. A sum of two zeros
-with the same sign keeps that sign in every direction. Rounding away from zero follows the rule of
-the other directions, as MPFR does: its exact cancellation gives positive zero.
+By IEEE 754-2019 Section 6.3, an exact zero sum of operands with opposite signs is positive in
+every rounding direction except toward negative infinity, where it is negative. Two zeros of the
+same sign keep that sign in every direction. Rounding away from zero follows the other
+directions, as MPFR does, so its exact cancellation gives positive zero.
 
 `zero` keeps a negative sign only in formats with a signed zero.
 -/
@@ -223,12 +222,12 @@ the result away from zero and truncate it otherwise.
 @[simp] theorem negate_negate (mode : IEEERoundingMode) : mode.negate.negate = mode := by
   cases mode <;> rfl
 
-/-- The negated mode rounds a result away from zero exactly when this mode rounds its negation. -/
+/-- The negated mode rounds a result away from zero if and only if this mode rounds its negation. -/
 theorem roundsAwayFromZero_negate (mode : IEEERoundingMode) (negative : Bool) :
     mode.negate.roundsAwayFromZero negative = mode.roundsAwayFromZero (!negative) := by
   cases mode <;> cases negative <;> rfl
 
-/-- The negated mode carries an overflow upward exactly when this mode carries its negation. -/
+/-- The negated mode carries an overflow upward if and only if this mode carries its negation. -/
 theorem overflowRoundsMagnitudeUp_negate (mode : IEEERoundingMode) (negative : Bool) :
     mode.negate.overflowRoundsMagnitudeUp negative =
       mode.overflowRoundsMagnitudeUp (!negative) := by
@@ -239,7 +238,7 @@ theorem magnitudeRounding_negate (mode : IEEERoundingMode) (negative : Bool) :
     mode.negate.magnitudeRounding negative = mode.magnitudeRounding (!negative) := by
   cases mode <;> cases negative <;> rfl
 
-/-- A mode rounds a magnitude up exactly when it moves a result of that sign away from zero. -/
+/-- A mode rounds a magnitude up if and only if it moves a result of that sign away from zero. -/
 theorem magnitudeRounding_eq_up_iff (mode : IEEERoundingMode) (negative : Bool) :
     mode.magnitudeRounding negative = .up ↔ mode.roundsAwayFromZero negative = true := by
   cases mode <;> cases negative <;> simp [magnitudeRounding, roundsAwayFromZero]
@@ -255,7 +254,7 @@ namespace FloatLib.Rounding
 ## The rounding-mode type
 
 `open FloatLib.Rounding` brings the type `IEEERoundingMode` into scope without its namespace, so
-user code can take a rounding direction as a parameter. The directions keep their leading dot:
+your code can take a rounding direction as a parameter. The directions keep their leading dot:
 
 ```
 open FloatLib.Rounding

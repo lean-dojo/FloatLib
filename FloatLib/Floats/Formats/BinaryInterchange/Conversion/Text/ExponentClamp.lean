@@ -16,8 +16,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 rational. Far above the overflow threshold every rational rounds to the same overflow result with
 the same flags, and far below the least subnormal every positive rational rounds to the same tiny
 result with the same flags. In both regions every finite value lies on the same side of the
-rational, so the ternary value is preserved too. This file proves these saturation facts for
-scaled rationals and concludes `convertDecimalText_eq_exact`.
+rational, so the ternary value is preserved too. We prove these saturation facts for scaled
+rationals and conclude `convertDecimalText_eq_exact`.
 -/
 
 @[expose] public section

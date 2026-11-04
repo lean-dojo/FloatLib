@@ -12,10 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Configured
 /-!
 # Optional projective views of configured posits
 
-These adapters intentionally map NaR to the added point of mathlib's one-point completion and
-projective line. They are proof-side views, not executable posit semantics, and are kept outside
-the basic configured API to avoid imposing topology and projective-geometry dependencies on
-ordinary programs.
+Configured posits normally decode NaR as an exceptional value with no real meaning. These
+adapters map it, on purpose, to the added point of Mathlib's one-point completion and projective
+line. They are views for proofs and carry no executable posit semantics. We keep them out of the
+basic configured API so that ordinary programs don't pick up topology and projective-geometry
+dependencies.
 -/
 
 @[expose] public section
@@ -32,9 +33,9 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [codec : FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 /--
-Explicit one-point view of a configured posit.
+Opt-in one-point view of a configured posit.
 
-This view maps NaR to `OnePoint.infty`, reinterpreting its meaning as the added projective point.
+This view maps NaR to `OnePoint.infty` and so reads it as the added projective point.
 The primary denotation returned by `decode` keeps NaR as `ExceptionalValue.notAReal`.
 -/
 @[inline] def toProjectiveRat
@@ -48,7 +49,7 @@ The primary denotation returned by `decode` keeps NaR as `ExceptionalValue.notAR
     ℙ Rat (Fin 2 → Rat) :=
   Model.toProjectiveRatLine (toModel value)
 
-/-- Explicit real one-point view, obtained by embedding exact rational finite values. -/
+/-- Opt-in real one-point view, which embeds the exact rational finite values. -/
 @[inline] noncomputable def toProjectiveReal
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     OnePoint ℝ :=
@@ -60,7 +61,7 @@ The primary denotation returned by `decode` keeps NaR as `ExceptionalValue.notAR
     ℙ ℝ (Fin 2 → ℝ) :=
   Model.toProjectiveRealLine (toModel value)
 
-/-- A configured posit maps to the rational point at infinity exactly when it is NaR. -/
+/-- A configured posit maps to the rational point at infinity if and only if it is NaR. -/
 @[simp, grind =] theorem toProjectiveRat_eq_infty_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toProjectiveRat value = OnePoint.infty ↔ isNaR value = true :=
@@ -74,7 +75,7 @@ The primary denotation returned by `decode` keeps NaR as `ExceptionalValue.notAR
       toRat? value = some rational :=
   Model.toProjectiveRat_eq_coe_iff (toModel value) rational
 
-/-- The rational projective-line view represents precisely the same finite rational values. -/
+/-- On finite rational points, the rational projective-line view agrees with `toRat?`. -/
 @[grind =]
 theorem toProjectiveRatLine_eq_finite_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan))
@@ -84,13 +85,13 @@ theorem toProjectiveRatLine_eq_finite_iff
       toRat? value = some rational :=
   Model.toProjectiveRatLine_eq_finite_iff (toModel value) rational
 
-/-- The distinguished rational projective point is attained exactly by posit NaR. -/
+/-- Posit NaR, and nothing else, maps to the distinguished rational projective point. -/
 @[simp, grind =] theorem toProjectiveRatLine_eq_nar_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toProjectiveRatLine value = Model.projectiveRatNaR ↔ isNaR value = true :=
   Model.toProjectiveRatLine_eq_nar_iff (toModel value)
 
-/-- A configured posit maps to the real point at infinity exactly when it is NaR. -/
+/-- A configured posit maps to the real point at infinity if and only if it is NaR. -/
 @[simp, grind =] theorem toProjectiveReal_eq_infty_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toProjectiveReal value = OnePoint.infty ↔ isNaR value = true :=
@@ -104,7 +105,7 @@ theorem toProjectiveRatLine_eq_finite_iff
       toRat? value = some rational :=
   Model.toProjectiveReal_eq_coe_iff (toModel value) rational
 
-/-- The real projective-line view represents precisely the embedded finite rational values. -/
+/-- On embedded finite rational points, the real projective-line view agrees with `toRat?`. -/
 @[grind =]
 theorem toProjectiveRealLine_eq_finite_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan))
@@ -114,7 +115,7 @@ theorem toProjectiveRealLine_eq_finite_iff
       toRat? value = some rational :=
   Model.toProjectiveRealLine_eq_finite_iff (toModel value) rational
 
-/-- The distinguished real projective point is attained exactly by posit NaR. -/
+/-- Posit NaR, and nothing else, maps to the distinguished real projective point. -/
 @[simp, grind =] theorem toProjectiveRealLine_eq_nar_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toProjectiveRealLine value = Model.projectiveRealNaR ↔ isNaR value = true :=

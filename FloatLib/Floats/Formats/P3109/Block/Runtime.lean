@@ -12,16 +12,16 @@ public import Mathlib.Data.PNat.Basic
 /-!
 # P3109 scaled blocks
 
-Chapter 5 of the unapproved P3109 interim report 4.0.3 defines a nonempty sequence with
-one independently typed scale. Decoding multiplies exact closed rational observations, and
+Chapter 5 of the unapproved P3109 interim report 4.0.3 defines a block as a nonempty sequence
+with one scale of its own type. Decoding multiplies exact closed rational observations, and
 projection normalizes each exact result before one destination projection. Zero and infinite
-result scales use the special rules of §5.4.2 rather than ordinary division.
+result scales follow the special rules of §5.4.2 and never go through ordinary division.
 
-A policy holds one saturation mode and one rounding mode for the whole block. Stochastic
-modes take one random word per lane, all of the same bit width. Reductions accumulate exact
-closed values in lane order and round only the final result. The generic elementwise operations
-cover exact rational closed operations. Transcendental functions need a separate evaluator, which
-this module does not install.
+A policy holds one saturation mode and one rounding mode for the whole block. Stochastic modes
+take one random word per lane, all of the same bit width. Reductions accumulate exact closed
+values in lane order and round only the final result. The generic elementwise operations cover
+exact rational closed operations, and transcendental functions would need an evaluator of their
+own, which this module doesn't install.
 
 Reference: §§5.3–5.8 of
 <https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308>.

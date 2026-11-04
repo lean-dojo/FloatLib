@@ -18,11 +18,10 @@ public meta import FloatLib.Floats.ExecFloat.Carrier -- shake: keep
 # Proof-aware format-report profiles
 
 A numerical family describes its representation, value classes, rounding, execution strategy,
-theorem groups, and proof limits with one `FormatProfile`, which supplies the data for
-`#float_info`.
+theorem groups, and proof limits with one `FormatProfile`, and that's the data `#float_info` shows.
 
-Rendering and metaprogramming inspection live in separate modules. Keeping the schema independent
-lets family packages construct and validate reports without depending on the command UI.
+Rendering and metaprogramming inspection live in other modules. We keep the schema on its own so
+that family packages can construct and validate reports without depending on the command UI.
 -/
 
 @[expose] public section
@@ -71,8 +70,8 @@ meta inductive NumericalAnalysisKind where
 /--
 The concise numerical statement attached to a checked theorem surface.
 
-The statement summarizes the theorem for numerical users; the theorem declaration list and
-`scope` remain the authoritative Lean interface.
+The statement summarizes the theorem for numerical users, while the theorem declaration list and
+`scope` stay the authoritative Lean interface.
 -/
 meta structure NumericalGuarantee where
   /-- Kinds of numerical analysis supported by the theorem group. -/
@@ -128,9 +127,9 @@ meta structure TheoremSurface where
 
 /--
 Theorem groups about values of another type, which the inspected type's values reach through
-`embedding`. An executable carrier states few theorems directly: `Binary32` relates its values to
-the proof model `Model format` with `ExecFloat.Binary.toModel`, a configured fixed-point value to
-its code with `toCode`; the theorems about that type then apply through the embedding.
+`embedding`. An executable carrier states few theorems of its own. `Binary32` relates its values to
+the proof model `Model format` with `ExecFloat.Binary.toModel`, and a configured fixed-point value
+relates to its code with `toCode`. The theorems about that type then apply through the embedding.
 -/
 meta structure RelatedTheorems where
   /-- The type constructor the groups are about, such as `Formats.BinaryInterchange.Model`. -/

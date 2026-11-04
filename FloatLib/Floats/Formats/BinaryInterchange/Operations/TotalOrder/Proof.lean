@@ -11,7 +11,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Ma
 /-!
 # Binary total-order correctness
 
-This proof entry point exports complete-data and encoded-word order laws, numerical comparison
-bridges, signed-zero and NaN rules, and the magnitude-order specification. Runtime clients can
-import `TotalOrder.Runtime` alone.
+Import this file for the proofs about total order: the order laws on complete data and on encoded
+words, the bridges to numerical comparison, the signed-zero and NaN rules, and the specification
+of magnitude order. Code that only runs the order can import `TotalOrder.Runtime` alone.
 -/

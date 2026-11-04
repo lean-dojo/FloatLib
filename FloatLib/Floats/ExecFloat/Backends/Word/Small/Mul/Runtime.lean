@@ -13,12 +13,13 @@ public import Mathlib.Data.Rat.Cast.Order
 /-!
 # Native one-word finite multiplication
 
-The executable normal multiplication path here serves conventional IEEE formats whose storage,
-exponent, and significand intermediates fit in `UInt64`. Refinement proofs live in `Mul.Proof`.
+This normal multiplication path serves conventional IEEE formats whose storage, exponent, and
+significand intermediates fit in `UInt64`. Its refinement proofs live in `Mul.Proof`.
 
 The kernel declines exceptional, zero, and subnormal operands, products below the normal threshold
-before rounding, and overflow after rounding. The dispatcher handles those cases with the generic
-implementation. Each accepted result agrees with its correctly rounded finite-product result.
+before rounding, and overflow after rounding, and the dispatcher handles those cases with the
+generic implementation. Each accepted result agrees with its correctly rounded finite-product
+result.
 -/
 
 @[expose] public section
@@ -45,7 +46,7 @@ def Eligible (fmt : FloatFormat) : Prop :=
     fmt.fracWidth ≤ 31
 
 /--
-Product eligibility is decided from the descriptor fields; the conditional form is inlined and
+Product eligibility is decided from the descriptor fields. The conditional form is inlined, so it
 can be simplified for a closed format (see `NativeSmallWord.StorageEligible`).
 -/
 @[inline] instance (fmt : FloatFormat) : Decidable (Eligible fmt) :=

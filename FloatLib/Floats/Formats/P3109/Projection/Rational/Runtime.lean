@@ -12,19 +12,20 @@ public import FloatLib.Numerics.Exact.RationalBinary
 /-!
 # Exact-rational P3109 projection
 
-Configured binary floats, posits, integer inputs, and exact finite arithmetic can all supply
-exact rational values. This module projects them into any valid P3109 descriptor, rounding from
-the numerator and denominator with no intermediate approximation.
+Configured binary floats, posits, integer inputs, and exact finite arithmetic can all supply exact
+rational values. This module projects them into any valid P3109 descriptor, rounding from the
+numerator and denominator with no intermediate approximation, so `1/3` is rounded from `1` and `3`
+themselves.
 
-The runtime follows the same P3109 projection order as dyadic projection:
+It follows the same P3109 projection order as dyadic projection:
 
-1. select the descriptor quantum;
-2. round the exact quotient according to the requested P3109 mode;
-3. apply the shared saturation rule;
-4. encode the resulting datum.
+1. select the descriptor quantum
+2. round the exact quotient according to the requested P3109 mode
+3. apply the shared saturation rule
+4. encode the resulting datum
 
-The dyadic entry point suits a caller that already has an exact binary value. Both paths share
-saturation, encoding, and descriptor logic.
+If you already have an exact binary value, the dyadic entry point suits you better. Both paths
+share saturation, encoding, and descriptor logic.
 -/
 
 @[expose] public section

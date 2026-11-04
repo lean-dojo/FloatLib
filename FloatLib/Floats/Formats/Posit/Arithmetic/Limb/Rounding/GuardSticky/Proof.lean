@@ -16,11 +16,11 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 /-!
 # Correctness of direct two-limb guard-and-sticky rounding
 
-`candidateCarrierLawful` proves that the `UInt128` candidate carrier satisfies the shared carrier
-laws at capacity 128. The shared theorems then give the packing and rounding refinement. The
-remaining proofs connect the two-limb entry points, which add the zero test, the exact
-minimum-positive comparison, and exact-width sign restoration, to the arbitrary-width direct
-rounder.
+Much of this proof comes from the shared carrier theorems. `candidateCarrierLawful` shows that the
+`UInt128` candidate carrier satisfies the shared carrier laws at capacity 128, and the packing and
+rounding refinement follow. What's left connects the two-limb entry points, which add three steps of
+their own (the zero test, the exact minimum-positive comparison, and exact-width sign
+restoration), to the arbitrary-width direct rounder.
 -/
 
 @[expose] public section

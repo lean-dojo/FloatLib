@@ -11,18 +11,18 @@ public import Init.Data.UInt.Log2
 /-!
 # Limb arrays: representation and field access
 
-A `LimbArray` stores a natural number as a little-endian array of 32-bit limbs: limb `i` carries
-weight `2^(32 i)`, and reading beyond the stored limbs yields zero, so an array denotes the same
-number after zero limbs are appended. The value of an array is `toNat`. `Core.Proof` relates the
-accessors to this value, and the arithmetic and shift modules provide their own value theorems.
+A `LimbArray` stores a natural number as a little-endian array of 32-bit limbs. Limb `i` carries
+weight `2^(32 i)`, and reading beyond the stored limbs gives zero, so appending zero limbs doesn't
+change the number an array denotes. That number is `toNat`. `Core.Proof` relates the accessors to
+it, and the arithmetic and shift modules prove their own value theorems.
 
-Using `UInt32` limbs lets each limb product, plus an accumulator limb and a carry, fit in a
-`UInt64`: `(2^32 - 1)^2 + 2 * (2^32 - 1) = 2^64 - 1`. Array updates can also reuse storage when
-the array is uniquely referenced.
+We use `UInt32` limbs so that each limb product, plus an accumulator limb and a carry, fits in a
+`UInt64`: `(2^32 - 1)^2 + 2 * (2^32 - 1) = 2^64 - 1`. Array updates can also reuse storage when the
+array is uniquely referenced.
 
-This module defines the representation and the non-arithmetic accessors: reading bits and 32-bit
-windows, masking to a bit count, resizing, comparing, and locating the leading set bit. Each loop
-is structural recursion over a limb count so its invariant can be stated by induction. The
+This module defines the representation and the accessors that do no arithmetic: reading bits and
+32-bit windows, masking to a bit count, resizing, comparing, and locating the leading set bit. Each
+loop is structural recursion over a limb count, so its invariant can be stated by induction. The
 arithmetic kernels live in `Arithmetic.Runtime` and the shifts in `Shift.Runtime`.
 -/
 

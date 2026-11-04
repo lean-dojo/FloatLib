@@ -13,10 +13,10 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of direct posit square-root packing
 
-The integer-root prefix and its exact sticky bit select the same Posit as exact squared-boundary
-rounding. The proof uses rational points inside the generated root cell to bracket the
-mathematical square root. Both rational witnesses round to the same posit, so monotonicity
-identifies the rounding of the root between them.
+An integer-root prefix with its exact sticky bit selects the same Posit as exact rounding against
+squared boundaries. For the proof we pick two rational points inside the generated root cell, one
+on each side of the mathematical square root. Both round to the same posit, so by monotonicity the
+root between them rounds there too.
 -/
 
 @[expose] public section

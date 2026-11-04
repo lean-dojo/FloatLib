@@ -19,11 +19,11 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 # Correctness of two-word finite addition
 
 Under `Eligible`, every accepted result of `Addition.Runtime` is the exact finite kernel's answer.
-The proof follows the one-word addition proof `NativeSmallWordAdd`: the two-word rounder computes
-the natural-number normal specification `NativeSmallWordAdd.normalSpec?`, the aligned and sticky
-combinations match `FiniteScaleAdd.roundMagnitudes`, and the decoded storage fields are those of
-`FiniteKernel.decode?`. The natural-number lemmas about sticky alignment are shared with the
-one-word kernel.
+Its proof follows the one-word addition proof `NativeSmallWordAdd` step for step: the two-word
+rounder computes the natural-number normal specification `NativeSmallWordAdd.normalSpec?`, the
+aligned and sticky combinations match `FiniteScaleAdd.roundMagnitudes`, and the decoded storage
+fields are those of `FiniteKernel.decode?`. Natural-number lemmas about sticky alignment are shared
+with the one-word kernel.
 -/
 
 @[expose] public section

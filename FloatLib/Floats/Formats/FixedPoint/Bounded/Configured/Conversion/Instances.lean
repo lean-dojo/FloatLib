@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Conversion.P
 /-!
 # Bounded fixed-point conversion instances
 
-Bounded fixed-point destinations quantize exact rationals under a caller-chosen overflow policy.
-The context-free instance chooses `.reject`, as the arithmetic does.
+Converting an exact rational into bounded fixed point needs an overflow policy, and the caller
+picks it. When there's no context to pick from, the instance here uses `.reject`, the same default
+the arithmetic uses.
 -/
 
 @[expose] public section

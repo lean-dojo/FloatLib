@@ -20,9 +20,10 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified fixed-limb significand products
 
-`mul128_toNat` proves the full `128 × 128 → 256` product correct using the `mul64_toNat` theorem
-from `Core.Proof.UInt128`. The addition theorems reconstruct the sum from its low limbs and
-outgoing carry. The `UInt256` lemmas describe widening, projection, and leading-bit selection.
+The main result is `mul128_toNat`, which proves the full `128 × 128 → 256` product correct from the
+`mul64_toNat` theorem in `Core.Proof.UInt128`. Along the way, the addition theorems reconstruct a
+sum from its low limbs and outgoing carry, and the `UInt256` lemmas describe widening, projection,
+and leading-bit selection.
 -/
 
 @[expose] public section

@@ -13,13 +13,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.SquareRoot
 /-!
 # Wide-limb square-root runtime
 
-Positive normal inputs are decoded from their stored limbs. Their significands are
-scaled by `fracWidth` or `fracWidth + 1` bits and passed to a checked increasing-precision integer
-square root. The exact remainder determines rounding, including carry into the exponent.
+Positive normal inputs are decoded from their stored limbs, and their significands are scaled by
+`fracWidth` or `fracWidth + 1` bits and passed to a checked increasing-precision integer square
+root. Its exact remainder determines rounding, carry into the exponent included.
 
-The normal path has no fraction-width bound and does not require the bias to exceed the
-precision. Zero, subnormal, negative, and exceptional inputs use the reference operation.
-`Sqrt.Proof` proves equality with that operation on every eligible stored value.
+Unlike the two-word kernel, this normal path has no fraction-width bound and doesn't need the bias
+to exceed the precision. Zero, subnormal, negative, and exceptional inputs use the reference
+operation. `Sqrt.Proof` proves equality with that operation on every eligible stored value.
 -/
 
 @[expose] public section

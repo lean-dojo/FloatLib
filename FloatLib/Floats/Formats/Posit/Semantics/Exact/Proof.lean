@@ -12,13 +12,14 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness properties of exact posit semantics
 
-The complete and partial rational decoders preserve zero and finite fields, identify NaR exactly,
-and agree with the shared dyadic decoder used by integer arithmetic kernels.
+A posit word has two exact meanings in the library. Users see a rational, and the integer
+arithmetic kernels compute with a dyadic. This module is where the two meet. Both rational
+decoders, complete and partial, preserve zero and finite fields, pick out NaR and nothing else, and
+agree with the shared dyadic decoder.
 
-This is the semantic junction between user-facing rational meanings and implementation-facing
-dyadics. Proving the agreement once lets order, rounding, and arithmetic developments choose the
-more convenient exact representation without creating parallel definitions of what a posit word
-means.
+We prove that agreement once. After that, the order, rounding, and arithmetic developments can each
+use whichever exact representation is more convenient, without a parallel definition of what a
+posit word means.
 -/
 
 @[expose] public section
@@ -49,7 +50,7 @@ namespace Model.ExactValue
     toRat? (.zero : Model.ExactValue format) = some 0 :=
   rfl
 
-/-- The optional rational view preserves decoded finite fields exactly. -/
+/-- The optional rational view of decoded finite fields is their exact rational value. -/
 @[simp] theorem toRat?_finite {format : Format} (fields : Model.DecodedFields format) :
     toRat? (.finite fields) = some fields.toRat :=
   rfl
@@ -97,7 +98,7 @@ theorem toRat?_eq_toDyadic?_map (value : Model format) :
     toRat? (nar format) = none := by
   simp [toRat?]
 
-/-- An exact rational is unavailable precisely for the unique NaR word. -/
+/-- Only the unique NaR word has no exact rational. -/
 theorem toRat?_eq_none_iff (value : Model format) :
     value.toRat? = none ↔ value.isNaR = true := by
   unfold toRat? Model.ExactValue.toRat? decodeExact

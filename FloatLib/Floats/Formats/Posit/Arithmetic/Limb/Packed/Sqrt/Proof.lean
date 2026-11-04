@@ -15,8 +15,8 @@ public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.Proof
 /-!
 # Refinement of direct packed-pair posit square root
 
-The packed square-root adapter returns an in-range code and agrees with the shared
-width-generic root-prefix kernel after decoding.
+After decoding, the packed square-root adapter agrees with the shared width-generic root-prefix
+kernel, and the code it returns is in range.
 -/
 
 @[expose] public section

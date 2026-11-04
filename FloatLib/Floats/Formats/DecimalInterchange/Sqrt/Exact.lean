@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Optimal
 /-!
 # Exact representable square roots
 
-On a finer decimal grid, a representable root has an integer coefficient.
-Squaring that integer identifies the scaled radicand exactly, so every rounding
-mode recovers the same root. No test for irrationality is needed.
+If the root is representable, it has an integer coefficient on a fine enough decimal grid, and
+squaring that integer gives back the scaled radicand. So every rounding mode recovers the same
+root, the root of `2.25` is `1.5` in all five modes, and nothing ever has to test for
+irrationality.
 -/
 
 @[expose] public section
@@ -64,7 +65,7 @@ theorem sqrtPair_quantum_le_of_valid (f : Format) (mode : RoundingMode)
   simp only [sqrtPair, f.carry_eq, ite_eq_right (Nat.ne_of_lt hlt)]
   exact sqrtQuantum_le_of_valid f s c q hvalid
 
-/-- All five modes recover every representable nonnegative root exactly. -/
+/-- All five modes recover every representable nonnegative root unchanged. -/
 theorem sqrtPair_exact_value (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) (hvalid : (Datum.finite s c q).Valid f) :
     ((sqrtPair f mode (((c : ℚ) * (10 : ℚ) ^ q) ^ 2)).1 : ℚ) *

@@ -13,14 +13,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Division
 /-!
 # Width-generic wide-limb division
 
-Finite inputs are decoded from their limb fields. Division uses one arbitrary-precision
-integer quotient, fusing significand scaling with the extra bit needed for nearest-even rounding.
-For normal operands, a significand comparison determines the ratio's leading exponent. Subnormal
+Finite inputs are decoded from their limb fields. Division uses one arbitrary-precision integer
+quotient, which fuses significand scaling with the extra bit that nearest-even rounding needs. For
+normal operands a significand comparison determines the ratio's leading exponent, and subnormal
 operands use the general leading-exponent computation and the same certified rounder.
 
-The finite path includes zero operands, subnormal results, underflow, and overflow in every
-rounding direction. Only non-finite operands use the reference operation, whose value result does
-not depend on the rounding direction. `Division.Proof` proves the refinement through the codec.
+This finite path covers zero operands, subnormal results, underflow, and overflow in every rounding
+direction. Only non-finite operands use the reference operation, whose value result doesn't depend
+on the rounding direction. `Division.Proof` proves the refinement through the codec.
 -/
 
 @[expose] public section

@@ -12,17 +12,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 /-!
 # Numerical and exceptional-value rules for binary total order
 
-The order laws follow from the order on complete exact data. The numerical theorems connect the
-predicate to dyadic, real, and extended-real comparisons. The exceptional-value rules state
-the IEEE sign and signaling-class priorities and FloatLib's implementation-defined payload
-direction explicitly.
+Here the order laws of binary total order come from the order on complete exact data. Numerical
+theorems connect the predicate to dyadic, real and extended-real comparison. For exceptional
+values we state the IEEE sign and signaling-class priorities as theorems, and also the payload
+direction FloatLib chose where the standard leaves it to the implementation.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
-/-- The model predicate is precisely the shared order on complete decoded data. -/
+/-- The model predicate is the shared order on complete decoded data. -/
 theorem totalOrder_eq_exactValue {fmt : FloatFormat} (x y : Model fmt) :
     totalOrder x y = ExactValue.totalOrder (exactValue x) (exactValue y) := rfl
 
@@ -53,7 +53,7 @@ theorem totalOrder_antisymm {fmt : FloatFormat}
     x = y :=
   exactValue_injective (ExactValue.totalOrder_antisymm hxy hyx)
 
-/-- Mutual comparison holds exactly for bitwise-identical operands. -/
+/-- Mutual comparison holds if and only if the operands are bitwise identical. -/
 theorem totalOrder_both_iff {fmt : FloatFormat}
     (x y : Model fmt) :
     totalOrder x y = true ∧ totalOrder y x = true ↔ x = y := by
@@ -193,7 +193,7 @@ theorem exactValue_finite_or_infinity_of_isNaN_eq_false {fmt : FloatFormat}
     exact Or.inl ⟨d, exactValue_eq_finite_of_toDyadic?_eq_some hd⟩
   · exact Or.inr (exactValue_eq_infinity_of_isInf hinf)
 
-/-- A NaN precedes a number exactly when its sign bit is negative. -/
+/-- A NaN precedes a number just when its sign bit is negative. -/
 theorem totalOrder_nan_number {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = true) (hy : isNaN y = false) :
     totalOrder x y = signBit x := by
@@ -204,7 +204,7 @@ theorem totalOrder_nan_number {fmt : FloatFormat} {x y : Model fmt}
   · rw [hinf]
     exact ExactValue.totalOrder_nan_infinity _ _ _ _
 
-/-- A number precedes a NaN exactly when that NaN has positive sign. -/
+/-- A number precedes a NaN just when that NaN has positive sign. -/
 theorem totalOrder_number_nan {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = false) (hy : isNaN y = true) :
     totalOrder x y = !signBit y := by

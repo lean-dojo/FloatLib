@@ -14,9 +14,8 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 Optimized finite-division backends share `normalSpec?` as their natural-number normal-result
 specification. For conventional IEEE descriptors, `normalSpec_eq_roundRatScaled_of_some` proves
-agreement with exact
-nearest-even rational rounding when scaling the numerator requires a nonnegative left shift.
-That shift bound is a caller obligation, not a check made by `normalSpec?`.
+agreement with exact nearest-even rational rounding when scaling the numerator takes a nonnegative
+left shift. That shift bound is the caller's obligation, since `normalSpec?` doesn't check it.
 -/
 
 @[expose] public section
@@ -28,8 +27,8 @@ Candidate specification for a normal finite quotient.
 
 Zero inputs and exponents outside the supported normal range return `none`. Agreement with exact
 rational rounding requires `fmt.isIEEE = true` and
-`RationalBinary.floorLog2 num den ≤ Int.ofNat fmt.fracWidth`; the latter ensures that the numerator
-scaling is a left shift. Dispatchers use the complete rational implementation when a candidate
+`RationalBinary.floorLog2 num den ≤ Int.ofNat fmt.fracWidth`, and the latter makes the numerator
+scaling a left shift. Dispatchers use the complete rational implementation when a candidate
 declines.
 -/
 def normalSpec? (fmt : FloatFormat) (sign : Bool)

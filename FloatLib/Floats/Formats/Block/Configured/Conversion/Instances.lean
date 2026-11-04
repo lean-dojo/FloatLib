@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Block.Configured.Conversion.Proof
 /-!
 # Shared-scale block conversion instances
 
-Shared-scale block quantization requires an explicit shared exponent. No `DefaultQuantizer`
-instance is installed.
+Quantizing into a shared-scale block takes the shared exponent from the caller. This module
+installs that contextual quantizer and on purpose installs no `DefaultQuantizer`, because a default
+would hide a scale-selection policy such as maximum magnitude.
 -/
 
 @[expose] public section
@@ -27,7 +28,7 @@ namespace Conversion
 variable {lanes : Nat}
 
 /--
-Shared-scale destinations support quantization only with an explicit exponent context.
+Shared-scale destinations quantize only when the caller supplies the exponent context.
 
 There is intentionally no `DefaultQuantizer` instance.
 -/

@@ -14,20 +14,20 @@ public import FloatLib.Numerics.Exact.RationalBinary
 /-!
 # Native binary32 storage and rounding primitives
 
-`Model FloatFormat.binary32` remains the theorem-facing representation. Narrow-word kernels share
-a `UInt32` view, direct field operations, exact finite decoding, and rounding primitives
-defined here.
+`Model FloatFormat.binary32` stays the representation that theorems talk about. What's defined here
+is shared by the narrow-word kernels: a `UInt32` view, direct field operations, exact finite
+decoding, and rounding primitives.
 
-Operation-specific kernels and their refinements live in sibling modules. Keeping this base small
-prevents representation-only clients from importing the much larger addition and fused-operation
+Each operation's kernel and refinement live in a sibling module. We keep this base small so that
+clients who only need the representation don't import the much larger addition and fused-operation
 proof developments.
 
 ## References
 
 - IEEE Standard for Floating-Point Arithmetic, IEEE 754-2019, Clauses 3.4, 4.3.1, 5.4.1, and 6.2,
   <https://doi.org/10.1109/IEEESTD.2019.8766229>.
-- Lean, `Init.Data.Float.Model`, for the kernel-visible logical floating-point model used by
-  the surrounding agreement development.
+- Lean, `Init.Data.Float.Model`, for the kernel-visible logical floating-point model used by the
+  surrounding agreement development.
 -/
 
 @[expose] public section
@@ -125,11 +125,11 @@ abbrev Value := Model FloatFormat.binary32
         mkBits value.negative encodedExponent fraction
 
 /--
-Round the signed magnitude `(num / den) * 2^exponent` to a native binary32 word; a zero
-denominator produces canonical NaN.
+Round the signed magnitude `(num / den) * 2^exponent` to a native binary32 word. A zero denominator
+produces canonical NaN.
 
-The exact quotient calculations remain format-independent natural-number arithmetic. Only the
-binary32 thresholds and final field packing are specialized.
+The exact quotient calculations stay format-independent natural-number arithmetic, and only the
+binary32 thresholds and the final field packing are specialized.
 -/
 @[inline] def roundRatScaled (sign : Bool) (num den : Nat) (exponent : Int) : UInt32 :=
   if den == 0 then

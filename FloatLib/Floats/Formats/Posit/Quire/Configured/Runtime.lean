@@ -14,12 +14,13 @@ public import FloatLib.Floats.Formats.Posit.Quire.Configured.Type -- shake: keep
 /-!
 # Runtime interface for configured posit quires
 
-Configured posit quires support exact construction, decoding, accumulation, and final rounding.
-The executable definitions lift the standard quire model through the configured posit carrier.
-Quire arithmetic proofs and optional real/projective views are provided separately.
+This is the executable side of configured posit quires: exact construction, decoding,
+accumulation, and the final rounding back to a posit. Each definition lifts the standard quire
+model through the configured posit carrier, and the arithmetic proofs and the optional real and
+projective views come from other modules.
 
-Accumulation returns NaR on exceptional input, overflow, or a result equal to the reserved NaR
-coefficient. Ordinary results preserve the exact sum.
+Accumulation returns NaR on exceptional input, on overflow, and on a result equal to the reserved
+NaR coefficient. Every other result keeps the exact sum.
 
 ## References
 
@@ -60,7 +61,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     FloatLib.Numerics.NumericalValue Rat :=
   Formats.Posit.Quire.Model.decode value
 
-/-- Ordinary exact rational quire value, or `none` precisely for quire NaR. -/
+/-- Exact rational value of an ordinary quire. Quire NaR, and nothing else, gives `none`. -/
 @[inline] def toRat?
     (value : Formats.Posit.Quire.Model format) : Option Rat :=
   Formats.Posit.Quire.Model.toRat? value
@@ -87,7 +88,7 @@ def exactProducts? :
       let products ← exactProducts? rest
       pure (left * right :: products)
 
-/-- Convert one configured posit exactly into its associated quire. -/
+/-- Convert one configured posit into its associated quire without rounding. -/
 @[inline] def pToQ
     (value : FloatLib.Floats.ExecFloat
       (Configured.Family format code plan)) :
@@ -106,7 +107,7 @@ def exactProducts? :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.qAbs value
 
-/-- Add a configured posit exactly to its associated quire. -/
+/-- Add a configured posit to its associated quire without rounding. -/
 @[inline] def qAddP
     (accumulator : Formats.Posit.Quire.Model format)
     (addend : FloatLib.Floats.ExecFloat
@@ -115,7 +116,7 @@ def exactProducts? :
   Formats.Posit.Quire.Model.qAddP accumulator
     (ExecFloat.Posit.toModel addend)
 
-/-- Subtract a configured posit exactly from its associated quire. -/
+/-- Subtract a configured posit from its associated quire without rounding. -/
 @[inline] def qSubP
     (accumulator : Formats.Posit.Quire.Model format)
     (subtrahend : FloatLib.Floats.ExecFloat
@@ -124,13 +125,13 @@ def exactProducts? :
   Formats.Posit.Quire.Model.qSubP accumulator
     (ExecFloat.Posit.toModel subtrahend)
 
-/-- Add two configured quires exactly. -/
+/-- Add two configured quires without rounding. -/
 @[inline] def qAddQ
     (left right : Formats.Posit.Quire.Model format) :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.qAddQ left right
 
-/-- Subtract two configured quires exactly. -/
+/-- Subtract two configured quires without rounding. -/
 @[inline] def qSubQ
     (left right : Formats.Posit.Quire.Model format) :
     Formats.Posit.Quire.Model format :=

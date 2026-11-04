@@ -12,18 +12,18 @@ public import Mathlib.Analysis.Real.Pi.Irrational
 /-!
 # Every argument has an accepting window
 
-For `m = 0` the error bound is zero and every window is accepted. For `m > 0`, `m * 2 ^ e * 2/π`
-is irrational because `π` is (`irrational_pi`), so it keeps a
-positive distance `d` from every integer. A reduction of it satisfies
-`|fraction + η| ≥ d * 2 ^ scale` with `0 ≤ η < error`, so `|fraction| > d * 2 ^ scale - error`.
-The error of `reduceWindow` is `2 m` for every window while `2 ^ scale` doubles with each bit of
-window, so every window with `2 m * (2 ^ (bits + 1) + 1) < d * 2 ^ scale` is accepted
-(`exists_accepting_window`). The attempt windows of `reduce` double, so enough fuel
-reaches an accepted reduction (`exists_accepts_reduce`).
+For `m = 0` the error bound is zero and every window is accepted. For `m > 0`, `m * 2 ^ e * 2/π` is
+irrational because `π` is (`irrational_pi`), so it keeps a positive distance `d` from every integer.
+A reduction of it satisfies `|fraction + η| ≥ d * 2 ^ scale` with `0 ≤ η < error`, so
+`|fraction| > d * 2 ^ scale - error`. For every window the error of `reduceWindow` is `2 m`, while
+`2 ^ scale` doubles with each bit of window, so every window with
+`2 m * (2 ^ (bits + 1) + 1) < d * 2 ^ scale` is accepted (`exists_accepting_window`). Since the
+attempt windows of `reduce` double, enough fuel reaches an accepted reduction
+(`exists_accepts_reduce`).
 
-The runtime bounds its attempts and checks the acceptance of the one it returns, so it needs
-neither theorem. They show that the bound on attempts is a resource limit: the method itself always
-succeeds.
+At runtime we bound the attempts and check whether the one returned is accepted, so neither theorem
+is needed there. What they show is that the bound on attempts is only a resource limit, and the
+method itself always succeeds.
 -/
 
 public section

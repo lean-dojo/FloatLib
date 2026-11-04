@@ -12,10 +12,10 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 /-!
 # Exact inverse trigonometric values divided by pi
 
-On `[-1, 1]`, inverse sine and cosine return rational multiples of pi at five rational inputs.
-Inverse tangent has three such inputs. The classifiers return these answers exactly.
-Niven's theorem rules out all other rational answers, supplying the termination premise
-for interval comparison. Domain checks belong to the numerical operation using the classifier.
+On `[-1, 1]`, inverse sine and cosine return rational multiples of pi at five rational inputs, and
+inverse tangent at three, and the classifiers return these answers exactly. Niven's theorem rules
+out every other rational answer, which supplies the termination premise for interval comparison.
+Domain checks belong to the numerical operation that uses the classifier.
 -/
 
 public section

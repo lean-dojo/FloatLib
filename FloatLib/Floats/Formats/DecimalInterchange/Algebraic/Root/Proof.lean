@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 /-!
 # Integer-degree root values and rounding guarantees
 
-The delivered datum represents the signed, rounded coefficient. Carry and exact
-cohort selection preserve its value. Numerical bounds compare it with the real
-root, and power equality decides exactness without approximating an irrational
-result.
+This file lifts the integer root rounding to datums. The delivered datum carries the signed,
+rounded coefficient, and neither the power-of-ten carry nor the choice of an exact cohort changes
+its value. The error bounds compare it with the real root. Whether a result is exact comes down to
+an equality of powers, so no irrational root is ever approximated to decide it.
 -/
 
 @[expose] public section
@@ -118,7 +118,7 @@ theorem Arithmetic.rootN_valid (f : Format) (mode : RoundingMode) (x : Datum) (n
               (mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le)
           · exact mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le
 
-/-- The root rounder raises overflow exactly when the rounded quantum exceeds the format's largest
+/-- The root rounder raises overflow if and only if the rounded quantum exceeds the format's largest
 quantum. -/
 theorem rootMagnitude_overflow_iff (f : Format) (mode : RoundingMode) (s : Bool)
     (degree : Nat) (x : ℚ) (preferred : Int) :
@@ -207,7 +207,7 @@ theorem rootMagnitude_value_sub_realRoot (f : Format) (mode : RoundingMode) (s :
     Rat.cast_zpow, Rat.cast_ofNat, Rat.cast_neg, Rat.cast_one] <;> ring
 
 /-- Without overflow, the absolute error of the delivered root is the integer rounding error at the
-scaled radicand times the grid unit; the result's sign does not matter. -/
+scaled radicand times the grid unit, whatever the result's sign. -/
 private theorem rootMagnitude_abs_value_sub_realRoot (f : Format) (mode : RoundingMode) (s : Bool)
     {degree : Nat} (hn : degree ≠ 0) {x : ℚ} (hx : 0 ≤ x) (preferred : Int)
     (hfinite : (rootMagnitude f mode s degree x preferred).status.overflow = false) :
@@ -255,8 +255,8 @@ theorem rootMagnitude_error_lt_one (f : Format) (mode : RoundingMode) (s : Bool)
   exact (mul_lt_mul_of_pos_right h (zpow_pos (by norm_num : (0 : ℝ) < 10) _)).trans_eq
     (one_mul _)
 
-/-- Without overflow, the root rounder raises inexact exactly when the delivered value differs from
-the signed real root; the rounder decides this by an exact power equality. -/
+/-- Without overflow, the root rounder raises inexact if and only if the delivered value differs
+from the signed real root. The rounder decides this with an exact power equality. -/
 theorem rootMagnitude_inexact_iff (f : Format) (mode : RoundingMode) (s : Bool)
     {degree : Nat} (hn : degree ≠ 0) {x : ℚ} (hx : 0 ≤ x)
     (value : ℚ) (preferred : Int)
@@ -286,8 +286,8 @@ theorem rootMagnitude_inexact_iff (f : Format) (mode : RoundingMode) (s : Bool)
   rw [rootPair_value]
   exact not_congr (hexact.trans hsign.symm)
 
-/-- Underflow uses the exact root's magnitude, before rounding; an overflowing root is never tiny.
--/
+/-- Underflow looks at the exact root's magnitude before rounding, and an overflowing root is never
+tiny. -/
 theorem rootMagnitude_underflow_iff (f : Format) (mode : RoundingMode) (s : Bool)
     {degree : Nat} (hn : degree ≠ 0) {x : ℚ} (hx : 0 ≤ x) (preferred : Int) :
     (rootMagnitude f mode s degree x preferred).status.underflow = true ↔

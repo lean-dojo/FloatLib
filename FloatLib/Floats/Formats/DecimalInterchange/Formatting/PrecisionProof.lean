@@ -13,10 +13,10 @@ public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 /-!
 # Guarantees for significant-digit output
 
-The carry adjustment preserves value. The emitted characters therefore denote
-the result of the existing exact integer-grid rounder, with its nearest and
-directed error guarantees. The inexact flag detects a numerical change even when
-the requested precision changes the output quantum.
+Rounding to a requested precision can carry, as when `9.99` at two digits becomes `10`, and the
+carry adjustment keeps the value. So the emitted characters denote the result of the exact
+integer-grid rounder, with its nearest and directed error guarantees. The inexact flag tracks
+numerical change alone, even when the requested precision changes the output quantum.
 -/
 
 @[expose] public section
@@ -178,7 +178,8 @@ theorem read_format_significant (mode : RoundingMode) (digits : ℕ+) (value : D
         (significantDecimal mode value digits).exponent) := by
   simp [format, Decimal.format, read, readCharacters]
 
-/-- Requested-precision output sets inexact exactly when its character value differs from the input. -/
+/-- Requested-precision output sets inexact if and only if its character value differs from the
+input. -/
 theorem format_significant_inexact_iff (mode : RoundingMode) (digits : ℕ+) (value : Decimal) :
     (format mode (.significant digits)
       (.finite value.negative value.significand value.exponent)).status.inexact = true ↔
@@ -210,7 +211,7 @@ private theorem parse_format_significant_eq (f : Format) (outputMode inputMode :
   exact ⟨_, rfl⟩
 
 /-- At least the format precision preserves numerical value through actual output and input.
-The two conversions may use different rounding modes; the quantum need not be recovered. -/
+The two conversions may use different rounding modes, and the quantum need not be recovered. -/
 theorem parse_format_significant_value (f : Format) (outputMode inputMode : RoundingMode)
     (value : Decimal) (digits : ℕ+)
     (hvalid : (Datum.finite value.negative value.significand value.exponent).Valid f)

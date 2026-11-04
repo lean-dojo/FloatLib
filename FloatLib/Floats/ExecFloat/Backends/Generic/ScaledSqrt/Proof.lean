@@ -18,9 +18,9 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Exact square roots at the rounding scale
 
-Integer division by a square commutes with the floor square root. Applying this at a power of two
-retains the guard bit, while comparison with the reconstructed square recovers the sticky bit.
-These identities preserve the entire extended mantissa and the unpacked rounding result.
+Integer division by a square commutes with the floor square root. Applied at a power of two, that
+keeps the guard bit, and a comparison with the reconstructed square recovers the sticky bit.
+Together these identities preserve the entire extended mantissa and the unpacked rounding result.
 -/
 
 @[expose] public section
@@ -51,7 +51,7 @@ theorem sqrt_div_square (n d : Nat) : Nat.sqrt (n / (d * d)) = Nat.sqrt n / d :=
     have hn := Nat.sqrt_lt.mp h
     nlinarith only [hn]
 
-/-- Discarding twice as many radicand bits gives exactly the shifted floor square root. -/
+/-- Discarding twice as many radicand bits gives the shifted floor square root. -/
 theorem sqrt_shift (n k : Nat) : Nat.sqrt (n >>> (2 * k)) = Nat.sqrt n >>> k := by
   rw [Nat.shiftRight_eq_div_pow, Nat.shiftRight_eq_div_pow]
   have hp : 2 ^ (2 * k) = 2 ^ k * 2 ^ k := by

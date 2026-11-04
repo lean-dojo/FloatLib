@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Exact single-rounding contracts for posit integer powers
 
-The finite-domain contracts expose the exact rational power presented to the posit rounding
-kernel. Zero to a negative power is excluded; exponent zero is the constant one on all finite
-inputs. No posit rounding occurs inside the exponentiation or compound's addition.
+These contracts say which exact rational power the posit rounding kernel receives on the finite
+domain. Nothing is rounded on the way there, neither inside the exponentiation nor in compound's
+addition. Zero to a negative power is outside the domain, and exponent zero gives the constant one
+on every finite input.
 -/
 
 @[expose] public section
@@ -24,7 +25,7 @@ namespace FloatLib.Floats.Formats.Posit.Model
 variable {format : Format}
 
 /--
-In its real domain, rational integer exponentiation is followed by exactly one rounding.
+In its real domain, rational integer exponentiation is followed by a single rounding.
 
 The domain is everything except zero to a negative power, so it includes exponent zero at a zero
 base, where the result is rounded one.
@@ -50,7 +51,7 @@ theorem roundIntPower_zero_of_neg (exponent : Int) (hexponent : exponent < 0) :
 
 /--
 Finite integer powers round the exact rational power once, including negative exponents and
-exponent zero; only zero to a negative power is excluded.
+exponent zero. Only zero to a negative power is excluded.
 -/
 theorem powInt_eq_roundRat (value : Model format) {q : Rat} (exponent : Int)
     (hvalue : value.toRat? = some q) (hdomain : q ≠ 0 ∨ 0 ≤ exponent) :

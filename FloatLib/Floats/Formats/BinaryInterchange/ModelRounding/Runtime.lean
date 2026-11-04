@@ -13,12 +13,12 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Executable normalization for binary interchange formats
 
-These computations normalize exact integer mantissas with round-to-nearest, ties-to-even.
-Mantissa widths and target exponents are parameters; no named binary format is selected.
+This module normalizes exact integer mantissas with round-to-nearest, ties-to-even. Mantissa
+widths and target exponents are parameters, so no named binary format is chosen.
 
-Proofs relating these computations to Lean's logical floating-point model are kept in
-`ModelRounding.Proof`, so executable clients can import this module without the large semantic
-proof layer.
+Proofs that relate these computations to Lean's logical floating-point model live in
+`ModelRounding.Proof`, which lets executable clients import this module without the large
+semantic proof layer.
 
 ## References
 
@@ -42,8 +42,8 @@ def roundMantissaAtExponentEven
   else
     mantissa <<< (exponent - targetExponent).toNat
 
-/-- Round a positive integer mantissa to the precision specified by `leadingBit + 1`;
-a rounding carry can produce one extra bit. -/
+/-- Round a positive integer mantissa to the precision `leadingBit + 1`.
+A rounding carry can produce one extra bit. -/
 def roundMantissaToLeadingBitEven (mantissa leadingBit : Nat) : Nat :=
   if leadingBit ≤ mantissa.log2 then
     roundShiftRightEven mantissa (mantissa.log2 - leadingBit)

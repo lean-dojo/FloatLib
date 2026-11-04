@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Enclosure.Elementary.Runtime
 /-!
 # Rational enclosures for hyperbolic sine and cosine
 
-Exact interval addition, subtraction, and scaling combine the existing exponential
-enclosures. Callers comparing large inputs first use logarithmic bounds to avoid constructing
-an exponential whose size greatly exceeds the rational boundary.
+Exact interval addition, subtraction, and scaling combine the exponential enclosures. For large
+inputs, callers compare through logarithmic bounds first, so they never construct an exponential
+whose size greatly exceeds the rational boundary.
 -/
 
 @[expose] public section

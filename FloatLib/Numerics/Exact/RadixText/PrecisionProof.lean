@@ -8,10 +8,11 @@ module
 public import FloatLib.Numerics.Exact.RadixText.Precision
 import Mathlib.Tactic.Positivity.Finset
 
-/-! # Laws of significant-digit rounding in any radix
+/-!
+# Laws of significant-digit rounding in any radix
 
-The caller supplies integer rounding. These laws establish the grid, coefficient
-bounds and value-preserving carry independently of decimal or binary descriptors.
+Given an integer rounding from the caller, these laws establish the grid, the coefficient bounds,
+and the value-preserving carry without reference to decimal or binary descriptors.
 -/
 
 @[expose] public section
@@ -36,7 +37,7 @@ theorem carry_value (radix : Nat) (hradix : 0 < radix) (digits : ℕ+)
     ring
   · simp [carry, h]
 
-/-- The written result denotes precisely the caller's integer rounding on the selected grid. -/
+/-- The written result denotes the caller's integer rounding on the selected grid. -/
 theorem significant_value (radix : Nat) (hradix : 0 < radix)
     (roundMagnitude : Bool → ℚ → Nat) (negative : Bool)
     (coefficient : Nat) (quantum : Int) (digits : ℕ+) :

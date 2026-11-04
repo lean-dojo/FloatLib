@@ -14,21 +14,21 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 /-!
 # Arithmetic runtime for configured binary values
 
-The six IEEE arithmetic operations lift from the descriptor model to configured binary values with
-the model's options, a rounding direction `mode` and `status`:
+This module lifts the six IEEE arithmetic operations from the descriptor model to configured binary
+values. They keep the model's options, a rounding direction `mode` and `status`:
 
 ```lean
 ExecFloat.Binary.add x y (mode := .up)
 ExecFloat.Binary.div x y (mode := .down) (status := true)
 ```
 
-Operands come first, and `mode` defaults to nearest-even. The direction and status are ordinary
+Operands come first, and `mode` defaults to nearest-even. Direction and status are ordinary
 arguments and results, and no rounding-mode instance is changed.
 
-The default call, nearest-even without status, runs the certified implementation selected for the
-format, the same `ExecFloat.add` through `ExecFloat.fma` that the operators `+`, `-`, `*`, `/`
-run, so `x.add y`, `ExecFloat.Binary.add x y`, and `x + y` compile to the same kernel call. The
-other directions, and every call with `status := true`, decode the operands through the
+A default call, nearest-even without status, runs the certified implementation selected for the
+format. That is the same `ExecFloat.add` through `ExecFloat.fma` that the operators `+`, `-`, `*`,
+`/` run, so `x.add y`, `ExecFloat.Binary.add x y`, and `x + y` compile to the same kernel call.
+The other directions, and every call with `status := true`, decode the operands through the
 configured codec, run the model operation with the same options, and encode the result. Square
 root sends nearest-away rounding to the selected kernel too, since an exact square root is never a
 tie.
@@ -46,16 +46,16 @@ has the conversion mode type `Numerics.RoundingMode`, so an `IEEERoundingMode` v
 
 With `status := true` an operation returns the configured value together with the five IEEE
 exception indicators and the ternary value computed by the descriptor model. There is no hidden
-floating-point environment: `IEEEOutcome.bind` feeds one result to the next operation and keeps
+floating-point environment. `IEEEOutcome.bind` feeds one result to the next operation and keeps
 the union of their flags, which are sticky in the IEEE sense.
 
-`ofRat q` rounds an exact rational once into the format with the same `mode` and `status` options.
-Literals are rounded the same way.
+`ofRat q` rounds an exact rational once into the format with the same `mode` and `status` options,
+and literals are rounded the same way.
 
 FMA means fused multiply-add. It forms the exact value `x * y + z` and rounds once, while ordinary
 `x * y + z` rounds the product and then the sum. IEEE 754 specifies FMA as a primitive, including
-its exceptional-value and status behavior. `ExactExpression` handles larger finite algebraic
-expressions.
+its exceptional-value and status behavior. Larger finite algebraic expressions go through
+`ExactExpression`.
 -/
 
 @[expose] public section
@@ -109,8 +109,8 @@ Feed the value of `outcome` to the next operation `next`, keeping the union of b
 the ternary value of `next`.
 
 The flags are sticky: a flag raised by either step is set in the result. The ternary value is not
-accumulated. It compares the final value with the exact result of `next` on its rounded input,
-not with the exact value of the whole computation.
+accumulated. It compares the final value with the exact result of `next` on its rounded input, and
+says nothing about the exact value of the whole computation.
 
 ```lean
 (ExecFloat.Binary.div x y (status := true)).bind fun q => ExecFloat.Binary.sqrt q (status := true)

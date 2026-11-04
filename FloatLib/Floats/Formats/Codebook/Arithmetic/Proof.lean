@@ -14,10 +14,11 @@ public import Mathlib.Algebra.Ring.Int.Defs
 /-!
 # Correctness of catalog-codebook arithmetic
 
-For the one-bit bipolar and two-bit ternary catalog tables, negation and multiplication agree
-with the corresponding integer operations on finite inputs. The proofs enumerate these tables'
-stored words. The ternary refinement statements assume finite operands; separate rejection
-theorems cover multiplication with a reserved operand.
+On the two catalog tables, the one-bit bipolar code and the two-bit ternary code, negation and
+multiplication agree with integer negation and multiplication on finite inputs. The tables are
+tiny, so each proof runs through every stored word. For ternary, the refinement theorems assume
+finite operands, and a second set of rejection theorems covers multiplication with the reserved
+word `11`.
 -/
 
 @[expose] public section
@@ -39,7 +40,7 @@ private theorem bitVec2_cases (x : BitVec 2) :
 
 namespace Catalog.bipolar1
 
-/-- Bipolar negation exactly refines integer negation. -/
+/-- Bipolar negation refines integer negation on every word. -/
 theorem neg_refines :
     Operation.Finite1 Catalog.bipolar1.numericalSystem
       Catalog.bipolar1.numericalSystem neg (fun x : ℤ => -x) := by
@@ -54,7 +55,7 @@ theorem neg_refines :
     simp [NumericalSystem.Represents, Codebook.numericalSystem,
       Catalog.bipolar1, neg]
 
-/-- Bipolar multiplication exactly refines integer multiplication. -/
+/-- Bipolar multiplication refines integer multiplication on every pair of words. -/
 theorem mul_refines :
     Operation.Finite2 Catalog.bipolar1.numericalSystem
       Catalog.bipolar1.numericalSystem Catalog.bipolar1.numericalSystem
@@ -87,7 +88,7 @@ namespace Catalog.ternary2
     mul? x (BitVec.ofNat 2 3) = none := by
   rcases bitVec2_cases x with h | h | h | h <;> subst x <;> rfl
 
-/-- Checked ternary negation exactly refines integer negation on finite inputs. -/
+/-- On finite inputs, checked ternary negation refines integer negation. -/
 theorem neg_refines :
     Operation.Checked1 Catalog.ternary2.numericalSystem
       Catalog.ternary2.numericalSystem neg? (fun x : ℤ => .finite (-x)) := by
@@ -101,7 +102,7 @@ theorem neg_refines :
     subst value
     simp [Codebook.Code, Codebook.numericalSystem, Catalog.ternary2, neg?]
 
-/-- Checked ternary multiplication exactly refines integer multiplication on finite inputs. -/
+/-- On finite inputs, checked ternary multiplication refines integer multiplication. -/
 theorem mul_refines :
     Operation.Checked2 Catalog.ternary2.numericalSystem
       Catalog.ternary2.numericalSystem Catalog.ternary2.numericalSystem

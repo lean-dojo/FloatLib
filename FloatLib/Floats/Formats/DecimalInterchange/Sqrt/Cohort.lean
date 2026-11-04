@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Cohort
 /-!
 # Preferred cohorts of exact square roots
 
-An exact representable square root is returned at the valid exponent closest
-to the preferred exponent. The public operation uses the floor of half the
-operand exponent, as required by IEEE 754-2019 §5.4.1.
+When the square root is exact and representable, it comes back at the valid exponent closest to
+the preferred one. The public operation prefers the floor of half the operand exponent, as IEEE
+754-2019 §5.4.1 requires, so the root of `400e-2` prefers quantum `-1` and comes out as `20e-1`.
 -/
 
 @[expose] public section
@@ -21,8 +21,8 @@ operand exponent, as required by IEEE 754-2019 §5.4.1.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
 /-- Exact square-root projection minimizes the distance to the preferred exponent. The root's
-coefficient and quantum need not be valid themselves; a valid representation `(e, t)` of the root
-suffices. -/
+coefficient and quantum need not be valid themselves, as long as the root has some valid
+representation `(e, t)`. -/
 theorem sqrtMagnitude_quantum_closest (f : Format) (mode : RoundingMode)
     (c : Nat) (q preferred : Int) (d : Nat) (r : Int)
     (hout : (sqrtMagnitude f mode (((c : ℚ) * (10 : ℚ) ^ q) ^ 2) preferred).value =
@@ -54,8 +54,8 @@ theorem sqrtMagnitude_quantum_closest (f : Format) (mode : RoundingMode)
     e t he hv
 
 /-- The public square root uses the closest valid exponent to the floor of half the input quantum.
-The exact root `c * 10 ^ q` need not be valid itself; the comparison ranges over every valid
-representation `(e, t)` of it, including zero. -/
+The exact root `c * 10 ^ q` need not be valid itself, and the comparison ranges over every valid
+representation `(e, t)` of it, zero included. -/
 theorem Arithmetic.sqrt_quantum_closest (f : Format) (mode : RoundingMode)
     (a : Nat) (b : Int) (c : Nat) (q : Int)
     (hroot : (a : ℚ) * (10 : ℚ) ^ b = ((c : ℚ) * (10 : ℚ) ^ q) ^ 2)

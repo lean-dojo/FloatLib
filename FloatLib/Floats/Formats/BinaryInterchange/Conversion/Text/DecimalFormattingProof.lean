@@ -76,14 +76,14 @@ theorem roundDecimal_nearest_error (value : DecimalText.Decimal) (quantum : Int)
     (roundScientific mode places value).negative = value.negative :=
   rfl
 
-/-- Fixed output raises inexact exactly when the rounding changes the numerical value. -/
+/-- Fixed output raises inexact if and only if the rounding changes the numerical value. -/
 theorem fixedText_inexact_iff (mode : IEEERoundingMode) (places : Nat)
     (value : Numerics.Dyadic) :
     (fixedText mode places value).status.inexact = true ↔
       (roundFixed mode places (DecimalText.ofDyadic value)).toRat ≠ value.toRat := by
   simp [fixedText]
 
-/-- Scientific output raises inexact exactly when the rounding changes the numerical value. -/
+/-- Scientific output raises inexact if and only if the rounding changes the numerical value. -/
 theorem scientificText_inexact_iff (mode : IEEERoundingMode) (places : Nat)
     (value : Numerics.Dyadic) :
     (scientificText mode places value).status.inexact = true ↔

@@ -13,12 +13,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 /-!
 # Correctness of finite binary32 components
 
-The representation lemmas here establish field bounds and connect runtime mantissa-and-scale
-coordinates to the generic exact-dyadic decoder. Binary32 word proofs for addition,
-multiplication, division, square root, and fused operations all reuse this boundary.
-
-Runtime clients can import `Finite.Runtime` without these proofs. The operation proofs reuse the
-same field bounds and mantissa-scale decoding theorem.
+These representation lemmas bound the fields and connect the runtime mantissa-and-scale coordinates
+to the generic exact-dyadic decoder. Binary32 word proofs for addition, multiplication, division,
+square root, and fused operations all reuse this boundary, with its field bounds and its
+mantissa-scale decoding theorem. `Finite.Runtime` can be imported without these proofs.
 -/
 
 @[expose] public section
@@ -108,11 +106,11 @@ theorem finiteScale_le
     omega
 
 /--
-The mantissa decoded directly from a binary32 value fits in the 24 bits used by the native
-finite-operation kernels.
+The mantissa decoded from a binary32 value fits in the 24 bits that the native finite-operation
+kernels use.
 
-Operation proofs should normally use this value-level lemma. The component-level
-`finiteMantissa_lt` theorem remains available when a proof constructs fields independently.
+Operation proofs should normally use this value-level lemma. When a proof builds the fields on its
+own, the component-level `finiteMantissa_lt` theorem is there for it.
 -/
 theorem finiteMantissa_lt_of_value (x : Value) :
     (finiteMantissa
@@ -126,7 +124,7 @@ theorem finiteMantissa_lt_of_value (x : Value) :
 /--
 The scale decoded from a finite binary32 value is at most 253.
 
-This is the value-level counterpart of `finiteScale_le`; it keeps field-width bookkeeping out of
+This is the value-level counterpart of `finiteScale_le`, and it keeps field-width bookkeeping out of
 the individual arithmetic proofs.
 -/
 theorem finiteScale_le_of_value (x : Value)

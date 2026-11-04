@@ -15,17 +15,23 @@ public import FloatLib.Numerics.Enclosure.Refinement
 /-!
 # Certified decimal exp-minus-one and log-plus-one
 
-Outward-rounded binary-grid enclosures retain the cancellation in `exp x - 1` and the small
-increment in `log (1 + x)`. Their precision follows the decimal coefficient width. A result is
-accepted when both rational endpoints round to the same finite nearest-even decimal datum.
-Refinement increases the Taylor degree while the interval shrinks rapidly, and increases the
-working precision when that progress stalls.
+Computing `exp x - 1` as written loses most of its digits to cancellation when `x` is tiny, and
+`log (1 + x)` has the same problem. These kernels use outward-rounded binary-grid enclosures that
+keep the cancellation and the small increment, at a precision that follows the decimal
+coefficient width. A result is accepted when both rational endpoints round to the same finite
+nearest-even decimal datum. While the interval shrinks quickly, refinement raises the Taylor
+degree, and when that progress stalls it raises the working precision.
 
-Invalid or nonfinite inputs, logarithm arguments at or below minus one, overflow, and
-inconclusive certification return `none`. Valid signed zeros retain their sign and quantum.
-Rational argument bounds skip impossible tail and overflow checks. The remaining exact
-exponential comparisons run outside the search, so the `Certified.Budget` bounds its enclosure
-attempts and not their work.
+The kernels return `none` for:
+
+* invalid or nonfinite inputs
+* logarithm arguments at or below minus one
+* overflow
+* inconclusive certification
+
+Valid signed zeros keep their sign and quantum. Rational argument bounds skip impossible tail and
+overflow checks. The remaining exact exponential comparisons run outside the search, so
+`Certified.Budget` bounds the enclosure attempts and not the work they do.
 -/
 
 @[expose] public section

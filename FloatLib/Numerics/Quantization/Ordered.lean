@@ -15,7 +15,7 @@ public import FloatLib.Numerics.Core.System
 
 Directed and stochastic quantizers need the representable values immediately below and above an
 exact input. These predicates use only a numerical system's denotation and the order on its finite
-scalar domain. They do not assume a radix, field layout, unique encoding, or executable search
+scalar domain, and they assume no radix, field layout, unique encoding, or executable search
 algorithm.
 -/
 

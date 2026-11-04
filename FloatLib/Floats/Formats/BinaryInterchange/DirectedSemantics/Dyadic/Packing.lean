@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 /-!
 # Field packing for directed dyadic rounding
 
-Directed rounding first chooses a point on the representable dyadic grid and then packs that point
-into exponent and fraction fields. This module proves that the normal and subnormal packing
-formulas preserve the chosen exact value.
+Directed rounding first chooses a point on the representable dyadic grid and then packs it into
+exponent and fraction fields. We prove that the normal and subnormal packing formulas keep the
+chosen exact value.
 
-The field-width bounds prevent truncation during packing. Normal packing also requires a
-finiteness hypothesis, since some encoding policies reserve patterns within those widths for
-exceptional values.
+Field-width bounds stop truncation during packing. Normal packing also needs a finiteness
+hypothesis, because some encoding policies reserve patterns within those widths for exceptional
+values.
 -/
 
 @[expose] public section
@@ -89,10 +89,10 @@ theorem encodedExponent_minNormal_eq_one (fmt : FloatFormat) :
   simp
 
 /--
-For a nonzero rounded mantissa at most `2^fracWidth`, the upward subnormal branch, including its
-smallest-normal boundary, preserves its grid value. The `mantissa = 0` branch, which returns
-`posMinSubnormal` rather than a value `0 * …`, is excluded by `hzero`; callers that reach it handle
-it separately.
+For a nonzero rounded mantissa at most `2^fracWidth`, the upward subnormal branch keeps its grid
+value, the smallest-normal boundary included. `hzero` excludes the `mantissa = 0` branch, which
+returns `posMinSubnormal` and not a value `0 * …`. Callers that reach that branch handle it
+themselves.
 -/
 theorem toReal_roundSubnormalUp
     (fmt : FloatFormat) (mantissa : Nat)

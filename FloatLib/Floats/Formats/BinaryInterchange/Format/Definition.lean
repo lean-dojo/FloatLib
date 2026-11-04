@@ -16,9 +16,9 @@ exponent bias, and exceptional-value encoding. There is no global precision ceil
 finite-only, and FNUZ formats are values of the same structure, and so is a custom format, which
 pairs one of the four exceptional-value encodings with a validated exponent bias.
 
-Lean's generic `Float.Model.Format` represents the IEEE interpretation of a layout. The
-`toModel` conversion below therefore exposes that logical view only for the layout fields; the
-policy-aware executable semantics use `exponentBias` and `encoding` directly.
+Lean's generic `Float.Model.Format` represents the IEEE interpretation of a layout, so the
+`toModel` conversion below exposes that logical view for the layout fields only. Policy-aware
+executable semantics work from `exponentBias` and `encoding` themselves.
 
 References:
 
@@ -36,11 +36,11 @@ namespace FloatFormat
 inductive Encoding where
   /-- All-ones exponent: zero fraction is infinity, nonzero fraction is NaN. -/
   | ieee
-  /-- No infinity; the all-ones exponent and all-ones fraction pattern is NaN. -/
+  /-- No infinity. The pattern with all-ones exponent and all-ones fraction is NaN. -/
   | finiteMaxNaN
-  /-- No infinity or negative zero; the negative-zero bit pattern is the sole NaN. -/
+  /-- No infinity or negative zero. The negative-zero bit pattern is the sole NaN. -/
   | finiteUnsignedZero
-  /-- Every nonzero bit pattern is finite; both signs of zero remain representable. -/
+  /-- Every nonzero bit pattern is finite, and both signs of zero are representable. -/
   | finite
   deriving Repr
 
@@ -49,7 +49,7 @@ namespace Encoding
 /--
 Executable equality of encodings by case split.
 
-The explicit inlined test lets the compiler reduce comparisons of known constructors. The
+Writing the test out and inlining it lets the compiler reduce comparisons of known constructors. The
 `DecidableEq` instance uses this test so descriptor eligibility checks can specialize with it.
 -/
 @[inline] protected def beq : Encoding → Encoding → Bool
@@ -66,7 +66,7 @@ theorem beq_eq_true_iff (left right : Encoding) :
 
 end Encoding
 
-/-- Equality of encodings is decidable; the instance is inlined so literal comparisons fold. -/
+/-- Equality of encodings is decidable, and the instance is inlined so literal comparisons fold. -/
 @[inline] instance instDecidableEqEncoding : DecidableEq Encoding := fun left right =>
   decidable_of_iff (Encoding.beq left right = true) (Encoding.beq_eq_true_iff left right)
 
@@ -89,7 +89,7 @@ structure FloatFormat where
   expWidth_ge_two : 2 ≤ expWidth := by decide
   /-- Width of the fraction (significand without the implicit integer bit). -/
   fracWidth : Nat
-  /-- An interchange format has at least one explicit fraction bit. -/
+  /-- An interchange format has at least one stored fraction bit. -/
   fracWidth_pos : 0 < fracWidth := by decide
   /-- Bias subtracted from every nonzero encoded exponent. -/
   exponentBias : Nat
@@ -115,7 +115,7 @@ Default exponent bias for a configured encoding.
 
 IEEE, finite-max-NaN, and signed-zero finite formats use the conventional IEEE bias. The
 finite-unsigned-zero encoding shifts the bias by one, matching its reuse of negative zero as NaN.
-Callers can still supply any other validated bias through `FloatFormat.custom`.
+Any other validated bias can be supplied through `FloatFormat.custom`.
 -/
 @[inline] def Encoding.defaultBias (encoding : Encoding) (expWidth : Nat) : Nat :=
   match encoding with
@@ -258,7 +258,7 @@ theorem exponentBias_lt_two_pow (fmt : FloatFormat) :
 /--
 Recover an executable IEEE format descriptor from Lean's logical format descriptor.
 
-Both descriptors require at least two exponent bits; `fmt.he` supplies the explicit width proof.
+Both descriptors require at least two exponent bits, and `fmt.he` supplies the width proof.
 The conversion assigns the conventional IEEE bias and exceptional-value interpretation.
 -/
 @[inline] def ofModel (fmt : Float.Model.Format) (h : 2 ≤ fmt.exponentBits) : FloatFormat where
@@ -292,7 +292,7 @@ conventional IEEE descriptor.
     (toModel fmt).numBits = fmt.bitWidth := by
   rfl
 
-/-- Raw storage has precisely the width prescribed by the format. -/
+/-- Raw storage is a bit vector of the format's total width. -/
 abbrev ExecWord (fmt : FloatFormat) := BitVec fmt.bitWidth
 
 end FloatFormat

@@ -12,19 +12,19 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 /-!
 # Rank semantics of adjacent-value operations
 
-Numerical ranks specify `nextUp` and `nextDown` for every binary format descriptor. The central
-device is `adjacencyRank`: it reverses the raw encoding order for negative values, preserves it
-for positive values, and assigns both signed-zero words one rank. The unsigned-zero policy has
-one reserved NaN word at the sign boundary, which `nextUp` skips.
+We specify `nextUp` and `nextDown` for every binary format descriptor through one number per word,
+`adjacencyRank`. It keeps the raw encoding order for positive values, reverses it for negative
+values, and gives both signed-zero words the same rank. Under the unsigned-zero policy one reserved
+NaN word sits at the sign boundary, and `nextUp` skips it.
 
-The public contracts show that each ordinary step changes the rank by exactly one, that the rank
-orders non-NaN values as their extended reals (`adjacencyRank_lt_adjacencyRank_iff`, with equal
-ranks exactly for equal values, so the two zeros share one), and that a step from a number never
-lands on a NaN (`isNaN_nextUp`, `isNaN_nextDown`). Exceptional values, saturating endpoints,
-non-strict rank inequalities, and the absence of a represented value between the input and output
-are in `Adjacent.Proof.Boundaries`.
+Three facts make up the public contract. Each ordinary step changes the rank by one. Ranks order
+non-NaN values as their extended reals do (`adjacencyRank_lt_adjacencyRank_iff`), and two ranks
+are equal just when the values are, so the two zeros share one. A step from a number never lands
+on a NaN (`isNaN_nextUp`, `isNaN_nextDown`). Exceptional values, saturating endpoints, non-strict
+rank inequalities and the absence of a represented value between input and output are in
+`Adjacent.Proof.Boundaries`.
 
-No theorem depends on a named format or fixed field width.
+No theorem depends on a named format or a fixed field width.
 -/
 
 @[expose] public section
@@ -581,7 +581,7 @@ private theorem endpointTest_eq_false {fmt : FloatFormat} {x y : Model fmt}
   exact h (by simpa using hparts.1) (eq_of_bits_eq (beq_iff_eq.mp hparts.2))
 
 /--
-Away from NaNs and a saturating positive endpoint, `nextUp` advances exactly one adjacency rank.
+Away from NaNs and a saturating positive endpoint, `nextUp` advances by one adjacency rank.
 
 The infinity premise excludes positive infinity while permitting negative infinity, whose next
 value is finite. The final premise matters only for formats that do not represent infinity.
@@ -642,7 +642,7 @@ theorem adjacencyRank_nextUp
       adjacencyRank_eq_signMaskNat_of_isZero]
 
 /--
-Away from NaNs and a saturating negative endpoint, `nextDown` retreats exactly one adjacency rank.
+Away from NaNs and a saturating negative endpoint, `nextDown` retreats by one adjacency rank.
 
 The infinity premise excludes negative infinity while permitting positive infinity, whose previous
 value is finite. The final premise matters only for formats that do not represent infinity.
@@ -797,7 +797,10 @@ private theorem magnitude_eq_zero_of_isZero {fmt : FloatFormat} {x : Model fmt}
   obtain ⟨hexponent, hfraction⟩ := fields_eq_zero_of_isZero hx
   simp [magnitudeBits, hexponent, hfraction]
 
-/-- A number whose magnitude is zero is a zero; the sign-mask word of FNUZ is its NaN. -/
+/--
+A number whose magnitude is zero is a zero. In FNUZ the sign-mask word has magnitude zero too, and
+it is the NaN that the hypothesis excludes.
+-/
 private theorem isZero_of_magnitude_eq_zero {fmt : FloatFormat} {x : Model fmt}
     (hnan : isNaN x = false) (hm : magnitudeBits x = 0) : isZero x = true := by
   obtain ⟨he, hf⟩ := fields_eq_zero_of_magnitude_eq_zero hm
@@ -839,7 +842,7 @@ fraction `f`.
 private def gridIndex (fmt : FloatFormat) (e f : Nat) : Nat :=
   if e = 0 then f else (2 ^ fmt.fracWidth + f) * 2 ^ (e - 1)
 
-/-- The grid index index increases strictly with the field pair read as one number. -/
+/-- The grid index increases strictly with the field pair read as one number. -/
 private theorem gridIndex_lt_gridIndex (fmt : FloatFormat) {e f e' f' : Nat}
     (hf : f < 2 ^ fmt.fracWidth) (hf' : f' < 2 ^ fmt.fracWidth)
     (h : e * 2 ^ fmt.fracWidth + f < e' * 2 ^ fmt.fracWidth + f') :
@@ -899,11 +902,11 @@ private theorem wordGridIndex_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
     obtain ⟨he, hf⟩ := fields_eq_zero_of_magnitude_eq_zero h
     simp [wordGridIndex, gridIndex, he, hf]
 
-/-- Signed grid index index: the grid index index, negated when the sign bit is set. -/
+/-- Signed grid index: the grid index, negated when the sign bit is set. -/
 private def signedGridIndex {fmt : FloatFormat} (x : Model fmt) : Int :=
   if signBit x then -(wordGridIndex x : Int) else wordGridIndex x
 
-/-- Signed grid index indices are ordered as signed keys. -/
+/-- Signed grid indices are ordered as their signed keys. -/
 private theorem signedGridIndex_lt_signedGridIndex {fmt : FloatFormat} {x y : Model fmt}
     (h : signedMagnitude x < signedMagnitude y) : signedGridIndex x < signedGridIndex y := by
   have hzx := wordGridIndex_eq_zero_iff x
@@ -919,7 +922,7 @@ private theorem signedGridIndex_lt_signedGridIndex {fmt : FloatFormat} {x y : Mo
   · have := wordGridIndex_lt_wordGridIndex (x := y) (y := x) (by omega)
     omega
 
-/-- A finite word denotes its signed grid index index times the least subnormal spacing. -/
+/-- A finite word denotes its signed grid index times the least subnormal spacing. -/
 private theorem toReal_eq_signedGridIndex {fmt : FloatFormat} {x : Model fmt}
     (hx : isFinite x = true) :
     toReal x = (signedGridIndex x : ℝ) * (2 : ℝ) ^ fmt.minSubnormalExponent := by
@@ -973,7 +976,7 @@ private theorem magnitude_le_of_isNaN_eq_false {fmt : FloatFormat} {x : Model fm
       (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hinf)).le
   · exact (encoding_eq_ieee_and_magnitude_of_isInf hinf).2.le
 
-/-- A finite word denotes a real number in the extended reals; an infinity denotes its endpoint. -/
+/-- An infinity denotes the extended-real endpoint of its sign, as a finite word denotes a real. -/
 private theorem toEReal_of_isInf {fmt : FloatFormat} {x : Model fmt} (hx : isInf x = true) :
     toEReal x = if signBit x then ⊥ else ⊤ := by
   rw [toEReal_eq_ite, isNaN_eq_false_of_isInf_eq_true x hx]
@@ -1056,7 +1059,7 @@ theorem adjacencyRank_lt_adjacencyRank_iff {fmt : FloatFormat} {x y : Model fmt}
   · exact absurd (toEReal_lt_toEReal_of_signedMagnitude_lt hy hx hk) (not_lt.mpr hlt.le)
 
 /--
-Two non-NaN values have the same adjacency rank exactly when they denote the same extended real.
+Two non-NaN values have the same adjacency rank if and only if they denote the same extended real.
 The two signed-zero words therefore share a rank, and every other number has a rank of its own.
 -/
 theorem adjacencyRank_eq_adjacencyRank_iff {fmt : FloatFormat} {x y : Model fmt}
@@ -1093,7 +1096,7 @@ private theorem expField_eq_expAllOnesNat_of_le {fmt : FloatFormat} (x : Model f
   unfold FloatFormat.expAllOnesNat at hge ⊢
   omega
 
-/-- In the IEEE encoding a word is a NaN exactly when its magnitude exceeds the infinities'. -/
+/-- In the IEEE encoding a word is a NaN just when its magnitude exceeds the infinities'. -/
 private theorem isNaN_iff_of_ieee {fmt : FloatFormat} (x : Model fmt)
     (hencoding : fmt.encoding = .ieee) :
     isNaN x = true ↔ fmt.expAllOnesNat * 2 ^ fmt.fracWidth < magnitudeBits x := by
@@ -1119,7 +1122,7 @@ private theorem expAllOnesNat_mul_add (fmt : FloatFormat) :
   conv_rhs => rw [show 2 ^ fmt.expWidth = (2 ^ fmt.expWidth - 1) + 1 by omega]
   rw [Nat.add_mul, Nat.one_mul]
 
-/-- In the maximum-NaN encoding a word is a NaN exactly when it has the largest magnitude. -/
+/-- In the maximum-NaN encoding a word is a NaN just when it has the largest magnitude. -/
 private theorem isNaN_iff_of_finiteMaxNaN {fmt : FloatFormat} (x : Model fmt)
     (hencoding : fmt.encoding = .finiteMaxNaN) :
     isNaN x = true ↔ magnitudeBits x + 1 = fmt.signMaskNat := by
@@ -1244,7 +1247,7 @@ private theorem isNaN_eq_false_of_magnitude_eq_add_one {fmt : FloatFormat} {x z 
         omega
   | finite => simp [isNaN, hencoding]
 
-/-- `nextUp` returns a NaN exactly for a NaN input: from a number it always steps to a number. -/
+/-- `nextUp` returns a NaN just for a NaN input, because from a number it steps to a number. -/
 @[simp] theorem isNaN_nextUp {fmt : FloatFormat} (x : Model fmt) :
     isNaN (nextUp x) = isNaN x := by
   cases hnan : isNaN x
@@ -1285,7 +1288,7 @@ private theorem isNaN_eq_false_of_magnitude_eq_add_one {fmt : FloatFormat} {x z 
         exact hmaxNe (by simp [FloatFormat.supportsInfinity, hencoding])
   · simp [nextUp, Internal.Value.nextUp, hnan]
 
-/-- `nextDown` returns a NaN exactly for a NaN input: from a number it always steps to a number. -/
+/-- `nextDown` returns a NaN just for a NaN input, because from a number it steps to a number. -/
 @[simp] theorem isNaN_nextDown {fmt : FloatFormat} (x : Model fmt) :
     isNaN (nextDown x) = isNaN x := by
   cases hnan : isNaN x

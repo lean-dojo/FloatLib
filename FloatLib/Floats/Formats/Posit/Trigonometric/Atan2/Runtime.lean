@@ -12,11 +12,11 @@ public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Runtime
 /-!
 # Correctly rounded two-coordinate posit arctangent
 
-The Posit Standard (2022), §5.5, orders the coordinates as `(x, y)`: the result is the
-principal argument of `x + i*y`. The negative real axis has angle pi. NaR propagates,
-and the origin produces NaR rather than adopting Mathlib's totalized zero angle.
+The Posit Standard (2022), §5.5, orders the coordinates as `(x, y)`, so the result is the
+principal argument of `x + i*y` and the negative real axis has angle pi. NaR propagates. At the
+origin Mathlib's totalized angle is zero, but the posit operation produces NaR there.
 
-The pi-scaled variant divides the exact angle by pi before the final rounding.
+For the pi-scaled variant, the exact angle is divided by pi before the final rounding.
 -/
 
 @[expose] public section
@@ -40,11 +40,11 @@ def evaluateArgument {format : Format} (prepare : Rat → Rat → Nat → Prepar
 
 end Trigonometric
 
-/-- Correctly rounded principal argument of `x + i*y`, in radians; `(0, 0)` produces NaR. -/
+/-- Correctly rounded principal argument of `x + i*y`, in radians. `(0, 0)` produces NaR. -/
 def arcTan2 {format : Format} (x y : Model format) : Model format :=
   Trigonometric.evaluateArgument FloatLib.Numerics.TrigonometricComparison.prepareAtan2 x y
 
-/-- Correctly rounded principal argument of `x + i*y` divided by pi; `(0, 0)` produces NaR. -/
+/-- Correctly rounded principal argument of `x + i*y` divided by pi. `(0, 0)` produces NaR. -/
 def arcTan2Pi {format : Format} (x y : Model format) : Model format :=
   Trigonometric.evaluateArgument FloatLib.Numerics.TrigonometricComparison.prepareAtan2Pi x y
 

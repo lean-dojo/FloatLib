@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.P3109.Projection.Encoding
 /-!
 # Correctness of P3109 projection
 
-P3109 projection rounds first, saturates second, and encodes last. This module proves that the
-executable code decodes to the same datum as that exact round-then-saturate specification for
-every valid descriptor and every supported policy.
+P3109 projection rounds first, saturates second, and encodes last, and the order shows. In
+`binary8p4se`, 233 rounds to 240 and only then becomes infinity, because 240 has no finite
+encoding. Here we prove that the executable code decodes to the same datum as that exact
+round-then-saturate specification, for every valid descriptor and every supported policy.
 -/
 
 @[expose] public section
@@ -122,7 +123,7 @@ private theorem sameDatum_decode_encodeSaturateAbove
       format.sameDatum_decode_encodeNan,
       format.sameDatum_decode_encodePositiveInfinity]
 
-/-- A failed executable test `compareScalable x y == .lt` means `y ≤ x` exactly. -/
+/-- A failed executable test `compareScalable x y == .lt` means `y ≤ x`. -/
 private theorem toRat_le_of_compareScalable_ne_lt {x y : Numerics.Dyadic}
     (h : ¬Numerics.Dyadic.Internal.compareScalable x y = .lt) : y.toRat ≤ x.toRat := by
   apply not_lt.mp

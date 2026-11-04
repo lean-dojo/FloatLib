@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.P3109.Conversion.Proof
 /-!
 # P3109 conversion capabilities
 
-The destination quantizer uses the exact rational scalar domain and the `ProjectionPolicy`
-context. A conversion's `(mode := ...)` option takes a P3109 `RoundingMode` and its
+Converting into P3109 goes through the exact rational scalar domain, with a `ProjectionPolicy`
+as context. A conversion's `(mode := ...)` option takes a P3109 `RoundingMode` and its
 `(context := ...)` option a `SaturationMode`, as in
 `x.cast (target := ExecFloat.P3109 .binary8p4se) (mode := .up) (context := .finite)`, and the two
 make the projection policy. Context-free conversion selects FloatLib's nearest-even,

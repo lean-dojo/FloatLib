@@ -12,8 +12,9 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Real interval corner bounds
 
-The ordered-field proofs live in `Numerics.Enclosure.Interval.Bounds`. These real-specialized
-names preserve the interval API used by floating-point model semantics.
+These are the corner bounds of `Numerics.Enclosure.Interval.Bounds` at the reals. Ordered-field
+proofs live there, and the real-specialized names here keep the interval API that the floating-point
+model semantics uses.
 -/
 
 @[expose] public section

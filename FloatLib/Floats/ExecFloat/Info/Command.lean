@@ -12,12 +12,12 @@ public import FloatLib.Floats.ExecFloat.Info.Inspection
 /-!
 # Format inspection commands
 
-Syntax and elaboration for `#float_help`, `#float_info`, and `#float_info!`. Each format package
-registers a renderer for its configured types. The final rule runs when no imported renderer
-recognizes the type: it names the module whose report covers the type, or says what
-`#float_info` reports on.
+This module holds the syntax and elaboration of `#float_help`, `#float_info`, and `#float_info!`.
+Each format package registers a renderer for its configured types. When no imported renderer
+recognizes a type, the final rule runs, and it names the module whose report covers the type or says
+what `#float_info` reports on.
 
-Commands inspect elaborated types at compile time. Adding a format renderer requires no change
+The commands inspect elaborated types at compile time, so adding a format renderer needs no change
 to arithmetic execution.
 -/
 
@@ -36,8 +36,8 @@ open Lean Elab Command
 /--
 The family entry points that `#float_help` lists: each name as it reads after
 `open FloatLib.Floats`, the arguments it takes, and what it is. This generic module imports no
-family, so the names are text; a conformance test checks that each one resolves. Every entry has a
-`#float_info` report except the one whose description says it has none.
+family, so the names are text, and a conformance test checks that each one resolves. Every entry has
+a `#float_info` report except the one whose description says it has none.
 -/
 meta def entryPoints : List (String × String × String) :=
   [ ("ExecFloat.Binary", "", "parameterized binary interchange")
@@ -204,9 +204,9 @@ meta def withExecFamilyApplication
     render typeExpr family arguments
 
 /--
-The modules that register the `#float_info` reports for a family, keyed by the family's
-namespace. This generic module imports no family, so the names are not checked here; a conformance
-test checks that every module exists.
+The modules that register the `#float_info` reports for a family, keyed by the family's namespace.
+This generic module imports no family, so the names aren't checked here. A conformance test checks
+that every module exists.
 -/
 meta def reportModules : List (Name × Name) :=
   [ (`FloatLib.Floats.Formats.BinaryInterchange, `FloatLib.Floats.Formats.BinaryInterchange)
@@ -231,15 +231,16 @@ private meta def familyHead? (type : Expr) : MetaM (Option Name) := do
   return (← whnfR type).getAppFn.constName?
 
 /--
-Explain why no report was printed, after every imported family renderer has declined the type.
+Explain why no report was printed, once every imported family renderer has declined the type. Family
+rules call `throwUnsupportedSyntax` when their carrier shape doesn't match, so a new numerical
+family can add a renderer without modifying this module.
 
-Family-specific rules call `throwUnsupportedSyntax` when their carrier shape does not match, so a
-new numerical family can add a renderer without modifying this module. A type in a FloatLib
-family whose report module is not imported, such as `Binary32` without
-`FloatLib.Floats.Formats.BinaryInterchange`, is told which module to import, and an `ExecFloat`
-type of an unknown family is told that `import FloatLib` brings every family's report. Any other
-type, including one whose report module is already imported but has no report for it, is told what
-`#float_info` reports on.
+* A type in a FloatLib family whose report module isn't imported, such as `Binary32` without
+  `FloatLib.Floats.Formats.BinaryInterchange`, is told which module to import.
+* An `ExecFloat` type of an unknown family is told that `import FloatLib` brings every family's
+  report.
+* Any other type, including one whose report module is imported but has no report for it, is told
+  what `#float_info` reports on.
 -/
 elab_rules : command
   | `(#float_info%$tk $type:term) =>

@@ -13,12 +13,12 @@ public import FloatLib.Numerics.Exact.Elementary.Runtime
 /-!
 # Natural exponential and logarithm for posits
 
-Each operation compares its exact mathematical result with the posit rounding boundaries.
-Adaptive rational enclosures resolve the comparisons, with termination proved in the
-format-independent numerics layer. No intermediate posit rounding occurs in `expMinus1`
-or `logPlus1`.
+You can round `exp x` correctly without ever knowing its exact value. Each operation compares its
+exact mathematical result with the posit rounding boundaries, and adaptive rational enclosures
+settle every comparison, with termination proved once in the format-independent numerics layer.
+Neither `expMinus1` nor `logPlus1` does any intermediate posit rounding.
 
-The operation and domain rules follow the Posit Standard (2022), §§5.1 and 5.5.
+Operation and domain rules follow the Posit Standard (2022), §§5.1 and 5.5.
 -/
 
 @[expose] public section
@@ -34,7 +34,7 @@ def expRat (format : Format) (argument offset : Rat) : Model format :=
   ComparisonRounding.roundSigned format
     (fun boundary => compareTarget.compare (boundary + offset))
 
-/-- Round the natural logarithm of a positive rational; reject other arguments. -/
+/-- Round the natural logarithm of a positive rational. Other arguments are rejected. -/
 def logRat (format : Format) (argument : Rat) : Model format :=
   if hpositive : 0 < argument then
     ComparisonRounding.roundSigned format

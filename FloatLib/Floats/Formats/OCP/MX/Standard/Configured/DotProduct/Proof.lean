@@ -13,9 +13,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CorePro
 /-!
 # Configured MX dot-product accuracy
 
-The configured binary32 carrier preserves the executable exact-accumulation result bit for bit.
-The public error theorem therefore inherits the numerical half-ULP bound of the model operation,
-with finite input and output hypotheses stated at the configured decoding boundary.
+Packing the result into the configured binary32 carrier changes no bit of the exact-accumulation
+result. So the public error theorem inherits the half-ULP bound of the model operation, and its
+finite input and output hypotheses are stated where configured values are decoded.
 -/
 
 public section

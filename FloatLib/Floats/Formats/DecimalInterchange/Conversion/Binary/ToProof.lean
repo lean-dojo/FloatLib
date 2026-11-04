@@ -12,17 +12,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Decimal-to-binary conversion contracts
 
-Finite decimal inputs are evaluated as exact rationals, independently of their
-cohort. Nearest-even conversion refines binary rounded-real semantics, and nearest-away
+Going from decimal to binary, a finite input is evaluated as an exact rational, so its cohort makes
+no difference. Nearest-even conversion refines binary rounded-real semantics, and nearest-away
 conversion has the integer-grid semantics proved in `NearestAwayProof`.
-The directed conversions inherit the binary kernels' extended-real enclosure
-bounds, which include overflow to infinity. Only that half of the directed contract is stated.
-These bounds alone would also be met by an infinite result, so neither the nearest-in-direction
-property nor exactness on a representable input follows from them; neither is proved here.
 
-Exception theorems state the overflow and tininess predicates, including
-the distinction between exponent overflow and an inexact result at the largest
-finite value.
+The directed conversions inherit the extended-real enclosure bounds of the binary kernels, overflow
+to infinity included, and we state only that half of the directed contract. An infinite result
+would meet these bounds too. So they don't give you the nearest-in-direction property or exactness
+on a representable input, and neither is proved here.
+
+The exception theorems state the overflow and tininess predicates, and they tell exponent overflow
+apart from an inexact result at the largest finite value.
 -/
 
 @[expose] public section
@@ -46,7 +46,7 @@ theorem toBinary_eq_of_magnitude_eq (fmt : FloatFormat) (hfmt : fmt.isIEEE = tru
       toBinary fmt hfmt mode (.finite s c₂ q₂) := by
   simp only [toBinary, h]
 
-/-- An infinity delivers `infinityOrMaxFinite` of its sign and raises no exception;
+/-- An infinity delivers `infinityOrMaxFinite` of its sign and raises no exception.
 `toBinary_infinity_value` shows that this is the infinity of the same sign. -/
 @[simp] theorem toBinary_infinity (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (mode : RoundingMode) (s : Bool) :
@@ -142,7 +142,7 @@ theorem roundBinaryMagnitude_down_le (fmt : FloatFormat)
   rwa [signedScaledRatToReal_eq_rat s hx] at h
 
 /-- Conversion toward positive infinity gives an extended-real upper bound of the input. This is
-the enclosure half of the directed contract; minimality is not stated. -/
+the enclosure half of the directed contract, and minimality is not stated. -/
 theorem le_toBinary_up (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (s : Bool) (c : Nat) (q : Int) :
     (((Datum.finiteValue s c q : ℚ) : ℝ) : EReal) ≤
@@ -152,7 +152,7 @@ theorem le_toBinary_up (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
   cases s <;> simpa [toBinary, Datum.finiteValue] using h
 
 /-- Conversion toward negative infinity gives an extended-real lower bound of the input. This is
-the enclosure half of the directed contract; maximality is not stated. -/
+the enclosure half of the directed contract, and maximality is not stated. -/
 theorem toBinary_down_le (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (s : Bool) (c : Nat) (q : Int) :
     Model.toEReal (toBinary fmt hfmt .down (.finite s c q)).value ≤
@@ -190,7 +190,8 @@ theorem le_toBinary_towardZero_negative (fmt : FloatFormat) (hfmt : fmt.isIEEE =
     (mode : RoundingMode) (x : Datum) :
     (toBinary fmt hfmt mode x).status.divideByZero = false := by cases x <;> rfl
 
-/-- The finite conversion path raises overflow exactly at the mode's rational boundary. -/
+/-- The finite conversion path raises overflow if and only if `binaryOverflow`, the mode's rational
+boundary test, holds. -/
 theorem toBinary_overflow_iff (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (mode : RoundingMode) (s : Bool) (c : Nat) (q : Int) :
     (toBinary fmt hfmt mode (.finite s c q)).status.overflow = true ↔

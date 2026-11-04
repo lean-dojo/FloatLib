@@ -11,9 +11,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Runtime
 /-!
 # Unary binary squaring kernels
 
-Squaring decodes one operand and passes its exact significand product to the existing
-multiplication rounders. Finite results have positive sign, including an underflowed zero.
-Declined inputs use multiplication, retaining its complete exceptional-value policy.
+To square, we decode one operand and pass its exact significand product to the multiplication
+rounders. Finite results have positive sign, even an underflowed zero. Declined inputs use
+multiplication, which keeps its complete exceptional-value policy.
 -/
 
 @[expose] public section

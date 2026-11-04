@@ -13,11 +13,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runti
 # Format-generic executable floating-point intervals
 
 Closed executable intervals have `Model fmt` endpoints, an endpoint order, and
-format-independent constructors. Outward-rounded arithmetic and activation ranges live in later
-modules.
+format-independent constructors, and outward-rounded arithmetic and activation ranges come in
+later modules.
 
-The executable layer carries no soundness theorems, so applications can choose an exact real,
-extended-real, or format-model interpretation without changing the interval representation.
+No soundness theorem lives in this executable layer. That keeps the choice open: an application
+can pick an exact real, extended-real, or format-model interpretation without changing the
+interval representation.
 -/
 
 @[expose] public section
@@ -120,10 +121,10 @@ endpoints.
 Build an enclosure from ordered, non-NaN endpoints, or use the whole range.
 
 The candidate pair is kept only when `leB lo hi` holds. It is replaced by `whole fmt` when either
-endpoint is a NaN (so the comparison is unordered) and also when `lo > hi` numerically, which can
-happen when a caller supplies reversed bounds. An indeterminate expression such as `0 * ∞` can
-produce NaN endpoints instead. Such endpoint calculations cannot justify a narrower bound, and for
-formats with infinity the fallback encloses every real number, so interval arithmetic composes.
+endpoint is a NaN (so the comparison is unordered), and also when `lo > hi` numerically, which
+happens if a caller supplies reversed bounds. An indeterminate expression such as `0 * ∞` can
+produce NaN endpoints. Such endpoint calculations cannot justify a narrower bound, and for formats
+with infinity the fallback encloses every real number, so interval arithmetic composes.
 -/
 @[inline] def ofBounds {fmt : FloatFormat} (lo hi : Model fmt) : Interval fmt :=
   if leB lo hi then ⟨lo, hi⟩ else whole fmt

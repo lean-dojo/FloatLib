@@ -12,12 +12,12 @@ public import FloatLib.Numerics.Operation.Proof.Finite
 /-!
 # Real semantics and correctness of exact logarithmic numbers
 
-The exact codes from `Exact.Runtime` denote zero or signed integral powers of the radix. This
-module defines their real interpretation and numerical system, then connects the executable
-rational decoder to that interpretation and proves multiplication refinement.
+Here the exact codes from `Exact.Runtime`, zero or signed integral powers of the radix, get their
+real meaning. We define the real interpretation and the numerical system, connect the executable
+rational decoder to that interpretation, and prove that multiplication refines real multiplication.
 
-The proof views add only erased propositions to the existing code. The configured family uses
-these results to expose exact logarithmic multiplication through `ExecFloat`.
+The proof views add only erased propositions to the existing code. The configured family builds on
+these results to offer exact logarithmic multiplication through `ExecFloat`.
 -/
 
 @[expose] public section
@@ -102,7 +102,7 @@ end Code
     (numericalSystem radix).Represents code value ↔ code.toReal = value := by
   simp [NumericalSystem.Represents, numericalSystem]
 
-/-- Logarithmic multiplication exactly refines multiplication over the reals. -/
+/-- Logarithmic multiplication refines real multiplication with no rounding. -/
 theorem mul_refines {radix : Radix} :
     Operation.Finite2 (numericalSystem radix) (numericalSystem radix)
       (numericalSystem radix) Code.mul (fun left right : ℝ => left * right) := by

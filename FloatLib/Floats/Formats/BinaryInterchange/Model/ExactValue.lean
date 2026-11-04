@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 /-!
 # Exact values represented by binary models
 
-`Model.ExactValue` records the complete interpretation of an executable bit pattern without
-introducing another floating-point carrier. Finite values retain their exact dyadic decoding, so
-positive and negative zero remain distinct when the format represents both. Infinities retain
-their sign, and NaNs retain their sign, signaling class, and fraction payload.
+`Model.ExactValue` records everything an executable bit pattern means, without bringing in
+another floating-point carrier. A finite value keeps its exact dyadic decoding, so positive and
+negative zero stay apart when the format has both. An infinity keeps its sign, and a NaN keeps its
+sign, signaling class and fraction payload.
 -/
 
 @[expose] public section

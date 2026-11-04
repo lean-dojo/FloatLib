@@ -15,15 +15,15 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Runtime
 /-!
 # Packed one-word Posit signed sums
 
-The two-limb signed-sum engine is the common fixed-carrier implementation. One-word decoded
-significands first use scalar alignment and signed-magnitude arithmetic whenever the exact
-intermediate fits one word. Exact capacity failures continue in the same common two-limb engine,
-which uses exact dyadic arithmetic if two limbs are insufficient. Eligible one-word formats
-retain the complete result in its low output limb.
+One-word sums try the cheap path first. Whenever the exact intermediate fits one word, the decoded
+significands go through scalar alignment and signed-magnitude arithmetic. When it doesn't, the sum
+continues in the common two-limb signed-sum engine, the shared fixed-carrier implementation, which
+falls back to exact dyadic arithmetic if even two limbs are too few. For eligible one-word formats
+the complete result sits in the low output limb.
 
-Fused multiply-add uses the same rule: `FixedWord.mul64` computes the exact product, a one-limb
-product reuses scalar signed addition, and a genuine two-limb product enters the common engine.
-Every branch is selected by exact carrier capacity rather than a named format or tuned width.
+Fused multiply-add follows the same rule. `FixedWord.mul64` computes the exact product, a one-limb
+product reuses scalar signed addition, and a product that really needs two limbs enters the common
+engine. Exact carrier capacity picks every branch. No named format or tuned width plays a part.
 -/
 
 @[expose] public section
@@ -69,8 +69,9 @@ open FloatLib.Numerics
 /--
 Round the exact sum of two decoded one-word Posit dyadics.
 
-Zero operands bypass alignment. Otherwise the larger-exponent significand is shifted exactly
-when it remains in one word. A failed scalar capacity check continues in `roundWideFieldsWord`.
+Zero operands bypass alignment. Otherwise the larger-exponent significand is shifted left to
+line the two up, as long as the shifted value fits one word. A failed scalar capacity check
+continues in `roundWideFieldsWord`.
 -/
 @[inline] def roundFieldsWord
     (format : Format) (heligible : NativeWord.Eligible format)

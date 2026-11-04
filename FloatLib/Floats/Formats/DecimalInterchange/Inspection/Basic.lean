@@ -11,12 +11,14 @@ public import FloatLib.Floats.Formats.DecimalInterchange.TotalOrder.Proof
 /-!
 # Decimal inspection with mathematical guarantees
 
-Comparison agrees with exact extended rational order and ignores cohorts.
-Classification agrees with numerical zero and normal/subnormal thresholds.
-Total ordering distinguishes complete datums, with transitivity, totality,
-antisymmetry, signed-zero/cohort tie rules and NaN ordering proofs.
-Stored sign operations preserve all non-sign bits, including redundant encodings,
-and decoding commutes with sign replacement.
+Import this module for decimal inspection together with its proofs:
+
+* comparison agrees with exact extended rational order and ignores cohorts, so `1.0` equals `1.00`
+* classification agrees with numerical zero and the normal and subnormal thresholds
+* total ordering tells complete datums apart, with proofs of transitivity, totality,
+  antisymmetry, the signed-zero and cohort tie rules, and NaN ordering
+* stored sign operations preserve every non-sign bit, redundant encodings included, and decoding
+  commutes with sign replacement
 
 Neighbor operations and integer, format, and character conversions have their
 own proofs in `Neighbors`, `Conversion`, and `Formatting`.

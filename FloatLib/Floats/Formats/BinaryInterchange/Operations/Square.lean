@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 /-!
 # Once-rounded binary squares
 
-`Model.square` uses one operand decode in the specialized product kernels and returns exactly
-the complete encoding of `Model.mul x x`. The descriptor's rounding, overflow, zero, and NaN
-policies therefore apply at every width.
+`Model.square` decodes its operand once for the specialized product kernels and returns the same
+complete encoding as `Model.mul x x`. So the descriptor's rounding, overflow, zero and NaN
+policies apply at every width.
 -/
 
 @[expose] public section

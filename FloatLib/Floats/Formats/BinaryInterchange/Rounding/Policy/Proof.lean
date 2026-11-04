@@ -11,12 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
 /-!
 # Basic policy-rounding facts
 
-This module contains the facts needed by arithmetic and conversion proofs: deterministic
-nearest-even behavior, flush-to-zero behavior, IEEE dispatch, and overflow policy equations.
+Arithmetic and conversion proofs need a few facts about policy rounding, and they are all here:
+deterministic nearest-even behavior, flush-to-zero behavior, IEEE dispatch and the overflow policy
+equations.
 
-The independent proof that the general rational policy engine agrees with the directed dyadic
-engine lives in `Rounding.Policy.Agreement`, so ordinary finite arithmetic and conversion modules
-do not inherit its larger directed-semantics dependency graph.
+`Rounding.Policy.Agreement` holds the independent proof that the general rational policy engine
+agrees with the directed dyadic engine. Keeping it there keeps its larger directed-semantics
+dependency graph out of ordinary finite arithmetic and conversion modules.
 -/
 
 @[expose] public section

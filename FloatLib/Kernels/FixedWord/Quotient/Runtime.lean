@@ -12,10 +12,9 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 /-!
 # Fixed-word restoring quotient generation
 
-One- and two-limb unsigned restoring-division state machines share a quotient/remainder
-recurrence, alongside a one-word rational-logarithm kernel.
-`Quotient.Proof` proves the one-word loop and the two-limb step, and
-`Quotient.Restoring128Proof` proves the two-limb loop.
+This module has the one- and two-limb state machines for unsigned restoring division, which share a
+quotient/remainder recurrence, and a one-word rational-logarithm kernel. `Quotient.Proof` proves the
+one-word loop and the two-limb step, and `Quotient.Restoring128Proof` proves the two-limb loop.
 -/
 
 @[expose] public section

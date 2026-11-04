@@ -12,12 +12,12 @@ import Mathlib.Data.Int.NatAbs
 /-!
 # Rational semantics of dyadic arithmetic
 
-Field-level multiplication and fused multiply-add agree with their record-based expressions.
-Addition and subtraction preserve rational denotation, including when the exact result is zero.
+Field-level multiplication and fused multiply-add agree with their record-based expressions, and
+addition and subtraction preserve rational denotation, also when the exact result is zero.
 
-For addition, align the operands at the smaller exponent and add their signed integer
-significands. The main argument shows that recovering the sign and magnitude with `natAbs`
-preserves that sum.
+Addition aligns the operands at the smaller exponent and adds their signed integer significands, and
+the main step of the proof shows that recovering the sign and magnitude with `natAbs` preserves that
+sum.
 -/
 
 @[expose] public section
@@ -52,7 +52,7 @@ theorem mul_eq (left right : Dyadic) :
     (left.mul right).exponent =
       left.exponent + right.exponent := rfl
 
-/-- Scalar-field multiplication is exactly record-based dyadic multiplication. -/
+/-- Scalar-field multiplication agrees with record-based dyadic multiplication. -/
 theorem mulFields_eq
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
     (rightNegative : Bool) (rightSignificand : Nat) (rightExponent : Int) :
@@ -71,7 +71,7 @@ theorem mulFields_eq
         } :=
   rfl
 
-/-- Scalar-field addition is exactly record-based dyadic addition. -/
+/-- Scalar-field addition agrees with record-based dyadic addition. -/
 theorem addFields_eq
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
     (rightNegative : Bool) (rightSignificand : Nat) (rightExponent : Int) :
@@ -90,7 +90,7 @@ theorem addFields_eq
         } :=
   rfl
 
-/-- Scalar-field subtraction is exactly record-based dyadic subtraction. -/
+/-- Scalar-field subtraction agrees with record-based dyadic subtraction. -/
 theorem subFields_eq
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
     (rightNegative : Bool) (rightSignificand : Nat) (rightExponent : Int) :
@@ -179,8 +179,8 @@ irrelevant.
 /--
 Normalize addition when the right operand stores zero.
 
-This is the symmetric form of `add_of_left_significand_eq_zero`; in particular, the right
-exponent never affects the result.
+This is the symmetric form of `add_of_left_significand_eq_zero`. In particular, the right exponent
+never affects the result.
 -/
 @[simp] theorem add_of_right_significand_eq_zero
     (left right : Dyadic)
@@ -325,7 +325,7 @@ theorem add_opposite_sign_same_exponent_eq_zero
 With a nonzero left operand, align the right operand at the smaller left exponent before exact
 addition.
 
-This is the mathematical bridge used by bounded-word kernels that perform the shift explicitly. A
+Bounded-word kernels that do the shift themselves use this as their bridge to the mathematics. A
 zero right operand stays zero after the shift, and both sides return the left operand.
 -/
 theorem add_align_right_to_left_exponent

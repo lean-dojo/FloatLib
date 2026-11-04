@@ -14,8 +14,9 @@ import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 /-!
 # Correctness of packed native-word Posit multiplication
 
-The product's high limb is an exact capacity certificate. One-limb products use scalar rounding;
-two-limb products use the common wide rounder. Both branches refine direct exact-dyadic packing.
+Whether a product needs one limb or two is read off its high limb, which is an exact capacity
+certificate. One-limb products use scalar rounding and two-limb products use the common wide
+rounder. Both branches refine direct exact-dyadic packing, and the theorems here prove it.
 -/
 
 @[expose] public section

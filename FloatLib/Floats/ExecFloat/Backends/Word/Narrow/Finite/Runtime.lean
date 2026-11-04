@@ -12,10 +12,10 @@ public import Mathlib.Data.Rat.Cast.Order
 /-!
 # Finite binary32 runtime coordinates
 
-Finite binary32 fields are converted into the mantissa-and-scale coordinates shared by native
-arithmetic kernels. For every nonzero finite value, the coordinates denote its magnitude
-`mantissa * 2^(scale - 149)`, with exponent subtraction in `Int`. Bounds and decoder agreement
-live in `Finite.Proof`.
+Finite binary32 fields are converted into the mantissa-and-scale coordinates that the native
+arithmetic kernels share, and for every nonzero finite value the coordinates denote its magnitude
+`mantissa * 2^(scale - 149)`, with exponent subtraction in `Int`. Bounds and decoder agreement are
+in `Finite.Proof`.
 -/
 
 @[expose] public section
@@ -30,11 +30,11 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
     fraction.toUInt64 ||| 0x800000
 
 /--
-Encode the finite exponent as a nonnegative scale, giving magnitude
-`mantissa * 2^(scale - 149)` with exponent subtraction in `Int`.
+Encode the finite exponent as a nonnegative scale, giving magnitude `mantissa * 2^(scale - 149)`
+with exponent subtraction in `Int`.
 
-The binary32 entry point only widens its native field; the scale rule itself is shared with every
-word kernel.
+The binary32 entry point only widens its native field, and the scale rule itself is shared with
+every word kernel.
 -/
 @[always_inline, inline] def finiteScale (exponent : UInt32) : UInt64 :=
   FloatLib.Numerics.FixedWord.finiteScale exponent.toUInt64

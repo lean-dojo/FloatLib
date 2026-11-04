@@ -14,12 +14,16 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Proof
 /-!
 # Range and refinement laws for packed two-limb boundaries
 
-The abstract theorems in this module let operation proofs reason about decoded options without
-unfolding the packed decoder. Re-encoding agrees with a model-valued operation whenever the
-NaR code and finite kernel agree separately, and a native two-operand kernel that returns the NaR
-word on NaR inputs is a binary boundary over the decoded operands. The last section specializes
-the binary laws to two-limb rounding of an exact dyadic operation, the shape shared by packed
-addition, subtraction and multiplication.
+With these abstract theorems, an operation proof can reason about decoded options without
+unfolding the packed decoder. Its two main laws are these:
+
+* re-encoding agrees with a model-valued operation as soon as the NaR code and the finite kernel
+  each agree with it,
+* a native two-operand kernel that returns the NaR word on NaR inputs is a binary boundary over
+  the decoded operands.
+
+The last section specializes the binary laws to two-limb rounding of an exact dyadic operation,
+which is the shape packed addition, subtraction, and multiplication share.
 -/
 
 @[expose] public section
@@ -103,8 +107,9 @@ theorem ofNatBits_unaryCode
   | some finite => exact hoperation finite
 
 /--
-Unary refinement with separate encoded and semantic decoder results. Keeping their equality as an
-argument avoids rewriting inside a concrete packed-decoder expression in operation modules.
+Unary refinement when the encoded and semantic decoder results arrive as two values with an
+equality between them. Keeping that equality as an argument avoids rewriting inside a concrete
+packed-decoder expression in operation modules.
 -/
 theorem ofNatBits_unaryCode_of_eq
     (narCode : Nat)
@@ -198,8 +203,9 @@ theorem ofNatBits_binaryCode
       | some rightValue => exact hoperation leftValue rightValue
 
 /--
-Binary refinement with separate encoded and semantic decoder results. The equalities are consumed
-by this small abstract theorem rather than by each packed operation proof.
+Binary refinement when the encoded and semantic decoder results arrive as distinct values with
+equalities between them. This small abstract theorem consumes the equalities, so no packed
+operation proof has to.
 -/
 theorem ofNatBits_binaryCode_of_eq
     (narCode : Nat)

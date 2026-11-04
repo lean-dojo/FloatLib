@@ -14,20 +14,21 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 /-!
 # Correctness of IEEE binary arithmetic
 
-The executable operations in `Model` first decode finite operands to exact dyadics, perform
-integer arithmetic, and round once in the destination format. This module proves the corresponding
-real-number statements uniformly in the exponent and fraction widths for descriptors satisfying
+Each executable operation in `Model` decodes finite operands to exact dyadics, does integer
+arithmetic, and rounds once in the destination format. Here we prove the matching real-number
+statements, uniformly in the exponent and fraction widths, for descriptors with
 `fmt.isIEEE = true`.
 
 The result-finiteness hypotheses exclude IEEE overflow to infinity. NaNs and infinities are covered
-by the executable special-value rules, but they do not have values in this real-number semantics.
-A finite sum, product, or fused multiply-add has finite operands
-(`isFinite_of_isFinite_add` and its siblings), so the rounding theorems assume only that the
-executable result is finite. A sum with a zero, or a product with a zero or with a value of
-magnitude one, does not round (`toReal_add_of_isZero_left` and its siblings). The same cases are
-stated by decoded value with `toRat?` (`toRat?_add_of_toRat?_eq_some_zero_left` and its
-siblings), and a sum or product whose exact value is the decoded value of some encoding decodes
-to that value (`toRat?_add_of_representable`, `toRat?_mul_of_representable`).
+by the executable special-value rules, but they have no value in this real-number semantics. A
+finite sum, product, or fused multiply-add has finite operands (`isFinite_of_isFinite_add` and its
+siblings), so the rounding theorems assume only that the executable result is finite.
+
+Some cases do not round at all. A sum with a zero, or a product with a zero or with a value of
+magnitude one, is exact (`toReal_add_of_isZero_left` and its siblings). The same cases are stated
+by decoded value with `toRat?` (`toRat?_add_of_toRat?_eq_some_zero_left` and its siblings), and a
+sum or product whose exact value is the decoded value of some encoding decodes to that value
+(`toRat?_add_of_representable`, `toRat?_mul_of_representable`).
 -/
 
 @[expose] public section
@@ -227,7 +228,7 @@ theorem isFinite_mul_of_abs_mul_le_posMaxFinite
 Finite multiplication is exact real multiplication followed by one nearest-even rounding.
 
 The hypothesis `hfin` excludes overflow by asking that the executable product be finite, and it
-forces finite operands; `toReal_mul_eq_roundAt_of_abs_mul_le_posMaxFinite` supplies it from a
+forces finite operands. `toReal_mul_eq_roundAt_of_abs_mul_le_posMaxFinite` supplies it from a
 bound on the operands.
 -/
 theorem toReal_mul_eq_roundAt {fmt : FloatFormat} (x y : Model fmt)
@@ -252,7 +253,7 @@ theorem toReal_mul_eq_roundAt_of_abs_mul_le_posMaxFinite
   toReal_mul_eq_roundAt x y hfmt
     (isFinite_mul_of_abs_mul_le_posMaxFinite x y hfmt hx hy hbound)
 
-/-- Multiplying a zero by a finite value gives exactly zero. -/
+/-- A zero times a finite value has real value zero. -/
 theorem toReal_mul_of_isZero_left {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true) (hx : isZero x = true) (hy : isFinite y = true) :
     toReal (mul x y) = 0 := by
@@ -263,7 +264,7 @@ theorem toReal_mul_of_isZero_left {fmt : FloatFormat} (x y : Model fmt)
       exact (abs_nonneg _).trans (abs_toReal_le_posMaxFinite_of_isFinite y hy)),
     h0, zero_mul, roundAt_zero]
 
-/-- Multiplying a finite value by a zero gives exactly zero. -/
+/-- A finite value times a zero has real value zero. -/
 theorem toReal_mul_of_isZero_right {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true) (hx : isFinite x = true) (hy : isZero y = true) :
     toReal (mul x y) = 0 := by
@@ -485,7 +486,7 @@ theorem isFinite_fma_of_abs_mul_add_le_posMaxFinite
 Finite fused multiply-add is exact real multiplication and addition followed by one rounding.
 
 The hypothesis `hfin` excludes overflow by asking that the executable result be finite, and it
-forces finite operands; `toReal_fma_eq_roundAt_of_abs_mul_add_le_posMaxFinite` supplies it from a
+forces finite operands. `toReal_fma_eq_roundAt_of_abs_mul_add_le_posMaxFinite` supplies it from a
 bound on the operands.
 -/
 theorem toReal_fma_eq_roundAt {fmt : FloatFormat} (x y z : Model fmt)

@@ -12,9 +12,9 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Native binary32 product rounding
 
-The machine-word product rounder serves multiplication, aligned addition, and fused
-multiply-add. Its correctness theorem lives in `Rounding.Proof`, keeping execution-only imports
-independent of the proof development.
+One machine-word rounder serves multiplication, aligned addition, and fused multiply-add. Its
+correctness theorem is in `Rounding.Proof`, so execution-only imports don't pull in the proof
+development.
 -/
 
 @[expose] public section
@@ -22,11 +22,11 @@ independent of the proof development.
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 
 /--
-Round the signed magnitude `product * 2^(scale - 298)` to binary32, with sign `sign` and
-subtraction in `Int`.
+Round the signed magnitude `product * 2^(scale - 298)` to binary32, with sign `sign` and subtraction
+in `Int`.
 
-Correctness holds for every `UInt64` magnitude when `scale ≤ 506`; callers establish this bound.
-In particular, finite multiplication supplies a product below `2^48`.
+Correctness holds for every `UInt64` magnitude when `scale ≤ 506`, and callers establish that bound.
+Finite multiplication, for instance, supplies a product below `2^48`.
 -/
 @[inline] def roundProduct (sign : Bool) (product scale : UInt64) : UInt32 :=
   if product == 0 then

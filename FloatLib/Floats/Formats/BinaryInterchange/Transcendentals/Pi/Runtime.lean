@@ -14,10 +14,10 @@ public import FloatLib.Numerics.Exact.Trigonometric.Runtime
 /-!
 # Correctly rounded pi
 
-`Model.pi fmt` rounds an enclosure of pi from the shared constants cache of
-`Numerics.Enclosure.Constants`, at the fraction width plus 64 bits. When both endpoints round to the
-same finite encoding, which fails only for a descriptor other than IEEE or when pi lies within
-`2 ^ -(fracWidth + 62)` of a rounding boundary, that encoding is the result. Otherwise exact
+`Model.pi fmt` rounds an enclosure of pi, taken from the shared constants cache of
+`Numerics.Enclosure.Constants` at the fraction width plus 64 bits. If both endpoints round to the
+same finite encoding, that encoding is the result. This fails only for a descriptor other than
+IEEE or when pi lies within `2 ^ -(fracWidth + 62)` of a rounding boundary, and then exact
 comparisons of `atan 1 = π / 4` with each candidate decide the rounding. After the first use of a
 precision, the enclosure costs one shift and two endpoint roundings.
 

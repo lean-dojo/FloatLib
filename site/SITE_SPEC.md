@@ -1,6 +1,6 @@
 # FloatLib website specification
 
-FloatLib's website is a technical book: an introduction, twenty-one chapters, and a bibliography. It
+FloatLib's website is a technical book: an introduction, fourteen chapters, and a bibliography. It
 explains the numerical representations, executable algorithms, and proofs, and it presents the
 performance measurements and external comparisons. In public the project is called FloatLib. The
 Lean namespace is `FloatLib`, the Lake package is `floatlib`, and the repository lives at
@@ -38,12 +38,13 @@ heading for the overview. Invite readers to build on the library and link to the
 
 In chapter 1 the book starts with using FloatLib and a short code tour. Put the detailed source tour
 beside the explanations it belongs to, and don't write a second directory-by-directory chapter. In
-reading order, the book goes from a working program to machine numbers, the history and its incident
-case studies, and verification. Then come execution, models, and rounding, the format families, and
-kernels and dispatch, followed by performance and the native-float comparison, external validation,
-interval proof automation, and further examples. Decimal arithmetic and elementary functions get
-their own chapters after the binary formats, and native-float semantics come after the performance
-chapter. Keep the bibliography as a reference list of its own, with no chapter number.
+reading order, the book starts with a beginner's guide that takes a new user from installation to a
+first proof, then explains how floating-point numbers work (with the short history and why
+verification is hard), how running code and proofs fit together, and rounding. Then come the format
+families: IEEE binary, decimal, the small machine-learning formats with P3109, posits, and fixed
+point with the other representations, followed by elementary functions and the proof tactics. The
+book ends with performance and how FloatLib picks its kernels, Lean's native floats, and how we test
+FloatLib. Keep the bibliography as a reference list of its own, with no chapter number.
 
 ## Typography and figures
 
@@ -81,13 +82,17 @@ measurement scope goes in the caption.
 
 ## Writing
 
-Explain the subject in depth. Take a worked example far enough that the reader can follow the
-mechanism, and then connect it to the mathematics and the implementation. Keep the useful
-explanations, equations, checked examples, citations, and qualifications that are already there. Fix
-weak framing, but don't squash a substantial chapter into a summary.
+Write each chapter the way NumPy's absolute beginner's guide is written: assume no prior knowledge,
+explain every term in plain words the first time it appears, name sections by what the reader wants
+to do or know, and follow each small step with its code, its output and a sentence on what happened.
+Keep chapters short, about 2,000 to 5,000 words of prose. A chapter explains one subject: the idea,
+a worked example that shows it, the API a reader calls, and what is proved and under which
+hypotheses. Detail a reader looks up, such as complete theorem lists, every variant of a hypothesis
+and implementation internals, belongs in the docstrings and the theorem index. Keep every
+qualification of what is proved, and say each one once.
 
-Use direct explanations and worked calculations together. Keep a clear existing explanation when
-adding an example, and follow the calculation far enough to explain its result. Use “we” naturally
+Use direct explanations and worked calculations together, and follow a calculation far enough to
+explain its result. An accurate analogy helps more than a second example. Use “we” naturally
 for the authors' work or for a calculation, without rewriting sentences merely to add personality.
 Keep grounded opinions, uncertainty, and occasional informality when they help explain the work.
 An occasional “:)” fits a light moment such as an admitted weakness or an invitation, at most once
@@ -114,7 +119,7 @@ location.
 ## Source layout
 
 - `content/landing.md`: opening definition, author byline, introduction, and highlights.
-- `content/chapters/NN-slug.md`: the twenty-one chapters.
+- `content/chapters/NN-slug.md`: the fourteen chapters.
 - `content/references.json`: bibliography entries and primary-source links. Undated web resources
   carry an `accessed` date in `YYYY-MM-DD` form, displayed separately from the publication year.
 - `content/assets/`: published images.

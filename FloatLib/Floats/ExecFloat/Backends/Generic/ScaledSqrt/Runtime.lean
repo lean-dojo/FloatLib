@@ -12,9 +12,11 @@ public import Init.Data.Float.Model.Unpacked.Round
 /-!
 # Integer square roots at the rounding scale
 
-Discarding twice as many radicand bits as root bits preserves the truncated root. One retained
-root bit and an exact square comparison recover the round and sticky bits without constructing
-the full root or shifting it one bit at a time.
+Discarding twice as many radicand bits as root bits leaves the truncated root unchanged. For
+example, 1003 divided by 4 and rounded down is 250, whose floor square root is 15, and the floor
+square root of 1003 is 31, which halves to 15. One retained root bit and an exact square comparison
+then recover the round and sticky bits, without constructing the full root or shifting it one bit at
+a time.
 -/
 
 @[expose] public section

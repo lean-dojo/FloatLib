@@ -15,11 +15,10 @@ import all Init.Data.Float.Float32
 /-!
 # Arbitrary integer constructors
 
-Lean exposes the definitions of `Float.ofNat`, `Float.ofInt`, and their binary32 counterparts on
-top of its logical floating-point models.
-The arbitrary-integer casts use these constructors, whose scientific-literal path has a
-small-input fast path. The proofs here cover both branches before applying the shared integer
-conversion specification.
+`Float.ofNat`, `Float.ofInt`, and their binary32 counterparts are defined in Lean on top of its
+logical floating-point models, and the arbitrary-integer casts go through them. Their
+scientific-literal path has a fast path for small inputs. So the proofs here cover both branches,
+and only then apply the shared integer conversion specification.
 -/
 
 @[expose] public section

@@ -16,9 +16,9 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 # Soundness and termination of hyperbolic enclosures
 
 The rational endpoints converge to the mathematical hyperbolic sine and cosine. At a nonzero
-rational argument neither result is rational: otherwise its exponential would satisfy a
-nonzero quadratic polynomial over the rationals, contradicting transcendence. Thus adaptive
-comparison eventually separates every rational boundary.
+rational argument neither result is rational, since otherwise its exponential would satisfy a
+nonzero quadratic polynomial over the rationals and contradict transcendence. So adaptive comparison
+eventually separates every rational boundary.
 -/
 
 public section

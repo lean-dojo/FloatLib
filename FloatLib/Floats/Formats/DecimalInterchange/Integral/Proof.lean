@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Quantize.Proof
 /-!
 # Integral result, preferred quantum, and status guarantees
 
-When the format's maximum quantum is nonnegative, every valid finite input produces
-a finite integer at the specified preferred quantum, with no intermediate precision
-loss or range exception. This includes all three standard presets. The general
-invalid characterization also covers custom layouts with a negative maximum quantum.
+In every format whose maximum quantum is nonnegative, which includes all three standard presets,
+integral rounding takes a valid finite input to a finite integer at the specified preferred
+quantum, with no intermediate precision loss and no range exception. Rounding `12.5` toward zero,
+say, gives `12` at quantum `0`. The general invalid characterization also covers custom layouts
+with a negative maximum quantum.
 -/
 
 @[expose] public section
@@ -35,7 +36,7 @@ theorem integral_coefficient_le (mode : RoundingMode) (s : Bool) (c : Nat) (q : 
     simpa using mul_le_mul_of_nonneg_left
       (zpow_le_one_of_nonpos₀ (by norm_num : (1 : ℚ) ≤ 10) hn) (Nat.cast_nonneg (α := ℚ) c)
 
-/-- The successful output explicitly retains the sign and preferred quantum, including zero. -/
+/-- The successful output keeps the sign and the preferred quantum, zero included. -/
 theorem roundToIntegralExact_finite (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) (hv : (Datum.finite s c q).Valid f)
     (hzero : 0 ≤ f.maxQuantum) :
@@ -51,7 +52,7 @@ theorem roundToIntegralExact_finite (f : Format) (mode : RoundingMode)
       (integral_coefficient_le mode s c q).trans_lt hc⟩
   simp only [roundToIntegralExact, quantizeMagnitude, ite_eq_left hq]
 
-/-- For a valid finite input, invalid occurs exactly when the preferred integral quantum
+/-- For a valid finite input, invalid occurs if and only if the preferred integral quantum
 cannot be represented. The coefficient bound never causes this failure. -/
 theorem roundToIntegralExact_invalid_iff (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) (hv : (Datum.finite s c q).Valid f) :
@@ -108,11 +109,11 @@ theorem roundToIntegralExact_finite_flags (f : Format) (mode : RoundingMode)
   rw [roundToIntegralExact_finite f mode s c q hv hzero]
   exact ⟨rfl, rfl, rfl, rfl⟩
 
-/-- Explicit-direction integral rounding suppresses inexact, including for a nonintegral input. -/
+/-- `roundToIntegral` suppresses inexact, even for a nonintegral input. -/
 @[simp] theorem roundToIntegral_inexact (f : Format) (mode : RoundingMode) (x : Datum) :
     (roundToIntegral f mode x).status.inexact = false := rfl
 
-/-- Exact integral rounding signals inexact precisely for a numerical change. -/
+/-- Exact integral rounding signals inexact if and only if the value changes. -/
 theorem roundToIntegralExact_inexact_iff (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) (v : ℚ)
     (hv : (roundToIntegralExact f mode (.finite s c q)).value.toRat? = some v) :
@@ -144,7 +145,7 @@ theorem roundToIntegralExact_error_le_half (f : Format) (mode : RoundingMode)
     simpa only [roundToIntegralExact, quantize, max_eq_right (by omega : q ≤ 0), zpow_zero]
       using he
 
-/-- The two integral variants have exactly the same numerical datum. -/
+/-- The two integral variants produce the same numerical datum. -/
 @[simp] theorem roundToIntegral_value (f : Format) (mode : RoundingMode) (x : Datum) :
     (roundToIntegral f mode x).value = (roundToIntegralExact f mode x).value := rfl
 

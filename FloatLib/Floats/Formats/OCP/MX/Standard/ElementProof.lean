@@ -16,13 +16,13 @@ import Mathlib.Tactic.Linarith.Frontend
 /-!
 # Numerical contracts for OCP MX element rounding
 
-The bounded candidate search implements a mathematical nearest-even specification over all
-finite element encodings (`quantizeFinite_quantizes`). The proofs do not assume uniform spacing,
-so the contract covers subnormals, binade boundaries and inputs beyond the finite range, for which
-it selects the nearest finite word with no separate saturation case. For INT8 the asymmetric
-two's-complement range and its two saturation endpoints are proved (`int8_bounds`,
-`toRat?_endpoint_int8`). That `endpoint`, the constant used by the saturating conversion path, is
-the extreme finite word of each float profile is not proved here.
+Element rounding is a bounded search over candidates, and `quantizeFinite_quantizes` proves that it
+meets a mathematical nearest-even specification over all finite element encodings. Nothing in the
+proofs assumes uniform spacing. So the contract covers subnormals, binade boundaries and inputs
+beyond the finite range, where it picks the nearest finite word and needs no saturation case of its
+own. For INT8 we prove the asymmetric two's-complement range and its two saturation endpoints
+(`int8_bounds`, `toRat?_endpoint_int8`). One thing this file doesn't prove is that `endpoint`, the
+constant the saturating conversion path uses, is the extreme finite word of each float profile.
 -/
 
 public section
@@ -32,7 +32,7 @@ namespace FloatLib.Floats.Formats.OCP.MX.Standard.Element
 open FloatLib.Numerics
 open FloatLib.Floats.Formats.BinaryInterchange
 
-/-- Candidate enumeration contains exactly the finite words with their decoded rational values. -/
+/-- The candidates are the finite words with their decoded rational values, and nothing else. -/
 @[simp] theorem mem_candidates {profile : Profile} {word : Element profile} {value : Rat} :
     (word, value) ∈ candidates profile ↔ toRat? word = some value := by
   simp only [candidates, List.mem_filterMap, List.mem_ofFn]
@@ -67,8 +67,8 @@ theorem toRat?_int8 (word : Element .int8) :
     toRat? word = some ((word.toInt : Rat) / 64) := by
   simp [toRat?, decode]
 
-/-- Every INT8 element lies in the asymmetric range `[-2, 127/64]`; `toRat?_endpoint_int8` shows
-that both ends are attained. -/
+/-- Every INT8 element lies in the asymmetric range `[-2, 127/64]`, and `toRat?_endpoint_int8`
+shows that both ends are attained. -/
 theorem int8_bounds (word : Element .int8) :
     (-2 : Rat) ≤ (word.toInt : Rat) / 64 ∧ (word.toInt : Rat) / 64 ≤ 127 / 64 := by
   have hlo : (-128 : Int) ≤ word.toInt := BitVec.le_toInt word
@@ -119,7 +119,7 @@ theorem Quantizes.error_le {profile : Profile} {input : SignedRat}
   subst result
   exact Prod.Lex.monotone_fst _ _ (hmin other otherValue hother)
 
-/-- A representable rational is reproduced exactly, including at finite endpoints. -/
+/-- Quantizing a representable rational gives it back unchanged, at the finite endpoints too. -/
 theorem Quantizes.exact {profile : Profile} {input : SignedRat}
     {word other : Element profile} {value : Rat}
     (h : Quantizes input word) (hvalue : toRat? word = some value)

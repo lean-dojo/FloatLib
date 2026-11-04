@@ -12,12 +12,12 @@ public import FloatLib.Numerics.Quantization.Spec
 /-!
 # Directed relational quantization
 
-These specifications characterize rounding toward negative and positive infinity as selection of
-the lower or upper representable neighbor. They permit duplicate encodings of the same scalar and
-therefore remain relational even when the selected mathematical value is unique.
+These specifications say that rounding toward negative or positive infinity selects the lower or the
+upper representable neighbor. They allow duplicate encodings of the same scalar, so they stay
+relational even when the selected mathematical value is unique.
 
-The selected neighbor must be finite. These relations do not specify an overflow result when
-the required finite neighbor does not exist.
+The selected neighbor must be finite. These relations don't specify an overflow result when that
+finite neighbor doesn't exist.
 -/
 
 @[expose] public section

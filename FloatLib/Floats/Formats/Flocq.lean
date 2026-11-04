@@ -16,9 +16,11 @@ public import FloatLib.Floats.Formats.Flocq.GenericFormat
 /-!
 # Flocq-style numerical format family
 
-Flocq-style formats combine a rounded-real theorem library, representation-level calculations,
-and a semantic embedding into FloatLib's representation-independent format and quantization
-interfaces.
+Flocq, the Coq library of Boldo and Melquiond, describes a format by the set of reals it can
+represent, through an exponent function, with no bit layout involved. This family brings that
+approach to FloatLib in three parts: a theorem library about rounded reals, calculations on
+mantissa and exponent representations, and an embedding into FloatLib's representation-independent
+format and quantization interfaces.
 
 ## References
 
@@ -29,12 +31,10 @@ interfaces.
 
 ## Calculation
 
-This layer turns the generic Flocq-style format theory into calculations. It provides exact
-mantissa/exponent operations, brackets values at a chosen exponent, and applies
-directed or nearest rounding.
-
-The calculation modules build on `Theory`, relating mantissa/exponent calculations to the abstract
-format and rounding laws.
+The calculation layer turns the generic format theory into something you can compute with. It has
+exact mantissa and exponent operations, it brackets a value at a chosen exponent, and it applies
+directed or nearest rounding. Each calculation is related back to the abstract format and rounding
+laws of `Theory`, which these modules build on.
 -/
 
 @[expose] public section

@@ -12,8 +12,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 /-!
 # Native finite decoding for one-word formats
 
-A flat `UInt64` field decoder serves every conventional IEEE format covered by
-`NativeSmallWord.StorageEligible`. `Finite.Proof` has their refinements.
+One flat `UInt64` field decoder serves every conventional IEEE format covered by
+`NativeSmallWord.StorageEligible`. `Finite.Proof` has the refinements.
 -/
 
 @[expose] public section

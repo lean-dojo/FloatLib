@@ -11,12 +11,11 @@ public import FloatLib.Kernels.FixedWord.Quotient.Runtime
 /-!
 # Certified fixed-word division runtime
 
-The radix-`2^32` loop generates a quotient and remainder candidate for two normalized two-limb
-significands of `precision + 1` bits, for any precision from 65 to 126. An executable
-certificate then checks the Euclidean equation and the remainder bound, and a rejected candidate
-is replaced by the allocation-light restoring accumulator. Soundness, completeness of the repair,
-and equality between that accumulator and the logical recurrence are proved in
-`CertifiedDivision.Proof`.
+For two normalized two-limb significands of `precision + 1` bits, with any precision from 65 to 126,
+a radix-`2^32` loop proposes a quotient and a remainder. An executable certificate then checks the
+Euclidean equation and the remainder bound, and a rejected candidate is replaced by the
+allocation-light restoring accumulator. `CertifiedDivision.Proof` proves the certificate sound and
+the repair complete, and shows that the accumulator equals the logical recurrence.
 -/
 
 @[expose] public section
@@ -169,19 +168,17 @@ Consume one radix-`2^32` quotient digit from a five-digit partial dividend.
 Generate a quotient/remainder candidate for a normalized numerator and denominator of
 `precision + 1` bits, with `64 < precision ≤ 126`.
 
-The intended result is `(num * 2^(shift.toNat precision)) / den` together with the corresponding
-remainder. Knuth's Algorithm D runs in radix `2^32` after normalizing the divisor by
-`127 - precision` bits so that its leading bit is bit 127. The numerator receives the same
-normalization, which places the scaled dividend at `num * 2^127` or `num * 2^128` independently
-of the precision, so the digit layout below does not depend on the format. The shift argument
-admits only the two layouts this kernel supports.
+The intended result is `(num * 2^(shift.toNat precision)) / den` and its remainder. Knuth's
+Algorithm D runs in radix `2^32` after normalizing the divisor by `127 - precision` bits, so that
+its leading bit is bit 127. The numerator gets the same normalization, which puts the scaled
+dividend at `num * 2^127` or `num * 2^128` whatever the precision, and so the digit layout below
+doesn't depend on the format. The shift argument admits only these two layouts.
 
-Algorithm reference: Donald E. Knuth, *The Art of Computer Programming*, vol. 2,
-*Seminumerical Algorithms*, 3rd ed. (1997), §4.3.1, Algorithm D.
+The result is a speculative fast candidate that callers check with `certificate`. `checkedCandidate`
+keeps this hot path and calls a proved restoring divider only after a failed certificate.
 
-The Algorithm D result is a speculative fast candidate that callers check with `certificate`.
-`checkedCandidate` keeps this hot path and calls a proved restoring divider only after a failed
-certificate.
+Algorithm reference: Donald E. Knuth, *The Art of Computer Programming*, vol. 2, *Seminumerical
+Algorithms*, 3rd ed. (1997), §4.3.1, Algorithm D.
 -/
 @[inline] def candidate (precision : Nat)
     (num den : FloatLib.Numerics.FixedWord.UInt128) (shift : CandidateShift) :

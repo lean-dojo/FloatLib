@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Grid
 /-!
 # Successor and predecessor on a normalized decimal grid
 
-The downward step immediately below a radix power is expressed on the finer
-grid. Its upward grid step recovers the original value, so the same grid-gap
-theorem establishes adjacency in both directions.
+Just below a power of ten, the downward step lands on the finer grid, as `1` goes down to
+`0.9999999` in decimal32. Stepping up from there gives back the original value, so one grid-gap
+theorem proves adjacency in both directions.
 -/
 
 @[expose] public section
@@ -34,8 +34,8 @@ theorem neighborAbove_valid (f : Format) (c : Nat) (q : Int)
       exact ⟨hb, by omega, by omega⟩
     · trivial
 
-/-- A finite upward grid step is positive and has exactly the value of the next coefficient on the
-input grid, after any carry. -/
+/-- A finite upward grid step is positive and has the value of the next coefficient on the input
+grid, after any carry. -/
 theorem neighborAbove_finite (f : Format) (c d : Nat) (q r : Int) (s : Bool)
     (hc : c < f.coefficientBound)
     (hout : neighborAbove f c q = .finite s d r) :

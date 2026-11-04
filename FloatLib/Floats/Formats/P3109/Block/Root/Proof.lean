@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
 /-!
 # Refinement of P3109 block roots
 
-A finite nonzero result scale normalizes the exact real root before precision rounding. The
-executable square comparisons agree with the real-root reference in every rounding mode, and the
-final encoder preserves the signed, rounded, and saturated datum.
+With a finite nonzero result scale, the exact real root is normalized before precision rounding.
+We prove that the executable square comparisons agree with the real-root reference in every
+rounding mode, and that the final encoder preserves the signed, rounded, and saturated datum.
 -/
 
 @[expose] public section

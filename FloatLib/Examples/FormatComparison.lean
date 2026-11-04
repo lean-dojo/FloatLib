@@ -11,20 +11,20 @@ public import FloatLib.Floats
 /-!
 # Native, IEEE, and posit arithmetic side by side
 
-If we evaluate `((1.5 + 2.25) * 2) / 3` as a Lean `Float`, a `Float32`, a FloatLib binary64, a
-FloatLib binary32, and a 32-bit posit, do we get the same answer? Yes, 2.5 in every case, because
-every intermediate value is exactly representable. The interesting comparison is `1 / 3`, where
-the formats and rounding directions disagree, and that is the second half of this file. Run the
-printed comparison from the repository root with:
+`((1.5 + 2.25) * 2) / 3` comes out as 2.5 in a Lean `Float`, a `Float32`, a FloatLib binary64, a
+FloatLib binary32, and a 32-bit posit, because every intermediate value is exactly representable.
+Where they disagree is `1 / 3`, and that comparison of formats and rounding directions is the second
+half of this file. You can run the printed comparison from the repository root with:
 
 ```bash
 lake -d tests exe check example
 ```
 
-Compiled arithmetic on Lean's builtin `Float` and `Float32` uses native runtime primitives.
-FloatLib operations have reference semantics and refinement proofs. Opt-in calls through
-`Configured.NativeFPU.Unchecked` also depend on the compiler, host FPU, and environment. Posit32
-uses nearest-even rounding and has no selectable IEEE rounding mode.
+The five evaluations don't rest on the same guarantees. Compiled arithmetic on Lean's builtin
+`Float` and `Float32` uses native runtime primitives, while FloatLib operations have reference
+semantics and refinement proofs. Opt-in calls through `Configured.NativeFPU.Unchecked` also depend
+on the compiler, the host FPU, and the environment. Posit32 uses nearest-even rounding and has no
+selectable IEEE rounding mode.
 
 References:
 

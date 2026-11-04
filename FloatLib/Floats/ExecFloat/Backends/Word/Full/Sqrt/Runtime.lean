@@ -12,12 +12,11 @@ public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
 /-!
 # Native binary64 square-root runtime
 
-Positive finite inputs are scaled to a 105- or 106-bit radicand held in two `UInt64` limbs. A
-checked Newton candidate, or a 53-step restoring loop when the check fails, gives the floor root
-and remainder in native words. The remainder decides the nearest-even result, and the binary64
-exponent and fraction are packed without building a generic unpacked-float model.
-
-`Sqrt.Proof` has the proofs and the `Nat.sqrt` model.
+A positive finite input is scaled to a 105- or 106-bit radicand held in two `UInt64` limbs, and a
+checked Newton candidate, or a 53-step restoring loop when the check fails, gives the floor root and
+remainder in native words. Its remainder decides the nearest-even result, and the binary64 exponent
+and fraction are packed without ever building a generic unpacked-float model. `Sqrt.Proof` has the
+proofs and the `Nat.sqrt` model.
 -/
 
 @[expose] public section
@@ -76,11 +75,12 @@ remainder and trial divisor fit in one native word.
     (mantissa : UInt64) (shift : Nat) : RestoringRootState UInt64 :=
   rootLoop (shiftedRadicand mantissa shift) 53 { root := 0, remainder := 0 }
 
-/-! ## Checked Newton root
+/-!
+## Checked Newton root
 
-The restoring loop takes 53 serial steps. `rootAndRemainderChecked` takes the candidate and exact
-square check of `CheckedSquareRoot` instead. Inputs outside the loop's verified range and rejected
-candidates still run the loop, so the result is `rootAndRemainder` on every input
+The restoring loop takes 53 serial steps, and `rootAndRemainderChecked` replaces them with the
+candidate and exact square check of `CheckedSquareRoot`. Inputs outside the loop's verified range
+and rejected candidates run the loop anyway, so the result is `rootAndRemainder` on every input
 (`rootAndRemainderChecked_eq` in `Sqrt.Proof`).
 -/
 

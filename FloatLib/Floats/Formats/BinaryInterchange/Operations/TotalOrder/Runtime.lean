@@ -13,23 +13,23 @@ public import FloatLib.Numerics.Exact.Dyadic.Comparison.Runtime
 /-!
 # IEEE binary total ordering
 
-`Model.totalOrder` orders complete exact values, retaining zero signs and NaN metadata.
-Finite values use the shared exponent-scalable exact dyadic comparator; the specification
-compares their exact rational denotations. Equal values are ordered by sign, then by
-exponent, reversed for negative values. Binary interchange has a unique representation of each
-nonzero finite value; the exponent rule also gives a consistent order on unnormalized dyadics.
+`Model.totalOrder` orders complete exact values, so zero signs and NaN metadata take part. Finite
+values go through the shared exponent-scalable exact dyadic comparator, while the specification
+compares their exact rational denotations, and equal values are ordered by sign, then by
+exponent, reversed for negative values. Binary interchange represents each nonzero finite value
+uniquely. On unnormalized dyadics the exponent rule also gives a consistent order.
 
-IEEE 754-2019 §5.10 specifies the sign and signaling-class order of NaNs and leaves the remaining
-NaN order implementation-defined. FloatLib chooses increasing fraction payload for positive NaNs
-and decreasing fraction payload for negative NaNs. The complete fraction includes the quiet bit;
-class is compared first, so this convention is also increasing/decreasing trailing payload.
-Neither predicate quiets NaNs or produces exception indicators.
+IEEE 754-2019 §5.10 fixes the order of NaNs by sign and signaling class and leaves the rest of the
+NaN order implementation-defined, so FloatLib chose one: increasing fraction payload for positive
+NaNs and decreasing fraction payload for negative NaNs. The complete fraction includes the quiet
+bit. Class is compared first, so the same convention reads as increasing or decreasing trailing
+payload. Neither predicate quiets NaNs or produces exception indicators.
 
-`totalOrderMag` clears signs in the complete exact data. For signed-zero formats this agrees
-with `totalOrder` after encoded absolute value, as required by §5.7.2 for IEEE formats.
-The exact operation also applies to unsigned-zero formats, whose reserved NaN word cannot have
-its sign bit cleared without changing its classification. Both APIs accept every descriptor;
-IEEE conformance claims apply to IEEE encodings.
+`totalOrderMag` clears signs in the complete exact data. For signed-zero formats this agrees with
+`totalOrder` after encoded absolute value, as §5.7.2 requires for IEEE formats. Clearing signs in
+the exact data also works for unsigned-zero formats, whose reserved NaN word cannot have its sign
+bit cleared without changing its classification. Both APIs accept every descriptor, and the IEEE
+conformance claims apply to IEEE encodings.
 
 ## References
 
@@ -85,7 +85,7 @@ def abs : ExactValue → ExactValue
   | .infinity _ => .infinity false
   | .nan _ signaling payload => .nan false signaling payload
 
-/-- Total ordering of exact magnitudes; opposite signs with identical magnitudes are tied. -/
+/-- Total ordering of exact magnitudes. Opposite signs with identical magnitudes are tied. -/
 def totalOrderMag (x y : ExactValue) : Bool :=
   totalOrder (abs x) (abs y)
 

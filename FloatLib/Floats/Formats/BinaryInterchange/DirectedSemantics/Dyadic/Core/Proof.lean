@@ -12,11 +12,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Signed
 /-!
 # Core directed rounding of exact dyadics
 
-Floor and ceiling normalization bounds characterize the executable underflow, subnormal, normal,
-and overflow branches. The lemmas include the one-bit carry that upward rounding can produce and
-connect exponent alignment to real rounding before field packing.
+These are the core lemmas of directed dyadic rounding. Floor and ceiling normalization bounds
+characterize the executable underflow, subnormal, normal and overflow branches, including the
+one-bit carry that upward rounding can produce. Other lemmas connect exponent alignment to real
+rounding before field packing.
 
-All results are uniform in `FloatFormat`.
+Every result is uniform in `FloatFormat`.
 -/
 
 @[expose] public section
@@ -323,11 +324,11 @@ theorem roundMantissaAtExponentUp_eq_one_of_lt_minSubnormal
 /-!
 ## Positive executable branches
 
-These lemmas describe the branches of `roundDyadicPosDown` and `roundDyadicPosUp`, which select a
-branch from the leading exponent `Nat.log2 mantissa + exponent` alone. They do not assume
+`roundDyadicPosDown` and `roundDyadicPosUp` pick a branch from the leading exponent
+`Nat.log2 mantissa + exponent` alone. These lemmas describe those branches without assuming
 `mantissa ≠ 0`. For a zero mantissa, where `Nat.log2 0 = 0`, an equation names the branch the
-function takes, not the rounding of zero: the signed rounders `roundDyadicDown` and `roundDyadicUp`
-return a zero for a zero significand before they reach these helpers.
+function takes and says nothing about rounding zero. The signed rounders `roundDyadicDown` and
+`roundDyadicUp` return a zero for a zero significand before they ever reach these helpers.
 -/
 
 /-- Downward positive rounding saturates at the largest finite value on overflow. -/

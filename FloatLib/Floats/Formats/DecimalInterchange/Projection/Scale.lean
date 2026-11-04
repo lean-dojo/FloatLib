@@ -12,11 +12,10 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Selecting the decimal rounding grid
 
-Count digits after scaling to the least quantum. This permits exact rational
-inputs, including values below the least subnormal. `Nat.log` computes the digit
-count from the scaled integer part.
-The selected exponent is unbounded above so overflow can be tested *after*
-precision rounding, as required by IEEE 754-2019 §7.4.
+To pick the rounding grid we scale the input to the least quantum and count digits, with `Nat.log`
+on the scaled integer part. That works for any exact rational input, even one below the least
+subnormal. The selected exponent has no upper bound, so overflow can be tested *after* precision
+rounding, as IEEE 754-2019 §7.4 requires.
 -/
 
 @[expose] public section

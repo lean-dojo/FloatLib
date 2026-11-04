@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 /-!
 # Rounding Away from Zero
 
-Away-from-zero rounding uses ceiling on nonnegative inputs and floor on negative inputs. Together
-with toward-zero rounding, it supplies the second endpoint decomposition for arbitrary valid
-integer rounding modes.
+Rounding away from zero takes the ceiling of a nonnegative input and the floor of a negative one,
+so `2.1` goes to `3` and `-2.1` to `-3`. Together with toward-zero rounding it gives the second
+endpoint decomposition for arbitrary valid integer rounding modes.
 -/
 
 @[expose] public section

@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Enclosure.Rational.Convergence
 /-!
 # Convergence of rational arctangent bounds
 
-The geometric radius tends to zero on the open series domain. The exact reduction branches
-depend only on the input, so interval addition, subtraction, scaling, and negation transfer
-endpoint convergence to every rational argument.
+On the open series domain the geometric radius tends to zero. Since the exact reduction branches
+depend only on the input, interval addition, subtraction, scaling, and negation carry endpoint
+convergence over to every rational argument.
 -/
 
 public section

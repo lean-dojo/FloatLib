@@ -19,14 +19,12 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Addition.Proof
 /-!
 # Correctness of addition and subtraction backends
 
-The dispatcher has several execution paths: generic exact arithmetic, the one-word `UInt64`
-kernel of `NativeSmallWordAdd`, native small-word decoding into the compiled component kernel,
-binary32, binary64, and fixed limbs. They all refine the same format-generic `Spec.add` and
-`Spec.sub`.
-
-Accepted specialized results agree with the finite kernel, and declined paths use `generic`.
-Together these refinements give `word_eq_spec` and `subWord_eq_spec` for every descriptor and
-operand pair, including exceptional values.
+Addition can take several paths: generic exact arithmetic, the one-word `UInt64` kernel of
+`NativeSmallWordAdd`, native small-word decoding into the compiled component kernel, binary32,
+binary64, and fixed limbs. All of them refine the same format-generic `Spec.add` and `Spec.sub`.
+Accepted specialized results agree with the finite kernel and declined paths use `generic`, and
+together these refinements give `word_eq_spec` and `subWord_eq_spec` for every descriptor and
+operand pair, exceptional values included.
 -/
 
 @[expose] public section

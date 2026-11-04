@@ -12,13 +12,17 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Midpoint decisions for guard-and-sticky rounding
 
-Guard and sticky bits are useful only if they denote the same midpoint test as the exact bit
-stream. This module represents that one-bit-wider boundary as a bounded integer and proves the
-usual decision table (below, above, and tie broken by retained parity) implements nearest-even.
+Guard and sticky bits are only worth having if they give the same midpoint test as the exact bit
+stream. This module writes that one-bit-wider boundary as a bounded integer and proves that the
+usual decision table implements nearest-even:
 
-The statement is deliberately independent of a particular posit width or machine carrier. Both
-word and limb rounders reuse it, which keeps their optimized bit extraction separate from the one
-rounding rule they must all satisfy.
+* below the midpoint, keep the lower code,
+* above it, take the next one,
+* on a tie, let the parity of the retained code decide.
+
+None of this mentions a posit width or a machine carrier, on purpose. Word and limb rounders
+both reuse it, so their optimized bit extraction stays apart from the one rounding rule they all
+have to satisfy.
 -/
 
 @[expose] public section
@@ -253,10 +257,10 @@ theorem streamSticky_eq_decide_midpoint_lt_of_guard
     horder.trans (half_lt_mod_iff_midpoint_lt raw width retained hretained)
 
 /--
-Guard, sticky, and retained-code parity are exactly the standard nearest-even decision at the
+Guard, sticky, and retained-code parity give the standard nearest-even decision at the
 one-bit-wider boundary.
 
-The theorem is deliberately independent of the Posit layout. Once a backend proves that its
+The theorem doesn't depend on the Posit layout, on purpose. Once a backend proves that its
 one-bit-wider code denotes `streamMidpointRaw`, every fixed-word and fixed-limb kernel can reuse
 this decision theorem unchanged.
 -/

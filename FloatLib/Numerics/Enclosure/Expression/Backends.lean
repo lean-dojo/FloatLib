@@ -19,12 +19,11 @@ public import FloatLib.Numerics.Enclosure.Interval.Powers
 /-!
 # Rational and binary-grid expression backends
 
-`Backend.ofRounding` combines the interval operations with any rational outward rounder.
-`Backend.rational` keeps exact rational endpoints. `Backend.binaryGrid` uses integer arithmetic
-for algebraic operations and rounds rational elementary-function bounds back onto its grid.
-
-The elementary enclosures and their domain checks are shared by all endpoint backends.
-`BackendsProof` proves the common `Backend.Sound` contract for all three backends.
+There are three backends. `Backend.ofRounding` combines the interval operations with any rational
+outward rounder, `Backend.rational` keeps exact rational endpoints, and `Backend.binaryGrid` uses
+integer arithmetic for algebraic operations and rounds rational elementary-function bounds back onto
+its grid. All of them share the elementary enclosures and their domain checks, and `BackendsProof`
+proves the common `Backend.Sound` contract for each.
 -/
 
 @[expose] public section
@@ -36,10 +35,9 @@ variable {α : Type*}
 /--
 Rational enclosures for elementary expression operations.
 
-Arithmetic constructors return `none`; the backends dispatch them to their own arithmetic.
-Logarithm requires a positive lower endpoint, and square root requires a nonnegative one.
-Inverse sine and cosine require inputs in `[-1, 1]`; tangent requires a cosine enclosure
-that excludes zero.
+Arithmetic constructors return `none`, because each backend sends them to its own arithmetic.
+Logarithm needs a positive lower endpoint and square root a nonnegative one. Inverse sine and cosine
+need inputs in `[-1, 1]`, and tangent needs a cosine enclosure that excludes zero.
 -/
 def elementaryBounds? (config : Config) : UnaryOp → Interval ℚ → Option (Interval ℚ)
   | .exp, I => some (expBounds I config.degree)

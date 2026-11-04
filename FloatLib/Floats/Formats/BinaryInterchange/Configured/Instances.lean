@@ -23,7 +23,7 @@ share one set of instances. Numerical literals are rounded once from exact ratio
 comparison, equality, and hashing operate on the exact-width model, independently of the packed
 carrier.
 
-Two different notions of equality are installed:
+The module installs two notions of equality, and they disagree on zeros and NaNs:
 
 * `==` (`BEq`) is IEEE numerical equality through `ExecFloat.compareEqual`: `NaN == NaN` is
   `false` and `-0 == +0` is `true` when the format represents these values. `List.contains`,
@@ -36,7 +36,7 @@ Two different notions of equality are installed:
 These instances do not provide `LawfulBEq`. Using configured values as `Std.HashMap` or
 `Std.HashSet` keys requires an equality and hashing convention that satisfies their laws.
 
-`<` and `≤` use IEEE numerical comparisons: `a < b` holds exactly when the numerical comparison
+`<` and `≤` use IEEE numerical comparisons: `a < b` holds if and only if the numerical comparison
 returns `some .lt`, and `a ≤ b` when it returns `some .lt` or `some .eq`. Every comparison
 involving a NaN is false, so `a ≤ a` fails for NaN and these relations are not a `Preorder`.
 `max` and `min` are IEEE `maximum` and `minimum`: they propagate NaN and order `-0` below `+0`,
@@ -186,7 +186,7 @@ theorem le_iff_compareLessEqual :
     left ≤ right ↔ FloatLib.Floats.ExecFloat.compareLessEqual left right = true :=
   Iff.rfl
 
-/-- `<` holds exactly when the model comparison returns `some .lt`. -/
+/-- `<` holds if and only if the model comparison returns `some .lt`. -/
 theorem lt_iff_compare_eq_lt :
     left < right ↔ Model.compare (toModel left) (toModel right) = some .lt := by
   rw [lt_iff_compareLess, FloatLib.Floats.ExecFloat.compareLess, compare_eq_compare_toModel]
@@ -197,7 +197,7 @@ theorem lt_iff_lt_toModel :
     left < right ↔ Model.lt (toModel left) (toModel right) :=
   lt_iff_compare_eq_lt
 
-/-- `≤` holds exactly when the model comparison returns `some .lt` or `some .eq`. -/
+/-- `≤` holds if and only if the model comparison returns `some .lt` or `some .eq`. -/
 theorem le_iff_compare_eq_lt_or_eq :
     left ≤ right ↔
       Model.compare (toModel left) (toModel right) = some .lt ∨
@@ -241,7 +241,7 @@ theorem lt_irrefl (value : FloatLib.Floats.ExecFloat (Configured.Family format c
     simp
   · exact not_lt_of_isNaN (Or.inl h)
 
-/-- `≤` is reflexive exactly on non-NaN values. -/
+/-- `≤` is reflexive on a value if and only if it is not a NaN. -/
 theorem le_self_iff (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     value ≤ value ↔ isNaN value = false := by
   cases h : isNaN value

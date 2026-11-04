@@ -15,19 +15,19 @@ import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics
 /-!
 # IEEE remainder contracts
 
-IEEE remainder subtracts the nearest integer multiple of the divisor, with ties going to an even
-quotient. Reducing an aligned numerator modulo twice the divisor preserves both the remainder
-and the quotient parity needed to resolve a tie.
+IEEE remainder subtracts the nearest integer multiple of the divisor, and a tie goes to the even
+quotient. So the remainder of 5 by 2 is 1 (quotient 2), and the remainder of 7 by 2 is -1
+(quotient 4). Reducing an aligned numerator modulo twice the divisor keeps both the remainder and
+the quotient parity that a tie needs.
 
-The finite kernel has this exact rational semantics. For finite inputs and a nonzero divisor in
-an IEEE encoding, the resulting dyadic is representable, so its final encoding loses no precision.
-Zero divisors and infinities have their own value and status equations.
+We prove that the finite kernel has this exact rational semantics. For finite inputs and a nonzero
+divisor in an IEEE encoding, the resulting dyadic is representable, so its final encoding loses no
+precision. Zero divisors and infinities have their own value and status equations. For finite
+operands and a nonzero divisor, the remainder is the dividend minus an integer multiple of the
+divisor and at most half the divisor in magnitude.
 
-For finite operands and a nonzero divisor, the remainder is the dividend minus an integer
-multiple of the divisor and at most half the divisor in magnitude.
-
-When a nonzero remainder and the dividend have opposite signs, C's `fmod` adds the divisor with
-the dividend's sign; `remainder_add_copySign_exact` proves that this addition is finite and exact.
+If a nonzero remainder and the dividend have opposite signs, C's `fmod` adds the divisor with the
+dividend's sign, and `remainder_add_copySign_exact` proves that this addition is finite and exact.
 -/
 
 @[expose] public section
@@ -458,9 +458,9 @@ private theorem abs_toReal_le_of_significand_le (r d : Numerics.Dyadic)
   exact mul_le_mul_of_nonneg_right (by exact_mod_cast hsig) (bpow_nonneg _)
 
 /--
-With a nonzero divisor, the remainder of two finite operands is exactly representable in an IEEE
-encoding. The final rounding preserves the exact dyadic's real value and produces a finite
-result, justifying the clear status on this branch.
+With a nonzero divisor, the remainder of two finite operands is representable in an IEEE
+encoding. The final rounding keeps the exact dyadic's real value and produces a finite result, so
+this branch can report a clear status.
 -/
 theorem remainder_exact
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (dividend divisor : Model fmt)

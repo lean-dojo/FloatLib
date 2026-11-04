@@ -18,30 +18,33 @@ public import FloatLib.Numerics.Enclosure.Refinement
 /-!
 # Certified binary exponential, logarithm, and power by enclosure refinement
 
-Exact input decoding and outward-rounded binary-grid enclosures feed a nearest-even endpoint
-check. Refinement increases the Taylor degree while the interval shrinks rapidly, and increases
-the working precision when that progress stalls. The cases `exp 0 = 1` and `log 1 = 0` use point
-enclosures.
+These kernels refine an enclosure of the real result until both of its ends round the same way,
+or the budget runs out. Each input is decoded exactly, outward-rounded binary-grid enclosures
+bracket the real result, and a nearest-even check on the two endpoints decides. Refinement raises
+the Taylor degree while the interval shrinks rapidly, and raises the working precision when that
+progress stalls. Point enclosures handle `exp 0 = 1` and `log 1 = 0`.
 
-Exponential uses format-derived rational argument bounds to skip impossible underflow and overflow
-checks. Beyond these bounds, total logarithm-based comparisons handle extreme inputs. These
-comparisons terminate independently of the `Certified.Budget`, which bounds the attempts of the
-direct enclosure search. Every accepted result has a finite real-rounding certificate. A call that
-does not certify a result returns a `Certified.Failure` saying why: an unsupported descriptor, a
-nonfinite input, an argument outside the function's domain, a result beyond the finite range, or a
-search that did not settle.
+For the exponential, format-derived rational argument bounds skip impossible underflow and overflow
+checks. Beyond these bounds, total logarithm-based comparisons handle extreme inputs. They
+terminate whatever the `Certified.Budget`, which bounds the attempts of the enclosure search
+itself. Every accepted result has a finite real-rounding certificate. A call that does not certify
+a result returns a `Certified.Failure` saying why: an unsupported descriptor, a nonfinite input, an
+argument outside the function's domain, a result beyond the finite range, or a search that did not
+settle.
 
-The power `a ^ b` of a positive base is `exp (b * log a)`. Writing `a = s * 2 ^ e` with `s` near
-one, an enclosure of `t = b * log a` settles underflow and rejects overflow. It also gives an
-integer `k` near `t / log 2`, from its lower endpoint and a 52-bit approximation of `1 / log 2`,
-and any integer is sound. Refinement then encloses `exp (t - k * log 2)` from enclosures of `log s`
-and `log 2`, and rounds both endpoints times `2 ^ k` without forming that power. The
-exponential's working precision is independent of `|t|`, and the argument grid grows only with
-the bit lengths of `b` and `b * e`, so a result near the end of a very wide exponent range needs
-no work proportional to `|t|`. The logarithms of `2` and of `j / 32` come from the shared constants
-cache of `Numerics.Enclosure.Constants`, which keeps the series short. An exact result that is a
-rounding boundary generally does not settle and ends `inconclusive`, but one whose reduced argument
-is enclosed exactly, such as binary16 `4 ^ -12.5 = 2 ^ -25`, can still settle.
+The power `a ^ b` of a positive base is `exp (b * log a)`. Write `a = s * 2 ^ e` with `s` near
+one. An enclosure of `t = b * log a` settles underflow and rejects overflow, and it gives an
+integer `k` near `t / log 2` from its lower endpoint and a 52-bit approximation of `1 / log 2`
+(any integer is sound). Refinement then encloses `exp (t - k * log 2)` from enclosures of `log s`
+and `log 2`, and rounds both endpoints times `2 ^ k` without forming that power. The exponential's
+working precision does not depend on `|t|`, and the argument grid grows only with the bit lengths
+of `b` and `b * e`. So a result near the end of a very wide exponent range needs no work
+proportional to `|t|`. Logarithms of `2` and of `j / 32` come from the shared constants cache
+of `Numerics.Enclosure.Constants`, which keeps the series short.
+
+An exact result that is a rounding boundary generally does not settle and ends `inconclusive`.
+One whose reduced argument is enclosed exactly can still settle, as binary16 `4 ^ -12.5 = 2 ^ -25`
+does.
 -/
 
 @[expose] public section
@@ -161,7 +164,7 @@ their exponential. Unsupported descriptors, overflow, and an exhausted budget ar
     accept search (if search.isSome then .inconclusive else expSearchFailure fmt argument 1)
 
 /--
-Certify `log (1 + argument)`, forming the sum exactly before enclosing the logarithm.
+Certify `log (1 + argument)`, forming the exact sum before enclosing the logarithm.
 
 In particular, a small nonzero argument is not lost by rounding `1 + argument` to one.
 Arguments at or below `-1` are a domain failure, and the other failures are those of `logRat`.
@@ -182,12 +185,12 @@ lengths of its numerator and denominator: `|value| < 2 ^ magnitudeBits value`.
 /--
 Enclose `log value` for a positive rational on the grid of `precision` fractional bits.
 
-With `j` the integer nearest `32 * value`, `log value = log (j / 32) + log (32 * value / j)`: the
-first term comes from the cached table `BinaryGrid.Internal.logTable`, and for `value` in
-`[3/4, 3/2)` the second argument lies within `1/48` of one, so its series needs about a third of the
-terms. Values below `3/4` use the first table entry, since the index saturates at zero. Values from
-about `3/2` up, and grids finer than the table's, use `BinaryGrid.logUnreduced` directly. The
-identity holds for every positive `j`, so the choice affects the work only.
+With `j` the integer nearest `32 * value`, `log value = log (j / 32) + log (32 * value / j)`. The
+first term comes from the cached table `BinaryGrid.Internal.logTable`. For `value` in
+`[3/4, 3/2)` the second argument lies within `1/48` of one, so its series needs about a third of
+the terms. Values below `3/4` use the first table entry, since the index saturates at zero. Values
+from about `3/2` up, and grids finer than the table's, go straight to `BinaryGrid.logUnreduced`.
+The identity holds for every positive `j`, so the choice affects the work only.
 -/
 def logReduced (value : ℚ) (precision : Nat) : Interval Int :=
   let numerator := value.num.natAbs
@@ -235,19 +238,23 @@ def logTwoUpper : ℚ := 6931471808 / 10000000000
 
 /--
 Round `(scaled * 2 ^ binaryExponent) ^ exponent` for a positive rational `scaled` if the
-enclosure budget certifies a finite result.
+enclosure budget certifies a finite result. Here
+`t = exponent * log (scaled * 2 ^ binaryExponent)`.
 
-An overflow evident from `exponent * binaryExponent` alone fails as `range` before any logarithm.
-An enclosure of `t = exponent * log (scaled * 2 ^ binaryExponent)` on the first grid settles a
-result below half the least subnormal as `+0`, by rounding `[0, 1]` times
-`2 ^ (minSubnormalExponent - 1)` without forming that power. It fails as `range` for a result at
-least `2 ^ (maxNormalExponent + 1)`, comparing `t` with the same grid's enclosure of `log 2`.
-Otherwise refinement encloses `exp (t - k * log 2)` for an integer `k` near `t / log 2`, reusing
-the first enclosure of `t` in its first attempt, and accepts when both endpoints times `2 ^ k`
-round to the same finite encoding. The budget's degree applies to the exponential, while the
-logarithm series take their degrees from the grid. Unsupported descriptors, nonpositive `scaled`,
-overflow, and an exhausted budget are failures. A result within a rounding step of the overflow
-threshold also ends the search as `inconclusive`.
+* An overflow evident from `exponent * binaryExponent` alone fails as `range` before any
+  logarithm.
+* An enclosure of `t` on the first grid settles a result below half the least subnormal as `+0`,
+  by rounding `[0, 1]` times `2 ^ (minSubnormalExponent - 1)` without forming that power.
+* The same enclosure fails as `range` for a result at least `2 ^ (maxNormalExponent + 1)`,
+  comparing `t` with the same grid's enclosure of `log 2`.
+* Otherwise refinement encloses `exp (t - k * log 2)` for an integer `k` near `t / log 2`,
+  reusing the first enclosure of `t` in its first attempt. It accepts when both endpoints times
+  `2 ^ k` round to the same finite encoding.
+
+The budget's degree applies to the exponential, while the logarithm series take their degrees
+from the grid. Unsupported descriptors, nonpositive `scaled`, overflow, and an exhausted budget
+are failures. A result within a rounding step of the overflow threshold also ends the search as
+`inconclusive`.
 -/
 def powRatScaled (fmt : FloatFormat) (scaled : ℚ) (binaryExponent : ℤ) (exponent : ℚ)
     (budget : Budget := {}) : Except Failure (Model fmt) :=
@@ -355,18 +362,22 @@ def log {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
 /--
 Certify `base ^ exponent` for a finite positive base and a finite exponent.
 
-Both inputs are decoded exactly as dyadics. A base equal to `posOne`, the only encoding of one in
-an IEEE format, returns one for every finite exponent (`pow_posOne`). For any other base the
-significand alone is split as `scaled * 2 ^ e`, so the base's power-of-two scale is never formed.
-When the stored fields show
-`|exponent * log base| < 2 ^ -(fracWidth + 4)` the result rounds to one without forming the
-exponent's rational: in a format with a very wide exponent field its denominator can have billions
-of bits. An exponent decoded as a dyadic `b` with stored binary exponent
-`b.exponent > fracWidth + expWidth + 8` stops before its rational is formed: it is an integer so
-large that only a base of one has a finite nonzero rounded power, and `powHugeFailure` reports
-whether the power overflows. Once these two checks have bounded its size, the general path forms
-the exponent's rational. Non-IEEE descriptors, nonpositive or nonfinite bases, nonfinite exponents,
-overflow, and an exhausted budget are failures too.
+Both inputs are decoded as exact dyadics. A base equal to `posOne`, the only encoding of one in
+an IEEE format, returns one for every finite exponent (`pow_posOne`). For any other base only the
+significand is split as `scaled * 2 ^ e`, so the base's power-of-two scale is never formed. Two
+checks run before the exponent's rational is formed, because in a format with a very wide exponent
+field its denominator can have billions of bits.
+
+* When the stored fields show `|exponent * log base| < 2 ^ -(fracWidth + 4)`, the result rounds
+  to one.
+* An exponent decoded as a dyadic `b` with stored binary exponent
+  `b.exponent > fracWidth + expWidth + 8` stops there. It is an integer so large that only a base
+  of one has a finite nonzero rounded power, and `powHugeFailure` reports whether the power
+  overflows.
+
+Once these two checks have bounded its size, the general path forms the exponent's rational.
+Non-IEEE descriptors, nonpositive or nonfinite bases, nonfinite exponents, overflow, and an
+exhausted budget are failures too.
 -/
 def pow {fmt : FloatFormat} (base exponent : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=

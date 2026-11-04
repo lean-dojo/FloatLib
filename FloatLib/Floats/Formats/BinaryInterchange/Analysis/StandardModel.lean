@@ -22,12 +22,13 @@ For nearest rounding, `u = 2^(-p)` with `p = fracWidth + 1`, and `η₀ = 2^(emi
 the subnormal spacing, where `emin = minSubnormalExponent`. For binary32 these are `2^(-24)` and
 `2^(-150)`. Any valid rounding function, including the directed ones, satisfies the same model
 with `2 * u` and `2 * η₀`. At most one of the two error terms is nonzero: `η = 0` in the normal
-range and `δ = 0` below it. The real grid has no overflow, so the grid theorems need no range
-hypothesis. The executable corollaries use IEEE descriptors and require the stated domain and
-finiteness hypotheses.
+range and `δ = 0` below it.
 
-A real that rounds to zero under nearest rounding is at most `η₀` in magnitude, so a real beyond
-`η₀` keeps its sign.
+Since the real grid has no overflow, the grid theorems need no range hypothesis, while the
+executable corollaries use IEEE descriptors and require the stated domain and finiteness
+hypotheses. A real
+that rounds to zero under nearest rounding is at most `η₀` in magnitude, so a real beyond `η₀`
+keeps its sign.
 
 Addition and subtraction are sharper. Below the normal range, the exact sum of two grid points is
 itself a grid point, so the underflow term vanishes and `fl(x + y) = (x + y) * (1 + δ)`.
@@ -62,13 +63,13 @@ noncomputable abbrev underflowErrorAt (fmt : FloatFormat) : ℝ :=
   FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix
     (FloatFormat.minSubnormalExponent fmt - 1)
 
-/-- The unit roundoff as a power of two. -/
+/-- The unit roundoff is `2 ^ (-(fracWidth + 1))`, as a real power of two. -/
 theorem unitRoundoffAt_eq (fmt : FloatFormat) :
     unitRoundoffAt fmt = (2 : ℝ) ^ (-((fmt.fracWidth : ℤ) + 1)) := by
   simp [unitRoundoffAt, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,
     Numerics.Radix.toReal]
 
-/-- The underflow allowance as a power of two. -/
+/-- The underflow allowance is `2 ^ (minSubnormalExponent - 1)`, as a real power of two. -/
 theorem underflowErrorAt_eq (fmt : FloatFormat) :
     underflowErrorAt fmt = (2 : ℝ) ^ (FloatFormat.minSubnormalExponent fmt - 1) := by
   simp [underflowErrorAt, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix,

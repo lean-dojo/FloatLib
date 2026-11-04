@@ -16,11 +16,11 @@ public import FloatLib.Floats.ExecFloat.Core.Operations
 /-!
 # Inspecting proof-carrying capabilities and backend plans
 
-Capability inspection reads the instances that execution uses. It reports the installed
-conversions, which universal operations exist, the planning policy, the candidate selected by each
-capability, and the planner decisions behind that selection. The selected candidate comes from the
-capability itself. Diagnostic assessments rerun the shared selector on the capability's candidate
-estimates and policy.
+Capability inspection reads the same instances that execution uses. It reports the installed
+conversions, which universal operations exist, the planning policy, the candidate each capability
+selected, and the planner decisions behind that selection. The selected candidate comes from the
+capability itself, while diagnostic assessments rerun the shared selector on the capability's
+candidate estimates and policy.
 -/
 
 @[expose] public section

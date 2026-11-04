@@ -67,10 +67,10 @@ What the numerical clauses say depends on the destination:
 | Bounded fixed point | The nearest-even coefficient is preserved or rejected when range-checked, reduced modulo `2^width` to its signed representative when wrapped, or clamped when saturated. |
 
 Every family keeps the complete status and failure outcome, and the `spec_iff_eq_run` theorems (with
-binary's `specWith_iff_eq_runWith`) show that the numerical clauses still determine exactly one
-complete executable outcome.
+binary's `specWith_iff_eq_runWith`) show that the numerical clauses determine exactly one complete
+executable outcome.
 
-For rewriting a concrete binary conversion, `ExecFloat.Binary.Conversion.run_default_finite` reduces
+To rewrite a particular binary conversion, `ExecFloat.Binary.Conversion.run_default_finite` reduces
 a default-context finite conversion to `Model.roundRat`, and
 `ExecFloat.Binary.Conversion.cast_eq_roundRat_of_decodeTo_eq_finite` does the same for a `cast`
 whose source decodes to a finite value. From there, `Model.Policy.roundRat_nearest_eq_execFloat` in
@@ -131,7 +131,7 @@ theorems identify it with `value = 0`, so both signed zeros are recognized. The 
 the expression.
 
 Posit integer functions and conversions reuse the shared exact rational-to-integer rounder in
-`FloatLib.Numerics.Quantization.Deterministic.Rational`, so they don't maintain separate tie rules.
+`FloatLib.Numerics.Quantization.Deterministic.Rational`, so they don't keep tie rules of their own.
 
 | Theorem | Informal statement |
 | --- | --- |
@@ -159,10 +159,10 @@ with a rational boundary, including equality, so a format can round the value on
 
 We describe a rational power by its root and build its exact value only when it can be a cell
 boundary. Take the binary64 power `0x1.0000008000001p+0 ^ 17179869184.5`: it is about `2^738.66`,
-but its odd significand has about `8.9 * 10^11` bits. Capped exponentiation decides equality with a
-boundary at a cost polynomial in the bit lengths of the base, the exponent and the boundary, not in
-the exponent's magnitude. Logarithm enclosures of increasing degree separate every other boundary,
-and the search ends because the logarithm difference is then nonzero.
+but its odd significand has about `8.9 * 10^11` bits, which is more than a hundred gigabytes just
+to write down. Capped exponentiation decides equality with a boundary at a cost polynomial in the
+bit lengths of the base, the exponent and the boundary, and not in the exponent's magnitude. Logarithm enclosures of increasing degree separate every other boundary, and the search
+ends because the logarithm difference is then nonzero.
 
 ## Binary interchange formats
 
@@ -273,8 +273,8 @@ sign.
 `Model.roundDyadicNearestAway` is IEEE 754-2019 `roundTiesToAway`: `roundDyadic` off a grid tie and
 `roundDyadicAway` at one, which `Model.dyadicIsGridTie` detects on the grid with gradual underflow
 and no upper exponent bound. `Model.rationalIsGridTieScaled` and `Model.roundRatNearestAwayScaled`
-are the rational versions. Our policy regression suite compares the rational rounder with the
-general engine and the rational tie test with `dyadicIsGridTie` at denominator one.
+are the rational versions. In our policy regression suite we compare the rational rounder with
+the general engine, and the rational tie test with `dyadicIsGridTie` at denominator one.
 `Model.dyadicNearestAwayOverflows` and `Model.rationalNearestAwayOverflowsScaled` classify overflow
 at the top finite midpoint, which overflows under nearest-away whatever the parity of the largest
 finite significand. Tininess for nearest-away uses the nearest-even boundary `underflowMidpoint`,
@@ -283,14 +283,14 @@ because both nearest rules round that midpoint up to the smallest normal value.
 ### The nearest-away and away-from-zero directions
 
 `IEEERoundingMode` has six constructors: the five rounding-direction attributes of IEEE 754-2019,
-with `nearestAway` (roundTiesToAway) after `nearest`, and `away` (MPFR's `MPFR_RNDA`, not an IEEE
-attribute) last. `Numerics.RoundingMode` has `away` as well, and `Policy.ieeeRoundingMode?` maps
+with `nearestAway` (roundTiesToAway) after `nearest`, and `away` (MPFR's `MPFR_RNDA`, which IEEE
+doesn't define as an attribute) last. `Numerics.RoundingMode` has `away` as well, and `Policy.ieeeRoundingMode?` maps
 `nearestAway` and `away`, so `Policy.roundDyadic` and the conversion status `finiteStatus` treat
 them as directions. Every operation that takes a rounding direction accepts them: arithmetic,
 square root, casts, reductions, integral rounding, integer conversion, and text input and output.
 Nearest-away square root uses the nearest-even square root, because the square root of a value of
-a format is never a tie of its grid, as `Model.Internal.Directed.sqrt` explains. No theorem states
-that fact.
+a format is never a tie of its grid, as `Model.Internal.Directed.sqrt` explains. We haven't stated
+that fact as a theorem.
 
 | Theorem | Informal statement |
 | --- | --- |
@@ -387,7 +387,7 @@ matrix theorems.
 `roundAt`, `ulpAt`, and `minNormalAt` use the descriptor's declared exponent bias, including FNUZ
 and custom encodings, on a grid with no upper exponent bound. `toReal_genericFormat_of_isFinite` and
 `roundAt_toReal_eq` apply to every finite decoded word without an IEEE premise. To connect an
-arithmetic operation to that grid, you still need its operation-specific refinement hypotheses.
+arithmetic operation to that grid, you also need its operation-specific refinement hypotheses.
 
 You need the normal range for the relative-error theorem. Near zero, gradual underflow prevents a
 uniform relative bound, so absolute error is the useful statement there.
@@ -787,8 +787,8 @@ cache of proved constants in `FloatLib.Numerics.Enclosure.Constants` (import
 `FloatLib.Numerics.Enclosure`), which also supplies the `2 / pi` and `pi / 2` of sine and cosine
 reduction, the `log 2` of exponential reduction and of generated configurations, and the `log 2` of
 the certified power. Each precision level of the cache is computed once, on first use, and these
-readers share it from then on. The exact comparators and the certified logarithm still compute their
-own `pi / 4` and `log 2`.
+readers share it from then on. The exact comparators and the certified logarithm are the
+exception, since they compute their own `pi / 4` and `log 2`.
 
 | Theorem | Informal statement |
 | --- | --- |
@@ -1135,8 +1135,8 @@ with an executable approximation:
 
 Invalid inputs have their own domain and NaR theorems, and the configured posit carriers export the
 corresponding results through their model bridge. The natural exponential/logarithm search
-terminates because it separates irrational targets from rational boundaries. Exact rational cases
-are handled directly.
+terminates because it separates irrational targets from rational boundaries, while exact rational
+cases are handled directly.
 
 For exact accumulation, the important quire results are:
 
@@ -1219,8 +1219,8 @@ The following names are in `OCP.MX.Standard`:
 | `toReal_dotGeneral_eq_roundAt` | A finite result is one nearest-even binary32 rounding of the exact real sum. |
 | `abs_toReal_dotGeneral_sub_le` | For finite inputs and a finite result, the error is at most half a binary32 ULP, including gradual underflow. |
 
-Dot products accept different element profiles on their two sides. Exact accumulation is our choice
-of the internal precision MX permits. The scale-selection theorem doesn't claim global optimality
+Dot products accept different element profiles on their two sides. Of the internal precisions MX
+permits, we chose exact accumulation. The scale-selection theorem doesn't claim global optimality
 over other shared scales.
 
 `Numerics.Interval α` stores arbitrary endpoint representations. Its partial arithmetic uses
@@ -1229,8 +1229,8 @@ corner bounds apply over any ordered field. Successful finite operations preserv
 unavailable enclosures, exceptional inputs, and zero-crossing division return `none`. Concrete
 binary, decimal, and posit adapters use exact rational scalar arithmetic. `Interval.ContainsReal`
 interprets those rational endpoints in the reals, and the `containsReal_add?`, `containsReal_sub?`,
-`containsReal_mul?`, and `containsReal_div?` theorems cover arbitrary real members, not only
-rational inputs. `contains_fma?` proves the ordered-field multiply-add enclosure, and
+`containsReal_mul?`, and `containsReal_div?` theorems cover arbitrary real members, rational
+inputs or otherwise. `contains_fma?` proves the ordered-field multiply-add enclosure, and
 `containsReal_fma?` gives its real interpretation, with outward rounding applied only after the
 product and addend are combined.
 
@@ -1253,10 +1253,10 @@ monotonicity and odd symmetry for stable endpoint evaluation. All five contracts
 member of their accepted input intervals.
 
 `ConstantBounds` bundles a constant's rational endpoints with the ordinary inequalities proving
-containment. Its `toExtension_sound` theorem supplies the general contract automatically.
-`Extension.Sound` connects a computable enclosure to a curried real function or constant.
-`Backend.withExtensions_sound` preserves containment when extending any sound endpoint backend.
-`@[interval_extension]` registers constant certificates or those proofs for use by the tactic.
+containment, and its `toExtension_sound` theorem supplies the general contract automatically.
+`Extension.Sound` connects a computable enclosure to a curried real function or constant, and
+`Backend.withExtensions_sound` preserves containment when you extend any sound endpoint backend.
+`@[interval_extension]` registers constant certificates or those proofs for the tactic to use.
 `Expr.call` supports any number of arguments and is reevaluated on each subdivision.
 
 Configured binary endpoints are available through
@@ -1299,7 +1299,8 @@ For bit-executable descriptor intervals, import
 `ValidExtended.valid_of_isFinite` turns that overflow-aware invariant back into ordinary `Valid`
 once both result endpoints are proved finite. `ofBounds` handles indeterminate candidates such as
 `∞ + -∞`, `0 · ∞`, and `∞ / ∞` by returning the whole range. This keeps the operations closed and
-the fallbacks conservative, but each soundness theorem still requires its stated input hypotheses.
+the fallbacks conservative, but each soundness theorem requires its stated input hypotheses all the
+same.
 For negation, ReLU, and absolute value, apply `*_sound_extended` right after an operation that may
 overflow, with no need to prove the intermediate endpoints finite. For finite intervals, the
 original `*_sound` theorems are convenient specializations.
@@ -1327,7 +1328,7 @@ IEEE 754-2019 rounding-direction attributes and rounding away from zero, GNU MPF
 as integer-rounding rules. Each has a `ValidRnd` instance, so `Flocq.roundingSpec` and every
 theorem about `round` that assumes only `ValidRnd` cover all six.
 Results that assume `ValidRndToNearest`, such as `error_bound_ulp` and `round_toNearest_point`,
-still apply only to nearest rounding.
+apply only to nearest rounding.
 
 `Flocq.RoundOddPoint` fixes parity at a grid exponent you supply. `Flocq.RoundOddCanonicalPoint`
 uses the result's canonical exponent, matching Flocq's `Rnd_odd_pt`. `round_odd_canonical_point_FIX`
@@ -1435,18 +1436,18 @@ are hypotheses of their own, and only the theorem that needs one assumes it.
 | `Flocq.affine_toReal_roundedValue` | Reconstruction also commutes with the rational-to-real embedding. |
 
 You'll find the nearest-even connection in `FloatLib.Floats.Formats.Flocq.Theory.Rounding.Affine`.
-If you only need executable rational quantization, you can still import
-`Numerics.Quantization.Affine`.
+If you only need executable rational quantization, you can import
+`Numerics.Quantization.Affine` on its own.
 
 ## Theorem names and lookup
 
 We use a few recurring names across the format families:
 
-- `*_eq_spec` rewrites executable code to its reference definition;
-- `*_refines`, `implements_*`, `spec_*`, and `preparedSpec_*` prove a relational capability;
-- `toReal_*` and `toRat_*` state decoded mathematical behavior;
-- `isFinite_*` establishes the side condition needed by a finite real theorem;
-- `*_abs_error`, `*_relative_error`, and `*_mem_Icc` provide error or enclosure bounds;
+- `*_eq_spec` rewrites executable code to its reference definition.
+- `*_refines`, `implements_*`, `spec_*`, and `preparedSpec_*` prove a relational capability.
+- `toReal_*` and `toRat_*` state decoded mathematical behavior.
+- `isFinite_*` establishes the side condition needed by a finite real theorem.
+- `*_abs_error`, `*_relative_error`, and `*_mem_Icc` provide error or enclosure bounds.
 - `*_eq_none_iff` characterizes exceptional values in optional exact views.
 
 `#float_info YourType` lists the theorems for that type. For most configured types, such as

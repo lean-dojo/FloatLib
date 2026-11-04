@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Public square-root semantics
 
-These results cover zero's sign and preferred quantum, invalid negative inputs,
-and the real numerical error of a finite nonnegative operand. The public error
-bound includes zero rather than assuming the input is strictly positive.
+Three things are covered here: the sign and preferred quantum of a zero result, invalid negative
+inputs, and the real numerical error for a finite nonnegative operand. The public error bound
+includes zero, so you don't need to assume the input is strictly positive.
 -/
 
 @[expose] public section

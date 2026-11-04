@@ -24,16 +24,16 @@ and instantiated by each carrier.
   bit. `fractionPrefix`, `tailPrefix`, `lowerCandidateFromFields`, `roundInterior`, and
   `roundNormalizedPositive` form the shared kernel.
 
-Both records are passed as arguments to always-inlined functions. The `UInt64` and `UInt128`
-instances are transparent constants, so the functions specialize to their primitive operations.
-The sibling proof module states the natural-number meaning of every operation
+We pass both records as arguments to always-inlined functions, and the `UInt64` and `UInt128`
+instances are transparent constants, so every call specializes to the carrier's primitive
+operations. Its sibling proof module gives each operation its natural-number meaning
 (`LawfulTailCarrier`, `LawfulCandidateCarrier`) and proves the shared kernel against the
 arbitrary-width rounder `DirectDyadicPacking.roundPositiveCode`.
 
-The two exponent bits are always stored in `UInt64`, so this module reads them through neutral
+Since the two exponent bits always sit in a `UInt64`, this module reads them through neutral
 fixed-word primitives and depends on neither posit storage backend. Underflow detection, the zero
-test, and sign restoration stay in the specialized kernels: they use carrier-specific comparison
-and complement primitives with their own contracts.
+test, and sign restoration live in the specialized kernels, because they need carrier-specific
+comparison and complement primitives with contracts of their own.
 -/
 
 @[expose] public section

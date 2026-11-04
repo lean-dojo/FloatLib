@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Mixed.Proof
 /-!
 # Semantics of P3109 blocks
 
-Lane projection refines the report's exact normalization followed by destination projection.
-The special scale laws cover NaN precedence and zero and infinite result scales. Finite
-reductions keep the whole rational sum or product, with no intermediate rounding.
+Projecting a lane refines the report's recipe, exact normalization followed by destination
+projection. The special scale laws cover NaN precedence and zero and infinite result scales.
+Finite reductions keep the whole rational sum or product and round nothing along the way.
 -/
 
 @[expose] public section

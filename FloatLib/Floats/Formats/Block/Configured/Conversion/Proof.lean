@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.Block.Configured.Proof
 /-!
 # Shared-scale block conversion proofs
 
-The principal result proves that direct block conversion satisfies the lane-wise nearest-even
-`QuantizesAt` relation at the caller-supplied shared exponent.
+Here we prove that direct block conversion satisfies `QuantizesAt`. At the shared exponent the
+caller supplies, every lane is rounded to the nearest point of its grid, with ties to even.
 -/
 
 @[expose] public section
@@ -28,7 +28,7 @@ namespace Conversion
 
 variable {lanes : Nat}
 
-/-- Finite vectors are quantized lane-wise at the explicitly supplied exponent. -/
+/-- Finite vectors are quantized lane by lane at the exponent the caller supplied. -/
 @[simp, grind =] theorem run_finite (exponent : Int) (exact : Vector Rat lanes) :
     run exponent (.finite exact) =
       let rounded := ExecFloat.SharedScale.quantizeAt exponent exact
@@ -67,7 +67,7 @@ theorem implements_run :
       .finite (ExecFloat.SharedScale.decode value) :=
   rfl
 
-/-- The explicit exponent supplied to conversion is stored exactly. -/
+/-- Conversion stores the exponent the caller supplied, unchanged. -/
 @[simp, grind =] theorem exponent_of_finite_run (exponent : Int) (exact : Vector Rat lanes) :
     (FloatLib.Floats.ExecFloat.ConversionOutcome.value?
         (run exponent (.finite exact))).map ExecFloat.SharedScale.exponent =

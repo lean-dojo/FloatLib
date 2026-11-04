@@ -12,9 +12,9 @@ public import FloatLib.Numerics.IEEEStatus
 /-!
 # IEEE comparison predicates
 
-The truth tables in IEEE 754-2019 Tables 5.1–5.2 depend only on four possible relations:
-less, equal, greater, and unordered. This module shares those tables between numerical
-formats. Operand decoding and the invalid-operation flag belong to each format's API.
+Truth tables in IEEE 754-2019 Tables 5.1-5.2 depend on only four possible relations: less, equal,
+greater, and unordered. This module shares those tables between numerical formats, and each format's
+API keeps operand decoding and the invalid-operation flag.
 -/
 
 @[expose] public section
@@ -35,7 +35,7 @@ inductive Predicate where
   | unordered | ordered | lessUnordered | notGreater | notLess | greaterUnordered
   deriving DecidableEq, Repr
 
-/-- Whether a predicate accepts a relation; `none` denotes unordered operands. -/
+/-- Whether a predicate accepts a relation, where `none` denotes unordered operands. -/
 def Predicate.accepts : Predicate → Option Ordering → Bool
   | .equal, r => r == some .eq
   | .notEqual, r => r != some .eq

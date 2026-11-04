@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 /-!
 # Exact Subtraction
 
-The fixed-point family is an additive lattice, so subtraction is exact without a ratio
-restriction (`generic_format_FIX_sub` in `Format.Theorems`). This is the fixed-grid foundation for
-the floating-point Sterbenz theorem, where the ratio hypotheses are needed to align the operands'
-effective exponents.
+Sterbenz's lemma says that if `y ≤ x ≤ 2y`, then `x - y` is representable, so the subtraction
+doesn't round. On a fixed-point grid you don't even need the ratio condition, because the grid is
+an additive lattice (`generic_format_FIX_sub` in `Format.Theorems`). That fixed-grid fact is the
+foundation here. For floating point, the ratio hypotheses are what align the operands' effective
+exponents.
 -/
 
 @[expose] public section
@@ -25,13 +26,12 @@ variable {β : Numerics.Radix}
 
 /--
 Sterbenz's lemma for the unbounded-exponent format: if two representable values satisfy
-`y ≤ x ≤ 2 * y`, then their subtraction is exactly representable at the same precision. The bounds
+`y ≤ x ≤ 2 * y`, then their difference is exactly representable at the same precision. The bounds
 force `0 ≤ y`, and `y = 0` forces `x = 0`.
 
-The proof does not appeal to rounding.  Both operands lie on the grid of the smaller canonical
-exponent, the one of `y`.  The ratio bound gives `x - y ≤ y`, so the difference has magnitude at
-most that of `y`, its canonical exponent is at most that of `y`, and the integer difference on the
-common grid is representable.
+The proof never mentions rounding. Both operands lie on the grid of the smaller canonical
+exponent, which is `y`'s, and `x - y ≤ y` keeps the canonical exponent of the difference at most
+that of `y`, so the integer difference on that common grid is representable.
 -/
 theorem generic_format_FLX_sub_of_le_two_mul (prec : ℤ) (hprec : 0 < prec)
     {x y : ℝ} (hyx : y ≤ x) (hx2y : x ≤ 2 * y)

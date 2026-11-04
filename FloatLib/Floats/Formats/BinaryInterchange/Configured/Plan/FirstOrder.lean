@@ -14,10 +14,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Automati
 Word and pair storage can call a structural kernel without projecting a certificate closure.
 The guard below uses the same eligibility and cost comparison as the complete portfolio. Its
 selection proofs unfold that portfolio and show that the direct call is the selected candidate's
-own function, not another algorithm with the same numerical specification.
+own function. Another algorithm with the same numerical specification would not count.
 
-The generic winner also has a direct entry point for carriers without a table or limb candidate.
-This exposes constant format parameters to the compiler at arbitrary precision.
+The generic winner also has a direct entry point for carriers without a table or limb candidate,
+which exposes constant format parameters to the compiler at arbitrary precision.
 -/
 
 @[expose] public section
@@ -25,7 +25,7 @@ This exposes constant format parameters to the compiler at arbitrary precision.
 namespace FloatLib.Floats.Formats.BinaryInterchange.Configured
 
 /-- Storage plans whose structural candidate can be called without a carrier-specific table or
-limb closure. This is a storage eligibility test, not a selection decision. -/
+limb closure. It tests storage eligibility and makes no selection decision. -/
 @[inline] def StoragePlan.firstOrderDispatch {format : FloatFormat} : StoragePlan format → Bool
   | .word16 _ | .word32 _ | .word64 _ => true
   | .pair _ _ | .wide => decide (Model.NativePair.Eligible format)

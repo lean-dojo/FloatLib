@@ -12,8 +12,8 @@ public import FloatLib.Numerics.Core.System
 # Block-scaled representation capability
 
 Block-scaled codes store one scale shared by several significands. This proof-only capability
-relates that concrete decomposition to a system's finite block denotation while leaving the
-index, scale, stored significand, lane value, and scaling operation fully generic.
+relates that concrete decomposition to a system's finite block denotation, and it leaves the index,
+scale, stored significand, lane value, and scaling operation fully generic.
 -/
 
 @[expose] public section

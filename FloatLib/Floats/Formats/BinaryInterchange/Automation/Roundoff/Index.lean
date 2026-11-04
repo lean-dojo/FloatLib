@@ -11,19 +11,28 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Norm
 /-!
 # Rule indexing for `roundoff`
 
+Two things live here: the checks that say what is exact data and what is index data, and the
+discrimination tree of registered rules that the analysis retrieves from.
+
 Inputs, the entries of a stored function read at index data, stored container entries, canonical
-literals and casts of index data are exact data; index data computes no numerical value, also
-through the definitions it calls: it compares, selects and stores stored values through FloatLib's
-own order dictionaries, registered reads and the classes they trust, and applies a numerical
-function, a variable or a field or the value of a constant at the arguments its type names, such as
-an entry that a getter reads from a container, fully and to index data whose types hold no number
-only, while a definition it hands a value that can hold one, such as a list of numerical functions,
-is read through its value. Local definitions in types are expanded first. Registered rules are
-classified by their conclusions: numerical bounds and observations, mixed bounds, finiteness
-theorems and order facts. Each is prepared once per call, its container reads normalized like the
-analyzed program, and indexed in a discrimination tree by the complete computation it concerns;
-retrieval ignores instances, but applying a candidate checks its whole statement, selected
-dictionaries included.
+literals and casts of index data are exact data. Index data computes no numerical value, also
+through the definitions it calls:
+
+* It compares, selects and stores stored values through FloatLib's own order dictionaries,
+  registered reads and the classes they trust.
+* It applies a numerical function only fully and only to index data whose types hold no number.
+  The function can be a variable or a field, or the value of a constant at the arguments its type
+  names, such as an entry that a getter reads from a container.
+* A definition it hands a value that can hold a numerical function, such as a list of numerical
+  functions, is read through its value.
+
+In all of this, local definitions in types are expanded first.
+
+Registered rules are classified by their conclusions: numerical bounds and observations, mixed
+bounds, finiteness theorems and order facts. Each is prepared once per call, with its container
+reads normalized like the analyzed program, and indexed in a discrimination tree by the complete
+computation it concerns. Retrieval ignores instances, but applying a candidate checks its whole
+statement, selected dictionaries included.
 -/
 
 public meta section
@@ -41,7 +50,8 @@ def hasObservation (expression : Lean.Expr) : CoreM Bool := do
     heads.contains (term.getAppFn.constName?.getD .anonymous)).isSome
 
 /-- Data fields of an input are inputs too. Class methods and applied function fields still
-need their implementation or a numerical rule; treating them as data would hide computation. -/
+need their implementation or a numerical rule, because treating them as data would hide
+computation. -/
 partial def isInputValue (value : Lean.Expr) : MetaM Bool := do
   match value with
   | .fvar id => return (← id.getDecl).value?.isNone
@@ -168,12 +178,13 @@ partial def carries (cache : CarrierCache) (term : Bool) (name : Name) : MetaM B
     return (false, low.filter (· < depth))
   return (← visit {} 0 name).1
 
-/-- Whether a value of a type built with the constant `name` can hold a function of any kind: as a
-definition its value has a function type in it or uses such a constant, or as an inductive type a
-field of a constructor that is not a proof does, or is a type, as in a record that packs a value
-with its type. A numerical carrier counts as holding none, being a value, while an opaque type or an
-axiom counts as holding one. This only spares the precise search of `holdsNumericalFunction` the
-types, such as `Nat` or a list of them, that hold none. -/
+/-- Whether a value of a type built with the constant `name` can hold a function of any kind. A
+definition can when its value has a function type in it or uses such a constant. An inductive type
+can when a field of a constructor that is not a proof has a function type in it, uses such a
+constant or is a type, as in a record that packs a value with its type. A numerical carrier counts
+as holding none, being a value, while an opaque type or an axiom counts as holding one. This only
+spares the precise search of `holdsNumericalFunction` the types, such as `Nat` or a list of them,
+that hold none. -/
 partial def mayHoldFunction (cache : CarrierCache) (name : Name) : MetaM Bool := do
   -- Whether a value of `type` is a type or a family of types, not a proposition.
   let typeField (type : Lean.Expr) : MetaM Bool :=
@@ -255,24 +266,71 @@ partial def holdsType (type : Lean.Expr) : MetaM Bool := do
       return false
   visit #[] 8 type
 
-/-- Whether the local variable `id` is a type parameter: it has no visible value, is no dictionary
-of a class that a read selecting stored entries trusts (`Read.trusts`), and its type can be or hold
-a type (`holdsType`), as `β : Type` or a record that packs a type does. A value of a type it gives
-can be a numerical value, or a function, once the statement is specialized, so such a type counts
-as numerical (`mentionsCarrier`, `carrierHead`, `holdsNumericalFunction`). A type that a trusted
-dictionary gives, such as the buffer of a tensor's storage, belongs to the storage it trusts. -/
+/-- The first read selecting stored entries (`Read.isCertified`) that trusts the class `name`
+(`Read.trusts`) and whose laws (`Read.laws`) hold no number: no constant of their statements does
+as a term (`carries`). Registration has checked that such laws pin each method of the class
+(`Read.checkLaws`). Each law's verdict is kept in `cache`. -/
+private def storageRead? (name : Name) (cache : CarrierCache) : MetaM (Option Read) := do
+  (← extension).reads.findM? fun read => do
+    unless read.isCertified && read.trusts.contains name do return false
+    read.laws.allM fun law => do
+      if let some known := (← cache.get)[(law, 4)]? then return known
+      let lawful ← (← getConstInfo law).type.getUsedConstants.allM fun constant => do
+        return !(← carries cache true constant)
+      cache.modify (·.insert (law, 4) lawful)
+      return lawful
+
+/-- Whether the dictionary `term` of the class `name`, trusted by the lawful read `read`
+(`storageRead?`), may occur in index data, for the test `closed` of index data: an input, such as a
+local instance, a local definition whose value may, or a constant applied to types, proofs, inputs
+and index data, whose optional decisions of equality (`Read.optionalDecisions`) reduce to
+`none` or `some` with its binders as variables. Anything else, such as a dictionary that a condition
+selects or a constant applied to a computed value, is not. The verdict for a constant is kept in
+`cache`. -/
+private partial def isStorageDictionary (read : Read) (name : Name)
+    (closed : Lean.Expr → MetaM Bool) (cache : CarrierCache) (term : Lean.Expr) : MetaM Bool := do
+  let term := term.consumeMData
+  if let .fvar id := term then
+    if let some value := (← id.getDecl).value? then
+      return ← isStorageDictionary read name closed cache value
+  if ← isInputValue term then return true
+  let .const constant _ := term.getAppFn | return false
+  let indexArguments ← term.getAppArgs.allM fun argument => do
+    if (← isType argument) || (← isProof argument) || (← isInputValue argument) then return true
+    closed argument
+  unless indexArguments do return false
+  if let some known := (← cache.get)[(constant, 5)]? then return known
+  let info ← getConstInfo constant
+  let lawful ← forallTelescope info.type fun binders type => do
+    let type ← whnfR type
+    unless type.isAppOf name do return false
+    let dictionary := mkAppN (mkConst constant (info.levelParams.map Level.param)) binders
+    (← read.optionalDecisions name).allM fun field => do
+      let value ← whnfD
+        (mkAppN (mkConst field type.getAppFn.constLevels!) (type.getAppArgs.push dictionary))
+      return value.isAppOf ``Option.none || value.isAppOf ``Option.some
+  cache.modify (·.insert (constant, 5) lawful)
+  return lawful
+
+/-- Whether the local variable `id` is a type parameter: it has no visible value, and its type can
+be or hold a type (`holdsType`), as `β : Type` or a record that packs a type does. A value of a type
+it gives can be a numerical value, or a function, once the statement is specialized, so such a type
+counts as numerical (`mentionsCarrier`, `carrierHead`, `holdsNumericalFunction`). A dictionary of a
+class that a lawful read trusts (`storageRead?`) is none: a type it gives, such as the buffer of a
+tensor's storage, is used through the dictionary, whose methods its laws pin. -/
 def isTypeParameter (id : FVarId) (cache? : Option CarrierCache := none) : MetaM Bool := do
-  let key := (id.name, 3)
-  if let some cache := cache? then
-    if let some known := (← cache.get)[key]? then return known
   let some declaration := (← getLCtx).find? id | return false
+  if declaration.isLet then return false
+  let cache ← match cache? with
+    | some cache => pure cache
+    | none => IO.mkRef {}
+  if let some known := (← cache.get)[(id.name, 3)]? then return known
   let type ← instantiateMVars declaration.type
-  let trusted ← match ← isClass? type with
-    | some name => pure ((← extension).reads.any fun read =>
-        read.isCertified && read.trusts.contains name)
+  let storage ← match ← isClass? type with
+    | some name => pure (← storageRead? name cache).isSome
     | none => pure false
-  let parameter ← if declaration.isLet || trusted then pure false else holdsType type
-  if let some cache := cache? then cache.modify (·.insert key parameter)
+  let parameter ← if storage then pure false else holdsType type
+  cache.modify (·.insert (id.name, 3) parameter)
   return parameter
 
 /-- Whether `type` mentions a type parameter (`isTypeParameter`). -/
@@ -334,7 +392,7 @@ def mentionsCarrier (type : Lean.Expr) (cache? : Option CarrierCache := none) : 
 def orderClasses : Array Name := #[``LT, ``LE, ``BEq, ``Ord, ``Decidable]
 
 /-- FloatLib's dictionaries of `orderClasses` on its configured executable values. `==` and the
-orders and their decisions compare the decoded values exactly, as IEEE 754 does: a NaN is unordered
+orders and their decisions compare the exact decoded values, as IEEE 754 does: a NaN is unordered
 and unequal to itself, and the two zeros are equal. Its `DecidableEq` decides structural equality of
 the stored word instead: the two zeros differ, and a NaN equals itself. -/
 def orderDictionaries : Array Name := #[``FloatLib.Floats.execFloatBEq,
@@ -359,17 +417,21 @@ def numericalFunction (type : Lean.Expr) (cache : CarrierCache) : MetaM Bool := 
   let type ← expandLocal type
   return (← whnfD type).isForall && (← mentionsCarrier type cache)
 
-/-- Whether a value of `type` can hold a numerical function (`numericalFunction`): `type` is one, or
-at default transparency a type with a type argument or a field that holds one, such as a list, an
-option or a pair of numerical functions, a record with one as a field or a record of such records.
-The fields of an inductive type are read at its parameters and at the indices of `type`: matching a
-constructor's result against `type` specializes its fields, and a type that the match leaves open,
-as when an index is not a constructor or the constructor cannot build `type`, may be a numerical one
-(`mentionsCarrier`), so a function on it counts, and so does a value of a type that a constructor
-leaves open, which can be a function. A function that takes a type, such as `(β : Type) → β → Nat`,
-counts too, since it can be applied at a numerical type, and so does a value of a type parameter
-(`isTypeParameter`), which can be specialized to a numerical function type. A numerical value holds
-none, and neither does a proof; a type nested too deeply to finish counts as holding one. -/
+/-- Whether a value of `type` can hold a numerical function (`numericalFunction`). It can when
+`type` is one, or at default transparency a type with a type argument or a field that holds one,
+such as a list, an option or a pair of numerical functions, a record with one as a field or a
+record of such records.
+
+The fields of an inductive type are read at its parameters and at the indices of `type`, because
+matching a constructor's result against `type` specializes its fields. A type that the match leaves
+open, as when an index is not a constructor or the constructor cannot build `type`, may be a
+numerical one (`mentionsCarrier`), so a function on it counts, and so does a value of a type that a
+constructor leaves open, which can be a function.
+
+A function that takes a type, such as `(β : Type) → β → Nat`, counts too, since it can be applied at
+a numerical type, and so does a value of a type parameter (`isTypeParameter`), which can be
+specialized to a numerical function type. A numerical value holds none, and neither does a proof.
+A type nested too deeply to finish counts as holding one. -/
 partial def holdsNumericalFunction (type : Lean.Expr) (cache : CarrierCache) : MetaM Bool := do
   let rec visit (seen : Array Lean.Expr) (fuel : Nat) (type : Lean.Expr) : MetaM Bool := do
     let type ← expandLocal type
@@ -443,33 +505,40 @@ def estimated (id : FVarId) : MetaM Bool := do
 /-- Whether `argument` is index data, such as a length, start, step, offset or shape that an index
 producer reads, an index at which a stored input is read, the integer of an exact cast or a discrete
 value that a loop's reference keeps. It may read stored values only to compare, select or store
-them, never to compute with them. Proofs, data types, the propositions of `exact` and their
-decisions are index data. A dictionary whose type mentions a numerical carrier (`mentionsCarrier`)
-must be one of the `orderDictionaries`, `execFloatBEq` only over one of the
-`comparisonDictionaries`, a dictionary of a registered read (`Read.dictionaries`) or of one of the
-`storageClasses`, or be built by a constant that holds no number, such as `instDecidableEqBool`, and
-then pass through its arguments. A variable whose type mentions a carrier must be stored, not one
-whose error a hypothesis bounds (`estimated`); a numerical function (`numericalFunction`) takes only
-index data whose types hold no number, and fully, however it is produced: a variable, a projection
-or a field applied to arguments, or the value of any other constant at the arguments its type names,
-such as an entry that a getter reads, applied to the arguments after those; a definition that takes
-a value that can hold one (`holdsNumericalFunction`), such as a list of numerical functions or a
-record with one, is read through its value and checked use by use, failing closed when that does not
-finish, while a function written as `fun` is checked through its body and counts as such a value
-only when its result can hold one; a value of a numerical type (`carrierHead`) may pass only to a
-parameter whose type is a type variable, which can compare, select or store it, or hand it to the
-functions and dictionaries it takes, but not look into it, and no projection may look into it
-either. No constant the argument uses may hold a numerical value as a term (`carries`), so a
-definition it calls is read through its value and an opaque constant or an axiom outside Lean's core
-library is rejected, and each `let`-bound local definition it uses must have index data as its
-value, while a variable without a visible value, such as one that a `have` in a tactic proof
-introduces, is an input as Lean states it, and a value of a type parameter of the statement
-(`isTypeParameter`) counts as numerical, since the statement can be specialized to a numerical type.
-The length of a stored list or array, or of a map of one, is index data. A number
-computed from a decoded or rounded value, such as the numerator of `toRat? (x * x)` or the number of
-indices below `x * x`, is not index data, also when a helper `Nat → Nat` computes it, while
-literals, parameters, fields of inputs, arithmetic on them and the position of the largest of stored
-values are. -/
+them, never to compute with them.
+
+Literals, parameters, fields of inputs, arithmetic on them and the position of the largest of
+stored values are index data. So are proofs, data types, the propositions of `exact` and their
+decisions, and the length of a stored list or array, or of a map of one. A number computed from a
+decoded or rounded value, such as the numerator of `toRat? (x * x)` or the number of indices below
+`x * x`, is not index data, also when a helper `Nat → Nat` computes it. In detail:
+
+* A dictionary whose type mentions a numerical carrier (`mentionsCarrier`) must be one of the
+  `orderDictionaries`, `execFloatBEq` only over one of the `comparisonDictionaries`, a dictionary
+  of a registered read (`Read.dictionaries`), one of a class that a lawful read trusts that is an
+  input or a constant fixing the data no law pins (`Read.laws`), or be built by a constant that
+  holds no number, such as `instDecidableEqBool`, and then pass through its arguments.
+* A variable whose type mentions a carrier must be a stored one, never one whose error a
+  hypothesis bounds (`estimated`).
+* A numerical function (`numericalFunction`) takes only index data whose types hold no number, and
+  fully, however it is produced: a variable, a projection or a field applied to arguments, or the
+  value of any other constant at the arguments its type names, such as an entry that a getter
+  reads, applied to the arguments after those.
+* A definition that takes a value that can hold one (`holdsNumericalFunction`), such as a list of
+  numerical functions or a record with one, is read through its value and checked use by use,
+  failing closed when that does not finish. A function written as `fun` is checked through its body
+  and counts as such a value only when its result can hold one.
+* A value of a numerical type (`carrierHead`) may pass only to a parameter whose type is a type
+  variable, which can compare, select or store it, or hand it to the functions and dictionaries it
+  takes, but not look into it. No projection may look into it either.
+* No constant the argument uses may hold a numerical value as a term (`carries`). So a definition
+  it calls is read through its value, and an opaque constant or an axiom outside Lean's core
+  library is rejected.
+* Each `let`-bound local definition it uses must have index data as its value, while a variable
+  without a visible value, such as one that a `have` in a tactic proof introduces, is an input as
+  Lean states it.
+* A value of a type parameter of the statement (`isTypeParameter`) counts as numerical, since the
+  statement can be specialized to a numerical type. -/
 partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
     (cache? : Option CarrierCache := none) : MetaM Bool := do
   let cache ← match cache? with
@@ -478,7 +547,6 @@ partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
   let closed ← IO.mkRef true
   -- The decisions of the propositions of `exact` met so far.
   let decisions ← IO.mkRef (#[] : Array Lean.Expr)
-  let storage ← storageClasses
   let reads := (← extension).reads
   -- The definitions unfolded to see how they use a value that can hold a numerical function.
   let unfolded ← IO.mkRef (0 : Nat)
@@ -495,7 +563,8 @@ partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
             return true
           return argument.getAppFn.constName?.any comparisonDictionaries.contains
       if reads.any fun read => read.isCertified && read.selectsThrough head then return true
-      return storage.contains name
+      let some read ← storageRead? name cache | return false
+      isStorageDictionary read name (indexClosed · exact cache) cache term
   -- Whether `term`, an argument, can hold a numerical function whose uses are not written out
   -- (`holdsNumericalFunction`), as a variable's are not, whether it is one or a container or a
   -- record of them. A function written as `fun` is checked through its body, so it counts only when
@@ -636,12 +705,18 @@ partial def indexClosed (argument : Lean.Expr) (exact : Array Lean.Expr := #[])
   closed.get
 
 /-- Whether the entries of `input`, a container that `loop` traverses, have the provenance that
-lets an entry be exact data: they are stored inputs or indices. `input` is an input
-(`isInputValue`); a traversal of the loop's coordinates or an index computation (`List.range`,
-`List.range'`, `List.finRange` and their array and vector forms) whose arguments are index data
-(`indexClosed`); or it lists, pairs or numbers the entries of such containers (`Vector.toList`,
-`List.zip`, `List.zipIdx` and their array and vector forms) with any number it takes, such as an
-offset, index data too. The type of an entry says nothing about where it comes from: a pair of
+lets an entry be exact data, that is, whether they are stored inputs or indices. `input` qualifies
+when it is
+
+* an input (`isInputValue`),
+* a traversal of the loop's coordinates or an index computation (`List.range`, `List.range'`,
+  `List.finRange` and their array and vector forms) whose arguments are index data
+  (`indexClosed`),
+* or a container that lists, pairs or numbers the entries of such containers (`Vector.toList`,
+  `List.zip`, `List.zipIdx` and their array and vector forms), with any number it takes, such as
+  an offset, index data too.
+
+The type of an entry says nothing about where it comes from: a pair of
 integers can encode a rounded value, and so can a range whose start is computed from one. -/
 partial def storedEntries (loop : Loop) (input : Lean.Expr) (cache? : Option CarrierCache := none) :
     MetaM Bool := do
@@ -827,7 +902,7 @@ def normalizeRule (session : Session) (rule : Lean.Expr) : MetaM Lean.Expr := do
     let proof ← mkAppM ``Eq.mp #[equality, mkAppN rule arguments]
     mkLambdaFVars arguments proof
 
-/-- Index complete computation patterns. The tree ignores instance arguments; applying a
+/-- Index complete computation patterns. The tree ignores instance arguments, but applying a
 candidate still checks its complete statement, including every selected dictionary. -/
 partial def numericalPattern (expression : Lean.Expr) (root : Bool := true) :
     MetaM Lean.Expr := do
@@ -851,8 +926,8 @@ partial def numericalPattern (expression : Lean.Expr) (root : Bool := true) :
   return mkAppN function prepared
 
 /-- `value` as the pair `(value.1, ())` when its type is a pair with a unit second component, such
-as the coordinate of a vector, and a pair `(i, u)` of that type as `(i, ())`; `none` when `value`
-has another type or is such a pair `(i, ())` already. -/
+as the coordinate of a vector, and a pair `(i, u)` of that type as `(i, ())`. It is `none` when
+`value` has another type or is such a pair `(i, ())` already. -/
 def unitPair? (value : Lean.Expr) : MetaM (Option Lean.Expr) := do
   let type ← whnf (← inferType value)
   unless type.isAppOfArity ``Prod 2 do return none
@@ -907,9 +982,9 @@ def rulesFor (tree : DiscrTree Rule) (term key : Lean.Expr) : MetaM (Array Rule)
   let written ← tree.getMatch term
   return found ++ written.filter fun rule => !found.any (·.name == rule.name)
 
-/-- A scalar observation has one explicit data input. Implicit data must be parameters of
-that input's type, rather than captured container values or additional scalar operands.
-Instance arguments remain intact and are checked when a numerical theorem is applied. -/
+/-- A scalar observation has one explicit data input. Its implicit data must be parameters of
+that input's type, and cannot be captured container values or additional scalar operands.
+Instance arguments stay intact and are checked when a numerical theorem is applied. -/
 def isScalarObservation (containerFree : IO.Ref NameSet) (expression : Lean.Expr) :
     MetaM Bool := do
   let head := expression.getAppFn.constName?.getD .anonymous
@@ -980,8 +1055,8 @@ def referenceObservesOperands (containerFree : IO.Ref NameSet) (actual reference
     return !matched
   return ← found.get
 
-/-- Dispatch proof search by rigid proposition heads. Unknown and conjunctive conclusions
-remain candidates; applying the proof still checks all arguments and selected instances. -/
+/-- Dispatch proof search by rigid proposition heads. Unknown and conjunctive conclusions stay
+candidates, and applying the proof still checks all arguments and selected instances. -/
 def conditionHead (type : Expr) (classifiers : Bool := false) : Option Name :=
   let conclusion := type.getForallBody.consumeMData
   if conclusion.isAppOf ``And || conclusion.isAppOf ``Iff || conclusion.isConstOf ``False then
@@ -992,8 +1067,16 @@ def conditionHead (type : Expr) (classifiers : Bool := false) : Option Name :=
     else none
   else conclusion.getAppFn.constName?
 
+/-- The left side of an equality such as `isFinite x = true`, or `none` for another term. -/
+private def equalityLeft? (relation : Lean.Expr) : Option Lean.Expr :=
+  relation.eq?.map (·.2.1)
+
+/-- The value a mixed bound concerns, or `none` for another term. -/
+private def mixedValue? (bound : Lean.Expr) : Option Lean.Expr :=
+  if bound.isAppOfArity ``MixedError 4 then some bound.getAppArgs[0]! else none
+
 /-- Index the registered numerical rules by their computation patterns. Type arguments are
-wildcards even when a format is reconstructed from its widths; a retrieved theorem must still
+wildcards even when a format is reconstructed from its widths, and a retrieved theorem must still
 unify with the original, fully typed computation. -/
 def Session.index (session : Session) (mixed : Bool := false) : TacticM Session := do
   let environment ← getEnv
@@ -1007,12 +1090,15 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
   -- Index a mixed, exact or finiteness rule by the computation `observed` reads from its
   -- conclusion: the left side of an equality, or the value a bound concerns.
   let insert (tree : DiscrTree Rule) (name : Name) (exact : Bool) (order : Nat)
-      (observed : Lean.Expr → Lean.Expr) : MetaM (DiscrTree Rule) := withNewMCtxDepth do
+      (observed : Lean.Expr → Option Lean.Expr) : MetaM (DiscrTree Rule) := withNewMCtxDepth do
     let rule ← mkConstWithFreshMVarLevels name
     let prepared ← abstractMVars rule
     let (_, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
+    let some computation := observed conclusion | do
+      trace[roundoff] "rule {name} not indexed: its conclusion is {conclusion}"
+      return tree
     let pattern ← withReducible <| withCanUnfoldPred (programCanUnfold session.boundaries false)
-      (numericalPattern (observed conclusion))
+      (numericalPattern computation)
     withCanUnfoldPred (fun _ _ => pure false)
       (tree.insertIfSpecific pattern { name, exact, prepared, order })
   -- Order facts read containers like the analyzed program, so their reads are normalized once.
@@ -1041,21 +1127,26 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
         some <$> mkLambdaFVars arguments
           (← mkAppM ``Eq.mp #[← result.getProof' conclusion, mkAppN fact arguments])
       traversed.mapM abstractMVars
-  -- Index a prepared rule by the computation `observed` reads from its conclusion.
+  -- Index a prepared rule by the computation `observed` reads from its conclusion. A rule whose
+  -- normalized conclusion no longer has that form, such as a finiteness that normalization
+  -- decided, is not indexed.
   let insertPrepared (tree : DiscrTree Rule) (name : Name) (prepared : AbstractMVarsResult)
-      (order : Nat) (observed : Lean.Expr → Lean.Expr) : MetaM (DiscrTree Rule) :=
+      (order : Nat) (observed : Lean.Expr → Option Lean.Expr) : MetaM (DiscrTree Rule) :=
     withNewMCtxDepth do
       let (_, _, rule) ← openAbstractMVarsResult prepared
       let (_, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
+      let some computation := observed conclusion | do
+        trace[roundoff] "a conclusion of rule {name} is not indexed: normalized, it is {conclusion}"
+        return tree
       let pattern ← withReducible <|
         withCanUnfoldPred (programCanUnfold session.boundaries false)
-          (numericalPattern (observed conclusion))
+          (numericalPattern computation)
       withCanUnfoldPred (fun _ _ => pure false)
         (tree.insertIfSpecific pattern { name, exact := false, prepared, order })
   if mixed then
     for h : index in [:exactOperations.size] do
       if environment.contains exactOperations[index] then
-        mixedEntries ← insert mixedEntries exactOperations[index] true index (·.appFn!.appArg!)
+        mixedEntries ← insert mixedEntries exactOperations[index] true index equalityLeft?
   let rules := roundoffRules.getState environment
   for h : index in [:rules.size] do
     let name := rules[index]
@@ -1073,7 +1164,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
               pure none
           if let some prepared := prepared? then
             mixedEntries ← insertPrepared mixedEntries name prepared (exactOperations.size + index)
-              (·.getAppArgs[0]!)
+              mixedValue?
         continue
     | .finiteness =>
         if mixed then
@@ -1083,8 +1174,8 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
               trace[roundoff] "finiteness rule {name} not indexed: {error.toMessageData}"
               pure none
             if let some prepared := prepared? then
-              finiteness ← insertPrepared finiteness name prepared index (·.appFn!.appArg!)
-          else finiteness ← insert finiteness name false index (·.appFn!.appArg!)
+              finiteness ← insertPrepared finiteness name prepared index equalityLeft?
+          else finiteness ← insert finiteness name false index equalityLeft?
         continue
     | .order =>
         if mixed then
@@ -1110,9 +1201,9 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
             mkLambdaFVars arguments (← mkAppM ``And.right #[mkAppN rule arguments])
           abstractMVars (← normalizeRule session projected)
         mixedEntries ← insertPrepared mixedEntries name bound (exactOperations.size + index)
-          (·.getAppArgs[0]!)
+          mixedValue?
         let finite ← normalizeFact name ``And.left
-        finiteness ← insertPrepared finiteness name finite index (·.appFn!.appArg!)
+        finiteness ← insertPrepared finiteness name finite index equalityLeft?
       continue
     let entry? ← withNewMCtxDepth do
       -- Normalization runs once, in the main goal's context, so a hypothesis that only a branch
@@ -1191,7 +1282,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
     bounds := entries, observations, helpers, mixed, mixedBounds := mixedEntries, finiteness,
     refutations, orders, orderShapes, base := .ofArray (← getLCtx).getFVarIds,
     dischargeSimp := some (simplification.ctx, simplification.simprocs) }
-/-- Whether a helper lemma can apply to the target. Its index decides most targets; the others
+/-- Whether a helper lemma can apply to the target. Its index decides most targets, and the others
 are compared by unification that keeps the helper's heads and selected class methods opaque. -/
 def Helper.compatible (helper : Helper) (target : Expr) : MetaM Bool :=
   withoutModifyingState <| withNewMCtxDepth do
@@ -1251,7 +1342,7 @@ def classified? (type : Lean.Expr) : Option Lean.Expr := do
   return if value.isAppOf ``ExecFloat.Binary.toModel then value.appArg! else value
 
 /-- Whether `fact` and `target` classify values computed by different operations, so that `fact`
-cannot supply `target`; comparing them by unification would evaluate floating-point code. -/
+cannot supply `target`. Comparing them by unification would evaluate floating-point code. -/
 def otherClassified (fact target : Lean.Expr) : Bool :=
   match classified? fact, classified? target with
   | some left, some right => left.getAppFn != right.getAppFn
@@ -1273,7 +1364,7 @@ def foldDecodedFinite (proposition : Lean.Expr) : MetaM Lean.Expr :=
 
 
 /-- Compare predicate heads without evaluating floating-point classifiers. Ordinary aliases may
-expose those heads; dependent propositions and unresolved control flow remain conservative. -/
+expose those heads, while dependent propositions and unresolved control flow stay conservative. -/
 def assumptionHead (type : Expr) : MetaM (Option Name) := do
   if type.isForall then return none
   let conclusion := type.consumeMData

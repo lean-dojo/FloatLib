@@ -11,16 +11,16 @@ public import FloatLib.Numerics.Operation.Semantics
 /-!
 # Status-bearing numerical operation contracts
 
-Status-bearing operations differ in their concrete result structures: IEEE arithmetic returns
+Operations that carry a status differ in their concrete result structures. IEEE arithmetic returns
 exception flags, checked integer operations may report overflow, and quantizers may report
-saturation. These contracts express correctness in terms of result and status projections,
-without imposing a common runtime wrapper.
+saturation, so these contracts state correctness through result and status projections and impose no
+common runtime wrapper.
 
-The complete variants `RefinesStatus1`-`RefinesStatus3` constrain every input and every outcome,
-exceptional ones included. The finite variants `RefinesStatusFinite1`-`RefinesStatusFinite3` take
-finite inputs and also assert that the result code represents a finite value, so an operation
-that overflows to infinity or returns NaN on some finite input, flag or not, cannot satisfy them;
-its exceptional outcomes need a complete variant.
+Complete variants `RefinesStatus1`-`RefinesStatus3` constrain every input and every outcome,
+exceptional ones included. Finite variants `RefinesStatusFinite1`-`RefinesStatusFinite3` take finite
+inputs and also assert that the result code represents a finite value. So an operation that
+overflows to infinity or returns NaN on some finite input, flag or not, can't satisfy them, and its
+exceptional outcomes need a complete variant.
 -/
 
 @[expose] public section

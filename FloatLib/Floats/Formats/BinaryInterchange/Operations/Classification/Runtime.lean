@@ -11,13 +11,13 @@ public import FloatLib.Numerics.IEEEClass
 /-!
 # Binary classification and canonicality queries
 
-The non-signaling queries of IEEE 754-2019 §5.7.2 inspect the complete descriptor.
-They also apply to custom biases and finite encodings: an all-ones exponent can
-be normal, and the FNUZ negative-zero word is a quiet NaN.
+These are the non-signaling queries of IEEE 754-2019 §5.7.2, and because each one inspects the
+complete descriptor they work for custom biases and finite encodings too, where an all-ones
+exponent can be normal and the FNUZ negative-zero word is a quiet NaN.
 
-Every word in these implicit-leading-bit layouts is a canonical interchange
-encoding. This includes every NaN payload; canonicality does not mean choosing
-the library's preferred NaN or repacking through Lean's logical model.
+In these implicit-leading-bit layouts every word is a canonical interchange encoding, whatever its
+NaN payload. Canonical here does not mean the library's preferred NaN, and it does not mean
+repacking through Lean's logical model.
 -/
 
 @[expose] public section

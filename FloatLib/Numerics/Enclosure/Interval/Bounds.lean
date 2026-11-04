@@ -12,11 +12,9 @@ public import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Ordered-field interval corner bounds
 
-Multiplication and division away from zero are enclosed by their four endpoint calculations.
-The proofs apply to any ordered field, independently of endpoint representation or rounding.
-
-The corner rule is equation (5.4) in S. M. Rump,
-[Verification methods: Rigorous results using floating-point
+Multiplication, and division away from zero, are enclosed by their four endpoint calculations. We
+prove this for any ordered field, whatever the endpoint representation or rounding. The corner rule
+is equation (5.4) in S. M. Rump, [Verification methods: Rigorous results using floating-point
 arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §5.1.
 -/
 

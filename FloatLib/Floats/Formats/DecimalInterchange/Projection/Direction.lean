@@ -10,12 +10,12 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Semantics
 /-!
 # Directed projection bounds
 
-In the absence of overflow, the returned datum is finite and bounds the exact input on the side
-prescribed by the rounding direction. Every finite result does so, overflow included: rounding
-toward positive saturates a negative overflow to the most negative finite datum, which lies above
-the input, and rounding toward negative saturates a positive overflow to the greatest one. Rounding
-toward zero cannot increase its magnitude, with or without overflow. The bounds include subnormal
-results and either sign of an exact zero.
+Without overflow, the returned datum is finite and bounds the exact input from the side the
+rounding direction prescribes. Every finite result does that, even on overflow. Rounding toward
+positive saturates a negative overflow to the most negative finite datum, which lies above the
+input, and rounding toward negative saturates a positive overflow to the greatest one. Rounding
+toward zero can't increase the magnitude, with or without overflow. The bounds cover subnormal
+results and both signs of an exact zero.
 -/
 
 @[expose] public section

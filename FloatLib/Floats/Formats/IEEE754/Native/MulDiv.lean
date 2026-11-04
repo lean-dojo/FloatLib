@@ -20,20 +20,19 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Roun
 /-!
 # Native multiplication and division
 
-These theorems relate FloatLib's multiplication and division to the logical floating-point model
-shipped with Lean, on the complete packed word. The operands are finite, signed zeros included;
-the result is unrestricted, so subnormal results, overflow to infinity, `x / 0` and `0 / 0` are
-covered.
+FloatLib's multiplication and division agree with the logical floating-point model that ships with
+Lean, on the complete packed word. The operands are finite, signed zeros included, and the result
+is unrestricted, so subnormal results, overflow to infinity, `x / 0` and `0 / 0` are all covered.
 
-A product rounds one exact dyadic in both models. A quotient is compared through its value: both
-results are finite exactly when the exact quotient stays below the overflow threshold, and then
-they are the nearest-even rounding of the same real with the same sign; otherwise both are the
-infinity of the quotient's sign. These model equalities do not verify the machine instructions
-used by compiled native code.
+Each operation needs its own argument. A product rounds one exact dyadic in both models. A
+quotient is compared through its value: both results are finite if and only if the exact quotient
+stays below the overflow threshold, and then they're the nearest-even rounding of the same real,
+with the same sign. Otherwise both are the infinity of the quotient's sign. These model
+equalities don't verify the machine instructions that compiled native code runs.
 
-The configured operations are the first-order binary32 and binary64 instances of
-`Configured.NativeDispatch`, the ones a client that imports `Configured` elaborates, so `rw` and
-`simp` apply the bridges to client terms in either direction.
+As in `Native.AddSub`, the configured operations are the first-order binary32 and binary64
+instances of `Configured.NativeDispatch`, the ones a client that imports `Configured` elaborates,
+so `rw` and `simp` apply the bridges to client terms in either direction.
 -/
 
 @[expose] public section

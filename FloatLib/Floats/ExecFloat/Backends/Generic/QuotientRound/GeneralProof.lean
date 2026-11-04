@@ -13,10 +13,11 @@ public import Mathlib.Tactic.Linarith
 /-!
 # Exactness of single-quotient rounding
 
-If `num = den * q + r`, with `r < den`, dividing `2 * num` yields `2 * q` below the
-midpoint and `2 * q + 1` at or above it. Its low two bits and the equality test
-`den * quotient = 2 * num` therefore carry all the information ties to even needs. The low-word
-product can only reject that equality, and a low-word match is checked in full.
+If `num = den * q + r`, with `r < den`, dividing `2 * num` gives `2 * q` below the midpoint and
+`2 * q + 1` at or above it. So its low two bits and the equality test `den * quotient = 2 * num`
+carry everything that ties to even needs. For 7 / 2, say, dividing 14 by 2 gives the odd quotient 7,
+so the value is at or above the midpoint between 3 and 4, and 2 times 7 equals 14, so it is the tie
+itself. The low-word product can only reject that equality, and a low-word match is checked in full.
 
 Nearest-away rounding reuses the nearest-even and directed branches, and its supplied-exponent tie
 test is the reference `rationalIsGridTieScaled`.

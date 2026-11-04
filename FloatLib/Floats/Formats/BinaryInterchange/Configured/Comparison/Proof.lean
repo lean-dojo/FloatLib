@@ -55,14 +55,14 @@ theorem compareSignaling_value_of_toEReal? (predicate : Numerics.IEEEComparison.
     (compareSignaling predicate x y).value = predicate.accepts (some (compare a b)) :=
   Model.compareSignaling_value_of_toEReal? predicate hx hy
 
-/-- Quiet configured comparison raises invalid precisely for signaling NaNs. -/
+/-- Quiet configured comparison raises invalid if and only if an operand is a signaling NaN. -/
 theorem compareQuiet_invalid_iff (predicate : Numerics.IEEEComparison.Predicate)
     (x y : Value) :
     (compareQuiet predicate x y).status.invalid = true ↔
       Model.isSNaN (toModel x) = true ∨ Model.isSNaN (toModel y) = true :=
   Model.compareQuiet_invalid_iff predicate _ _
 
-/-- Signaling configured comparison raises invalid precisely for NaNs. -/
+/-- Signaling configured comparison raises invalid if and only if an operand is a NaN. -/
 theorem compareSignaling_invalid_iff (predicate : Numerics.IEEEComparison.Predicate)
     (x y : Value) :
     (compareSignaling predicate x y).status.invalid = true ↔

@@ -14,9 +14,11 @@ public import FloatLib.Floats.Formats.Posit.Configured.Comparison
 /-!
 # Correctness of the configured posit value interface
 
-The public constructors form a lossless equivalence with the exact-width model and every in-range
-word. Exact decoding and classification preserve the standardized zero and NaR observations, and
-the common Boolean comparison API agrees with the configured signed-word order.
+Three groups of facts are proved here. The public constructors give a lossless equivalence with
+the exact-width model and with every in-range word (`toModel_ofModel`, `ofNatBits_toNatBits`).
+Exact decoding and classification keep the standardized zero and NaR observations. And the common
+Boolean comparison API agrees with the configured signed-word order, from
+`compareEqual_eq_true_iff` through `compareGreaterEqual_eq_true_iff`.
 -/
 
 @[expose] public section
@@ -134,13 +136,13 @@ instance or depend on its implementation name.
       false
   simp
 
-/-- The public optional rational view is absent precisely for the unique NaR value. -/
+/-- The public optional rational view is `none` for the unique NaR value and nothing else. -/
 @[simp, grind =] theorem toRat?_eq_none_iff
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     toRat? value = none ↔ isNaR value = true :=
   Model.toRat?_eq_none_iff (toModel value)
 
-/-- Boolean posit equality agrees exactly with equality of configured values. -/
+/-- Boolean posit equality returns `true` if and only if the configured values are equal. -/
 @[simp, grind =] theorem compareEqual_eq_true_iff
     (left right : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     FloatLib.Floats.ExecFloat.compareEqual left right = true ↔ left = right := by
@@ -152,7 +154,7 @@ instance or depend on its implementation name.
     cases equality
     rfl
 
-/-- Boolean posit inequality agrees exactly with inequality of configured values. -/
+/-- Boolean posit inequality returns `true` if and only if the configured values differ. -/
 @[simp, grind =] theorem compareNotEqual_eq_true_iff
     (left right : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     FloatLib.Floats.ExecFloat.compareNotEqual left right = true ↔ left ≠ right := by

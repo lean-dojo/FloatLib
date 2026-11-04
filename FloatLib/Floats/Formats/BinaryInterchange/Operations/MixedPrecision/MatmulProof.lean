@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecisio
 /-!
 # Shape and entry refinement for mixed-precision matrix multiplication
 
-Successful `matmul` execution produces exactly one row per left input row and one entry per right
-input column. Every output entry is the corresponding executable `dotSequential`. For IEEE
-encodings with finite inputs, intermediate values, and results,
-`dotSequential_abs_error_le_budget` supplies its numerical error bound.
+When `matmul` succeeds, it produces one row per left input row and one entry per right input
+column, and each entry is the corresponding executable `dotSequential`. For IEEE encodings with
+finite inputs, intermediate values and results, `dotSequential_abs_error_le_budget` then bounds
+the numerical error of every entry.
 -/
 
 @[expose] public section

@@ -17,16 +17,15 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Error.Relative
 /-!
 # Error bounds for executable binary floats
 
-These bounds relate operations on `Model fmt` to exact real arithmetic. The function `toReal`
-interprets finite values in `ℝ`, and the format parameter selects the corresponding Flocq-style
-grid. This real-valued grid has no upper exponent bound, so the executable operation theorems
-apply when the result is finite.
+These bounds relate operations on `Model fmt` to exact real arithmetic. `toReal` interprets finite
+values in `ℝ`, and the format parameter picks the matching Flocq-style grid. That real-valued grid
+has no upper exponent bound, so the executable operation theorems apply when the result is finite.
 
-Infinities and NaNs have no real value, so the operation theorems require a finite result. For
-addition, subtraction, multiplication, fused multiply-add and casts into an IEEE destination a
-finite result forces finite operands. Division keeps a finite divisor, because a finite dividend
-over an infinity gives a signed zero, and square root keeps its finite nonnegative domain. Signed
-zeros both have real value zero.
+Infinities and NaNs have no real value, which is why each operation theorem asks for a finite
+result. For addition, subtraction, multiplication, fused multiply-add and casts into an IEEE
+destination, a finite result forces finite operands. Division keeps a finite divisor, because a
+finite dividend over an infinity gives a signed zero, and square root keeps its finite nonnegative
+domain. Both signed zeros have real value zero.
 -/
 
 @[expose] public section
@@ -113,7 +112,7 @@ theorem relativeError_roundAt_le_of_normal (fmt : FloatFormat) (x : ℝ)
 
 /--
 One IEEE addition with a finite result, which forces finite operands, is within half an ULP of the
-exact sum; the bound follows the subnormal grid near zero.
+exact sum. Near zero the bound follows the subnormal grid.
 -/
 theorem abs_toReal_add_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
@@ -125,7 +124,7 @@ theorem abs_toReal_add_sub_le {fmt : FloatFormat} (x y : Model fmt)
 
 /--
 One IEEE subtraction with a finite result, which forces finite operands, is within half an ULP of
-the exact difference; the bound follows the subnormal grid near zero.
+the exact difference. Near zero the bound follows the subnormal grid.
 -/
 theorem abs_toReal_sub_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
@@ -137,7 +136,7 @@ theorem abs_toReal_sub_sub_le {fmt : FloatFormat} (x y : Model fmt)
 
 /--
 One IEEE multiplication with a finite result, which forces finite operands, is within half an ULP
-of the exact product; the bound follows the subnormal grid near zero.
+of the exact product. Near zero the bound follows the subnormal grid.
 -/
 theorem abs_toReal_mul_sub_le {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
@@ -301,9 +300,9 @@ theorem cast_exact_mem_Icc {src dst : FloatFormat} (x : Model src)
 
 /--
 The residual of finite nearest-even addition lies on the precision and gradual-underflow grid of
-`fmt`. This is representability on the real grid, which has no upper exponent bound; the theorem
-does not construct a finite `Model fmt` with that value. A finite sum forces finite operands, so
-`hout` is the only finiteness assumption.
+`fmt`. This is representability on the real grid, which has no upper exponent bound, so the
+theorem does not construct a finite `Model fmt` with that value. A finite sum forces finite
+operands, so `hout` is the only finiteness assumption.
 -/
 theorem genericFormat_toReal_add_sub {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)

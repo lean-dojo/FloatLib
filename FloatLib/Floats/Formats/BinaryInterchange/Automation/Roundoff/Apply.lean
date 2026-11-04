@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Disc
 # Applying rules in `roundoff`
 
 A registered rule applies when its whole statement unifies with the computation, selected
-dictionaries included. Its input-error premises are supplied by the analysis of the operands and
-its selection premises are proved, or the rule is rejected; the others become conditions. A
-correctly rounded call contributes the half ulp of its contract, an elementary function without
+dictionaries included. Its input-error premises must be supplied by the analysis of the operands
+and its selection premises proved, or the rule is rejected. Any other premise becomes a condition.
+A correctly rounded call contributes the half ulp of its contract, an elementary function without
 one its rational enclosure, and a hypothesis stated like a generated theorem is used as a
 registered rule. The analysis of a branch keeps its guard, and the step of a loop is analyzed for
 a symbolic accumulator. Local roundings compose with the propagation of input errors, and budgets
@@ -27,6 +27,17 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Roundoff
 
 open Lean Meta Elab Tactic Qq
 open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+
+/-- Whether the input premise `type`, an error bound at every value of a variable, bounds `actual`
+itself at some value, so that supplying it would analyze `actual` again. -/
+private def boundsActual (type : Lean.Expr) (actual : Lean.Expr) : TacticM Bool := do
+  let .forallE _ domain body _ := type | return false
+  if ← isProp domain then return false
+  let matched? ← attempt? 1000 <| withNewMCtxDepth do
+    let point ← mkFreshExprMVar domain
+    let some (value, _, _) ← boundConclusion? (body.instantiate1 point) | return none
+    return if ← withReducible (isDefEq (← instantiateMVars value) actual) then some () else none
+  return matched?.isSome
 
 /-- Apply the bound built by `prepare` with its original instances. Input-error premises determine
 the reference before ordinary domain conditions are discharged or retained as obligations.
@@ -87,6 +98,11 @@ def applyRule? (actual : Q(ℝ)) (label : Name) (prepare : MetaM Lean.Expr) (exa
       let argument ← instantiateMVars arguments[index]!
       let type ← instantiateMVars (← inferType argument)
       if type.isForall then
+        -- A bound at every coordinate of the container that `actual` reads is rejected like an
+        -- input equal to `actual`: supplying it would analyze the same read again.
+        if ← boundsActual type actual then
+          allInputsAnalyzed := false
+          continue
         -- An error bound at every coordinate of a container input, from its analysis at a fresh one.
         let resolved? ← transaction? do
           let (supplied?, next) ← ((forallInput? type deriveInput).run session).run state
@@ -370,8 +386,8 @@ an ulp, or in mixed analysis the unit roundoff and the underflow allowance, toge
 call's finiteness under the same premises. An exact case of the contract whose premises `prove`
 establishes, such as a zero input, comes first and gives the result without error. Mixed
 analysis proves the domain and range premises with `prove` where it can, and the domain
-`-1 < x` of `log1p` from the enclosure of `1 + x` that `deriveInput` gives; the others are
-discharged or kept open. With `computedCalls` the call is instead its own exact reference, with
+`-1 < x` of `log1p` from the enclosure of `1 + x` that `deriveInput` gives. The others are
+discharged or kept open. With `computedCalls` the call is its own exact reference instead, with
 its finiteness when `prove` shows it. -/
 def primitiveBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimate)
     (prove : MVarId → AnalyzeM Bool) : AnalyzeM (Option Estimate) := do
@@ -457,7 +473,8 @@ def elementaryEnclosures : Array (Name × Array Name) := #[
       `FloatLib.Floats.Formats.BinaryInterchange.Model.tanh])]
 
 /-- Compare an actual primitive result with its certified rational enclosure. The shared
-composition pass propagates input error afterward; endpoints stay symbolic during construction. -/
+composition pass propagates input error afterward, and endpoints stay symbolic during
+construction. -/
 def intervalBound? (actual : Q(ℝ)) : AnalyzeM (Option Estimate) := do
   let configured := actual.isAppOf ``ExecFloat.Binary.toReal
   unless configured || actual.isAppOf ``Model.toReal do return none
@@ -536,8 +553,8 @@ def isGeneratedForm (declaration : LocalDecl) (value : Lean.Expr) : MetaM Bool :
     return producer environment reads candidate == producer environment reads value
 
 /-- How the hypothesis `declaration` bounds a value (`Given`), in the analysis mode of `session`.
-Mixed hypotheses are read only by mixed analysis, absolute ones by both; for mixed analysis, a
-bound between two decoded values is a range fact, not an input error. -/
+Mixed hypotheses are read only by mixed analysis, absolute ones by both. For mixed analysis, a
+bound between two decoded values is a range fact and does not count as an input error. -/
 def Session.readGiven (session : Session) (declaration : LocalDecl) : MetaM Given := do
   unless ← isProp declaration.type do return { proposition := false }
   let type ← instantiateMVars declaration.type
@@ -590,11 +607,11 @@ def Session.hypothesisBounds (session : Session) : MetaM (Array (LocalDecl × Gi
 
 /-- Reuse scalar or pointwise bounds, discharging their conditional premises in the current
 branch or leaving the required evidence visible to the caller. Mixed analysis reads a hypothesis
-stated like a generated theorem through its bound; `proveFinite` uses its finiteness. Also
-whether the bound is final: a supplied input error, or a bound that propagated input errors, is
-used as it is; a hypothesis stated like a generated theorem is a contract whose reference is its
-model at the computed argument, which `Analyze.build` then propagates through the model when it
-can. -/
+stated like a generated theorem through its bound, and `proveFinite` uses its finiteness. The
+result also says whether the bound is final. A supplied input error, or a bound that propagated
+input errors, is used as it is. A hypothesis stated like a generated theorem is a contract whose
+reference is its model at the computed argument, which `Analyze.build` then propagates through the
+model when it can. -/
 def givenBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimate)
     (prove : MVarId → AnalyzeM Bool) : AnalyzeM (Option (Estimate × Bool)) := do
   let session ← read
@@ -612,7 +629,7 @@ def givenBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimate)
       return some (bound, propagatesInputs || !generated)
   return none
 
-/-- Share repeated premises and bind the remaining ones as an explicit condition.
+/-- Share repeated premises and bind the remaining ones as a stated condition.
 Branches, loop invariants and generated statements use the same condition handling. The outcomes
 of comparisons without metavariables are kept in `comparisons` for later calls. -/
 def withConditions {α : Type} (candidates : Array MVarId)
@@ -711,7 +728,7 @@ def inBranch (condition : Q(Prop)) (action : Lean.Expr → AnalyzeM Estimate) :
   return estimate
 
 /-- Analyze a scalar step once under an incoming accumulator bound. Its new premises become
-one condition on visited states; no local variables or cached proofs escape the loop. -/
+one condition on visited states, and no local variables or cached proofs escape the loop. -/
 def deriveStep (observe step inputType stateType : Lean.Expr)
     (analyzeBody : Q(ℝ) → AnalyzeM Estimate) : AnalyzeM StepEstimate := do
   let before ← get
@@ -749,7 +766,7 @@ def deriveStep (observe step inputType stateType : Lean.Expr)
   set before
   return result
 
-/-- Metadata on an application spine carries elaboration information, not computation.
+/-- Metadata on an application spine carries elaboration information and no computation.
 Keep every argument, including the selected dictionaries, while exposing the actual head. -/
 def stripHeadMetadata : Lean.Expr → Lean.Expr
   | .mdata _ expression => stripHeadMetadata expression
@@ -827,8 +844,8 @@ def refutedGuard? (condition : Lean.Expr) : AnalyzeM (Option Lean.Expr) := do
   return none
 
 /-- Apply one existing container-read equality after ordinary coordinate simplification stalls.
-Only this fully typed observation uses default transparency and local-let expansion; the selected
-storage, original producer, and scalar callback remain in its checked proof. -/
+Only this fully typed observation uses default transparency and local-let expansion. The selected
+storage, original producer, and scalar callback stay in its checked proof. -/
 def readObservation? (name : Name) (expression : Expr) :
     MetaM (Option (Expr × Expr)) := do
   let expression ← instantiateMVars expression
@@ -942,8 +959,8 @@ def compose (step input : Estimate) : MetaM Estimate := do
   | _, _ => throwError "roundoff: cannot compose an absolute and a mixed bound"
 
 /-- Tidy the reference and budgets of a mixed estimate with identities of zero and one. Terms
-without metavariables share the session's cache of tidied terms; an assignment, or its rollback,
-could change the meaning of another term. -/
+without metavariables share the session's cache of tidied terms, since an assignment, or its
+rollback, could change the meaning of another term. -/
 def Session.simplify (session : Session) (estimate : Estimate) : MetaM Estimate := do
   let .mixed relative absolute := estimate.bound | return estimate
   let context ← Simp.mkContext { implicitDefEqProofs := false } #[session.budget]
@@ -967,8 +984,8 @@ def Session.simplify (session : Session) (estimate : Estimate) : MetaM Estimate 
       (mkApp2 observed relative'.expr absolute'.expr) equality estimate.proof }
 
 /-- Restate an absolute budget that the identities of zero and one reduce to zero as the numeral
-zero. Absolute budgets are otherwise kept as derived; this makes a branch of exact cases, such as
-a backward slice read inside or outside its range, exact. -/
+zero. Absolute budgets are otherwise kept as derived. The restatement makes a branch of exact
+cases, such as a backward slice read inside or outside its range, exact. -/
 def Session.zeroBudget (session : Session) (estimate : Estimate) : MetaM Estimate := do
   let .absolute error := estimate.bound | return estimate
   let context ← Simp.mkContext { implicitDefEqProofs := false } #[session.budget]

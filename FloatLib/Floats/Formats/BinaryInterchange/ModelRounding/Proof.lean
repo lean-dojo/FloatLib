@@ -13,15 +13,15 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
 /-!
 # Correctness of normalization through Lean's logical float model
 
-The executable rounding primitives in `ModelRounding.Runtime` agree with Lean 4's
-width-parameterized `Float.Model.UnpackedFloat.round`. The normalization theorem is generic in
-the model format. Lemmas using `FloatFormat.toModel` use the conventional IEEE bias at the
-descriptor's field widths.
-
-The model represents discarded information with a round bit and a sticky bit. `Model` uses an
+We prove that the executable rounding primitives in `ModelRounding.Runtime` agree with Lean 4's
+width-parameterized `Float.Model.UnpackedFloat.round`. They keep different records of what
+rounding throws away. Lean's model uses a round bit and a sticky bit, while `Model` does an
 integer shift followed by nearest-even rounding. The main result,
-`round_exact_eq_finishRoundedMantissa`, proves that these two representations compute the same
-rounded mantissa and target exponent.
+`round_exact_eq_finishRoundedMantissa`, shows that both compute the same rounded mantissa and
+target exponent.
+
+The normalization theorem is generic in the model format. Lemmas that go through
+`FloatFormat.toModel` use the conventional IEEE bias at the descriptor's field widths.
 
 ## References
 
@@ -482,7 +482,7 @@ theorem shiftToTargetExponent_at_minSubnormal
   rw [targetExponent_at_minSubnormal fmt mantissa hfit]
   simp [HShiftRight.hShiftRight, Nat.repeat]
 
-/-- A mantissa between `2^p` and `2^(p+1)` has leading bit exactly at position `p`. -/
+/-- A mantissa between `2^p` and `2^(p+1)` has its leading bit at position `p`. -/
 theorem log2_eq_fracWidth_of_normalized
     (fmt : FloatFormat) (mantissa : Nat)
     (hlow : pow2 fmt.fracWidth ≤ mantissa)
@@ -525,7 +525,7 @@ theorem shiftToTargetExponent_normalized
   simp only [hshift]
   simp [HShiftRight.hShiftRight, Nat.repeat]
 
-/-- The only extra bit produced by nearest-even normalization is shifted away exactly. -/
+/-- Shifting away the one extra bit that nearest-even normalization can produce keeps it exact. -/
 theorem shiftToTargetExponent_normalized_carry
     (fmt : FloatFormat) (k : Int)
     (hk : FloatFormat.ieeeMinNormalExponent fmt ≤ k) :
@@ -565,7 +565,7 @@ theorem shiftToTargetExponent_normalized_carry
 /--
 An exact dyadic below the normal range rounds to at most `2^p` units of the minimum exponent.
 
-Here `p = fmt.fracWidth`; equality is the carry from the largest subnormal neighborhood to the
+Here `p = fmt.fracWidth`. Equality is the carry from the largest subnormal neighborhood to the
 smallest normal value.
 -/
 theorem roundMantissaAtExponentEven_minSubnormal_le_pow2

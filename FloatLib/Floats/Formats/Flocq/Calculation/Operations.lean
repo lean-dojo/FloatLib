@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Digits
 /-!
 # Exact Operations on Mantissa/Exponent Values
 
-These operations manipulate `FloatRep` representations without rounding.  Addition aligns both
-operands to their smaller exponent; multiplication adds exponents.  Their correctness theorems are
-radix-parametric counterparts of Flocq's `Calc.Operations` results.
+These operations work on `FloatRep` representations and never round. Addition aligns both operands
+to the smaller exponent, so in radix 10, `12 × 10^1` plus `3 × 10^-1` becomes `1200 × 10^-1` plus
+`3 × 10^-1`, which is `1203 × 10^-1`. Multiplication adds the exponents. The correctness theorems
+are radix-parametric counterparts of Flocq's `Calc.Operations` results.
 -/
 
 @[expose] public section

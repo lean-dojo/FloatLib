@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Enclosure.Rational.Runtime
 /-!
 # Finite decimal enclosure acceptance
 
-Round both exact rational endpoints to nearest, ties to even. Accept only identical finite
-datums; otherwise return `none`. Exact endpoint results prefer the least representable quantum.
-`Proof` connects acceptance to real rounding.
+The acceptance test is short. Round both exact rational endpoints to nearest, ties to even, and
+accept only when the two give the same finite datum, returning `none` otherwise. Exact endpoint
+results prefer the least representable quantum. `Proof` connects acceptance to real rounding.
 -/
 
 @[expose] public section
@@ -28,7 +28,7 @@ open FloatLib.Numerics
 def roundEndpoint (f : Format) (value : ℚ) : Datum :=
   (project f .nearest value f.minQuantum).value
 
-/-- Accept exactly when both endpoints round to the same finite decimal datum. -/
+/-- Accept if and only if both endpoints round to the same finite decimal datum. -/
 def round? (f : Format) (interval : RationalInterval) : Option Datum :=
   let lower := roundEndpoint f interval.lo
   let upper := roundEndpoint f interval.hi

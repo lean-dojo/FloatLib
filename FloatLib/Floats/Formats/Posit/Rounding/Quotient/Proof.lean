@@ -19,14 +19,13 @@ import Mathlib.Tactic.NormNum.Pow
 /-!
 # Correctness of rational-free exact posit quotient rounding
 
-The executable quotient rounder compares candidate codes by cross multiplication instead of
-constructing the rational quotient. This module proves the positive-code search, threshold test,
-ties-to-even decision, sign handling, zero, and NaR branches equal to the reference rational
-specification.
+The executable quotient rounder never builds the rational quotient. It compares candidate codes
+by cross multiplication, and since multiplying dyadics keeps their integer significands and binary
+exponents with no rational normalization, every comparison is exact.
 
-The comparison remains exact: multiplying dyadics preserves their integer significands and
-binary exponents without rational normalization. The final theorem identifies the result with
-exact rational division followed by standard posit rounding.
+Here we prove that each branch agrees with the reference rational specification: the positive-code
+search, the threshold test, the ties-to-even decision, sign handling, zero, and NaR. Our last
+theorem says the result is exact rational division followed by standard posit rounding.
 -/
 
 @[expose] public section
@@ -53,7 +52,7 @@ theorem lowerCode_eq_reference
   exact (le_div_iff₀ hdenominator).symm
 
 /--
-Cross-multiplied quotient rounding selects exactly the rational specification's positive code.
+Cross-multiplied quotient rounding selects the rational specification's positive code.
 -/
 theorem roundPositiveCode_eq_reference
     (format : Format) (numerator denominator : FloatLib.Numerics.Dyadic)

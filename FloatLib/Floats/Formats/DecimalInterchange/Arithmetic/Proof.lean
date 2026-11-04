@@ -11,16 +11,16 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Semantics
 /-!
 # Decimal arithmetic range and numerical error
 
-Every operation returns a valid destination datum. For finite operands and a
-result without overflow, the nearest-mode error bounds compare the returned
-value with the exact rational sum, difference, product, quotient, or fused
-expression. Division additionally requires a nonzero divisor. The fused bound
-concerns `x * y + z` directly, without a rounded intermediate product.
+Two kinds of theorem live here. The first kind says every operation returns a valid datum of the
+destination format, whatever its operands. The second bounds the error of the nearest modes: for
+finite operands and a result that doesn't overflow, the returned value is within half a grid unit
+of the exact rational sum, difference, product, quotient, or fused expression. Division also needs
+a nonzero divisor. The fused bound is about `x * y + z` itself, with no rounded product in between.
 
-The file opens with general facts about the exact value of a datum that the other decimal proofs
-use: which datums have a given rational value (`Datum.toRat?_eq_some_iff`,
+The file opens with general facts about the exact value of a datum, which the other decimal proofs
+use. They say which datums have a given rational value (`Datum.toRat?_eq_some_iff`,
 `Datum.toRat?_eq_some_zero_iff`) and how negation changes it (`Datum.negate_toRat?`,
-`Datum.negate_toRat?_of_eq_some`). They are proved here, next to the `Datum.finiteValue` of
+`Datum.negate_toRat?_of_eq_some`). We prove them here, next to the `Datum.finiteValue` of
 `Arithmetic.Runtime`, and not in `Sign.Proof`, so that the root and power proofs can use them
 without importing the codecs that `Sign.Proof` depends on.
 -/
@@ -29,7 +29,7 @@ without importing the codecs that `Sign.Proof` depends on.
 
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
-/-- A datum has an exact rational value exactly when it is finite, and that value is its signed
+/-- A datum has an exact rational value if and only if it is finite, and that value is its signed
 coefficient times its radix power (zero for either signed zero). -/
 theorem Datum.toRat?_eq_some_iff {x : Datum} {v : ℚ} :
     x.toRat? = some v ↔ ∃ s c q, x = .finite s c q ∧ v = Datum.finiteValue s c q := by
@@ -46,7 +46,7 @@ theorem Datum.toRat?_eq_some_iff {x : Datum} {v : ℚ} :
     rw [Datum.toRat?_eq]
     rfl
 
-/-- A datum has exact value zero exactly when it is a zero of either sign, at any quantum. -/
+/-- A datum has exact value zero if and only if it is a zero of either sign, at any quantum. -/
 theorem Datum.toRat?_eq_some_zero_iff {x : Datum} :
     x.toRat? = some 0 ↔ ∃ s q, x = .finite s 0 q := by
   constructor

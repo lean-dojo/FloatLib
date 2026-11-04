@@ -14,10 +14,10 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 /-!
 # Containment for tangent and hyperbolic interval bounds
 
-The tangent proof composes the existing sine, cosine, and division contracts. Hyperbolic sine
-is monotone; hyperbolic cosine is monotone on absolute values. Hyperbolic tangent uses the
-increasing map `(u - 1) / (u + 1)` on nonnegative exponential values, keeping its denominator
-strictly positive even when a coarse exponential enclosure has lower endpoint zero.
+The tangent proof composes the sine, cosine, and division contracts. Hyperbolic sine is monotone,
+and hyperbolic cosine is monotone on absolute values. Hyperbolic tangent uses the increasing map
+`(u - 1) / (u + 1)` on nonnegative exponential values, which keeps its denominator strictly positive
+even when a coarse exponential enclosure has lower endpoint zero.
 -/
 
 public section

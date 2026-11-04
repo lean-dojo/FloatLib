@@ -16,12 +16,11 @@ import FloatLib.Floats.ExecFloat.Backends.Word.Small.Div.Proof
 /-!
 # Verified native normal-result division for binary64
 
-The native path generates quotient bits with a restoring `UInt64` loop. Every accepted result
-equals the generic finite kernel's result, and `divFinite_eq_divFiniteComponents` extends this
-agreement to the whole optional finite operation, declined inputs included.
-
-Zeros and quotients outside the normal-result path use the generic finite kernel. Non-finite
-operands are handled by the outer arithmetic dispatcher.
+Quotient bits on the native path come from a restoring `UInt64` loop. Every accepted result equals
+the generic finite kernel's result, and `divFinite_eq_divFiniteComponents` extends this agreement to
+the whole optional finite operation, declined inputs included. Zeros and quotients outside the
+normal-result path use the generic finite kernel, and non-finite operands are handled by the outer
+arithmetic dispatcher.
 -/
 
 @[expose] public section

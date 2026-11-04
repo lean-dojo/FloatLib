@@ -13,23 +13,23 @@ public import Mathlib.Data.Nat.Bitwise
 /-!
 # Lean floating-point model bridge
 
-`Model fmt` retains the raw interchange bits, including noncanonical NaN payloads. Lean's
-`Float.Model.UnpackedFloat` interprets those bits using the conventional IEEE bias and exceptional
-encodings for their field widths. This module connects the two without selecting binary32 or any
-other fixed format. Custom descriptor biases and encoding policies require separate semantic
-agreement theorems.
+`Model fmt` keeps the raw interchange bits, noncanonical NaN payloads included. Lean's
+`Float.Model.UnpackedFloat` reads those bits with the conventional IEEE bias and exceptional
+encodings for their field widths. This module connects the two without picking binary32 or any
+other fixed format, but custom descriptor biases and encoding policies need semantic agreement
+theorems of their own.
 
 `FloatFormat.toModel` keeps only the two field widths, so `toModel`, `ofModel`,
-`IsModelCanonical`, and `canonicalizeModel` follow the descriptor's own semantics only when
-`fmt.isIEEE`. For a finite-only, maximum-NaN, or unsigned-zero encoding, Lean's model can read a
-finite word as infinity or NaN, and `canonicalizeModel` can rewrite it. The agreement theorems for
-IEEE descriptors are `toDyadic?_ieee_eq_model`, `isFinite_toModel`, and
-`toReal_eq_unpackedToReal_toModel`; `toModel_eq_notANumber_iff` says which words Lean's model
-reads as NaN under every descriptor.
+`IsModelCanonical` and `canonicalizeModel` follow the descriptor's own semantics only when
+`fmt.isIEEE`. For a finite-only, maximum-NaN or unsigned-zero encoding, Lean's model can read a
+finite word as infinity or NaN, and `canonicalizeModel` can rewrite it. For IEEE descriptors the
+agreement theorems are `toDyadic?_ieee_eq_model`, `isFinite_toModel` and
+`toReal_eq_unpackedToReal_toModel`, while `toModel_eq_notANumber_iff` says, under every
+descriptor, which words Lean's model reads as NaN.
 
-The bridge is width preserving: `FloatFormat.toModel` has exactly `fmt.bitWidth` packed bits, so no
-padding, truncation, or host `Float` conversion occurs. Packing a model value canonicalizes NaNs,
-as Lean's model requires; unpacking arbitrary `Model` bits remains total.
+The bridge preserves width. `FloatFormat.toModel` has `fmt.bitWidth` packed bits, so nothing is
+padded, truncated or converted through a host `Float`. Packing a model value canonicalizes NaNs,
+as Lean's model requires, while unpacking arbitrary `Model` bits stays total.
 
 ## References
 
@@ -76,7 +76,7 @@ open Float.Model.UnpackedFloat
     modelSignBit (modelSign negative) = negative := by
   cases negative <;> rfl
 
-/-- View executable bits at the exactly equal width expected by Lean's model. -/
+/-- View executable bits as the bit vector Lean's model expects, which has the same width. -/
 @[inline] def toModelBits {fmt : FloatFormat} (x : Model fmt) :
     BitVec (FloatFormat.toModel fmt).numBits :=
   x.bits
@@ -153,8 +153,8 @@ private theorem ofNat_and_lowMask_eq_setWidth
   rw [Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le (Nat.mod_lt n (Nat.two_pow_pos width)) hpow)]
 
 /--
-Packing explicit fields agrees with Lean's sign/exponent/fraction concatenation. Inputs are reduced
-to their declared field widths by the corresponding `BitVec.ofNat`.
+Packing given fields agrees with Lean's sign/exponent/fraction concatenation. The corresponding
+`BitVec.ofNat` reduces each input to its declared field width.
 -/
 theorem toModelBits_ofFields (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
@@ -218,10 +218,10 @@ theorem toModelBits_ofFields (fmt : FloatFormat) (sign : Bool)
 /-!
 ## Agreement of packed fields
 
-These lemmas are the representation boundary for the generic bridge. They show that the manual
-field extractors used by the executable kernel and the extractors used by Lean's logical model
-read the same raw bit vector. Arithmetic refinement proofs can therefore work with one decoded
-sign, exponent, and mantissa rather than repeat bit-layout arguments for each format.
+Here the generic bridge meets the bit representation. The hand-written field extractors of the
+executable kernel and the extractors of Lean's logical model read the same raw bit vector. So
+arithmetic refinement proofs can work with one decoded sign, exponent and mantissa, and need not
+repeat bit-layout arguments for each format.
 -/
 
 /-- Packing and then extracting the one-bit sign field returns the original model sign. -/
@@ -260,7 +260,7 @@ theorem unpackMantissa_toNat {fmt : FloatFormat} (x : Model fmt) :
           ((2 ^ fractionWidth - 1) % 2 ^ (1 + exponentWidth + fractionWidth))
     rw [Nat.shiftRight_zero, and_lowMask_mod_eq (by omega)]
 
-/-- The decoded fraction field fits in exactly the number of bits declared by its format. -/
+/-- The decoded fraction field fits in the number of bits its format declares. -/
 theorem fracField_lt_pow2 {fmt : FloatFormat} (x : Model fmt) :
     fracField x < 2 ^ fmt.fracWidth := by
   rw [← unpackMantissa_toNat x]
@@ -291,7 +291,7 @@ theorem unpackExponent_toNat {fmt : FloatFormat} (x : Model fmt) :
           ((2 ^ exponentWidth - 1) % 2 ^ (1 + exponentWidth + fractionWidth))
     rw [and_lowMask_mod_eq (by omega)]
 
-/-- The decoded biased exponent fits in exactly the number of bits declared by its format. -/
+/-- The decoded biased exponent fits in the number of bits its format declares. -/
 theorem expField_lt_pow2 {fmt : FloatFormat} (x : Model fmt) :
     expField x < 2 ^ fmt.expWidth := by
   rw [← unpackExponent_toNat x]
@@ -315,7 +315,7 @@ theorem expField_interior_bounds {fmt : FloatFormat} (x : Model fmt)
     unfold FloatFormat.expAllOnesNat at hnotAllOnes ⊢
     omega
 
-/-- Lean's one-bit sign field is exactly the most significant executable bit. -/
+/-- Lean's one-bit sign field is the most significant executable bit. -/
 theorem unpackSign_eq_ofBool_msb {fmt : FloatFormat} (x : Model fmt) :
     Float.Model.UnpackedFloat.unpackSign
       (spec := FloatFormat.toModel fmt) (toModelBits x) = BitVec.ofBool x.bits.msb := by
@@ -342,21 +342,21 @@ theorem modelSignBit_ofBitVec_unpackSign {fmt : FloatFormat} (x : Model fmt) :
   rw [unpackSign_eq_ofBool_msb, signBit_eq_msb]
   cases x.bits.msb <;> rfl
 
-/-- Packing explicit fields retains the low `fracWidth` bits of the fraction. -/
+/-- Packing given fields retains the low `fracWidth` bits of the fraction. -/
 @[simp] theorem fracField_ofFields (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
     fracField (ofFields fmt sign exponent fraction) = fraction % 2 ^ fmt.fracWidth := by
   rw [← unpackMantissa_toNat, toModelBits_ofFields]
   simp [FloatFormat.toModel]
 
-/-- Packing explicit fields retains the low `expWidth` bits of the biased exponent. -/
+/-- Packing given fields retains the low `expWidth` bits of the biased exponent. -/
 @[simp] theorem expField_ofFields (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
     expField (ofFields fmt sign exponent fraction) = exponent % 2 ^ fmt.expWidth := by
   rw [← unpackExponent_toNat, toModelBits_ofFields]
   simp [FloatFormat.toModel]
 
-/-- Packing explicit fields preserves the requested sign bit. -/
+/-- Packing given fields preserves the requested sign bit. -/
 @[simp] theorem signBit_ofFields (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
     signBit (ofFields fmt sign exponent fraction) = sign := by
@@ -418,13 +418,13 @@ theorem ofFields_signBit_expField_fracField {fmt : FloatFormat}
   unfold ofFields mkBits negZero ofBits
   simp [hzero]
 
-/-- An in-range fraction is recovered exactly after field packing. -/
+/-- An in-range fraction comes back unchanged after field packing. -/
 theorem fracField_ofFields_of_lt (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) (hfraction : fraction < 2 ^ fmt.fracWidth) :
     fracField (ofFields fmt sign exponent fraction) = fraction := by
   simp [Nat.mod_eq_of_lt hfraction]
 
-/-- An in-range biased exponent is recovered exactly after field packing. -/
+/-- An in-range biased exponent comes back unchanged after field packing. -/
 theorem expField_ofFields_of_lt (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) (hexponent : exponent < 2 ^ fmt.expWidth) :
     expField (ofFields fmt sign exponent fraction) = exponent := by
@@ -441,9 +441,9 @@ the descriptor's meaning when `fmt.isIEEE` (`toDyadic?_ieee_eq_model`).
   Float.Model.UnpackedFloat.unpack (FloatFormat.toModel fmt) (toModelBits x)
 
 /--
-Lean's model reads a word as NaN exactly when its layout has the IEEE NaN pattern, an all-ones
-exponent with a nonzero fraction. This holds for every descriptor; the descriptor's own `isNaN` is
-this predicate for the `.ieee` encoding only.
+Lean's model reads a word as NaN if and only if its layout has the IEEE NaN pattern, an all-ones
+exponent with a nonzero fraction. This holds for every descriptor, but the descriptor's own
+`isNaN` is this predicate only for the `.ieee` encoding.
 -/
 theorem toModel_eq_notANumber_iff {fmt : FloatFormat} (x : Model fmt) :
     toModel x = .notANumber ↔ IEEE.isNaN x = true := by
@@ -467,7 +467,7 @@ theorem toModel_eq_notANumber_iff {fmt : FloatFormat} (x : Model fmt) :
 
 /--
 Encode a Lean logical value at `fmt`'s field widths with the conventional IEEE bias and exceptional
-patterns; NaNs use Lean's canonical payload. When `fmt.isIEEE` is false the word need not denote
+patterns. NaNs get Lean's canonical payload. When `fmt.isIEEE` is false the word need not denote
 the same value under the descriptor.
 -/
 @[inline] def ofModel (fmt : FloatFormat) (x : Float.Model.UnpackedFloat) : Model fmt :=

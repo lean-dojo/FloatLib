@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 /-!
 # Binary predicate semantics
 
-All predicates use exact extended-real order on non-NaN inputs and their specified
-unordered truth value on NaNs. The exception theorems distinguish quiet and signaling
-comparisons without changing their Boolean answers.
+On non-NaN inputs every predicate follows exact extended-real order, and on NaNs it returns its
+specified unordered truth value. Quiet and signaling comparisons give the same Boolean answers.
+Their flags can differ, and the exception theorems say how.
 -/
 
 public section
@@ -54,14 +54,14 @@ theorem compareQuiet_value_eq_compareSignaling {fmt : FloatFormat}
     (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
     (compareQuiet predicate x y).value = (compareSignaling predicate x y).value := rfl
 
-/-- Quiet comparisons raise invalid exactly for signaling NaN operands. -/
+/-- A quiet comparison raises invalid if and only if an operand is a signaling NaN. -/
 theorem compareQuiet_invalid_iff {fmt : FloatFormat}
     (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
     (compareQuiet predicate x y).status.invalid = true ↔
       isSNaN x = true ∨ isSNaN y = true := by
   simp [compareQuiet]
 
-/-- Signaling comparisons raise invalid exactly for NaN operands. -/
+/-- A signaling comparison raises invalid if and only if an operand is a NaN. -/
 theorem compareSignaling_invalid_iff {fmt : FloatFormat}
     (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
     (compareSignaling predicate x y).status.invalid = true ↔

@@ -13,10 +13,10 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 /-!
 # Configured total-order refinement
 
-Packing and decoding preserve both predicates exactly. Order laws and numerical, zero, and NaN
-rules are transported from the descriptor model, independently of the chosen runtime carrier.
-Mutual magnitude comparison identifies absolute exact values, including NaN metadata; opposite
-signs can tie.
+Packing and decoding preserve both predicates. Order laws and numerical, zero, and NaN rules are
+transported from the descriptor model, independently of the chosen runtime carrier. Mutual
+magnitude comparison identifies absolute exact values, including NaN metadata, and opposite signs
+can tie.
 -/
 
 @[expose] public section
@@ -30,11 +30,11 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 
 local notation "Value" => ExecFloat (Configured.Family format code plan)
 
-/-- Configured total ordering is exactly the descriptor-model predicate. -/
+/-- Configured total ordering is the descriptor-model predicate. -/
 theorem totalOrder_eq_model (x y : Value) :
     totalOrder x y = Model.totalOrder (toModel x) (toModel y) := rfl
 
-/-- Configured magnitude ordering is exactly the descriptor-model predicate. -/
+/-- Configured magnitude ordering is the descriptor-model predicate. -/
 theorem totalOrderMag_eq_model (x y : Value) :
     totalOrderMag x y = Model.totalOrderMag (toModel x) (toModel y) := rfl
 

@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Code.Runtime
 /-!
 # Packing equivalence for configured posits
 
-Configured posits may live in a byte, native word, fixed pair of limbs, or a wide carrier. The
-public model is independent of that choice, so packing and decoding must be lossless for every
-storage plan.
+A configured posit may live in a byte, a native word, a fixed pair of limbs, or a wide carrier,
+and since its public model is the same whichever one it uses, packing and decoding have to be
+lossless for every storage plan.
 
-These mutual-inverse theorems discharge that obligation once by case analysis on the plan. Codec
-instances and arithmetic capabilities reuse them instead of maintaining width-specific conversion
-proofs that could drift apart.
+The mutual-inverse theorems here settle that once, by case analysis on the plan. Codec instances
+and arithmetic capabilities all reuse them, so there are no width-specific conversion proofs to
+drift apart.
 -/
 
 @[expose] public section

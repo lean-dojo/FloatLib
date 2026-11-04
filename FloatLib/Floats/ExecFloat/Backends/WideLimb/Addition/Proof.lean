@@ -13,12 +13,12 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Finite.Proof
 /-!
 # Verified wide-limb addition and subtraction
 
-The central theorem is `alignOrdered?_refines`: an accepted result of the alignment core is the
-unsigned-scale exact sum `FiniteScaleAdd.roundSum` of the two signed magnitudes. Its proof follows
-the two routes of the kernel. On the jammed route the limb value of the combined significand is
+Our central theorem, `alignOrdered?_refines`, says that an accepted result of the alignment core is
+the unsigned-scale exact sum `FiniteScaleAdd.roundSum` of the two signed magnitudes, and its proof
+follows the kernel's two routes. On the jammed route, the limb value of the combined significand is
 `shiftRightJam` of the exact aligned sum or difference (`shiftRightJam_add_mul_two_pow`,
 `shiftRightJam_mul_two_pow_sub`), and the exact value has enough bits above the jam for
-`roundNormal?_jammed`. On the exact route the limb value is the exact sum or difference and
+`roundNormal?_jammed`. On the exact route the limb value is the exact sum or difference, and
 `roundNormal?_exact` applies. Equal magnitudes of opposite sign give positive zero, as the
 specification requires.
 

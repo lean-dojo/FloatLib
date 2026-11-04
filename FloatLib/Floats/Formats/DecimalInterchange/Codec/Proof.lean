@@ -10,10 +10,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.BitsProof
 /-!
 # Decimal codec correctness
 
-The coefficient laws imply a round trip for every representable datum and
-semantic preservation and idempotence of word canonicalization. Two words have
-the same canonical word exactly when they decode to the same datum. Equality here
-preserves each datum's quantum exponent, signed zero, and NaN metadata, not only
+`Codec.Lawful` lists what a coefficient encoding has to prove, and this file derives the codec
+theorems from those laws once for both BID and DPD. Every representable datum survives a round trip.
+Canonicalizing a word keeps its meaning, doing it twice is the same as doing it once, and two words
+have the same canonical word if and only if they decode to the same datum. Equality of datums is
+strong here: it covers each datum's quantum exponent, signed zero, and NaN metadata, and not only
 the rational value of ordinary numbers.
 -/
 
@@ -99,7 +100,7 @@ theorem decode_valid (codec : Codec) (laws : codec.Lawful)
     · trivial
     · exact laws.decodePayload_lt f _ (Nat.mod_lt _ f.trailingBase_pos)
 
-/-- Every representable datum survives encoding and decoding exactly. -/
+/-- Every representable datum survives encoding and decoding unchanged. -/
 theorem decode_encode (codec : Codec) (laws : codec.Lawful)
     (f : Format) (d : Datum) (h : d.Valid f) :
     codec.decode f (codec.encode f d) = d := by
@@ -144,7 +145,7 @@ theorem canonicalize_idempotent (codec : Codec) (laws : codec.Lawful)
     codec.canonicalize f (codec.canonicalize f word) = codec.canonicalize f word := by
   simp only [canonicalize, codec.decode_encode laws f _ (codec.decode_valid laws f word)]
 
-/-- Two words have the same canonical word exactly when they decode to the same datum, so
+/-- Two words have the same canonical word if and only if they decode to the same datum, so
 canonicalization selects one word for each datum. -/
 theorem canonicalize_eq_canonicalize_iff (codec : Codec) (laws : codec.Lawful)
     (f : Format) (left right : BitVec f.bitWidth) :

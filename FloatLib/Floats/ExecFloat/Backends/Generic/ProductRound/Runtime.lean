@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Core
 /-!
 # Executable unsigned-scale rounding for finite products
 
-This arbitrary-precision kernel rounds a finite product directly from its unsigned field scale.
-For conventional IEEE descriptors, `ProductRound.Proof` proves agreement with the public dyadic
+This arbitrary-precision kernel rounds a finite product straight from its unsigned field scale. For
+conventional IEEE descriptors, `ProductRound.Proof` proves that it agrees with the public dyadic
 rounder.
 -/
 
@@ -28,7 +28,7 @@ IEEE descriptor.
 
 The thresholds are written in the same unsigned coordinate:
 
-* `bias + 2 * fracWidth - 1` is the first normal leading-bit position;
+* `bias + 2 * fracWidth - 1` is the first normal leading-bit position,
 * `3 * bias + 2 * fracWidth - 2` is the largest finite normal leading-bit position.
 -/
 @[inline] def round (fmt : FloatFormat)

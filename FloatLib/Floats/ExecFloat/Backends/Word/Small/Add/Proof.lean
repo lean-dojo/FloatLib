@@ -18,12 +18,12 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 # Correctness of native one-word finite addition
 
 Under `Eligible`, every accepted result of `Add.Runtime` agrees with the exact finite kernel.
-`addFinite_refines` also covers subtraction by identifying the toggled right sign with `neg y`.
-A declined input is handled by the dispatcher's generic fallback.
+`addFinite_refines` also covers subtraction, by identifying the toggled right sign with `neg y`.
+Declined inputs are handled by the dispatcher's generic fallback.
 
-`normalSpec?` describes the normal branch of `FiniteProductRound.round`. The proof transfers
-native rounding to this specification using the shared carry and packing theorem
-`NativeWordProduct.finish_eq`, then treats signed magnitudes, exponent alignment, and decoding.
+`normalSpec?` describes the normal branch of `FiniteProductRound.round`. Native rounding is carried
+over to this specification with the shared carry and packing theorem `NativeWordProduct.finish_eq`,
+and then the proof deals with signed magnitudes, exponent alignment, and decoding.
 -/
 
 @[expose] public section

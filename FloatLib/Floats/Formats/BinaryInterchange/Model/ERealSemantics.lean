@@ -12,11 +12,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 /-!
 # Extended-real interpretation of binary models
 
-Every non-NaN `Model fmt` has an extended-real interpretation. Finite values use their exact
-real decoding, while the two infinities map to `⊥` and `⊤`. The partial interpretation maps NaNs
-to `none`; `toEReal` is a convenient totalization that maps that single unordered case to zero.
+Every non-NaN `Model fmt` has an extended-real interpretation. A finite value uses its exact real
+decoding, and the two infinities go to `⊥` and `⊤`. The partial interpretation sends NaNs to
+`none`, and `toEReal` is a convenient total version that sends that one unordered case to zero.
 
-The definitions and proofs are uniform in `fmt`.
+Definitions and proofs are uniform in `fmt`.
 -/
 
 @[expose] public section
@@ -26,7 +26,7 @@ namespace Model
 
 section
 
-/-- Extended-real interpretation of `Model`; `none` is reserved exactly for NaNs. -/
+/-- Extended-real interpretation of `Model`. It is `none` on NaNs and only there. -/
 noncomputable def toEReal? {fmt : FloatFormat} (x : Model fmt) : Option EReal :=
   if isNaN x then
     none
@@ -39,7 +39,7 @@ noncomputable def toEReal? {fmt : FloatFormat} (x : Model fmt) : Option EReal :=
 noncomputable def toEReal {fmt : FloatFormat} (x : Model fmt) : EReal :=
   (toEReal? x).getD 0
 
-/-- The partial extended-real interpretation is undefined exactly on NaNs. -/
+/-- The partial extended-real interpretation is undefined on NaNs and nowhere else. -/
 theorem toEReal?_eq_none_iff_isNaN_eq_true {fmt : FloatFormat} (x : Model fmt) :
     toEReal? x = none ↔ isNaN x = true := by
   cases hnan : isNaN x <;> cases hinf : isInf x <;> simp [toEReal?, hnan, hinf]

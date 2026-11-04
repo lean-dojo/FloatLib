@@ -12,12 +12,12 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
 /-!
 # Rounding Into A Generic Format
 
-Rounding any real with a valid integer-rounding rule produces a value in the selected generic
-format. The proof separates inputs whose magnitude is at most the selected exponent from those
-above it.
+Round any real with a valid integer-rounding rule and the result lands in the selected generic
+format. That's the main theorem here, and its proof treats inputs whose magnitude is at most the
+selected exponent apart from those above it.
 
 Negative inputs reduce to positive ones through `round_neg`, which conjugates the integer rule by
-negation. Conjugation exchanges floor and ceiling and fixes truncation.
+negation. Conjugation swaps floor and ceiling and leaves truncation alone.
 -/
 
 @[expose] public section

@@ -11,9 +11,11 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 /-!
 # Correctness of exact rational-to-posit rounding
 
-The executable rational-to-posit specification in `Rounding.Runtime` satisfies search,
-threshold, round-trip, and sign laws. Import this module for these proofs, or import the
-`FloatLib.Floats.Formats.Posit` family entry point for the complete public interface.
+These are the laws of the rational-to-posit specification in `Rounding.Runtime`. Bisection finds
+the cutoff whenever the accepted codes form a prefix, the threshold test sits at the standard's
+appended-bit boundary, rounding the value of a finite code gives that code back, and rounding
+commutes with negation (`roundRat_neg`). Import this module for the proofs alone, or the
+`FloatLib.Floats.Formats.Posit` family entry point for the whole public interface.
 
 ## References
 
@@ -47,8 +49,8 @@ private theorem lowerCodeByBisection_succ_of_lt
 /--
 Bounded bisection never reaches its exclusive upper endpoint.
 
-This structural range fact does not require monotonicity of `accept`; every recursive branch
-retains a nonempty half-open interval and eventually returns one of its lower endpoints.
+This is a structural range fact and needs no monotonicity of `accept`. Every recursive branch
+keeps a nonempty half-open interval and eventually returns one of its lower endpoints.
 -/
 theorem lowerCodeByBisection_lt_upper
     (accept : Nat → Bool) (fuel lower upper : Nat)
@@ -158,12 +160,12 @@ theorem lowerCodeByBisection_congr
           ite_eq_right hnontrivial, ite_eq_right hnontrivial]
 
 /--
-Bounded bisection exactly recovers a cutoff when the accepted codes form a natural-number prefix.
+Bounded bisection returns the cutoff when the accepted codes form a prefix of the naturals.
 
-The interval invariant is `lower ≤ cutoff < upper`. The span bound states that the remaining
-interval contains at most `2 ^ fuel` unit steps, so every nontrivial midpoint leaves at most half
-the old span. This theorem is independent of posit decoding and can therefore be reused by every
-exact comparison domain that drives the same search.
+The interval invariant is `lower ≤ cutoff < upper`. The span bound says the remaining interval
+holds at most `2 ^ fuel` unit steps, so every nontrivial midpoint leaves at most half the old span.
+Nothing here depends on posit decoding, and every exact comparison domain that drives the same
+search reuses this theorem.
 -/
 theorem lowerCodeByBisection_eq_cutoff
     (fuel lower upper cutoff : Nat)
@@ -348,8 +350,8 @@ Positive-code rounding is a left inverse of exact decoding on the complete nonne
 interval.
 
 This is the arbitrary-width encoder round-trip theorem. It combines global decoder monotonicity,
-exact bisection recovery, and the standard's appended-bit boundary rather than relying on
-small-width enumeration.
+exact bisection recovery, and the standard's appended-bit boundary, with no enumeration of small
+widths.
 -/
 theorem roundPositiveCode_nonnegativeRatAt
     (format : Format) {code : Nat}
@@ -372,7 +374,7 @@ theorem roundPositiveCode_nonnegativeRatAt
       (by rw [hlower]; omega)]
     omega
 
-/-- Model-valued positive rounding exactly re-encodes every nonnegative finite code. -/
+/-- Rounding the value of a nonnegative finite code with `roundPositiveRat` gives that code back. -/
 theorem roundPositiveRat_nonnegativeRatAt
     (format : Format) {code : Nat}
     (hcode : code < format.signMaskNat) :

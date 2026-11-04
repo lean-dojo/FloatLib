@@ -11,8 +11,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Subtraction.Runtime
 /-!
 # Native binary64 addition and subtraction runtime
 
-The executable binary64 dispatchers combine equal-exponent addition with signed Sterbenz
-subtraction. Their refinement proofs are in `Addition.Proof`.
+Binary64 addition and subtraction combine equal-exponent addition with signed Sterbenz subtraction.
+Their refinement proofs are in `Addition.Proof`.
 -/
 
 @[expose] public section

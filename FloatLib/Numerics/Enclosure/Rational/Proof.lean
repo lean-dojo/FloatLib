@@ -17,8 +17,9 @@ import Mathlib.Tactic.Linarith.Frontend
 /-!
 # Soundness of rational interval operations
 
-`Contains` interprets executable rational endpoints as a closed real interval. The arithmetic
-lemmas propagate membership without imposing a floating-point format or rounding policy.
+`Contains` reads executable rational endpoints as a closed real interval. The arithmetic lemmas
+carry membership through each operation, and they assume no floating-point format or rounding
+policy.
 -/
 
 @[expose] public section
@@ -76,7 +77,7 @@ theorem contains_scaleNonnegative {interval : RationalInterval} {x : ℝ}
   · simpa [scaleNonnegative] using mul_le_mul_of_nonneg_left hx.2 hreal
 
 /--
-Scaling by any rational factor encloses `factor * x`; a negative factor exchanges the endpoints.
+Scaling by any rational factor encloses `factor * x`, and a negative factor exchanges the endpoints.
 -/
 theorem contains_scale {interval : RationalInterval} {x : ℝ}
     (hx : interval.Contains x) (factor : ℚ) :

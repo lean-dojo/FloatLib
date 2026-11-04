@@ -15,10 +15,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 /-!
 # Real interpretation of binary models
 
-Finite format-parameterized bit patterns denote exact real values, and `toRat?` reads exactly the
-finite ones as rationals with the same value. Arithmetic refinement belongs in later modules,
-after the executable operation has been related to one exact dyadic intermediate and one rounding
-step.
+A finite bit pattern of any format denotes an exact real value, and `toRat?` reads the finite
+patterns, and only those, as rationals with the same value. Arithmetic refinement comes later. It
+belongs in modules that first relate each executable operation to one exact dyadic intermediate
+and one rounding step.
 -/
 
 @[expose] public section
@@ -37,7 +37,7 @@ namespace Dyadic
   cases sign <;>
     simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
 
-/-- A dyadic denotes zero exactly when its unsigned coefficient is zero. -/
+/-- A dyadic denotes zero if and only if its unsigned coefficient is zero. -/
 theorem toReal_eq_zero_iff (d : Numerics.Dyadic) :
     d.toReal = 0 ↔ d.significand = 0 := by
   have hp := zpow_ne_zero d.exponent (by norm_num : (2 : ℝ) ≠ 0)
@@ -118,20 +118,20 @@ theorem toReal_nonpos_of_negative_eq_true {d : Numerics.Dyadic} (hsign : d.negat
 
 end Dyadic
 
-/-- Real interpretation for finite values; returns `none` for NaN and infinity. -/
+/-- Real interpretation for finite values. NaN and infinity give `none`. -/
 noncomputable def toReal? {fmt : FloatFormat} (x : Model fmt) : Option ℝ :=
   match toDyadic? x with
   | some d => some d.toReal
   | none => none
 
-/-- Total real interpretation, mapping NaN and infinity to `0`. Numerical theorems must
-therefore establish finiteness or handle exceptional inputs separately. -/
+/-- Total real interpretation, mapping NaN and infinity to `0`. So numerical theorems must
+establish finiteness or handle exceptional inputs on their own. -/
 noncomputable def toReal {fmt : FloatFormat} (x : Model fmt) : ℝ :=
   match toReal? x with
   | some r => r
   | none => 0
 
-/-- Real interpretation of Lean's unpacked logical float; NaN and infinity map to zero. -/
+/-- Real interpretation of Lean's unpacked logical float, with NaN and infinity mapped to zero. -/
 noncomputable def unpackedToReal (x : Float.Model.UnpackedFloat) : ℝ :=
   match unpackedToDyadic? x with
   | some d => d.toReal
@@ -209,7 +209,7 @@ theorem isNaN_eq_true_of_toDyadic?_eq_none_of_isInf_eq_false {fmt : FloatFormat}
     contradiction
   · rfl
 
-/-- A finite value is an executable zero exactly when its real interpretation is zero. -/
+/-- A finite value is an executable zero if and only if its real interpretation is zero. -/
 theorem isZero_eq_true_iff_toReal_eq_zero {fmt : FloatFormat} (x : Model fmt)
     (hx : isFinite x = true) :
     isZero x = true ↔ toReal x = 0 := by
@@ -228,8 +228,8 @@ theorem toReal_eq_unpackedToReal_toModel {fmt : FloatFormat} (hfmt : fmt.isIEEE 
 
 /-! ## Rational decoding
 
-`toRat?` succeeds exactly on finite values, and its rational is their real value. These facts
-keep the `Algebraic` namespace of the rounding proofs that first used them.
+`toRat?` succeeds on the finite values and nowhere else, and its rational is their real value.
+These facts keep the `Algebraic` namespace of the rounding proofs that first used them.
 -/
 
 namespace Algebraic
@@ -244,15 +244,15 @@ theorem toReal_of_toRat?_eq_some {fmt : FloatFormat}
     have hq : exact.toRat = q := by simpa [toRat?, hdecode] using hvalue
     rw [toReal_eq, hdecode, ← hq, Numerics.Dyadic.cast_toRat]
 
-/-- Rational decoding succeeds exactly on finite operands, in every encoding. -/
+/-- Rational decoding succeeds on finite operands and only on them, in every encoding. -/
 theorem toRat?_isSome_eq_isFinite {fmt : FloatFormat} (value : Model fmt) :
     (toRat? value).isSome = isFinite value := by
   rw [← toDyadic?_isSome_eq_isFinite]
   simp [toRat?]
 
 /--
-A successful rational decode implies that the operand is finite; `toRat?_isSome_eq_isFinite` is the
-characterization.
+A successful rational decode implies that the operand is finite. `toRat?_isSome_eq_isFinite` is
+the full characterization.
 -/
 theorem isFinite_of_toRat?_eq_some {fmt : FloatFormat}
     {value : Model fmt} {q : Rat} (hvalue : toRat? value = some q) :

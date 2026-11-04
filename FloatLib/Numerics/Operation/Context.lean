@@ -9,9 +9,9 @@ module
 /-!
 # Representation-independent operation context
 
-Rounding direction, overflow handling, and treatment of tiny outputs describe how an exact value is
-written into a finite numerical representation. They are operation context rather than properties
-of a binary bit layout, so they live in the family-independent operation layer.
+Rounding direction, overflow handling, and the treatment of tiny outputs describe how an exact value
+is written into a finite numerical representation. They're operation context and not properties of a
+binary bit layout, so they live in the family-independent operation layer.
 
 A concrete format may support only part of this vocabulary. Its quantizer gives each policy a
 meaning or rejects unsupported combinations at a higher API layer.

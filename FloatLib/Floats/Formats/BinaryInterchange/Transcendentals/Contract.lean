@@ -15,26 +15,27 @@ public import FloatLib.Numerics.Enclosure.Elementary.Proof
 /-!
 # Proof contracts for transcendental approximations
 
-These contracts state and prove accuracy claims about an approximation:
+These contracts state and prove three kinds of accuracy claim about an approximation:
 
-1. a real function value lies in a proved enclosure;
-2. an executable result satisfies a proved absolute-error budget; and
+1. a real function value lies in a proved enclosure,
+2. an executable result satisfies a proved absolute-error budget, and
 3. an enclosure is narrow enough that both endpoints round to the same destination value.
 
-When both endpoints round alike, monotonicity forces the enclosed function value to round there
-too. `StableEnclosure.roundAt_eq_roundAt_lower` proves this fact. Constructing an enclosure
-requires Lean proofs of both bounds; external numerical output alone does not supply them.
+The third one gives correct rounding. When both endpoints round alike, monotonicity forces the
+enclosed function value to round there too, and `StableEnclosure.roundAt_eq_roundAt_lower` proves
+it. Constructing an enclosure takes Lean proofs of both bounds, and the output of an external
+numerical tool does not supply them.
 
-IEEE exceptional-value behavior and the sign of an exact zero remain separate bit-level
-obligations. `roundAt` is the finite real grid semantics.
+`roundAt` is the finite real grid semantics. IEEE exceptional-value behavior and the sign of an
+exact zero are bit-level obligations of their own.
 
 `ApproximationCertificateOn` and `CorrectlyRoundedCertificateOn` restrict the finite-real
-guarantees to an explicit predicate on encoded inputs. For example, a logarithm certificate can
-use `fun input ↦ 0 < toReal input`; an exponential certificate can use a proved input range on
-which the result remains finite. Membership never replaces the obligation to prove output
-finiteness. Outside the domain these certificates make no claim, so exceptional-value and overflow
-behavior need separate specifications. The certificates without `On` apply to every finite input
-and are equivalent to the domain-restricted certificates with domain `fun _ ↦ True`.
+guarantees to a predicate on encoded inputs. A logarithm certificate can use
+`fun input ↦ 0 < toReal input`, for example, and an exponential certificate can use a proved input
+range on which the result stays finite. Membership never replaces the obligation to prove that the
+output is finite. Outside the domain these certificates make no claim, so exceptional-value and
+overflow behavior need their own specifications. The certificates without `On` apply to every
+finite input and are equivalent to the domain-restricted ones with domain `fun _ ↦ True`.
 
 ## References
 
@@ -98,8 +99,8 @@ theorem lower_le_upper {f : ℝ → ℝ} {x : ℝ} (enclosure : RealEnclosure f 
 /--
 Any candidate lying in the same enclosure has absolute error at most its width.
 
-This conservative bound is often sufficient for a first verified implementation. A sharper
-algorithm-specific proof can populate `ApproximationCertificate` directly.
+This conservative bound is often enough for a first verified implementation. A sharper,
+algorithm-specific proof can populate `ApproximationCertificate` instead.
 -/
 theorem abs_sub_le_width {f : ℝ → ℝ} {x candidate : ℝ}
     (enclosure : RealEnclosure f x)
@@ -285,11 +286,11 @@ structure ApproximationCertificate
 /--
 Whole-algorithm correctly-rounded finite-real contract.
 
-Both components are propositions, so the certificate adds no runtime data. Every finite input is in
-scope, so the contract fits functions such as sine, cosine and tanh. `roundAt` has no upper
-exponent bound, so at a finite input whose exponential rounds above the largest finite value no
-finite result meets it; for `Real.log` at zero and `Real.sqrt` below zero it would demand a finite
-result where IEEE 754 returns an infinity or NaN. Those functions use
+Both components are propositions, so the certificate adds no runtime data. Every finite input is
+in scope, which fits functions such as sine, cosine and tanh. `roundAt` has no upper exponent
+bound, so at a finite input whose exponential rounds above the largest finite value no finite
+result meets the contract. For `Real.log` at zero and `Real.sqrt` below zero it would demand a
+finite result where IEEE 754 returns an infinity or NaN. Those functions use
 `CorrectlyRoundedCertificateOn` with a domain.
 -/
 def CorrectlyRoundedCertificate
@@ -320,12 +321,12 @@ theorem toReal_eq_roundAt {fmt : FloatFormat} {f : ℝ → ℝ}
 end CorrectlyRoundedCertificate
 
 /--
-Absolute-error contract on an explicit domain of encoded inputs.
+Absolute-error contract on a given domain of encoded inputs.
 
 The domain can express mathematical restrictions, such as positivity for logarithms, and the
-range on which finite output is promised. Budgets must be nonnegative on the domain; output
-finiteness and accuracy are required for every finite input in that domain. In particular, merely
-restricting the mathematical domain does not discharge the output-finiteness obligation.
+range on which finite output is promised. Budgets must be nonnegative on the domain, and output
+finiteness and accuracy are required for every finite input in that domain. So restricting the
+mathematical domain does not by itself discharge the output-finiteness obligation.
 -/
 structure ApproximationCertificateOn
     (fmt : FloatFormat)
@@ -393,7 +394,7 @@ namespace ApproximationCertificateOn
 end ApproximationCertificateOn
 
 /--
-Correct nearest-even finite-real rounding on an explicit domain of encoded inputs.
+Correct nearest-even finite-real rounding on a given domain of encoded inputs.
 
 Every finite input in the domain must produce a finite result with the stated rounded real
 value. This does not certify overflow, exceptional values, or the sign of zero: `roundAt` has no

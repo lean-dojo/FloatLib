@@ -16,11 +16,11 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Fma.Proof
 /-!
 # Certified wide-limb candidates for the limb carrier
 
-An explicit `StoragePlan.limbs` stores formats wider than 128 bits in limb arrays. Its arithmetic
-candidates enter through this carrier and are proved equal to the configured reference operation
-through `Model.WideLimb.toModel_add` and its siblings together with the codec laws. Division and
-square root use arbitrary-precision integer quotients and roots after reading the stored fields;
-the other kernels operate on the limbs themselves. A candidate is offered only when
+A format wider than 128 bits that opts into `StoragePlan.limbs` is stored in limb arrays. Its
+arithmetic candidates enter through this carrier and are proved equal to the configured reference
+operation through `Model.WideLimb.toModel_add` and its siblings together with the codec laws.
+Division and square root use arbitrary-precision integer quotients and roots after reading the
+stored fields. Every other kernel works on the limbs themselves. A candidate is offered only when
 `Model.WideLimb.Eligible` holds, a decidable test on the descriptor.
 -/
 
@@ -109,32 +109,32 @@ def wideLimbFma (h : Model.WideLimb.Eligible format) :
             (Model.WideLimb.toModel addend.raw))
       rw [← Model.WideLimb.toModel_fma h, Model.WideLimb.ofModel_toModel]
 
-/-- Offer wide-limb addition exactly when the descriptor is eligible. -/
+/-- Wide-limb addition when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbAdd? :
     Option (Certified (@Spec.add format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbAdd format width_gt h) else none
 
-/-- Offer wide-limb subtraction exactly when the descriptor is eligible. -/
+/-- Wide-limb subtraction when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbSub? :
     Option (Certified (@Spec.sub format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbSub format width_gt h) else none
 
-/-- Offer wide-limb multiplication exactly when the descriptor is eligible. -/
+/-- Wide-limb multiplication when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbMul? :
     Option (Certified (@Spec.mul format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbMul format width_gt h) else none
 
-/-- Offer wide-limb division exactly when the descriptor is eligible. -/
+/-- Wide-limb division when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbDiv? :
     Option (Certified (@Spec.div format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbDiv format width_gt h) else none
 
-/-- Offer wide-limb square root exactly when the descriptor is eligible. -/
+/-- Wide-limb square root when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbSqrt? :
     Option (Certified (@Spec.sqrt format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbSqrt format width_gt h) else none
 
-/-- Offer wide-limb fused multiply-add exactly when the descriptor is eligible. -/
+/-- Wide-limb fused multiply-add when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbFma? :
     Option (Certified (@Spec.fma format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbFma format width_gt h) else none

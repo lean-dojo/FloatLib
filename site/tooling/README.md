@@ -20,8 +20,8 @@ python3 site/serve.py --port 10000 --dir "${FLOATLIB_BUILD_DIR}-site"
 
 Then open `http://localhost:10000/`. The build checks the chapter examples with Lean, compares
 their printed results, resolves theorem links and citations, verifies result-derived figures, and
-renders the reader. To change the text, edit the chapters under `site/content/chapters/`. There's
-no separate manual to keep in sync.
+renders the reader. To change the text, edit the chapters under `site/content/chapters/`, since
+there's no separate manual to keep in sync.
 
 ## Site data pipeline
 
@@ -98,7 +98,7 @@ The full build accepts these flags:
 | `--require-clean` | Reject an export from an uncommitted library or an unborn `HEAD`. Cannot be combined with `--allow-missing-results`. |
 
 `FLOATLIB_SITE_REQUIRE_CLEAN=1` does the same as `--require-clean`. During development,
-`FLOATLIB_SITE_STRICT=0` lets chapter warnings through, but errors still fail the build. (The
+`FLOATLIB_SITE_STRICT=0` lets chapter warnings through, though errors fail the build either way. (The
 output-directory overrides are in the table above.) Chapters compile with one compiler at a time.
 If the machine has the resources for more, set `FLOATLIB_SITE_JOBS` to another worker count.
 
@@ -118,8 +118,8 @@ URLs point at `HEAD`, but excerpts follow the worktree. When a node is dirty, it
 link if the excerpt matches those lines at `HEAD`, falls back to a file-only link if they differ,
 and gets no URL if the file isn't in `HEAD` at all. `site/build.sh --require-clean` refuses a
 dirty library. Before the first commit, `source.revision` is `null`, there's no diff digest, and
-every declaration is marked uncommitted with no GitHub URL. Local builds still run every check in
-that state, and `--require-clean` refuses it too.
+every declaration is marked uncommitted with no GitHub URL. Local builds run every check in that
+state anyway, and `--require-clean` refuses it too.
 
 ## Export behavior
 

@@ -13,11 +13,11 @@ public import Mathlib.Algebra.Order.Algebra
 /-!
 # Sterbenz exact subtraction
 
-Sterbenz's lemma applies to the rounded-real grid of every `fmt`: two same-sign representable
-values within a factor of two have an exactly representable difference. For an IEEE descriptor,
-subtraction of the corresponding finite model values is finite and decodes to that exact real
-difference. The factor-of-two bounds force nonnegative operands and include zero, and the
-same-sign forms cover negative operands as well.
+Sterbenz's lemma holds on the rounded-real grid of every `fmt`: two same-sign representable values
+within a factor of two have a representable difference, so subtracting them loses nothing. For an
+IEEE descriptor, subtraction of the corresponding finite model values is finite and decodes to
+that exact real difference. The factor-of-two bounds force nonnegative operands and include zero,
+and the same-sign forms cover negative operands as well.
 
 ## References
 

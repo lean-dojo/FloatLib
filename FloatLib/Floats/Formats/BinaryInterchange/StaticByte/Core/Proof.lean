@@ -142,8 +142,8 @@ private theorem ofRaw_eq_ofModel {F : Type u} [Family F] {code : Code F}
 /--
 Lift a direct binary byte-kernel refinement equation to the universal static-byte carrier.
 
-The executable function is an explicit argument. A capability can name its byte kernel directly
-and use this theorem to prove its refinement.
+The executable function is an ordinary argument, so a capability can name its byte kernel and use
+this theorem to prove its refinement.
 -/
 theorem liftBinary_eq_spec {F : Type u} [Family F]
     (run : Code F → Code F → Code F)
@@ -162,8 +162,7 @@ theorem liftBinary_eq_spec {F : Type u} [Family F]
 /--
 Lift a direct unary byte-kernel refinement equation to the universal static-byte carrier.
 
-The theorem is proof-only; it does not add a conversion or dispatch layer to the executable
-kernel.
+The theorem is proof-only and adds no conversion or dispatch layer to the executable kernel.
 -/
 theorem liftUnary_eq_spec {F : Type u} [Family F]
     (run : Code F → Code F)
@@ -199,7 +198,7 @@ theorem liftTernary_eq_spec {F : Type u} [Family F]
   ofRaw_eq_ofModel (run_eq_spec left.raw right.raw addend.raw)
 
 /--
-Lift a certified binary byte table directly to the universal static-byte carrier.
+Lift a certified binary byte table to the universal static-byte carrier.
 
 This proof-only wrapper packages the recurring composition of `liftBinary_eq_spec` with the
 certificate carried by `TinyTable.CertifiedBinary`. Concrete format modules can therefore keep
@@ -222,7 +221,7 @@ theorem liftBinaryTable_eq_spec {F : Type u} [Family F]
     (byteCodeToModel_runBinary width_le_eight kernel) left right
 
 /--
-Lift a certified unary byte table directly to the universal static-byte carrier.
+Lift a certified unary byte table to the universal static-byte carrier.
 
 The certificate is the same one used by `byteCodeToModel_runUnary`, lifted to `ExecFloat`.
 -/
@@ -242,9 +241,9 @@ theorem liftUnaryTable_eq_spec {F : Type u} [Family F]
     (byteCodeToModel_runUnary width_le_eight kernel) value
 
 /--
-Lift a certified ternary byte table directly to the universal static-byte carrier.
+Lift a certified ternary byte table to the universal static-byte carrier.
 
-The concrete table remains named in the monomorphic executable definition; only its refinement
+The concrete table stays named in the monomorphic executable definition, and only its refinement
 proof is factored through this theorem.
 -/
 theorem liftTernaryTable_eq_spec {F : Type u} [Family F]
@@ -267,7 +266,7 @@ theorem liftTernaryTable_eq_spec {F : Type u} [Family F]
 /--
 Lift a proved model-level ternary kernel through the direct-byte representation.
 
-This gives a table-free FMA construction. The executable function is `modelTernary`;
+This gives a table-free FMA construction. The executable function is `modelTernary`, and
 `op_eq_spec` supplies its correctness proof.
 -/
 theorem liftModelTernary_eq_spec {F : Type u} [Family F]

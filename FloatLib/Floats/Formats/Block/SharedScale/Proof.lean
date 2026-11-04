@@ -17,8 +17,8 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Correctness of shared-scale blocks
 
-The direct vector kernel implements contextual quantization, and the format satisfies the generic
-block-scaled representation capability.
+Here we prove that the direct vector kernel implements contextual quantization and that the
+format satisfies the generic block-scaled representation capability.
 -/
 
 @[expose] public section
@@ -27,7 +27,7 @@ namespace FloatLib.Floats.Formats.Block
 
 open FloatLib.Numerics
 
-/-- The common format represents exactly its vector-valued block denotation. -/
+/-- A code represents a vector in the common format if and only if it decodes to that vector. -/
 @[simp] theorem represents_iff {lanes : Nat} (code : FormatCode (SharedScale lanes))
     (value : Vector Rat lanes) :
     FormatRepresents (SharedScale lanes) code value ↔ decode code = value := by
@@ -56,7 +56,7 @@ theorem scale_pos (exponent : Int) : 0 < scale exponent := by
 /--
 The proof-facing block-scaled capability for the unbounded shared-scale representation.
 
-Executable decoding still projects the exponent and significands directly.
+Executable decoding reads the exponent and significands straight from the code.
 -/
 theorem blockScaled_sharedScale (lanes : Nat) :
     BlockScaled (formatSystem (SharedScale lanes))

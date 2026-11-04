@@ -15,7 +15,7 @@ public import FloatLib.Floats.Formats.Posit.Algebraic.Root.Runtime
 A comparison oracle orders a nonnegative real target against exact rational candidates. Two
 bounded searches locate its binade and a truncated significand with two extra bits. An exact
 comparison with the half-integer then supplies Lean's accuracy certificate. The final rounding
-discards that certificate once; no floating-point approximation of the target is needed.
+discards that certificate once, and no floating-point approximation of the target is needed.
 
 The search bounds come from the complete descriptor. Custom biases and finite encodings use
 the descriptor-aware dyadic rounder with a representative of the same accuracy class.
@@ -91,8 +91,8 @@ def certificate (fmt : FloatFormat) (compare : Rat → Ordering) : Certificate :
   | .inexact .gt => 3
 
 /--
-Round a certificate once. Its exponent must be no greater than the target exponent; the
-constructor above reserves two guard bits to ensure this throughout the finite search interval.
+Round a certificate once. Its exponent must be no greater than the target exponent. The
+constructor above reserves two guard bits so that this holds throughout the finite search interval.
 -/
 @[inline] def roundCertificate (fmt : FloatFormat) (sign : Bool) (c : Certificate) :
     Model fmt :=
@@ -106,7 +106,7 @@ constructor above reserves two guard bits to ensure this throughout the finite s
 Total nearest-even rounding of a signed magnitude given an exact comparison oracle.
 
 The oracle's contract is comparison with a nonnegative real. At half the least subnormal,
-ties select signed zero. The upper cutoff uses the descriptor's overflow policy; values just
+ties select signed zero. The upper cutoff uses the descriptor's overflow policy. Values just
 below it still pass through the significand rounder, which handles overflow caused by carry.
 -/
 def round (fmt : FloatFormat) (sign : Bool) (compare : Rat → Ordering) : Model fmt :=

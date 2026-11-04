@@ -13,13 +13,13 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Configured standard OCP MX destinations
 
-`ExecFloat.OCP.MX.Standard profile` is a constrained 32-lane destination on the common carrier.
-It is separate from the arbitrary-length raw block family. Conversion selects the recommended
-max-binade scale, and the element SAT/OVF policy is the conversion context.
+`ExecFloat.OCP.MX.Standard profile` is a 32-lane destination on the common carrier, constrained
+by its concrete profile, and a different family from the arbitrary-length raw blocks. Conversion
+picks the recommended max-binade scale, and the conversion context is the element SAT/OVF policy.
 
-The generic exact domain is a vector of signed rationals. A stored block containing non-finite
-lanes has no value in that domain and is summarized as NaN. The lane-wise `decode` accessor
-keeps every individual NaN, infinity, and finite neighbor.
+In generic code the exact domain is a vector of signed rationals. A stored block with a non-finite
+lane has no value there, so it's summarized as NaN. If you need every lane, the lane-wise `decode`
+accessor keeps each NaN and infinity along with its finite neighbors.
 -/
 
 @[expose] public section
@@ -124,7 +124,8 @@ def run (overflow : OverflowMode) :
 
 /--
 Destination specification. The rounded block is constrained by the numerical lane-rounding
-relation at the selected scale; the flags are specified as `status`, the same function `run` uses.
+relation at the selected scale, and the flags are specified as `status`, the same function `run`
+uses.
 -/
 def spec (overflow : OverflowMode) (input : NumericalValue (Vector SignedRat 32))
     (outcome : ExecFloat.ConversionOutcome (Standard profile)) : Prop :=

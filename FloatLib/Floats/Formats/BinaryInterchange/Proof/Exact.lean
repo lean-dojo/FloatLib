@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Core
 These definitions attach exact, total, or finite semantic evidence to an executable model and
 move between the three proof-indexed views without changing its runtime bits.
 
-The views let later theorems ask for the exceptional-value hypothesis they need instead of
-carrying a record of unrelated facts. Constructors and projections pass the underlying model
+With three views, a later theorem can ask for just the exceptional-value hypothesis it needs
+and carry no record of unrelated facts. Constructors and projections pass the underlying model
 value through, and their semantic proofs are erased.
 -/
 

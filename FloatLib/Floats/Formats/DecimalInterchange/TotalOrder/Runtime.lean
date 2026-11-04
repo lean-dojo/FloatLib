@@ -11,19 +11,18 @@ public import Mathlib.Order.Prod.Lex.Basic
 /-!
 # Total ordering of decimal datums
 
-IEEE 754-2019 §5.10 orders negative NaNs first, then negative infinity,
-negative finite values, positive finite values, positive infinity, and positive
-NaNs. Within the finite parts, numerical value precedes quantum; quantum order
-is reversed for negative datums, including negative zero.
+IEEE 754-2019 §5.10 orders negative NaNs first, then negative infinity, negative finite values,
+positive finite values, positive infinity, and positive NaNs. Within the finite parts, numerical
+value comes before quantum, and quantum order is reversed for negative datums, negative zero
+included. So `1.00` precedes `1.0`, while `-1.0` precedes `-1.00`.
 
-For positive NaNs, signaling precedes quiet; this rule reverses for negative NaNs.
-§5.10(d)(5)(iii) leaves the remaining payload order implementation-defined.
-Here smaller payloads precede larger ones for positive NaNs, with the reverse
-order for negative NaNs.
+For positive NaNs, signaling precedes quiet, and the rule reverses for negative NaNs.
+§5.10(d)(5)(iii) leaves the remaining payload order to the implementation, and we put smaller
+payloads before larger ones for positive NaNs, with the reverse order for negative NaNs.
 
-The key is injective on complete datums. It orders canonical BID/DPD members
-after decoding; it deliberately cannot distinguish redundant encodings of the
-same datum. These predicates never signal invalid.
+The key is injective on complete datums. It orders canonical BID/DPD members after decoding, and
+on purpose it can't tell redundant encodings of the same datum apart. These predicates never
+signal invalid.
 -/
 
 @[expose] public section

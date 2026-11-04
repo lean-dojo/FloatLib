@@ -12,10 +12,10 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Bounded fixed-point conversion runtime
 
-Conversion into bounded fixed point takes the `OverflowPolicy` of its arithmetic as its context:
-`reject` returns `outOfRange`, `wrap` reduces the rounded coefficient modulo `2 ^ width`, and
-`saturate` clamps it to the signed range. `Conversion.Instances` installs `reject` as the
-context-free default.
+Conversion into bounded fixed point takes the same `OverflowPolicy` as the arithmetic, as its
+context. Under `reject` it returns `outOfRange`, `wrap` reduces the rounded coefficient modulo
+`2 ^ width`, and `saturate` clamps it to the signed range. When no context is given,
+`Conversion.Instances` installs `reject`.
 -/
 
 @[expose] public section
@@ -90,10 +90,10 @@ def coefficientSpec (policy : OverflowPolicy) (exact : Rat) (stored : Int) : Pro
 /--
 Conversion relates the delivered coefficient to integer rounding, range, wrap, and clamp.
 
-The status is retained in full. Its clause names the runtime `finiteStatus`;
+The status is retained in full. Its clause names the runtime `finiteStatus`, and
 `Conversion.finiteStatus_eq` states those flags through the same nearest-even coefficient and
-`InRange` as the value clauses, without the runtime range test. Rejection of a finite input occurs
-exactly when the nearest-even coefficient is out of range under `reject`. The other policies always
+`InRange` as the value clauses, without the runtime range test. Under `reject`, a finite input is
+rejected if and only if its nearest-even coefficient is out of range. The other policies always
 deliver a value.
 -/
 def spec :

@@ -10,9 +10,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Declet
 /-!
 # Packing trailing decimal digits into consecutive DPD declets
 
-Trailing decimal digits are split into base-1000 groups and packed into consecutive ten-bit
-declets, least significant first. Decoding interprets every declet, including redundant
-patterns, as three decimal digits.
+Below its combination field, a DPD word stores the rest of the coefficient: the trailing digits are
+split into base-1000 groups, and each group goes into its own ten-bit declet, least significant
+first. Decoding reads every declet as three decimal digits, redundant patterns included.
 -/
 
 @[expose] public section

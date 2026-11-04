@@ -11,19 +11,20 @@ public import FloatLib.Numerics.Enclosure.Interval.Bounds
 /-!
 # Partial interval arithmetic on arbitrary endpoint carriers
 
-Exact endpoint calculations take place in an ordered field. A supplied `OutwardRounding`
-encodes the lower and upper results. An operation returns `none` if decoding fails, an outward
-bound is unavailable, or a divisor interval contains zero. Binary, decimal, and posit adapters
+Endpoint calculations happen exactly, in an ordered field, and a supplied `OutwardRounding` encodes
+the lower and upper results. An operation returns `none` if decoding fails, if an outward bound is
+unavailable, or if a divisor interval contains zero. The binary, decimal, and posit adapters
 instantiate the scalar field with exact rationals.
 
-The arithmetic operations in this file do not check that decoded endpoints are ordered. A reversed
-input, which has no member, can still give a `some` result; the containment theorems then say
-nothing, since they quantify over members. `Interval.ofBounds?` builds only ordered intervals, and
-`hull?` and `intersect?` in `Interval.Operations` reject reversed bounds.
+Watch out for one thing. The arithmetic operations in this file don't check that decoded endpoints
+are ordered, so a reversed input, which has no member, can still give a `some` result. The
+containment theorems then say nothing, because they quantify over members. `Interval.ofBounds?`
+builds only ordered intervals, and `hull?` and `intersect?` in `Interval.Operations` reject reversed
+bounds.
 
-This implements the outward enclosure construction in Rump's
-[Verification methods](https://doi.org/10.1017/S096249291000005X), §5.3, equations (5.14)–(5.15).
-`OutwardRounding` requires containment, so an adapter may return wider bounds than the tight
+This implements the outward enclosure construction in Rump's [Verification
+methods](https://doi.org/10.1017/S096249291000005X), §5.3, equations (5.14)-(5.15).
+`OutwardRounding` only requires containment, so an adapter may return wider bounds than the tight
 directed rounding used there.
 -/
 
@@ -46,8 +47,8 @@ def checkedCandidates? (decode : α → Option β) (candidate : β → Interval 
 /--
 Build a sound partial rounder from candidate endpoints and their exact decoder.
 
-The check also rejects overflowed, saturated-on-the-wrong-side, and exceptional results.
-Candidate generation may use a fast untrusted search; successful results carry checked bounds.
+The check also rejects overflowed, saturated-on-the-wrong-side, and exceptional results. Candidate
+generation may use a fast untrusted search, because successful results carry checked bounds.
 -/
 def ofCandidates (decode : α → Option β) (candidate : β → Interval α) :
     OutwardRounding α β where
@@ -97,7 +98,7 @@ def liftBinary? (R : OutwardRounding α β) (f : Interval β → Interval β →
 def neg? (R : OutwardRounding α β) (I : Interval α) : Option (Interval α) :=
   liftUnary? R (fun a => ⟨-a.hi, -a.lo⟩) I
 
-/-- Outward-rounded addition; missing finite interpretations and overflow return `none`. -/
+/-- Outward-rounded addition. Missing finite interpretations and overflow return `none`. -/
 def add? (R : OutwardRounding α β) (I J : Interval α) : Option (Interval α) :=
   liftBinary? R (fun a b => ⟨a.lo + b.lo, a.hi + b.hi⟩) I J
 

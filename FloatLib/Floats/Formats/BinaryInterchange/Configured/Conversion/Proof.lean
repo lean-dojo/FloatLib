@@ -19,7 +19,7 @@ Configured conversion inherits the descriptor's default IEEE nearest-value contr
 the complete outcome for every context.
 
 It is the final transport layer between descriptor-level conversion semantics and the public packed
-carrier. The statements do not mention storage selection: every configured backend must decode to
+carrier. Storage selection never appears in the statements. Every configured backend must decode to
 the same converted value and status, so moving from a native word to arbitrary-width storage
 cannot change the numerical contract.
 -/
@@ -69,7 +69,7 @@ theorem implements_run :
   implements_runWith configuredPack
 
 /--
-An outcome satisfies the semantic contract exactly when it is the outcome of `run`, configured
+An outcome satisfies the semantic contract if and only if it is the outcome of `run`, configured
 word and status fields included.
 -/
 theorem spec_iff_eq_run (context : Context) (input : NumericalValue SignedRat)
@@ -191,8 +191,8 @@ theorem decode_of_isNaN {source : FloatFormat}
 /--
 Default conversion of a decoded configured NaN is `Model.cast` on the source model.
 An IEEE destination keeps the sign and any payload that fits, and an oversized payload becomes zero.
-Maximum-NaN encodings keep only the sign, while FNUZ has a single NaN. Invalid is raised exactly
-for a signaling source. The destination must have a NaN encoding. When it has none,
+Maximum-NaN encodings keep only the sign, while FNUZ has a single NaN. Invalid is raised if and
+only if the source is signaling. The destination must have a NaN encoding. When it has none,
 `run_default_decode_of_isNaN_of_encoding_finite` shows that conversion fails while
 `Model.cast` raises invalid.
 -/

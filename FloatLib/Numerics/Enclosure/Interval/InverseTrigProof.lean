@@ -12,10 +12,10 @@ public import FloatLib.Numerics.Enclosure.Interval.ElementaryProof
 /-!
 # Real containment for interval arcsine and arccosine
 
-Mathlib's `Real.arcsin_eq_arctan` connects interior point enclosures to arcsine. Its
-monotonicity theorem then bounds every real member of an interval by the endpoint images.
-The cases at `-1` and `1` use the existing enclosure of π/4. Arccosine containment follows
-from `Real.arccos_eq_pi_div_two_sub_arcsin`.
+Mathlib's `Real.arcsin_eq_arctan` connects interior point enclosures to arcsine, and the
+monotonicity of arcsine then bounds every real member of an interval by the endpoint images. At `-1`
+and `1` we use the enclosure of π/4. Arccosine containment follows from
+`Real.arccos_eq_pi_div_two_sub_arcsin`.
 -/
 
 public section

@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Code.Runtime
 /-!
 # Two-limb runtime access for configured posits
 
-Formats from 65 through 128 bits use a persistent `UInt128` pair by default. These operations
-expose and pack that carrier directly, without constructing a model at the storage boundary.
+Formats from 65 through 128 bits are stored as a persistent `UInt128` pair by default, and these
+operations read and pack that carrier as it is, with no model built at the storage boundary.
 -/
 
 @[expose] public section
@@ -29,10 +29,10 @@ variable {format : Format}
   code.1
 
 /--
-Store one already-range-checked two-limb encoding directly.
+Store a two-limb encoding whose range is already checked.
 
-Unlike `pack`, this carrier-native boundary performs no natural-number conversion. It is the
-result constructor for arithmetic kernels whose complete code already resides in `UInt128`.
+Unlike `pack`, this carrier-native boundary does no natural-number conversion. Arithmetic kernels
+whose complete code already sits in a `UInt128` use it to build their result.
 -/
 @[always_inline, inline] def packWord
     (word : FloatLib.Numerics.FixedWord.UInt128)

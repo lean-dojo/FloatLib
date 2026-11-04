@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Rounded-real semantics
 
-Scaled rational inputs connect to the independent real-number rounding definition `roundAt`
-through their exponent and mantissa. The proof removes the sign, identifies the exact exponent
-and scaled mantissa seen by the generic rounding theory, and proves that nearest-even quotient
-selection makes the same tie decision.
+A scaled rational input meets the independent real-number rounding definition `roundAt` through
+its exponent and mantissa. The proof drops the sign, identifies the exact exponent and scaled
+mantissa that the generic rounding theory sees, and shows that nearest-even quotient selection
+makes the same tie decision.
 
-For descriptors with `fmt.isIEEE = true`, the remaining lemmas show that an exact magnitude at
-most the largest finite value produces a finite packed result.
+For descriptors with `fmt.isIEEE = true`, the remaining lemmas show that an exact magnitude no
+larger than the largest finite value gives a finite packed result.
 -/
 
 @[expose] public section

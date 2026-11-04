@@ -13,19 +13,19 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Runtime
 /-!
 # Decimal interchange codecs and proofs
 
-The executable BID and DPD implementations satisfy exact datum round trips for
-every `Format` descriptor, including decimal32, decimal64, and decimal128.
-Every word decodes to a representable datum.
-Canonicalization and conversion between encodings preserve that datum, including
-cohort exponent, signed zero, infinity sign, and NaN sign, signaling bit, and payload.
+This module proves that the BID and DPD codecs lose nothing. For every `Format` descriptor,
+decimal32, decimal64, and decimal128 included, encoding a datum and decoding the word gives the
+datum back, and every word decodes to a representable datum. Canonicalizing a word or converting it
+to the other encoding keeps that datum whole: the cohort exponent, the sign of a zero or an
+infinity, and a NaN's sign, signaling bit, and payload.
 
-The specifications are IEEE 754-2019 §§3.3, 3.5 and 5.5.2, Tables 3.3–3.4 and 3.6, and
+Both codecs follow IEEE 754-2019 §§3.3, 3.5 and 5.5.2, Tables 3.3, 3.4 and 3.6, and
 Mike Cowlishaw's *Densely Packed Decimal Encoding*:
 <https://speleotrove.com/decimal/DPDecimal.html>.
 The IEEE standard is identified by DOI `10.1109/IEEESTD.2019.8766229`.
 
-These are representation guarantees. Import `Arithmetic.Basic` for decimal
-arithmetic and its rounding, preferred-exponent, and exception theorems.
+Everything here is about representation. For decimal arithmetic, with its rounding,
+preferred-exponent, and exception theorems, import `Arithmetic.Basic`.
 -/
 
 @[expose] public section
@@ -73,8 +73,8 @@ theorem canonicalize_idempotent (encoding : Encoding) (f : Format)
       encoding.canonicalize f word :=
   encoding.codec.canonicalize_idempotent encoding.lawful f word
 
-/-- In both encodings, two words have the same canonical word exactly when they decode to the same
-datum. -/
+/-- In both encodings, two words have the same canonical word if and only if they decode to the
+same datum. -/
 theorem canonicalize_eq_canonicalize_iff (encoding : Encoding) (f : Format)
     (left right : BitVec f.bitWidth) :
     encoding.canonicalize f left = encoding.canonicalize f right ↔

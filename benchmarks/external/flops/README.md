@@ -26,7 +26,7 @@ python3 benchmarks/scripts/compare-p3109-flops.py \
 ```
 
 `--cpu N` picks one logical CPU from the process's allowed set, and without it the script
-uses the first allowed CPU. It never overwrites an existing result. Build logs and generated
+uses the first allowed CPU. It won't overwrite an existing result. Build logs and generated
 comparison vectors stay in the work directory, while `results.json` gets the source and
 compiler information, exact fixture words, agreement counts, individual measurements, and
 summary statistics.
@@ -40,7 +40,7 @@ with `z = (17*x + 29*y + 43) mod 256`. That's **529,152 arithmetic cases** in al
 script compares the complete byte streams.
 
 On top of those, it compares the 16 exact input/output fixtures used by each of the 12
-timing configurations, which adds **192 more cases**. Any mismatch stops the experiment
+timing configurations (three formats times four operations), which adds **192 more cases**. Any mismatch stops the experiment
 before timing starts. These checks cover the chosen formats and policy, so stochastic
 rounding and both saturation modes go untested.
 
@@ -61,9 +61,9 @@ has to match an independent Python simulation of the fixture chain.
 We report the median and the 5th to 95th percentiles of those nine measurements. Those
 percentiles describe how much the trials varied, and they aren't a confidence interval.
 Because the two libraries pin different Lean and C compiler versions, this compares the
-compiled libraries and their adapters. It can't separate the cost of an algorithm from its
+compiled libraries and their adapters, and it can't separate the cost of an algorithm from its
 compiler.
 
 Both the [results](../../results/p3109-flops/results.json) and the
-[guide table](../../../site/content/chapters/17-performance.md#p3109-arithmetic-with-flops)
+[guide table](../../../site/content/chapters/12-performance.md#how-does-floatlib-compare-with-flops)
 report this workload on its own, apart from the IEEE and posit benchmark workloads.

@@ -13,15 +13,15 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 /-!
 # Shared finite-prefix proof helpers
 
-These lemmas describe sticky-bit jamming independently of the operation that generated the
-prefix. Quotient and square-root kernels share this proof layer.
+These lemmas describe sticky-bit jamming without caring which operation produced the prefix, and
+that is why the quotient and square-root kernels can share them.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.Posit.Model.StickyPrefix
 
-/-- Jamming preserves an exact prefix and otherwise sets precisely its low bit. -/
+/-- Jamming leaves an exact prefix alone, and otherwise it sets the low bit and nothing else. -/
 theorem jamRemainder_eq (value remainder : Nat) :
     jamRemainder value remainder =
       if remainder = 0 then

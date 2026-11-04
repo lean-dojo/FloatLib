@@ -16,24 +16,25 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of standard posit quire operations
 
-The executable quire operations agree with their exact coefficient, dyadic, and rational
-semantics. The refinement theorems cover these operations from Posit Standard (2022), §5.11:
+Every executable quire operation agrees with its exact coefficient, dyadic, and rational
+semantics. Our refinement theorems cover these operations of Posit Standard (2022), §5.11:
 
-* `pToQ`;
-* `qNegate` and `qAbs`;
-* `qAddP` and `qSubP`;
-* `qAddQ` and `qSubQ`;
-* `qMulAdd` and `qMulSub`; and
-* `qToP`.
+* `pToQ`
+* `qNegate` and `qAbs`
+* `qAddP` and `qSubP`
+* `qAddQ` and `qSubQ`
+* `qMulAdd` and `qMulSub`
+* `qToP`
 
-For each accumulation and quire-quire operation there are three kinds of result: on ordinary
-inputs whose exact coefficient stays ordinary, the stored coefficient and the rational value are
-exact (`coefficient_*_of_ordinary`, `toRat?_*_of_ordinary`); an exact coefficient outside the
-ordinary range gives quire NaR (`*_eq_nar_of_not_ordinary`); and every NaR input gives quire NaR
-(the `*_nar_*` simp lemmas).
+Each accumulation and quire-quire operation has three kinds of result. On ordinary inputs whose
+exact coefficient stays ordinary, the stored coefficient and the rational value are exact
+(`coefficient_*_of_ordinary`, `toRat?_*_of_ordinary`). An exact coefficient outside the ordinary
+range gives quire NaR (`*_eq_nar_of_not_ordinary`). And every NaR input gives quire NaR (the
+`*_nar_*` simp lemmas).
 
-The runtime definitions live in `Arithmetic.Runtime`. Keeping the refinement layer separate lets
-execution-only clients use the integer and dyadic kernels without importing the full proof graph.
+Runtime definitions are in `Arithmetic.Runtime`. We keep this refinement layer apart so that a
+client who only executes can use the integer and dyadic kernels without importing the whole proof
+graph.
 
 ## References
 
@@ -191,7 +192,7 @@ private theorem toDyadic?_eq_some_cases
       contradiction
 
 /--
-Every ordinary posit dyadic aligns exactly with the least-significant bit of its associated quire.
+Every ordinary posit dyadic lines up with the least-significant bit of its associated quire.
 
 This supplies the conversion kernel's scale condition at every width, including the two-bit
 boundary format.
@@ -416,9 +417,9 @@ theorem toRat?_qAbs_of_ordinary
     simp [toRat?, hnar]
 
 /--
-Quire absolute value is exact on the rational semantics: a quire with rational value `q` has
-absolute value `|q|`. Negating an ordinary coefficient stays in the ordinary range, so the result is
-never NaR; NaR itself stays NaR (`qAbs_nar`).
+Quire absolute value is exact on the rational semantics, so a quire with rational value `q` has
+absolute value `|q|`. Negating an ordinary coefficient stays in the ordinary range, which means the
+result is never NaR, and NaR itself stays NaR (`qAbs_nar`).
 -/
 theorem toRat?_qAbs (value : Model format) {q : Rat} (hvalue : value.toRat? = some q) :
     (qAbs value).toRat? = some |q| := by
@@ -619,8 +620,8 @@ theorem addDyadic_eq_nar_of_exponent_lt
   · rw [ite_eq_right hnar, ite_eq_left hexponent]
 
 /--
-Once the accumulator is ordinary and the increment is aligned, the kernel is exactly
-`ofCoefficient` applied to the coefficient sum.
+Once the accumulator is ordinary and the increment is aligned, the kernel is `ofCoefficient`
+applied to the coefficient sum.
 -/
 theorem addDyadic_eq_ofCoefficient
     (accumulator : Model format)
@@ -775,7 +776,7 @@ theorem coefficient_qAddP_of_ordinary
 
 /--
 Adding a finite posit whose exact coefficient sum is not ordinary produces quire NaR. The
-accumulator is not assumed ordinary; a NaR accumulator gives NaR unconditionally
+accumulator need not be ordinary, and a NaR accumulator gives NaR unconditionally
 (`qAddP_nar_accumulator`).
 -/
 theorem qAddP_eq_nar_of_not_ordinary
@@ -1104,8 +1105,8 @@ theorem toRat?_pToQ
 /--
 Quire-to-posit conversion agrees with Posit Standard (2022) rational rounding.
 
-An ordinary quire rounds its exact rational value once; the reserved quire NaR maps to the unique
-posit NaR instead of being assigned a finite or infinite numerical value.
+An ordinary quire rounds its exact rational value once. The reserved quire NaR maps to the unique
+posit NaR and is never given a finite or infinite numerical value.
 -/
 theorem qToP_eq_roundRat (value : Model format) :
     qToP value =

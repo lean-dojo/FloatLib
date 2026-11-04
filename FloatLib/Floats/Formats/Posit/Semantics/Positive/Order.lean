@@ -19,13 +19,13 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Order of positive Posit encodings
 
-Regime order and exponent/fraction-tail order imply that unsigned codes below the sign mask are
-strictly ordered by their exact rational meanings. Crossing a variable-length regime boundary
-changes how many bits remain for exponent and fraction, so ordinary fixed-field lexicographic
-reasoning is not enough.
+Below the sign mask, a larger unsigned code means a larger exact rational value. This module
+proves that from two smaller facts, regime order and exponent/fraction-tail order. A
+lexicographic argument over fixed fields won't do, because crossing a variable-length regime
+boundary changes how many bits remain for exponent and fraction.
 
-The theorem justifies native unsigned comparison for positive finite posits and supports the signed
-order development without decoding both operands again.
+With this theorem, positive finite posits can be compared as native unsigned words, and the
+signed order development builds on it without decoding both operands again.
 -/
 
 @[expose] public section
@@ -116,8 +116,8 @@ theorem nonnegativeRatAt_nextPrecision_two_mul
 /--
 Within one regime block, increasing a positive unsigned code strictly increases its exact value.
 
-Division by the trailing-field modulus yields equal regime prefixes; taking remainders removes
-them. Code order is then exactly order of the bounded exponent/fraction remainder, whose rational
+Division by the trailing-field modulus gives equal regime prefixes, and taking remainders removes
+them. Code order is then the order of the bounded exponent/fraction remainder, whose rational
 interpretation is strictly monotone.
 -/
 theorem nonnegativeRatAt_lt_of_regimeValue_eq
@@ -148,7 +148,7 @@ theorem nonnegativeRatAt_lt_of_regimeValue_eq
 
 /--
 Two adjacent regime blocks are strictly separated because every tail lies in `[1, 16)` and the
-Posit Standard (2022) advances the binary scale by exactly four at each regime step.
+Posit Standard (2022) advances the binary scale by four at each regime step.
 -/
 private theorem mul_zpow_lt_of_regime_lt
     {leftTail rightTail : Rat}
@@ -229,7 +229,7 @@ theorem nonnegativeRatAt_strictMonoOn (format : Format) :
   intro left hleft right hright hlt
   exact nonnegativeRatAt_lt_of_lt format hlt hright
 
-/-- On nonnegative finite codes, rational-value comparison is exactly unsigned-code comparison. -/
+/-- On nonnegative finite codes, comparing rational values is the same as comparing codes. -/
 theorem nonnegativeRatAt_le_iff
     (format : Format) {left right : Nat}
     (hleft : left < format.signMaskNat)

@@ -31,11 +31,11 @@ variable {format : FloatFormat} {plan : StoragePlan format}
 Interpret a packed runtime code in the exact-width proof model.
 
 The machine-word and two-word carriers already carry the proof that their natural-number view is
-below `2 ^ format.bitWidth`, so the model word is built with `BitVec.ofNatLT` and compiled code
-performs no modular reduction and no power computation on the decode path. For a single machine
-word the conversion is the unboxing of the word. The byte carrier keeps the canonical
-`Model.ofNatBits` decoder because the byte tier executes exhaustive tables, whose proofs are
-stated in terms of that decoder.
+below `2 ^ format.bitWidth`. So the model word is built with `BitVec.ofNatLT`, and compiled code
+does no modular reduction and no power computation on the decode path. For a single machine word
+the conversion is the unboxing of the word. The byte carrier keeps the canonical
+`Model.ofNatBits` decoder, because the byte tier runs exhaustive tables whose proofs are stated
+in terms of that decoder.
 -/
 @[always_inline, inline] def toModel : Code plan → Model format :=
   match plan with

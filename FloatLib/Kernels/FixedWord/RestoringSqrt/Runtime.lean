@@ -12,9 +12,9 @@ public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 /-!
 # Fixed-word restoring square-root runtime
 
-The restoring loop consumes a four-word radicand two bits at a time and retains the root and
-remainder in two words. `RestoringSqrt.Proof` proves the result correct under the digit-count and
-capacity bounds stated below.
+This loop consumes a four-word radicand two bits at a time and keeps the root and remainder in two
+words. `RestoringSqrt.Proof` proves the result correct under the digit-count and capacity bounds
+stated below.
 -/
 
 @[expose] public section

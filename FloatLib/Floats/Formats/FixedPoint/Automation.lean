@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 /-!
 # Fixed-point rules for numerical automation
 
-The rules expose exact rational semantics. Runtime addition, subtraction, negation, and
-multiplication remain the direct integer-coefficient kernels in `FixedPoint.Code`.
+These automation rules let proofs reason about fixed point through its exact rational semantics.
+Nothing changes at runtime, where addition, subtraction, negation, and multiplication are the
+direct integer-coefficient kernels in `FixedPoint.Code`.
 -/
 
 public meta section

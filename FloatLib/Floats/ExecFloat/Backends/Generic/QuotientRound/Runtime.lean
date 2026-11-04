@@ -12,17 +12,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
 /-!
 # Division with one integer quotient
 
-The nearest-even kernel divides a doubled numerator. The low quotient bit distinguishes values below
-a rounding midpoint, and the next bit resolves ties whose retained significand is odd. Only the
-remaining case needs an exactness check. A machine-word product often disproves exactness before the
-full product is needed. Equality of machine words never certifies equality of natural numbers.
+The nearest-even kernel divides a doubled numerator. The low quotient bit tells values below a
+rounding midpoint apart, and the next bit resolves ties whose retained significand is odd, so only
+the remaining case needs an exactness check. A machine-word product often disproves exactness before
+the full product is needed, but equal machine words never certify equal natural numbers.
 
 Scaling and the extra quotient bit share one numerator shift. Neither the fraction width nor the
 integer division has a fixed limb bound. `GeneralProof` proves agreement with the exact rational
-rounders, including subnormal results and all six rounding directions.
+rounders, subnormal results and all six rounding directions included.
 
 Nearest-away rounding first tests for a grid tie with `isGridTieAtExponent`, which costs one more
-remainder, and then rounds the magnitude up at a tie and to nearest-even otherwise.
+remainder, and then rounds the magnitude up at a tie and to nearest even otherwise.
 -/
 
 @[expose] public section
@@ -161,15 +161,15 @@ conventional IEEE descriptor and the descriptor-generic branch otherwise.
   else generalRoundAtExponent fmt sign num den exponent rationalExponent
 
 /--
-Whether `(num / den) * 2^exponent` lies exactly halfway between two adjacent values of the binary
-grid of `fmt`, reusing a supplied rational exponent.
+Whether `(num / den) * 2^exponent` lies halfway between two adjacent values of the binary grid of
+`fmt`, reusing a supplied rational exponent.
 
-`rationalExponent` must equal `RationalBinary.floorLog2 num den`. The test is then
-`rationalIsGridTieScaled` (`isGridTieAtExponent_eq`), and with another exponent it scales the
-quotient to the wrong grid. The quotient is scaled as the nearest-even and directed branches scale
-it, to the subnormal spacing below the normal range and to `fracWidth + 1` significant bits above
-it, and it is a tie when twice the remainder equals the denominator. A zero numerator or
-denominator and a magnitude below half the least subnormal are never ties.
+`rationalExponent` must equal `RationalBinary.floorLog2 num den`, and then the test is
+`rationalIsGridTieScaled` (`isGridTieAtExponent_eq`). Any other exponent scales the quotient to the
+wrong grid. The scaling is the one the nearest-even and directed branches use, to the subnormal
+spacing below the normal range and to `fracWidth + 1` significant bits above it, and the value is a
+tie when twice the remainder equals the denominator. A zero numerator or denominator, or a magnitude
+below half the least subnormal, is never a tie.
 -/
 @[inline] def isGridTieAtExponent (fmt : FloatFormat) (num den : Nat)
     (exponent rationalExponent : Int) : Bool :=

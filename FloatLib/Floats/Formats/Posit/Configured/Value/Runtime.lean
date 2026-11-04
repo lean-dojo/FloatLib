@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Runtime
 /-!
 # Runtime interface for configured posit values
 
-Configured posit values support packing, exact decoding, classification, and raw-word conversion
-independently of storage choice.
+Whatever storage a width uses, its values get the same packing, exact decoding, classification,
+and raw-word conversion. `toModel` and `ofModel` move between a value and its model, `ofNatBits`
+and `toNatBits` handle raw words, and `decode` and `toRat?` give the exact value.
 -/
 
 @[expose] public section
@@ -59,19 +60,19 @@ Inputs outside the configured width are reduced modulo `2 ^ format.bits`, matchi
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) : Nat :=
   (toModel value).toNatBits
 
-/-- Decode the tapered fields, retaining zero and NaR as separate constructors. -/
+/-- Decode the tapered fields, with zero and NaR kept as constructors of their own. -/
 @[inline] def exactValue
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     Model.ExactValue format :=
   (toModel value).decodeExact
 
-/-- Complete rational denotation; NaR remains an exceptional Not-a-Real observation. -/
+/-- Complete rational denotation. NaR stays an exceptional Not-a-Real observation. -/
 @[inline] def decode
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     FloatLib.Numerics.NumericalValue Rat :=
   Model.decode (toModel value)
 
-/-- Exact rational value of an ordinary configured posit, or `none` exactly for NaR. -/
+/-- Exact rational value of an ordinary configured posit. NaR, and only NaR, gives `none`. -/
 @[inline] def toRat?
     (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     Option Rat :=

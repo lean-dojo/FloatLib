@@ -14,23 +14,22 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 
 Write a positive base in lowest terms as `A / B` and an exponent as `n / d`. The real power
 `(A / B) ^ (n / d)` is rational exactly when `A` and `B` are perfect `d`-th powers, and then it
-equals `c ^ n` for the rational root `c` of the base. `exactRoot?` decides this without forming
-any power of the base. A radicand `m ≥ 2` with at most `d` bits cannot be a perfect `d`-th power,
-since its root would be at least two. That test runs before the integer root, so even an
-enormous binary denominator `d` costs one comparison.
+equals `c ^ n` for the rational root `c` of the base. `exactRoot?` decides this without forming any
+power of the base. A radicand `m ≥ 2` with at most `d` bits can't be a perfect `d`-th power, since
+its root would be at least two. That test runs before the integer root. So even an enormous binary
+denominator `d` costs one comparison.
 
-The descriptor stores `c` and `n`, never `c ^ n`. The size of that power can be far beyond memory
-although its magnitude is moderate. For example, `x = (1 + 2^-26)^2` and `y = (2^35 + 1) / 2` are
-binary64 values, `x ^ y` is about `2^738.66`, and the odd part of its numerator has about
-`8.9 * 10^11` bits. Equality with a rational boundary is decided instead by capped exponentiation
-of the root's numerator and denominator, which stops as soon as a partial power exceeds the
-corresponding part of the boundary.
+The descriptor stores `c` and `n`, never `c ^ n`, because that power can be far too large for memory
+even when its magnitude is moderate. Take the binary64 values `x = (1 + 2^-26)^2` and
+`y = (2^35 + 1) / 2`: `x ^ y` is only about `2^738.66`, but the odd part of its numerator has about
+`8.9 * 10^11` bits. So equality with a rational boundary is decided by capped exponentiation of the
+root's numerator and denominator, which stops as soon as a partial power exceeds the corresponding
+part of the boundary.
 
-An exact value is built only when it can be a cell boundary of a binary format: its denominator
-must be a power of two and its odd significand must stay below `2 ^ (precision + 3)`. The same
-bit-length bounds decide this before the odd significand is formed.
-
-The proofs are in `RationalPower.Exact.Proof`.
+We build an exact value only when it can be a cell boundary of a binary format. Its denominator must
+be a power of two and its odd significand must stay below `2 ^ (precision + 3)`, and the same
+bit-length bounds decide this before the odd significand is formed. Proofs of all this are in
+`RationalPower.Exact.Proof`.
 -/
 
 @[expose] public section
@@ -132,13 +131,14 @@ def powEq (exact : ExactRoot) (target : ℚ) : Bool :=
 
 /--
 The described power as an exact dyadic, when it can be a cell boundary of a binary format with
-`precision` significand bits.
+`precision` significand bits. Every such boundary has a power-of-two denominator and an odd
+significand below `2 ^ (precision + 3)`, so the value is built only when the power passes both
+tests.
 
-A boundary has a power-of-two denominator and an odd significand below `2 ^ (precision + 3)`.
-The denominator test and a bit-length bound on the odd part of the numerator run first, and
-capped exponentiation then forms the odd power. The power of two stays in the exponent, so a value
-such as `2 ^ (2 ^ 60)` needs no large integer. A zero numerator describes one, whatever the root.
-The contract assumes a positive root.
+The denominator test and a bit-length bound on the odd part of the numerator run first, and capped
+exponentiation then forms the odd power. The power of two stays in the exponent, so a value such as
+`2 ^ (2 ^ 60)` needs no large integer. A zero numerator describes one, whatever the root, and the
+contract assumes a positive root.
 -/
 def toDyadic? (exact : ExactRoot) (precision : Nat) : Option Dyadic :=
   let base := exact.powerBase
@@ -162,7 +162,7 @@ Decide `base ^ exponent = target` for a positive base.
 
 An irrational power equals no rational target. Otherwise the exact-root descriptor compares the
 root's powers with the target's numerator and denominator by capped exponentiation. The cost is
-polynomial in the bit lengths of the base, the exponent and the target, not in the exponent's
+polynomial in the bit lengths of the base, the exponent and the target, and not in the exponent's
 magnitude.
 -/
 def powEq (base exponent target : ℚ) : Bool :=

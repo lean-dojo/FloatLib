@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Predicates
 /-!
 # Order Theory for Generic Rounding
 
-Monotonicity is subtle because two inputs may be scaled with different canonical exponents.  The
-proof separates equal-grid inputs from inputs in different magnitude bins and uses the bounds from
-`Rounding.Generic` in the latter case.
+Rounding is monotone, as you'd expect, but the proof takes some care because two inputs may be
+scaled by different canonical exponents. Inputs on the same grid are easy. For inputs in
+different magnitude bins, the proof uses the bounds from `Rounding.Generic`.
 -/
 
 @[expose] public section

@@ -8,16 +8,16 @@ specification. No candidate reaches the planner's cost comparison without a proo
 `Numerics` supplies the exact values and contracts, `Kernels/` supplies shared integer
 algorithms, and the backends here apply those algorithms to a format. `Backends/Dispatch` tries
 a specialized kernel first and falls back to the exact baseline when the kernel declines an
-input. A `Capability` lets the planner choose among these certified implementations. That choice
-is the only step that uses a cost model.
+input. A `Capability` lets the planner choose among these certified implementations, and that
+choice is the only step that uses a cost model.
 
 The exact dyadic fallback is executable too. We import the
 [rounding proof](../../Formats/BinaryInterchange/Dyadic/RoundingKernel/Proof.lean) into the
 [dyadic specification](../../Formats/BinaryInterchange/Spec/Dyadic.lean) before defining
 addition, subtraction, multiplication, and FMA, so their compiled rounding uses bulk integer
 shifts and nearest-even rounding at every width while keeping the descriptor's encoding
-policies. Order matters here. A compiler substitution applies when a caller is compiled, and
-importing a proof later won't rewrite functions that were already compiled.
+policies. Order matters here, because a compiler substitution applies when a caller is
+compiled, and importing a proof later won't rewrite functions that were already compiled.
 
 ## Backends
 
@@ -46,7 +46,7 @@ checks the balanced-policy selections below.
 | `Binary32` | all six = fixed-format |
 | `Binary64` | all six = fixed-format |
 
-Selection picks a certified operation, and that operation can still use the exact fallback for
+Selection picks a certified operation, but that operation can use the exact fallback for
 individual inputs. Wide-limb multiplication and FMA, for example, require normal operands and
 check the result's leading position both before rounding and after the rounding carry. So a
 value just below the normal range can take the fallback even when it would round to the smallest
@@ -104,4 +104,4 @@ equation.
    against your reviewed same-machine baseline with
    `PERF_BASELINE_DIR=/path/to/baseline benchmarks/scripts/performance-regression.sh check`. The
    [calibration guide](../../../../benchmarks/docs/Calibration.md) explains how to record a
-   baseline. Only change a cost prior after three isolated trials beat the selected candidate.
+   baseline. Change a cost prior only after three isolated trials beat the selected candidate.

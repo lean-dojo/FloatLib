@@ -13,8 +13,8 @@ public import Mathlib.Tactic.Ext
 /-!
 # Laws for shared IEEE exception flags
 
-These results quantify over every flag state and selected group. They are independent
-of number format, numerical value, rounding direction, and runtime storage.
+These results quantify over every flag state and selected group, and they don't depend on number
+format, numerical value, rounding direction, or runtime storage.
 -/
 
 public section
@@ -52,7 +52,7 @@ add_decl_doc FloatLib.Numerics.IEEEStatus.ext_isSet_iff
     isSet ({} : IEEEStatus) exception = false := by
   cases exception <;> rfl
 
-/-- A singleton selects precisely its named exception. -/
+/-- A singleton selects its named exception and no other. -/
 @[simp] theorem isSet_singleton (selected exception : IEEEException) :
     (singleton selected).isSet exception = decide (exception = selected) := by
   simp [singleton]
@@ -99,13 +99,13 @@ theorem isSet_union_of_right (left right : IEEEStatus) (exception : IEEEExceptio
     (h : right.isSet exception = true) : (left.union right).isSet exception = true := by
   simp [h]
 
-/-- Raising a group affects exactly its members. -/
+/-- Raising a group affects its members and nothing else. -/
 theorem isSet_raiseFlags (flags group : IEEEStatus) (exception : IEEEException) :
     (flags.raiseFlags group).isSet exception =
       (flags.isSet exception || group.isSet exception) := by
   simp [raiseFlags]
 
-/-- Clearing a group removes precisely the selected flags. -/
+/-- Clearing a group removes the selected flags and leaves the rest. -/
 theorem isSet_lowerFlags (flags group : IEEEStatus) (exception : IEEEException) :
     (flags.lowerFlags group).isSet exception =
       (flags.isSet exception && !group.isSet exception) := by
@@ -144,7 +144,7 @@ theorem isSet_restoreFlags (flags saved group : IEEEStatus) (exception : IEEEExc
   ext exception
   simp [isSet_lowerFlags]
 
-/-- Restoring the complete saved group recovers the snapshot exactly. -/
+/-- Restoring the complete saved group recovers the snapshot. -/
 @[simp] theorem restoreFlags_allFlags (flags saved : IEEEStatus) :
     flags.restoreFlags saved.saveAllFlags allFlags = saved := by
   ext exception

@@ -15,14 +15,14 @@ The operation typeclasses already require every executable kernel to carry its r
 `FullArithmeticCertificate` collects those six refinement statements, indexed by the shared
 operation enum, and `fullArithmeticCertificate` proves it from the six capability instances.
 
-The bundle is a packaging of `ExecFloat.Proof.add_eq_spec` and its five siblings, nothing more. It
-holds for every format that has all six capabilities, because each capability carries its
-equation, so it cannot tell a correct format from one whose stored specification is wrong, and a
-format missing a capability cannot even state it. Formats supporting only a subset of operations
-use the individual `*_eq_spec` theorems.
+Don't read more into the bundle than it says. It packages `ExecFloat.Proof.add_eq_spec` and its five
+siblings, nothing more. It holds for every format that has all six capabilities, because each
+capability carries its equation, so it can't tell a correct format from one whose stored
+specification is wrong, and a format missing a capability can't even state it. Formats supporting
+only some of the operations use the individual `*_eq_spec` theorems.
 
-Each equation says that a public operation equals the specification stored by its format
-capability. What that specification computes, and whether it conforms to a standard, is stated by
+Each equation says that a public operation equals the specification stored by its format capability,
+while what that specification computes, and whether it conforms to a standard, is the subject of
 separate format-family theorems.
 -/
 
@@ -74,9 +74,9 @@ def OperationRefines
 /--
 The six execution equations of one format, indexed by `Backend.Operation`.
 
-Indexing by the operation avoids a second six-field record parallel to the executable capability
-hierarchy. The proposition relates execution to the specifications the capabilities store; it says
-nothing about what those specifications compute.
+Indexing by the operation saves a second six-field record parallel to the executable capability
+hierarchy. The proposition relates execution to the specifications the capabilities store, and it
+says nothing about what those specifications compute.
 -/
 abbrev FullArithmeticCertificate
     (F : Type u)

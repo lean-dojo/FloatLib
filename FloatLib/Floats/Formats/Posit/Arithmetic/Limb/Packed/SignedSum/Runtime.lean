@@ -15,10 +15,10 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Packed two-limb Posit signed sums
 
-Packed two-limb signed sums align decoded dyadic fields, combine their signed magnitudes, and
-round within `UInt128` whenever the exact intermediate fits that carrier. The sole exact
-capacity branch is selected by native shift and carry checks; it preserves the same general
-dyadic semantics for intermediates that genuinely require more than 128 bits.
+Addition and subtraction of packed two-limb posits both come down to this signed sum. It aligns
+the decoded dyadic fields, combines their signed magnitudes, and rounds inside `UInt128` whenever
+the exact intermediate fits there. Native shift and carry checks pick the one exact capacity
+branch, which gives intermediates that need more than 128 bits the same general dyadic semantics.
 -/
 
 @[expose] public section

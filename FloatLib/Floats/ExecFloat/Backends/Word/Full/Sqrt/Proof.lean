@@ -17,10 +17,10 @@ public import FloatLib.Kernels.FixedWord.CheckedSqrt.Proof
 /-!
 # Correctness of the native binary64 square-root kernel
 
-The restoring two-limb kernel reconstructs its scaled radicand one base-four digit at a time, and
-its state invariant shows that the final native root is `Nat.sqrt` with the exact remainder. A
-checked Newton candidate gives the same state (`rootAndRemainderChecked_eq`). Finally, the
-format-level theorem refines the native field packing to Lean's unpacked binary64 model.
+The restoring two-limb kernel rebuilds its scaled radicand one base-four digit at a time, and its
+state invariant shows that the final native root is `Nat.sqrt`, with the exact remainder. A checked
+Newton candidate gives the same state (`rootAndRemainderChecked_eq`). A format-level theorem then
+refines the native field packing to Lean's unpacked binary64 model.
 -/
 
 @[expose] public section

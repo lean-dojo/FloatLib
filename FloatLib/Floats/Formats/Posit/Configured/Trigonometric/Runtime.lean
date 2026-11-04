@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 /-!
 # Configured posit trigonometric operations
 
-Sine, cosine, and tangent take radian arguments; their inverses return principal angles.
-Each call lifts the correctly rounded model result through the lawful storage codec without
-further numerical rounding.
+Sine, cosine, and tangent take their arguments in radians, and the inverses return principal
+angles. Each call lifts the correctly rounded model result through the lawful storage codec, with
+no further rounding.
 -/
 
 @[expose] public section
@@ -43,11 +43,11 @@ local notation "Value" =>
 @[inline] def tan (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.tan value
 
-/-- Correctly rounded inverse sine; inputs outside `[-1, 1]` produce NaR. -/
+/-- Correctly rounded inverse sine. Inputs outside `[-1, 1]` produce NaR. -/
 @[inline] def arcSin (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcSin value
 
-/-- Correctly rounded inverse cosine; inputs outside `[-1, 1]` produce NaR. -/
+/-- Correctly rounded inverse cosine. Inputs outside `[-1, 1]` produce NaR. -/
 @[inline] def arcCos (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcCos value
 

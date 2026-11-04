@@ -12,7 +12,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Tree
 /-!
 # Binary reductions and their error bounds
 
-Exact-accumulation reduction kernels are exported together with their correctness proofs.
-`Reduction.Tree` bounds the accumulated error when each addition rounds separately.
-Runtime-only consumers of exact accumulation should import `Reduction.Runtime`.
+This entry point exports the exact-accumulation reduction kernels with their correctness
+proofs. When every addition rounds its own result, `Reduction.Tree` bounds the accumulated
+error. If you only run exact accumulation and need none of the proofs, import
+`Reduction.Runtime`.
 -/

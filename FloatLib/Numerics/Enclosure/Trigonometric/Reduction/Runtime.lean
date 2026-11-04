@@ -12,14 +12,14 @@ public import Mathlib.Data.Rat.Floor
 /-!
 # Rational period reduction for sine and cosine
 
-An enclosed quarter period supplies an approximate full period in `[4, 8]`. Rounding the
-quotient to an integer leaves a rational Taylor argument in `[-4, 4]`. The output radius
-includes the accumulated period error, using the global Lipschitz bound of sine and cosine.
-Thus the reduction remains valid even when the selected integer changes as precision grows.
+An enclosed quarter period gives an approximate full period in `[4, 8]`, and rounding the quotient
+to an integer leaves a rational Taylor argument in `[-4, 4]`. The output radius includes the
+accumulated period error through the global Lipschitz bound of sine and cosine. That's why the
+reduction stays valid even when the chosen integer changes as precision grows.
 
-The number of series terms need not grow with the magnitude of the reduced argument. The
-precision needed in the period still grows with the input magnitude, as expected for range
-reduction. All arithmetic here is rational; there is no machine approximation to π.
+Series terms don't have to grow in number with the magnitude of the reduced argument. Precision in
+the period does grow with the input magnitude, as you'd expect for range reduction. All the
+arithmetic is rational, and no machine approximation to π is used.
 -/
 
 @[expose] public section

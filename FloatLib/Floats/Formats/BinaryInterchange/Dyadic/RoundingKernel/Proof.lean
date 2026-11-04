@@ -14,16 +14,16 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Bounds
 /-!
 # Correctness of direct generic dyadic rounding
 
-The executable integer implementation in `RoundingKernel.Runtime` is extensionally equal to the
-logical `Float.Model.UnpackedFloat.round` specification used by `ieeeRoundDyadic`. The
-`@[csimp]` theorems install the direct implementation in compiled code while proofs keep the
-model-facing definitions.
+We prove here that the executable integer implementation in `RoundingKernel.Runtime` is
+extensionally equal to the logical `Float.Model.UnpackedFloat.round` specification that
+`ieeeRoundDyadic` uses. The `@[csimp]` theorems install the direct implementation in compiled
+code, while proofs keep the model-facing definitions.
 
 The IEEE proof covers signed zero, subnormal rounding, the minimum-normal transition,
 normalization carry, and overflow at arbitrary field widths. `roundDyadicGeneral_eq_roundDyadic`
 then shows that for an IEEE descriptor the descriptor-aware algorithm agrees with that logical
 specification. For any other descriptor `roundDyadic` is defined to be `roundDyadicGeneral`, so
-there the equality holds by definition; this file does not relate the non-IEEE rounding to an
+there the equality holds by definition. This file does not relate the non-IEEE rounding to an
 independent specification.
 -/
 
@@ -38,7 +38,7 @@ private theorem ofModel_zero_eq_signedZero (fmt : FloatFormat) (negative : Bool)
   · exact (posZero_eq_ofModel_zero fmt).symm
   · exact (negZero_eq_ofModel_zero fmt).symm
 
-/-- Lean's packed sign/exponent/fraction word decodes to the corresponding explicit fields. -/
+/-- Lean's packed sign/exponent/fraction word decodes to the fields it was packed from. -/
 private theorem ofModelBits_packComponents (fmt : FloatFormat) (sign : Bool)
     (exponent fraction : Nat) :
     ofModelBits (fmt := fmt)

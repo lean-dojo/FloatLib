@@ -11,8 +11,8 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Executable signed-magnitude dyadic addition
 
-Exact dyadic addition in sign-magnitude form, on natural-number magnitudes. Correctness proofs and
-the compiler substitution live in `AddDyadic.Proof`.
+This is exact dyadic addition in sign-magnitude form, on natural-number magnitudes. Correctness
+proofs and the compiler substitution live in `AddDyadic.Proof`.
 -/
 
 @[expose] public section

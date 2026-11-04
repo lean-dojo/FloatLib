@@ -13,12 +13,11 @@ public import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Direct encoding for P3109 projection
 
-The direct encoder and decoder satisfy the inverse laws needed by P3109 projection. Further
-contracts relate executable datum comparison to the mathematical `SameDatum` relation and
-specify the checked encoder: it returns a code exactly when that code decodes to the same datum
-as its input. The direct encoder depends only on the datum, so differently normalized dyadics with
-one rational value encode alike. Precision rounding and saturation correctness live in later
-modules.
+P3109 projection needs the direct encoder and decoder to be inverses, and this module proves the
+laws it uses. Further contracts relate executable datum comparison to the mathematical `SameDatum`
+relation and pin down the checked encoder, which returns a code if and only if that code decodes
+to the same datum as its input. The direct encoder looks only at the datum, so `3 * 2^0` and
+`6 * 2^-1` encode alike. Precision rounding and saturation correctness come in later modules.
 -/
 
 @[expose] public section
@@ -132,7 +131,7 @@ private theorem encodeDatumNat_finite_neg_decodePositiveFinite
 Encoding any decoded natural-number code recovers that code.
 
 The statement is intentionally independent of a bit-width bound. Width reduction belongs to
-`BitVec`; the P3109 row formulas themselves are inverse for every natural row number.
+`BitVec`, and the P3109 row formulas themselves are inverse for every natural row number.
 -/
 private theorem encodeDatumNat_decodeNat
     (format : Format) (bits : Nat) :
@@ -179,7 +178,8 @@ private theorem directCode_decode
   rw [format.encodeDatumNat_decode]
   rw [BitVec.ofNat_toNat, BitVec.setWidth_eq]
 
-/-- Executable datum equality holds exactly for the same mathematical P3109 datum. -/
+/-- Executable datum equality holds if and only if both sides are the same mathematical P3109
+datum. -/
 theorem datumEqual_eq_true_iff
     (left right : NumericalValue Numerics.Dyadic) :
     datumEqual left right = true ↔ SameDatum left right := by
@@ -395,8 +395,8 @@ private theorem encodeDatumNat_eq_of_sameDatum (format : Format)
       | finite _ => exact absurd h (by cases e <;> simp [SameDatum])
       | infinity _ => exact absurd h (by cases e <;> simp [SameDatum])
 
-/-- Checked encoding succeeds exactly on the P3109 datums: it returns `code` precisely when `code`
-decodes to the same datum as the input. -/
+/-- Checked encoding succeeds on the P3109 datums and nowhere else: it returns `code` if and only if
+`code` decodes to the same datum as the input. -/
 theorem encode?_eq_some_iff (format : Format) (value : NumericalValue Numerics.Dyadic)
     (code : BitVec format.bitWidth) :
     format.encode? value = some code ↔ SameDatum (format.decode code) value := by

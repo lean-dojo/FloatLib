@@ -447,7 +447,7 @@ def relativeSign (r : Recursor) (goal : MVarId) (value : Q(ℝ)) (fuel depth : N
   return proved?.isSome
 
 /-- The sign of a correctly rounded primitive call, by its contract's sign theorems.
-Their finiteness and range premises are proved or kept open; the others select the theorem. -/
+Their finiteness and range premises are proved or kept open, and the others select the theorem. -/
 def primitiveSign (r : Recursor) (goal : MVarId) (value : Q(ℝ)) (fuel depth : Nat) :
     AnalyzeM Bool := do
   let session ← read

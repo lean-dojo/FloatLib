@@ -13,9 +13,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 /-!
 # Refinement of native signed-magnitude addition
 
-The shared `UInt64` signed-magnitude primitive denotes exact dyadic addition before binary32
-rounding. Keeping the proof separate preserves the small runtime import surface of
-`FloatLib.Kernels.FixedWord.SignedMagnitude.Runtime`.
+Before binary32 rounding, the shared `UInt64` signed-magnitude primitive denotes exact dyadic
+addition. We keep this proof in a module of its own so that
+`FloatLib.Kernels.FixedWord.SignedMagnitude.Runtime` keeps its small runtime import surface.
 -/
 
 @[expose] public section
@@ -26,8 +26,8 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32
 Round one exact signed-magnitude sum at a shared native scale.
 
 The hypotheses require nonzero operands and a scale of at most 506. Only same-sign operands need
-their magnitude sum below `2^64`, because only they are added in a machine word; opposite signs
-subtract the smaller magnitude from the larger, which cannot wrap.
+their magnitude sum below `2^64`, because only they are added in a machine word. Opposite signs
+subtract the smaller magnitude from the larger, which can't wrap.
 -/
 theorem roundAddMagnitudesAtScale_eq_roundDyadic
     (xSign ySign : Bool) (xMagnitude yMagnitude scale : UInt64)

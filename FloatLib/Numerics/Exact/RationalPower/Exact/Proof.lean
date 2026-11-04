@@ -15,21 +15,21 @@ public import Mathlib.NumberTheory.Real.Irrational
 /-!
 # Correctness of exact rational-power classification
 
-Let `base = A / B` and `exponent = n / d` be in lowest terms. If `base ^ exponent` equals a
-rational `q`, then `q ^ d = base ^ n`. Comparing reduced numerators and denominators gives
-`A ^ |n| = C ^ d` and `B ^ |n| = D ^ d` for the parts `C` and `D` of `q` or of `q⁻¹`. Since
-`|n|` and `d` are coprime, Mathlib's `Nat.exists_eq_pow_of_exponent_coprime_of_pow_eq_pow` makes
-`A` and `B` perfect `d`-th powers. Hence a missing descriptor proves irrationality. Mathlib's
-`irrational_nrt_of_notint_nrt` needs an integer radicand, so this module proves the rational
-criterion itself.
+Let `base = A / B` and `exponent = n / d` be in lowest terms. If `base ^ exponent` equals a rational
+`q`, then `q ^ d = base ^ n`, and comparing reduced numerators and denominators gives
+`A ^ |n| = C ^ d` and `B ^ |n| = D ^ d` for the parts `C` and `D` of `q` or of `q⁻¹`. Since `|n|`
+and `d` are coprime, Mathlib's `Nat.exists_eq_pow_of_exponent_coprime_of_pow_eq_pow` makes `A` and
+`B` perfect `d`-th powers. So a missing descriptor proves irrationality. Mathlib's
+`irrational_nrt_of_notint_nrt` needs an integer radicand, which is why we prove the rational
+criterion here.
 
-Capped exponentiation is proved against the closed form `if base ^ exponent ≤ cap then ...`.
-The proofs reason about that power symbolically and never evaluate it.
+Capped exponentiation is proved against the closed form `if base ^ exponent ≤ cap then ...`. We
+reason about that power symbolically and never evaluate it.
 
-The dyadic builder is exact in both directions. A built value is the described power. When none is
-built, either the root's denominator has an odd prime factor, which divides the denominator of
-every positive power, or the odd part of the power is at least `2 ^ (precision + 3)`, and every
-dyadic equal to the power then has a significand at least that large.
+The dyadic builder is exact in both directions. A value it builds is the described power. When it
+builds none, either the root's denominator has an odd prime factor, which divides the denominator of
+every positive power, or the odd part of the power is at least `2 ^ (precision + 3)`, and then every
+dyadic equal to the power has a significand at least that large.
 -/
 
 @[expose] public section

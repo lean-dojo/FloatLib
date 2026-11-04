@@ -12,9 +12,10 @@ public import FloatLib.Kernels.FixedWord.Difference.Runtime
 /-!
 # Fixed-limb rounding
 
-Two- and four-limb shifts and nearest-even rounding, with guard, sticky, and carry results.
-Fixed tuples give these small kernels a statically sized representation. Callers handle exponents
-and packing, and `LimbRound.Proof` relates the operations to natural-number arithmetic.
+This module has the two- and four-limb shifts and nearest-even rounding, which report guard, sticky,
+and carry results. The kernels are small. Fixed tuples give them a statically sized representation.
+Callers handle exponents and packing. `LimbRound.Proof` relates the operations to natural-number
+arithmetic.
 -/
 
 @[expose] public section

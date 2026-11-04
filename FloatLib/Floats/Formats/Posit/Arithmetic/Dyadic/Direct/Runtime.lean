@@ -13,13 +13,14 @@ public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.Runtime
 /-!
 # Direct arbitrary-width exact-dyadic posit arithmetic
 
-Direct posit arithmetic combines shared exact-dyadic operand decoding and integer arithmetic
-with construction of the standard regime/exponent/fraction stream. It is the width-generic
-executable tier used after fixed packed storage ends.
+Once a posit is too wide for packed fixed-width storage, its arithmetic runs here, at any width.
+These kernels decode the operands to exact dyadics with the shared decoder, do integer arithmetic,
+and build the standard regime/exponent/fraction stream of the result.
 
-Division uses a destination-width quotient prefix, one exact remainder test, and direct
-guard/sticky packing. Square root uses one destination-width integer-root prefix and one exact
-square-remainder sticky bit. Refinement theorems live in `Direct.Proof`.
+Division computes a quotient prefix of the destination width, runs one exact remainder test,
+and gives the guard and sticky bits to the direct packer. Square root works the same way with an
+integer-root prefix of the destination width, and its sticky bit comes from one exact test of the
+square remainder. `Direct.Proof` has the refinement theorems.
 -/
 
 @[expose] public section

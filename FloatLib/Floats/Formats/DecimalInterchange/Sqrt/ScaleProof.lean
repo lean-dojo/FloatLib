@@ -13,9 +13,8 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Coefficient range for decimal square root
 
-Halving the base-ten logarithm of the squared scaled value determines the
-square-root grid. The proofs use integer logarithm bounds, without approximating
-the square root.
+To find the square-root grid, halve the base-ten logarithm of the squared scaled value. The proofs
+here use integer logarithm bounds and never approximate the square root.
 -/
 
 @[expose] public section

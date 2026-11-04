@@ -13,11 +13,12 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 /-!
 # Numerical correctness of exact MX dot products
 
-The executable list reductions are related to finite sums of decoded rational products and to
-the factored shared-scale formula of OCP MX 1.0 §6.1. For finite input lanes and a finite
-binary32 result, the result is one nearest-even rounding of the exact real dot across any
-number of blocks. Its error is at most half an ULP, including gradual underflow; there is no
-accumulation error.
+A floating-point dot product normally rounds at every partial sum. This one rounds once. We relate
+the executable list reductions to finite sums of decoded rational products and to the factored
+shared-scale formula of OCP MX 1.0 §6.1, and then show that for finite input lanes and a finite
+binary32 result, the answer is one nearest-even rounding of the exact real dot product, however
+many blocks there are. Its error is at most half an ULP, gradual underflow included, and nothing
+accumulates.
 -/
 
 public section
@@ -184,7 +185,7 @@ theorem dotGeneral_eq_nan_of_block {leftProfile rightProfile : Profile} {n : Nat
     dotGeneral left right = Model.posZero .binary32 := by
   simp [dotGeneral, dotGeneralExact, DotProduct.sum, DotProduct.roundFloat32]
 
-/-- Finite decoded lanes are multiplied and accumulated exactly, even when they cancel. -/
+/-- Finite decoded lanes are multiplied and accumulated without rounding, even when they cancel. -/
 theorem dotExact_finite {leftProfile rightProfile : Profile}
     (left : Block leftProfile) (right : Block rightProfile)
     (a b : Fin 32 → SignedRat)
@@ -272,7 +273,7 @@ theorem toReal_dotGeneral_eq_roundAt {leftProfile rightProfile : Profile} {n : N
 
 /--
 Finite-result absolute error is at most half an ULP of the exact dot. This includes subnormal
-results and cancellation; there is no error from the number or order of finite summands.
+results and cancellation, and neither the number nor the order of finite summands adds error.
 -/
 theorem abs_toReal_dotGeneral_sub_le {leftProfile rightProfile : Profile} {n : Nat}
     (left : Vector (Block leftProfile) n) (right : Vector (Block rightProfile) n)

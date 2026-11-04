@@ -12,25 +12,32 @@ public import FloatLib.Numerics.Exact.SignedRat
 /-!
 # Embeddings between exact domains
 
-`ExactMap Source Target` converts exact values between the domains used by numerical families.
-Binary interchange values, including Lean's native `Float32` and `Float`, use `SignedRat`, which
-keeps the sign of zero; posit, fixed-point, logarithmic, and quire values use `Rat`; OCP E8M0 uses
-`Dyadic`; codebooks can use another exact type. The integer, rational, dyadic, and signed-rational
-embeddings are defined below. Conversion lifts these finite maps over `NumericalValue`
-observations.
+`ExactMap Source Target` converts exact values between the domains that the numerical families use:
 
-The map from `SignedRat` to `Rat` preserves the rational value and forgets the sign of zero. A
-conversion through `Rat` therefore cannot carry a source zero sign to its destination.
+- binary interchange values, Lean's native `Float32` and `Float` included, use `SignedRat`, which
+  keeps the sign of zero,
+- posit, fixed-point, logarithmic, and quire values use `Rat`,
+- OCP E8M0 uses `Dyadic`,
+- codebooks can use another exact type.
 
-Instances must preserve value without rounding, overflow, or a context-dependent choice.
-The class states no such law, since it has no interpretation of arbitrary source and target types,
-so nothing checks it when an instance is declared, and an arbitrary coercion would typecheck. The
-generic conversion theorems use whatever map is installed. Each instance below is unfolded by its
-`run_*` lemma, and the value facts are proved about the function it unfolds to: the rational
-value and sign of `SignedRat.ofRat` (`SignedRat.value_ofRat`, `SignedRat.negative_ofRat`) and of
-`SignedRat.ofDyadic` (`SignedRat.value_ofDyadic`, `SignedRat.negative_ofDyadic`); the integer
-and natural maps are the standard casts, and `Dyadic.toRat` and `SignedRat.value` are the values
-by definition. A new instance needs the same kind of theorem.
+Below we define the integer, rational, dyadic, and signed-rational embeddings, and conversion lifts
+these finite maps over `NumericalValue` observations. Mapping `SignedRat` to `Rat` keeps the
+rational value and forgets the sign of zero, so a conversion through `Rat` can't carry a source zero
+sign to its destination.
+
+An instance must preserve value without rounding, overflow, or a context-dependent choice. The class
+can't state that law, because it has no interpretation of arbitrary source and target types. So
+nothing checks it when an instance is declared, and an arbitrary coercion would typecheck. Generic
+conversion theorems use whatever map is installed. Each instance below is unfolded by its `run_*`
+lemma, and the value facts are proved about the function it unfolds to:
+
+- the rational value and sign of `SignedRat.ofRat` (`SignedRat.value_ofRat`,
+  `SignedRat.negative_ofRat`),
+- the same for `SignedRat.ofDyadic` (`SignedRat.value_ofDyadic`, `SignedRat.negative_ofDyadic`),
+- the integer and natural maps, which are the standard casts,
+- `Dyadic.toRat` and `SignedRat.value`, which are the values by definition.
+
+A new instance needs the same kind of theorem.
 -/
 
 @[expose] public section
@@ -45,11 +52,10 @@ universe u v
 /--
 Canonical embedding between executable exact domains.
 
-This class is an interoperability capability, not an implicit numerical-promotion rule. User
-values remain statically typed, and destination rounding still occurs only in an explicit
-conversion or destination-driven operation. Installing an instance is a semantic commitment that
-the class does not check: preservation must be proved in the source or target domain's own
-mathematical model.
+The class lets exact domains interoperate. It is no implicit numerical-promotion rule: user values
+stay statically typed, and destination rounding happens only in a named conversion or a
+destination-driven operation. Installing an instance is a semantic commitment that the class doesn't
+check, so preservation has to be proved in the source or target domain's own mathematical model.
 -/
 class ExactMap (Source : Type u) (Target : Type v) where
   /--
@@ -105,7 +111,7 @@ instance dyadicToRat : ExactMap FloatLib.Numerics.Dyadic Rat where
     run (Source := FloatLib.Numerics.Dyadic) (Target := Rat) value = value.toRat :=
   rfl
 
-/-- Rationals embed into the signed-rational domain; zero receives the positive sign. -/
+/-- Rationals embed into the signed-rational domain, with the positive sign for zero. -/
 instance ratToSignedRat : ExactMap Rat FloatLib.Numerics.SignedRat where
   map := FloatLib.Numerics.SignedRat.ofRat
 

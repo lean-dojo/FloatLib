@@ -13,9 +13,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 /-!
 # Exact certificates from bounded comparisons
 
-The exponent search preserves a bracket between powers of two. The significand search
-preserves a bracket between consecutive integers. Exact comparison at the integer and its
-half-integer supplies the accuracy certificate consumed by the existing rounding proof.
+Two bounded searches turn exact comparisons into a rounding certificate. The exponent search
+keeps a bracket between powers of two, and the significand search keeps one between consecutive
+integers. Exact comparison at the integer and its half-integer then supplies the accuracy
+certificate that the rounding proof consumes.
 -/
 
 @[expose] public section
@@ -33,7 +34,7 @@ open FloatLib.Floats.Formats.Flocq
 
 /--
 A sufficiently deep bounded search ends at adjacent candidates enclosing the target.
-Only exact comparison and an initial bracket are needed; the proof follows both search branches.
+Only exact comparison and an initial bracket are needed. The proof follows both search branches.
 -/
 theorem bisect_bracket (accept : Nat → Bool) (valueAt : Nat → ℝ) (target : ℝ)
     (haccept : ∀ index, accept index = true ↔ valueAt index ≤ target)
@@ -226,7 +227,8 @@ theorem certificate_scaled_bounds (fmt : FloatFormat) (compare : Rat → Orderin
 
 /--
 Every interior oracle result supplies a valid nonzero accuracy certificate and satisfies the
-normalizer's no-left-shift precondition. All bounds depend on the descriptor, not a fixed width.
+normalizer's no-left-shift precondition. All bounds depend on the descriptor and assume no fixed
+width.
 -/
 theorem certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (compare : Rat → Ordering) (target : ℝ)

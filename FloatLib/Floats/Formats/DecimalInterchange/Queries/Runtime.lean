@@ -12,11 +12,11 @@ public import FloatLib.Numerics.IEEEClass
 /-!
 # Decimal classification and quantum queries
 
-The predicates of IEEE 754-2019 §§5.7.2–5.7.3 are non-signaling, including on
-signaling NaNs. Normality depends on numerical magnitude, not coefficient length:
-different members of one cohort have the same classification.
-`quantumExponent` is an additional finite-datum query, not an IEEE operation name.
-Canonicality belongs to the stored word because decoding accepts redundant words.
+The predicates of IEEE 754-2019 §§5.7.2 and 5.7.3 never signal, even on signaling NaNs. Normality
+depends on the numerical magnitude and has nothing to do with coefficient length, so `1000000e-6`
+and `1e0` are both normal in decimal32, and every member of a cohort gets the same classification.
+`quantumExponent` is a finite-datum query of our own that IEEE doesn't name. Canonicality is a
+property of the stored word, since decoding accepts redundant words.
 -/
 
 @[expose] public section
@@ -75,7 +75,7 @@ def classify (f : Format) : Datum → Class
       else
         if s then .negativeNormal else .positiveNormal
 
-/-- Return a finite datum's stored quantum exponent; special values return `none`. -/
+/-- Return a finite datum's stored quantum exponent, or `none` for special values. -/
 def quantumExponent : Datum → Option Int
   | .finite _ _ q => some q
   | _ => none

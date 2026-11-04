@@ -12,13 +12,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
 /-!
 # Optimized field access for binary models
 
-The public field operations in `Model.Carrier` use exact-width bit vectors, which expose the
-storage layout cleanly to proofs. This module defines extensionally equal `Nat` implementations
-and registers their compiler substitutions. Each field decoder reads the natural-number storage
-pattern, and packing constructs one natural-number pattern with an erased proof that it fits the
+The public field operations in `Model.Carrier` use exact-width bit vectors, which show proofs the
+storage layout cleanly. This module defines extensionally equal `Nat` implementations and
+registers their compiler substitutions. Each field decoder reads the natural-number storage
+pattern, and packing builds one natural-number pattern with an erased proof that it fits the
 width.
 
-The theorems here are execution certificates: they justify erased bounds or compiler rewrites.
+Every theorem here is an execution certificate, justifying an erased bound or a compiler rewrite.
 Semantic facts about the public field operations are in `Model.Fields.Proof`.
 -/
 
@@ -87,7 +87,7 @@ theorem packedFields_lt_storage (fmt : FloatFormat) (sign : Bool)
     · simpa [Nat.shiftLeft_eq] using signPower_lt_storage fmt
   exact Nat.or_lt_two_pow (Nat.or_lt_two_pow hSign hExponent) hFraction
 
-/-- Read the sign directly from the natural-number storage pattern. -/
+/-- Read the sign from the natural-number storage pattern. -/
 @[inline] def Internal.signBit {fmt : FloatFormat} (x : Model fmt) : Bool :=
   x.toNatBits.testBit (fmt.expWidth + fmt.fracWidth)
 

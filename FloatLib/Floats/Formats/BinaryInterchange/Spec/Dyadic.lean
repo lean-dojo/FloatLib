@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Pr
 /-!
 # Reference arithmetic with exact dyadic intermediates
 
-Addition, subtraction, multiplication, and fused multiply-add share one specification method:
-decode finite operands exactly, compute the dyadic intermediate, and round once to nearest with
+Addition, subtraction, multiplication, and fused multiply-add are all specified the same way.
+Decode finite operands exactly, compute the dyadic intermediate, and round once to nearest with
 ties to even. Exceptional operands follow the descriptor's NaN, infinity, overflow, and zero
 policy. In particular, FMA does not round its product before adding the third operand.
 
@@ -22,9 +22,9 @@ These definitions are the stable proof targets for the dispatched arithmetic ker
 use the rational specification in `Spec.Division`, and roots use `Spec.SquareRoot`. Other rounding
 directions and exception-status results belong to the operation APIs.
 
-These specifications also execute when a backend declines an operand. The rounding refinement
-must be imported before they are defined: it replaces the logical rounder's repeated one-bit
-shifts with bulk integer rounding in their compiled code.
+The specifications also execute when a backend declines an operand. So the rounding refinement
+must be imported before they are defined, because it replaces the logical rounder's repeated
+one-bit shifts with bulk integer rounding in their compiled code.
 -/
 
 @[expose] public section
@@ -55,11 +55,12 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.Spec
 Subtraction as addition of the negated right operand.
 
 `neg` toggles the stored sign bit of every word in a signed-zero format, so a NaN propagated from
-`y` is returned with its sign bit flipped relative to `y`. IEEE 754-2019 Section 6.3 leaves the
-sign of a NaN result unspecified, so this sign choice is allowed. Callers comparing NaN words
-bit for bit should not expect `sub x y` to return `y`'s NaN unchanged. In the finite-unsigned-zero
-encoding `neg` leaves the NaN word unchanged, so no flip occurs there. The dispatched `Model.sub`
-and its backends are proved equal to this definition, so the convention is shared by every format.
+`y` comes back with its sign bit flipped relative to `y`. IEEE 754-2019 Section 6.3 leaves the
+sign of a NaN result unspecified, so this sign choice is allowed, but callers comparing NaN words
+bit for bit should not expect `sub x y` to return `y`'s NaN unchanged. In the
+finite-unsigned-zero encoding `neg` leaves the NaN word unchanged, so no flip occurs there. The
+dispatched `Model.sub` and its backends are proved equal to this definition, so every format
+shares the convention.
 -/
 @[inline] def sub {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   add x (neg y)

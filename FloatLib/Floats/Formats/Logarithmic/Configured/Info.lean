@@ -14,8 +14,8 @@ public import FloatLib.Floats.Formats.Logarithmic.Exact.Info
 /-!
 # Inspection for configured logarithmic numbers
 
-This optional meta module registers `#float_info` for `ExecFloat.Logarithmic`. The configured
-format can be imported independently of this command registration.
+`#float_info` for `ExecFloat.Logarithmic` is registered here, in an optional meta module. You can
+import the configured format without it.
 -/
 
 public meta section

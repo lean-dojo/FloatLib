@@ -18,8 +18,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Famil
 # Correctness of configured binary kernels
 
 Every configured backend in `Configured.Core.Runtime` refines the same carrier-independent
-specification. The proofs depend only on the codec laws and the shared model-kernel theorems,
-not on the selected storage representation.
+specification. The proofs depend only on the codec laws and the shared model-kernel theorems, so
+the selected storage representation never enters them.
 -/
 
 @[expose] public section

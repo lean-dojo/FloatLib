@@ -11,9 +11,10 @@ public meta import FloatLib.Numerics.Automation.Interval.Reify
 /-!
 # Hypothesis bounds and certified input boxes
 
-Direct and pointwise hypotheses supply rational endpoints for the real atoms discovered by the
-reifier. The strongest endpoints form the input box, with a proof of each coordinate's membership.
-Strict hypotheses are conservatively weakened; unresolved indices or guards supply no bounds.
+Hypotheses, stated plainly or pointwise, supply rational endpoints for the real atoms the reifier
+finds, and taking the strongest endpoints gives the input box, with a proof that each coordinate is
+a member. Strict hypotheses are weakened conservatively, and unresolved indices or guards supply no
+bounds.
 -/
 
 public meta section
@@ -151,11 +152,12 @@ private def boundsAtAtom (atom : Q(ℝ)) (type proof : Lean.Expr) : MetaM (Array
     return #[]
 
 /--
-Extract direct bounds and instantiate universally quantified bounds at the supplied atoms.
+Extract the bounds that hypotheses state and instantiate universally quantified bounds at the
+supplied atoms.
 
-For example, `∀ i, x i ∈ Set.Icc lo hi` supplies the bounds for each used `x i`. Unused entries
-are not enumerated. Concrete guards such as `i ∈ Finset.range n` are proved before applying a
-guarded hypothesis; an unresolved index or guard supplies no bounds.
+For example, `∀ i, x i ∈ Set.Icc lo hi` supplies the bounds for each used `x i`, and unused entries
+are not enumerated. Concrete guards such as `i ∈ Finset.range n` are proved before a guarded
+hypothesis is applied, and an unresolved index or guard supplies no bounds.
 -/
 partial def boundsOfProofFor (atoms : Array Q(ℝ)) (proof : Lean.Expr) : MetaM (Array Bound) :=
   withIncRecDepth do

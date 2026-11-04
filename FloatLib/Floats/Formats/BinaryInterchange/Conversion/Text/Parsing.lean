@@ -13,18 +13,17 @@ public import FloatLib.Numerics.Exact.HexText.Runtime
 /-!
 # Binary external character conversion
 
-Decimal integers, fractions and e/E exponents use the shared exact scanner.
-Hexadecimal input follows IEEE 754 §5.12.3, including its mandatory p/P exponent.
-ASCII edge whitespace is ignored.
-Finite conversion rounds once and reports the binary exception policy,
-including tininess after rounding, and the ternary value of that rounding.
-Syntax errors are `ParseError`s.
+This is the text parser for binary formats. Decimal integers, fractions and e/E exponents go
+through the shared exact scanner, and hexadecimal input follows IEEE 754 §5.12.3, including its
+mandatory p/P exponent. ASCII whitespace at either end is ignored. Finite conversion rounds once
+and reports the binary exception policy, including tininess after rounding, together with the
+ternary value of that rounding. Syntax errors are `ParseError`s.
 
-Inf/Infinity/NaN/sNaN accept either case and an optional sign. A NaN's decimal
-suffix denotes its complete fraction field, including the quiet bit. Zero or
-an absent suffix chooses a default payload. A valid written payload keeps its
-sign and signaling state without raising invalid. A descriptor unable to encode a
-signaling NaN may quiet the default sNaN and raise invalid.
+The spellings Inf, Infinity, NaN and sNaN accept either case and an optional sign. A NaN's decimal
+suffix denotes its complete fraction field, including the quiet bit, and zero or an absent suffix
+chooses a default payload. A valid written payload keeps its sign and signaling state without
+raising invalid. A descriptor unable to encode a signaling NaN may quiet the default sNaN and
+raise invalid.
 -/
 
 @[expose] public section
@@ -218,8 +217,8 @@ def convertText (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
 The value of `convertText`, with the same errors (`Internal.Value.convertText_eq_map`).
 
 Decimal and dyadic text inline their converter and keep only its value, so finite numeric value
-parsing runs no rounding classifier. An infinity is delivered directly, and a NaN keeps the value
-of `convertNaNText`, which builds a constant outcome.
+parsing runs no rounding classifier. An infinity comes straight from `infinity?`, and a NaN keeps
+the value of `convertNaNText`, which builds a constant outcome.
 -/
 def Internal.Value.convertText (fmt : FloatFormat) (mode : IEEERoundingMode) (input : String) :
     TextValue → Except ParseError (Model fmt)

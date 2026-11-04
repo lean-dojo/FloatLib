@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Comparison.Proof
 /-!
 # Total-order laws and IEEE decimal tie rules
 
-Key injectivity establishes antisymmetry for full datums. The finite and NaN
-theorems identify the numerical, cohort, sign and payload ordering rules; the
-order laws alone would not establish agreement with those rules.
+The total order compares keys, and key injectivity gives antisymmetry for full datums. Order laws
+alone wouldn't show that this is IEEE's order, so the finite and NaN theorems identify the
+numerical, cohort, sign and payload rules one by one.
 -/
 
 @[expose] public section
@@ -66,13 +66,13 @@ theorem totalOrder_trans {x y z : Datum}
   decide_eq_true (le_trans (of_decide_eq_true hxy) (of_decide_eq_true hyz))
 
 /-- Any two datums are comparable in the decimal total order, two NaNs or two members of one cohort
-included. With `totalOrder_antisymm_iff` this makes `totalOrder` a linear order on datums; redundant
-encodings of one datum compare equal after decoding. -/
+included. With `totalOrder_antisymm_iff` this makes `totalOrder` a linear order on datums, and
+redundant encodings of one datum compare equal after decoding. -/
 theorem totalOrder_total (x y : Datum) :
     x.totalOrder y = true ∨ y.totalOrder x = true := by
   simpa only [totalOrder, decide_eq_true_eq] using le_total x.orderKey y.orderKey
 
-/-- Both directions hold precisely when the complete datums are identical. -/
+/-- Both directions hold if and only if the complete datums are identical. -/
 theorem totalOrder_antisymm_iff (x y : Datum) :
     (x.totalOrder y = true ∧ y.totalOrder x = true) ↔ x = y := by
   simp only [totalOrder, decide_eq_true_eq, le_antisymm_iff.symm]
@@ -97,7 +97,7 @@ theorem totalOrder_negative_finite_iff (c d : Nat) (q r : Int) :
     (.finite true c q : Datum).totalOrder (.finite false d r) = true := by
   simp [totalOrder, orderKey, Prod.Lex.toLex_le_toLex]
 
-/-- No positive finite datum precedes a negative one; in particular `+0` does not precede `-0`,
+/-- No positive finite datum precedes a negative one, so `+0` does not precede `-0`,
 whatever their quanta. -/
 @[simp] theorem totalOrder_positive_negative (c d : Nat) (q r : Int) :
     (.finite false c q : Datum).totalOrder (.finite true d r) = false := by
@@ -175,7 +175,7 @@ theorem totalOrderMag_total (x y : Datum) :
     x.totalOrderMag y = true ∨ y.totalOrderMag x = true :=
   totalOrder_total x.abs y.abs
 
-/-- Magnitude ordering identifies precisely datums differing at most in sign. -/
+/-- Both directions of magnitude ordering hold if and only if the datums differ at most in sign. -/
 theorem totalOrderMag_antisymm_iff (x y : Datum) :
     (x.totalOrderMag y = true ∧ y.totalOrderMag x = true) ↔ x.abs = y.abs :=
   totalOrder_antisymm_iff x.abs y.abs

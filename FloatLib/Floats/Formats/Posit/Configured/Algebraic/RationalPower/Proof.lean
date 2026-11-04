@@ -13,9 +13,11 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Exact semantics of configured powers and fused minus-one exponentials
 
-The configured operations refine the model kernels for every lawful storage codec. Their real
-semantics hold under the same domain conditions, independently of storage width. These are
-correctness results for exact boundary comparison, not bounds on execution cost.
+Configured `pow`, `exp2`, `exp10`, and the fused minus-one exponentials refine the model kernels
+for every lawful storage codec, and their real semantics hold under the same domain conditions as
+in the model, whatever the storage width. A negative base needs an integral exponent, for example,
+and `pow_eq_nar_of_neg_nonintegral` covers the case where it doesn't have one. Everything here is
+about the correctness of exact boundary comparison. None of it bounds execution cost.
 -/
 
 @[expose] public section

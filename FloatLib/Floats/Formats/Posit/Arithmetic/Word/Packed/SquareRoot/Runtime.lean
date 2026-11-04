@@ -14,13 +14,16 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Run
 /-!
 # Packed native-word Posit square root
 
-The packed square-root adapter connects native posit storage to the width-generic direct kernel.
-A proved-valid `UInt64` encoding is decoded once into native dyadic fields. A fixed-word root
-computes the complete destination-width prefix from a candidate accepted only after an exact
-square check, with the restoring loop as fallback. `CheckedSqrt.Compiler` extends the checked
-candidate to radicands of at least `2 ^ 128` in compiled code. The common two-limb guard/sticky
-packer then selects the Posit code. The significand, root, and remainder stay in fixed-width
-carriers.
+This adapter connects native posit storage to the width-generic direct square-root kernel, in
+three steps:
+
+1. A proved-valid `UInt64` encoding is decoded once into native dyadic fields.
+2. A fixed-word root computes the complete destination-width prefix. Its candidate is accepted
+   only after an exact square check, and the restoring loop is the fallback. In compiled code,
+   `CheckedSqrt.Compiler` extends the checked candidate to radicands of at least `2 ^ 128`.
+3. The common two-limb guard/sticky packer selects the Posit code.
+
+Significand, root, and remainder stay in fixed-width carriers throughout.
 -/
 
 @[expose] public section

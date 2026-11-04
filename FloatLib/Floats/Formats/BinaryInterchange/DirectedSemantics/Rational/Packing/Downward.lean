@@ -13,13 +13,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 /-!
 # Downward bounds for directed rational packing
 
-For a positive exact rational and a descriptor with `fmt.isIEEE = true`, the executable downward
-rounder returns a finite value no greater than the input.
+Given a positive exact rational and a descriptor with `fmt.isIEEE = true`, the executable
+downward rounder returns a finite value no greater than the input.
 
-The proof follows the same branch partition as the runtime packer (overflow saturation,
-below-minimum underflow, subnormal, and normal), using the equations from `Packing.Branches` and the
-shared grid inequalities from `Packing.Grid`. The final `EReal` theorem packages the result in the
-order used by the generic directed-rounding semantics.
+The proof splits into the same branches as the runtime packer (overflow saturation, below-minimum
+underflow, subnormal and normal), with the equations from `Packing.Branches` and the shared grid
+inequalities from `Packing.Grid`. A final `EReal` theorem states the result in the order that the
+generic directed-rounding semantics uses.
 -/
 
 @[expose] public section

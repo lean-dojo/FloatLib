@@ -11,7 +11,9 @@ public import FloatLib.Floats.Formats.OCP.MX.Configured.Runtime
 /-!
 # Representation theorems for configured OCP MX values
 
-Complete E8M0 bytes and joint MX block codes round-trip through their configured wrappers.
+Wrap an E8M0 byte or a joint MX block code in its configured type, unwrap it again, and you get
+the complete original back. These theorems prove that round trip and describe what the block
+constructors store.
 -/
 
 @[expose] public section
@@ -77,7 +79,7 @@ variable {format : FloatFormat}
     values (ofComponents scaleValue elementValues) = elementValues :=
   rfl
 
-/-- Building from nominal elements stores exactly their corresponding proof-model values. -/
+/-- Building from nominal elements stores their proof-model values, element by element. -/
 @[simp, grind =] theorem values_ofElements
     {F : Type u} [StaticByte.Family F]
     (scaleValue : ExecFloat.OCP.MX.E8M0)

@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Model.Basic
 /-!
 # Posit sign and unsigned magnitude
 
-Posit negation is two's complement over the complete encoded word. Field decoding works on the
-corresponding unsigned magnitude, so this module isolates the representation laws connecting the
-two views.
+You negate a posit by taking the two's complement of its whole encoded word. Field decoding reads
+the unsigned magnitude, so this module collects the representation laws that connect the signed
+word to its magnitude.
 -/
 
 @[expose] public section
@@ -27,8 +27,8 @@ variable {format : Format}
 /--
 Negate a posit by taking the two's complement of its entire encoded word.
 
-This operation fixes both zero and NaR and exchanges every positive finite code with its negative
-counterpart, exactly as specified by the posit encoding.
+It fixes zero and NaR and swaps every positive finite code with its negative counterpart, as the
+posit encoding specifies.
 -/
 @[inline] def neg (value : Model format) : Model format :=
   ofNatBits (format.modulus - value.toNatBits)

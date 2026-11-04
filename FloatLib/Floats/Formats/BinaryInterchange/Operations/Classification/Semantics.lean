@@ -13,9 +13,9 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Numerical meaning of binary classification
 
-For a finite value, normality means its magnitude reaches `2 ^ minNormalExponent`.
-Subnormals have positive magnitude below that threshold. These equivalences hold for every
-descriptor, including arbitrary valid biases and finite encodings with normal all-ones exponents.
+A finite value is normal when its magnitude reaches `2 ^ minNormalExponent`, and subnormal when
+its magnitude is positive and below that threshold. Both equivalences hold for every descriptor,
+including arbitrary valid biases and finite encodings whose all-ones exponents are normal.
 -/
 
 @[expose] public section
@@ -56,7 +56,7 @@ private theorem normal_scale (fmt : FloatFormat) (e : ℤ) :
   congr 1
   omega
 
-/-- A decoded finite value is normal exactly when its magnitude reaches the normal threshold. -/
+/-- A decoded finite value is normal just when its magnitude reaches the normal threshold. -/
 theorem isNormal_iff_le_abs_toRat {x : Model fmt} {d : Numerics.Dyadic}
     (hx : toDyadic? x = some d) :
     isNormal x = true ↔ (2 : ℚ) ^ fmt.minNormalExponent ≤ |d.toRat| := by
@@ -86,14 +86,17 @@ theorem isNormal_iff_le_abs_toRat {x : Model fmt} {d : Numerics.Dyadic}
       _ ≤ _ := mul_le_mul_of_nonneg_right (le_add_of_nonneg_right (Nat.cast_nonneg _))
         (zpow_nonneg (by norm_num) _)
 
-/-- Zero classification of a decoded value is exactly numerical zero. -/
+/-- A decoded value is classified as zero just when it is numerically zero. -/
 theorem isZero_iff_toRat_eq_zero {x : Model fmt} {d : Numerics.Dyadic}
     (hx : toDyadic? x = some d) :
     isZero x = true ↔ d.toRat = 0 := by
   rw [isZero_eq_beq_zero_of_toDyadic?_some hx, beq_iff_eq,
     Numerics.Dyadic.toRat_eq_zero_iff]
 
-/-- Subnormal classification is precisely positive magnitude below the normal threshold. -/
+/--
+A decoded value is subnormal just when its magnitude is positive and below the normal
+threshold.
+-/
 theorem isSubnormal_iff_abs_toRat {x : Model fmt} {d : Numerics.Dyadic}
     (hx : toDyadic? x = some d) :
     isSubnormal x = true ↔

@@ -15,40 +15,43 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 /-!
 # Real values of configured binary values
 
-`toReal?` reads a configured binary value as the real number it denotes, through its proof model,
-and returns `none` for NaNs and infinities, which have no real value. `toReal` is the total
-version, which maps them to zero as `Model.toReal` does.
+`toReal?` reads a configured binary value as the real number it denotes, through its proof model.
+It returns `none` for NaNs and infinities, which have no real value, and `toReal` is the total
+version that maps them to zero as `Model.toReal` does.
 
-The theorems `toReal_add_eq_roundAt` through `toReal_sqrt_eq_roundAt` state the IEEE rounding
-contract on the configured carrier: a finite result of `x + y`, `x - y`, `x * y`, `x / y`,
-`fma x y z`, or `sqrt x` is the nearest-even rounding `Model.roundAt` of the exact real result.
+`toReal_add_eq_roundAt` through `toReal_sqrt_eq_roundAt` state the IEEE rounding contract on the
+configured carrier. A finite result of `x + y`, `x - y`, `x * y`, `x / y`, `fma x y z`, or
+`sqrt x` is the nearest-even rounding `Model.roundAt` of the exact real result.
 `abs_toReal_add_sub_le` and its siblings turn that into an absolute error of at most half an ulp,
-`Model.halfUlpAt format`. They need an IEEE descriptor, a finite result, which forces finite
-operands and a nonzero divisor, a finite divisor for division (a finite value over an infinity is
-a signed zero), a finite operand that is zero or nonnegative for square root (which never
-overflows), and, like `toModel_hAdd`, the instance argument that the selected capability computes
-the configured model operation. Instance search proves that argument for every capability the
-library declares.
+`Model.halfUlpAt format`. They need
 
-The descriptor proof `hformat : format.isIEEE = true` is the last argument of these theorems and
-of every other configured theorem that needs it, with the tactic `ieee_format` as its default. It
-takes the proof from a hypothesis in context, or decides it for a concrete IEEE-encoded format such
-as binary32. A format with another encoding has no such proof, and a variable format without one
-in context passes it as `(hformat := h)`.
+* an IEEE descriptor,
+* a finite result, which forces finite operands and a nonzero divisor,
+* a finite divisor for division, because a finite value over an infinity is a signed zero,
+* a finite operand that is zero or nonnegative for square root, which never overflows,
+* and, like `toModel_hAdd`, the instance argument that the selected capability computes the
+  configured model operation. Instance search proves it for every capability the library
+  declares.
 
-`toReal_add_of_isZero_left` and its siblings state the cases that do not round: sums and
-differences with a zero, `x - x`, products with a zero or with a value of magnitude one, quotients
-by a value of magnitude one, and the square root of a zero. The literals `0` and `1` denote zero
-and one, the encoding word `1` denotes the least positive subnormal, and a value compares equal to
-zero with `==` exactly when it is a finite zero (`beq_zero_iff`).
+These theorems, and every other configured theorem that needs it, take the descriptor proof
+`hformat : format.isIEEE = true` as their last argument, with the tactic `ieee_format` as its
+default. That tactic takes the proof from a hypothesis in context, or decides it for a concrete
+IEEE-encoded format such as binary32. A format with another encoding has no such proof. For a
+variable format without one in context, you pass it as `(hformat := h)`.
 
-Between finite values `<` and `≤` are the order of the real values (`lt_iff_toReal_lt`), so a
+Some operations do not round at all, and `toReal_add_of_isZero_left` and its siblings state them:
+sums and differences with a zero, `x - x`, products with a zero or with a value of magnitude one,
+quotients by a value of magnitude one, and the square root of a zero. The literals `0` and `1`
+denote zero and one, and the encoding word `1` denotes the least positive subnormal. A value
+compares equal to zero with `==` if and only if it is a finite zero (`beq_zero_iff`).
+
+Between finite values `<` and `≤` are the order of the real values (`lt_iff_toReal_lt`). So a
 selection such as C's maximum step `if m < x then x else m` has the real value `max` of its
-operands (`toReal_ite_lt_eq_max` and its siblings), and is finite when they are
-(`isFinite_ite`). Between finite values `==` is the equality of the real values, so the two zeros
-compare equal (`beq_eq_decide_toReal_eq`). `isFinite_sqrt` states that square root does not
-overflow, and the `execFloat_sqrt` forms restate the square-root theorems for the format-generic
-call `ExecFloat.sqrt`.
+operands (`toReal_ite_lt_eq_max` and its siblings), and is finite when they are (`isFinite_ite`).
+Between finite values `==` is the equality of the real values, so the two zeros compare equal
+(`beq_eq_decide_toReal_eq`). `isFinite_sqrt` says that square root does not overflow, and the
+`execFloat_sqrt` forms restate the square-root theorems for the format-generic call
+`ExecFloat.sqrt`.
 -/
 
 @[expose] public section
@@ -76,7 +79,7 @@ zero. Theorems about it carry finiteness hypotheses, and `toReal?` is the partia
 noncomputable def toReal (value : Value) : ℝ :=
   Model.toReal (toModel value)
 
-/-- The optional real value is absent exactly for the values that are not finite. -/
+/-- The optional real value is absent if and only if the value is not finite. -/
 @[simp, grind =] theorem toReal?_eq_none_iff (value : Value) :
     toReal? value = none ↔ isFinite value = false := by
   have hdecode := Model.toDyadic?_isSome_eq_isFinite (toModel value)
@@ -100,7 +103,7 @@ theorem toReal?_eq_some_toReal {value : Value} (hvalue : isFinite value = true) 
   unfold toReal? toReal Model.toReal Model.toReal? isFinite at *
   cases hd : Model.toDyadic? (toModel value) <;> simp_all
 
-/-- A finite value is an executable zero exactly when its real value is zero. -/
+/-- A finite value is an executable zero if and only if its real value is zero. -/
 theorem isZero_eq_true_iff_toReal_eq_zero {value : Value} (hvalue : isFinite value = true) :
     isZero value = true ↔ toReal value = 0 :=
   Model.isZero_eq_true_iff_toReal_eq_zero _ hvalue
@@ -200,7 +203,7 @@ theorem toReal_one (hformat : format.isIEEE = true := by ieee_format) :
   rw [Configured.Family.toModel_ofModel, Model.toReal_posMinSubnormal, Model.bpow,
     FloatLib.Floats.Formats.Flocq.bpow_binaryRadix]
 
-/-- A value compares equal to zero exactly when it is finite with real value zero. -/
+/-- A value compares equal to zero if and only if it is finite with real value zero. -/
 theorem beq_zero_iff {value : ExecFloat (Configured.Family format code plan)} :
     (value == 0) = true ↔ isFinite value = true ∧ toReal value = 0 := by
   change (Model.compare (toModel value)
@@ -478,7 +481,7 @@ theorem toReal_sub_of_isZero_right {left right : Value}
   rw [toModel_hSub]
   exact Model.toReal_sub_of_isZero_right _ _ hformat hleft hright
 
-/-- Subtracting a finite configured value from itself gives exactly zero. -/
+/-- Subtracting a finite configured value from itself gives real value zero. -/
 theorem toReal_sub_self {left : Value}
     [cap : ExecFloat.Sub (Configured.Family format code plan)]
     [ExecFloat.Capability.HasSpec cap Configured.Spec.sub]
@@ -488,7 +491,7 @@ theorem toReal_sub_self {left : Value}
   rw [toModel_hSub]
   exact Model.toReal_sub_self hformat hleft
 
-/-- Multiplying a configured zero by a finite configured value gives exactly zero. -/
+/-- Multiplying a configured zero by a finite configured value gives real value zero. -/
 theorem toReal_mul_of_isZero_left {left right : Value}
     [cap : ExecFloat.Mul (Configured.Family format code plan)]
     [ExecFloat.Capability.HasSpec cap Configured.Spec.mul]
@@ -499,7 +502,7 @@ theorem toReal_mul_of_isZero_left {left right : Value}
   rw [toModel_hMul]
   exact Model.toReal_mul_of_isZero_left _ _ hformat hleft hright
 
-/-- Multiplying a finite configured value by a zero gives exactly zero. -/
+/-- Multiplying a finite configured value by a zero gives real value zero. -/
 theorem toReal_mul_of_isZero_right {left right : Value}
     [cap : ExecFloat.Mul (Configured.Family format code plan)]
     [ExecFloat.Capability.HasSpec cap Configured.Spec.mul]
@@ -543,7 +546,7 @@ theorem toReal_div_of_abs_toReal_eq_one_right {left right : Value}
   rw [toModel_hDiv]
   exact Model.toReal_div_of_abs_toReal_eq_one_right _ _ hformat hleft hright hone
 
-/-- The configured square root of a zero is exactly zero. -/
+/-- The configured square root of a zero has real value zero. -/
 theorem toReal_sqrt_of_isZero {value : Value}
     [cap : ExecFloat.Sqrt (Configured.Family format code plan)]
     [ExecFloat.Capability.HasSpec cap Configured.Spec.sqrt]

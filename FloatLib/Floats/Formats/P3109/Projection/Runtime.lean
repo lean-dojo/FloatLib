@@ -13,17 +13,19 @@ public import FloatLib.Numerics.Quantization.Deterministic
 /-!
 # P3109 projection
 
-P3109 projection has three steps:
+P3109 projection has three steps, and the order matters:
 
 1. round finite dyadics to the descriptor's precision, preserve infinities, and map exceptions
-   to NaN;
-2. apply the selected saturation rule at the descriptor's finite endpoints;
-3. encode the resulting datum.
+   to NaN
+2. apply the selected saturation rule at the descriptor's finite endpoints
+3. encode the resulting datum
 
-This module follows that order. All integer widths, exponent bounds, and special codes
-come from `Format`, with no named-width branches or host floating-point conversions.
+In `binary8p4se` with nearest-even rounding and no saturation request, 232 rounds to 224 and stays
+finite, while 233 rounds to 240, which has no finite encoding, and comes out as positive infinity.
+This module follows that order. All integer widths, exponent bounds, and special codes come from
+`Format`, with no named-width branches or host floating-point conversions.
 
-The stochastic modes receive a caller-supplied `BitVec`, whose width enforces the random-word
+The stochastic modes receive a caller-supplied `BitVec`, and its width enforces the random-word
 range.
 
 ## Reference
@@ -135,7 +137,7 @@ namespace Format
 Whether the lower candidate has an even P3109 code at a rounding boundary.
 
 For `P > 1`, code parity is ordinary significand parity. The `P = 1` branch is the special rule
-from Section 4.7.4: zero is even, and a nonzero code is even exactly when `Q + B` is even.
+from Section 4.7.4: zero is even, and a nonzero code is even if and only if `Q + B` is even.
 -/
 @[inline] def lowerCodeIsEven (format : Format)
     (quantumExponent : Int) (lowerSignificand : Nat) : Bool :=

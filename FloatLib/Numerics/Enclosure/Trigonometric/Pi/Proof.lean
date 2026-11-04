@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Proof
 /-!
 # Containment after exact rational angle reduction
 
-Removing an integer number of full turns preserves sine and cosine exactly. Their global
-Lipschitz bounds control the remaining uncertainty in pi, and the usual Taylor remainder
-then gives a real containment theorem at every degree.
+Removing a whole number of full turns leaves sine and cosine unchanged. Their global Lipschitz
+bounds control the uncertainty in pi that remains, and the usual Taylor remainder then gives a real
+containment theorem at every degree.
 -/
 
 public section

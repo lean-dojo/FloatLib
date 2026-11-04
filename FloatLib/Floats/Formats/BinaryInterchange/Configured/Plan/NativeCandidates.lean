@@ -17,8 +17,8 @@ always expose the computed storage plan during instance search. Named software c
 these capabilities, and the selection theorems identify the certificate chosen by each ordinary
 software portfolio under every `Policy`.
 
-The guarded `NativeFPU.Unchecked` functions remain an explicit application, differential-test, and
-benchmark API outside these certified portfolios.
+The guarded `NativeFPU.Unchecked` functions stay outside these certified portfolios. They are an
+application, differential-test and benchmark API that you call by name.
 -/
 
 @[expose] public section

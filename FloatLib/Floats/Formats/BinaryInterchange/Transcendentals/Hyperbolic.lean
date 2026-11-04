@@ -13,27 +13,27 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 /-!
 # Format-generic executable hyperbolic functions
 
-`sinh`, `cosh`, and `tanh` are built from exact dyadics, exact rationals, and the configured
-exponential kernel, so the same algorithms elaborate for arbitrary binary descriptors.
+`sinh`, `cosh` and `tanh` are built from exact dyadics, exact rationals and the configured
+exponential kernel, so the same algorithms elaborate for arbitrary binary descriptors. These
+algorithms have no proved general real-error or ULP bound.
 
-The small-argument branches evaluate the polynomial stored in `Config.sinhCoeffsAsc` exactly.
+Small arguments go through the polynomial stored in `Config.sinhCoeffsAsc`, evaluated exactly.
 For generated configurations, `Config.sinhTerms` selects its length from the destination fraction
-width using a Taylor-tail target, while binary32 keeps its pinned six-term table.
-`sinh` rounds the polynomial once. `cosh` integrates it exactly before one final rational rounding.
-`tanh` approximates `s / sqrt (1 + s^2)`, where `s` is the truncated `sinh` value, using an integer
+width using a Taylor-tail target, while binary32 keeps its pinned six-term table. `sinh` rounds
+the polynomial once. `cosh` integrates it exactly before one final rational rounding. `tanh`
+approximates `s / sqrt (1 + s^2)`, where `s` is the truncated `sinh` value, using an integer
 square root with `tanhGuardBits` extra bits. Larger arguments use dyadic approximations from the
 exponential polynomial, combined before destination rounding. Bounded alignment preserves the
-sign of tiny contributions at rounding midpoints. These algorithms have no proved general
-real-error or ULP bound.
+sign of tiny contributions at rounding midpoints.
 
-The provider entry points inspect the decoded input exponent before requesting approximation data.
-For nonzero inputs with leading exponent below `-(fracWidth + 2)`, `sinh` and `tanh` return the
-input and `cosh` returns one. Large inputs return the rounded limit of `tanh`, or the descriptor's
-native overflow result for `sinh` and `cosh`. These conservative magnitude branches bypass even
-caller-supplied approximation coefficients and avoid huge fixed-point conversions for extreme
-inputs. The remaining inputs are compared with the destination's rounded encoding of `1/2`
-to choose between the polynomial and exponential branches. The lower-level polynomial and dyadic
-helpers do not apply these magnitude guards.
+The provider entry points look at the decoded input exponent before they request approximation
+data. For nonzero inputs with leading exponent below `-(fracWidth + 2)`, `sinh` and `tanh` return
+the input and `cosh` returns one. Large inputs return the rounded limit of `tanh`, or the
+descriptor's native overflow result for `sinh` and `cosh`. These conservative magnitude branches
+bypass even caller-supplied approximation coefficients, and they avoid huge fixed-point
+conversions for extreme inputs. Every other input is compared with the destination's rounded
+encoding of `1/2` to choose between the polynomial and exponential branches. The lower-level
+polynomial and dyadic helpers do not apply these magnitude guards.
 -/
 
 @[expose] public section
@@ -93,14 +93,14 @@ def tanhGuardBits : Nat := 32
 Approximate `tanh` for small arguments from a truncated `sinh` series.
 
 The real identity is `tanh x = sinh x / sqrt (1 + sinh x ^ 2)`. Substituting the truncated
-series gives an approximation whose magnitude is `a / sqrt b`, after clearing powers of two
-from its numerator and denominator. The implementation computes
-`q = floor (sqrt (a^2 * 4^k / b))` and rounds `(2q + s) * 2^(-k-1)` once, where the sticky bit
-`s` is one exactly when the division or the square root discarded a nonzero remainder. The
-sticky bit keeps the truncated magnitude on the same side of every rounding midpoint as the
-quotient of the truncated series. Without it a value just above a midpoint rounded down. The
-choice of `k` gives the square-root calculation extra working bits controlled by
-`tanhGuardBits`. A real-error or ULP bound for the complete calculation is not proved.
+series gives an approximation of magnitude `a / sqrt b`, after clearing powers of two from its
+numerator and denominator. The implementation computes `q = floor (sqrt (a^2 * 4^k / b))` and
+rounds `(2q + s) * 2^(-k-1)` once. The sticky bit `s` is one when the division or the square
+root discarded a nonzero remainder, and zero otherwise. It keeps the truncated magnitude on the
+same side of every rounding midpoint as the quotient of the truncated series, and without it a
+value just above a midpoint would round down. The choice of `k` gives the square-root
+calculation extra working bits, controlled by `tanhGuardBits`. A real-error or ULP bound for the
+complete calculation is not proved.
 -/
 def tanhTaylorSmallWith {fmt : FloatFormat}
     (config : Config) (x : Model fmt) : Model fmt :=

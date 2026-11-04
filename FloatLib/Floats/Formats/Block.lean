@@ -17,7 +17,9 @@ public meta import FloatLib.Floats.Formats.Block.SharedScale.Info
 /-!
 # Contextual and block-scaled numerical formats
 
-Block formats assign runtime codes and scalar meanings to whole blocks.
+In a block format, the runtime code and its scalar meaning belong to a whole block of values, and
+one scale serves every lane. The formats collected here follow the shared-scale model of the OCP
+microscaling specification.
 
 ## References
 

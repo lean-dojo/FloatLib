@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Fundamental configured posit constants
 
-Zero and NaR are representation-level constants needed by arithmetic, standard functions,
-conformance proofs, and the public API. They live below those layers so every client uses the same
-definitions without creating an import cycle.
+Arithmetic, the standard functions, conformance proofs, and the public API all need zero and NaR.
+We define both constants here, below every one of those layers, so all clients share the same
+definitions and no import cycle appears.
 -/
 
 @[expose] public section

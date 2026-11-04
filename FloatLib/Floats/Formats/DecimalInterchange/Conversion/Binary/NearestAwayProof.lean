@@ -13,11 +13,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Nearest-away conversion to binary
 
-The rational is rounded to an integer on the destination binary grid. The rounded
-significand fits the precision, allowing one carry, so the binary encoder preserves
-its exact value whenever the delivered result is finite. This proves a single
-rounding, including ties away from zero, rather than assuming that two successive
-roundings agree.
+For nearest-away conversion to binary, the rational is first rounded to an integer on the
+destination binary grid. The rounded significand fits the precision, with room for one carry, so
+the binary encoder keeps its exact value whenever the delivered result is finite. That makes the
+conversion a single rounding, ties away from zero included. Nothing here assumes that two
+successive roundings agree.
 -/
 
 @[expose] public section
@@ -42,8 +42,8 @@ theorem minSubnormalExponent_le_binaryQuantum (fmt : FloatFormat) (x : ℚ) :
     fmt.minSubnormalExponent ≤ binaryQuantum fmt x :=
   le_max_left _ _
 
-/-- A magnitude scaled to its binary grid is below one full precision carry; a nonpositive one is
-below it trivially. -/
+/-- A magnitude scaled to its binary grid is below one full precision carry, and a nonpositive one
+trivially is. -/
 theorem div_binaryQuantum_lt (fmt : FloatFormat) (x : ℚ) :
     x / (2 : ℚ) ^ binaryQuantum fmt x < 2 ^ (fmt.fracWidth + 1) := by
   rcases le_or_gt x 0 with hx | hx
@@ -82,7 +82,7 @@ theorem binaryNearestAwayDyadic_significand_le (fmt : FloatFormat) (s : Bool)
     (Nat.succ_le_of_lt hfloor)
 
 /-- The nearest-away dyadic lies on the destination grid before imposing its upper
-exponent bound. A carry is an exact change of exponent, not another rounding. -/
+exponent bound. A carry only changes the exponent, so it is no second rounding. -/
 theorem binaryNearestAwayDyadic_genericFormat (fmt : FloatFormat) (s : Bool)
     {x : ℚ} (hx : 0 ≤ x) :
     Flocq.genericFormat Numerics.binaryRadix (Model.fexpOf fmt)

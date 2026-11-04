@@ -24,16 +24,16 @@ storage inputs → cast each to product → multiply in product
                                      → cast to accumulator → add to accumulator
 ```
 
-Each step has five possible rounding errors: two input casts, multiplication, the product cast,
-and addition. Finite casts between identical formats are exact. The result stays in the
-accumulator format; the output format is used only when a reduction finishes.
+Each step has five places where it can round: the two input casts, the multiplication, the product
+cast and the addition. Finite casts between identical formats are exact. The result stays in the
+accumulator format, and the output format is used only when a reduction finishes.
 
 `dotSequential` starts at positive zero, applies `mulAcc` from left to right, then casts once to
-the output format. Different reduction orders can produce different bits. Unequal input lengths
-return an error; empty inputs return positive zero cast to the output format.
+the output format. A different reduction order can produce different bits. Unequal input lengths
+return an error, and empty inputs return positive zero cast to the output format.
 
 `Matmul` applies the same dot kernel to rows and columns. `Proof` and `MatmulProof` give error
-bounds for IEEE encodings when the inputs, intermediate values, and results are finite.
+bounds for IEEE encodings when the inputs, intermediate values and results are finite.
 -/
 
 @[expose] public section
@@ -99,10 +99,10 @@ To produce an output value, apply `cast p.accumulator p.output` to the result.
 Sequential mixed-precision dot product under site policy `p`.
 
 Each product-add uses `mulAcc` (storage → product → accumulator), and the completed accumulator
-is cast once into `p.output`. The reduction visits indices from left to right; rounded addition
+is cast once into `p.output`. The reduction visits indices from left to right. Rounded addition
 is not associative, so another parenthesization can change the result.
 
-The inputs must have equal lengths. A mismatch returns `ReductionError.lengthMismatch`; empty
+The inputs must have equal lengths. A mismatch returns `ReductionError.lengthMismatch`, and empty
 inputs return `+0` cast from the accumulator format into `p.output`.
 -/
 def dotSequential (p : SitePolicy)

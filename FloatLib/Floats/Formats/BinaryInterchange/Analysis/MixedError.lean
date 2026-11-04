@@ -17,10 +17,10 @@ public import Mathlib.Algebra.BigOperators.Fin
 # Mixed error of binary arithmetic
 
 Fix an IEEE descriptor `fmt` and write `u = unitRoundoffAt fmt` and `η = underflowErrorAt fmt`.
-Suppose the operands of a finite operation approximate exact reals `x₀` and `y₀` in the sense of
-`MixedError`. We bound the decoded result against the same operation on `x₀` and `y₀`, with
-constants built explicitly from the operand constants, `u` and `η`. A whole
-computation is bounded by applying one theorem per operation.
+If the operands of a finite operation approximate exact reals `x₀` and `y₀` in the sense of
+`MixedError`, we bound the decoded result against the same operation on `x₀` and `y₀`. The
+constants are written out in terms of the operand constants, `u` and `η`, so a whole computation
+is bounded by applying one theorem per operation.
 
 Each bound composes the propagated operand error with the error of the final rounding, as in
 `MixedError.trans`. Addition and subtraction round without an underflow term, so `η` does not
@@ -28,18 +28,19 @@ appear in their bounds. A sum of same-sign values, or a difference of values of 
 keeps a relative bound. With cancellation, the propagated operand error becomes absolute.
 
 On finite operands, Sterbenz subtraction, `x - x`, negation, exact widening, `maximum` and
-`minimum` do not round, so they carry only the operand errors. The other exact operations, sums
-and differences with a zero, products with a zero or with a value of magnitude one, and the square
-root of a zero, are stated with the arithmetic semantics (`toReal_add_of_isZero_left` and its
+`minimum` do not round, so they carry only the operand errors. Sums and differences with a zero,
+products with a zero or with a value of magnitude one, and the square root of a zero are exact
+too. They are stated with the arithmetic semantics (`toReal_add_of_isZero_left` and its
 siblings), and so are their decoded forms (`toRat?_sub_self`, `toRat?_add_of_representable` and
 their siblings).
 
-A left-to-right sum of terms whose exact values, and the seed's, are nonnegative has relative
-error growing like `(1 + u) ^ n` in the number `n` of additions. When the terms carry different
-errors, each relative error is weighted by its own term. A sum of terms of either sign has an
-absolute bound in terms of `Σ |term₀ i|`. The partial sums of a finite sum are finite, a sum of
-zeros keeps the value of its seed, and a sum from zero over a list without repeated indices, in
-which every term but the one at `j` decodes to zero, is exact whatever its length.
+For sums, a left-to-right sum whose seed and terms have nonnegative exact values has relative error
+growing like `(1 + u) ^ n` in the number `n` of additions. When the terms carry different errors,
+each relative error is weighted by its own term. A sum of terms of either sign has an absolute
+bound in terms of `Σ |term₀ i|`. Three smaller facts close the file: the partial sums of a finite
+sum are finite, a sum of zeros keeps the value of its seed, and a sum from zero over a list without
+repeated indices, in which every term but the one at `j` decodes to zero, is exact whatever its
+length.
 
 ## Main results
 
@@ -183,7 +184,8 @@ theorem mixedError_toReal_sub_of_sterbenz (hfmt : fmt.isIEEE = true) (hx : isFin
   rw [toReal_sub_eq_of_sterbenz_of_same_sign hfmt hx hy hsign hxy hyx]
   exact ex.sub ey
 
-/-- Subtracting a finite value from itself is exactly zero, whatever the error of the value. -/
+/-- Subtracting a finite value from itself has zero mixed error against `x₀ - x₀`, whatever the
+error of the value. -/
 theorem mixedError_toReal_sub_self (hfmt : fmt.isIEEE = true) (hx : isFinite x = true) :
     MixedError (toReal (sub x x)) (x₀ - x₀) 0 0 :=
   MixedError.of_eq (by rw [toReal_sub_self hfmt hx, sub_self])
@@ -422,11 +424,11 @@ private theorem mixedError_toReal_foldl_add_pow_add (hfmt : fmt.isIEEE = true) (
       ← add_assoc d]
 
 /--
-A left-to-right sum `l.foldl (fun acc i => add acc (term i)) seed` whose seed and terms have
-nonnegative exact values keeps relative accuracy. Write `u = unitRoundoffAt fmt`. If the seed and
-every term have relative error `r` and absolute errors `d` and `err i`, the result has relative
-error `(1 + u) ^ l.length * (1 + r) - 1` and absolute error `(1 + u) ^ l.length * (d + Σ err i)`.
-With `r = 0` and an exact seed, `d = 0`, this reads
+A left-to-right sum `l.foldl (fun acc i => add acc (term i)) seed` with nonnegative exact seed and
+terms keeps relative accuracy. With `u = unitRoundoffAt fmt`, relative error `r` on the seed and
+every term, and absolute errors `d` and `err i`, the result has relative error
+`(1 + u) ^ l.length * (1 + r) - 1` and absolute error `(1 + u) ^ l.length * (d + Σ err i)`.
+For `r = 0` and an exact seed, `d = 0`, this reads
 `|Ŝ - S| ≤ ((1 + u) ^ n - 1) * S + (1 + u) ^ n * Σ err i`. Every partial sum must be finite, which
 `isFinite_of_mem_scanl_add` derives from a finite result.
 -/
@@ -473,10 +475,9 @@ theorem mixedError_toReal_foldl_add_of_toReal_eq_zero (hfmt : fmt.isIEEE = true)
 /--
 A left-to-right sum of terms with nonnegative exact values and their own mixed errors
 `(rel i, err i)`, from a seed with nonnegative exact value and pure absolute error `d`, has
-relative error `(1 + u) ^ l.length - 1`
-and absolute error `(1 + u) ^ l.length * (d + Σ (rel i * term₀ i + err i))`, with
-`u = unitRoundoffAt fmt`. Each relative error is
-weighted by its own term instead of bounded by the largest one.
+relative error `(1 + u) ^ l.length - 1` and absolute error
+`(1 + u) ^ l.length * (d + Σ (rel i * term₀ i + err i))`, with `u = unitRoundoffAt fmt`. Each
+relative error is weighted by its own term instead of being bounded by the largest one.
 -/
 theorem mixedError_toReal_foldl_add_weighted (hfmt : fmt.isIEEE = true)
     (hfinite : ∀ v ∈ l.scanl (fun acc i => add acc (term i)) seed, isFinite v = true)

@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Additi
 /-!
 # Directed subtraction soundness for conventional IEEE formats
 
-Subtraction reuses directed addition after exact sign-bit negation of the right operand. Generic
-finite-value negation semantics turn the resulting sum bounds into real subtraction bounds.
+Subtraction flips the sign bit of the right operand, which is exact, and then reuses directed
+addition. Generic finite-value negation semantics turn the resulting sum bounds into real
+subtraction bounds.
 -/
 
 @[expose] public section

@@ -14,12 +14,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 /-!
 # Quotient and exponent semantics
 
-Exact rational rounding reduces to an integer quotient after a power-of-two rescaling. This
-module proves bounds for small quotients and relates the scaled leading exponent to the order of
-the numerator and denominator. It also identifies the subnormal and normal grid exponents used
-by `roundAt`.
+After a power-of-two rescaling, exact rational rounding comes down to an integer quotient. We
+bound small quotients, relate the scaled leading exponent to the order of the numerator and
+denominator, and identify the subnormal and normal grid exponents that `roundAt` uses.
 
-These lemmas supply the bounds and exponent identities used by the nearest-even packing proofs.
+Nearest-even packing proofs rely on these bounds and exponent identities.
 -/
 
 @[expose] public section

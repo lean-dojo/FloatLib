@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Ration
 /-!
 # Binary exponent bounds for positive rational numbers
 
-The executable rational rounder locates a positive quotient between consecutive powers of two
-using `Numerics.RationalBinary.floorLog2`. This module proves that format-independent
-characterization, including the asymmetric numerator and denominator cases that make quotient
-normalization easy to get wrong.
+Before it rounds a positive quotient, the executable rational rounder places it between
+consecutive powers of two with `Numerics.RationalBinary.floorLog2`. We prove that this placement
+is right, independently of any format, including the asymmetric numerator and denominator cases
+that make quotient normalization easy to get wrong.
 
-The result serves every exponent width and both directed rounding modes, so division and
-conversion proofs share one rational lemma instead of repeating leading-bit arguments per format.
+One result serves every exponent width and both directed rounding modes. Division and conversion
+proofs share this one rational lemma and don't repeat leading-bit arguments for each format.
 -/
 
 @[expose] public section
@@ -616,7 +616,7 @@ theorem compareDyadicScaled?_false_eq_compare
   simpa [signedScaledRatToReal] using
     compareDyadicScaled?_eq_compare false numerator denominator exponent value hdenominator
 
-/-- Nonnegative scaled-rational comparison returns `.lt` exactly for strict real order. -/
+/-- Nonnegative scaled-rational comparison returns `.lt` if and only if the real order is strict. -/
 theorem compareDyadicScaled?_false_eq_lt_iff
     (numerator denominator : Nat) (exponent : Int)
     (value : Numerics.Dyadic)
@@ -628,7 +628,7 @@ theorem compareDyadicScaled?_false_eq_lt_iff
     numerator denominator exponent value hdenominator]
   simp [compare_lt_iff_lt]
 
-/-- Nonnegative scaled-rational comparison returns `.eq` exactly for real equality. -/
+/-- Nonnegative scaled-rational comparison returns `.eq` if and only if the reals are equal. -/
 theorem compareDyadicScaled?_false_eq_eq_iff
     (numerator denominator : Nat) (exponent : Int)
     (value : Numerics.Dyadic)
@@ -640,7 +640,7 @@ theorem compareDyadicScaled?_false_eq_eq_iff
     numerator denominator exponent value hdenominator]
   simp
 
-/-- Nonnegative scaled-rational comparison returns `.gt` exactly for reverse strict real order. -/
+/-- Nonnegative scaled-rational comparison returns `.gt` if and only if the reverse is strict. -/
 theorem compareDyadicScaled?_false_eq_gt_iff
     (numerator denominator : Nat) (exponent : Int)
     (value : Numerics.Dyadic)

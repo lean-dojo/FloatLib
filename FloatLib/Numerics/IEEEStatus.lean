@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Repr
 /-!
 # Shared IEEE exception indicators
 
-Binary and decimal operations signal the same five exceptions. Their numerical conditions,
-including tininess detection, belong to each format. The flag record and sticky accumulation
-do not depend on radix, precision, storage, or rounding direction.
+Binary and decimal operations signal the same five exceptions. Their numerical conditions, tininess
+detection included, belong to each format, but the flag record and sticky accumulation depend on
+neither radix, precision, storage, nor rounding direction.
 -/
 
 @[expose] public section
@@ -102,7 +102,7 @@ def testFlags (flags group : IEEEStatus) : Bool :=
   (flags.underflow && group.underflow) ||
   (flags.inexact && group.inexact)
 
-/-- Save all flags as an immutable value. -/
+/-- Save all flags as an immutable value. Flag states are plain values, so this is the identity. -/
 def saveAllFlags (flags : IEEEStatus) : IEEEStatus := flags
 
 /-- Test a saved snapshot without changing the current environment. -/

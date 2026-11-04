@@ -12,9 +12,9 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Correct rounding of the square-root coefficient
 
-The integer square root brackets the mathematical real square root. Exact
-squared comparisons then give at most half-unit error in either nearest mode and the
-appropriate one-sided bounds in the three directed modes.
+Correct rounding of a square root comes down to integers here. The integer square root brackets
+the real square root, and exact squared comparisons then give at most half a unit of error in
+either nearest mode and the right one-sided bound in each of the three directed modes.
 -/
 
 @[expose] public section

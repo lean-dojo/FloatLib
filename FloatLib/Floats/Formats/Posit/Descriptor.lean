@@ -11,12 +11,12 @@ public import Mathlib.Data.Nat.Basic
 /-!
 # Posit format descriptors
 
-A posit format has one sign bit and a tapered payload whose regime length depends on the encoded
-value. The Posit Standard (2022) fixes the maximum exponent field at two bits, so a standard
-format is selected only by its total width.
+A posit has one sign bit and a tapered payload, and the length of its regime field depends on the
+encoded value. The Posit Standard (2022) fixes the maximum exponent field at two bits, so you pick
+a standard format by its total width alone, as in `{ bits := 32 }`.
 
-The descriptor is static in the Lean type. It therefore supports arbitrary widths without storing
-the width in every runtime value.
+We keep the descriptor static in the Lean type. That is what lets the library support arbitrary
+widths without storing the width in every runtime value.
 
 ## References
 
@@ -85,8 +85,8 @@ namespace Format
 /--
 The same standardized posit family at one additional bit of precision.
 
-Section 4.1 of the standard defines an `n`-bit rounding boundary using an `(n + 1)`-bit posit, so
-this descriptor transformation is part of the exact rounding definition rather than an
+Section 4.1 of the standard defines an `n`-bit rounding boundary using an `(n + 1)`-bit posit.
+So this transformation is part of the exact rounding definition itself, and it isn't an
 implementation convenience.
 -/
 @[inline] def nextPrecision (format : Format) : Format where

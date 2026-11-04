@@ -12,10 +12,14 @@ import FloatLib.Numerics.Order.Comparison
 /-!
 # Exact real semantics of ordinary trigonometric comparisons
 
-Every direct comparator returns the ordering of the exact real function value and rational
-boundary. The inverse sine and cosine contracts require an argument in `[-1, 1]` and use
-their usual principal branches. Exact rational values are included: sine, tangent, and
-arctangent at zero; cosine at zero; inverse sine at zero; and inverse cosine at one.
+Every direct comparator returns the ordering of the exact real function value and the rational
+boundary. Inverse sine and cosine require an argument in `[-1, 1]` by contract and use the usual
+principal branches. Exact rational values are covered too:
+
+- sine, tangent, and arctangent at zero,
+- cosine at zero,
+- inverse sine at zero,
+- inverse cosine at one.
 
 Prepared and uncached comparators satisfy the same contracts at every cache size.
 -/

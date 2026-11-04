@@ -20,9 +20,9 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified fixed-limb differences
 
-The helpers of `Difference.Runtime` compare, subtract, normalize, and shift two-word unsigned
-values without converting the executable path to `Nat`. The theorems here give their mathematical
-values for format-specific subtraction proofs.
+The helpers in `Difference.Runtime` compare, subtract, normalize, and shift two-word unsigned values
+without converting the executable path to `Nat`. The theorems here give their mathematical values.
+Format-specific subtraction proofs build on them.
 -/
 
 @[expose] public section

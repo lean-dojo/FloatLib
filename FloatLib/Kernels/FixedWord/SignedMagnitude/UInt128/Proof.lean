@@ -15,9 +15,9 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 /-!
 # Exactness of two-limb signed-magnitude arithmetic
 
-Two-limb signed-magnitude addition has an exact-dyadic refinement through `UInt128`. The proof
+We refine two-limb signed-magnitude addition to exact dyadic arithmetic through `UInt128`. The proof
 factors execution through a signed integer coefficient, so carrier arithmetic and exact-dyadic
-semantics meet at one small, representation-independent boundary.
+semantics meet at one small boundary that doesn't depend on the representation.
 -/
 
 @[expose] public section
@@ -213,8 +213,8 @@ private theorem addSignedMagnitudes128_signedCoefficient
 /--
 Two-limb signed-magnitude addition denotes exact dyadic addition at a common exponent.
 
-The hypotheses use the mathematical carrier view directly, avoiding representation-specific
-zero lemmas at every caller.
+The hypotheses are stated on the mathematical carrier view, so no caller needs
+representation-specific zero lemmas.
 -/
 theorem signedMagnitudeDyadic128_addSignedMagnitudes128_eq_addFields
     (leftNegative rightNegative : Bool)

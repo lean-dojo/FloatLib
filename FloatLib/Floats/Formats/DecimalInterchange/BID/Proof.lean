@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Proof
 /-!
 # BID coefficient correctness and complete datum round trips
 
-BID coefficient and exponent packing satisfies the field bounds and recovers every valid datum
-after encoding. Every decoded word is valid; canonicalization preserves the complete datum, is
-idempotent, and maps two words to the same canonical word exactly when they decode to the same
-datum.
+Here BID meets the shared codec laws of `Codec.Proof`. Packing a coefficient and an exponent stays
+within the field bounds, and decoding gives back every valid datum after encoding. Every decoded
+word is valid. Canonicalization keeps the complete datum, applying it twice changes nothing, and
+two words get the same canonical word if and only if they decode to the same datum.
 -/
 
 @[expose] public section
@@ -22,7 +22,7 @@ datum.
 namespace FloatLib.Floats.Formats.DecimalInterchange.BID
 
 /-- A biased exponent above a coefficient field `k` trailing fields wide packs below `3 * k`
-exponent-continuation blocks; the two steering branches use `k = 8` and `k = 2`. -/
+exponent-continuation blocks. The two steering branches use `k = 8` and `k = 2`. -/
 private theorem exponent_field_lt (f : Format) (k c e : Nat)
     (hc : c < k * f.trailingBase) (he : e < f.exponentBound) :
     e * (k * f.trailingBase) + c < 3 * k * (f.exponentBase * f.trailingBase) := by
@@ -63,7 +63,7 @@ theorem encodeFinite_lt (f : Format) (c e : Nat)
     omega
 
 /-- Every finite BID field pattern decodes to a coefficient and biased exponent within the format
-bounds; an oversized significand decodes as zero. -/
+bounds. An oversized significand decodes as zero. -/
 theorem decodeFinite_valid (f : Format) (n : Nat)
     (hn : n < 30 * (f.exponentBase * f.trailingBase)) :
     (decodeFinite f n).1 < f.coefficientBound ∧
@@ -136,7 +136,7 @@ theorem lawful : codec.Lawful where
   decodePayload_encodePayload f p hp := by
     simp [codec, decodePayload, hp]
 
-/-- Encoding and decoding preserve a representable datum exactly. -/
+/-- Encoding a representable datum and decoding the word gives the datum back unchanged. -/
 theorem decode_encode (f : Format) (d : Datum) (h : d.Valid f) :
     decode f (codec.encode f d) = d :=
   codec.decode_encode lawful f d h
@@ -156,7 +156,7 @@ theorem canonicalize_idempotent (f : Format) (word : BitVec f.bitWidth) :
     canonicalize f (canonicalize f word) = canonicalize f word :=
   codec.canonicalize_idempotent lawful f word
 
-/-- Two BID words have the same canonical word exactly when they decode to the same datum, so
+/-- Two BID words have the same canonical word if and only if they decode to the same datum, so
 noncanonical significands and unused special-value bits are collapsed onto one word. -/
 theorem canonicalize_eq_canonicalize_iff (f : Format) (left right : BitVec f.bitWidth) :
     canonicalize f left = canonicalize f right ↔ decode f left = decode f right :=

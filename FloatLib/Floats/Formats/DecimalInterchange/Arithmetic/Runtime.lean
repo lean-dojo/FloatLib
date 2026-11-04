@@ -10,15 +10,15 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Runtime
 /-!
 # Decimal rational arithmetic
 
-Addition, subtraction, multiplication, division, and fused multiply-add compute
-their finite intermediate values in `ℚ`, then project once. Preferred exponents
-follow IEEE 754-2019 §5.4.1; signs and exceptional operands follow §§6–7.
+Decimal addition, subtraction, multiplication, division, and fused multiply-add all work the same
+way: each computes its finite intermediate value in `ℚ` and projects it onto the format once, with
+preferred exponents from IEEE 754-2019 §5.4.1 and the rules for signs and exceptional operands
+from §§6 and 7.
 
-NaN propagation chooses the first NaN operand, preserving its sign and payload
-when the payload fits the destination. Any signaling operand raises invalid.
-For `fma(0, infinity, quietNaN)`, this implementation raises invalid, one of the
-two behaviors permitted by §7.2(c). These operations return default exception
-flags; they do not implement trapping or a mutable floating-point environment.
+When NaNs come in, the first NaN operand wins. It keeps its sign, and its payload too if the payload
+fits the destination. Any signaling operand raises invalid. For `fma(0, infinity, quietNaN)` we
+raise invalid, which is one of the two behaviors §7.2(c) allows. The operations return default
+exception flags, so there is no trapping and no mutable floating-point environment.
 -/
 
 @[expose] public section
@@ -26,8 +26,8 @@ flags; they do not implement trapping or a mutable floating-point environment.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 
 /-- Exact rational value of a finite representation with sign `negative`, coefficient
-`coefficient` and quantum `quantum`. Both signed zeros have value `0`, so the sign of a zero result is
-tracked separately: the operations below pass it to `project`. -/
+`coefficient` and quantum `quantum`. Both signed zeros have value `0`, so the operations below
+pass the sign of a zero result to `project` on its own. -/
 def Datum.finiteValue (negative : Bool) (coefficient : Nat) (quantum : Int) : ℚ :=
   (if negative then -1 else 1) * (coefficient : ℚ) * (10 : ℚ) ^ quantum
 
@@ -47,7 +47,8 @@ def nanResult (f : Format) (negative : Bool) (payload : Nat) (invalid : Bool) : 
 def invalidResult : Outcome :=
   { value := .nan false false 0, status := { invalid := true } }
 
-/-- Sign of an exact zero sum. Equal signs survive; cancellation rounds downward to `-0`. -/
+/-- Sign of an exact zero sum. Equal signs survive, and cancellation gives `-0` only when rounding
+downward. -/
 def zeroSumSign (mode : RoundingMode) (left right : Bool) : Bool :=
   if left = right then left else decide (mode = .down)
 
@@ -81,8 +82,8 @@ def mul (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
         (qx + qy) (sx ^^ sy)
 
 /-- Division, including the distinction between finite nonzero/zero and infinity/zero.
-By §5.2, an infinity has quantum exponent `+∞`; finite/infinity therefore selects
-the smallest quantum in the signed-zero cohort. -/
+By §5.2 an infinity has quantum exponent `+∞`, so finite/infinity selects the smallest quantum in
+the signed-zero cohort. -/
 def div (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
   | .nan s t p, y => nanResult f s p (t || y.isSNaN)
   | _, .nan s t p => nanResult f s p t
@@ -110,7 +111,7 @@ def invalidProduct : Datum → Datum → Bool
   | .infinity _, .finite _ c _ | .finite _ c _, .infinity _ => c == 0
   | _, _ => false
 
-/-- Fused multiply-add with unbounded intermediate range and exactly one rounding.
+/-- Fused multiply-add with unbounded intermediate range and a single rounding.
 Neither an overflowing nor an underflowing intermediate product raises a flag. -/
 def fma (f : Format) (mode : RoundingMode) : Datum → Datum → Datum → Outcome
   | .nan s t p, y, z => nanResult f s p (t || y.isSNaN || z.isSNaN)

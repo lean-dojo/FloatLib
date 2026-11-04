@@ -12,11 +12,11 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Total ordering of complete exact representations
 
-The key used by `ExactValue.totalOrder` is injective, so its order is antisymmetric on complete
-data, not just on numerical denotations. Finite comparison agrees with rational order and breaks
-numerical ties by sign and exponent. Separate theorems give the NaN class and payload rules.
-Magnitude order is a total preorder: mutual comparison identifies complete data after clearing
-their signs, including NaN class and payload.
+`ExactValue.totalOrder` compares an injective key, so its order is antisymmetric on complete data,
+which is stronger than antisymmetry on numerical denotations. Finite comparison agrees with
+rational order and breaks numerical ties by sign and exponent. The NaN class and payload rules
+have theorems of their own. Magnitude order is a total preorder: if each of two values is at most
+the other, their complete data agree once the signs are cleared, NaN class and payload included.
 -/
 
 @[expose] public section
@@ -69,7 +69,7 @@ theorem totalOrderKey_injective : Function.Injective totalOrderKey := by
           cases s <;> cases t <;> cases q <;> cases r <;>
             simp_all [totalOrderKey]
 
-/-- The executable Boolean is precisely the mathematical order on exact coordinates. -/
+/-- The executable Boolean agrees with the mathematical order on exact coordinates. -/
 @[simp] theorem totalOrder_eq_true_iff (x y : ExactValue) :
     totalOrder x y = true ↔ totalOrderKey x ≤ totalOrderKey y := by
   cases x with
@@ -118,7 +118,7 @@ theorem totalOrder_antisymm {x y : ExactValue}
   totalOrderKey_injective
     (le_antisymm ((totalOrder_eq_true_iff _ _).1 hxy) ((totalOrder_eq_true_iff _ _).1 hyx))
 
-/-- Mutual comparison is exactly equality of complete representations. -/
+/-- Mutual comparison holds if and only if the complete representations are equal. -/
 theorem totalOrder_both_iff (x y : ExactValue) :
     totalOrder x y = true ∧ totalOrder y x = true ↔ x = y := by
   constructor
@@ -196,11 +196,11 @@ theorem totalOrder_finite_of_value_eq
     totalOrder (.infinity s) (.infinity t) = (s || !t) := by
   cases s <;> cases t <;> simp [totalOrder, totalOrderKey, Prod.Lex.toLex_le_toLex]
 
-/-- A NaN precedes every finite number exactly when the NaN has negative sign. -/
+/-- A NaN precedes every finite number just when the NaN has negative sign. -/
 @[simp] theorem totalOrder_nan_finite (s q : Bool) (p : Nat) (d : Numerics.Dyadic) :
     totalOrder (.nan s q p) (.finite d) = s := rfl
 
-/-- Every finite number precedes a NaN exactly when that NaN has positive sign. -/
+/-- Every finite number precedes a NaN just when that NaN has positive sign. -/
 @[simp] theorem totalOrder_finite_nan (d : Numerics.Dyadic) (s q : Bool) (p : Nat) :
     totalOrder (.finite d) (.nan s q p) = !s := rfl
 
@@ -209,7 +209,7 @@ theorem totalOrder_finite_of_value_eq
     totalOrder (.nan s q p) (.infinity t) = s := by
   cases s <;> cases t <;> simp [totalOrder, totalOrderKey, Prod.Lex.toLex_le_toLex]
 
-/-- Infinity precedes precisely the positive NaNs. -/
+/-- An infinity precedes a NaN if and only if the NaN is positive. -/
 @[simp] theorem totalOrder_infinity_nan (t s q : Bool) (p : Nat) :
     totalOrder (.infinity t) (.nan s q p) = !s := by
   cases s <;> cases t <;> simp [totalOrder, totalOrderKey, Prod.Lex.toLex_le_toLex]

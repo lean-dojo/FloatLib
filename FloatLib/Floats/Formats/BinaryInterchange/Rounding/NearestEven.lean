@@ -12,12 +12,12 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 /-!
 # Nearest-even rounding lemmas
 
-Format-independent integer primitives in `Numerics` agree with FloatLib's rounded-real
-nearest-even operation under the stated bounds.
+Under the stated bounds, the format-independent integer primitives in `Numerics` agree with
+FloatLib's rounded-real nearest-even operation.
 
 Generic shift-rounding equations and floor bounds live in
 `Numerics.Quantization.Deterministic.ShiftRight`, where fixed-point and other binary
-quantizations can reuse them. This module adds normalized-significand bounds, oddness of
+quantizations can reuse them. Here we add normalized-significand bounds, oddness of
 `nearestEven`, and its agreement with executable rounding of nonnegative rationals.
 -/
 

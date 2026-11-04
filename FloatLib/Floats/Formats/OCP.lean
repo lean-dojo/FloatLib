@@ -13,7 +13,9 @@ public import FloatLib.Floats.Formats.OCP.MX
 /-!
 # Open Compute Project numerical formats
 
-Nominal executable packages for OCP FP8 and microscaling element formats.
+The Open Compute Project specifies two 8-bit floats, FP8 E4M3 and E5M2, and the microscaling (MX)
+formats, in which a block of narrow elements shares one scale. This module collects our executable
+packages for both, and each format is its own nominal type.
 
 ## References
 

@@ -14,32 +14,33 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 /-!
 # Executable policy-aware binary quantization
 
-Encoding policy and operation policy are distinct. E4M3FN, for example, has one fixed collection
-of bit patterns but supports both saturating and non-saturating conversions. Hardware may also
-flush a subnormal result to zero even though the storage format can represent that subnormal.
+A format's bit patterns don't decide how a value is written into it. E4M3FN has one fixed set of
+bit patterns, yet it supports both saturating and non-saturating conversions, and hardware may
+flush a subnormal result to zero even when the storage format can represent that subnormal. So
+this module keeps the encoding policy and the operation policy apart.
 
-`QuantizationPolicy` records the three choices needed when an exact rational is written into a
+`QuantizationPolicy` records the three choices you need when an exact rational is written into a
 binary format:
 
-1. integer rounding at the discarded-bit boundary;
-2. behavior beyond the largest finite magnitude;
+1. integer rounding at the discarded-bit boundary,
+2. behavior beyond the largest finite magnitude,
 3. gradual underflow or flush-to-zero after rounding.
 
-The implementation uses natural-number arithmetic only. It never passes through a host float.
-The local stochastic choice in `roundQuot` is deterministic given `entropy` and is unbiased when
-`entropy % den` is uniform. That statement does not by itself give a global unbiasedness theorem
-for quantization with saturation, overflow, or flush-to-zero.
+Everything runs in natural-number arithmetic and never passes through a host float. Given
+`entropy`, the local stochastic choice in `roundQuot` is deterministic, and it is unbiased when
+`entropy % den` is uniform. That alone doesn't give a global unbiasedness theorem for
+quantization with saturation, overflow or flush-to-zero.
 
-`roundDyadicGeneral` always executes the rational policy algorithm below. The ordinary
-`roundDyadic` entry point dispatches the six `IEEERoundingMode` choices with native overflow
-and gradual underflow to the shift-based rounders in `Rounding.Directed.Dyadic`. Every other
-policy uses the general engine. The two implementations are independent, so the agreement
-theorems in `Rounding.Policy.Agreement` and `Rounding.Policy.NearestAwayAgreement` do not hold
+There are two engines. `roundDyadicGeneral` always runs the rational policy algorithm below. The
+ordinary `roundDyadic` entry point sends the six `IEEERoundingMode` choices with native overflow
+and gradual underflow to the shift-based rounders in `Rounding.Directed.Dyadic`, and every other
+policy goes to the general engine. Because the two implementations are independent, the agreement
+theorems in `Rounding.Policy.Agreement` and `Rounding.Policy.NearestAwayAgreement` don't hold
 merely by delegation.
 
-Both engines resolve overflow through `directedOverflow`, so a finite-with-NaN encoding such as
-E4M3FN saturates to its largest finite value in the truncating direction and produces its NaN word
-only when the direction carries the magnitude past that value.
+Both engines resolve overflow through `directedOverflow`. A finite-with-NaN encoding such as
+E4M3FN therefore saturates to its largest finite value in the truncating direction, and produces
+its NaN word only when the direction carries the magnitude past that value.
 
 References:
 
@@ -168,11 +169,11 @@ carried downward becomes the largest finite value of the requested sign.
 /--
 Round the nonnegative rational magnitude `num / den` into `fmt` with the requested sign.
 
-This is the statically checked arithmetic core used after a caller has established that `den > 0`.
-A magnitude below half the least subnormal is decided by the rounding direction alone, except
-under stochastic rounding, so the subnormal alignment shift is not materialized for such inputs.
-Stochastic rounding of a far-below-subnormal quotient does shift `num` by the full alignment
-`fmt.exponentBias + fmt.fracWidth - 1`, because the exact remainder decides the outcome.
+This is the statically checked arithmetic core, used once a caller has established `den > 0`.
+Below half the least subnormal the rounding direction alone decides the result, so the subnormal
+alignment shift is never built for such inputs. Stochastic rounding is the exception. Its outcome
+depends on the exact remainder, so it does shift `num` by the full alignment
+`fmt.exponentBias + fmt.fracWidth - 1`.
 -/
 def roundRatGeneralOfDenNeZero (fmt : FloatFormat) (policy : QuantizationPolicy) (entropy : Nat)
     (sign : Bool) (num den : Nat) (_hden : den ≠ 0) : Model fmt :=

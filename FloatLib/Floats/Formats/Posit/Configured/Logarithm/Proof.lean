@@ -12,8 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Logarithm.Runtime
 /-!
 # Real correctness of configured posit logarithms
 
-Every supported carrier decodes to the same model operation. The finite-domain theorems state
-the exact real logarithm being rounded, including the unrounded addition in `Plus1`.
+On every supported carrier, `log2`, `log10`, and their `Plus1` forms decode to the same model
+operation. The finite-domain theorems, `log2_eq_real` and the rest, name the exact real logarithm
+that gets rounded, and in the `Plus1` forms that includes the addition, which isn't rounded on
+its own.
 -/
 
 @[expose] public section
@@ -64,7 +66,7 @@ theorem log10_eq_real (value : Value) {q : Rat}
   rw [toModel_log10]
   exact Model.log10_eq_real _ hvalue hq
 
-/-- Configured base-two `Plus1` forms `1 + x` exactly before rounding the logarithm. -/
+/-- Configured base-two `Plus1` computes `1 + x` without rounding, then rounds the logarithm. -/
 theorem log2Plus1_eq_real (value : Value) {q : Rat}
     (hvalue : toRat? value = some q) (hq : -1 < q) :
     toModel (log2Plus1 value) =
@@ -72,7 +74,7 @@ theorem log2Plus1_eq_real (value : Value) {q : Rat}
   rw [toModel_log2Plus1]
   exact Model.log2Plus1_eq_real _ hvalue hq
 
-/-- Configured base-ten `Plus1` forms `1 + x` exactly before rounding the logarithm. -/
+/-- Configured base-ten `Plus1` computes `1 + x` without rounding, then rounds the logarithm. -/
 theorem log10Plus1_eq_real (value : Value) {q : Rat}
     (hvalue : toRat? value = some q) (hq : -1 < q) :
     toModel (log10Plus1 value) =

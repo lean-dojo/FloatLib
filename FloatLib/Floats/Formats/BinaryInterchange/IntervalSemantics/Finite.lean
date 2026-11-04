@@ -15,8 +15,8 @@ public import FloatLib.Floats.Interval.RealBounds
 # Range-limited finite-only interval enclosures
 
 Finite-only formats saturate instead of producing infinity, so their outward interval operations
-are sound only when the exact endpoint expressions stay inside the finite range. The theorems here
-state those range premises.
+are sound only when the exact endpoint expressions stay inside the finite range. Every theorem
+here states that range premise.
 -/
 
 @[expose] public section

@@ -16,8 +16,8 @@ Both notations take a number of digits after the decimal point. Fixed output rou
 on the exact decimal value, before inserting the point and exponent. Trailing zeros express the
 requested precision, and a negative value that rounds to zero retains its sign.
 
-These operations use exact integer arithmetic for any binary descriptor. They do not call the
-host floating-point printer. `Model.format` selects them with `style := .fixed places` and
+These operations use exact integer arithmetic for any binary descriptor and never call the host
+floating-point printer. `Model.format` selects them with `style := .fixed places` and
 `style := .scientific places`.
 -/
 

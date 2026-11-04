@@ -11,11 +11,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 /-!
 # Native binary32 field-packing identities
 
-The executable field operations live in `Narrow.Base.Runtime`. This module proves that extracting
-and repacking a native binary32 word is lossless, and records the native form of quieting a NaN.
-
-These bit-level identities are shared by addition and fused multiply-add proofs, but do not depend
-on either arithmetic operation.
+Extracting and repacking a native binary32 word loses nothing, and this module proves it, along with
+the native form of quieting a NaN. Executable field operations live in `Narrow.Base.Runtime`.
+Addition and fused multiply-add proofs share these bit-level identities, which don't depend on
+either arithmetic operation.
 -/
 
 @[expose] public section

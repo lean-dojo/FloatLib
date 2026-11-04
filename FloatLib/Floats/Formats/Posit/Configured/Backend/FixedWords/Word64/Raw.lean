@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Kernel
 /-!
 # Raw `UInt64` kernels for packed posits
 
-These entry points preserve the native `UInt64` calling convention of the selected storage plan.
-Configured runtime wrappers use the generic range certificates from `FixedWords.Kernels`.
+Here the shared kernels get one `UInt64` entry point per operation, which keeps the native
+calling convention of the selected storage plan, and the configured runtime wrappers prove the
+results in range with the generic certificates from `FixedWords.Kernels`.
 -/
 
 @[expose] public section

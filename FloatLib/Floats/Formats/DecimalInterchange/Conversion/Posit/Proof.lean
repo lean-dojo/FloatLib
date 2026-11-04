@@ -13,10 +13,10 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Posit and decimal conversion semantics
 
-Decimal destinations inherit the shared projection's validity, error and directed
-enclosure guarantees. Posit destinations equal the standard signed real-rounding
-specification for every finite decimal input, including saturation and nonzero
-underflow. No intermediate binary format is involved.
+Converting a posit to decimal goes through the shared decimal projection, so it inherits that
+projection's validity, error, and directed enclosure guarantees. In the other direction, the posit
+we deliver equals the standard signed real-rounding specification for every finite decimal input,
+saturation and nonzero underflow included. No binary format sits in between.
 -/
 
 @[expose] public section
@@ -96,8 +96,8 @@ theorem fromPosit_down_le {fmt : Posit.Format} (f : Format)
   rw [fromPosit_eq_project f .down x hx] at hfinite ⊢
   exact project_down_le f a 0 false hfinite
 
-/-- For a finite decimal result, inexact is exactly a changed rational value, also when it
-overflows to the greatest finite datum. -/
+/-- For a finite decimal result, inexact is raised if and only if the rational value changes, also
+when it overflows to the greatest finite datum. -/
 theorem fromPosit_inexact_iff {fmt : Posit.Format} (f : Format) (mode : RoundingMode)
     (x : Posit.Model fmt) {a value : ℚ} (hx : Posit.Model.toRat? x = some a)
     (hout : (fromPosit f mode x).value.toRat? = some value) :
@@ -105,7 +105,8 @@ theorem fromPosit_inexact_iff {fmt : Posit.Format} (f : Format) (mode : Rounding
   rw [fromPosit_eq_project f mode x hx] at hout ⊢
   exact project_inexact_iff f mode a value 0 false hout
 
-/-- Decimal underflow is precisely an inexact tiny input; an overflowing input is never tiny. -/
+/-- Decimal underflow is raised if and only if the input is tiny and the result inexact. An
+overflowing input is never tiny. -/
 theorem fromPosit_underflow_iff {fmt : Posit.Format} (f : Format) (mode : RoundingMode)
     (x : Posit.Model fmt) {a : ℚ} (hx : Posit.Model.toRat? x = some a) :
     (fromPosit f mode x).status.underflow = true ↔

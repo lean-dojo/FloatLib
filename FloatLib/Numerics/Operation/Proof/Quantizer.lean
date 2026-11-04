@@ -12,12 +12,11 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Proof-indexed quantizers
 
-Application lemmas for scalar quantizers that implement a declared rounding map on an explicit
-domain.
-
-The contract records both where the quantizer is valid and which mathematical rounding function
-it realizes. Generic numerical code can therefore request the contract it needs without knowing
-whether execution uses fixed point, a codebook, a floating format, or another representation.
+These are application lemmas for scalar quantizers that implement a declared rounding map on a
+stated domain. Such a contract records both where the quantizer is valid and which mathematical
+rounding function it realizes, so generic numerical code can ask for the contract it needs without
+knowing whether execution uses fixed point, a codebook, a floating format, or another
+representation.
 -/
 
 @[expose] public section

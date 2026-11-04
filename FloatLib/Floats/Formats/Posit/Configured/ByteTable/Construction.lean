@@ -12,13 +12,14 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Proof
 /-!
 # Certified construction of byte-sized posit tables
 
-Every posit occupying at most eight encoded bits has at most 256 possible words. These
-constructors evaluate the proved direct exact-dyadic kernels lazily for every table entry. Warm
-execution then performs only native indexing and one `ByteArray` load.
+A posit of at most eight encoded bits has at most 256 possible words, few enough to put every
+result in a table. These constructors fill each entry lazily by evaluating the proved direct
+exact-dyadic kernel on it, and once a table is warm an operation costs native indexing and one
+`ByteArray` load.
 
-Dense unary and binary tables remain small through eight bits. A dense ternary table has
-`2 ^ (3 * bits)` bytes, so the execution planner may reject FMA when setup or resident memory
-cannot be amortized.
+Dense unary and binary tables stay small all the way up to eight bits. A dense ternary table has
+`2 ^ (3 * bits)` bytes, though, so the execution planner may turn down an FMA table when the setup
+cost or the resident memory can't be amortized.
 -/
 
 @[expose] public section

@@ -11,13 +11,13 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Fixed-limb difference runtime
 
-Unsigned two-limb comparison, subtraction, leading-bit discovery, and normalization share the
-same borrow and shift conventions. Keeping those conventions here prevents the dyadic comparison
-and rounding kernels from growing subtly different copies.
+Unsigned two-limb comparison, subtraction, leading-bit discovery, and normalization all use the same
+borrow and shift conventions, and we keep them in one place so that the dyadic comparison and
+rounding kernels don't grow subtly different copies.
 
-The hot path uses explicit `UInt64` limbs without converting through `Nat`. Their
-natural-number meanings, and the preconditions under which wrapping subtraction denotes ordinary
-subtraction, are proved separately in `Difference.Proof`.
+The hot path works on `UInt64` limbs and never converts through `Nat`. `Difference.Proof` proves
+their natural-number meanings, along with the preconditions under which wrapping subtraction means
+ordinary subtraction.
 -/
 
 @[expose] public section
@@ -80,10 +80,10 @@ The explicit ranges avoid the modulo reduction performed by native machine-word 
     ⟨0, 0⟩
 
 /--
-A two-word value with exactly one bit set, returning zero beyond the 128-bit carrier.
+A two-word value with a single bit set, or zero when the index is beyond the 128-bit carrier.
 
-Constructing the bit directly in its containing limb avoids routing fixed-width significands
-through an arbitrary-precision power before their final mathematical conversion.
+Building the bit inside its own limb keeps fixed-width significands from going through an
+arbitrary-precision power before their final mathematical conversion.
 -/
 @[inline] def singleBit (index : Nat) : UInt128 :=
   if index < 64 then

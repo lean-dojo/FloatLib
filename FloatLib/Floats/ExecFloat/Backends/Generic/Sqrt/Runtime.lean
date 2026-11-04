@@ -14,10 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Ru
 /-!
 # Executable compact finite square root
 
-The compiled path consumes the sign, significand, and exponent from `FiniteKernel.Components`,
-avoiding a second storage decode. Conventional IEEE descriptors use the unpacked-model kernel,
-and other descriptors use an arbitrary-precision integer square root. Correctness proofs live in
-`Sqrt.Proof`.
+The compiled path takes the sign, significand, and exponent from `FiniteKernel.Components`, so
+storage is decoded only once. Conventional IEEE descriptors use the unpacked-model kernel, and other
+descriptors use an arbitrary-precision integer square root. Correctness proofs live in `Sqrt.Proof`.
 -/
 
 @[expose] public section

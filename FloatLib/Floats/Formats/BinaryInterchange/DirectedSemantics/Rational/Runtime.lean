@@ -11,10 +11,10 @@ public import FloatLib.Numerics.Quantization.Deterministic.MagnitudeRounding
 /-!
 # Low-level rational rounding primitives
 
-Format-independent executable quotient operations support nearest-even and directed rational
-rounding. The quotient layer stays below `Model.Arithmetic`, so native arithmetic kernels can
-reuse its proofs without an import cycle through the public dispatcher. The ceiling
-of a quotient is `Numerics.roundQuotient .up`, shared with every other quotient rounder.
+Nearest-even and directed rational rounding both run on these format-independent executable
+quotient operations. The quotient layer sits below `Model.Arithmetic`, so native arithmetic
+kernels can reuse its proofs without an import cycle through the public dispatcher. The ceiling of
+a quotient is `Numerics.roundQuotient .up`, which every other quotient rounder shares.
 -/
 
 @[expose] public section

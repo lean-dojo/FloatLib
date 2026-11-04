@@ -9,16 +9,16 @@ module
 /-!
 # Shared finite-prefix execution helpers
 
-Division, square root, and other non-dyadic operations generate a finite integer prefix plus an
-exact indication that more nonzero digits follow. This module contains the format-independent
-operation that turns that indication into a sticky low bit.
+Division, square root, and the other non-dyadic operations produce a finite integer prefix of the
+result and a remainder that tells whether any nonzero digits follow. `jamRemainder` folds that
+remainder into the low bit of the prefix, the sticky bit, in the same way for every format.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.Posit.Model.StickyPrefix
 
-/-- Preserve an exact prefix; set its low bit when the remainder is nonzero. -/
+/-- Keep the prefix when the remainder is zero, and otherwise set its low bit. -/
 @[inline] def jamRemainder (value remainder : Nat) : Nat :=
   if remainder == 0 then value else value ||| 1
 

@@ -15,16 +15,16 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 /-!
 # Sound interval evaluation of real expressions
 
-Each backend operation must enclose its real result for every real member of the input intervals.
-Structural induction then gives the same guarantee for a complete expression. The theorem does
-not restrict variable values to rationals or to the interval's endpoint representation.
+Each backend operation must enclose its real result for every real member of the input intervals,
+and structural induction then gives the same guarantee for a whole expression. Variable values
+aren't restricted to rationals or to the interval's endpoint representation.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.Interval
 
-/-- Curried real functions; arity zero is a real constant. -/
+/-- Curried real functions, where arity zero is a real constant. -/
 def RealFunction : Nat → Type
   | 0 => ℝ
   | n + 1 => ℝ → RealFunction n

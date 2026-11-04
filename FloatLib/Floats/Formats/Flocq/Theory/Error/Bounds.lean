@@ -12,18 +12,14 @@ import Mathlib.Algebra.Order.Algebra
 /-!
 # Floating-Point Error Bounds
 
-Single-step rounding in FloatLib’s Flocq-style model satisfies absolute and relative error bounds.
-
-`Theory.Rounding.Core` proves a half-ULP bound for every rounding function satisfying
-`ValidRndToNearest`.
-
-The half-ULP bound yields relative-error forms, including the
-$\operatorname{fl}(x)=x(1+\delta)$ factorization. To bound the error of a single rounded operation
+One rounding step in FloatLib’s Flocq-style model has both an absolute and a relative error bound.
+The absolute one comes first: `Theory.Rounding.Core` proves a half-ULP bound for every rounding
+function satisfying `ValidRndToNearest`. From it we get the relative-error forms, including the
+factorization $\operatorname{fl}(x)=x(1+\delta)$. To bound the error of a single rounded operation
 such as `round rnd (x + y)`, apply `error_bound_ulp` at the exact expression.
 
-Bounds for dot products, matrix operations, and backward stability require a concrete evaluation
-order and format hypotheses. They belong with the corresponding algorithm rather than in this
-generic one-step rounding file.
+You won't find bounds for dot products, matrix operations, or backward stability here. Those need
+a concrete evaluation order and format hypotheses, so they belong with the algorithm in question.
 
 ## References
 
@@ -87,7 +83,7 @@ theorem exists_delta_of_relativeError_le {x r B : ℝ} (hx : x ≠ 0)
 Relative error factorisation for rounding, with a ULP-based bound.
 
 This is the standard model $\operatorname{fl}(x)=x(1+\delta)$, with $|\delta|$ bounded using the
-ULP at $x$. Zero rounds exactly, with $\delta = 0$.
+ULP at $x$. Zero rounds to itself, with $\delta = 0$.
 -/
 theorem round_relative_error_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
     ∃ δ : ℝ,

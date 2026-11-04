@@ -46,7 +46,7 @@ theorem numericalSystem_represents_of_isFinite {fmt : FloatFormat} (z : ExecComp
     (numericalSystem fmt).Represents z (toComplex z) := by
   simp [NumericalSystem.Represents, numericalSystem, hz]
 
-/-- A complex code represents a value exactly when both components are finite and decode to it. -/
+/-- A complex code represents a value if and only if both components are finite and decode to it. -/
 @[simp] theorem represents_iff {fmt : FloatFormat} (z : ExecComplex fmt) (value : ℂ) :
     (numericalSystem fmt).Represents z value ↔
       isFinite z = true ∧ toComplex z = value := by
@@ -75,7 +75,7 @@ theorem conj_refines (fmt : FloatFormat) :
   refine ⟨?_, toComplex_conj z hzFinite⟩
   simpa [ExecComplex.isFinite, ExecComplex.conj] using hzFinite
 
-/-- Complex addition refines its explicit componentwise rounded semantics. -/
+/-- On a finite result, complex addition refines `roundedAdd`, its componentwise rounding. -/
 theorem add_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt)
       (numericalSystem fmt) ExecComplex.add (roundedAdd fmt)
@@ -86,7 +86,7 @@ theorem add_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
   obtain ⟨-, rfl⟩ := (represents_iff y right).1 hy
   exact (represents_iff _ _).2 ⟨hout, toComplex_add_eq_roundedAdd x y hfmt hout⟩
 
-/-- Complex subtraction refines its explicit componentwise rounded semantics. -/
+/-- On a finite result, complex subtraction refines `roundedSub`, its componentwise rounding. -/
 theorem sub_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     Operation.Finite2If (numericalSystem fmt) (numericalSystem fmt)
       (numericalSystem fmt) ExecComplex.sub (roundedSub fmt)
@@ -141,7 +141,8 @@ theorem magnitude_refines (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
   exact (Model.represents_iff _ _).2
     ⟨hfinite.result, toReal_magnitude_eq_roundedMagnitude z hfmt hfinite⟩
 
-/-- Decode squared magnitude directly when the complex input represents a specified value. -/
+/-- When the complex input represents `value`, its squared magnitude decodes to
+`roundedNormSq fmt value`. -/
 theorem toReal_normSq_of_represents {fmt : FloatFormat} {z : ExecComplex fmt} {value : ℂ}
     (hfmt : fmt.isIEEE = true) (hz : (numericalSystem fmt).Represents z value)
     (hfinite : NormSqFinite z) :
@@ -149,7 +150,8 @@ theorem toReal_normSq_of_represents {fmt : FloatFormat} {z : ExecComplex fmt} {v
   obtain ⟨_, rfl⟩ := (represents_iff z value).1 hz
   exact toReal_normSq_eq_roundedNormSq z hfmt hfinite
 
-/-- Decode magnitude directly when the complex input represents a specified value. -/
+/-- When the complex input represents `value`, its magnitude decodes to
+`roundedMagnitude fmt value`. -/
 theorem toReal_magnitude_of_represents {fmt : FloatFormat} {z : ExecComplex fmt} {value : ℂ}
     (hfmt : fmt.isIEEE = true) (hz : (numericalSystem fmt).Represents z value)
     (hfinite : MagnitudeFinite z) :

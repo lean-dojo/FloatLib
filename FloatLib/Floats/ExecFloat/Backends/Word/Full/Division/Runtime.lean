@@ -14,8 +14,8 @@ public import FloatLib.Kernels.FixedWord.Quotient.Runtime
 /-!
 # Native binary64 division runtime
 
-The normal-result binary64 path performs restoring division on `UInt64`. Inputs outside that
-kernel fall back to the exact generic finite implementation. `Division.Proof` has the proofs.
+For a normal result, binary64 division runs restoring division on `UInt64`. Anything outside that
+kernel falls back to the exact generic finite implementation. `Division.Proof` has the proofs.
 -/
 
 @[expose] public section

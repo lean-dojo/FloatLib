@@ -20,9 +20,9 @@ import FloatLib.Kernels.FixedWord.Core.Proof.Rounding
 /-!
 # Correctness of width-generic finite arithmetic
 
-The executable arbitrary-precision kernels live in `Kernel.Runtime`. This module proves that the
-compact field-scale implementations agree with the exact dyadic specifications and installs the
-verified compiler substitutions.
+Executable arbitrary-precision kernels live in `Kernel.Runtime`. We prove here that the compact
+field-scale implementations agree with the exact dyadic specifications, and we install the verified
+compiler substitutions.
 -/
 
 @[expose] public section

@@ -12,17 +12,17 @@ public import Init.Data.Dyadic.Basic
 /-!
 # Exact dyadic values
 
-A `FloatLib.Numerics.Dyadic` stores a sign, natural significand, and integral power-of-two scale.
-Arithmetic and rounding can work on these fields without rational normalization.
+A `FloatLib.Numerics.Dyadic` stores a sign, a natural significand, and an integral power-of-two
+scale, so arithmetic and rounding can work on these fields without rational normalization.
 
-Lean core's `_root_.Dyadic`, defined in `Init.Data.Dyadic.Basic`, normalizes nonzero values to
-an odd integer times a power of two and has a single zero. The FloatLib record retains an
-unnormalized significand and scale, together with a separate sign for IEEE signed-zero rules.
-Its `toRat` identifies both zero signs; formats with a single zero discard that sign on encoding.
-`toCore` converts to Lean's normalized carrier and preserves the rational value.
+Lean core has its own `_root_.Dyadic`, defined in `Init.Data.Dyadic.Basic`, which normalizes nonzero
+values to an odd integer times a power of two and has a single zero. Ours keeps an unnormalized
+significand and scale and a separate sign, because the IEEE signed-zero rules need one. Its `toRat`
+identifies both zero signs, and formats with a single zero discard that sign on encoding. `toCore`
+converts to Lean's normalized carrier and preserves the rational value.
 
-The carrier provides integer conversions and rational denotation. Arithmetic and order follow in
-their respective modules.
+This module gives the carrier its integer conversions and rational denotation. Arithmetic and order
+have modules of their own.
 -/
 
 @[expose] public section
@@ -33,7 +33,8 @@ namespace FloatLib.Numerics
 An exact signed integer multiple of an integral power of two.
 
 `significand = 0` denotes zero for every sign and exponent. Families that distinguish signed zero
-can preserve that distinction in their semantics and rounding rules; `toRat` identifies both zeros.
+can keep that distinction in their semantics and rounding rules, while `toRat` identifies both
+zeros.
 -/
 structure Dyadic where
   /-- `true` means negative. -/

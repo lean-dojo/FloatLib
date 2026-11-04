@@ -14,10 +14,10 @@ public import FloatLib.Numerics.Operation.Status
 /-!
 # Executable numerical-operation contracts
 
-Numerical-operation contracts provide arity-neutral relations, named unary/binary/ternary forms,
-standard total and checked semantics, proof-indexed application helpers, and composition laws.
-All contracts are propositions, so optimized runtime kernels retain their concrete monomorphic
-function signatures.
+These contracts relate executable operations to what they mean: arity-neutral relations, named
+unary/binary/ternary forms, standard total and checked semantics, proof-indexed application helpers,
+and composition laws. All of them are propositions, so optimized runtime kernels keep their concrete
+monomorphic function signatures.
 -/
 
 @[expose] public section

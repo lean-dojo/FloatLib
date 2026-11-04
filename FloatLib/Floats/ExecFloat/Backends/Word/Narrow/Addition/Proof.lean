@@ -18,11 +18,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Proof
 /-!
 # Correctness of native-word addition for generic binary32
 
-The `UInt64` addition kernel equals its exact-dyadic finite specification. For exponent gaps at
-most 39, alignment and signed addition are exact in one word. For larger gaps the smaller operand
-cannot change the nearest-even rounding of the larger one, even at a binade boundary.
-
-Runtime clients can import `Addition.Runtime` without the alignment, packing and rounding proofs.
+This `UInt64` addition kernel equals its exact-dyadic finite specification. For exponent gaps of at
+most 39, alignment and signed addition are exact in one word, while a larger gap means the smaller
+operand can't change the nearest-even rounding of the larger one, even at a binade boundary.
+`Addition.Runtime` can be imported without the alignment, packing, and rounding proofs.
 -/
 
 @[expose] public section

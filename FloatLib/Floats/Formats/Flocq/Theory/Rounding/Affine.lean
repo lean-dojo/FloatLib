@@ -12,13 +12,14 @@ public import FloatLib.Numerics.Quantization.Affine.Real
 /-!
 # Executable affine quantization and real rounding
 
-The rational nearest-even kernel and the real nearest-even specification choose exactly the
-same integer, including negative inputs and half-way ties. Consequently, executable affine
-quantization agrees with real affine quantization before and after saturation, and exact
-reconstruction commutes with the rational-to-real embedding.
+Affine quantization runs on rationals but is specified over the reals, so the two have to agree.
+They do. The rational nearest-even kernel and the real nearest-even specification choose the same
+integer on every input, negative inputs and half-way ties included, and `-2.5` goes to `-2` either
+way. So executable affine quantization agrees with real affine quantization before and after
+saturation, and exact reconstruction commutes with the rational-to-real embedding.
 
 The rounding-independent API lives in `Numerics.Quantization.Affine.Real`. This module also
-specializes its order, round-trip, and error theorems to the existing Flocq rounding contracts.
+specializes its order, round-trip, and error theorems to the Flocq rounding contracts.
 -/
 
 @[expose] public section
@@ -27,7 +28,7 @@ namespace FloatLib.Floats.Formats.Flocq
 
 open Numerics Numerics.Quantization
 
-/-- Rational nearest-even execution agrees exactly with real nearest-even rounding. -/
+/-- Rational nearest-even execution gives the same integer as real nearest-even rounding. -/
 theorem nearestEven_ratCast (x : ℚ) : nearestEven (x : ℝ) = roundRatEven x := by
   rw [roundRatEven_eq_floor_ceil]
   by_cases hint : x.floor = x.ceil

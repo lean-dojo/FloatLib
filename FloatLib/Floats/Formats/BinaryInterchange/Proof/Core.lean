@@ -14,9 +14,9 @@ public import FloatLib.Numerics.Core.ExactSemantics
 # Proof-indexed binary-interchange values
 
 Erased proof views refine one executable `Model fmt` by its encoded interpretation or numerical
-value. `AtExact` preserves the complete encoded interpretation, `AtValue` records the general
-numerical value, and `At` is the finite real specialization. These are refinement views, not
-additional runtime representations.
+value. `AtExact` keeps the complete encoded interpretation, `AtValue` records the general
+numerical value, and `At` is the finite real specialization. All three are refinement views and
+add no runtime representation.
 -/
 
 @[expose] public section
@@ -29,7 +29,7 @@ open FloatLib.Numerics
 /--
 An executable float bundled with a proof of its complete numerical interpretation.
 
-This is a refinement view, not a second floating-point representation.
+It is a refinement view and adds no second floating-point representation.
 -/
 abbrev AtValue (fmt : FloatFormat) (v : NumericalValue ℝ) :=
   (numericalSystem fmt).At v

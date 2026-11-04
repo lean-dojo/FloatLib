@@ -14,17 +14,18 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 /-!
 # P3109 arithmetic with external binary destinations
 
-The report's projection uses the external format's actual precision, bias, and finite endpoints.
-It keeps all nine rounding modes and all three saturation modes, with caller-supplied stochastic
-bits. Finite overflow under `SaturationMode.propagate` clamps, while an infinite exact input stays
-infinite. The destination encoder writes positive zero and canonical quiet NaN, as required by
-§4.8.2.
+Here P3109 arithmetic delivers its result into an ordinary binary format such as binary32. The
+report's projection then uses the external format's actual precision, bias, and finite endpoints,
+and it keeps all nine rounding modes and all three saturation modes, with caller-supplied
+stochastic bits. Under `SaturationMode.propagate`, finite overflow clamps, while an infinite exact
+input stays infinite. As §4.8.2 requires, the destination encoder writes positive zero and the
+canonical quiet NaN.
 
-Finite encoding uses the proved binary dyadic encoder on an already rounded, in-range datum, and
-`External.Proof` shows that this encoding adds no second rounding error.
-The adapters accept IEEE-style encoding descriptors, including binary16, binary32, binary64,
-and BFloat16. They install no instances, so the ordinary IEEE arithmetic and signed-zero conversion
-APIs are unchanged. A binary `Model` operand of mixed report arithmetic decodes through the binary
+Finite encoding runs the proved binary dyadic encoder on a datum that is already rounded and in
+range, and `External.Proof` shows that this adds no second rounding error. The adapters accept
+IEEE-style encoding descriptors, including binary16, binary32, binary64, and BFloat16. They
+install no instances, so the ordinary IEEE arithmetic and signed-zero conversion APIs stay as they
+are. A binary `Model` operand of mixed report arithmetic decodes through the binary
 `ExecFloat.Binary.Conversion.modelDecoder`. `Mixed.decode` then drops its zero sign through
 `ExactMap.signedRatToRat` and turns a NaN into the report's one NaN, which is the observation
 `decode` gives (`mixed_decode_eq_decode`).
@@ -149,8 +150,8 @@ def configuredDestination (format : FloatFormat)
 @[inline] def precisionOf (format : FloatFormat) : Nat := format.fracWidth + 1
 
 /-- The P3109 signedness of an external IEEE descriptor, `.signed`. The descriptor argument is
-ignored, so the answer describes the IEEE descriptors that `project` and `destination` accept; it is
-not read from `format`. -/
+ignored, so the answer describes the IEEE descriptors that `project` and `destination` accept and
+is never read from `format`. -/
 @[inline] def signednessOf (_format : FloatFormat) : Signedness := .signed
 
 /-- The P3109 domain of an external IEEE descriptor, `.extended`, since IEEE formats have

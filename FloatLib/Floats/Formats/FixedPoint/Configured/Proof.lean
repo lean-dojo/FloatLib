@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.FixedPoint.Exact.Proof
 /-!
 # Correctness of configured exact fixed-point operations
 
-Wrapping is an equivalence with the complete code, and each arithmetic operation agrees with its
-exact rational interpretation.
+Wrapping is an equivalence with the complete code. Every arithmetic operation agrees with its
+exact rational interpretation, so adding `0.25` and `0.5` at two decimal digits gives `0.75`
+with nothing rounded.
 -/
 
 @[expose] public section
@@ -36,7 +37,7 @@ variable {radix : Radix} {fractionalDigits p q : Nat}
     ofCode value.toCode = value :=
   ExecFloat.ofRaw_raw value
 
-/-- Constructing from a coefficient stores that coefficient exactly. -/
+/-- Constructing from a coefficient stores that coefficient unchanged. -/
 @[simp, grind =] theorem coefficient_ofCoefficient (stored : Int) :
     coefficient (ofCoefficient stored :
       ExecFloat.FixedPoint radix fractionalDigits) = stored :=

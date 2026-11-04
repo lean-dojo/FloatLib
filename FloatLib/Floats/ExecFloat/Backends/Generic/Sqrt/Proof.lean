@@ -15,9 +15,9 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 /-!
 # Correctness of compact finite square root
 
-The executable descriptor-aware square-root kernels live in `Sqrt.Runtime`. This module proves
-their agreement with the exact dyadic and unpacked-model specifications and installs the verified
-compiler substitution.
+The executable descriptor-aware square-root kernels live in `Sqrt.Runtime`. We prove that they agree
+with the exact dyadic and unpacked-model specifications, and we install the verified compiler
+substitution.
 -/
 
 @[expose] public section

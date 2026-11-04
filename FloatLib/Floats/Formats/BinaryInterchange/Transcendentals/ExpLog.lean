@@ -38,11 +38,11 @@ namespace Transcendentals
     significand := value.natAbs
     exponent := 0 }
 
-/-- Exact dyadic one. -/
+/-- One as a dyadic, with significand 1 and exponent 0. -/
 @[inline] def oneDyadic : Numerics.Dyadic :=
   { negative := false, significand := 1, exponent := 0 }
 
-/-- Exact dyadic zero. -/
+/-- Zero as a dyadic, with a clear sign, significand 0 and exponent 0. -/
 @[inline] def zeroDyadic : Numerics.Dyadic :=
   { negative := false, significand := 0, exponent := 0 }
 
@@ -143,16 +143,20 @@ def atanhSeries (fixed : FixedPoint) (t : Int) (terms : Nat) : Int :=
 end Transcendentals
 
 /--
-Evaluate exponential using a delayed configuration provider.
+Evaluate the exponential using a delayed configuration provider.
 
 The provider is called only for a finite input that is neither tiny nor beyond the overflow and
 underflow bounds, so generated configurations are not constructed for NaNs, infinities, or those
 arguments. Below `2^-(p+1)` the nearest result is one. Two kinds of argument below one half
-evaluate `sum x^k/k!` exactly with enough terms for `2p + expGuardBits` bits and round once: one
-whose bits extend below the fixed-point scale, which conversion would round so that neighbouring
-inputs share a result; and one whose `x^2/2` is within `2^15` of the fixed-point resolution, since
-near zero `exp x` can sit just `x^2/2` off a rounding midpoint. Every other argument uses the
-configured fixed-point path.
+evaluate `sum x^k/k!` with exact arithmetic, with enough terms for `2p + expGuardBits` bits, and
+round once:
+
+* one whose bits extend below the fixed-point scale, which conversion would round so that
+  neighbouring inputs share a result, and
+* one whose `x^2/2` is within `2^15` of the fixed-point resolution, since near zero `exp x` can
+  sit just `x^2/2` off a rounding midpoint.
+
+Every other argument uses the configured fixed-point path.
 -/
 def expWithProvider {fmt : FloatFormat}
     (getConfig : Unit → Transcendentals.Config) (x : Model fmt) : Model fmt :=

@@ -10,10 +10,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Remainder.Runtime
 /-!
 # The unbounded nearest-even quotient
 
-The quotient is characterized by an error of at most one half and even parity at
-the two possible midpoints. The remainder coefficient never exceeds the original
-dividend or half the divisor. These integer bounds will prove representability
-at the preferred decimal quantum, without rounding the result.
+IEEE remainder divides with a quotient rounded to the nearest integer, ties to even, so the
+remainder of `7` by `2` is `-1`, because `7/2 = 3.5` rounds to `4`. Here that quotient is pinned
+down by an error of at most one half and even parity at the two possible midpoints. The remainder
+coefficient never exceeds the original dividend or half the divisor, and these integer bounds are
+what later prove the result representable at the preferred decimal quantum, with no rounding.
 -/
 
 @[expose] public section
@@ -38,7 +39,7 @@ theorem remainderCoefficient_twice_le (a b : Nat) (hb : b ≠ 0) :
   unfold remainderCoefficient remainderRoundUp
   split <;> simp only [decide_eq_true_eq] at * <;> omega
 
-/-- For a nonzero divisor, the remainder is zero exactly when the divisor divides the dividend. -/
+/-- For a nonzero divisor, the remainder is zero if and only if the divisor divides the dividend. -/
 theorem remainderCoefficient_eq_zero_iff (a b : Nat) (hb : b ≠ 0) :
     remainderCoefficient a b = 0 ↔ a % b = 0 := by
   have hr := Nat.mod_lt a (Nat.pos_of_ne_zero hb)

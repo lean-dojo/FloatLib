@@ -14,9 +14,9 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Real meaning of rationally computed endpoint enclosures
 
-Rational endpoint calculations enclose arbitrary real members of an interval, not just rational
-samples. The rounding interface still accepts only executable rationals. Its endpoint bounds
-are embedded into the reals after the computation, so no real-number rounding oracle is needed.
+Rational endpoint calculations enclose every real member of an interval, and rational samples are
+only a special case. The rounding interface takes executable rationals only. Its endpoint bounds are
+embedded into the reals after the computation, so no real-number rounding oracle is needed.
 -/
 
 @[expose] public section
@@ -29,7 +29,7 @@ variable {α : Type*}
 def ContainsReal (decode : α → Option ℚ) (I : Interval α) (x : ℝ) : Prop :=
   I.Contains (fun a => (decode a).map (fun q => (q : ℝ))) x
 
-/-- Rational endpoints embed directly as closed real bounds. -/
+/-- Rational endpoints embed as closed real bounds. -/
 @[simp]
 theorem containsReal_some_iff (I : Interval ℚ) (x : ℝ) :
     I.ContainsReal some x ↔ (I.lo : ℝ) ≤ x ∧ x ≤ (I.hi : ℝ) := by

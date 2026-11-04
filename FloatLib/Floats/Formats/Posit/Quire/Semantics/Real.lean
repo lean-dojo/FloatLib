@@ -12,8 +12,9 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Real-valued views of posit quires
 
-These adapters embed ordinary exact rational quire values into mathlib's `Real`. They are separate
-from executable semantics so quire arithmetic does not import real-analysis infrastructure.
+These adapters embed the exact rational value of an ordinary quire into mathlib's `Real`, and they
+live outside the executable semantics so that quire arithmetic never imports real-analysis
+infrastructure.
 -/
 
 @[expose] public section
@@ -28,7 +29,7 @@ variable {format : Format}
 @[inline] noncomputable def decodeReal (value : Model format) : NumericalValue ℝ :=
   value.decode.map fun rational : Rat => (rational : ℝ)
 
-/-- Optional real value of a quire, unavailable exactly for quire NaR. -/
+/-- Optional real value of a quire, missing for quire NaR and for no other quire. -/
 @[inline] noncomputable def toReal? (value : Model format) : Option ℝ :=
   value.toRat?.map fun rational : Rat => (rational : ℝ)
 
@@ -42,7 +43,7 @@ variable {format : Format}
     (nar format).toReal? = none := by
   simp [toReal?]
 
-/-- The optional real view is unavailable precisely for quire NaR. -/
+/-- The optional real view is `none` for quire NaR and for no other quire. -/
 theorem toReal?_eq_none_iff (value : Model format) :
     value.toReal? = none ↔ value.isNaR = true := by
   simp [toReal?, toRat?_eq_none_iff]

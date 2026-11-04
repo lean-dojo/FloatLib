@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.OCP.MX.E8M0.Info
 /-!
 # Inspection reports for configured OCP MX values
 
-This optional meta module registers `#float_info` for the common-carrier E8M0 scale and MX block
-families. The executable wrappers remain independent of command elaboration and proof-report
-rendering.
+Import this meta module to get `#float_info` for the E8M0 scale and MX block families on the
+common carrier. The executable wrappers don't need it, so they never depend on command elaboration
+or proof-report rendering.
 -/
 
 @[expose] public section
@@ -53,9 +53,9 @@ private meta def scaleProfile : FormatProfile :=
 
 /--
 The report of a configured MX block: its construction and round-trip theorems, then the joint
-block theorems about the raw code, which `toCode` reaches. The raw block report also lists the
-scale's element-scaling theorems, which are about the raw E8M0 scale rather than about blocks; the
-`#float_info` report of `ExecFloat.OCP.MX.E8M0` lists them.
+block theorems about the raw code, which `toCode` reaches. It leaves out the scale's
+element-scaling theorems that the raw block report lists, because those are about the raw E8M0
+scale and not about blocks. The `#float_info` report of `ExecFloat.OCP.MX.E8M0` lists them.
 -/
 private meta def blockProfile (elementIdentity : String) : FormatProfile :=
   let raw := E8M0.FloatInfo.Command.blockProfile elementIdentity

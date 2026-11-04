@@ -12,10 +12,10 @@ import FloatLib.Numerics.Order.Comparison
 /-!
 # Real semantics of pi-scaled comparisons
 
-The exact-value branches and every adaptive branch return the ordering of the corresponding
-real function and rational boundary. Inverse sine and cosine use their principal branches on
-`[-1, 1]`. Tangent agrees with the totalized real function, including zero at half-integer poles;
-format wrappers must reject poles when required by their exceptional-value contract.
+The exact-value branches and every adaptive branch return the ordering of the corresponding real
+function and rational boundary. Inverse sine and cosine use their principal branches on `[-1, 1]`.
+Tangent agrees with the totalized real function, which is zero at half-integer poles, so a format
+wrapper has to reject poles when its exceptional-value contract requires that.
 -/
 
 public section

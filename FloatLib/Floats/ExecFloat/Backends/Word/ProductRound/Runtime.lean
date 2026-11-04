@@ -11,13 +11,13 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
 /-!
 # Shared native-word product finishing
 
-The one-word and two-word multiplication kernels represent the exact product differently. After
-rounding it to a `UInt64` significand, both do the same carry adjustment, overflow test and field
-packing, so that final stage lives here with one executable definition and one proof.
+One-word and two-word multiplication kernels represent the exact product differently. Once it's
+rounded to a `UInt64` significand, though, both do the same carry adjustment, overflow test, and
+field packing, so that final stage lives here, with one executable definition and one proof.
 
 `finish?` is `finishWord?` mapped to model values. `finishWord` returns a word in place of an
-`Option`, and its caller picks a decline marker outside the valid packed range. The overflow
-threshold and exponent offset are computed from `NativeSmallWord.biasWord` in machine-word
+`Option`, and its caller picks a decline marker outside the valid packed range. Both the overflow
+threshold and the exponent offset are computed from `NativeSmallWord.biasWord` in machine-word
 arithmetic.
 -/
 

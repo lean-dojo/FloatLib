@@ -17,12 +17,12 @@ import FloatLib.Kernels.FixedWord.LimbRound.Proof.Arithmetic
 /-!
 # Correctness of two-word fused multiply-add
 
-Every accepted result of `Fma.Runtime` is the exact finite kernel's answer. The proof follows the
-one-word FMA proof: `fmaFieldsWords_refines` matches the alignment branches of `fmaFieldsWords?`
-with `FiniteScaleAdd.roundSum` at round offset `0`. Four-word magnitudes are reduced to two words
-with `normalizeJam128`, which `FiniteProductRound.round_shiftRightJam` shows does not change the
-rounding, and then go through the two-word rounder of `Addition.Proof`. The sticky alignments reuse
-the natural-number lemmas of the one-word addition kernel.
+Every accepted result of `Fma.Runtime` is the exact finite kernel's answer. Its proof follows the
+one-word FMA proof, with `fmaFieldsWords_refines` matching the alignment branches of
+`fmaFieldsWords?` with `FiniteScaleAdd.roundSum` at round offset `0`. Four-word magnitudes are
+reduced to two words with `normalizeJam128`, which by `FiniteProductRound.round_shiftRightJam`
+doesn't change the rounding, and then go through the two-word rounder of `Addition.Proof`. Sticky
+alignments reuse the natural-number lemmas of the one-word addition kernel.
 -/
 
 @[expose] public section

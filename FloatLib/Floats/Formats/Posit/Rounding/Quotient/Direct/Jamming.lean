@@ -20,14 +20,14 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Exact quotient comparisons preserved by jamming
 
-Jamming a nonzero discarded suffix into the low bit relates the retained prefix to the original
-Euclidean quotient and remainder. The comparison lemmas show that the exact fraction and its
-jammed prefix make the same comparisons at the even boundaries used by posit rounding, including
-scaled tails and stream midpoints.
+Jamming a nonzero discarded suffix into the low bit keeps enough of the Euclidean quotient and
+remainder for rounding. In the comparison lemmas, the exact fraction and its jammed prefix compare
+the same way against the even boundaries of posit rounding, scaled tails and stream midpoints
+included, and the lemmas talk only about the exact quotient and the retained prefix, whatever the
+storage width.
 
-These lemmas concern the exact quotient and retained prefix, independently of storage width.
-`Direct.PrefixProof` uses them after normalizing significands to prove the executable prefix
-correct; `Direct.Proof` then connects that prefix to the posit encoding and final rounding.
+`Direct.PrefixProof` uses them, after normalizing the significands, to prove the executable prefix
+correct, and `Direct.Proof` then connects that prefix to the posit encoding and the final rounding.
 -/
 
 @[expose] public section
@@ -224,8 +224,8 @@ theorem paddedStreamPrefix_jamRemainder_le
 /--
 The exact quotient fraction lies strictly below the successor of its retained jammed prefix.
 
-This is the upper half of the general local bracket. It needs only a proper Euclidean remainder
-and discards at least one stream bit; no Posit width, storage tier, or candidate decoder appears.
+This is the upper half of the general local bracket. It needs a proper Euclidean remainder and at
+least one discarded stream bit, and no Posit width, storage tier, or candidate decoder appears.
 -/
 theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
     (quotient remainder denominator width retained : Nat)
@@ -330,11 +330,11 @@ theorem midpoint_lt_quotientTailFraction_iff_jammed
 /-!
 ## Interpreting finite stream words
 
-The unjammed quotient is an integer tail word followed by one proper rational remainder. The
-closing lemmas `quotientFraction_lt_trailingRat_iff` and `trailingRat_lt_quotientFraction_iff`
-compare that fractional position with any bounded integer tail boundary. They use only
-monotonicity of `trailingRat`, so quotient rounding does not duplicate Posit regime layout or
-decoder proofs.
+Before jamming, the quotient is an integer tail word followed by one proper rational remainder.
+Two closing lemmas, `quotientFraction_lt_trailingRat_iff` and
+`trailingRat_lt_quotientFraction_iff`, compare that fractional position with any bounded integer
+tail boundary. Monotonicity of `trailingRat` is all they use, so quotient rounding repeats none of
+the Posit regime layout or decoder proofs.
 -/
 
 /--

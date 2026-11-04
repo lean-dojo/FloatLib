@@ -14,7 +14,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Tree
 
 Decoding commutes with a reduction that rounds at every addition, independently of the storage
 plan. Nearest-even finite executions inherit the model's half-ULP error budget. The round-once
-collection API is separate.
+collection API is not part of this module.
 -/
 
 @[expose] public section

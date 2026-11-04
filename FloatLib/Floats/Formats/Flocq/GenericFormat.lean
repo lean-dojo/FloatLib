@@ -14,13 +14,11 @@ public import FloatLib.Numerics.Quantization.Spec
 /-!
 # Flocq-style generic formats as ordinary FloatLib formats
 
-The radix/exponent-function model of `FloatRep` supplies a representation-independent
-`EncodedFormat` interface.
-
-The runtime code is a canonical integer-mantissa/integer-exponent pair. Lean erases its proof of
-canonicality, and its denotation is the corresponding real number. The central theorem
-`representable_iff_genericFormat` proves that common-system representability coincides with
-`genericFormat`.
+Here a Flocq-style format, given by a radix and an exponent function, becomes an ordinary FloatLib
+`EncodedFormat` that doesn't depend on any representation. A runtime code is a canonical pair of an
+integer mantissa and an integer exponent. Lean erases the proof of canonicality, and the code
+denotes the real number `m * β^e`. The central theorem, `representable_iff_genericFormat`, says
+that a real is representable in the common system if and only if it satisfies `genericFormat`.
 
 The definitions mirror the separation in Flocq between:
 
@@ -68,7 +66,8 @@ noncomputable instance (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp
 
 variable (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp]
 
-/-- A canonical code represents exactly the real obtained from its mantissa and exponent. -/
+/-- A canonical code represents `x` if and only if `x` is the real built from its mantissa and
+exponent. -/
 @[simp] theorem represents_iff (code : FormatCode (GenericFormat β fexp)) (x : ℝ) :
     FormatRepresents (GenericFormat β fexp) code x ↔ toReal code.1 = x := by
   change

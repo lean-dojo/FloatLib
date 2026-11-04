@@ -17,9 +17,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Pair.Proof
 /-!
 # Correctness of configured posit backends
 
-Every configured backend is proved equal to the independent exact operation in
-`Configured.Spec`. The proofs cover the representation-independent exact-dyadic and two-limb
-kernels as well as the direct packed-storage entry points.
+Here every configured backend is proved equal to the independent exact operation in
+`Configured.Spec`, which covers the representation-independent exact-dyadic and two-limb kernels
+and also the direct packed-storage entry points that work on native words or on limb pairs.
 -/
 
 @[expose] public section

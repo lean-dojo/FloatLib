@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 /-!
 # Bfloat16 consequences of the generic theory
 
-The general format-rounding theorem specializes to two useful bfloat16 facts. Widening to binary32
-is exact because both formats have the same normal exponent range and binary32 adds fraction bits.
-Addition performs exact dyadic addition followed by one bfloat16 nearest-even rounding step.
+Two useful bfloat16 facts fall out of the general format-rounding theorem. Widening to binary32 is
+exact, because both formats have the same normal exponent range and binary32 adds fraction bits.
+Addition is exact dyadic addition followed by one bfloat16 nearest-even rounding step.
 -/
 
 @[expose] public section

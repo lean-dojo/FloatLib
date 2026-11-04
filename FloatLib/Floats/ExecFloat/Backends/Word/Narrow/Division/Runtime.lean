@@ -14,8 +14,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Base.Runtime
 # Native-word division for binary32
 
 Finite division uses native-word significands and quotient arithmetic, with `Int` exponents and
-natural-number coordinates for the final packing. Finite division by zero is handled here.
-`divFiniteWord?` returns `none` for NaN or infinity operands, and the caller applies their policy.
+natural-number coordinates for the final packing. Finite division by zero is handled here too.
+`divFiniteWord?` returns `none` for NaN or infinity operands and leaves their policy to the caller.
 `Division.Proof` has the proofs.
 -/
 

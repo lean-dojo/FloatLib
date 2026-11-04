@@ -18,13 +18,11 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Multiplication.Proo
 /-!
 # Correctness of multiplication backends
 
-Every route through the multiplication dispatcher meets `Spec.mul`: binary32, binary64,
-fixed-pair, parameterized one-word, two-word, and generic implementations differ only in storage
-and execution strategy.
-
-Each fast kernel may decline when its structural or finite-input preconditions fail. The proof
-shows that accepted results refine `Spec.mul` and that every decline reaches `generic`. Runtime
-clients can import `Mul.Runtime` without loading these theorems.
+Every route through the multiplication dispatcher meets `Spec.mul`. Binary32, binary64, fixed-pair,
+parameterized one-word, two-word, and generic implementations differ only in storage and execution
+strategy. Each fast kernel may decline when its structural or finite-input preconditions fail, and
+the proof shows both that accepted results refine `Spec.mul` and that every decline reaches
+`generic`. `Mul.Runtime` loads without these theorems.
 -/
 
 @[expose] public section

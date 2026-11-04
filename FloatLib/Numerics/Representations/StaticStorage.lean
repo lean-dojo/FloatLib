@@ -14,10 +14,8 @@ public import Mathlib.Data.Nat.Basic
 
 Bounded `UInt8`, `UInt16`, `UInt32`, and `UInt64` carriers store exact natural-number encodings.
 Callers choose a carrier and prove that the encoding fits both the format bound and the word's
-capacity.
-
-The bounds are propositions erased from the runtime carrier. The packing functions and their
-round-trip laws are independent of the numerical format using them.
+capacity. Those bounds are propositions erased from the runtime carrier, and the packing functions
+and their round-trip laws don't depend on the numerical format that uses them.
 -/
 
 @[expose] public section
@@ -30,16 +28,16 @@ namespace FloatLib.Numerics.StaticStorage
 abbrev BoundedCode (α : Type u) (toNat : α → Nat) (bound : Nat) :=
   { value : α // toNat value < bound }
 
-/-- An in-range encoding stored directly in `UInt8`. -/
+/-- An in-range encoding stored in a `UInt8`. -/
 abbrev ByteCode (bound : Nat) := BoundedCode UInt8 UInt8.toNat bound
 
-/-- An in-range encoding stored directly in `UInt16`. -/
+/-- An in-range encoding stored in a `UInt16`. -/
 abbrev Word16Code (bound : Nat) := BoundedCode UInt16 UInt16.toNat bound
 
-/-- An in-range encoding stored directly in `UInt32`. -/
+/-- An in-range encoding stored in a `UInt32`. -/
 abbrev Word32Code (bound : Nat) := BoundedCode UInt32 UInt32.toNat bound
 
-/-- An in-range encoding stored directly in `UInt64`. -/
+/-- An in-range encoding stored in a `UInt64`. -/
 abbrev Word64Code (bound : Nat) := BoundedCode UInt64 UInt64.toNat bound
 
 /-- An encoding below its format bound fits any storage width containing that bound. -/

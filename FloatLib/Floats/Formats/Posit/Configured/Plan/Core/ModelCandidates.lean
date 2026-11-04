@@ -13,12 +13,12 @@ public import FloatLib.Floats.Formats.Posit.Configured.Plan.Core.Estimates
 /-!
 # Representation-independent configured posit candidates
 
-These constructors package the model-valued two-limb backends with their refinement theorems.
-They are independent of the persistent carrier: any configured representation with a `ModelCodec`
-can use them. Each entry passes its eligibility witness to the two-limb rounder. Division and
-square root have no two-limb entry because their kernels are the width-generic quotient-prefix and
-root-prefix kernels already offered by the exact-dyadic candidate; offering the same kernel twice
-would only duplicate a certificate.
+Each constructor here packages a model-valued two-limb backend with its refinement theorem and
+passes its eligibility witness on to the two-limb rounder. None of them depends on the persistent
+carrier, so any configured representation with a `ModelCodec` can use them. Division and square
+root get no two-limb entry. Their kernels are the width-generic quotient-prefix and root-prefix
+kernels that the exact-dyadic candidate already offers, and offering the same kernel twice would
+just duplicate a certificate.
 -/
 
 @[expose] public section

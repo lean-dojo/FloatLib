@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Codebook.Core.Runtime
 /-!
 # Configured codebook identity
 
-A complete lookup denotation determines a codebook family on the common `ExecFloat` carrier. The
-selected codebook remains in the type, so equal-width lookup tables are never interchangeable.
+Any complete lookup denotation determines a codebook family on the common `ExecFloat` carrier.
+Because the selected codebook stays in the type, two tables of the same width are never
+interchangeable, even though both store the same kind of bit vector.
 -/
 
 @[expose] public section

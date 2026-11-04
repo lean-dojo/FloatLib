@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
 /-!
 # Two-limb posit rounding runtime
 
-Posit rounding uses the two-limb execution refinement whenever the exact significand fits in
-`UInt128`. Wider exact intermediates retain the same field-oriented guard/sticky semantics in
-the arbitrary-width direct rounder. Selection is by representation capacity rather than named
-format, and neither branch uses a candidate certificate or search path.
+Whenever the exact significand fits in `UInt128`, posit rounding takes the two-limb execution
+refinement. Wider exact intermediates go to the arbitrary-width direct rounder, which has the same
+field-oriented guard/sticky semantics. Representation capacity picks the branch, and the named
+format plays no part. Neither branch needs a candidate certificate or a search path.
 
 Semantic refinement laws are in `Rounding.Proof`.
 -/

@@ -30,42 +30,45 @@ public meta import FloatLib.Floats.Formats.P3109.Info
 /-!
 # P3109 formats
 
-Signed and unsigned P3109 descriptors, exact arithmetic, round-then-saturate projection, and
-`ExecFloat.P3109` conversions. `ofDyadic` and `ofRat` project exact values, and `convert`,
-`cast`, and mixed-expression operations use the same projection rules. Named constructors provide
-zero, NaN, and supported infinities. `ofFiniteFields?` checks field widths and reserved encodings,
-and `ofNatBits` accepts serialized codes.
+P3109 describes a whole family of low-precision formats through four parameters, and the order of
+its steps matters. In `binary8p4se`, nearest-even conversion with no saturation request sends 232
+to 224 but 233 to positive infinity, because 233 first rounds to 240, which has no finite
+encoding. This package implements the family: signed and unsigned P3109 descriptors, exact
+arithmetic, round-then-saturate projection, and `ExecFloat.P3109` conversions. `ofDyadic` and
+`ofRat` project exact values, and `convert`, `cast`, and mixed-expression operations use the same
+projection rules. Named constructors provide zero, NaN, and supported infinities.
+`ofFiniteFields?` checks field widths and reserved encodings, and `ofNatBits` accepts serialized
+codes.
 
-Core arithmetic evaluates exact rational intermediates and performs one destination projection.
-Square root uses exact integer comparisons with a proof against `Real.sqrt`. The common
-`ExecFloat` capabilities provide add, subtract, multiply, divide, square root, and FMA. Each
+Arithmetic computes the exact rational result and projects it once into the destination. Square
+root gets there by exact integer comparisons, with a proof against `Real.sqrt`. Add, subtract,
+multiply, divide, square root, and FMA come through the common `ExecFloat` capabilities, and each
 `ExecFloat.P3109` operation also accepts operands of independent descriptors and takes
 `(target := ...)`, `(mode := ...)`, and `(saturation := ...)` options. Literals round once from
-their exact value, and `==` is numerical equality with NaN unequal to itself. `square` projects
-the exact square once.
-The mixed-operation interface covers fused addition, scaled arithmetic, and external
-binary16, binary32, and BFloat16 destinations. Extrema, classification, format queries, and
-neighbor operations follow the same descriptor's datum set.
+their exact value, `square` projects the exact square once, and `==` is numerical equality with
+NaN unequal to itself. The mixed-operation interface covers fused addition, scaled arithmetic, and
+external binary16, binary32, and BFloat16 destinations. Extrema, classification, format queries,
+and neighbor operations follow the same descriptor's datum set.
 
-`Block` stores a nonempty sequence with an independently typed scale. Its conversion,
-maximum-finite scale selection, exact reductions, and mixed block dots follow chapter 5.
-Generic elementwise closed arithmetic and per-lane stochastic rounding words share one projection
-interface. Block square root, reciprocal square root, and hypotenuse normalize the exact
-radicand before one destination rounding, including zero, infinite, and negative result scales.
+A `Block` is a nonempty sequence with a scale of its own type. Its conversion, maximum-finite scale
+selection, exact reductions, and mixed block dots follow chapter 5 of the report. Generic
+elementwise closed arithmetic and per-lane stochastic rounding words share one projection
+interface. Block square root, reciprocal square root, and hypotenuse normalize the exact radicand
+before one destination rounding, zero, infinite, and negative result scales included.
 
-The implementation follows Interim Report v4.0.3. This is a working-group report, not an approved
-IEEE standard. Conversion indicators are defined by FloatLib.
+We follow Interim Report v4.0.3, which is a working-group report and has not been approved as an
+IEEE standard. The conversion indicators are FloatLib's own.
 
 Finite values use binary scientific notation with `P - 1` stored trailing bits and an implicit
-leading bit for normal values. A separate descriptor is needed because:
+leading bit for normal values. That sounds like IEEE 754, but P3109 needs a descriptor of its own:
 
-* unsigned profiles have no sign bit;
-* one exponent bit and zero trailing bits are allowed, below `FloatFormat`'s minimum widths;
+* unsigned profiles have no sign bit
+* one exponent bit and zero trailing bits are allowed, below `FloatFormat`'s minimum widths
 * NaN occupies a profile-dependent endpoint or midpoint, and extended profiles reserve endpoint
-  infinities instead of IEEE 754's all-ones-exponent class.
+  infinities instead of IEEE 754's all-ones-exponent class
 
-The family shares exact dyadics, comparison, and deterministic rounding with the other formats.
-Field classification and saturation use the P3109 rules.
+Exact dyadics, comparison, and deterministic rounding are shared with the other formats, while
+field classification and saturation follow the P3109 rules.
 
 ## Reference
 
@@ -75,8 +78,9 @@ Field classification and saturation use the P3109 rules.
 
 ## Projection
 
-This is the public entry point for exact P3109 round-then-saturate projection, direct encoding,
-their correctness theorems, and the rounding-direction theorems for the deterministic modes.
+Projection comes in through this module too: exact round-then-saturate projection, direct
+encoding, their correctness theorems, and the rounding-direction theorems for the deterministic
+modes.
 -/
 
 @[expose] public section

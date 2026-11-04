@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 /-!
 # Packing finite values in Lean's float model
 
-Lean's `Float.Model.UnpackedFloat.pack` assumes that finite inputs have already been normalized for
-the selected format. This module proves exact round trips for representable normal and subnormal
-values in Lean's width-parameterized IEEE model, and that a finite logical value packs either to
-a finite value or to the infinity of its sign. Agreement with the descriptor's real decoder
-requires `fmt.isIEEE = true`.
+Lean's `Float.Model.UnpackedFloat.pack` assumes that its finite inputs are already normalized for
+the selected format. In Lean's width-parameterized IEEE model, we prove exact round trips for
+representable normal and subnormal values, and show that a finite logical value packs to a finite
+value or to the infinity of its sign. Agreement with the descriptor's real decoder needs
+`fmt.isIEEE = true`.
 
-Numerical rounding is handled separately by the rounding semantics.
+Numerical rounding is left to the rounding semantics.
 -/
 
 @[expose] public section
@@ -116,7 +116,7 @@ private theorem normalizedMantissa_bounds (mantissa p : Nat) (hm : mantissa ≠ 
   · simpa [← hbits] using hlower
   · simpa [hbits] using hupper
 
-/-- Packing and unpacking a representable normal value preserves the unpacked value exactly. -/
+/-- Packing and then unpacking a representable normal value gives back the same unpacked value. -/
 theorem unpack_pack_finite_normal
     (spec : Format) (sign : Sign) (mantissa : Nat) (exponent : Int)
     (hm : mantissa ≠ 0)

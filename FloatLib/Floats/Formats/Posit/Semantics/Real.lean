@@ -12,11 +12,10 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Optional real-valued semantics of posits
 
-The exact rational meaning of every ordinary posit embeds into mathlib's `Real`. NaR remains
-`ExceptionalValue.notAReal` in the complete view and `none` in the partial view.
-
-`Posit.Semantics.Exact.Runtime` provides the executable rational denotation. This module adds
-real coordinates for proofs.
+Every ordinary posit has an exact rational meaning, and this module embeds it into mathlib's
+`Real` so that proofs can work with real coordinates. NaR keeps both of its forms,
+`ExceptionalValue.notAReal` in the complete view and `none` in the partial one. For the
+executable rational denotation, see `Posit.Semantics.Exact.Runtime`.
 -/
 
 @[expose] public section
@@ -42,7 +41,7 @@ variable {format : Format}
 @[inline] noncomputable def decodeReal (value : Model format) : NumericalValue ℝ :=
   value.decodeExact.toRealValue
 
-/-- Exact real value of an ordinary posit, or `none` exactly for NaR. -/
+/-- Exact real value of an ordinary posit. The result is `none` on NaR and on no other word. -/
 @[inline] noncomputable def toReal? (value : Model format) : Option ℝ :=
   value.toRat?.map fun rational : Rat => (rational : ℝ)
 
@@ -56,7 +55,7 @@ variable {format : Format}
     toReal? (nar format) = none := by
   simp [toReal?]
 
-/-- The optional real view is unavailable precisely for the unique NaR word. -/
+/-- Only the unique NaR word has no optional real view. -/
 theorem toReal?_eq_none_iff (value : Model format) :
     value.toReal? = none ↔ value.isNaR = true := by
   rw [toReal?]

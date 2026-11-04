@@ -15,17 +15,17 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Affine quantization over the reals
 
-`RealAffineQuantizer` describes a positive-scale integer grid with bounded storage. Its rounding
-function is supplied by the caller: order preservation, integer round trips, and error bounds
-each require only the corresponding property of that function. In particular, the error result
-is not restricted to nearest-even rounding.
+`RealAffineQuantizer` describes a positive-scale integer grid with bounded storage. The caller
+supplies its rounding function, and order preservation, integer round trips, and error bounds each
+need only the matching property of that function. In particular, the error result isn't tied to
+nearest-even rounding.
 
-`AffineQuantizer.toReal` embeds the executable rational quantizer's parameters without changing
-the code interval. The executable quantizer rounds with `roundRatEven`, so `toReal_quantize` and
-`toReal_roundedValue` assume a real rounder that agrees with `roundRatEven` on rationals; the real
-quantizer with that rounder then reproduces the complete saturated operation. The Flocq rounding
-adapter discharges the agreement for its nearest-even rounder; executable clients can continue
-importing `Affine` alone without loading real-number theory.
+`AffineQuantizer.toReal` embeds the executable rational quantizer's parameters without changing the
+code interval. Since the executable quantizer rounds with `roundRatEven`, `toReal_quantize` and
+`toReal_roundedValue` assume a real rounder that agrees with `roundRatEven` on rationals, and the
+real quantizer with that rounder then reproduces the complete saturated operation. Flocq's rounding
+adapter discharges the agreement for its nearest-even rounder. Executable clients can keep importing
+`Affine` alone without loading real-number theory.
 -/
 
 @[expose] public section

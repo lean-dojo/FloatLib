@@ -15,8 +15,8 @@ public import Init.Data.SInt.Float32
 /-!
 # Shared integer rounding at the native boundary
 
-These proofs identify Lean's integer conversion kernels with FloatLib's rational quantizer and
-dyadic integral rounder. The arguments do not depend on a machine integer width.
+Here we show that Lean's integer conversion kernels compute the same results as FloatLib's
+rational quantizer and dyadic integral rounder. No argument depends on a machine integer width.
 -/
 
 @[expose] public section

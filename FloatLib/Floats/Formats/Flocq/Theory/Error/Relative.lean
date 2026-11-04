@@ -13,13 +13,14 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Magnitude
 /-!
 # Relative Error in the FLX Format
 
-The unbounded-exponent `flxExp prec` format has a uniform relative-error bound.  For a nonzero
-input, its ULP is `β^(magnitude x - prec)`, while the magnitude lower bound gives
-`β^(magnitude x - 1) ≤ |x|`.  Their ratio is therefore at most `β^(1 - prec)`.
+In the unbounded-exponent `flxExp prec` format one relative-error bound holds everywhere, and the
+argument is short. For a nonzero input the ULP is `β^(magnitude x - prec)`, and the magnitude lower
+bound gives `β^(magnitude x - 1) ≤ |x|`, so their ratio is at most `β^(1 - prec)`. For the 24
+bits of binary32 that's `2^-23`.
 
-Combining the ULP ratio with nearest rounding gives the unit-roundoff bound
-`u = β^(1 - prec) / 2`. The same bound holds for FLT inputs in the normal range. The sharper
-classical bound `u / (1 + u)` for nearest rounding is not proved here.
+Nearest rounding halves it, which gives the unit-roundoff bound `u = β^(1 - prec) / 2`. The same
+bound holds for FLT inputs in the normal range. We don't prove the sharper classical bound
+`u / (1 + u)` for nearest rounding.
 -/
 
 @[expose] public section
@@ -77,7 +78,7 @@ theorem relative_error_round_FLX (prec : ℤ) (hprec : 0 < prec)
 /--
 Nearest FLX rounding admits the usual multiplicative model
 `round x = x * (1 + δ)` with `|δ| ≤ u`, where `u = β^(1 - prec) / 2` is the unit roundoff. Zero
-rounds exactly, with `δ = 0`.
+rounds to itself, with `δ = 0`.
 -/
 theorem round_relative_error_FLX (prec : ℤ) (hprec : 0 < prec)
     (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :

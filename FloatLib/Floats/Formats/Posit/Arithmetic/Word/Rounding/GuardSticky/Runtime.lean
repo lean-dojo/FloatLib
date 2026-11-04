@@ -13,15 +13,15 @@ public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 /-!
 # Direct one-word guard-and-sticky Posit rounding
 
-The shared field-oriented posit rounder is instantiated with the `UInt64` carrier.
-`candidateCarrier` maps every shared operation to a native-word primitive, and the generic
-kernel in `GuardStickyCarrier` keeps the candidate code in `UInt64` during packing and rounding.
-Only steps with carrier-specific contracts live here: the exact minimum-positive comparison, the
-zero test, and sign restoration.
+With the `UInt64` carrier plugged in, the shared field-oriented posit rounder becomes the one-word
+rounder. `candidateCarrier` maps every shared operation to a native-word primitive, and the
+generic kernel in `GuardStickyCarrier` keeps the candidate code in `UInt64` through packing and
+rounding. Three steps have carrier-specific contracts, so they are the ones written here: the
+exact minimum-positive comparison, the zero test, and sign restoration.
 
-Intermediate capacity selects the kernel, and no named Posit width is special. Operations that
-continue in a two-limb intermediate import the `WordLimb` adapter at that boundary, so this scalar
-rounder neither depends on nor re-exports a second implementation.
+No named Posit width is special. Intermediate capacity selects the kernel. An operation that
+continues in a two-limb intermediate imports the `WordLimb` adapter at that boundary, and this
+scalar rounder neither depends on a second implementation nor re-exports one.
 -/
 
 @[expose] public section

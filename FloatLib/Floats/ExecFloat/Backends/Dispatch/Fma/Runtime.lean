@@ -12,9 +12,9 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Fma.Runtime
 /-!
 # Executable fused multiply-add dispatch
 
-The dispatcher adds the fixed-limb pair-layout route to the smaller word-specialized kernels
-without importing their refinement proofs. The pair route contains a complete finite candidate
-chain; the dispatcher handles only exceptional inputs after that chain returns `none`.
+This dispatcher adds the fixed-limb pair-layout route to the smaller word-specialized kernels
+without importing their refinement proofs. Since the pair route has a complete finite candidate
+chain, once that chain returns `none` the dispatcher has only exceptional inputs left to handle.
 -/
 
 @[expose] public section

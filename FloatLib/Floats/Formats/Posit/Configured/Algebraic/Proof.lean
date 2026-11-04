@@ -14,8 +14,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Algebraic.Runtime
 /-!
 # Refinement and exact semantics of configured posit algebraic functions
 
-Every configured operation decodes to its model operation, for any lawful storage codec.
-The finite-domain corollaries expose the exact once-rounded rational or real expression.
+Each configured algebraic function decodes to its model operation, whatever lawful storage codec
+the width uses. That is what `toModel_rSqrt`, `toModel_hypot`, and their siblings say. The
+finite-domain corollaries, such as `rSqrt_eq_roundPositive` and `powInt_eq_roundRat`, then name the
+exact rational or real expression that gets rounded once.
 -/
 
 @[expose] public section

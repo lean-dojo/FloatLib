@@ -10,13 +10,13 @@ public import FloatLib.Numerics.Exact.DecimalText.Runtime
 /-!
 # Fixed and scientific decimal presentation
 
-These renderers place the decimal point in the digits of an exact decimal record. They perform
-no rounding and retain coefficient trailing zeros. Scientific notation keeps one digit before
-the point and always prints an exponent, including for signed zero.
+These renderers put a decimal point into the digits of an exact decimal record. They never round and
+they keep the coefficient's trailing zeros, while scientific notation keeps one digit before the
+point and always prints an exponent, even for a signed zero.
 
-`formatDyadicCompact` is the exception: it first removes fractional trailing zeros, then prints
-fixed notation such as `1.5` or `6`, falling back to the shorter `e` exponent form when fixed
-notation would need more characters. It is the text of a `Dyadic`. `ofRat?` gives the exact
+`formatDyadicCompact` is the exception, and it gives the text of a `Dyadic`. It first removes
+fractional trailing zeros and then prints fixed notation such as `1.5` or `6`, falling back to the
+shorter `e` exponent form when fixed notation would need more characters. `ofRat?` gives the exact
 decimal record of a rational with a terminating expansion.
 -/
 

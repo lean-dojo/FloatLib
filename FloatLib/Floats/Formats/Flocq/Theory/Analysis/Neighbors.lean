@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Analysis.Ulp
 /-!
 # Successor and Predecessor
 
-The neighboring values follow Flocq's `Core/Ulp.v`.  At a positive radix boundary, the spacing
-below the value can differ from the spacing above it, so `predPos` uses the preceding
-magnitude's exponent in that case.
+Successor and predecessor follow Flocq's `Core/Ulp.v`, and they differ in one subtle place. At a
+positive radix boundary the spacing below a value can be smaller than the spacing above it. With
+three binary digits, the representable values just below `1` step by `1/8` and the ones above `1`
+step by `1/4`. So `predPos` uses the exponent of the preceding magnitude there.
 -/
 
 @[expose] public section

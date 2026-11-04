@@ -16,8 +16,8 @@ These binary32 and binary64 FMA entry points execute the proved fixed-word kerne
 logic and compiled code, with carrier conversion fixed statically. Addition, subtraction,
 multiplication, division, and square root use the generic configured `Backend.word*` entry points.
 
-Guarded `Float32` and `Float` experiments live in the separate
-`Configured.NativeFPU.Unchecked` module. Importing this runtime does not expose them or pull native
+Guarded `Float32` and `Float` experiments live in their own module,
+`Configured.NativeFPU.Unchecked`. Importing this runtime does not expose them or pull native
 floating-point primitives into certified clients.
 -/
 
@@ -52,7 +52,7 @@ theorem binary32Bits_lt (bits : UInt32) :
 /--
 Proved software binary32 FMA with the `UInt32` carrier adapter fixed statically.
 
-This uses the proved fixed-word FMA kernel. Spelling the carrier conversion directly avoids
+This uses the proved fixed-word FMA kernel. Spelling out the carrier conversion avoids
 retaining a `ModelCodec` structure and four indirect closure applications in compiled
 monomorphic code.
 -/

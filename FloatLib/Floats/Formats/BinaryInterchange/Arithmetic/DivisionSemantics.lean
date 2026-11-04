@@ -13,9 +13,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
 /-!
 # Correctness of IEEE binary division
 
-The exact scaled-rational rounding theorem gives the real-number correctness contract for the
-public `Model.div` operation. The refinement sits above the dyadic arithmetic and rational
-packing layers to keep those dependencies acyclic.
+The public `Model.div` operation gets its real-number correctness contract from the exact
+scaled-rational rounding theorem. The refinement sits above the dyadic arithmetic and rational
+packing layers, which keeps those dependencies acyclic.
 -/
 
 @[expose] public section

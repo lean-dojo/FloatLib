@@ -16,11 +16,11 @@ public import FloatLib.Numerics.Exact.DecimalText.Proof
 /-!
 # Decimal text roundtrips
 
-The character scanner recovers the full datum. Destination rounding then fixes
-every valid datum: preferred-cohort optimality recovers the printed quantum,
-and numerical exactness recovers its coefficient. This preserves more than a
-rational value: signed zeros, trailing coefficient zeros, and NaN diagnostics
-survive a format/parse roundtrip.
+Print a valid datum and parse it back, and you get the same datum. The character scanner recovers
+everything that was printed, and destination rounding leaves a valid datum where it is, because
+preferred-cohort optimality recovers the printed quantum and numerical exactness recovers the
+coefficient. That's more than the rational value. Signed zeros, trailing coefficient zeros, and
+NaN diagnostics all survive the roundtrip, so `120e-2` comes back with its trailing zero.
 -/
 
 @[expose] public section
@@ -192,8 +192,8 @@ theorem parse_error_le_half (f : Format) (mode : RoundingMode)
     projectMagnitude_error_le_half f mode hm value.negative
       (decimal_magnitude_nonneg value) value.exponent hq
 
-/-- A finite parser result is inexact precisely when its numerical value changed, also when it
-overflows to the greatest finite datum. -/
+/-- A finite parser result is inexact if and only if its numerical value changed, an overflow to
+the greatest finite datum included. -/
 theorem parse_inexact_iff (f : Format) (mode : RoundingMode)
     (text : String) (value : Decimal) (result : ℚ)
     (hread : parseCharacters text.toList = some value)
@@ -254,8 +254,8 @@ theorem parse_down_le_of_toRat?_eq_some (f : Format) (text : String) (value : De
       (decimal_magnitude_nonneg value) result value.exponent hvalue
 
 /-- Exact input selects the valid cohort member closest to the written quantum. The written value
-`coefficient * 10 ^ quantum` need not fit the destination; the comparison ranges over every valid
-representation `(e, t)` of it. -/
+`coefficient * 10 ^ quantum` need not fit the destination, and the comparison ranges over every
+valid representation `(e, t)` of it. -/
 theorem parse_exact_cohort_closest (f : Format) (mode : RoundingMode)
     (text : String) (value : Decimal)
     (hread : parseCharacters text.toList = some value)

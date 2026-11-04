@@ -12,9 +12,9 @@ public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Proof
 /-!
 # Refinement of unary binary squaring
 
-Each single-operand kernel equals the corresponding multiplication kernel on equal operands. The
-multiplication proofs then supply correct rounding and the complete result encoding, including
-NaN signs and payloads.
+On equal operands, each single-operand kernel equals the corresponding multiplication kernel.
+Multiplication's proofs then supply correct rounding and the complete result encoding, NaN signs and
+payloads included.
 -/
 
 @[expose] public section

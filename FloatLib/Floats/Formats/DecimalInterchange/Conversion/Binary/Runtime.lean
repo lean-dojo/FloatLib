@@ -11,24 +11,22 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 /-!
 # Numeric conversion between binary and decimal interchange
 
-Both directions evaluate the finite input exactly as a rational before rounding
-once to the destination. Binary-to-decimal conversion prefers quantum zero on
-an exact result, so it selects the representable cohort member whose quantum is
-closest to zero. For an inexact result, decimal projection supplies the least
-quantum. Decimal-to-binary conversion uses the binary rational kernels.
-Nearest-away first rounds the exact rational to the destination binary grid,
-then encodes that dyadic with the binary encoder.
+Converting between binary and decimal never rounds twice. In both directions the finite input is
+evaluated as an exact rational and then rounded once to the destination. Going to decimal, an exact
+result prefers quantum zero, so you get the representable cohort member whose quantum is closest
+to zero, and an inexact result gets the least quantum from decimal projection. Going to binary, we
+use the binary rational kernels. Nearest-away is the one exception: it rounds the exact rational
+to the destination binary grid first and then hands that dyadic to the binary encoder.
 
-Zeros and infinities retain their signs. NaNs are quieted and raise invalid
-exactly when signaling. The diagnostic payload is interpreted as a natural
-number: it is preserved when it fits the destination, otherwise replaced by
-zero. This is a payload-selection policy, not a claim that IEEE 754 specifies a
-unique payload when narrowing.
+Zeros and infinities keep their signs. NaNs are quieted, and they raise invalid if and only if they
+were signaling. We read the diagnostic payload as a natural number, keep it when it fits the
+destination, and replace it by zero when it doesn't. That is our choice of payload, and we don't
+claim that IEEE 754 specifies a unique payload when narrowing.
 
-Decimal destinations use tininess before rounding. Binary destinations use the
-library convention: tininess after rounding to the destination
-precision with an unbounded exponent range. The constants for the binary midpoint
-and predecessor are shared with the scalar status implementation.
+Decimal destinations detect tininess before rounding. Binary destinations follow the library
+convention, tininess after rounding to the destination precision with an unbounded exponent range,
+and they share the constants for the binary midpoint and predecessor with the scalar status
+implementation.
 
 ## References
 
@@ -162,8 +160,8 @@ def binaryTernary (fmt : BinaryInterchange.FloatFormat) (negative : Bool) (magni
 
 /-- Convert a decimal datum to an IEEE binary destination in any of the five rounding
 directions. The IEEE descriptor proof excludes finite-only exceptional-value policies.
-Finite input coefficients and quantum exponents are evaluated exactly, so the source
-decimal cohort does not affect the binary result. The ternary value compares the
+A finite input's coefficient and quantum exponent are evaluated as an exact rational, so the
+source decimal cohort does not affect the binary result. The ternary value compares the
 delivered value with the exact decimal value, and infinities and NaNs have `.eq`. -/
 def toBinary (target : BinaryInterchange.FloatFormat) (_hIEEE : target.isIEEE = true)
     (mode : RoundingMode) (x : Datum) : BinaryInterchange.Model.IEEEOutcome target :=

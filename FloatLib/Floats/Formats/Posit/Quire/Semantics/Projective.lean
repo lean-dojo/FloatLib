@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Semantics.OnePointOption
 /-!
 # Explicit projective views of posit quires
 
-These adapters apply `Option.toOnePoint` to the exact optional semantics. They map the unique
-quire NaR word to the added point and then to mathlib's projective line, preserving the distinction
-between NaR and finite values. This geometric interpretation supplies no signed or ordered
-infinity semantics for quire arithmetic.
+These adapters apply `Option.toOnePoint` to the exact optional semantics. Quire NaR, the one
+exceptional word, goes to the added point and from there to mathlib's projective line, so NaR stays
+distinct from every finite value. That geometric picture gives quire arithmetic no signed or
+ordered infinity.
 
 ## References
 
@@ -48,7 +48,7 @@ The added point represents quire NaR in this view.
     (nar format).toProjectiveRat = OnePoint.infty := by
   simp [toProjectiveRat]
 
-/-- Finite one-point coordinates agree exactly with the primary rational semantics. -/
+/-- Finite one-point coordinates agree with the primary rational semantics. -/
 theorem toProjectiveRat_eq_coe_iff
     (value : Model format) (rational : Rat) :
     value.toProjectiveRat = (rational : OnePoint Rat) ↔

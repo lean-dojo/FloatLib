@@ -13,8 +13,9 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Correctness of byte-sized posit tables
 
-The generic byte encoding agrees with configured posit decoding, and every direct table call
-implements the corresponding carrier-independent configured operation.
+This file proves the two facts that byte tables rest on. The generic byte encoding agrees with
+configured posit decoding, and every direct table call (`runUnary_eq_lift`, `runBinary_eq_lift`,
+`runTernary_eq_lift`) implements the matching carrier-independent configured operation.
 -/
 
 @[expose] public section
@@ -33,7 +34,7 @@ variable {format : Format}
       Code.toModel (plan := .byte width_le) code :=
   rfl
 
-/-- A direct binary-table call is exactly the configured lifted model operation. -/
+/-- A direct binary-table call equals the configured lifted model operation. -/
 theorem runBinary_eq_lift
     {modelSpec : Model format → Model format → Model format}
     (width_le : format.bits ≤ 8)
@@ -52,7 +53,7 @@ theorem runBinary_eq_lift
   apply ModelCodec.applyBinary_eq_lift
   exact kernel.decodeCode_run
 
-/-- A direct unary-table call is exactly the configured lifted model operation. -/
+/-- A direct unary-table call equals the configured lifted model operation. -/
 theorem runUnary_eq_lift
     {modelSpec : Model format → Model format}
     (width_le : format.bits ≤ 8)
@@ -71,7 +72,7 @@ theorem runUnary_eq_lift
   apply ModelCodec.applyUnary_eq_lift
   exact kernel.decodeCode_run
 
-/-- A direct ternary-table call is exactly the configured lifted model operation. -/
+/-- A direct ternary-table call equals the configured lifted model operation. -/
 theorem runTernary_eq_lift
     {modelSpec : Model format → Model format → Model format → Model format}
     (width_le : format.bits ≤ 8)

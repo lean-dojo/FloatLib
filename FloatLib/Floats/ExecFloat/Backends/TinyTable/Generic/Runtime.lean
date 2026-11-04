@@ -11,9 +11,9 @@ public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Certificates
 /-!
 # Direct byte-table execution
 
-The functions in this module are the warm execution path. They force a memoized table, compute a
-native row-major index, and perform one byte load. Proofs attached to `Code` and array bounds are
-erased. Once the table has been generated, lookup does not evaluate the model operation again.
+This is the warm execution path. Each function forces a memoized table, computes a native row-major
+index, and does one byte load. The proofs attached to `Code` and array bounds are erased, and once
+the table exists, lookup never evaluates the model operation again.
 -/
 
 @[expose] public section
@@ -36,7 +36,7 @@ variable {Model : Type u}
       simpa only [table_eq] using
         binaryIndex_lt encoding op left right)
 
-/-- Execute one generated binary table directly on byte codes. -/
+/-- Execute one generated binary table on byte codes, with a single byte load. -/
 @[always_inline, inline] def runBinary
     (encoding : Encoding Model)
     (op : Model → Model → Model) (table : Thunk ByteArray)
@@ -67,7 +67,7 @@ variable {Model : Type u}
   table.get.uget (unaryByteIndex value.1)
     (by simpa only [table_eq] using unaryIndex_lt encoding op value)
 
-/-- Execute one generated unary table directly on a byte code. -/
+/-- Execute one generated unary table on a byte code, with a single byte load. -/
 @[always_inline, inline] def runUnary
     (encoding : Encoding Model) (op : Model → Model)
     (table : Thunk ByteArray) (table_eq : table.get = unaryTotal encoding op)
@@ -97,7 +97,7 @@ variable {Model : Type u}
       simpa only [table_eq] using
         ternaryIndex_lt encoding op left right addend)
 
-/-- Execute one generated ternary table directly on byte codes. -/
+/-- Execute one generated ternary table on byte codes, with a single byte load. -/
 @[always_inline, inline] def runTernary
     (encoding : Encoding Model)
     (op : Model → Model → Model → Model)

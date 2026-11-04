@@ -14,18 +14,21 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Configured posit conversion runtime
 
-Every configured posit uses `Rat` as its executable exact domain. Finite conversion follows the
-Posit Standard (2022) directly: interior values use the appended-bit boundary, nonzero values
-below `minPos` select signed `minPos`, and values above `maxPos` select signed `maxPos`.
+Conversion into a configured posit starts from an exact `Rat`, the executable exact domain for
+every width. Finite values follow the Posit Standard (2022):
 
-The default context maps infinity and exceptional observations to the unique `NaR`. For IEEE
-infinities and NaNs this follows §6.5 of the Posit Standard (2022); both IEEE signed zeros become
-posit zero.
-Callers may explicitly reject infinity or exceptional observations, or saturate infinity to signed
-`maxPos`.
+* values in the interior round at the appended-bit boundary,
+* a nonzero value below `minPos` becomes `minPos` with its sign,
+* a value above `maxPos` becomes `maxPos` with its sign.
 
-The mathematical conversion relation is declared in `Conversion.Proof`, where the real rounding
-specification and its rational bridge are available without adding them to runtime imports.
+The default context sends infinity and every exceptional observation to the unique `NaR`, which
+is what §6.5 of the Posit Standard (2022) asks for IEEE infinities and NaNs. Both IEEE signed zeros
+become posit zero. If you want something else, a `Context` can reject infinity or exceptional
+observations, or saturate infinity to signed `maxPos`.
+
+We declare the mathematical conversion relation in `Conversion.Proof`. The real rounding
+specification and its rational bridge are available there, and the runtime imports stay free of
+them.
 
 ## References
 
@@ -97,7 +100,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
   let rounded := Model.roundRat format exact
   .success (ExecFloat.Posit.ofModel rounded) (finiteStatus exact rounded)
 
-/-- Explicitly handle source infinity. -/
+/-- Convert a source infinity as the context's infinity policy says. -/
 @[inline] def quantizeInfinity (context : Context) (negative : Bool) :
     FloatLib.Floats.ExecFloat.ConversionOutcome
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
@@ -115,8 +118,8 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
           saturated := true
           mappedSpecial := true }
 
-/-- Explicitly handle a source exceptional observation. A signaling NaN source also raises
-`invalid`, as it does for a binary destination. -/
+/-- Convert a source NaN, NaR, reserved, or undefined observation by the exceptional policy. A
+signaling NaN source also raises `invalid`, as it does for a binary destination. -/
 @[inline] def quantizeExceptional (context : Context) (exceptional : ExceptionalValue) :
     FloatLib.Floats.ExecFloat.ConversionOutcome
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=

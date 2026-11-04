@@ -12,12 +12,12 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Prefix.Runtime
 /-!
 # Executable direct posit square-root packing
 
-The square root of an exact dyadic need not be dyadic. This module scales the source by an even
-power of two, computes its integer square root, and jams the exact square remainder into the low
-bit of a prefix with enough bits for the destination format. The ordinary direct Posit packer
-then performs the complete guard/sticky rounding step.
+An exact dyadic can have a square root that isn't dyadic. This kernel scales the source by an even
+power of two, takes its integer square root, and jams the exact square remainder into the low bit
+of a prefix long enough for the destination format. Then the ordinary direct Posit packer does the
+whole guard/sticky rounding step.
 
-The kernel is width-generic. Its equality to exact square-root rounding is proved in `Direct.Proof`.
+It works at every width, and `Direct.Proof` proves that it equals exact square-root rounding.
 -/
 
 @[expose] public section
@@ -31,8 +31,8 @@ open FloatLib.Floats.Formats.Posit.Model.StickyPrefix
 Number of generated square-root fraction bits.
 
 A Posit has `payloadBits` bits below its sign. Generating the root to that precision leaves enough
-exponent/fraction stream for every possible guard bit; the jammed low bit records whether the
-exact root has any later nonzero digit.
+exponent and fraction stream for every possible guard bit, and the jammed low bit records whether
+the exact root has any later nonzero digit.
 -/
 @[inline] def prefixPrecision (format : Format) : Nat :=
   format.payloadBits
@@ -61,7 +61,7 @@ exact root has any later nonzero digit.
   scaled - root * root
 
 /--
-Generate a normalized square-root prefix at an explicit fractional precision.
+Generate a normalized square-root prefix at a given fractional precision.
 
 Writing the source exponent as `2q + r`, where `r` is zero or one, reduces the operation to an
 integer square root of `significand * 2^(r + 2 * precision)`. The Euclidean square remainder
@@ -81,8 +81,8 @@ determines whether the exact root continues beyond the generated prefix.
 /--
 Generate the destination-width normalized square-root prefix.
 
-The policy depends only on representable precision, not on a named storage backend or special
-format width.
+The policy depends on representable precision alone. No named storage backend or special format
+width enters into it.
 -/
 @[inline] def rootPrefix
     (format : Format) (radicand : FloatLib.Numerics.Dyadic) :
@@ -90,10 +90,10 @@ format width.
   prefixAtPrecision (prefixPrecision format) radicand
 
 /--
-Round a nonnegative square root directly from its normalized prefix and exact sticky bit.
+Round a nonnegative square root in one pass from its normalized prefix and exact sticky bit.
 
-Integer square-root and remainder calculations determine the prefix; the shared guard/sticky
-packer selects the final code. This helper returns zero for zero or negative inputs.
+Integer square-root and remainder calculations give the prefix, and the shared guard/sticky packer
+selects the final code. Zero or negative inputs return zero.
 -/
 @[inline] def roundCode
     (format : Format) (radicand : FloatLib.Numerics.Dyadic) : Nat :=

@@ -12,12 +12,12 @@ public import FloatLib.Floats.Formats.Posit.Configured.Plan.Core.ModelCandidates
 /-!
 # General configured posit candidate portfolios
 
-Each portfolio combines the eligible two-limb rounding kernel with the width-generic exact-dyadic
-implementation and retains the exact-rational specification as its final reference baseline. Each
-kernel class appears once: the exact-dyadic candidate is the direct kernel itself, so no
-model-valued alias of it is offered under another name. The baseline is selected during planning,
-not called as a hidden runtime recovery path. Carrier-specific packed candidates are assembled in
-the sibling planner modules.
+A general portfolio pairs the eligible two-limb rounding kernel with the width-generic
+exact-dyadic implementation, and keeps the exact-rational specification as its final reference
+baseline. Each kind of kernel appears once. The exact-dyadic candidate is the direct kernel
+itself, so no model-valued alias of it shows up under another name. When the baseline runs, it is
+because planning chose it, and it is never a hidden recovery path at runtime. Packed
+candidates for particular carriers are assembled in the sibling planner modules.
 -/
 
 @[expose] public section

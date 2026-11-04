@@ -17,13 +17,13 @@ public import FloatLib.Numerics.Enclosure.Hyperbolic.Proof
 /-!
 # Exact comparisons for hyperbolic functions
 
-Inverse hyperbolic tangent reduces to a logarithm of an exact rational ratio. Hyperbolic
-tangent uses the same comparison in reverse. Neither operation constructs an exponential
-at the input, so large rational arguments do not produce exponentially large integers.
+Inverse hyperbolic tangent reduces to the logarithm of an exact rational ratio, and hyperbolic
+tangent uses the same comparison in reverse. Since neither builds an exponential at the input, a
+large rational argument never produces an exponentially large integer.
 
-Hyperbolic sine and cosine first compare the exponential with a rational bound using a
-logarithm. Only unresolved cases construct exponential enclosures; in those cases the
-exponential lies in a rational interval of width one around twice the comparison boundary.
+Hyperbolic sine and cosine are harder. They first compare the exponential with a rational bound
+through a logarithm, and only the cases this leaves open construct exponential enclosures, in which
+the exponential lies in a rational interval of width one around twice the comparison boundary.
 -/
 
 @[expose] public section
@@ -86,7 +86,9 @@ def compareCosh (argument boundary : ℚ) : Ordering :=
 def compareArsinh (argument boundary : ℚ) : Ordering :=
   (compareSinh boundary argument).swap
 
-/-- Compare inverse hyperbolic cosine on its nonnegative branch; callers require `argument ≥ 1`. -/
+/--
+Compare inverse hyperbolic cosine on its nonnegative branch. Callers must ensure `argument ≥ 1`.
+-/
 def compareArcosh (argument boundary : ℚ) : Ordering :=
   if boundary < 0 then .gt else (compareCosh boundary argument).swap
 

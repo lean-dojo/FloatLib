@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.DPD.DecletProof
 /-!
 # DPD trailing-field bounds and round trips
 
-Packing `groups` declets produces a value below `1024 ^ groups`; decoding produces a coefficient
-below `1000 ^ groups`. Encoding then decoding recovers every coefficient within that bound, and
-canonicalization preserves the decoded trailing coefficient.
+Packing `groups` declets gives a value below `1024 ^ groups`, and decoding gives a coefficient
+below `1000 ^ groups`, because each declet has ten bits but decodes to three decimal digits. Every
+coefficient within that bound survives the round trip. Canonicalization leaves the decoded trailing
+coefficient alone.
 -/
 
 @[expose] public section

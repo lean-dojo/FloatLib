@@ -13,13 +13,13 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of exact posit-quire semantics
 
-A quire is a wide signed fixed-point accumulator with one reserved NaR encoding. This module
-connects its stored coefficient to exact rational, dyadic, and generic numerical-value views, and
-proves that all three recognize the same exceptional word.
+A quire is a wide signed fixed-point accumulator with one reserved NaR encoding. Here we connect
+its stored coefficient to the exact rational, dyadic, and generic numerical-value views, and prove
+that all three recognize the same exceptional word. A coefficient that was built successfully keeps
+its value at the quire scale.
 
-Successful coefficient construction is preserved exactly at the quire scale. These facts are the
-semantic base for exact product accumulation within the quire's capacity; rounding back to a
-posit is a separate operation.
+Exact product accumulation within the quire's capacity rests on these facts, while rounding back
+to a posit is another operation with its own theorems.
 -/
 
 @[expose] public section
@@ -63,7 +63,7 @@ variable {format : Format}
     (nar format).toDyadic? = none := by
   simp [toDyadic?]
 
-/-- Rational and dyadic quire views agree exactly. -/
+/-- The rational quire view is the dyadic view mapped to rationals. -/
 theorem toRat?_eq_toDyadic?_map (value : Model format) :
     value.toRat? =
       value.toDyadic?.map FloatLib.Numerics.Dyadic.toRat := by
@@ -74,17 +74,17 @@ theorem toRat?_eq_toDyadic?_map (value : Model format) :
       Bool.eq_false_of_not_eq_true hnar
     simp [hordinary]
 
-/-- An exact rational is unavailable precisely for the reserved quire NaR word. -/
+/-- An exact rational is missing for the reserved quire NaR word and for no other word. -/
 theorem toRat?_eq_none_iff (value : Model format) :
     value.toRat? = none ↔ value.isNaR = true := by
   simp [toRat?]
 
-/-- An exact dyadic is unavailable precisely for the reserved quire NaR word. -/
+/-- An exact dyadic is missing for the reserved quire NaR word and for no other word. -/
 theorem toDyadic?_eq_none_iff (value : Model format) :
     value.toDyadic? = none ↔ value.isNaR = true := by
   simp [toDyadic?]
 
-/-- Generic decoding is exceptional precisely for the reserved quire NaR word. -/
+/-- Generic decoding is exceptional for the reserved quire NaR word and for no other word. -/
 theorem decode_eq_exceptional_iff (value : Model format) :
     value.decode = .exceptional .notAReal ↔ value.isNaR = true := by
   rw [← toRat?_eq_none_iff]

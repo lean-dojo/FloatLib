@@ -14,11 +14,12 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
 /-!
 # Numerical guarantees for decimal algebraic operations
 
-The bounds compare delivered values with the exact square, integer power,
-reciprocal square root, or hypotenuse. They hold for arbitrary decimal formats.
-The one-unit bounds cover all five rounding modes; nearest modes satisfy the
-half-unit bound. Overflow is excluded explicitly, as in the underlying rounders, except in the
-inexact and underflow laws and the toward-zero bounds, which also cover overflow.
+Square, integer power, reciprocal square root, and hypotenuse each return a valid datum of the
+format, and this file bounds how far that result is from the exact square or power, or from the
+real root or hypotenuse, in any decimal format. Every rounding mode stays within one grid unit, and
+the two nearest modes stay within half a unit. Like the rounders underneath, most of these bounds
+assume the result doesn't overflow. The inexact and underflow laws and the toward-zero bounds are
+the exceptions, and they cover overflow too.
 -/
 
 @[expose] public section
@@ -76,7 +77,7 @@ theorem hypot_valid (f : Format) (mode : RoundingMode) (x y : Datum) :
     | trivial
     | split
 
-/-- A finite integer power is exactly one rational projection whenever it has no pole. -/
+/-- Without a pole, a finite integer power is a single rational projection. -/
 theorem powInt_eq_project (f : Format) (mode : RoundingMode) (x : Datum)
     (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n) :
     ∃ preferred negativeZero,
@@ -122,7 +123,7 @@ theorem hypot_eq_sqrtMagnitude (f : Format) (mode : RoundingMode)
   exact ⟨_, rfl⟩
 
 /-- The square of a finite datum is one projection of the exact square, with some preferred quantum
-and a positive sign when the square is exactly zero, so the square of either zero is `+0`. -/
+and a positive sign when the exact square is zero, so the square of either zero is `+0`. -/
 theorem square_eq_project (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) :
     ∃ preferred, square f mode x = project f mode (a ^ 2) preferred false := by
@@ -152,8 +153,8 @@ theorem square_error_lt_one (f : Format) (mode : RoundingMode)
   rw [he] at hfinite ⊢
   exact project_error_lt_one f mode _ _ _ hfinite
 
-/-- The square of a finite datum raises inexact exactly when a finite result differs from the exact
-square, also when it overflows to the greatest finite datum. -/
+/-- The square of a finite datum raises inexact if and only if a finite result differs from the
+exact square, also when it overflows to the greatest finite datum. -/
 theorem square_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a)
     (hv : (square f mode x).value.toRat? = some value) :
@@ -162,8 +163,8 @@ theorem square_inexact_iff (f : Format) (mode : RoundingMode)
   rw [he] at hv ⊢
   exact project_inexact_iff f mode _ _ _ _ hv
 
-/-- The square of a finite datum raises underflow exactly when the exact square is below the least
-normal magnitude and the result is inexact; an overflowing square is never tiny. -/
+/-- The square of a finite datum raises underflow if and only if the exact square is below the
+least normal magnitude and the result is inexact. An overflowing square is never tiny. -/
 theorem square_underflow_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) :
     (square f mode x).status.underflow = true ↔
@@ -237,8 +238,8 @@ theorem powInt_error_lt_one (f : Format) (mode : RoundingMode)
   rw [he] at hfinite ⊢
   exact project_error_lt_one f mode _ _ _ hfinite
 
-/-- An integer power of a finite datum raises inexact exactly when a finite result differs from the
-exact power, also when it overflows to the greatest finite datum. A pole gives an infinity, so a
+/-- An integer power of a finite datum raises inexact if and only if a finite result differs from
+the exact power, also when it overflows to the greatest finite datum. A pole gives an infinity, so a
 finite result excludes it. -/
 theorem powInt_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a) (n : Int)
@@ -252,7 +253,7 @@ theorem powInt_inexact_iff (f : Format) (mode : RoundingMode)
   rw [he] at hv ⊢
   exact project_inexact_iff f mode _ _ _ _ hv
 
-/-- An integer power of a finite datum raises underflow exactly when the exact power is below the
+/-- An integer power of a finite datum raises underflow if and only if the exact power is below the
 least normal magnitude in absolute value and the result is inexact. A pole raises only
 divide-by-zero, and an overflowing power is never tiny. -/
 theorem powInt_underflow_iff (f : Format) (mode : RoundingMode)
@@ -355,7 +356,7 @@ private theorem sqrtMagnitude_value_lt_of_overflow (f : Format) (mode : Rounding
     rw [← hv, Rat.cast_mul, Rat.cast_natCast, Rat.cast_zpow, Rat.cast_ofNat]
     exact hlt
 
-/-- A finite square root raises inexact exactly when its value differs from the real root, also
+/-- A finite square root raises inexact if and only if its value differs from the real root, also
 when it overflows to the greatest finite datum, which lies below the root. -/
 private theorem sqrtMagnitude_inexact_iff_of_eq_some (f : Format) (mode : RoundingMode) {x : ℚ}
     (hx : 0 ≤ x) (preferred : Int) (value : ℚ)
@@ -369,9 +370,9 @@ private theorem sqrtMagnitude_inexact_iff_of_eq_some (f : Format) (mode : Roundi
       sqrtMagnitude_value_lt_of_overflow f mode hx preferred value hfinite hv
     exact iff_of_true hinexact hlt.ne
 
-/-- The reciprocal square root of a finite datum raises inexact exactly when a finite result differs
-from the real reciprocal square root, also when it overflows to the greatest finite datum. A zero or
-negative operand gives an infinity or a NaN, so a finite result has a positive operand. -/
+/-- The reciprocal square root of a finite datum raises inexact if and only if a finite result
+differs from the real reciprocal square root, also when it overflows to the greatest finite datum.
+A zero or negative operand gives an infinity or a NaN, so a finite result has a positive operand. -/
 theorem rsqrt_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a)
     (hv : (rsqrt f mode x).value.toRat? = some value) :
@@ -384,9 +385,9 @@ theorem rsqrt_inexact_iff (f : Format) (mode : RoundingMode)
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_inexact_iff_of_eq_some f mode (inv_nonneg.mpr ha.le) preferred value hv
 
-/-- The reciprocal square root of a finite datum raises underflow exactly when the real reciprocal
-square root is below the least normal magnitude and the result is inexact. A zero or negative
-operand raises only divide-by-zero or invalid, and an overflowing root is never tiny. -/
+/-- The reciprocal square root of a finite datum raises underflow if and only if the real
+reciprocal square root is below the least normal magnitude and the result is inexact. A zero or
+negative operand raises only divide-by-zero or invalid, and an overflowing root is never tiny. -/
 theorem rsqrt_underflow_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) :
     (rsqrt f mode x).status.underflow = true ↔
@@ -400,9 +401,9 @@ theorem rsqrt_underflow_iff (f : Format) (mode : RoundingMode)
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_underflow_iff f mode (inv_nonneg.mpr ha.le) preferred
 
-/-- The hypotenuse of two finite datums raises inexact exactly when a finite result differs from the
-real square root of the exact sum of squares, also when it overflows to the greatest finite datum.
--/
+/-- The hypotenuse of two finite datums raises inexact if and only if a finite result differs from
+the real square root of the exact sum of squares, also when it overflows to the greatest finite
+datum. -/
 theorem hypot_inexact_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b value : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b)
     (hv : (hypot f mode x y).value.toRat? = some value) :
@@ -413,8 +414,9 @@ theorem hypot_inexact_iff (f : Format) (mode : RoundingMode)
   simpa only [Rat.cast_add, Rat.cast_pow] using sqrtMagnitude_inexact_iff_of_eq_some f mode
     (add_nonneg (sq_nonneg a) (sq_nonneg b)) preferred value hv
 
-/-- The hypotenuse of two finite datums raises underflow exactly when the real hypotenuse is below
-the least normal magnitude and the result is inexact; an overflowing hypotenuse is never tiny. -/
+/-- The hypotenuse of two finite datums raises underflow if and only if the real hypotenuse is
+below the least normal magnitude and the result is inexact. An overflowing hypotenuse is never
+tiny. -/
 theorem hypot_underflow_iff (f : Format) (mode : RoundingMode)
     (x y : Datum) (a b : ℚ) (hx : x.toRat? = some a) (hy : y.toRat? = some b) :
     (hypot f mode x y).status.underflow = true ↔
@@ -438,7 +440,7 @@ theorem le_rsqrt_up (f : Format)
     le_sqrtMagnitude_up f (inv_nonneg.mpr ha.le) preferred hfinite
 
 /-- Rounding toward zero or toward negative, the reciprocal square root of a positive finite datum
-is finite and at most the real reciprocal square root; the two modes agree because the result is
+is finite and at most the real reciprocal square root. The two modes agree because the result is
 positive. An overflow delivers the greatest finite datum, which lies below the root. -/
 theorem rsqrt_directed_le (f : Format) (mode : RoundingMode)
     (hm : mode = .towardZero ∨ mode = .down)
@@ -463,7 +465,7 @@ theorem le_hypot_up (f : Format)
     (add_nonneg (sq_nonneg a) (sq_nonneg b)) preferred hfinite
 
 /-- Rounding toward zero or toward negative, the hypotenuse of two finite datums is finite and at
-most the real hypotenuse; the two modes agree because the result is nonnegative. An overflow
+most the real hypotenuse. The two modes agree because the result is nonnegative. An overflow
 delivers the greatest finite datum, which lies below the hypotenuse. -/
 theorem hypot_directed_le (f : Format) (mode : RoundingMode)
     (hm : mode = .towardZero ∨ mode = .down)

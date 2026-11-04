@@ -12,10 +12,10 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Convergence
 /-!
 # Convergence of pi-scaled trigonometric enclosures
 
-The exact rational angle reduction is independent of the refinement degree. Its bounded
-remainder multiplies a vanishing uncertainty in pi, while a uniform factorial majorant
-controls the Taylor error. Thus both endpoints converge at every rational input, including
-special angles where a later comparison must use the exact-value classifier.
+Exact rational angle reduction doesn't depend on the refinement degree. Its bounded remainder
+multiplies a vanishing uncertainty in pi, while a uniform factorial majorant controls the Taylor
+error. So both endpoints converge at every rational input, including the special angles where a
+later comparison has to use the exact-value classifier.
 -/
 
 public section

@@ -13,8 +13,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 # Widening a packed binary word
 
 Increasing the fraction width while retaining the exponent width shifts all three fields by the
-same number of bits. A single shift of the stored word therefore agrees with extracting and
-repacking its fields. The destination bound is proved before compilation, avoiding a modulus.
+same number of bits. So a single shift of the stored word agrees with extracting and repacking its
+fields. The destination bound is proved before compilation, which avoids a modulus.
 
 This is a storage identity for every bit pattern. Before using it as a numerical conversion, the
 cast runtime checks bias and encoding compatibility and handles exceptional values.

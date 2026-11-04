@@ -12,8 +12,8 @@ public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridProof
 /-!
 # Real semantics of exact elementary comparisons
 
-These are total comparisons with the mathematical exponential and natural logarithm.
-They include equality: `exp 0 = 1` and `log 1 = 0` are handled exactly before refinement.
+These comparisons with the mathematical exponential and natural logarithm are total. Equality is
+included, because `exp 0 = 1` and `log 1 = 0` are handled exactly before refinement.
 -/
 
 public section

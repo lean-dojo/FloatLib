@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Logarithmic.Exact.Proof
 /-!
 # Correctness of configured exact logarithmic operations
 
-Wrapping is an equivalence with the complete code, zero denotes real zero, and multiplication
-agrees exactly with multiplication of decoded real values.
+Wrapping is an equivalence with the complete code, and zero denotes real zero. For
+multiplication, the product of two values decodes to the product of their real values, with
+nothing rounded.
 -/
 
 @[expose] public section
@@ -39,7 +40,7 @@ variable {radix : Radix}
     toReal (zero : ExecFloat.Logarithmic radix) = 0 :=
   Formats.Logarithmic.Code.toReal_zero radix
 
-/-- Logarithmic multiplication agrees exactly with multiplication of decoded real values. -/
+/-- The product of two logarithmic values decodes to the product of their real values. -/
 @[simp, grind =] theorem toReal_mul (left right : ExecFloat.Logarithmic radix) :
     toReal (mul left right) = toReal left * toReal right :=
   Formats.Logarithmic.Code.toReal_mul left.toCode right.toCode
@@ -54,7 +55,7 @@ variable {radix : Radix}
     (value.toRat : ℝ) = value.toReal :=
   Formats.Logarithmic.Code.cast_toRat value.toCode
 
-/-- Logarithmic multiplication agrees exactly with multiplication of the rational readings. -/
+/-- The product of two logarithmic values reads as the product of their rational readings. -/
 @[simp, grind =] theorem toRat_mul (left right : ExecFloat.Logarithmic radix) :
     toRat (mul left right) = toRat left * toRat right :=
   Formats.Logarithmic.Code.toRat_mul left.toCode right.toCode

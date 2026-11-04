@@ -13,15 +13,17 @@ public import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Core conversion capabilities and outcomes
 
-A source's `ExactDecoder` gives its exact value. An `ExactMap` embeds that value into the
-destination's exact domain, and a `Quantizer` rounds it under the policy of its context.
-`ConversionOutcome` retains the resulting value and flags, or the reason conversion failed, and
-`#eval` shows it as `.success v { inexact := true }` or `.failure .outOfRange`, with only the
-raised flags. `RoundingModes` gives the types of a conversion's `(mode := ...)` and
-`(context := ...)` options, the rounding direction and a policy without one, and combines them into
-the quantizer's context. `ModeContext` supplies the policy a call uses when it names none.
+Conversion happens in three steps. A source's `ExactDecoder` gives its exact value, an `ExactMap`
+embeds that value into the destination's exact domain, and a `Quantizer` rounds it under the policy
+of its context.
 
-`Conversion.Runtime` has the entry points, and `Conversion.Proof` has their correctness theorems
+`ConversionOutcome` keeps the resulting value and flags, or the reason the conversion failed.
+`#eval` shows it as `.success v { inexact := true }` or `.failure .outOfRange`, with only the raised
+flags. `RoundingModes` gives the types of a conversion's `(mode := ...)` and `(context := ...)`
+options, the rounding direction and a policy without one, and combines them into the quantizer's
+context. `ModeContext` supplies the policy a call uses when it names none.
+
+The entry points are in `Conversion.Runtime`, and `Conversion.Proof` has their correctness theorems
 and the laws for composing outcomes.
 -/
 
@@ -157,7 +159,7 @@ inductive ConversionOutcome (α : Type u) where
 
 /--
 `#eval` writes `.success v` followed by the raised flags, which it leaves out when none is raised,
-or `.failure reason`. The value prints as its type displays it, so this is text to read, not a
+or `.failure reason`. The value prints as its type displays it, so this is text to read and isn't a
 serialization. An overflow to an IEEE infinity shows as
 `.success inf { inexact := true, overflow := true }`.
 -/
@@ -245,27 +247,24 @@ end ExactDecoder
 /--
 Context-indexed quantization capability for one destination value type.
 
-Its specification is relational, so stochastic, state-indexed and otherwise nondeterministic
-mathematics stay expressible even when `run` chooses one executable result.
+The specification is relational, so stochastic, state-indexed, and other nondeterministic
+mathematics stay expressible while `run` chooses one executable result. `Exact` is an output
+parameter, so a destination has one canonical mathematical input domain. Alternative execution
+backends must refine that semantics and keep the domain users see, and sources with a different
+exact domain reach it through an `ExactMap`.
 
-`Exact` is an output parameter, so a destination has one canonical mathematical input domain.
-Alternative execution backends must refine that semantics and keep the domain users see. Sources
-with a different exact domain reach it through an `ExactMap`.
+Mixed addition and subtraction consult this context before quantizing. By default they use the
+operations of `Exact`, and a signed-zero domain may refine the sign of an exact cancellation without
+changing its value. Multiplication and division use the operations of the exact domain. `correct`
+relates `run` to `spec` and doesn't constrain these hooks, so each family proves that its hooks keep
+the numerical sum and difference, as the binary instances do. The generic prepared-spec theorems
+compose quantization with the supplied hooks and need those lemmas for an arithmetic correctness
+result.
 
-Mixed addition and subtraction also consult this context before quantization. The default
-operations are those of `Exact`, and a signed-zero domain can refine the sign of an exact
-cancellation without changing its numerical value. Multiplication and division use the operations
-of the exact domain.
-
-`correct` relates `run` to `spec` and does not constrain these arithmetic hooks, so a family
-proves separately that its hooks keep the numerical sum and difference. The generic prepared-spec
-theorems compose quantization with the supplied hooks, and an arithmetic correctness result also
-needs those preservation lemmas, as the binary instances supply.
-
-What `spec` says is up to the family. Choosing `Spec.ofFunction run` makes `correct` reflexive and
-gives no rounding property of its own. A family contract can expose denotation, coefficient or
-policy predicates while keeping full output and status equality, and the generic conversion
-theorems transport the clauses that the installed relation contains and no others.
+What `spec` says is up to the family. `Spec.ofFunction run` makes `correct` reflexive and gives no
+rounding property of its own. A family contract can expose denotation, coefficient, or policy
+predicates while keeping full output and status equality, and the generic conversion theorems
+transport the clauses that the installed relation contains and no others.
 -/
 class Quantizer (Destination : Type u) (Exact : outParam (Type v)) where
   /--
@@ -293,17 +292,19 @@ class Quantizer (Destination : Type u) (Exact : outParam (Type v)) where
   subExact : [Sub Exact] → Context → Exact → Exact → Exact := fun _ left right => left - right
 
 /--
-The `mode` and `context` options of conversions into `Destination`. `Mode` is the type of the
-rounding direction, and `default` is the direction of a call that names none. `Policy` is the type
-of `context`, every other destination policy, and `withMode` combines a direction and a policy
-into the quantizer's context.
+The `mode` and `context` options of conversions into `Destination`.
 
-A policy has no direction, so the mode decides it. A conversion runs the destination quantizer in
-`withMode mode context`, whether the caller passes `context` or the call uses the canonical
-policy. Binary and nominal static-byte destinations take a `Numerics.RoundingMode`, nearest-even
-by default, and the binary `Conversion.Policy`, whose `entropy` feeds `.stochastic`. P3109
-destinations take a P3109 `RoundingMode` and a `SaturationMode`. A destination without selectable
-directions, such as a posit, falls back to the mode type `NoRoundingDirection`.
+`Mode` is the type of the rounding direction, and `default` is the direction of a call that names
+none. `Policy` is the type of `context`, every other destination policy, and `withMode` combines a
+direction and a policy into the quantizer's context. A policy has no direction, so the mode decides
+it, and a conversion runs the quantizer in `withMode mode context` whether the caller passes
+`context` or the call uses the canonical policy.
+
+* Binary and nominal static-byte destinations take a `Numerics.RoundingMode`, nearest-even by
+  default, and the binary `Conversion.Policy`, whose `entropy` feeds `.stochastic`.
+* P3109 destinations take a P3109 `RoundingMode` and a `SaturationMode`.
+* A destination without selectable directions, such as a posit, falls back to the mode type
+  `NoRoundingDirection`.
 -/
 class RoundingModes (Destination : Type u) (Exact : outParam (Type v))
     [quantizer : Quantizer Destination Exact] (Mode : outParam Type) where

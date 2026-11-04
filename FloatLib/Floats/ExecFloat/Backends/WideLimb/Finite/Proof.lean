@@ -15,13 +15,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 /-!
 # From the compact finite kernels to the reference operations
 
-The wide-limb kernels prove that an accepted result is the compact finite kernel
-(`FiniteKernel.add?`, `mul?`, or `fma?`) on the operand models. This module supplies the last
-step of each refinement: whenever a compact finite kernel accepts its operands, the reference
-operation `Model.Spec.add`, `mul`, or `fma` returns the same value (`spec_add_of_add?_eq_some` and
-its siblings). It also records that negating a model value flips only the decoded sign
-(`decode?_neg`) and that the unsigned-scale sum is commutative (`roundSum_comm`), which the
-alignment kernel uses to order its operands by scale.
+Each wide-limb kernel proves that an accepted result is the compact finite kernel
+(`FiniteKernel.add?`, `mul?`, or `fma?`) on the operand models. This module supplies the last step
+of each refinement: whenever a compact finite kernel accepts its operands, the reference operation
+`Model.Spec.add`, `mul`, or `fma` returns the same value (`spec_add_of_add?_eq_some` and its
+siblings). It also records two facts that the alignment kernel uses to order its operands by scale:
+negating a model value flips only the decoded sign (`decode?_neg`), and the unsigned-scale sum is
+commutative (`roundSum_comm`).
 -/
 
 @[expose] public section

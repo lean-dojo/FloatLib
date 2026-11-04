@@ -8,10 +8,10 @@ module
 /-!
 # Densely packed decimal declets
 
-The eight cases below are Cowlishaw's DPD encoding table, also specified by
-IEEE 754-2019 §3.5.2(c)(1). Three decimal digits occupy ten bits. Decoding accepts
-all 1024 bit patterns; the 24 redundant patterns select the same digits as their
-canonical encodings.
+Densely packed decimal fits three decimal digits into ten bits. That leaves 24 of the 1024 bit
+patterns over, and decoding accepts all of them: each of the 24 redundant patterns gives the same
+digits as its canonical encoding. The eight cases below are Cowlishaw's DPD encoding table, which
+IEEE 754-2019 §3.5.2(c)(1) also specifies.
 
 Source: https://speleotrove.com/decimal/DPDecimal.html, encoding and decoding tables.
 -/

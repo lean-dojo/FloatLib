@@ -12,13 +12,14 @@ public import FloatLib.Numerics.Enclosure.Rational.Runtime
 /-!
 # Rounding rational enclosures to posits
 
-An enclosure determines a unique rounded value when its endpoints select the same posit code.
-The check uses only rational arithmetic and the format's existing appended-bit rounding rule.
-An inconclusive check returns `none`, allowing a caller to refine the enclosure.
+When both endpoints of a rational enclosure round to the same posit code, everything inside rounds
+to that code too, and the enclosure has settled the answer. `roundPositive?` checks this with
+rational arithmetic and the format's appended-bit rule. If the endpoints disagree it returns
+`none`, and the caller can tighten the enclosure and try again.
 
-`roundPositive?` is for nonnegative functions. An interval crossing zero cannot be accepted for
-a strictly positive target until its lower endpoint has become positive. The corresponding
-theorem uses monotonicity of real posit rounding.
+It is meant for nonnegative targets. For a strictly positive target, an interval that crosses
+zero is accepted once its lower endpoint has become positive and not before. Acceptance rests on
+the monotonicity of real posit rounding.
 -/
 
 @[expose] public section

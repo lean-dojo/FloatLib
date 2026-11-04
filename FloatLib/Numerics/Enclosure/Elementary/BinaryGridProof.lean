@@ -14,8 +14,8 @@ public import FloatLib.Numerics.Enclosure.Interval.BinaryGridProof
 # Soundness of binary-grid exponential and logarithm enclosures
 
 Rounded Horner steps and rectangular splitting contain the exponential and odd logarithm Taylor
-polynomials. Rounded powers and exact scalar factors enclose their remainder bounds. Mathlib's real
-estimates therefore apply at every grid precision, including zero.
+polynomials, and rounded powers and exact scalar factors enclose their remainder bounds. So
+Mathlib's real estimates apply at every grid precision, including zero.
 -/
 
 @[expose] public section

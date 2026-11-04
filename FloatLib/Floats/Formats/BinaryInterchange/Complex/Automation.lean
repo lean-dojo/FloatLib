@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 /-!
 # Complex `Model` rules for numerical automation
 
-These rules expose the rounded complex semantics through the same operation contracts used by
-scalar floats and other numerical systems. Executable complex arithmetic remains the direct
-definitions in `Complex.Core`.
+These rules show numerical automation the rounded complex semantics through the operation
+contracts that scalar floats and other numerical systems use. They leave execution alone:
+executable complex arithmetic is the plain definitions in `Complex.Core`.
 -/
 
 public meta section

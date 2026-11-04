@@ -13,8 +13,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Codec
 # Correctness of configured binary byte tables
 
 These theorems connect direct table execution to the representation-independent configured
-operations. They apply to every binary-interchange descriptor whose complete encoding fits in
-eight bits.
+operations, for every binary-interchange descriptor whose complete encoding fits in eight bits.
 -/
 
 @[expose] public section
@@ -26,7 +25,7 @@ open FloatLib.Floats.ExecFloat.Backend
 
 variable {format : FloatFormat}
 
-/-- A direct binary-table call is exactly the configured lifted model operation. -/
+/-- A direct binary-table call computes the configured lifted model operation. -/
 theorem runBinary_eq_lift
     {modelSpec : Model format → Model format → Model format}
     (width_le_eight : format.bitWidth ≤ 8)
@@ -45,7 +44,7 @@ theorem runBinary_eq_lift
   apply ModelCodec.applyBinary_eq_lift
   exact kernel.decodeCode_run
 
-/-- A direct unary-table call is exactly the configured lifted model operation. -/
+/-- A direct unary-table call computes the configured lifted model operation. -/
 theorem runUnary_eq_lift
     {modelSpec : Model format → Model format}
     (width_le_eight : format.bitWidth ≤ 8)
@@ -64,7 +63,7 @@ theorem runUnary_eq_lift
   apply ModelCodec.applyUnary_eq_lift
   exact kernel.decodeCode_run
 
-/-- A direct ternary-table call is exactly the configured lifted model operation. -/
+/-- A direct ternary-table call computes the configured lifted model operation. -/
 theorem runTernary_eq_lift
     {modelSpec : Model format → Model format → Model format → Model format}
     (width_le_eight : format.bitWidth ≤ 8)

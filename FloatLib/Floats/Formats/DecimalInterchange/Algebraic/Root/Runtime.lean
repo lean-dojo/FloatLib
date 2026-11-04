@@ -11,13 +11,15 @@ public import FloatLib.Kernels.IntegerRoot.Runtime
 /-!
 # Decimal integer-degree roots by exact power comparisons
 
-The integer root brackets the scaled coefficient. Comparing the radicand with
-the power of the exact midpoint decides nearest rounding, including ties.
-Precision, degree, and intermediate integers are unbounded.
+`Arithmetic.rootN` takes a root of any integer degree with one rounding. The integer root brackets
+the scaled coefficient, and comparing the radicand with the power of the exact midpoint settles
+nearest rounding, ties included. Precision, degree, and the intermediate integers have no bound.
 
-Negative degrees invert the exact rational radicand before root rounding.
-Negative nonzero operands require an odd degree. Signed zeros follow the same
-odd-degree sign rule; a negative degree at zero raises divide-by-zero.
+Four rules cover the signs and the special degrees:
+* a negative degree inverts the exact rational radicand before the root is rounded
+* a negative nonzero operand needs an odd degree
+* signed zeros follow the same odd-degree sign rule
+* a negative degree at zero raises divide-by-zero
 -/
 
 @[expose] public section

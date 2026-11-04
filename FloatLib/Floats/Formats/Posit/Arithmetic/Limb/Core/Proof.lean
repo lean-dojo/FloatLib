@@ -12,8 +12,9 @@ public import FloatLib.Kernels.FixedWord.Core.Proof
 /-!
 # Refinement laws for two-limb posit capacity primitives
 
-The results in this module relate the native two-limb search endpoint to the exact natural-number
-encoding used by the posit model.
+Two short lemmas relate the native two-limb search endpoint to the exact natural-number encoding
+of the posit model. One says the endpoint converts to two limbs without loss, and the other puts
+it at or below bit 127.
 -/
 
 @[expose] public section

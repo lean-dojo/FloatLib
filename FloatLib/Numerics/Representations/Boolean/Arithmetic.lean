@@ -12,7 +12,7 @@ public import FloatLib.Numerics.Operation.Semantics
 /-!
 # Executable Boolean numerical operations
 
-Boolean masks use their native `Bool` carrier. These definitions are direct inline operations, and
+Boolean masks use their native `Bool` carrier. These definitions are plain inline operations, and
 their contracts expose the same functions through the representation-independent numerical API.
 -/
 

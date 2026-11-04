@@ -13,11 +13,13 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Right shift with sticky-bit jamming
 
-`shiftRightJam` is the representation-independent contract used by fixed words, dynamic limbs,
-and format-specific rounding kernels. It returns the exact quotient when no discarded bit is set;
-otherwise it records the discarded nonzero suffix in the quotient's low bit.
+`shiftRightJam` is the representation-independent contract that fixed words, dynamic limbs, and
+format-specific rounding kernels all use. It returns the exact quotient when no discarded bit is
+set, and otherwise records the nonzero discarded suffix in the quotient's low bit. Shifting binary
+10110 right by three gives 10, and since the discarded 110 isn't zero the result is 11. Shifting
+10000 by three gives 10 as it is.
 
-Keeping the operation in `Numerics` prevents a generic rounding argument from depending on one
+We keep the operation in `Numerics` so that a generic rounding argument never depends on one
 particular fixed-word backend.
 -/
 

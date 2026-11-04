@@ -19,16 +19,16 @@ public import FloatLib.Floats.Formats.Posit.Configured.Instances
 /-!
 # Exact dot products with a posit quire
 
-How do we compute a dot product of posits without rounding each product? A quire is a wide
-fixed-point accumulator paired with a posit format. The calculation has three steps: start at
-zero, accumulate with `qMulAdd`, and round once with `qToP`. The reusable `dotProduct` below also
-checks the input lengths, and the theorem at the end says when the accumulation is exact.
+A quire is a wide fixed-point accumulator paired with a posit format, and it lets a dot product of
+posits skip the rounding after each product. A quire calculation has three steps: start at zero,
+accumulate with `qMulAdd`, and round once with `qToP`. Our reusable `dotProduct` below also checks
+the input lengths, and the theorem at the end says when the accumulation is exact.
 
-A quire paired with an `n`-bit posit has a `16n`-bit coefficient, 512 bits for Posit32. Overflow
-or a NaR input produces NaR ("not a real"). The Posit Standard sizes the quire so that fewer than
-`2^31` products of finite posits can never overflow, and `toRat?_accumulateProducts` applies the
-library's proof of that guarantee to this loop. The correctly rounded binary reduction in
-`BasicOperations` instead uses an unbounded software accumulator.
+A quire paired with an `n`-bit posit has a `16n`-bit coefficient, which is 512 bits for Posit32.
+Overflow or a NaR input produces NaR ("not a real"). The Posit Standard sizes the quire so that
+fewer than `2^31` products of finite posits can never overflow it, and `toRat?_accumulateProducts`
+applies the library's proof of that guarantee to this loop. For comparison, the correctly rounded
+binary reduction in `BasicOperations` uses an unbounded software accumulator.
 -/
 
 @[expose] public section

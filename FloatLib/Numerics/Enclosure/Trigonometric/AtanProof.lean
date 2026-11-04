@@ -13,9 +13,9 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.Arctan
 /-!
 # Containment for rational arctangent enclosures
 
-Mathlib's real arctangent series identifies the exact sum. Its geometric tail estimate bounds
-the rational partial sums. The reduction identities hold over the reals; rational interval
-arithmetic preserves their exact constants.
+Mathlib's real arctangent series identifies the exact sum, and its geometric tail estimate bounds
+the rational partial sums. The reduction identities hold over the reals, and rational interval
+arithmetic keeps their constants exact.
 -/
 
 public section
@@ -108,7 +108,7 @@ theorem atan_unit_identity (x : ℚ) (hx : 0 ≤ x) :
 /--
 Unit reduction retains real containment, including the switch at one half.
 
-Containment holds for every nonnegative input; the reduction is only fast on `[0, 1]`.
+Containment holds for every nonnegative input, though the reduction is only fast on `[0, 1]`.
 -/
 theorem contains_atanUnit (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
     (atanUnit x degree).Contains (Real.arctan (x : ℝ)) := by

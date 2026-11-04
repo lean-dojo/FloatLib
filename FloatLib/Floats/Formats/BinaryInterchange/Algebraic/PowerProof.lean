@@ -16,8 +16,8 @@ public import
 
 The power is evaluated in the rationals before any format rounding. Casting commutes with
 integer exponentiation, including negative exponents, so the established rational-rounding
-theorem proves a single rounding of the exact real power. IEEE overflow has no real denotation
-and is excluded by the finite-result premise.
+theorem proves a single rounding of the exact real power. IEEE overflow has no real denotation, so
+the finite-result premise excludes it.
 -/
 
 @[expose] public section
@@ -67,7 +67,7 @@ theorem powInt_of_isSNaN {fmt : FloatFormat} (value : Model fmt) (exponent : Int
     powInt value 0 = posOne fmt := by
   simp [powInt, hnan]
 
-/-- A finite nonzero base uses exactly one rational rounding for every nonzero exponent. -/
+/-- A finite nonzero base uses a single rational rounding for every nonzero exponent. -/
 theorem powInt_eq_roundAlgebraicRat {fmt : FloatFormat} (value : Model fmt)
     (exponent : Int) {q : Rat} (hvalue : toRat? value = some q)
     (hzero : isZero value = false) (hexponent : exponent ≠ 0) :

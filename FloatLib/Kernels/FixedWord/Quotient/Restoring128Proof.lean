@@ -16,9 +16,9 @@ import Mathlib.Tactic.Ring.RingNF
 /-!
 # Two-limb restoring quotient refinement
 
-Each step doubles `quotient * denominator + remainder` while keeping the remainder below the
-denominator. Iterating the step theorem from `Quotient.Proof` gives the scaled quotient and
-remainder, provided the denominator and quotient prefixes fit in two limbs.
+Each step of the two-limb loop doubles `quotient * denominator + remainder` and keeps the remainder
+below the denominator, so iterating the step theorem from `Quotient.Proof` gives the scaled quotient
+and remainder, as long as the denominator and the quotient prefixes fit in two limbs.
 -/
 
 @[expose] public section

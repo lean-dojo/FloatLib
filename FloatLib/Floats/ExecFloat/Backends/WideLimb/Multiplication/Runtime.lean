@@ -12,13 +12,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Dyadic
 /-!
 # Wide-limb multiplication runtime
 
-Normal operands are multiplied exactly by the schoolbook limb product and passed to
-`roundNormal?` for one rounding. Normal inputs can still be declined: the product's leading
-position must reach the normal range before rounding, and its position after rounding carry
-must stay in the finite range. In particular, the lower check can decline a product that would
-round up to the smallest normal value. Zero, subnormal, and exceptional operands are also
-declined. The total operation computes every declined case with `Model.Spec.mul` through the
-model codec; for every `Eligible` format, `Multiplication.Proof` proves agreement on all operands.
+Normal operands are multiplied exactly by the schoolbook limb product and passed to `roundNormal?`
+for one rounding. Normal inputs can still be declined, because the product's leading position must
+reach the normal range before rounding and its position after rounding carry must stay in the finite
+range. That lower check can even decline a product that would round up to the smallest normal value.
+Zero, subnormal, and exceptional operands are declined too. Every declined case is computed with
+`Model.Spec.mul` through the model codec, and for every `Eligible` format `Multiplication.Proof`
+proves agreement on all operands.
 -/
 
 @[expose] public section

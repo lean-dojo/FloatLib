@@ -12,12 +12,13 @@ public import FloatLib.Numerics.Enclosure.Expression.Real
 /-!
 # Certified inequality checks and adaptive subdivision
 
-Rational input boxes denote sets of arbitrary real assignments. Endpoint enclosure preserves
-these sets, and backend soundness carries their values through expression evaluation. A successful
-upper-bound test therefore proves the requested inequality throughout a box.
+A rational input box stands for a set of arbitrary real assignments. Endpoint enclosure preserves
+these sets, and backend soundness carries their values through expression evaluation, so a
+successful upper-bound test proves the requested inequality on the whole box.
 
-Every midpoint split covers its parent. Induction on the subdivision depth combines successful
-checks of both children without assuming that any sampled point represents the entire box.
+Every midpoint split covers its parent. Induction on the subdivision depth then combines the
+successful checks of both children, and at no point do we assume that a sampled point represents the
+whole box.
 -/
 
 @[expose] public section

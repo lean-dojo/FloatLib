@@ -14,10 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Core
 
 `RealMem` interprets a finite-endpoint interval as a closed interval in `ℝ`. `ERealMem`
 interprets its endpoints in `EReal`, so outward-rounded operations remain meaningful when a result
-overflows to an infinity. Meaningful endpoint interpretations require `Valid` or `ValidExtended`;
-the totalized decoders alone do not exclude NaN endpoints.
-
-The executable interval carrier remains independent of these interpretations.
+overflows to an infinity. Meaningful endpoint interpretations require `Valid` or `ValidExtended`,
+because the totalized decoders alone do not exclude NaN endpoints. None of these interpretations
+is built into the executable interval carrier.
 -/
 
 @[expose] public section
@@ -96,7 +95,8 @@ theorem ValidExtended.valid_of_isFinite
   ⟨hlo, hhi, hI.ordered⟩
 
 /--
-For a valid interval, embedding real membership into `EReal` preserves membership exactly.
+For a valid interval, a real's embedding into `EReal` is an extended-real member if and only if
+the real is a member.
 -/
 theorem eRealMem_coe_iff_of_valid
     {fmt : FloatFormat} {I : Interval fmt} (hI : Valid I) (x : ℝ) :

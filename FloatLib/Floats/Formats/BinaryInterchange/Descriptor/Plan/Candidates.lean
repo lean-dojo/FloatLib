@@ -16,20 +16,20 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 
 Every binary `FloatFormat` has a proof-carrying candidate plan for addition, subtraction,
 multiplication, division, square root, and fused multiply-add. The public `ExecFloat` dispatcher
-makes the only selection:
+makes the only selection. A plan offers it up to three kinds of candidate:
 
-* every format of at most eight encoded bits can use a lazily generated exhaustive table;
-* each operation exposes at most one structural route, classified as fixed-format, native-word,
-  or fixed-limb in exactly the same order as its executable dispatcher;
-* every descriptor retains a proved width-generic baseline.
+* Every format of at most eight encoded bits can use a lazily generated exhaustive table.
+* Each operation exposes at most one structural route, classified as fixed-format, native-word,
+  or fixed-limb in the same order as its executable dispatcher.
+* Every descriptor keeps a proved width-generic baseline.
 
-Every candidate is selected from descriptor data through the same structural predicates used by
-runtime dispatch. Layout-specific kernels remain specialized, but no plan depends on descriptor
-identity or a catalogued format name. A new IEEE, finite-only, FNUZ, or otherwise custom descriptor
-receives table and structural candidates when eligible, together with the generic baseline.
+Candidates are selected from descriptor data through the structural predicates that runtime
+dispatch uses. Layout-specific kernels stay specialized, but no plan depends on descriptor
+identity or a catalogued format name. So a new IEEE, finite-only, FNUZ, or otherwise custom
+descriptor gets table and structural candidates when eligible, together with the generic baseline.
 
-Cost estimates live in `Descriptor.Plan.Estimates`; this module is responsible for candidate
-availability and proof-carrying construction.
+Cost estimates are in `Descriptor.Plan.Estimates`. This module handles candidate availability
+and proof-carrying construction.
 -/
 
 @[expose] public section
@@ -170,7 +170,7 @@ def ternaryTableCertified
 
 /-! ## Candidate availability -/
 
-/-- Offer an exhaustive binary table exactly when the encoded width fits in one byte. -/
+/-- Offer an exhaustive binary table when the encoded width fits in one byte, and only then. -/
 def tableBinary? {format : FloatFormat}
     (operation : Operation)
     (modelSpec modelRun : Model format → Model format → Model format)
@@ -184,7 +184,7 @@ def tableBinary? {format : FloatFormat}
   else
     none
 
-/-- Offer an exhaustive unary table exactly when the encoded width fits in one byte. -/
+/-- Offer an exhaustive unary table when the encoded width fits in one byte, and only then. -/
 def tableUnary? {format : FloatFormat}
     (operation : Operation)
     (modelSpec modelRun : Model format → Model format)
@@ -198,7 +198,7 @@ def tableUnary? {format : FloatFormat}
   else
     none
 
-/-- Offer an exhaustive ternary table exactly when the encoded width fits in one byte. -/
+/-- Offer an exhaustive ternary table when the encoded width fits in one byte, and only then. -/
 def tableTernary? {format : FloatFormat}
     (operation : Operation)
     (modelSpec modelRun :

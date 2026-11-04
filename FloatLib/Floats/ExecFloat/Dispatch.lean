@@ -11,9 +11,10 @@ public import FloatLib.Floats.ExecFloat.Core.Operations
 /-!
 # Static dispatch for public `ExecFloat` operations
 
-Same-format arithmetic entry points of the format-independent execution layer. Capability
-dictionaries are resolved from the static format type. Each function is marked `inline`, and the
-checks under `benchmarks/scripts/checks/` verify that specialization erases the dictionary lookup.
+These are the same-format arithmetic entry points of the format-independent execution layer.
+Capability dictionaries are resolved from the static format type. Every function is marked `inline`,
+and the checks under `benchmarks/scripts/checks/` verify that specialization erases the dictionary
+lookup.
 -/
 
 @[expose] public section

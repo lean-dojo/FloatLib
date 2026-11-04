@@ -13,15 +13,15 @@ public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 /-!
 # Direct guard-and-sticky two-limb Posit rounding
 
-The shared field-oriented posit rounder is instantiated with the `UInt128` carrier.
-`candidateCarrier` maps every shared operation to a two-limb primitive, and the generic kernel
-in `GuardStickyCarrier` keeps significands and codes in `UInt128`. Exponents and bit counts use
-`Int` and `Nat`. Only the steps with carrier-specific contracts live here: the exact
+Here the shared field-oriented posit rounder is instantiated with the `UInt128` carrier.
+`candidateCarrier` maps every shared operation to a two-limb primitive, so the generic kernel in
+`GuardStickyCarrier` keeps significands and codes in `UInt128`, while exponents and bit counts are
+`Int` and `Nat`. This file holds only the steps with carrier-specific contracts, namely the exact
 minimum-positive comparison, the zero test, and exact-width sign restoration.
 
-Intermediate capacity selects the kernel, and no named Posit format is special. Every format
-whose storage fits two words may use it whenever the exact significand is below `2^128`.
-Wider exact intermediates retain the same field semantics through the arbitrary-width rounder.
+No named Posit format is special. Intermediate capacity selects the kernel, so any format whose
+storage fits two words can use it whenever the exact significand is below `2^128`. Wider exact
+intermediates keep the same field semantics through the arbitrary-width rounder.
 -/
 
 @[expose] public section

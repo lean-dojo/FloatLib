@@ -14,13 +14,13 @@ public meta import Lean.Elab.Command
 /-!
 # Bounded fixed-point format inspection
 
-Inspection for a bounded fixed-point code reports its radix, scale, signed coefficient range, and
-the three distinct overflow policies. It links refinement theorems for modular, checked, and
-saturating arithmetic.
+On a bounded fixed-point code, `#float_info` reports the radix, the scale, the signed coefficient
+range, and the three overflow policies, with links to the refinement theorems for modular,
+checked, and saturating arithmetic. We claim no external wire standard for this mathematical
+family.
 
-No external wire standard is claimed for this mathematical family. The public entry point is
-`FloatLib.Floats.Formats.FixedPoint.Bounded`; this module contains only the optional meta-level
-inspection support.
+The public entry point is `FloatLib.Floats.Formats.FixedPoint.Bounded`. This module holds only the
+optional meta-level inspection support.
 -/
 
 public meta section

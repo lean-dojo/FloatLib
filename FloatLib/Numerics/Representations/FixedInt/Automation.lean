@@ -13,8 +13,8 @@ public import Mathlib.Tactic.NormNum
 /-!
 # Fixed-width integer rules for numerical automation
 
-Symbolic goals use the proved modular, checked, and saturating contracts.  Concrete reduction
-unfolds the `BitVec` kernels only during the explicit closed-term phase.
+Symbolic goals use the proved modular, checked, and saturating contracts. Concrete reduction unfolds
+the `BitVec` kernels only in the separate closed-term phase.
 -/
 
 public meta section

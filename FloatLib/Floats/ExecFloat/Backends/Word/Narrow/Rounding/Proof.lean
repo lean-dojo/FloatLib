@@ -13,13 +13,13 @@ import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 /-!
 # Correctness of native binary32 product rounding
 
-The binary32 product path keeps the unrounded product and all rounding decisions in native words.
-The refinement covers normal, subnormal, carry, overflow, and signed-zero branches and relates each
-one to the generic exact-dyadic rounder.
+On the binary32 product path, the unrounded product and every rounding decision stay in native
+words, and each branch is related to the generic exact-dyadic rounder: normal, subnormal, carry,
+overflow, and signed zero.
 
-`roundProduct_eq_roundDyadic` applies to every `UInt64` magnitude at a scale of at most 506,
-covering multiplication, aligned addition, and fused multiply-add. Runtime clients import
-`Rounding.Runtime` independently of these proofs.
+`roundProduct_eq_roundDyadic` applies to every `UInt64` magnitude at a scale of at most 506, which
+covers multiplication, aligned addition, and fused multiply-add. `Rounding.Runtime` is imported
+without these proofs.
 -/
 
 @[expose] public section

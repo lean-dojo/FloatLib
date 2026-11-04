@@ -14,10 +14,10 @@ public import FloatLib.Numerics.Exact.Trigonometric.Proof
 /-!
 # Real semantics of posit trigonometric operations
 
-The operation proofs compose exact comparator semantics with the standard posit rounding
-algorithm. They cover all finite inputs in the real domain, including exact zero results,
-domain endpoints, and nonzero saturation. NaR propagation and invalid inverse domains are
-stated separately.
+Each proof composes exact comparator semantics with the standard posit rounding algorithm.
+Together they cover every finite input in the real domain, with exact zero results, domain
+endpoints, and nonzero saturation included. NaR propagation and invalid inverse domains have their
+own theorems.
 -/
 
 public section

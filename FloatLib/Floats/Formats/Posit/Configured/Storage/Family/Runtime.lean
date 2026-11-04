@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Core
 /-!
 # Configured posit-family runtime conversion
 
-The storage codec converts between a configured posit `ExecFloat` value and its exact-width
-proof model. The carrier and storage plan are fixed in the value's type.
+A configured posit `ExecFloat` value and its exact-width proof model are two forms of one number,
+and the storage codec converts between them. Nothing about the carrier or storage plan is decided
+at runtime, since both are fixed in the value's type.
 -/
 
 @[expose] public section

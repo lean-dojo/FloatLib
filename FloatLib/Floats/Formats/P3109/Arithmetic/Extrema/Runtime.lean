@@ -11,10 +11,11 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Mixed.Runtime
 /-!
 # P3109 comparisons and extrema
 
-Comparisons are unordered at NaN. `compare` is the order behind `==` on P3109 values, so NaN
-compares unequal to itself. The ten extrema differ in NaN handling, magnitude ordering, and
-preference for finite operands. Equal magnitudes use numerical order to resolve the sign, so
-minimum selects the negative operand and maximum the positive one.
+Comparisons are unordered at NaN, and since `compare` is the order behind `==` on P3109 values,
+NaN compares unequal to itself. There are ten extrema. They differ in how they treat NaN, whether
+they order by magnitude, and whether they prefer finite operands. When two magnitudes are equal,
+numerical order settles the sign, so of `-2` and `2` the minimum by magnitude is `-2` and the
+maximum is `2`.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.11–4.12.
 -/

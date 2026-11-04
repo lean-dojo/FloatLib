@@ -11,13 +11,15 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Runtime
 /-!
 # Decimal algebraic operations with one rounding
 
-Squares and integer powers project an exact rational result. Reciprocal square
-root and hypotenuse pass an exact rational radicand to the square-root rounder:
-neither a reciprocal nor a sum of squares is rounded first.
+Each operation here rounds once. Squares and integer powers project an exact rational result.
+Reciprocal square root and hypotenuse hand an exact rational radicand to the square-root rounder,
+so neither the reciprocal nor the sum of squares is rounded on the way.
 
-Exact results select the preferred cohort. Integer powers multiply the operand
-quantum by the exponent; reciprocal square root uses the floor of its negated
-half-quantum; hypotenuse uses the smaller operand quantum.
+Exact results land in the preferred cohort, and each operation picks its preferred quantum its own
+way:
+* an integer power multiplies the operand quantum by the exponent
+* reciprocal square root takes the floor of half the negated quantum
+* hypotenuse takes the smaller operand quantum
 -/
 
 @[expose] public section
@@ -34,7 +36,7 @@ def powerSign (negative : Bool) (exponent : Int) : Bool :=
   negative && decide (exponent % 2 = 1)
 
 /-- Integer power with an exact rational intermediate and one final projection.
-A quiet NaN to power zero gives the rounded value one; a signaling NaN raises invalid.
+A quiet NaN to power zero gives the rounded value one, and a signaling NaN raises invalid.
 Negative powers of either zero raise divide-by-zero, with the odd-power sign. -/
 def powInt (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
   | .nan s t p, n =>
@@ -52,7 +54,7 @@ def powInt (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
 
 /-- Reciprocal square root, rounding the root of the exact rational reciprocal.
 Either zero gives the correspondingly signed infinity and divide-by-zero.
-A negative nonzero input raises invalid; positive infinity gives positive zero. -/
+A negative nonzero input raises invalid. Positive infinity gives positive zero. -/
 def rsqrt (f : Format) (mode : RoundingMode) : Datum → Outcome
   | .nan s t p => nanResult f s p t
   | .infinity s =>

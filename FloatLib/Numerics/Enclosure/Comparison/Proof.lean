@@ -15,9 +15,9 @@ public import Mathlib.Topology.Order.Basic
 /-!
 # Correctness and termination of enclosure comparison
 
-Containment proves the ordering at every successful search. Endpoint convergence proves that
-the search terminates whenever the target differs from the boundary. Irrationality is one
-convenient sufficient condition when the boundaries are rational.
+Containment proves the ordering whenever the search succeeds, and endpoint convergence proves that
+the search terminates whenever the target differs from the boundary. When the boundaries are
+rational, irrationality of the target is one convenient sufficient condition.
 -/
 
 public section

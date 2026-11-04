@@ -12,11 +12,11 @@ public import FloatLib.Numerics.Exact.Trigonometric.Pi.Proof
 /-!
 # Real semantics of two-coordinate arctangent comparisons
 
-Both prepared and uncached comparators agree with the principal complex argument for every
-rational pair and rational boundary. The argument at `(0, 0)` is zero, and the Posit invalid-input
-policy belongs to the format wrapper. In units of π the comparison is exact, equality included, so
-a point whose argument is a rational multiple of π, such as a point on an axis or a diagonal,
-compares `.eq` with that rational.
+For every rational pair and rational boundary, the prepared and the uncached comparators agree with
+the principal complex argument, where the argument at `(0, 0)` is zero and the Posit invalid-input
+policy is left to the format wrapper. In units of π the comparison is exact, equality included, so a
+point whose argument is a rational multiple of π, such as a point on an axis or a diagonal, compares
+`.eq` with that rational.
 -/
 
 public section

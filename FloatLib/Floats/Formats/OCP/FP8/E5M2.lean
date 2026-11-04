@@ -11,14 +11,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # OCP FP8 E5M2
 
-`FloatLib.Floats.E5M2` is OCP E5M2 with a direct `UInt8` runtime carrier, and `E5M2.Family` is
-its type-level identity. Its IEEE-style infinity and NaN encodings are properties of this format
-package, and the universal executable carrier does not assume them.
+`FloatLib.Floats.E5M2` is OCP E5M2 in one `UInt8`, with type-level identity `E5M2.Family`. It
+keeps the IEEE-style infinity and NaN encodings. Those belong to this format package, and the
+universal executable carrier doesn't assume them.
 
-For addition, subtraction, multiplication, division, and square root, balanced and throughput
-planning select exhaustive byte tables, and latency planning selects the arithmetic kernels.
-Fused multiply-add uses the proved generic single-rounding kernel, which avoids a
-16,777,216-entry ternary table and meets the same specification.
+Planning works as it does for E4M3FN. Balanced and throughput planning answer addition,
+subtraction, multiplication, division, and square root from exhaustive byte tables, and latency
+planning runs the arithmetic kernels. Fused multiply-add goes to the proved generic single-rounding
+kernel, which meets the same specification without a 16,777,216-entry ternary table.
 
 ## Reference
 

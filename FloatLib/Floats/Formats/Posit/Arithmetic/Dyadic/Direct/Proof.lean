@@ -17,10 +17,11 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of direct arbitrary-width exact-dyadic posit arithmetic
 
-The direct-packing kernels agree with the rational specification. Addition, subtraction,
-multiplication, square root, and FMA are related through the exact-dyadic implementation.
-Division uses the quotient-prefix refinement directly. Executable definitions are in
-`Direct.Runtime`.
+Here we prove that the direct-packing kernels of `Direct.Runtime` agree with the rational
+specification. Addition, subtraction, multiplication, square root, and FMA get there in two steps:
+each kernel equals its exact-dyadic counterpart (`add_eq_dyadic` and its siblings), and the dyadic
+kernels already equal `Spec`. Division has a proof of its own, through the quotient-prefix
+refinement.
 -/
 
 @[expose] public section

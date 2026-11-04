@@ -13,10 +13,11 @@ public import FloatLib.Floats.Formats.P3109.Projection.Range
 /-!
 # Range preservation before P3109 saturation
 
-An input in the finite interval cannot round past either endpoint in any mode. The endpoint
-is an integer multiple of the input quantum, and each mode preserves integers and chooses one
-of the two adjacent candidates. Thus precision-rounding overflow implies that the exact input
-was already outside the finite interval. This is a one-way implication.
+No rounding mode can push an input in the finite interval past either endpoint. The endpoint is an
+integer multiple of the input's quantum, and every mode preserves integers and picks one of the
+two neighboring candidates. So if precision rounding overflows, the exact input was already
+outside the finite interval. The converse fails, since an input just past `maxFinite` can round
+back down onto it.
 -/
 
 @[expose] public section
@@ -65,7 +66,7 @@ end RationalRounding
 
 namespace Format
 
-/-- Decoding uses a strictly bounded significand; a carry is introduced only by rounding. -/
+/-- Decoding uses a strictly bounded significand, and only rounding introduces a carry. -/
 theorem decodePositiveFinite_significand_lt_precision (format : Format) (bits : Nat) :
     (format.decodePositiveFinite bits).significand < 2 ^ format.precision := by
   have hp : 2 ^ format.precision = 2 * 2 ^ format.trailingBits := by

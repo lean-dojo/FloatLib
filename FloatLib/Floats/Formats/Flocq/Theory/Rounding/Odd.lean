@@ -12,11 +12,12 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
 /-!
 # Round to Odd
 
-For an inexact real input, `oddRound` selects the odd member of the two adjacent integers.
-Exact integers are unchanged.  Applied to a binary scaled mantissa, this is the usual round-to-odd
-or jamming rule: discarded information is recorded by setting the least-significant retained bit.
+For a real input that isn't an integer, `oddRound` picks the odd one of the two neighboring
+integers, so `2.3` and `2.9` both go to `3`. Integers stay as they are. On a binary scaled
+mantissa this is the usual round-to-odd or jamming rule: whatever was discarded gets recorded by
+setting the least significant bit that is kept.
 
-The double-rounding result below concerns a fixed binary grid. The corresponding theorem for
+The double-rounding result below is about a fixed binary grid. The corresponding theorem for
 floating-point formats also needs hypotheses relating their precision and minimum exponents.
 
 References:
@@ -34,7 +35,7 @@ References:
 
 namespace FloatLib.Floats.Formats.Flocq
 
-/-- Preserve integers; otherwise select the odd integer among `floor x` and `floor x + 1`. -/
+/-- Preserve integers, and otherwise select the odd integer among `floor x` and `floor x + 1`. -/
 noncomputable def oddRound (x : ℝ) : ℤ :=
   let f := ⌊x⌋
   if x = (f : ℝ) then f else if Odd f then f else f + 1
@@ -102,13 +103,13 @@ theorem even_lt_oddRound {x : ℝ} {n : ℤ} (hnx : (n : ℝ) < x) (hn : Even n)
     n < oddRound x :=
   lt_of_le_of_ne (ValidRnd.le_of_intCast_le oddRound hnx.le) (oddRound_ne_of_even hnx.ne' hn).symm
 
-/-- Round-to-odd stays strictly below an even integer exactly when its input does. -/
+/-- Round-to-odd stays strictly below an even integer if and only if its input does. -/
 theorem oddRound_lt_even_iff {x : ℝ} {n : ℤ} (hn : Even n) :
     oddRound x < n ↔ x < (n : ℝ) :=
   ⟨fun h => lt_of_not_ge fun hnx => (ValidRnd.le_of_intCast_le oddRound hnx).not_gt h,
     fun h => oddRound_lt_even h hn⟩
 
-/-- Round-to-odd stays strictly above an even integer exactly when its input does. -/
+/-- Round-to-odd stays strictly above an even integer if and only if its input does. -/
 theorem even_lt_oddRound_iff {x : ℝ} {n : ℤ} (hn : Even n) :
     n < oddRound x ↔ (n : ℝ) < x :=
   ⟨fun h => lt_of_not_ge fun hxn => (ValidRnd.le_of_le_intCast oddRound hxn).not_gt h,
@@ -116,8 +117,8 @@ theorem even_lt_oddRound_iff {x : ℝ} {n : ℤ} (hn : Even n) :
 
 /--
 Round-to-odd with at least two extra binary digits prevents nearest-even double rounding on the
-integer grid.  `roundAtScale_nearestEven_after_odd_binary_extra` transports this to any fixed grid;
-no floating-point (exponent-dependent) version is proved in this library.
+integer grid. `roundAtScale_nearestEven_after_odd_binary_extra` transports this to any fixed grid.
+No floating-point (exponent-dependent) version is proved in this library.
 -/
 theorem nearestEven_roundOdd_binary_extra (extra : ℕ) (x : ℝ) :
     nearestEven
@@ -179,8 +180,9 @@ theorem nearestEven_roundOdd_binary_extra (extra : ℕ) (x : ℝ) :
 /--
 Round-to-odd on a finer binary grid prevents nearest-even double rounding on a coarser grid.
 
-The coarse grid has positive spacing `step`; the intermediate grid is finer by `extra + 2` binary
-digits. Both grids are fixed, so the theorem applies to fixed-point and affine-quantization grids.
+The coarse grid has positive spacing `step`, and the intermediate grid is finer by `extra + 2`
+binary digits. Both grids are fixed, so the theorem applies to fixed-point and
+affine-quantization grids.
 It does not cover floating-point formats, whose spacing depends on the exponent of the value.
 -/
 theorem roundAtScale_nearestEven_after_odd_binary_extra

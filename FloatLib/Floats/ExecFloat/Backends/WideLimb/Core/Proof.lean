@@ -13,14 +13,14 @@ public import FloatLib.Kernels.LimbArray.Shift.Proof
 /-!
 # Wide-limb storage
 
-The limb carrier of `Core.Runtime` represents the exact-width proof model through a bounded
-storage invariant. The storage invariant `topLimbFits` is shown equivalent to the value lying
-below `2 ^ bitWidth` (`topLimbFits_iff`), which gives the codec laws `toModel_ofModel` and
-`ofModel_toModel`. The field accessors then agree with `Model.signBit`, `Model.expField`, and
-`Model.fracField`, so the compact finite decoder `FiniteKernel.decode?` of a stored value is
-read off the limbs (`decode?_toModel`). Finally `toModel_pack` states the model that `pack`
-produces. Every arithmetic kernel of this backend ends in `pack`, so this is the contract each
-refinement proof uses. The main storage result is `Value.toNat_lt`.
+In `Core.Runtime`, the limb carrier represents the exact-width proof model through a bounded storage
+invariant, `topLimbFits`, and that invariant is equivalent to the value lying below `2 ^ bitWidth`
+(`topLimbFits_iff`), which gives the codec laws `toModel_ofModel` and `ofModel_toModel`. Field
+accessors then agree with `Model.signBit`, `Model.expField`, and `Model.fracField`, so the compact
+finite decoder `FiniteKernel.decode?` of a stored value can be read off the limbs
+(`decode?_toModel`). Finally `toModel_pack` states the model that `pack` produces. Every arithmetic
+kernel of this backend ends in `pack`, so that's the contract each refinement proof uses. Its main
+storage result is `Value.toNat_lt`.
 -/
 
 @[expose] public section

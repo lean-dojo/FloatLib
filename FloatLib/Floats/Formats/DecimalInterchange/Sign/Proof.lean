@@ -11,10 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.BitsProof
 /-!
 # Bit preservation and datum semantics of decimal sign operations
 
-Decimal sign replacement preserves every payload bit, including in noncanonical words. Decoding
-commutes with sign replacement, negation, absolute value, and sign copying for every codec. The
-exact value of a negated datum (`Datum.negate_toRat?`) is proved in `Arithmetic.Proof`, which does
-not depend on the codecs.
+Changing the sign of a decimal word touches only the sign bit, so every payload bit survives,
+noncanonical words included. For every codec, decoding commutes with sign replacement, negation,
+absolute value, and sign copying. The exact value of a negated datum (`Datum.negate_toRat?`) is
+proved in `Arithmetic.Proof`, which doesn't depend on the codecs.
 -/
 
 @[expose] public section
@@ -75,7 +75,7 @@ namespace Bits
     payload f (withSign f s w) = payload f w :=
   payload_pack f s _ (payload_lt f w)
 
-/-- A word is rebuilt exactly from its sign bit and the bits below it. -/
+/-- A word is rebuilt from its sign bit and the bits below it, with nothing lost. -/
 theorem pack_negative_payload (f : Format) (w : BitVec f.bitWidth) :
     pack f (negative f w) (payload f w) = w := by
   apply BitVec.eq_of_toNat_eq

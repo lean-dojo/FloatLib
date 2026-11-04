@@ -10,10 +10,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Cohort
 /-!
 # Least-quantum cohorts of inexact projections
 
-IEEE 754-2019 §5.2 selects the smallest available quantum for inexact results.
-The coefficient is either on the subnormal grid or has a full leading digit;
-therefore no equal valid value can have a smaller quantum. This includes finite
-results delivered on directed overflow.
+For an inexact result, IEEE 754-2019 §5.2 picks the smallest available quantum, so `1/3` in
+decimal32 comes out as `3333333e-7` with all seven digits. The coefficient is either on the
+subnormal grid or has a full leading digit, so no equal valid value can have a smaller quantum.
+Finite results delivered on directed overflow are covered too.
 -/
 
 @[expose] public section

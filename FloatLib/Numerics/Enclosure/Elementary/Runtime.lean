@@ -15,23 +15,21 @@ public import Mathlib.Data.Rat.Floor
 /-!
 # Rational enclosures for exponential and logarithm
 
-Taylor polynomials and their remainder bounds are evaluated with exact rational arithmetic.
-`exp` reduces the argument by a power of two and restores the scale by repeated squaring.
-The reduced logarithm series uses the identity
-`log x = log (1 + t) - log (1 - t)`, where `t = (x - 1) / (x + 1)`.
-`log` first reduces a positive argument to `[1, 2)`, then restores the removed multiple of
-`log 2`. Every series argument satisfies `|t| ≤ 1/3`.
+Everything here is exact rational arithmetic, Taylor polynomials and remainder bounds alike. `exp`
+reduces the argument by a power of two and restores the scale by repeated squaring. `log` first
+reduces a positive argument to `[1, 2)` and then restores the removed multiple of `log 2`, and its
+reduced series uses the identity `log x = log (1 + t) - log (1 - t)`, where `t = (x - 1) / (x + 1)`.
+Every series argument satisfies `|t| ≤ 1/3`.
 
-The natural argument controls the polynomial degree, not a floating-point precision or a search
-timeout. The endpoint error tends to zero as it increases. These kernels return bounds. A caller
-can use them to separate the exact value from rounding boundaries, or show that both endpoints
+A natural argument sets the polynomial degree. It isn't a floating-point precision or a search
+timeout, and the endpoint error tends to zero as it grows. What you get back are bounds, which a
+caller can use to separate the exact value from rounding boundaries or to show that both endpoints
 round to the same result.
 
-The soundness theorems in `Elementary.Proof` use Mathlib's real Taylor remainder bounds.
-
-The underlying series are the exponential and logarithm expansions in the NIST
-[Digital Library of Mathematical Functions, §4.2.E19](https://dlmf.nist.gov/4.2.E19) and
-[§4.6.E1](https://dlmf.nist.gov/4.6.E1). The logarithm change of variable is also used in
+Soundness theorems in `Elementary.Proof` use Mathlib's real Taylor remainder bounds, and the
+underlying series are the exponential and logarithm expansions in the NIST [Digital Library of
+Mathematical Functions, §4.2.E19](https://dlmf.nist.gov/4.2.E19) and
+[§4.6.E1](https://dlmf.nist.gov/4.6.E1). That logarithm change of variable also appears in
 [§4.6.E4](https://dlmf.nist.gov/4.6.E4).
 -/
 

@@ -15,8 +15,9 @@ public import FloatLib.Numerics.Capabilities.Radix
 /-!
 # Optional numerical-system capabilities
 
-Optional data and laws for block scaling, scalar functions, error bounds, representable neighbors,
-and positional radices. `NumericalSystem` requires none of these capabilities.
+Here are optional data and laws for block scaling, scalar functions, error bounds, representable
+neighbors, and positional radices. `NumericalSystem` requires none of them, so a theorem that needs
+one asks for it.
 -/
 
 @[expose] public section

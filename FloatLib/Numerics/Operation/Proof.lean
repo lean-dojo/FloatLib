@@ -13,13 +13,12 @@ public import FloatLib.Numerics.Operation.Proof.Quantizer
 /-!
 # Proof-indexed application of numerical operations
 
-These helpers apply existing executable functions to proof-indexed inputs. Runtime data remains
-the concrete code returned by those functions; representation proofs are propositions erased by
-the compiler.
+These helpers apply executable functions to proof-indexed inputs. Runtime data stays the concrete
+code those functions return, and representation proofs are propositions that the compiler erases.
 
-The imports collect total, finite, checked, and quantizer proof helpers. The composition laws
-below combine refinement facts directly, without wrapping the executable functions. Import a
-`Proof.*` submodule when only one proof-indexed contract family is needed.
+Its imports collect total, finite, checked, and quantizer proof helpers, and the composition laws
+below combine refinement facts without wrapping the executable functions. If you need only one
+proof-indexed contract family, import its `Proof.*` submodule.
 -/
 
 @[expose] public section

@@ -14,9 +14,10 @@ public import FloatLib.Numerics.Exact.Elementary.Proof
 /-!
 # Correct rounding of natural posit elementary functions
 
-The real-rounding theorems cover every finite input in the function's domain, including
-extreme magnitudes, exact zero results, and the standard nonzero saturation rule.
-Separate theorems record NaR propagation and invalid logarithm domains.
+These are the correct-rounding theorems for the natural exponential and logarithm. They cover
+every finite input in each function's domain, with extreme magnitudes, exact zero results, and the
+standard's nonzero saturation rule all included. NaR propagation and invalid logarithm domains get
+theorems of their own.
 -/
 
 @[expose] public section

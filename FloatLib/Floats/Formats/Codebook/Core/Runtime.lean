@@ -12,8 +12,9 @@ public import Mathlib.Data.BitVec
 /-!
 # Exact finite-codebook runtime model
 
-A `Codebook width α` assigns a complete semantic value to each `BitVec width`. The runtime carrier
-is always the exact-width bit vector; proof-indexed views are isolated in `Core.Proof`.
+A `Codebook width α` gives every `BitVec width` a complete semantic value, finite or exceptional.
+At runtime a value is always that exact-width bit vector and nothing more. Views that carry proofs
+live in `Core.Proof`.
 -/
 
 @[expose] public section

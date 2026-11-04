@@ -19,11 +19,11 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Verified fixed-word division candidates
 
-The radix-`2^32` runtime loop is a candidate generator. Its quotient and remainder are
-accepted when native multiplication and addition confirm the Euclidean division equation and the
-remainder bound. If that check rejects the candidate, the runtime falls back to a restoring
-accumulator. This module proves that accumulator equal to the logical recurrence and certifies its
-result on normalized inputs of `precision + 1` bits with `64 < precision ≤ 126`.
+Division here is guess and check. The radix-`2^32` runtime loop only proposes a quotient and
+remainder, and they are accepted when native multiplication and addition confirm the Euclidean
+division equation and the remainder bound. A rejected pair falls back to a restoring accumulator. We
+prove that accumulator equal to the logical recurrence and certify its result on normalized inputs
+of `precision + 1` bits with `64 < precision ≤ 126`.
 -/
 
 @[expose] public section
@@ -55,7 +55,8 @@ private theorem widenShift_toNat (precision : Nat)
 The executable certificate accepts every representable Euclidean decomposition for the two shifts
 used by two-limb division.
 
-This is completeness of the independent checker, not of the speculative Algorithm D generator.
+This is completeness of the independent checker. It says nothing about the speculative Algorithm D
+generator.
 -/
 theorem certificate_complete (precision : Nat)
     (hprecision : 64 < precision ∧ precision ≤ 126)

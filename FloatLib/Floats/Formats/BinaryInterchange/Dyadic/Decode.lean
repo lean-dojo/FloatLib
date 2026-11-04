@@ -13,20 +13,20 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Core
 
 Binary arithmetic proofs need an exact value that is cheaper and more concrete than a real
 number. `toDyadic?` decodes every finite encoding to that value and rejects exceptional
-encodings. Conventional IEEE descriptors use the IEEE layout reading `ieeeToDyadic?`; configurable
-descriptors follow their declared bias and exceptional-value policy.
+encodings. Conventional IEEE descriptors use the IEEE layout reading `ieeeToDyadic?`, and
+configurable descriptors follow their declared bias and exceptional-value policy.
 
-The theorems of this file are about `ieeeToDyadic?`. It reads any layout with the conventional
-bias and the IEEE exceptional patterns, and it is `toDyadic?` only when `fmt.isIEEE`. The central
-theorem `ieeeToDyadic?_eq_unpackedToDyadic?_toModel` proves that this field decoding agrees with
-Lean's logical floating model. Later lemmas recover IEEE finiteness, sign, zero, and sign-toggle
-facts from a successful IEEE decode. For a custom bias or a finite-only, maximum-NaN, or
+This file's theorems are about `ieeeToDyadic?`, which reads any layout with the conventional bias
+and the IEEE exceptional patterns and is `toDyadic?` only when `fmt.isIEEE`. Its central theorem,
+`ieeeToDyadic?_eq_unpackedToDyadic?_toModel`, proves that this field decoding agrees with Lean's
+logical floating model. Later lemmas recover IEEE finiteness, sign, zero, and sign-toggle facts
+from a successful IEEE decode, though for a custom bias or a finite-only, maximum-NaN, or
 unsigned-zero encoding they do not describe the declared semantics.
 
 The descriptor-aware facts about `toDyadic?` are in `Dyadic.Classification`
 (`toDyadic?_isSome_eq_isFinite`, `toDyadic?_ieee_eq_model`, and the sign and zero lemmas), and
-`toDyadic?_neg_of_toDyadic?_some` covers negation. This direction is deliberate: optimized kernels
-may inspect fields, while their proofs can immediately move to one canonical exact dyadic
+`toDyadic?_neg_of_toDyadic?_some` covers negation. We chose this direction on purpose. Optimized
+kernels may inspect fields, while their proofs can move at once to one canonical exact dyadic
 semantics.
 -/
 
@@ -43,7 +43,7 @@ open FloatLib.Numerics
 Decode a finite `Model` into an exact dyadic under its complete format descriptor.
 
 The conventional IEEE case delegates to the established decoder. Other encodings use their
-declared exponent bias and exceptional-value policy directly.
+declared exponent bias and exceptional-value policy.
 -/
 @[inline] def toDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
   if fmt.isIEEE then
@@ -67,7 +67,7 @@ declared exponent bias and exceptional-value policy directly.
           exponent := Int.ofNat exponent - Int.ofNat fmt.exponentBias -
             Int.ofNat fmt.fracWidth }
 
-/-- Exact rational value of a finite executable float; returns `none` for NaN or infinity. -/
+/-- Exact rational value of a finite executable float, or `none` for NaN or infinity. -/
 @[inline] def toRat? {fmt : FloatFormat} (x : Model fmt) : Option Rat :=
   (toDyadic? x).map Numerics.Dyadic.toRat
 
@@ -89,8 +89,8 @@ private theorem unpackExponent_eq_neg_one_iff {fmt : FloatFormat} (x : Model fmt
 /--
 The IEEE field decoder agrees with Lean's logical IEEE model.
 
-The theorem is width-generic. Both sides use the conventional IEEE interpretation of the layout;
-the descriptor's custom bias and exceptional-value policy are handled separately by `toDyadic?`.
+The theorem is width-generic. Both sides use the conventional IEEE interpretation of the layout,
+and `toDyadic?` handles the descriptor's custom bias and exceptional-value policy.
 -/
 theorem ieeeToDyadic?_eq_unpackedToDyadic?_toModel {fmt : FloatFormat} (x : Model fmt) :
     ieeeToDyadic? x = unpackedToDyadic? (toModel x) := by
@@ -331,7 +331,7 @@ theorem exists_ieeeToDyadic?_of_isFinite {fmt : FloatFormat} {x : Model fmt}
   have hinf : IEEE.isInf x = false := by simp [IEEE.isInf, hexp]
   exact exists_ieeeToDyadic?_of_not_isNaN_not_isInf hnan hinf
 
-/-- IEEE dyadic decoding succeeds exactly on bit patterns classified as finite by IEEE rules. -/
+/-- IEEE dyadic decoding succeeds if and only if IEEE rules classify the bit pattern as finite. -/
 theorem ieeeToDyadic?_isSome_eq_isFinite {fmt : FloatFormat} (x : Model fmt) :
     (ieeeToDyadic? x).isSome = IEEE.isFinite x := by
   cases hdy : ieeeToDyadic? x with

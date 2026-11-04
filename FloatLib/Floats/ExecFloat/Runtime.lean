@@ -15,21 +15,17 @@ public import FloatLib.Floats.ExecFloat.Instances
 /-!
 # Execution-only `ExecFloat` interface
 
-Import this module when a program needs the universal carrier, comparison, explicit conversion,
-destination-driven mixed arithmetic, same-format arithmetic capabilities, public dispatch
-functions, and ordinary operator instances without importing proof automation or the
-`#float_info` elaborator.
+Import this module when a program needs the universal carrier, comparison, conversion,
+destination-driven mixed arithmetic, same-format arithmetic capabilities, public dispatch functions,
+and ordinary operator instances, and doesn't need proof automation or the `#float_info` elaborator.
 
-Every installed arithmetic capability still stores a certified implementation. This import
-avoids re-exporting reference
-definitions, user-facing correctness theorems, automation attributes, and inspection commands
-when a downstream runtime module does not use them.
+Installed arithmetic capabilities keep their certified implementations. What the import leaves out
+is the re-export of reference definitions, user-facing correctness theorems, automation attributes,
+and inspection commands that a downstream runtime module doesn't use. Conversion stays proof-linked
+through this execution-only API as well, since every destination `Quantizer` stores a mathematical
+contract and an implementation theorem, but the theorem names aren't re-exported here.
 
-Conversion remains proof-linked through this execution-only API: every destination
-`Quantizer` stores a mathematical contract and an implementation theorem. The theorem names are
-not re-exported through this runtime-focused import.
-
-Use `FloatLib.Floats.ExecFloat` for the complete user interface.
+For the complete user interface, use `FloatLib.Floats.ExecFloat`.
 -/
 
 @[expose] public section

@@ -16,11 +16,11 @@ public import FloatLib.Floats.ExecFloat.Info
 /-!
 # Inspection of Lean's native runtime floats
 
-`#float_info` reports native storage, arithmetic, and conversions for Lean's `Float32` and
-binary64 `Float`. It lists the bridges to Lean's logical models with their input conditions and
-the certified software refinements for their configured counterparts. Execution of native
-arithmetic, including explicit calls through `Configured.NativeFPU.Unchecked`, also depends on
-Lean's compiler, runtime, and host hardware.
+For Lean's `Float32` and binary64 `Float`, `#float_info` reports native storage, arithmetic, and
+conversions. It lists the bridges to Lean's logical models with their input conditions, and the
+certified software refinements for the configured counterparts. When native arithmetic runs,
+including any call you make through `Configured.NativeFPU.Unchecked`, it also depends on Lean's
+compiler, runtime, and host hardware.
 -/
 
 public meta section

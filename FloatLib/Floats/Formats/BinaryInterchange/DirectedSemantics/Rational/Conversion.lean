@@ -14,11 +14,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 # Exact rational conversion for directed `Model` rounding
 
 `Model.ofRat fmt q` rounds a normalized mathlib `Rat` once into any `Model fmt`, to nearest with
-ties to even. `(mode := .up)` selects another direction and `(status := true)` adds the IEEE
-exception flags and the ternary value. For conventional IEEE formats, directed overflow returns
-either a signed infinity or the largest finite value of the same sign, according to the rounding
-direction. The conversion theorems establish the extended-real lower and upper bounds and non-NaN
-results in both directions.
+ties to even. `(mode := .up)` picks another direction, and `(status := true)` adds the IEEE
+exception flags and the ternary value. In conventional IEEE formats, directed overflow gives a
+signed infinity or the largest finite value of the same sign. The rounding direction decides
+which. We prove the extended-real lower and upper bounds and non-NaN results in both directions.
 -/
 
 @[expose] public section

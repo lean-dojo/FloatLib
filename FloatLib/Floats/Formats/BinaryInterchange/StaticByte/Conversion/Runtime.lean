@@ -16,8 +16,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
 Nominal families backed by `StaticByte.Family` decode through `SignedRat` and use the shared binary
 conversion policy and numerical contract.
 
-The adapter uses the family descriptor and byte codec, independently of its arithmetic kernels.
-Typeclass installation lives in `Conversion.Instances`; correctness equations live in
+The adapter needs only the family descriptor and byte codec, none of its arithmetic kernels.
+Typeclass installation is in `Conversion.Instances`, and the correctness equations are in
 `Conversion.Proof`.
 -/
 
@@ -49,13 +49,13 @@ variable {F : Type u} [Family F]
     FloatLib.Floats.ExecFloat.ConversionOutcome (FloatLib.Floats.ExecFloat F) :=
   FloatLib.Floats.ExecFloat.Binary.Conversion.quantizeFiniteWith pack context exact
 
-/-- Apply the explicit infinity policy to a nominal static-byte destination. -/
+/-- Apply the infinity policy of `context` to a nominal static-byte destination. -/
 @[inline] def quantizeInfinity
     (context : FloatLib.Floats.ExecFloat.Binary.Conversion.Context) (negative : Bool) :
     FloatLib.Floats.ExecFloat.ConversionOutcome (FloatLib.Floats.ExecFloat F) :=
   FloatLib.Floats.ExecFloat.Binary.Conversion.quantizeInfinityWith pack context negative
 
-/-- Apply the explicit exceptional-value policy to a nominal static-byte destination. -/
+/-- Apply the exceptional-value policy of `context` to a nominal static-byte destination. -/
 @[inline] def quantizeExceptional
     (context : FloatLib.Floats.ExecFloat.Binary.Conversion.Context)
     (exceptional : ExceptionalValue) :
@@ -77,7 +77,7 @@ def spec :
       (FloatLib.Floats.ExecFloat.ConversionOutcome (FloatLib.Floats.ExecFloat F)) :=
   FloatLib.Floats.ExecFloat.Binary.Conversion.specWith pack
 
-/-- Every nominal static-byte binary source decodes exactly through `SignedRat`. -/
+/-- Every nominal static-byte binary source decodes through `SignedRat` without rounding. -/
 instance exactDecoder :
     FloatLib.Floats.ExecFloat.ExactDecoder (FloatLib.Floats.ExecFloat F) SignedRat where
   decode := decode

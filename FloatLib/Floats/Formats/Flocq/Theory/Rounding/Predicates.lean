@@ -12,9 +12,10 @@ public import Mathlib.Order.Bounds.Basic
 /-!
 # Rounding Predicates
 
-Semantic specifications for directed, toward-zero, and nearest rounding.  They are independent of
-any radix or concrete format: a predicate `F : ℝ → Prop` identifies the representable values, and
-the point predicates characterize the required output among those values.
+These are the semantic specifications of directed, toward-zero, and nearest rounding, with no
+radix or concrete format in sight. A predicate `F : ℝ → Prop` says which values are representable,
+and the point predicates say which of those values a rounding must return. Rounding down, for
+example, must return the largest representable value at or below the input.
 
 These definitions correspond to Flocq's `Rnd_DN_pt`, `Rnd_UP_pt`, `Rnd_ZR_pt`, and `Rnd_N_pt`.
 -/

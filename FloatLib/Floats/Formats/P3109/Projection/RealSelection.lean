@@ -12,9 +12,9 @@ public import Mathlib.Algebra.Order.Archimedean.Real.Basic
 /-!
 # Real stochastic rounding thresholds
 
-The report's floor and nearest-even formulas can be tested by comparing the exact real
-fraction with one rational threshold. These identities apply to irrational fractions as well.
-They justify the integer square comparisons used when rounding a square root.
+To test the report's floor and nearest-even formulas, it's enough to compare the exact real
+fraction with one rational threshold, and that works for irrational fractions too. These identities
+are what justify the integer square comparisons used when rounding a square root.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
 -/
@@ -106,7 +106,8 @@ theorem floor_selection_iff (root : Real) (lower scale random : Nat)
   push_cast
   constructor <;> intro h <;> nlinarith
 
-/-- Nearest-even stochastic selection includes its halfway point exactly for an even boundary. -/
+/-- Nearest-even stochastic selection includes its halfway point if and only if the boundary is
+even. -/
 theorem nearestEven_selection_iff (root : Real) (lower scale random : Nat)
     (hrandom : random < scale) (hroot : (lower : Real) ≤ root) :
     scale ≤ nearestEven ((root - lower) * scale) + random ↔

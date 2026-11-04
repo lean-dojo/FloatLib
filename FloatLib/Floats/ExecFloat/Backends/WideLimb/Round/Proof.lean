@@ -14,12 +14,12 @@ public import FloatLib.Numerics.ShiftRightJam.Proof
 /-!
 # Verified wide-limb normal rounding
 
-The proof proceeds through a natural-number specification `roundJammed`, which restates the normal
+This proof goes through a natural-number specification, `roundJammed`, which restates the normal
 branch of `FiniteProductRound.round` for a significand whose `jam` low bits have been jammed into
-one sticky bit. Two theorems connect it to its neighbours.
+one sticky bit. Two theorems connect it to its neighbours:
 
-* `roundNormal?_map_toModel`: the limb kernel computes `roundJammed` on the value of its
-  nonzero significand, assuming the exponent field fits in 32 bits.
+* `roundNormal?_map_toModel`: the limb kernel computes `roundJammed` on the value of its nonzero
+  significand, assuming the exponent field fits in 32 bits.
 * `round_eq_of_roundJammed`: an accepted `roundJammed` result on the jammed value is the exact
   rounder `FiniteProductRound.round` on the exact value, by `roundShiftRightEven_shiftRightJam`.
 
@@ -41,7 +41,7 @@ variable {fmt : FloatFormat}
 The normal branch of `FiniteProductRound.round` for a jammed significand.
 
 For a sufficiently large exact value, `significand = shiftRightJam exact jam` has its leading bit
-`jam` positions below that of `exact`. `round_eq_of_roundJammed` states the required bound;
+`jam` positions below that of `exact`. `round_eq_of_roundJammed` states the required bound, and
 `roundNormal?_map_toModel` relates this specification to the limb kernel on nonzero inputs.
 -/
 def roundJammed (fmt : FloatFormat) (sign : Bool) (significand jam scale : Nat) :

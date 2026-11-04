@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Packed two-limb operation boundaries
 
-These small executable combinators centralize propagation of the unique Posit Standard NaR
-condition after packed operands have been decoded. Range and semantic refinement laws live in
-`Boundary.Proof`.
+The Posit Standard has a single NaR, and once packed operands are decoded every operation has to
+pass it through the same way. These small executable combinators do that in one place. Their
+range and semantic refinement laws are in `Boundary.Proof`.
 -/
 
 @[expose] public section

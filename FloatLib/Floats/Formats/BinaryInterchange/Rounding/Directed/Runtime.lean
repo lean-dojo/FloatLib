@@ -14,16 +14,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 /-!
 # Executable directed rounding
 
-Exact rational intermediates support the six `IEEERoundingMode` choices. Together with the
-dyadic rounders of `Rounding.Directed.Dyadic`, they implement the directed kernels of addition,
-subtraction, multiplication, division, fused multiply-add, and square root in
-`Model.Internal.Directed`. `Model.add x y (mode := .up)` and its siblings in `Arithmetic.Runtime`
-call them for every direction except nearest-even. `roundRatNearestAwayScaled` and its tie test
-`rationalIsGridTieScaled` are the rational twins of the dyadic nearest-away rounder.
+This module rounds exact rational intermediates in each of the six `IEEERoundingMode`
+directions. With the dyadic rounders of `Rounding.Directed.Dyadic`, these rounders make up the
+directed kernels of addition, subtraction, multiplication, division, fused multiply-add and
+square root in `Model.Internal.Directed`. `Model.add x y (mode := .up)` and its siblings in
+`Arithmetic.Runtime` call the kernels for every direction except nearest-even.
+`roundRatNearestAwayScaled` and its tie test `rationalIsGridTieScaled` are the rational twins of
+the dyadic nearest-away rounder.
 
-Rounding thresholds, signed-zero behavior, and exceptional results follow the `FloatFormat`
-descriptor. `DirectedSemantics` proves the real and extended-real correctness theorems, with
-their format and input hypotheses.
+Rounding thresholds, signed-zero behavior and exceptional results all come from the
+`FloatFormat` descriptor. `DirectedSemantics` proves the real and extended-real correctness
+theorems, with their format and input hypotheses.
 -/
 
 @[expose] public section
@@ -75,15 +76,15 @@ def roundRatMagnitudeDirectedScaled (fmt : FloatFormat) (roundMagnitudeUp sign :
         totalExponent roundedMantissa
 
 /--
-Whether the scaled rational `(numerator / denominator) * 2^exponent` lies exactly halfway between
-two adjacent values of the binary grid of `fmt` with gradual underflow and no upper exponent bound.
+Whether the scaled rational `(numerator / denominator) * 2^exponent` lies halfway between two
+adjacent values of the binary grid of `fmt`, with gradual underflow and no upper exponent bound.
 
-This is the rational twin of `dyadicIsGridTie`, on the same grid. The rational is scaled as
-`roundRatScaledGeneral` scales it, to the subnormal spacing below the normal range and to
-`fracWidth + 1` significant bits above it, and it is a tie when twice the remainder of that
-quotient equals its denominator. A zero numerator or denominator is never a tie. A magnitude below
-half the least subnormal is recognized from its leading exponent alone, so the subnormal shift
-stays bounded by the operand widths and the destination precision.
+It is the rational twin of `dyadicIsGridTie`, on the same grid. After the scaling that
+`roundRatScaledGeneral` uses (to the subnormal spacing below the normal range and to
+`fracWidth + 1` significant bits above it), the value is a tie when twice the remainder of the
+quotient equals its denominator. A zero numerator or denominator is never a tie. A magnitude
+below half the least subnormal is recognized from its leading exponent alone, which keeps the
+subnormal shift bounded by the operand widths and the destination precision.
 -/
 def rationalIsGridTieScaled (fmt : FloatFormat) (numerator denominator : Nat)
     (exponent : Int) : Bool :=
@@ -172,9 +173,9 @@ end Internal.Directed
 /-! ## Arithmetic under an explicit rounding direction -/
 
 /--
-Zero for an exactly cancelling addition under `mode`. It requests the sign
-`IEEERoundingMode.zeroSumSign`, and `zero` delivers positive zero instead in a format without a
-signed zero.
+The zero that an addition cancelling to an exact zero gives under `mode`. It asks for the sign
+`IEEERoundingMode.zeroSumSign`, and in a format without a signed zero `zero` delivers positive
+zero.
 -/
 @[inline] def zeroForExactSum (fmt : FloatFormat) (mode : IEEERoundingMode)
     (leftSign rightSign : Bool) : Model fmt :=
@@ -390,13 +391,13 @@ namespace Internal.Directed
 /--
 IEEE square root in rounding direction `mode`, the kernel of `Model.sqrt x (mode := mode)`.
 
-Both nearest modes use the dispatched nearest-even `Nearest.sqrt`. The exact square root of a
-value of the format is never halfway between two adjacent values of the format's grid, because the
-square of such a midpoint is not a value of the format: in a normal binade its odd part has more
-significant bits than any significand, and below the normal range it is not a multiple of the least
-subnormal. Nearest-away rounding therefore never meets a tie here. The directed modes round an
-endpoint of `sqrtDyadicBracket`: the upper one when the positive result rounds up, toward positive
-infinity or away from zero, and the lower one otherwise.
+Both nearest modes use the dispatched nearest-even `Nearest.sqrt`, since nearest-away rounding
+never meets a tie here. The square of a grid midpoint is not a value of the format, so the exact
+square root of a value of the format never lands on one. In a normal binade that square's odd
+part has more significant bits than any significand, and below the normal range it is not a
+multiple of the least subnormal. The directed modes round an endpoint of `sqrtDyadicBracket`, the
+upper one when the positive result rounds up (toward positive infinity or away from zero) and the
+lower one otherwise.
 -/
 def sqrt {fmt : FloatFormat} (mode : IEEERoundingMode)
     (x : Model fmt) : Model fmt :=

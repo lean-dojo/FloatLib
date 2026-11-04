@@ -13,8 +13,8 @@ public import Mathlib.Algebra.Order.Group.Nat
 /-!
 # Correctness of native-backed unpacked floating-point square root
 
-The executable implementation lives in `ModelSqrt.Runtime`. This module proves exact agreement
-with Lean's logical unpacked-float operation and registers the verified compiler substitution.
+We prove here that the executable implementation in `ModelSqrt.Runtime` equals Lean's logical
+unpacked-float operation, and we register the verified compiler substitution.
 -/
 
 @[expose] public section
@@ -22,14 +22,14 @@ with Lean's logical unpacked-float operation and registers the verified compiler
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model.NativeModelSqrt
 
-/-- The native-backed core is exactly Lean's logical unpacked square-root core. -/
+/-- The native-backed core equals Lean's logical unpacked square-root core. -/
 theorem sqrtCore_eq (spec : Float.Model.Format) (mantissa : Nat) (exponent : Int) :
     sqrtCore spec mantissa exponent =
       Float.Model.UnpackedFloat.sqrtCore spec mantissa exponent := by
   simp [sqrtCore, Float.Model.UnpackedFloat.sqrtCore,
     FloatLib.Numerics.FixedWord.IntegerSquareRoot.sqrtNat_eq_sqrt]
 
-/-- The native-backed operation is exactly Lean's logical unpacked floating-point square root. -/
+/-- The native-backed operation equals Lean's logical unpacked floating-point square root. -/
 theorem sqrt_eq (spec : Float.Model.Format) (value : Float.Model.UnpackedFloat) :
     sqrt spec value = Float.Model.UnpackedFloat.sqrt spec value := by
   cases value with

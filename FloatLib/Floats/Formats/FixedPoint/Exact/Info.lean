@@ -13,13 +13,13 @@ public import FloatLib.Floats.ExecFloat.Info
 /-!
 # Inspection for exact fixed-point codes
 
-The unbounded fixed-point core has exact integer-coefficient arithmetic and no overflow policy.
-Its inspection profile therefore emphasizes rational denotation, common-scale addition and
-subtraction, and heterogeneous multiplication with a composed scale.
+The unbounded fixed-point core computes exactly with integer coefficients and needs no overflow
+policy. So its `#float_info` profile is about the rational denotation, common-scale addition and
+subtraction, and multiplication across scales, which composes them.
 
 This optional meta module registers `#float_info` without adding elaborator dependencies to the
-runtime family. It also states the missing operations plainly so exactness is not mistaken for a
-complete floating-point API.
+runtime family. The report also lists the missing operations plainly, because exact arithmetic is
+easy to mistake for a complete floating-point API.
 -/
 
 public meta section

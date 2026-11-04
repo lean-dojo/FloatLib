@@ -13,10 +13,11 @@ public import FloatLib.Floats.Formats.P3109.Order
 /-!
 # Integer indices for P3109 numerical order
 
-Excluding NaN, the encoded datum set is a consecutive interval of integers: negative magnitude
-codes receive negative indices, zero receives zero, and nonnegative codes keep their indices.
-The exact decoder preserves this order, including the infinite endpoints in extended formats.
-These indices allow adjacency arguments without enumerating a descriptor's code space.
+Give each non-NaN code an integer index and the encoded datum set becomes a consecutive interval.
+Negative magnitude codes get negative indices, zero gets zero, and nonnegative codes keep their own
+numbers, so in a signed 8-bit format code `0x81` gets index `-1`. The exact decoder preserves this
+order, the infinite endpoints of extended formats included. With these indices, adjacency
+arguments never have to enumerate a descriptor's code space.
 -/
 
 @[expose] public section
@@ -25,7 +26,7 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.Format
 
-/-- An integer index in numerical order; its value at the NaN code is not used. -/
+/-- An integer index in numerical order. Its value at the NaN code is never used. -/
 def orderIndex (format : Format) (bits : Nat) : Int :=
   if format.signedness = .signed ∧ format.signBoundary < bits then
     (format.signBoundary : Int) - bits

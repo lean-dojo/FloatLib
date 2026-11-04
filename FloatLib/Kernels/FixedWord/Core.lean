@@ -12,6 +12,6 @@ public import FloatLib.Kernels.FixedWord.Core.Proof
 /-!
 # Verified native-word primitives
 
-Executable native-word primitives are exported with their refinement proofs. Runtime-only
-clients may import `FloatLib.Kernels.FixedWord.Core.Runtime` directly.
+This module exports the executable native-word primitives together with their refinement proofs. If
+you only need to run them, import `FloatLib.Kernels.FixedWord.Core.Runtime` on its own.
 -/

@@ -12,9 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Field
 /-!
 # Posit scalar-field elimination
 
-These continuation interfaces eliminate one, two, or three packed posit words into exact scalar
-dyadic fields without allocating decoded input records. Their semantic refinement theorems live
-in `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof`.
+A kernel that adds two posits wants their signs, scales, and significands. It has no use for a
+record per decoded input. These continuation interfaces give it one, two, or three packed posit
+words as exact scalar dyadic fields, with no decoded input records allocated in between. Their
+semantic refinement theorems are in
+`FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof`.
 -/
 
 @[expose] public section

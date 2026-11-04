@@ -11,17 +11,17 @@ public import FloatLib.Numerics.Exact.DecimalText.Proof
 /-!
 # Preservation laws for fixed and scientific decimal notation
 
-Point insertion preserves the positional coefficient. Leading fractional padding does not
-change that coefficient, and the scanner counts the padding when recovering the decimal scale.
+Inserting the point preserves the positional coefficient. Leading fractional padding doesn't change
+that coefficient either, and the scanner counts the padding when it recovers the decimal scale.
 
-The same laws cover text that FloatLib did not print. Text with at least one whole digit and any
+These laws also cover text that FloatLib didn't print. Text with at least one whole digit and any
 fractional digits, leading zeros included, parses to the positional value of all its digits, with
-the exponent reduced by the number of fractional digits; signed integer text, as in an exponent,
+the exponent reduced by the number of fractional digits. Signed integer text, as in an exponent,
 parses to the value of its digits.
 
-`Decimal.trimTrailingZeros` and `Decimal.compact` keep the value (and `compact` the sign), and
-their fuel suffices: a trimmed record with a negative exponent has no trailing zero
-(`Decimal.trimTrailingZeros_mod_ten_ne_zero`), nor does a compacted nonzero significand
+`Decimal.trimTrailingZeros` and `Decimal.compact` keep the value, `compact` keeps the sign too, and
+their fuel is enough. A trimmed record with a negative exponent has no trailing zero
+(`Decimal.trimTrailingZeros_mod_ten_ne_zero`), and neither does a compacted nonzero significand
 (`Decimal.compact_significand_mod_ten_ne_zero`).
 -/
 
@@ -178,10 +178,10 @@ private theorem splitSign_pointCharacters (whole fraction tail : List Char)
       hwhole hdigits
 
 /--
-Decimal text with whole digits `whole`, optional fractional digits `fraction` and an exponent
-suffix accepted by `parseExponent` parses to the positional value of all its digits, with the
-exponent reduced by the number of fractional digits. Leading zeros are allowed; the text has at
-least one whole digit and a leading minus sign or no sign.
+Decimal text with whole digits `whole`, optional fractional digits `fraction` and an exponent suffix
+accepted by `parseExponent` parses to the positional value of all its digits, with the exponent
+reduced by the number of fractional digits. Leading zeros are allowed. The text has at least one
+whole digit and either a leading minus sign or no sign.
 -/
 theorem parseCharacters_pointCharacters_map_digitChar (negative : Bool)
     (whole fraction : List Nat) (tail : List Char) (exponent : Int) (hwhole : whole ≠ [])
@@ -483,8 +483,8 @@ theorem Decimal.compact_significand_mod_ten_ne_zero (value : Decimal)
   Decimal.compactLoop_mod_ten_ne_zero _ value hzero Nat.lt_log2_self
 
 /--
-Compact dyadic text parses back to the dyadic's rational value. This is the value round trip;
-the trimming itself is `Decimal.trimTrailingZeros_mod_ten_ne_zero`.
+Compact dyadic text parses back to the dyadic's rational value. That's the value round trip, and the
+trimming itself is `Decimal.trimTrailingZeros_mod_ten_ne_zero`.
 -/
 @[simp] theorem parse_formatDyadicCompact (value : Dyadic) :
     parse (formatDyadicCompact value) = some value.toRat := by

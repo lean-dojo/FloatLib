@@ -11,9 +11,10 @@ public import FloatLib.Numerics.Enclosure.Expression.Check
 /-!
 # User enclosure evaluation
 
-An extension supplies rational bounds independently of the endpoint representation. Calls check
-their argument count, decode the inputs, and round the result outward with the selected backend.
-The checker reevaluates each call on every subdivision; no sampled values or frozen bounds are used.
+An extension supplies rational bounds for an operation of your own, without caring about the
+endpoint representation. A call checks its argument count, decodes the inputs, and rounds the result
+outward with the selected backend. The checker evaluates each call again on every subdivision, and
+it never uses sampled values or frozen bounds.
 -/
 
 @[expose] public section

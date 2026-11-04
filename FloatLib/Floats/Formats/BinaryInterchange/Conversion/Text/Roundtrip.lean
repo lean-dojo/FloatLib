@@ -101,7 +101,7 @@ private theorem parse_eq_of_readText_decimal {fmt : FloatFormat} {text : String}
   rw [parse_eq_run, TextParser.run_of_readText _ _ _ _ hread]
   simp only [convertText, Except.map]
 
-/-- A finite value is zero exactly when its decoded dyadic has a zero significand. -/
+/-- A finite value is zero if and only if its decoded dyadic has a zero significand. -/
 private theorem significand_eq_zero_iff_toReal_eq_zero {fmt : FloatFormat} {value : Model fmt}
     {d : Numerics.Dyadic} (hd : toDyadic? value = some d) :
     d.significand = 0 ↔ toReal value = 0 := by

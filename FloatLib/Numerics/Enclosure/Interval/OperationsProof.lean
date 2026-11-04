@@ -12,9 +12,9 @@ public import FloatLib.Numerics.Enclosure.Interval.Real
 /-!
 # Containment for interval powers and set operations
 
-The scalar contracts lift exact endpoint bounds through `OutwardRounding`. For rational
-decoders, the real contracts cover every real member of the input intervals. Even powers
-use monotonicity on absolute values, retaining the zero minimum of a zero-crossing interval.
+The scalar contracts lift exact endpoint bounds through `OutwardRounding`, and for rational decoders
+the real contracts cover every real member of the input intervals. Even powers use monotonicity on
+absolute values, which keeps the zero minimum of an interval that crosses zero.
 -/
 
 @[expose] public section

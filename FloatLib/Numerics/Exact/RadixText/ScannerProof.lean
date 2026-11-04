@@ -11,11 +11,11 @@ import all Init.Data.Repr
 /-!
 # Positional scanner laws shared by decimal and hexadecimal text
 
-Digit scanning computes the positional value, counts consumed digits, and leaves a nondigit
-suffix unchanged. For radix greater than one and a decoder that recognizes the printed digits,
-printing then scanning recovers any natural number, including zero. `Nat.digitChar` prints `*`
-for every digit from 16 on, so such a decoder exists only up to radix 17; decimal and
-hexadecimal text use radix 10 and 16.
+Digit scanning computes the positional value, counts the digits it consumed, and leaves a nondigit
+suffix unchanged. For a radix greater than one and a decoder that recognizes the printed digits,
+printing and then scanning recovers any natural number, zero included. Such a decoder exists only up
+to radix 17, because `Nat.digitChar` prints `*` for every digit from 16 on. Decimal and hexadecimal
+text use radix 10 and 16.
 -/
 
 @[expose] public section

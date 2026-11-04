@@ -22,9 +22,9 @@ public import FloatLib.Floats.Formats.Posit
 /-!
 # Executable numerical format families
 
-Each family defines its representation, mathematical interpretation, and supported operations.
-`ExecFloat` supplies the common carrier and operation interfaces. External conformance checks
-live in the separate `tests` package.
+Every family here defines a representation, its mathematical interpretation, and the operations it
+supports, on top of the common carrier and operation interfaces of `ExecFloat`. External conformance
+checks live in the `tests` package, which has its own Lake workspace.
 -/
 
 @[expose] public section

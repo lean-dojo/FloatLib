@@ -22,16 +22,18 @@ public import FloatLib.Numerics.Core.Representation
 persistent runtime representation. The proof-carrying `StoragePlan` chooses the smallest built-in
 machine word that contains the complete encoding. Formats of 65 to 128 bits with the two-word
 layout of `NativePair` (IEEE encoding and more than 64 fraction bits, binary128 among them) are
-stored as two native words, which the two-word kernels read directly. Every other format wider than
-a machine word keeps the exact-width proof model by default, and the generic kernel computes on
-it. Formats wider than 128 bits may opt into `StoragePlan.limbs`, a `LimbArray` of 32-bit limbs
-(`WideLimb.Value`) that is the carrier of the wide-limb kernels, and `ExecFloat.BinaryLimbs` names
-that choice. The limb carrier is not the default because every operation without a limb kernel,
-and every comparison or conversion, must first rebuild the proof model from the limbs.
+stored as two native words, which the two-word kernels read without conversion. Every other
+format wider than a machine word keeps the exact-width proof model by default, and the generic
+kernel computes on it.
 
-The plan is part of the type, not data stored in each value, so closed configured formats
+Formats wider than 128 bits may opt into `StoragePlan.limbs`, a `LimbArray` of 32-bit limbs
+(`WideLimb.Value`) that is the carrier of the wide-limb kernels, and `ExecFloat.BinaryLimbs` names
+that choice. Limbs are not the default because every operation without a limb kernel, and every
+comparison or conversion, must first rebuild the proof model from the limbs.
+
+Since the plan lives in the type and is not stored in each value, closed configured formats
 specialize to the selected carrier with erased range evidence. This module defines the plan, the
-carriers, and the encoded-family identity. Packing, proofs, codecs, and semantics live in
+carriers, and the encoded-family identity, while packing, proofs, codecs, and semantics live in
 downstream modules.
 -/
 
@@ -42,15 +44,15 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Configured
 open FloatLib.Numerics
 
 /--
-A certified persistent-storage choice for one binary-interchange descriptor.
+A certified persistent-storage choice for one binary-interchange descriptor. Each constructor's
+proof is erased.
 
-The proof stored by each constructor is erased. `forKnownWidth`, the default plan of
-`ExecFloat.Binary`, stores a format of at most 64 bits in the smallest machine word that holds it.
-`pair` stores two native words and is the default for widths from 65 to 128 bits whose layout the
-two-word kernels serve. `wide` keeps the exact-width proof model as the carrier and is the default
-for every other width above 64 bits. `limbs` stores a runtime-sized array of 32-bit limbs for
-widths above 128 bits. It is never the default: `ExecFloat.BinaryLimbs` opts into it to run the
-wide-limb arithmetic kernels, at the cost of conversions for operations that must rebuild the
+`forKnownWidth`, the default plan of `ExecFloat.Binary`, puts a format of at most 64 bits in the
+smallest machine word that holds it. `pair` stores two native words and is the default for widths
+from 65 to 128 bits whose layout the two-word kernels serve. `wide` keeps the exact-width proof
+model and is the default for every other width above 64 bits. `limbs` stores a runtime-sized array
+of 32-bit limbs for widths above 128 bits. It is never the default: `ExecFloat.BinaryLimbs` opts
+into it for the wide-limb kernels, at the cost of conversions for operations that must rebuild the
 proof model.
 -/
 inductive StoragePlan (format : FloatFormat) where
@@ -68,7 +70,7 @@ namespace StoragePlan
 Choose the smallest built-in storage class from a known encoded width.
 
 `width_eq` lets parameterized APIs expose the width as a reducible arithmetic expression. Thus
-`ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)` reduces directly to the `word32`
+`ExecFloat.Binary (exponentBits := 8) (fractionBits := 23)` reduces straight to the `word32`
 branch without evaluating an opaque descriptor during typeclass search. Between 65 and 128 bits the
 two-word plan is chosen only for layouts the two-word kernels serve (`NativePair.Eligible`). The
 others keep the exact-width model, which every other operation reads without conversion.
@@ -117,9 +119,9 @@ end StoragePlan
 /--
 Type-level identity of a configured binary format and its statically selected storage plan.
 
-The runtime code is a type parameter, not a dependent result computed inside the `EncodedFormat`
-instance, so Lean's compiler can use its ordinary polymorphic calling convention in generic
-definitions and still reduce a closed configured type to `UInt8`, `UInt16`, `UInt32`, or
+The runtime code is a type parameter instead of a dependent result computed inside the
+`EncodedFormat` instance. So Lean's compiler can use its ordinary polymorphic calling convention in
+generic definitions and still reduce a closed configured type to `UInt8`, `UInt16`, `UInt32`, or
 `UInt64`.
 -/
 inductive Family

@@ -14,13 +14,14 @@ public import Mathlib.Data.Nat.Sqrt
 /-!
 # Elementary functions on rational intervals
 
-Monotone functions use lower and upper endpoint enclosures. Sine and cosine instead enclose
-the midpoint and add the half-width, using their global Lipschitz constant one. Intersecting
-with `[-1, 1]` keeps the bounds useful even when the requested Taylor degree is small.
+A monotone function needs only enclosures of its lower and upper endpoints. Sine and cosine aren't
+monotone, so they enclose the midpoint and add the half-width, using their global Lipschitz constant
+one. Intersecting with `[-1, 1]` keeps the bounds useful even when the requested Taylor degree is
+small.
 
-The analytic point enclosures come from `Numerics.Enclosure`. Square root uses an integer
-square root after exact dyadic scaling. `ElementaryProof` proves containment of every real
-member of the input interval, including irrational members.
+The analytic point enclosures come from `Numerics.Enclosure`, and square root uses an integer square
+root after exact dyadic scaling. `ElementaryProof` proves containment of every real member of the
+input interval, irrational members included.
 -/
 
 @[expose] public section
@@ -85,8 +86,8 @@ def Internal.reducedTrigBounds (taylor : ℚ → Nat → ℚ) (x : ℚ)
 /--
 Enclose sine for every real in the interval, including intervals crossing an extremum.
 
-Small midpoints use the direct Taylor kernel. Larger ones use proved rational period
-reduction; the resulting period error is included in the point enclosure.
+Small midpoints use the Taylor kernel as it is. Larger ones use proved rational period reduction,
+and the resulting period error is included in the point enclosure.
 -/
 def sinBounds (I : Interval ℚ) (terms : Nat) : Interval ℚ :=
   lipschitzUnitBounds (fun x =>

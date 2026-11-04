@@ -12,8 +12,9 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Proof-indexed views of exact finite codebooks
 
-The views in this module attach erased denotation proofs to the same exact-width runtime bit
-vector. They introduce no additional executable representation.
+A proof often wants a codebook word together with the fact that it denotes some value. The views
+here attach that denotation proof to the same exact-width runtime bit vector, and since the proof
+is erased, they add no executable representation.
 -/
 
 @[expose] public section

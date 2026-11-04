@@ -20,8 +20,9 @@ import Mathlib.Tactic.Positivity.Finset
 # Correctness of native two-word finite multiplication
 
 Every accepted result of the `64 x 64 -> 128` normal-product tier in `TwoWordMul.Runtime` is the
-exact format-generic product rounding. The proof separates the two-word product and its leading-bit
-bounds from the shared one-word carry and packing stage. The dispatcher handles declined inputs.
+exact format-generic product rounding, and the proof keeps the two-word product and its leading-bit
+bounds apart from the shared one-word carry and packing stage. Declined inputs are the dispatcher's
+business.
 -/
 
 @[expose] public section

@@ -13,14 +13,14 @@ public import FloatLib.Numerics.Quantization.Integer.Proof
 /-!
 # Unsigned posit integer conversion guarantees
 
-Accepted outputs denote the nearest-even integer exactly and have at most
-one-half unit of error. The range test applies to this rounded integer,
-including small negative inputs that round to zero.
+When the conversion accepts a posit, the output denotes the nearest-even integer and the error is
+at most one half unit. Since the range test looks at this rounded integer, a small negative input
+that rounds to zero passes it.
 
-The sentinel characterization includes the in-range integer `2^(width-1)`;
-its unsigned encoding is indistinguishable from the NaR or out-of-range result.
-Input conversion reserves that word before numerical rounding. Representable
-integers have exact round trips; the sentinel word goes through NaR and back.
+One in-range integer, `2^(width-1)`, has an unsigned encoding that can't be told apart from the NaR
+or out-of-range result, so the sentinel characterization includes it. Input conversion reserves that
+word before any numerical rounding. Representable integers make exact round trips, and the sentinel
+word goes through NaR and back.
 -/
 
 @[expose] public section
@@ -50,7 +50,7 @@ theorem ofUnsigned_eq_roundRat (value : BitVec width) (hwidth : 0 < width)
     ofUnsigned format value hwidth = roundRat format (value.toNat : Rat) := by
   simp [ofUnsigned, hvalue]
 
-/-- If a finite posit denotes the unsigned integer exactly, conversion recovers that posit. -/
+/-- If a finite posit denotes the unsigned integer, conversion recovers that posit. -/
 theorem ofUnsigned_eq_of_toRat? (value : BitVec width) (hwidth : 0 < width)
     (hvalue : value ≠ BitVec.intMin width) (result : Model format)
     (hexact : result.toRat? = some (value.toNat : Rat)) :
@@ -63,7 +63,7 @@ theorem ofUnsigned_eq_of_toRat? (value : BitVec width) (hwidth : 0 < width)
     toUnsigned width (nar format) hwidth = BitVec.intMin width := by
   simp [toUnsigned]
 
-/-- A posit without a rational value, which is exactly NaR, converts to the MSB-only word. -/
+/-- A posit without a rational value converts to the MSB-only word. NaR is the only such posit. -/
 theorem toUnsigned_eq_intMin_of_none (value : Model format) (hwidth : 0 < width)
     (hvalue : value.toRat? = none) :
     toUnsigned width value hwidth = BitVec.intMin width := by
@@ -136,7 +136,7 @@ theorem toUnsigned_even_of_half (value : Model format) (hwidth : 0 < width) {q :
     exact roundRatEven_even_of_quotient_tie q hhalf
   exact_mod_cast hu
 
-/-- An unsigned integer that is exactly represented by the posit is returned unchanged. -/
+/-- An unsigned integer that the posit represents is returned unchanged. -/
 theorem toUnsigned_eq_of_nat (value : Model format) (hwidth : 0 < width) {integer : Nat}
     (hvalue : value.toRat? = some (integer : Rat)) (hrange : integer < 2 ^ width) :
     toUnsigned width value hwidth = BitVec.ofNat width integer := by

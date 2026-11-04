@@ -13,12 +13,12 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Semantics.Core
 # Executable bounded fixed-point operations
 
 Bounded fixed point stores an exact signed coefficient in a fixed-width two's-complement carrier.
-Conversion and arithmetic take an `(overflow := ...)` option: `.reject`, the default, returns
-`none` when the exact coefficient does not fit, `.wrap` reduces it modulo `2 ^ width`, and
-`.saturate` clamps it to the signed range.
+Conversion and arithmetic take an `(overflow := ...)` option for when the exact coefficient
+doesn't fit. The default, `.reject`, returns `none`, `.wrap` reduces the coefficient modulo
+`2 ^ width`, and `.saturate` clamps it to the signed range.
 
-Multiplication also exposes the composed input scale and chosen destination width in its result
-type. The implementation reuses the generic fixed-integer kernels and their refinement theorems.
+Multiplication also puts the composed input scale and the chosen destination width in its result
+type. Underneath are the generic fixed-integer kernels and their refinement theorems.
 -/
 
 @[expose] public section

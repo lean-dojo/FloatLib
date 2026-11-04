@@ -13,9 +13,10 @@ public import Mathlib.Data.Rat.Floor
 /-!
 # Real containment for integer binary-grid intervals
 
-Signed integer division supplies floor and ceiling bounds before interpretation in the reals.
-The four-corner theorems then enclose every real member of the input intervals, including values
-between grid points. The runtime definitions compute entirely with integers after input conversion.
+Signed integer division gives floor and ceiling bounds before anything is read in the reals. The
+four-corner theorems then enclose every real member of the input intervals, values between grid
+points included, while the runtime definitions compute with integers alone once the inputs are
+converted.
 -/
 
 @[expose] public section

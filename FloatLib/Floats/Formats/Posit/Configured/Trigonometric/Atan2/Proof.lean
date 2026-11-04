@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Atan2.Runti
 /-!
 # Correct rounding of configured posit two-coordinate arctangent
 
-The configured operations inherit the model's principal-branch rounding and exceptional-value
-rules for every lawful storage carrier and valid posit width.
+Configured `arcTan2` and `arcTan2Pi` inherit the model's rules for every lawful storage carrier
+and valid posit width: correct rounding on the principal branch (`arcTan2_eq_real`), NaR in
+either coordinate, and NaR at the origin (`arcTan2_eq_nar_of_origin`).
 -/
 
 public section

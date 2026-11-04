@@ -9,9 +9,10 @@ module
 /-!
 # Representation-independent Posit guard and sticky bits
 
-These functions inspect the exact exponent-and-fraction tail using natural numbers only. They are
-the common specification refined by the one-word and two-limb execution carriers, and this module
-imports no fixed-width storage implementation.
+When a posit is rounded, the bits that fall off the end of the payload decide the result. These
+functions read that exponent-and-fraction tail with natural numbers alone. They are the common
+specification that the one-word and two-limb carriers refine, which is why this module imports no
+fixed-width storage implementation.
 -/
 
 @[expose] public section

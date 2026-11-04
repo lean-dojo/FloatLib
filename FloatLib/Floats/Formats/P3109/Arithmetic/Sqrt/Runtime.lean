@@ -12,16 +12,17 @@ public import Mathlib.Data.Nat.Sqrt
 /-!
 # P3109 square-root rounding by exact square comparisons
 
-For a nonnegative rational radicand, the floor candidate is `sqrt (numerator / denominator)`
-computed in natural numbers. Rounding compares the radicand with the square of an exact rational
-threshold. This decides rounding of the square root even when it is irrational.
+For a nonnegative rational radicand, the floor candidate is `sqrt (numerator / denominator)`,
+computed in natural numbers. To round, we compare the radicand with the square of an exact
+rational threshold, and that settles the rounding of the square root even when the root is
+irrational.
 
-Stochastic A and B select the upper candidate at their supplied random threshold. Stochastic C
-uses the half-integer threshold of its nearest-even integer rounding, including its tie parity.
-The caller supplies the random word, as in §4.7.4 of the P3109 4.0.3 working-group report.
+Stochastic A and B pick the upper candidate at their supplied random threshold. Stochastic C uses
+the half-integer threshold of its nearest-even integer rounding, tie parity included. As in §4.7.4
+of the P3109 4.0.3 working-group report, the caller supplies the random word.
 
 Square root, reciprocal square root, and hypotenuse follow §§4.10.8 and 4.10.14 of that unapproved
-report. Each evaluates its exact radicand before the one rounding and saturation step.
+report. Each one evaluates its exact radicand before the single rounding and saturation step.
 -/
 
 @[expose] public section

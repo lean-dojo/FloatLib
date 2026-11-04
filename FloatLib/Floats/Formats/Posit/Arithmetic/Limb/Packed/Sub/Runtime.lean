@@ -11,9 +11,10 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.SignedSum.Run
 /-!
 # Direct packed-pair posit subtraction runtime
 
-Subtraction reverses the right operand's sign and uses the shared signed-sum kernel. Significands
-stay in `UInt128` when alignment and accumulation fit; larger intermediates use exact dyadic
-arithmetic. The result is a two-limb code. Range and refinement proofs are in `Sub.Proof`.
+Subtraction flips the sign of the right operand and then runs the shared signed-sum kernel. From
+there on it is addition. Significands stay in `UInt128` when alignment and accumulation fit,
+larger intermediates use exact dyadic arithmetic, and the result is a two-limb code. `Sub.Proof` has
+the range and refinement proofs.
 -/
 
 @[expose] public section

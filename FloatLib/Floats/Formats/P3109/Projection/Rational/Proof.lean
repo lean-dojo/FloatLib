@@ -12,13 +12,14 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Direction
 /-!
 # Correctness of exact-rational P3109 projection
 
-The imported rational semantics prove the report's exact quantum, floor, parity, and selection
-formulas, with direction and error theorems for deterministic modes and selection correctness for
-every supplied stochastic word. This file proves that the result always fits the direct encoder's
-precision grid, then reuses the same saturation-and-encoding theorem as dyadic projection.
+Most of the work is imported. The rational semantics prove the report's exact quantum, floor,
+parity, and selection formulas, with direction and error theorems for the deterministic modes and
+selection correctness for every supplied stochastic word. This file adds the proof that the result
+always fits the direct encoder's precision grid, and then reuses the saturation-and-encoding
+theorem of dyadic projection.
 
 The logarithm bound imported here is a theorem about exact natural-number quotients. The P3109
-runtime does not depend on the binary-interchange representation or policy.
+runtime doesn't depend on the binary-interchange representation or policy.
 -/
 
 @[expose] public section

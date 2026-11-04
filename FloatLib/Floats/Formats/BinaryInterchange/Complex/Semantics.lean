@@ -16,17 +16,19 @@ public import Mathlib.Basic.Complex.Basic
 /-!
 # Real and complex semantics of `ExecComplex`
 
-The component map `toComplex` interprets finite executable values as mathematical complex numbers.
-Addition and subtraction round each component once. Multiplication records all six rounding sites:
-four scalar products, the subtraction forming the real component, and the addition forming the
-imaginary component. Each intermediate rounding appears in the corresponding theorem.
+The component map `toComplex` reads finite executable values as mathematical complex numbers,
+and the theorems here say what each operation computes, one rounding at a time. Addition and
+subtraction round each component once. Multiplication has six rounding sites: four scalar
+products, the subtraction forming the real component, and the addition forming the imaginary
+component. Every intermediate rounding appears in the theorem for its operation.
 
-Division records the chosen component ratio and every subsequent rounding. Squared magnitude
-records two rounded squares and their rounded sum; magnitude applies this to scaled components.
-Neither an exact field operation nor a whole-operation error bound is asserted.
+Division records the chosen component ratio and every rounding after it. Squared magnitude
+records two rounded squares and their rounded sum, and magnitude applies the same to scaled
+components. None of these theorems asserts an exact field operation or an error bound for the
+whole operation.
 
-The finiteness assumptions rule out overflow to infinity and NaN. They are explicit because the
-real-number semantics does not assign real values to infinities or NaNs. The scalar rounding
+Finiteness assumptions rule out overflow to infinity and NaN. They are stated as hypotheses
+because the real-number semantics gives infinities and NaNs no real value. The scalar rounding
 theorems ask only for finite results (and finite divisors), so the sum, difference and
 division-branch theorems assume no finite inputs.
 
@@ -69,7 +71,7 @@ noncomputable def roundedMul (fmt : FloatFormat) (x y : ℂ) : ℂ :=
     Model.roundAt fmt
       (Model.roundAt fmt (x.re * y.im) + Model.roundAt fmt (x.im * y.re))⟩
 
-/-- Negation of finite executable components agrees exactly with complex negation. -/
+/-- Negation of finite executable components is exact complex negation. -/
 theorem toComplex_neg {fmt : FloatFormat} (z : ExecComplex fmt)
     (hz : isFinite z = true) :
     toComplex (-z) = -toComplex z := by
@@ -160,7 +162,7 @@ theorem toComplex_mul_eq_roundedMul {fmt : FloatFormat} (x y : ExecComplex fmt)
     rw [Model.toReal_mul_eq_roundAt x.re y.im hfmt had]
     rw [Model.toReal_mul_eq_roundAt x.im y.re hfmt hbc]
 
-/-- Two separately rounded squares followed by a rounded sum. -/
+/-- Squared magnitude as two rounded squares followed by a rounded sum. -/
 noncomputable def roundedNormSq (fmt : FloatFormat) (z : ℂ) : ℝ :=
   Model.roundAt fmt (Model.roundAt fmt (z.re * z.re) + Model.roundAt fmt (z.im * z.im))
 
@@ -318,7 +320,7 @@ end Internal
 Ratio-division semantics, branching on the exact magnitudes of the denominator components.
 
 In the imaginary-dominant branch the final rounded quotient is conjugated, as in the executable
-code. This is a rounded expression, not exact division in `ℂ`.
+code. It is a rounded expression and does not compute exact division in `ℂ`.
 -/
 noncomputable def roundedDiv (fmt : FloatFormat) (x y : ℂ) : ℂ :=
   if |y.re| < |y.im| then
@@ -328,8 +330,8 @@ noncomputable def roundedDiv (fmt : FloatFormat) (x y : ℂ) : ℂ :=
 /--
 Finite inputs and all scalar domain obligations in the selected division branch.
 
-The pivot and the rounded denominator must both be nonzero; every intermediate and both final
-quotients must be finite. No obligation is imposed on the branch that is not executed.
+The pivot and the rounded denominator must both be nonzero, and every intermediate and both final
+quotients must be finite. The branch that is not executed carries no obligation.
 -/
 structure DivFinite {fmt : FloatFormat} (x y : ExecComplex fmt) : Prop where
   /-- Both numerator components are finite. -/
@@ -396,7 +398,7 @@ theorem magnitude_eq_posInf_of_isInf {fmt : FloatFormat} (z : ExecComplex fmt)
 /--
 Rounded semantics of magnitude with the exact scale `max |re| |im|`.
 
-The two divisions, two squares, sum, square root, and rescaling product each round separately.
+The two divisions, two squares, sum, square root, and rescaling product each round once.
 Zero scale returns zero without any division.
 -/
 noncomputable def roundedMagnitude (fmt : FloatFormat) (z : ℂ) : ℝ :=
@@ -414,8 +416,8 @@ The rounded component ratios, their squares, and their sum must be finite. The s
 valid scalar square-root input (zero of either sign, or a clear sign bit). Square-root finiteness
 then follows from the scalar theorem.
 
-These intermediate-range conditions do not follow merely from finite inputs or from the exact
-norm fitting in the format. The semantic theorem separately requires the conventional IEEE bias.
+Finite inputs do not imply these intermediate-range conditions, and neither does an exact norm
+that fits in the format. The semantic theorem also requires the conventional IEEE bias.
 -/
 structure MagnitudeFinite {fmt : FloatFormat} (z : ExecComplex fmt) : Prop where
   /-- Both input components are finite. -/

@@ -15,15 +15,16 @@ public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
 /-!
 # Correctness of direct one-word guard-and-sticky Posit rounding
 
-`candidateCarrierLawful` proves that the `UInt64` candidate carrier satisfies the shared carrier
-laws at capacity 64. The shared theorems then establish the packing and rounding refinement.
-The remaining proofs connect the one-word entry points, which add the zero test, the exact
-minimum-positive comparison, and sign restoration, to the arbitrary-width direct rounder. The
-one-word kernel and the two-limb kernel are therefore execution refinements of one rounding rule,
-selected only by exact intermediate capacity.
+This proof and its two-limb twin together make the one-word and two-limb kernels execution
+refinements of a single rounding rule, chosen by exact intermediate capacity alone.
 
-The `WordLimb` proof module proves the cross-carrier projection theorem for operations with a
-two-limb intermediate. Importing this scalar proof does not load the two-limb rounding proof.
+`candidateCarrierLawful` shows that the `UInt64` candidate carrier satisfies the shared carrier
+laws at capacity 64, and the shared theorems then give the packing and rounding refinement. The
+remaining proofs connect the one-word entry points to the arbitrary-width direct rounder. Those
+entry points add the zero test, the exact minimum-positive comparison, and sign restoration.
+
+Operations with a two-limb intermediate get their cross-carrier projection theorem from the
+`WordLimb` proof module, so importing this scalar proof doesn't load the two-limb rounding proof.
 -/
 
 @[expose] public section

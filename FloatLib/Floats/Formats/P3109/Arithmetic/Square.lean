@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
 /-!
 # Once-projected P3109 squares
 
-Squaring reuses exact multiplication and projects once into the requested destination.
-The source and destination may have different widths, precisions, signedness, and domains.
+Squaring reuses exact multiplication and projects once into the requested destination, so `x * x`
+is rounded a single time. Source and destination may differ in width, precision, signedness, and
+domain.
 -/
 
 @[expose] public section

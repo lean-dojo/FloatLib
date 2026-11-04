@@ -12,14 +12,14 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Configured posit semantic core
 
-Configured posit operations lift the exact model through the statically selected public carrier.
-These specifications are independent of optimized execution backends: clients that only need the
-configured type and its independent specification should not depend on planner or kernel
-implementation details.
+Each configured posit operation is specified here by lifting the exact model operation through
+the statically selected public carrier. None of these specifications mentions an optimized
+backend. If all you need is the configured type and its independent specification, import this
+module and you won't depend on any planner or kernel detail.
 
-Carrier packing is proved inverse to model decoding in `Configured.Storage.Family.Proof`.
-Consequently these definitions do not depend on whether a closed width selected `UInt8`, `UInt16`,
-`UInt32`, `UInt64`, two limbs, or the exact-width wide model.
+Carrier packing is proved inverse to model decoding in `Configured.Storage.Family.Proof`. So the
+definitions mean the same thing whether a closed width picked `UInt8`, `UInt16`, `UInt32`,
+`UInt64`, two limbs, or the exact-width wide model.
 -/
 
 @[expose] public section

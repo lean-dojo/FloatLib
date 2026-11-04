@@ -16,17 +16,21 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Addition.Runtime
 /-!
 # Executable addition and subtraction backends
 
-The generic path handles exact finite arithmetic and the descriptor's exceptional-value policy.
-The word dispatcher first tries a kernel justified by structural capabilities (native binary32 or
-binary64, a fixed pair of limbs, the one-word `UInt64` kernel for small IEEE formats, or reusable
-small-word storage for the remaining one-word formats) and returns to that generic path when the
-specialization declines.
+A generic path handles exact finite arithmetic and the descriptor's exceptional-value policy. Before
+falling back to it, the word dispatcher tries a kernel that the format's structural capabilities
+justify:
 
-The `@[specialize fmt]` annotation exposes descriptor-dependent tests to specialization at
-closed-format call sites. Kernel choice depends only on the descriptor, while operand-dependent
-acceptance checks stay in the selected kernels. A runtime descriptor is checked on each call.
+- native binary32 or binary64,
+- a fixed pair of limbs,
+- the one-word `UInt64` kernel for small IEEE formats,
+- reusable small-word storage for the remaining one-word formats.
 
-Refinement theorems live in `Add.Proof`, so runtime clients can import this module without them.
+When the specialization declines, it goes back to the generic path.
+
+The `@[specialize fmt]` annotation exposes the descriptor-dependent tests to specialization at
+closed-format call sites. Which kernel runs depends only on the descriptor, the operand-dependent
+acceptance checks stay in the selected kernels, and a runtime descriptor is checked on each call. We
+keep the refinement theorems in `Add.Proof`, so a program can import this module without them.
 -/
 
 @[expose] public section
@@ -60,16 +64,20 @@ and infinity policy.
             invalidResult fmt
 
 /--
-Non-table implementation of addition.
+The non-table implementation of addition, with the kernel picked by the format's structural
+capabilities:
 
-Structural capabilities select the kernel. Binary32 finite operands use the checked native-word
-backend. Binary64 first tries the one-word `UInt64` kernel of `NativeSmallWordAdd`, whose capacity
-contract admits its 53-bit significands, and falls back to its fixed-format chain for wide
-alignment shifts and boundary results. Eligible two-word layouts use their fixed-limb and
-width-generic finite chain. Every other IEEE format with at most 30 exponent and 61 fraction bits
-adds entirely in `UInt64` through `NativeSmallWordAdd`, and the remaining one-word IEEE formats use
-the shared native-storage decoder before the compiled component kernel. Every decline and every
-exceptional case falls back to `generic`.
+* Binary32 finite operands use the checked native-word backend.
+* Binary64 first tries the one-word `UInt64` kernel of `NativeSmallWordAdd`, whose capacity contract
+  admits its 53-bit significands, and falls back to its fixed-format chain for wide alignment shifts
+  and boundary results.
+* Eligible two-word layouts use their fixed-limb and width-generic finite chain.
+* Every other IEEE format with at most 30 exponent and 61 fraction bits adds entirely in `UInt64`
+  through `NativeSmallWordAdd`.
+* The remaining one-word IEEE formats use the shared native-storage decoder before the compiled
+  component kernel.
+
+Every decline and every exceptional case falls back to `generic`.
 -/
 @[specialize fmt] def word {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   if h32 : FloatFormat.IsBinary32 fmt then
@@ -107,14 +115,17 @@ exceptional case falls back to `generic`.
     generic x y
 
 /--
-Non-table implementation of subtraction.
+The non-table implementation of subtraction:
 
-Binary32 adds the negated right operand in its checked native backend. Binary64 first tries the
-one-word `UInt64` kernel with the right sign toggled in the storage word, then its fixed-format
-chain. Eligible two-word layouts use their fixed-limb and width-generic finite subtraction chain.
-Every other one-word IEEE format with at most 30 exponent and 61 fraction bits subtracts through
-`NativeSmallWordAdd`, and the remaining one-word formats use the shared native decoder on the
-negated operand. Exceptional cases enter exact generic addition with the negated right operand.
+* Binary32 adds the negated right operand in its checked native backend.
+* Binary64 first tries the one-word `UInt64` kernel with the right sign toggled in the storage word,
+  then its fixed-format chain.
+* Eligible two-word layouts use their fixed-limb and width-generic finite subtraction chain.
+* Every other one-word IEEE format with at most 30 exponent and 61 fraction bits subtracts through
+  `NativeSmallWordAdd`.
+* The remaining one-word formats use the shared native decoder on the negated operand.
+
+Exceptional cases enter exact generic addition with the negated right operand.
 -/
 @[specialize fmt] def subWord {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
   if h32 : FloatFormat.IsBinary32 fmt then

@@ -12,8 +12,9 @@ public import FloatLib.Floats.Formats.Block.SharedScale.Core
 /-!
 # Configured shared-scale block identity
 
-The universal carrier stores one complete vector-valued block. Its lane count remains in the type,
-and scale selection remains an explicit operation rather than an inferred scalar policy.
+Here the universal carrier holds one whole block, a vector of values with its lane count in the
+type. Choosing the scale is an operation you call with an exponent, so the library never infers a
+scalar policy for you.
 -/
 
 @[expose] public section

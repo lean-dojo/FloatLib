@@ -15,25 +15,25 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
 /-!
 # Executable floating-point powers
 
-`Model.pow` provides one deterministic power policy for every `FloatFormat`. For an IEEE descriptor,
-a finite nonzero base and a finite integral exponent give a correctly rounded result whenever
-that result is finite: its decoded value is nearest-even rounding of the exact power, as for
-`Model.powInt`. Small exact powers are computed by `powInt` itself. Larger ones use directed
-enclosures of `|x|^n` built by binary exponentiation at a working precision derived from the
-format. Repeated squaring stops once the enclosure lies beyond the overflow threshold or below
-half the least subnormal, so the exponent is never expanded into an integer when the answer is
-already an overflow or a zero. An enclosure whose endpoints round to different values is refined
-at a higher precision, and exact evaluation is the last resort.
+`Model.pow` gives every `FloatFormat` one deterministic power policy. For an IEEE descriptor, a
+finite nonzero base and a finite integral exponent give a correctly rounded result whenever that
+result is finite: its decoded value is the nearest-even rounding of the exact power, as for
+`Model.powInt`. Small exact powers go to `powInt` itself. Larger ones use directed enclosures of
+`|x|^n`, built by binary exponentiation at a working precision derived from the format. Repeated
+squaring stops as soon as the enclosure lies beyond the overflow threshold or below half the least
+subnormal, so an exponent is never expanded into an integer when the answer is already an overflow
+or a zero. If the endpoints of an enclosure round to different values, it is refined at a higher
+precision, and exact evaluation is the last resort.
 
 Integer exponents are classified from their dyadic representation. The classifier records sign,
-parity, and an optional bounded magnitude without constructing an integer whose bit length is
-controlled by the floating-point exponent field, which formats with wide exponent fields need.
+parity and an optional bounded magnitude, and it never builds an integer whose bit length the
+floating-point exponent field controls. Formats with wide exponent fields need that.
 
-A finite positive base with any other finite exponent uses `Transcendentals.Certified.pow`,
-which refines proved enclosures of `exp (y * log x)` until both endpoints round to the same
-finite value, so an accepted result is nearest-even rounding of the real power. A certified range
-failure delivers positive overflow directly. Other failures (an exact result on a rounding
-boundary, an exhausted budget, or a descriptor other than IEEE) fall back to the approximate
+A finite positive base with any other finite exponent goes to `Transcendentals.Certified.pow`. It
+refines proved enclosures of `exp (y * log x)` until both endpoints round to the same finite
+value, so an accepted result is the nearest-even rounding of the real power. A certified range
+failure delivers positive overflow right away. Any other failure (an exact result on a rounding
+boundary, an exhausted budget, or a descriptor other than IEEE) falls back to the approximate
 composition of the generic `exp`, `mul` and `log` kernels. `Operations.PowerProof` proves both
 correctly rounded finite cases under the IEEE and finiteness hypotheses above.
 -/
@@ -51,7 +51,7 @@ def smallPowLimit : Nat := 256
 /--
 Information needed to evaluate a finite integral floating-point exponent.
 
-`smallMagnitude?` is populated exactly when the magnitude is at most `smallPowLimit`.
+`smallMagnitude?` is populated if and only if the magnitude is at most `smallPowLimit`.
 -/
 structure IntegerExponent where
   /-- Whether the nonzero integer is negative. -/
@@ -276,8 +276,8 @@ Integer power of a finite nonzero base with dyadic representation `b`, for the i
 correctly rounded.
 
 Small exact results use `powInt`. A base of magnitude one gives a signed one. Otherwise
-directed enclosures are refined through `workingPrecisions`, and if none decides the result,
-`powInt` computes it exactly. `exactBudget` bounds the exact work in the first case.
+directed enclosures are refined through `workingPrecisions`, and if none decides the result, it
+falls back to exact evaluation by `powInt`. `exactBudget` bounds the exact work in the first case.
 -/
 def integerPowerWith {fmt : FloatFormat} (exactBudget : Nat) (base : Model fmt)
     (b : Numerics.Dyadic) (negativeExponent : Bool) (magnitude shift : Nat) : Model fmt :=
@@ -324,18 +324,17 @@ Deterministic executable floating-point exponentiation.
 
 The special cases, in branch order:
 
-* `x^(+-0) = 1`, including a quiet-NaN base; a signaling-NaN base is quieted
-  (IEEE 754-2019 §9.2.1 and §6.2);
-* `1^y = 1` except for a signaling-NaN exponent;
-* infinite exponents are classified by `|x|` relative to one;
-* signed zero and infinite bases give a zero or an overflow, negative exactly for a negative base
-  and an odd integer exponent;
-* a finite nonzero base with a finite integral exponent uses `Power.integerPower?`; for an IEEE
-  descriptor, a finite result is correctly rounded;
-* otherwise a finite negative base is invalid, and a positive one uses the certified enclosure
-  search `Transcendentals.Certified.pow`, whose accepted results are correctly rounded, with
-  positive overflow for a certified range failure and `exp (y * log x)` as the fallback for
-  other failures.
+* `x^(+-0) = 1`, including a quiet-NaN base. A signaling-NaN base is quieted
+  (IEEE 754-2019 §9.2.1 and §6.2).
+* `1^y = 1` except for a signaling-NaN exponent.
+* Infinite exponents are classified by `|x|` relative to one.
+* Signed zero and infinite bases give a zero or an overflow, negative if and only if the base is
+  negative and the exponent is an odd integer.
+* A finite nonzero base with a finite integral exponent uses `Power.integerPower?`. For an IEEE
+  descriptor, a finite result is correctly rounded.
+* Otherwise a finite negative base is invalid, and a positive one uses the certified enclosure
+  search `Transcendentals.Certified.pow`. Its accepted results are correctly rounded, a certified
+  range failure gives positive overflow, and other failures fall back to `exp (y * log x)`.
 -/
 def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
   if isZero exponent && !isSNaN base then

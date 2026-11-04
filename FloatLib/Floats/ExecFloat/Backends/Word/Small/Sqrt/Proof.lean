@@ -17,8 +17,8 @@ import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Proof
 /-!
 # Correctness of the one-word square root for small IEEE formats
 
-`sqrtPositiveCore_eq` shows that the kernel is Lean's logical unpacked square root, rounded and
-packed, for every nonzero mantissa and finite scale of an eligible format. `sqrtPositive_eq` then
+`sqrtPositiveCore_eq` shows that, for every nonzero mantissa and finite scale of an eligible format,
+the kernel is Lean's logical unpacked square root, rounded and packed. `sqrtPositive_eq` then
 identifies the dispatcher with the shared finite kernel for every positive finite input.
 -/
 

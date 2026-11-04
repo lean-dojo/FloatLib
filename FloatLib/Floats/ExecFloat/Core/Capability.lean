@@ -14,13 +14,13 @@ public import FloatLib.Floats.ExecFloat.Carrier
 
 A capability bundles an operation's specification, its certified implementations, and their cost
 estimates. The selector starts from a mandatory baseline and uses the estimates to consider
-alternatives within the resource limits. The named operations in `ExecFloat.Core.Operations` use
+alternatives within the resource limits, and the named operations in `ExecFloat.Core.Operations` use
 this indexed contract.
 
 `Capability.run_eq_spec` is an equality of Lean definitions. The binary software kernels use proved
-refinements and `@[csimp]` replacements, so their compiled correctness also depends on the
-compiler. The binary32/binary64 `NativeFPU.Unchecked` host functions are not capabilities, because
-they have no packed-word equality theorem of the kind `Backend.Certified` requires.
+refinements and `@[csimp]` replacements, so their compiled correctness also depends on the compiler.
+The binary32/binary64 `NativeFPU.Unchecked` host functions aren't capabilities at all, because they
+have no packed-word equality theorem of the kind `Backend.Certified` requires.
 -/
 
 @[expose] public section

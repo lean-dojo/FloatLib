@@ -51,36 +51,36 @@ test('reference links open the bibliography', () => {
     kind: 'references', key: 'ieee754_2019',
   });
   assert.deepEqual(parseRoute('#/chapter/using-the-library/what-the-theorems-give-you'), {
-    kind: 'chapter', slug: 'using-the-library', heading: 'what-the-theorems-give-you',
+    kind: 'chapter', slug: 'using-the-library', heading: 'how-to-prove-your-first-theorem',
   });
 });
 
 test('moved sections resolve directly across the revised chapters', () => {
   const destinations = [
     ['using-the-library', 'library-structure', 'using-the-library',
-      'proving-arithmetic-agrees-with-its-specification'],
-    ['using-the-library', 'complex-arithmetic', 'further-examples', 'complex-arithmetic'],
-    ['using-the-library', 'reductions-that-round-once', 'further-examples',
-      'sums-and-dot-products-with-one-rounding'],
+      'where-do-the-theorems-come-from'],
+    ['using-the-library', 'complex-arithmetic', 'ieee-binary-formats', 'how-to-work-with-complex-numbers'],
+    ['using-the-library', 'reductions-that-round-once', 'the-mathematics-of-rounding',
+      'how-to-add-a-list-with-one-rounding'],
     ['why-execution-and-proofs-are-separate', 'lean-compilation-and-code-extraction',
-      'why-execution-and-proofs-are-separate', 'compiler-replacements-with-csimp'],
+      'the-numerical-models', 'how-is-this-different-from-code-extraction'],
     ['ieee-binary-formats', 'applying-a-real-valued-arithmetic-theorem', 'ieee-binary-formats',
-      'from-executable-arithmetic-to-real-rounding'],
+      'what-the-theorems-give-you'],
     ['ieee-binary-formats', 'decimal-interchange', 'decimal-arithmetic',
-      'encoding-the-complete-datum'],
+      'how-decimal-numbers-are-stored-in-bits'],
     ['ieee-binary-formats', 'stable-decimal-exponential-and-logarithm', 'elementary-functions',
-      'certified-decimal-functions'],
+      'how-to-use-these-functions-with-decimal-numbers'],
     ['low-precision-formats-for-machine-learning', 'affine-integer-quantization',
-      'fixed-point-logarithmic-codebook-and-block-scaled', 'affine-quantization'],
+      'fixed-point-logarithmic-codebook-and-block-scaled', 'what-is-affine-quantization'],
     ['posits-and-the-quire', 'where-the-posit-work-stops', 'posits-and-the-quire',
-      'rounding-thresholds-and-exceptional-values'],
+      'how-does-a-posit-round'],
     ['kernels-fixed-word-algorithms', 'capacity-bounds-and-compiler-assumptions',
-      'kernels-fixed-word-algorithms', 'capacity-bounds-and-backend-dispatch'],
+      'performance', 'what-are-the-capacity-bounds'],
     ['backends-and-the-planner', 'choosing-and-caching-an-implementation',
-      'backends-and-the-planner', 'following-a-public-arithmetic-call'],
-    ['performance', 'timing-results', 'performance', 'public-binary-arithmetic'],
+      'performance', 'how-an-ordinary-addition-reaches-its-kernel'],
+    ['performance', 'timing-results', 'performance', 'how-fast-are-the-calls-you-write-yourself'],
     ['performance', 'comparing-with-leans-native-floats', 'performance',
-      'host-arithmetic-as-a-reference'],
+      'how-does-floatlib-compare-with-softfloat-mpfr-and-native-c'],
   ];
   for (const [oldSlug, oldHeading, slug, heading] of destinations) {
     assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
@@ -91,19 +91,19 @@ test('moved sections resolve directly across the revised chapters', () => {
 
 test('native-float section bookmarks follow the split from the performance chapter', () => {
   const destinations = [
-    ['leans-model-and-its-compiled-operations'],
-    ['both-implementations-lose-associativity'],
-    ['converting-to-native-floats-changes-nan-payloads'],
-    ['proofs-relating-floatlib-to-leans-float-model'],
-    ['integer-conversions-in-lean-434', 'integer-conversions'],
-    ['arithmetic-through-the-same-model'],
-    ['formats-rounding-directions-and-status'],
-    ['opting-into-guarded-host-operations'],
-    ['the-same-finite-bits-including-rounding-effects', 'both-implementations-lose-associativity'],
+    ['leans-model-and-its-compiled-operations', 'what-are-float-and-float32'],
+    ['both-implementations-lose-associativity', 'do-lean-and-floatlib-give-the-same-answers'],
+    ['converting-to-native-floats-changes-nan-payloads', 'why-do-nans-come-out-different'],
+    ['proofs-relating-floatlib-to-leans-float-model', 'how-to-convert-between-leans-floats-and-floatlib'],
+    ['integer-conversions-in-lean-434', 'how-to-convert-integers-to-floats-and-back'],
+    ['arithmetic-through-the-same-model', 'what-is-proved-about-leans-arithmetic'],
+    ['formats-rounding-directions-and-status', 'what-does-floatlib-add-to-float-and-float32'],
+    ['opting-into-guarded-host-operations', 'how-to-use-the-processors-own-arithmetic'],
+    ['the-same-finite-bits-including-rounding-effects', 'do-lean-and-floatlib-give-the-same-answers'],
     ['nan-payloads-change-at-the-native-conversion-boundary',
-      'converting-to-native-floats-changes-nan-payloads'],
+      'why-do-nans-come-out-different'],
     ['the-proved-conversion-and-arithmetic-bridges',
-      'proofs-relating-floatlib-to-leans-float-model'],
+      'how-to-convert-between-leans-floats-and-floatlib'],
   ];
   for (const [oldHeading, heading = oldHeading] of destinations) {
     assert.deepEqual(parseRoute(`#${chapterPath('performance', oldHeading)}`), {
@@ -127,7 +127,7 @@ test('alias destinations never require a second router pass', () => {
 
 test('alias resolution decodes names once and ignores inherited object properties', () => {
   assert.deepEqual(parseRoute('#/chapter/perform%61nce/timing-%72esults'), {
-    kind: 'chapter', slug: 'performance', heading: 'public-binary-arithmetic',
+    kind: 'chapter', slug: 'performance', heading: 'how-fast-are-the-calls-you-write-yourself',
   });
   for (const heading of ['toString', '__proto__', 'unknown-section', '%invalid']) {
     assert.deepEqual(parseRoute(`#${chapterPath('performance', heading)}`), {

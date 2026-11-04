@@ -14,13 +14,13 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Two-limb posit arithmetic runtime
 
-These kernels decode each finite operand once, perform the exact dyadic operation, and use the
-two-limb rounding backends through Posit128. Division reuses the shared width-generic
-quotient-prefix kernel through `divWords`. The packed square-root adapter likewise reuses the
-width-generic root-prefix kernel.
+These kernels serve posits whose codes live in two `UInt64` limbs. Each one decodes every finite
+operand once, performs the exact dyadic operation, and rounds with the two-limb backends through
+Posit128. Division goes through `divWords` to the shared width-generic quotient-prefix kernel, and
+the packed square-root adapter reuses the width-generic root-prefix kernel in the same way.
 
-Refinement to the representation-independent Posit Standard operations lives in
-`Arithmetic.Proof`.
+`Arithmetic.Proof` proves that these kernels refine the representation-independent Posit Standard
+operations.
 -/
 
 @[expose] public section
@@ -62,7 +62,7 @@ variable {format : Format}
 Decode two stored pair words and divide them with the shared width-generic quotient-prefix
 kernel.
 
-This function is a carrier adapter, not a separate fixed-limb divider.
+This function adapts the carrier, and there is no fixed-limb divider of its own.
 -/
 @[noinline] def divWords
     (format : Format)

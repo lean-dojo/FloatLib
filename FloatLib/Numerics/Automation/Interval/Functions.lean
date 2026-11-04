@@ -14,8 +14,8 @@ public import FloatLib.Numerics.Enclosure.Interval.PowersProof
 /-!
 # Registered elementary functions
 
-The standard elementary functions use the same enclosure registration as user-defined operations.
-Their procedures and containment proofs reuse the existing endpoint-independent backend contracts.
+The standard elementary functions use the same enclosure registration as user-defined operations,
+and their procedures and containment proofs reuse the endpoint-independent backend contracts.
 `acceptedDomain?` says which argument enclosures the partial ones accept, and `interval` quotes it
 when the backend rejects a call.
 -/
@@ -123,8 +123,8 @@ theorem logb_extension_sound : Backend.logbExtension.Sound Real.logb :=
 
 /--
 The argument enclosures that a partial registered enclosure accepts, keyed by its registration and
-phrased for `interval`'s message when it rejects a call. These are conditions on the enclosures
-the backend computes, not on the real functions, which Mathlib defines at every real argument. The
+phrased for `interval`'s message when it rejects a call. These are conditions on the enclosures the
+backend computes. The real functions themselves are defined by Mathlib at every real argument. The
 other registrations here accept every argument enclosure.
 -/
 meta def acceptedDomain? (registration : Lean.Name) : Option String :=

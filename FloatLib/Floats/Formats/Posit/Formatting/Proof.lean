@@ -13,9 +13,10 @@ public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
 /-!
 # Value-preserving Posit decimal conversion
 
-The decimal string denotes exactly the decoded dyadic rational. Rounding that rational recovers
-the original posit word. This proves the decimal preservation guarantee of
-Posit Standard (2022), §6.3 for every descriptor width.
+Print a posit, parse the string back, and you get the same word, at every descriptor width. That
+is the decimal preservation guarantee of Posit Standard (2022), §6.3. The proof takes two steps.
+First, the decimal string denotes the decoded dyadic rational with no error, and then rounding
+that rational recovers the original posit word.
 -/
 
 @[expose] public section
@@ -187,7 +188,7 @@ theorem parse_eq_roundRat (input : String) (value : Rat)
   obtain ⟨d, hd, rfl⟩ := Option.map_eq_some_iff.mp hinput
   simp [parse, hnar, hd, roundRat_clampDecimal]
 
-/-- An ordinary finite word's decimal display has exactly its decoded rational value. -/
+/-- The decimal display of an ordinary finite word denotes its decoded rational, unrounded. -/
 theorem decimalParse_display (value : Model format) (exact : FloatLib.Numerics.Dyadic)
     (hexact : value.toDyadic? = some exact) :
     DecimalText.parse value.display = some exact.toRat := by

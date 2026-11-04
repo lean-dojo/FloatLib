@@ -12,12 +12,13 @@ public import FloatLib.Numerics.Exact.RadixText.Runtime
 /-!
 # Exact decimal character conversion
 
-The reusable decimal carrier denotes an integer times an integral power of ten. Parsing accepts
-ASCII decimal integers, fractions, and `e`/`E` exponents with optional signs. Each successful parse
-denotes an exact rational, without host floating-point conversion.
+The decimal carrier here, which every format can reuse, denotes an integer times an integral power
+of ten. Parsing accepts ASCII decimal integers, fractions, and `e`/`E` exponents with optional
+signs, and each successful parse denotes an exact rational with no host floating-point conversion
+along the way.
 
-Every dyadic has a terminating decimal expansion: `m / 2^k = (m * 5^k) / 10^k`. The formatter
-uses that identity, with decimal exponent notation for fractional values. Output size and
+Every dyadic has a terminating decimal expansion, because `m / 2^k = (m * 5^k) / 10^k`, and the
+formatter uses that identity, with decimal exponent notation for fractional values. Output size and
 exact-integer work grow with the magnitude of the binary exponent.
 -/
 
@@ -27,7 +28,7 @@ namespace FloatLib.Numerics.DecimalText
 
 /-- An exact signed decimal significand and integral decimal scale. -/
 structure Decimal where
-  /-- Sign of the decimal significand; signed zeros denote the same rational. -/
+  /-- Sign of the decimal significand. Both signed zeros denote the same rational. -/
   negative : Bool
   /-- Magnitude of the integer significand. -/
   significand : Nat
@@ -40,11 +41,11 @@ def Decimal.toRat (value : Decimal) : Rat :=
   (if value.negative then -(value.significand : Rat) else value.significand) *
     (10 : Rat) ^ value.exponent
 
-/-- Recognize precisely the ten ASCII decimal digits. -/
+/-- Recognize the ten ASCII decimal digits and nothing else. -/
 def digitValue? (character : Char) : Option Nat :=
   if '0' ≤ character ∧ character ≤ '9' then some (character.toNat - '0'.toNat) else none
 
-/-- Remove at most one leading sign; an absent sign is positive. -/
+/-- Remove at most one leading sign. An absent sign is positive. -/
 def splitSign : List Char → Bool × List Char
   | '-' :: rest => (true, rest)
   | '+' :: rest => (false, rest)
@@ -97,7 +98,7 @@ def ofDyadic (value : Dyadic) : Decimal :=
         significand := value.significand * 5 ^ (exponent + 1)
         exponent := .negSucc exponent }
 
-/-- Exact decimal formatting of a dyadic; every finite input has decimal output. -/
+/-- Exact decimal formatting of a dyadic. Every finite input has a decimal output. -/
 def formatDyadic (value : Dyadic) : String :=
   (ofDyadic value).format
 

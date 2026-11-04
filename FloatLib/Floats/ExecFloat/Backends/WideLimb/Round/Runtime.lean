@@ -11,14 +11,13 @@ public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Runtime
 /-!
 # Wide-limb normal rounding runtime
 
-Accepted nonzero wide-limb arithmetic results pass through rounding of an exact or sticky-jammed
-significand at an unsigned scale. `roundNormal?` performs that step on limbs: it locates
-the leading bit, rounds to `fracWidth + 1` bits with ties to even, detects a carry into the next
-binade, checks the exponent range, and packs. It returns `none` if the leading position is below
-the normal range before rounding or above the finite range after carry normalization. The
-dispatcher handles declined cases with the exact baseline. `Round.Proof` shows that an accepted
-result is the arbitrary-precision product rounder
-`FiniteProductRound.round` applied to the exact value.
+Every accepted nonzero wide-limb arithmetic result is rounded here, from an exact or sticky-jammed
+significand at an unsigned scale. `roundNormal?` does that step on limbs. It locates the leading
+bit, rounds to `fracWidth + 1` bits with ties to even, detects a carry into the next binade, checks
+the exponent range, and packs. It returns `none` if the leading position is below the normal range
+before rounding or above the finite range after carry normalization, and the dispatcher handles
+those cases with the exact baseline. `Round.Proof` shows that an accepted result is the
+arbitrary-precision product rounder `FiniteProductRound.round` applied to the exact value.
 -/
 
 @[expose] public section
@@ -30,11 +29,11 @@ open FloatLib.Numerics
 /--
 Round an exact or sticky-jammed significand in the unsigned product-scale coordinate.
 
-For the numerical contract, the conventional IEEE descriptor has `expWidth ≤ 32` and the limb
-value is `shiftRightJam exact jam`, with `exact ≠ 0`. Either `jam = 0` or
+For the numerical contract, the conventional IEEE descriptor has `expWidth ≤ 32` and the limb value
+is `shiftRightJam exact jam`, with `exact ≠ 0`. Either `jam = 0` or
 `2 ^ (fmt.fracWidth + jam + 2) ≤ exact` is required. An accepted result then agrees with rounding
 signed magnitude `exact * 2^(scale - 2 * ieeeSubnormalAlignExp fmt)`, interpreting the exponent
-subtraction in `Int`. The bounds are supplied by callers, not checked here.
+subtraction in `Int`. Callers supply the bounds, and nothing here checks them.
 -/
 def roundNormal? (fmt : FloatFormat) (sign : Bool) (significand : LimbArray) (jam scale : Nat) :
     Option (Value fmt) :=

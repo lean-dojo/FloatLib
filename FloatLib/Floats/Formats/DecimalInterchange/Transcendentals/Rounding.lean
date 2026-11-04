@@ -14,14 +14,16 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 /-!
 # Decimal projection and real nearest-even rounding
 
-The decimal digit-counting algorithm selects the canonical exponent of the radix-ten Flocq
-format. Its exact quotient decision also agrees with the real nearest-even integer rounder.
-Consequently every finite nearest-even decimal projection equals rounding on the independent
-real grid, including subnormals and ties.
+Certifying a decimal transcendental against the reals needs decimal projection and real rounding
+to agree, and they do. The digit-counting algorithm selects the canonical exponent of the
+radix-ten Flocq format, and its exact quotient decision agrees with the real nearest-even integer
+rounder. So every finite nearest-even decimal projection equals rounding on the independent real
+grid, subnormals and ties included.
 
 The real grid has gradual underflow and no upper exponent bound. Finiteness of the executable
-projection is an explicit hypothesis; infinities cannot denote its real result. The proofs use
-only the descriptor's positive precision and quantum bounds, without requiring quantum zero.
+projection is a hypothesis of the theorems, because an infinity can't denote the real result. The
+proofs use only the descriptor's positive precision and quantum bounds, and don't require quantum
+zero.
 -/
 
 @[expose] public section
@@ -188,7 +190,8 @@ theorem project_nearest_eq_roundAt (f : Format) (x : ℚ)
     rw [harg, roundRatEven_signed s (div_nonneg (abs_nonneg x) hstep.le)]
     cases s <;> simp [RoundingMode.roundAt, Rat.cast_zpow]
 
-/-- Real interpretation of a decimal datum; nonfinite datums use the conventional zero fallback. -/
+/-- Real interpretation of a decimal datum, with the conventional zero fallback for nonfinite
+datums. -/
 noncomputable def toReal (datum : Datum) : ℝ :=
   (datum.toRat?.getD 0 : ℚ)
 

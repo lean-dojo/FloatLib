@@ -17,11 +17,10 @@ import Mathlib.Tactic.Linarith.Frontend
 /-!
 # Correctness of native-word finite multiplication for generic binary32
 
-The `UInt64` multiplication kernel equals its exact-dyadic finite specification. Runtime clients
-can import `Multiplication.Runtime` without the component and rounding proofs.
-
-The significands have at most 24 bits, so their product is exact in `UInt64`. The proof bounds
-the unsigned product scale and applies the native rounder theorem for `FloatFormat.binary32`.
+We prove that the `UInt64` multiplication kernel equals its exact-dyadic finite specification.
+Significands have at most 24 bits, so their product is exact in `UInt64`, and the proof bounds the
+unsigned product scale and applies the native rounder theorem for `FloatFormat.binary32`.
+`Multiplication.Runtime` can be imported without the component and rounding proofs.
 -/
 
 @[expose] public section

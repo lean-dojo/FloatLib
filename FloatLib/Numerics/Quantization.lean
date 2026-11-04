@@ -17,13 +17,13 @@ public import FloatLib.Numerics.Quantization.Stochastic
 /-!
 # Representation-independent quantization
 
-Quantization combines relational specifications, deterministic arithmetic primitives,
-order-directed specifications, explicit-entropy stochastic contracts, saturation, and an
-executable affine rational quantizer.
+Quantization here combines relational specifications, deterministic arithmetic primitives,
+order-directed specifications, stochastic contracts with their entropy passed as data, saturation,
+and an executable affine rational quantizer.
 
-Quantization remains separate from representability: a numerical system describes which values
-its codes mean, while these modules describe which code or outcome a policy permits for a
-particular exact input.
+We keep quantization apart from representability. A numerical system describes which values its
+codes mean, while these modules describe which code or outcome a policy permits for a particular
+exact input.
 -/
 
 @[expose] public section

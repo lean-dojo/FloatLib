@@ -13,21 +13,20 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Dyadic
 /-!
 # Wide-limb addition and subtraction runtime
 
-`alignAndRound?` combines two signed magnitudes given at unsigned scales, the shared core of
-addition, subtraction, and fused multiply-add. After ordering the operands by scale it takes one
-of two routes.
+`alignAndRound?` combines two signed magnitudes given at unsigned scales. It's the shared core of
+addition, subtraction, and fused multiply-add, and after ordering the operands by scale it takes one
+of two routes:
 
-* When the scale difference `d` is at least three and the higher-scale operand dominates, the
-  lower operand is shifted right by `d - 3` bits and the higher operand is shifted left by three.
-  The discarded tail supplies a sticky bit after addition, or a borrow and sticky bit after
-  subtraction. The dominance bound leaves enough bits above the jammed position for
-  `roundShiftRightEven_shiftRightJam` to preserve the final nearest-even result.
-* Otherwise the exact sum or difference is formed in limbs; cancellation is exact.
+* When the scale difference `d` is at least three and the higher-scale operand dominates, the lower
+  operand is shifted right by `d - 3` bits and the higher one left by three. Its discarded tail
+  supplies a sticky bit after addition, or a borrow and sticky bit after subtraction. This dominance
+  bound leaves enough bits above the jammed position for `roundShiftRightEven_shiftRightJam` to
+  preserve the final nearest-even result.
+* Otherwise the exact sum or difference is formed in limbs, and cancellation is exact.
 
-Both routes end in `roundNormal?`. `addNormal?` decodes two normal stored values into this core;
-`add` and `sub` use `Model.Spec.add` and `Model.Spec.sub`, respectively, for declined cases.
-For every `Eligible` format, `Addition.Proof` proves that they equal `Model.Spec.add` and
-`Model.Spec.sub`.
+Both routes end in `roundNormal?`. `addNormal?` decodes two normal stored values into this core, and
+for declined cases `add` and `sub` use `Model.Spec.add` and `Model.Spec.sub`. For every `Eligible`
+format, `Addition.Proof` proves that they equal `Model.Spec.add` and `Model.Spec.sub`.
 -/
 
 @[expose] public section
@@ -41,7 +40,7 @@ Combine two nonzero signed magnitudes whose scales satisfy `sb ≤ sa`.
 
 The value computed is `(aSign, a * 2^sa) + (bSign, b * 2^sb)` at unsigned scale `sb`, rounded by
 `roundNormal?` with the given rounding offset. Both magnitudes are expected to be at least
-`2^fracWidth`; `Addition.Proof.alignOrdered?_refines` states the contract.
+`2^fracWidth`, and `Addition.Proof.alignOrdered?_refines` states the contract.
 -/
 def alignOrdered? (fmt : FloatFormat) (roundOffset : Nat) (aSign : Bool) (a : LimbArray) (sa : Nat)
     (bSign : Bool) (b : LimbArray) (sb : Nat) : Option (Value fmt) :=
@@ -77,7 +76,7 @@ def alignAndRound? (fmt : FloatFormat) (roundOffset : Nat) (aSign : Bool) (a : L
     alignOrdered? fmt roundOffset aSign a sa bSign b sb
 
 /--
-Add two normal stored values, negating the second when `negateY` holds; other cases are declined.
+Add two normal stored values, negating the second when `negateY` holds. Other cases are declined.
 -/
 def addNormal? (fmt : FloatFormat) (negateY : Bool) (x y : Value fmt) : Option (Value fmt) :=
   let xExponent := expWord x

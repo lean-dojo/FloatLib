@@ -12,11 +12,15 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Semantics.Proof
 /-!
 # Correctness of configured bounded fixed-point operations
 
-Complete word conversions recover the stored code, and encoding preserves in-range words.
-Arithmetic with `(overflow := .wrap)` decodes to centered modular arithmetic on signed
-coefficients. The default `.reject` addition, subtraction and multiplication are exact whenever
-they succeed, and they return `none` exactly when the exact coefficient does not fit.
-`(overflow := .saturate)` decodes to the exact coefficient clamped to the signed range.
+These theorems say what each overflow policy means on configured values. Complete word
+conversions recover the stored code, and encoding preserves in-range words. Then, per policy:
+
+* With `(overflow := .wrap)`, arithmetic decodes to centered modular arithmetic on signed
+  coefficients.
+* With the default `.reject`, addition, subtraction and multiplication are exact whenever they
+  succeed, and they return `none` if and only if the exact coefficient doesn't fit.
+* With `(overflow := .saturate)`, the result decodes to the exact coefficient clamped to the signed
+  range.
 -/
 
 @[expose] public section
@@ -120,19 +124,19 @@ theorem mul_eq_some
   congrArg (Option.map ofCode)
     (Formats.FixedPoint.Bounded.checkedMul_eq_some left.toCode right.toCode hresult)
 
-/-- Addition returns `none` exactly when the exact coefficient sum does not fit. -/
+/-- Addition returns `none` if and only if the exact coefficient sum does not fit. -/
 theorem add_eq_none_iff
     (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
     add left right = none ↔ ¬FixedInt.InRange width (left.coefficient + right.coefficient) :=
   Option.map_eq_none_iff.trans (FixedInt.checkedAdd_eq_none_iff left.toCode right.toCode)
 
-/-- Subtraction returns `none` exactly when the exact coefficient difference does not fit. -/
+/-- Subtraction returns `none` if and only if the exact coefficient difference does not fit. -/
 theorem sub_eq_none_iff
     (left right : ExecFloat.BoundedFixedPoint radix fractionalDigits width) :
     sub left right = none ↔ ¬FixedInt.InRange width (left.coefficient - right.coefficient) :=
   Option.map_eq_none_iff.trans (FixedInt.checkedSub_eq_none_iff left.toCode right.toCode)
 
-/-- Multiplication returns `none` exactly when the exact coefficient product does not fit
+/-- Multiplication returns `none` if and only if the exact coefficient product does not fit
 `outWidth`. -/
 theorem mul_eq_none_iff
     (left : ExecFloat.BoundedFixedPoint radix p leftWidth)
@@ -143,7 +147,7 @@ theorem mul_eq_none_iff
     (Formats.FixedPoint.Bounded.checkedMul_eq_none_iff left.toCode right.toCode)
 
 /-- A checked operation that returns a value had an in-range exact result, since it returns `none`
-exactly outside the range. -/
+for every result outside the range and nowhere else. -/
 private theorem inRange_of_eq_some {α : Type} {result : Option α} {value : α} {inRange : Prop}
     (hnone : result = none ↔ ¬inRange) (hsome : result = some value) : inRange := by
   by_contra h

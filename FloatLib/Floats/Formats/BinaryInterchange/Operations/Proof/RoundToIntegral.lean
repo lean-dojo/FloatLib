@@ -17,18 +17,19 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Nearest
 /-!
 # Integral-rounding contracts
 
-The unbounded dyadic-to-integer kernel is related to the usual nearest-even, nearest-away, floor,
-ceiling, truncation, and away-from-zero semantics. The floating-point wrapper then records exactly
-when fractional bits were discarded and exposes the exceptional branches.
+We relate the unbounded dyadic-to-integer kernel to the usual nearest-even, nearest-away, floor,
+ceiling, truncation and away-from-zero semantics. The floating-point wrapper on top of it records
+whether fractional bits were discarded and exposes the exceptional branches.
 
-For IEEE encodings with `fmt.fracWidth ≤ fmt.maxNormalExponent`, the selected integer is exactly
-representable. This condition holds for the IEEE interchange formats. On finite inputs,
-`roundToIntegral` then denotes the integer selected by the rounding direction and reports no
-overflow. Truncation toward zero needs no such range
-condition: its result cannot exceed the input magnitude. Nearest-away rounding is
-roundToIntegralTiesToAway of IEEE 754-2019, Section 5.9, and it is Flocq's `nearestChoice` with
-the tie choice `nearestAwayChoice`. Rounding to nearest moves a finite value by at most one half
-and any direction by at most one (`abs_toReal_roundToIntegral_sub_le`).
+For IEEE encodings with `fmt.fracWidth ≤ fmt.maxNormalExponent`, a condition the IEEE interchange
+formats satisfy, the selected integer is representable, so on finite inputs `roundToIntegral`
+denotes the integer that the rounding direction selects and reports no overflow. Truncation toward
+zero needs no such range condition, since its result cannot exceed the input magnitude.
+
+Nearest-away rounding is roundToIntegralTiesToAway of IEEE 754-2019, Section 5.9, and it is
+Flocq's `nearestChoice` with the tie choice `nearestAwayChoice`. Rounding to nearest moves a finite
+value by at most one half, and any direction moves it by at most one
+(`abs_toReal_roundToIntegral_sub_le`).
 
 ## References
 
@@ -359,7 +360,7 @@ theorem dyadicIsIntegral_ofNat
   simp [dyadicIsIntegral]
 
 /--
-An exact dyadic is integral exactly when no negative binary exponent leaves a fractional bit.
+An exact dyadic is integral just when no negative binary exponent leaves a fractional bit.
 
 For exponent `-(shift + 1)`, this says that `2^(shift + 1)` divides the significand. A
 nonnegative exponent is always integral.
@@ -387,7 +388,7 @@ theorem dyadicIsIntegral_iff (value : Numerics.Dyadic) :
   rfl
 
 /--
-On finite input, `roundToIntegral` raises `inexact` exactly when a negative binary
+On finite input, `roundToIntegral` raises `inexact` just when a negative binary
 exponent leaves at least one fractional bit.
 -/
 theorem roundToIntegral_inexact_iff
@@ -429,7 +430,7 @@ theorem roundToIntegral_status_of_infinity
   simp [roundToIntegral, Internal.Status.roundToIntegral, hvalue, outcomeWithInvalid]
 
 /--
-`roundToIntegral` quiets a NaN and raises `invalid` exactly when it was signaling.
+`roundToIntegral` quiets a NaN, and raises `invalid` if and only if that NaN was signaling.
 -/
 theorem roundToIntegral_status_of_nan
     {fmt : FloatFormat} (value : Model fmt) (mode : IEEERoundingMode)
@@ -722,8 +723,8 @@ private theorem roundToIntegral_finite_exact_of_abs_le
 
 /--
 On a finite input of an IEEE format whose exponent range reaches the precision, the selected
-integer is represented exactly and reports no overflow. Fractional input can still set `inexact`.
-The range condition holds for IEEE 754's standard binary interchange formats.
+integer is represented without rounding and no overflow is reported. A fractional input can set
+`inexact` all the same. IEEE 754's standard binary interchange formats meet the range condition.
 -/
 theorem roundToIntegral_finite_exact
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)

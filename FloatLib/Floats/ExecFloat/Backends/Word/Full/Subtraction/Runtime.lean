@@ -11,12 +11,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Core.Runtime
 /-!
 # Native binary64 subtraction runtime
 
-The signed Sterbenz kernels live here; their refinement proofs are isolated in
-`Subtraction.Proof`.
-
-The routines accept normal operands of the same sign whose magnitudes lie within a factor of
-two. Their exact difference fits in one native word, including when the result is subnormal.
-Other inputs are left to the arithmetic dispatcher.
+Here are the signed Sterbenz kernels, with their refinement proofs in `Subtraction.Proof`. They
+accept normal operands of the same sign whose magnitudes are within a factor of two of each other.
+Their exact difference then fits in one native word, even when the result is subnormal. Other inputs
+are left to the arithmetic dispatcher.
 -/
 
 @[expose] public section
@@ -26,9 +24,9 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64
 /--
 Pack an exact significand difference below `2^53` at an encoded exponent in `1..2046`.
 
-The represented magnitude is `difference * 2^(exponent - 1075)`, with the exponent subtraction
-in `Int`. Zero becomes positive zero. Nonzero results below the minimum normal value are packed
-as subnormals; all other results are normalized without rounding.
+The represented magnitude is `difference * 2^(exponent - 1075)`, with the exponent subtraction in
+`Int`. Zero becomes positive zero. Nonzero results below the minimum normal value are packed as
+subnormals, and all other results are normalized without rounding.
 -/
 @[inline] def packExactDifference
     (sign : Bool) (difference exponent : UInt64) : Value :=
@@ -49,9 +47,9 @@ as subnormals; all other results are normalized without rounding.
 /--
 Try exact subtraction of positive normal binary64 values in Sterbenz's factor-two region.
 
-The same-exponent case aligns immediately. Adjacent exponents are accepted precisely when the
-significand of the operand with the larger exponent is no greater than the other significand,
-which is the native field form of the factor-two condition. `subSterbenz?_isSome_iff` in
+The same-exponent case aligns at once. Adjacent exponents are accepted if and only if the
+significand of the operand with the larger exponent is no greater than the other significand, which
+is the native field form of the factor-two condition. `subSterbenz?_isSome_iff` in
 `Subtraction.Proof` states the accepted inputs.
 -/
 @[inline] def subSterbenz? (x y : Value) : Option Value :=
@@ -85,7 +83,7 @@ which is the native field form of the factor-two condition. `subSterbenz?_isSome
 /--
 Try exact Sterbenz subtraction for same-sign normal binary64 inputs.
 
-Positive operands use `subSterbenz?` directly. Negative operands are negated and swapped so the
+Positive operands go straight to `subSterbenz?`. Negative operands are negated and swapped, so the
 same proved positive kernel computes `x - y` with the correct result sign.
 -/
 @[inline] def subSignedSterbenz? (x y : Value) : Option Value :=

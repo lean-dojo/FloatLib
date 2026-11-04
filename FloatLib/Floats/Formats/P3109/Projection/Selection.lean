@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Selection
 /-!
 # Mathematical meaning of dyadic rounding decisions
 
-The shift-based implementation of §4.7.4 has the same fractional-part formulas as the rational
-implementation. In particular the stochastic decisions hold for every supplied word, including
-words of width zero. No probability or distribution hypothesis is used.
+Dyadic projection implements §4.7.4 with shifts, and its fractional-part formulas come out the
+same as in the rational implementation. The stochastic decisions hold for every supplied word,
+even a word of width zero, and no probability or distribution hypothesis is used.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
 -/
@@ -62,7 +62,7 @@ theorem scaled_fraction_eq (remainder discarded output : Nat) :
     rw [hp]
     field_simp
 
-/-- The shift-based stochastic-C helper computes the report's RNITE exactly. -/
+/-- The shift-based stochastic-C helper computes the report's RNITE. -/
 theorem scaleFractionNearestEven_eq (remainder discarded output : Nat) :
     scaleFractionNearestEven remainder discarded output =
       RationalRounding.nearestEven (((remainder : Rat) / 2 ^ discarded) * 2 ^ output) := by
@@ -81,7 +81,7 @@ theorem scaleFractionNearestEven_eq (remainder discarded output : Nat) :
       RationalRounding.roundQuotientEven_eq_nearestEven _ _ (Nat.two_pow_pos _)]
     norm_cast
 
-/-- Every valid dyadic remainder uses exactly the report's rational rounding decision. -/
+/-- Every valid dyadic remainder uses the report's rational rounding decision. -/
 theorem roundAway_eq_rational (format : Format) (mode : RoundingMode)
     (negative : Bool) (quantum : Int) (lower remainder discarded : Nat)
     (hrange : remainder < 2 ^ discarded) :

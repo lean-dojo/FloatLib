@@ -15,7 +15,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 This adapter supplies the configured carrier's `ofModel` bridge to the representation-independent
 binary conversion policy. Exact rounding happens before packing, so storage and backend selection
 cannot change conversion semantics. The exact domain is `SignedRat`, which carries the sign of
-zero to the quantizer; the destination's encoding policy determines whether that sign is retained.
+zero to the quantizer. Whether that sign is kept is up to the destination's encoding policy.
 -/
 
 @[expose] public section
@@ -42,13 +42,13 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
   quantizeFiniteWith configuredPack context exact
 
-/-- Apply the explicit exceptional-value policy to a configured binary destination. -/
+/-- Apply the context's exceptional-value policy to a configured binary destination. -/
 @[inline] def quantizeExceptional (context : Context) (exceptional : ExceptionalValue) :
     FloatLib.Floats.ExecFloat.ConversionOutcome
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
   quantizeExceptionalWith configuredPack context exceptional
 
-/-- Apply the explicit infinity policy to a configured binary destination. -/
+/-- Apply the context's infinity policy to a configured binary destination. -/
 @[inline] def quantizeInfinity (context : Context) (negative : Bool) :
     FloatLib.Floats.ExecFloat.ConversionOutcome
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :=
@@ -65,7 +65,7 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 Complete configured outcome with the default IEEE nearest-value contract.
 
 `Binary.Conversion.specWith` supplies the independent finite-denotation clause and retains the
-complete word, status, and explicit policy behavior.
+complete word, status, and the behavior of the context's policies.
 -/
 def spec :
     Quantization.Spec Context (NumericalValue SignedRat)

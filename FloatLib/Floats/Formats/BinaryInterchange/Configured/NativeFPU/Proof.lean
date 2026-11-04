@@ -14,8 +14,8 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Core.Proof
 
 These theorems connect the binary32 and binary64 FMA adapters in `NativeFPU.Runtime` to the
 independent configured specification. The adapters use proved fixed-word software arithmetic in
-both logical and compiled execution. Host experiments live in the separately imported
-`NativeFPU.Unchecked` module and cannot enter this proof surface transitively.
+both logical and compiled execution. Host experiments live in `NativeFPU.Unchecked`, which must be
+imported on its own, and cannot enter this proof surface transitively.
 -/
 
 @[expose] public section

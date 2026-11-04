@@ -10,10 +10,10 @@ public import Mathlib.Data.Rat.Floor
 /-!
 # Exact rounding on a decimal coefficient grid
 
-IEEE 754-2019 §4.3 requires five rounding directions for decimal arithmetic.
-The integer decision below works on an exact rational magnitude. In particular,
-midpoints are compared exactly; no binary floating approximation is used.
-Format precision, exponent range, and cohort selection are handled separately.
+IEEE 754-2019 §4.3 requires five rounding directions for decimal arithmetic. The integer decision
+below works on an exact rational magnitude, so `0.15` on the tenths grid is a true midpoint, which
+a binary approximation of `0.15` would miss. Format precision, exponent range, and cohort
+selection are handled elsewhere.
 -/
 
 @[expose] public section
@@ -67,7 +67,7 @@ def roundMagnitude (mode : RoundingMode) (negative : Bool) (x : ℚ) : Nat :=
     | .down => negative && decide (0 < remainder)
   if increase then lower + 1 else lower
 
-/-- Apply the sign after rounding; callers retain the separate sign for signed zero. -/
+/-- Apply the sign after rounding. Callers keep the sign on its own for signed zero. -/
 def roundSigned (mode : RoundingMode) (negative : Bool) (x : ℚ) : ℚ :=
   if negative then -(mode.roundMagnitude negative x : ℚ)
   else mode.roundMagnitude negative x

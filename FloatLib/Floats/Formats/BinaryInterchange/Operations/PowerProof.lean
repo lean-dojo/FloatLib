@@ -16,22 +16,23 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certifie
 /-!
 # Correct rounding of powers
 
-`Model.pow` sends a finite nonzero base with a finite integral exponent to
-`Power.integerPower?`. This file proves that the result is the nearest-even rounding of the
-exact real power. A finite positive base with a non-integral exponent goes to the certified
-enclosure search `Transcendentals.Certified.pow`. Whenever that search succeeds, `pow` returns
-its result, which is the nearest-even rounding of the real power (`pow_spec_of_certified`).
+The main result is `toReal_pow_of_eq_intCast`. For an IEEE format, a finite base and a finite
+exponent with integer value `n`, every finite result of `pow` equals
+`roundAt fmt (toReal base ^ n)`.
 
-The executable kernel has three routes. Small exact problems call `powInt`, which rounds the
+`Model.pow` sends a finite nonzero base with a finite integral exponent to `Power.integerPower?`,
+and this file proves that the result is the nearest-even rounding of the exact real power. A
+finite positive base with a non-integral exponent goes to the certified enclosure search
+`Transcendentals.Certified.pow` instead. Whenever that search succeeds, `pow` returns its result,
+which is the nearest-even rounding of the real power (`pow_spec_of_certified`).
+
+Three routes make up the executable kernel. Small exact problems call `powInt`, which rounds the
 exact rational power once. A base of magnitude one gives a signed one. Every other case brackets
 the exact power between two dyadic endpoints (`powBounds`, `squareScreen`) and accepts the
-rounding only when both endpoints round to the same finite value (`roundEnclosure?`). If no
-working precision decides, `powInt` is the fallback. The endpoint lemmas show that the
+rounding only when both endpoints round to the same finite value (`roundEnclosure?`), with
+`powInt` as the fallback when no working precision decides. Endpoint lemmas show that the
 brackets are sound, `toReal_of_attempt` turns an accepted bracket into correct rounding, and
-`toReal_integerPowerWith` combines the three routes.
-
-The main result is `toReal_pow_of_eq_intCast`: for an IEEE format, a finite base and a finite
-exponent with integer value `n`, every finite result of `pow` equals `roundAt fmt (toReal base ^ n)`.
+`toReal_integerPowerWith` puts the three routes together.
 -/
 
 @[expose] public section

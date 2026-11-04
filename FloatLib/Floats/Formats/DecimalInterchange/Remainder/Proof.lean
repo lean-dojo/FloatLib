@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 /-!
 # Remainder representability and exact value
 
-On the finer operand grid, either the dividend or the divisor has an original
-bounded coefficient. The integer remainder is no larger than either. Hence the
-exact result fits at the preferred quantum, including subnormal results.
+Put both operands on the finer of their two grids. One of them, dividend or divisor, keeps its
+original bounded coefficient there, and the integer remainder is no larger than either. So the
+exact result fits at the preferred quantum, subnormal results included.
 -/
 
 @[expose] public section
@@ -64,7 +64,7 @@ theorem remainder_status (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : Int)
     (remainder f (.finite sx cx qx) (.finite sy cy qy)).status = {} := by
   simp [remainder, hc]
 
-/-- Every finite ordinary result uses exactly the preferred quantum. -/
+/-- Every finite ordinary result uses the preferred quantum. -/
 theorem remainder_quantum (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : Int)
     (hc : cy ≠ 0) :
     ∃ s c, (remainder f (.finite sx cx qx) (.finite sy cy qy)).value =
@@ -77,7 +77,7 @@ def remainderInteger (sx sy : Bool) (cx cy : Nat) (qx qy : Int) : Int :=
     (cy * 10 ^ (qy - min qx qy).toNat)
   if sx ^^ sy then -(n : Int) else (n : Int)
 
-/-- For finite operands and a nonzero divisor, the remainder is exactly `x - n * y`, where `n` is
+/-- For finite operands and a nonzero divisor, the remainder is `x - n * y`, where `n` is
 the nearest-even integer quotient of the exact values. -/
 theorem remainder_value (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : Int)
     (hc : cy ≠ 0) :

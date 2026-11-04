@@ -10,13 +10,13 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Quantize.Runtime
 /-!
 # Decimal integral rounding
 
-IEEE 754-2019 §§5.3.1 and 5.4.1 use the preferred quantum `max(Q(x), 0)`.
-Rounding to the integer grid never increases a valid finite coefficient. If the
-preferred quantum is representable, the result fits without additional precision
-rounding. A custom layout whose maximum quantum is negative cannot store this
-preferred quantum; this binding returns invalid through `quantizeMagnitude`.
-Both APIs preserve the sign of a successful zero result; the exact variant signals
-numerical inexactness.
+IEEE 754-2019 §§5.3.1 and 5.4.1 use the preferred quantum `max(Q(x), 0)`, so `12.5` rounds to an
+integer at quantum `0` and `12e2` keeps quantum `2`. Rounding to the integer grid never increases a
+valid finite coefficient, so when the preferred quantum is representable the result fits with no
+further precision rounding. A custom layout whose maximum quantum is negative can't store this
+preferred quantum, and there this binding returns invalid through `quantizeMagnitude`. Both APIs
+preserve the sign of a successful zero result, and only the exact variant signals numerical
+inexactness.
 -/
 
 @[expose] public section
@@ -31,7 +31,7 @@ def roundToIntegralExact (f : Format) (mode : RoundingMode) : Datum → Outcome
   | .infinity s => { value := .infinity s }
   | .finite s c q => quantizeMagnitude f mode s ((c : ℚ) * (10 : ℚ) ^ q) (max q 0)
 
-/-- Integral rounding with an explicit direction, without signaling inexact. -/
+/-- Integral rounding in a given direction, without signaling inexact. -/
 def roundToIntegral (f : Format) (mode : RoundingMode) (x : Datum) : Outcome :=
   let out := roundToIntegralExact f mode x
   { out with status := { out.status with inexact := false } }

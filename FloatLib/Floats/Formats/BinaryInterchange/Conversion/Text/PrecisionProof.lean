@@ -42,7 +42,7 @@ theorem roundTextMagnitude_nearest_error (negative : Bool) (x : Rat) (hx : 0 ≤
   simpa only [roundTextMagnitude, hcast] using roundRatEven_error_le_half x
 
 /--
-Nearest-away integer output of a nonnegative magnitude exceeds a natural bound exactly when the
+Nearest-away integer output of a nonnegative magnitude exceeds a natural bound if and only if the
 magnitude reaches the bound plus one half.
 -/
 theorem lt_roundTextMagnitude_nearestAway_iff (negative : Bool) (x : Rat) (hx : 0 ≤ x)
@@ -109,7 +109,7 @@ theorem roundTextMagnitude_le_nat (mode : IEEERoundingMode)
   | down => cases negative <;> assumption
   | away => exact hc
 
-/-- Requested decimal output has exactly the requested digit count for nonzero inputs. -/
+/-- Requested decimal output has the requested digit count for nonzero inputs. -/
 theorem significantDecimal_coefficient_bounds (mode : IEEERoundingMode)
     (value : DecimalText.Decimal) (digits : ℕ+) (hc : value.significand ≠ 0) :
     10 ^ ((digits : Nat) - 1) ≤
@@ -150,7 +150,7 @@ theorem parse_formatDyadicText_significant_hexadecimal (mode : IEEERoundingMode)
       some (HexText.significant (roundTextMagnitude mode) value digits) := by
   simp [formatDyadicText]
 
-/-- Decimal output raises inexact exactly when its numerical value changes. -/
+/-- Decimal output raises inexact if and only if its numerical value changes. -/
 theorem formatDyadicText_decimal_inexact_iff (mode : IEEERoundingMode)
     (value : Numerics.Dyadic) (digits : ℕ+) :
     (formatDyadicText mode .decimal (.significant digits) value).status.inexact = true ↔
@@ -158,7 +158,7 @@ theorem formatDyadicText_decimal_inexact_iff (mode : IEEERoundingMode)
         (DecimalText.ofDyadic value) digits).toRat ≠ value.toRat := by
   simp [formatDyadicText]
 
-/-- Hexadecimal output raises inexact exactly when its numerical value changes. -/
+/-- Hexadecimal output raises inexact if and only if its numerical value changes. -/
 theorem formatDyadicText_hexadecimal_inexact_iff (mode : IEEERoundingMode)
     (value : Numerics.Dyadic) (digits : ℕ+) :
     (formatDyadicText mode .hexadecimal (.significant digits) value).status.inexact = true ↔
@@ -213,7 +213,7 @@ theorem significantHex_nearest_error (value : Numerics.Dyadic) (digits : ℕ+) :
     simpa [HexText.significant, Numerics.Dyadic.toRat, Numerics.Dyadic.signedSignificand,
       hs, ← HexText.sixteen_zpow, neg_mul, neg_sub_neg, neg_add_eq_sub, abs_sub_comm] using h
 
-/-- Requested hexadecimal output has exactly the requested digit count for nonzero input. -/
+/-- Requested hexadecimal output has the requested digit count for nonzero input. -/
 theorem significantHex_coefficient_bounds (mode : IEEERoundingMode)
     (value : Numerics.Dyadic) (digits : ℕ+) (hc : value.significand ≠ 0) :
     16 ^ ((digits : Nat) - 1) ≤

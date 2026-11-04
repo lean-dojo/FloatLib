@@ -20,11 +20,11 @@ public import Mathlib.Algebra.Order.Algebra
 /-!
 # Runtime kernels for configured binary formats
 
-Configured binary arithmetic lifts the descriptor-model operations through the carrier selected
-by `StoragePlan`. The definitions are the total executable baseline for every precision and
-encoding policy. Correctness proofs live in `Configured.Core.Proof`.
+Configured binary arithmetic lifts the descriptor-model operations through the carrier selected by
+`StoragePlan`. The definitions are the total executable baseline for every precision and encoding
+policy, and their correctness proofs live in `Configured.Core.Proof`.
 
-The carrier conversion is deliberately explicit. The execution planner can charge for it and
+The carrier conversion is spelled out on purpose, so the execution planner can charge for it and
 prefer a direct byte, word, fixed-limb, or family-defined kernel when one is available.
 -/
 

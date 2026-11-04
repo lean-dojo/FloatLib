@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.P3109.Projection.RealSelection
 /-!
 # Square-root stochastic selection formulas
 
-The executable squared-threshold comparisons implement the floor and RNITE formulas of §4.7.4
-on the fractional part of the actual real square root. These equalities include exact roots and
-every supplied stochastic word. They make no probability or randomness-quality claim.
+Stochastic rounding of a square root needs the fractional part of the real root, which may be
+irrational. The executable squared-threshold comparisons implement the floor and RNITE formulas of
+§4.7.4 on that fractional part, for exact roots too and for every supplied stochastic word. These
+equalities say nothing about probability or the quality of the random bits.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7.4, 4.10.8.
 -/

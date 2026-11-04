@@ -11,13 +11,12 @@ public import Mathlib.Data.Nat.Sqrt
 /-!
 # Decimal square root by exact squared comparisons
 
-An integer square root brackets the scaled result. Comparing the radicand
-with the squared midpoint decides nearest rounding exactly, including ties.
-All decisions use integer and rational arithmetic.
+Decimal square root never computes an approximate root. An integer square root brackets the scaled
+result, and comparing the radicand with the squared midpoint decides nearest rounding, ties
+included. Every decision uses integer and rational arithmetic.
 
-The preferred exponent is the floor of half the operand quantum
-(IEEE 754-2019 §5.4.1). Negative zero survives, while a negative nonzero
-operand raises invalid (§§6.3, 7.2).
+The preferred exponent is the floor of half the operand quantum (IEEE 754-2019 §5.4.1). Negative
+zero survives, and a negative nonzero operand raises invalid (§§6.3, 7.2).
 -/
 
 @[expose] public section
@@ -52,7 +51,7 @@ def RoundingMode.sqrtRound (mode : RoundingMode) (radicand : ℚ) : Nat :=
   let lower := sqrtFloor radicand
   if mode.sqrtIncrement lower radicand then lower + 1 else lower
 
-/-- Rounded coefficient and quantum; an exact power-of-ten carry loses no value. -/
+/-- Rounded coefficient and quantum. An exact power-of-ten carry loses no value. -/
 def sqrtPair (f : Format) (mode : RoundingMode) (radicand : ℚ) : Nat × Int :=
   let q := sqrtQuantum f radicand
   let c := mode.sqrtRound (radicand / (10 : ℚ) ^ (2 * q))

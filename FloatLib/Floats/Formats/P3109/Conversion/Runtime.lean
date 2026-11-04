@@ -12,17 +12,17 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Conversion into P3109 formats
 
-P3109 destinations use `Rat` as their canonical exact scalar domain. This lets integers, exact
-dyadics, configured binary floats, configured posits, and other rationally decoded sources use the
-ordinary `convert`, `cast`, and destination-driven mixed-operation APIs without first passing
-through a host float.
+A P3109 destination takes its input as a `Rat`, its canonical exact scalar domain. So integers,
+exact dyadics, configured binary floats, configured posits, and anything else that decodes to a
+rational can use the ordinary `convert`, `cast`, and destination-driven mixed-operation APIs, and
+nothing passes through a host float on the way.
 
-The quantizer context is `ProjectionPolicy` itself, so `run` takes the P3109 rounding and
-saturation modes in one policy. The conversion entry points take the rounding as their `mode` and
-the `SaturationMode` as their `context`. Every policy produces a P3109 datum, so conversion
-returns success for finite, infinite, and exceptional observations. Changes to an input infinity
-or exceptional observation are reported through `mappedSpecial`, and endpoint clamping through
-`saturated`.
+The quantizer context is the `ProjectionPolicy` itself, which means `run` takes the P3109 rounding
+and saturation modes in one policy. The conversion entry points take the rounding as their `mode`
+and the `SaturationMode` as their `context`. Every policy produces a P3109 datum, so conversion
+succeeds for finite, infinite, and exceptional observations alike. If an input infinity or
+exceptional observation changes, `mappedSpecial` reports it, and `saturated` reports endpoint
+clamping.
 -/
 
 @[expose] public section
@@ -61,12 +61,11 @@ Whether the precision-rounded value of an exact rational lies strictly outside
 `[minFinite, maxFinite]`.
 
 Rounding is `roundFiniteRatToPrecision` in the requested mode, before any saturation. This is the
-after-rounding range condition of P3109 §4.7.3: an input that rounds to `maxFinite` is
-in range even when its exact magnitude exceeds `maxFinite`. Because the endpoints lie on the
-precision grid, no rounding mode moves an in-range input past them, so this condition is stronger
-than `exceedsFiniteRange`. The theorem
-`roundedExceedsFiniteRange_implies_exceedsFiniteRange` in `Conversion.Range` proves this
-implication for every mode and every supplied stochastic word.
+after-rounding range condition of P3109 §4.7.3, so an input that rounds to `maxFinite` is in range
+even when its exact magnitude exceeds `maxFinite`. The endpoints lie on the precision grid, so no
+mode moves an in-range input past them, and this condition implies `exceedsFiniteRange`.
+`roundedExceedsFiniteRange_implies_exceedsFiniteRange` in `Conversion.Range` proves that for every
+mode and every supplied stochastic word.
 -/
 @[inline] def roundedExceedsFiniteRange
     (format : Formats.P3109.Format) (mode : Formats.P3109.RoundingMode)
@@ -171,8 +170,8 @@ Conversion contract: the outcome has `run`'s word and status, and the word denot
 round-then-saturate datum.
 
 `SameDatum` compares finite values numerically and identifies NaN payloads, so the word equality
-is stated as well. The status clause is `status` itself, so this contract does not check the flags
-against a separate statement.
+is stated as well. The status clause is `status` itself, so this contract checks the flags
+against no independent statement.
 -/
 def spec :
     Quantization.Spec Formats.P3109.ProjectionPolicy

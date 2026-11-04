@@ -20,12 +20,10 @@ import Mathlib.Algebra.Order.Field.Basic
 /-!
 # Correctness of native-word dyadic comparison
 
-The runtime comparator avoids materializing shifted arbitrary-precision integers when two
-nonnegative dyadics fit the fixed-word preconditions. This module proves its word comparisons,
-exponent alignment, and swapped-operand cases equal to the reference `Dyadic` ordering.
-
-The comparison is format-independent, so binary and posit kernels can share these
-shift-and-compare theorems.
+When two nonnegative dyadics fit the fixed-word preconditions, the runtime comparator never builds
+the shifted arbitrary-precision integers, and we prove that its word comparisons, exponent
+alignment, and swapped-operand cases all equal the reference `Dyadic` ordering. Nothing here depends
+on a format. Binary and posit kernels share these shift-and-compare theorems.
 -/
 
 @[expose] public section
@@ -129,8 +127,7 @@ theorem shiftLeft128_toNat
     exact shiftLeft_lt_two_pow_of_log2_add_le _ _ 128 (by rw [← hleadingNat]; omega)
 
 /--
-Native-word comparison returns exactly the same ordering as arbitrary-precision dyadic field
-comparison.
+Native-word comparison returns the same ordering as arbitrary-precision dyadic field comparison.
 -/
 theorem compareNonnegative_eq
     (leftSignificand : UInt64) (leftExponent : Int)
@@ -254,12 +251,11 @@ private theorem twoPow128_le_word_shift_of_large_shift
     (Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hvalueNat))
 
 /--
-Two-limb-versus-word dyadic comparison is exactly the arbitrary-precision field comparison.
+Two-limb-versus-word dyadic comparison agrees with the arbitrary-precision field comparison.
 
-The proof covers all runtime exits: a zero high limb delegates to the established word
-comparator; a fitting right alignment is represented exactly in two limbs; and each capacity
-rejection has a strict ordering proof. Consequently the executable wide path introduces no
-approximation and no additional trust boundary.
+The proof covers every runtime exit. A zero high limb goes to the established word comparator, a
+right alignment that fits is represented exactly in two limbs, and each capacity rejection comes
+with a strict ordering proof. So the wide path adds no approximation and no new trust boundary.
 -/
 theorem compareNonnegative128ToWord_eq
     (leftSignificand : UInt128) (leftExponent : Int)
@@ -363,7 +359,7 @@ theorem compareNonnegative128ToWord_eq
             rw [Nat.shiftLeft_eq]
 
 /--
-The leading-exponent power-of-two test is exactly the reference arbitrary-precision dyadic
+The leading-exponent power-of-two test agrees with the reference arbitrary-precision dyadic
 comparison.
 -/
 theorem isLessPowerOfTwo_eq

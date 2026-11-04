@@ -12,11 +12,11 @@ public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 /-!
 # Executable rational-free exact posit square-root rounding
 
-A finite posit is dyadic, although its square root need not be. Correct rounding does not require
-constructing the root: for `c ≥ 0` and `x ≥ 0`, `c ≤ sqrt x` exactly when `c² ≤ x`.
-This module performs every search and threshold decision with shared exact-dyadic multiplication
-and comparison. The rational and real-valued refinement theorems live in `SquareRoot.Proof`, so
-real numbers do not enter executable kernels.
+A finite posit is dyadic, although its square root need not be. Rounding the root correctly never
+requires constructing it, because for `c ≥ 0` and `x ≥ 0`, `c ≤ sqrt x` exactly when `c² ≤ x`.
+So every search and threshold decision here is an exact-dyadic multiplication and comparison,
+done by the shared kernels. We put the rational and real-valued refinement theorems in
+`SquareRoot.Proof`, which keeps real numbers out of the executable kernels.
 -/
 
 @[expose] public section

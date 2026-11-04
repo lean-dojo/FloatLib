@@ -14,10 +14,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 /-!
 # Native-word fused multiply-add for generic binary32
 
-The fast path combines a product of at most 48 bits with the addend in one `UInt64` when the
-alignment allows it. A same-sign addend dominating the product by more than 48 scale bits is
-returned unchanged, and other large gaps with a large enough dominant operand shift the smaller
-one right with a sticky bit. Remaining gaps use exact dyadic alignment, which preserves
+On the fast path, a product of at most 48 bits and the addend share one `UInt64` whenever the
+alignment allows it, and a same-sign addend that dominates the product by more than 48 scale bits
+comes back unchanged. Other large gaps with a large enough dominant operand shift the smaller one
+right with a sticky bit, and the remaining gaps use exact dyadic alignment, which preserves
 tie-breaking. NaN and infinity handling stays outside this module, and `Fma.Proof` has the proofs.
 -/
 
@@ -63,14 +63,15 @@ modulo 64, so a count of 64 or more is never an exact shift.
   shift < 64 && (value >>> shift) <<< shift == value
 
 /--
-Machine-word implementation of finite binary32 fused multiply-add.
+Machine-word implementation of finite binary32 fused multiply-add. The exact product has at most 48
+bits.
 
-The exact product has at most 48 bits. When the aligned operands also fit in one `UInt64`, the
-product and addend are combined without building dyadics. An addend dominating a same-sign product
-by more than 48 scale bits is returned unchanged. Larger gaps keep three guard bits of a normal
-addend, or the whole product when it is at least `2^46`, and shift the other operand right with a
-sticky bit, which rounds like the exact sum. Remaining gaps use the exact path
-`fmaExactFinite?`.
+* When the aligned operands also fit in one `UInt64`, product and addend are combined without
+  building dyadics.
+* An addend dominating a same-sign product by more than 48 scale bits is returned unchanged.
+* Larger gaps keep three guard bits of a normal addend, or the whole product when it is at least
+  `2^46`, and shift the other operand right with a sticky bit, which rounds like the exact sum.
+* Remaining gaps use the exact path `fmaExactFinite?`.
 -/
 @[inline] def fmaFiniteWord? (x y z : Value) : Option Value :=
   let xBits := toUInt32 x

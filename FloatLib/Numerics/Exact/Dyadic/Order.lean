@@ -12,13 +12,13 @@ public import FloatLib.Numerics.Exact.Dyadic.Comparison.Proof
 /-!
 # Rational semantics of exact-dyadic order
 
-`Dyadic` stores a signed natural significand and an integral power of two. Its executable
-comparison routines avoid constructing rationals: they align powers of two, compare natural
-magnitudes, and account for signs. This module proves that those decisions are exactly the
-ordering decisions made by `Dyadic.toRat`.
+`Dyadic` stores a signed natural significand and an integral power of two. Its executable comparison
+routines never construct a rational. They align powers of two, compare natural magnitudes, and
+account for signs, and this module proves that each of those decisions is the ordering decision
+`Dyadic.toRat` makes.
 
-The correctness arguments are separate from execution. Field-level comparisons avoid temporary
-`Dyadic` records, while format proofs can use rational inequalities. The later lemmas show that
+We keep the correctness arguments apart from execution. Field-level comparisons avoid temporary
+`Dyadic` records, while format proofs get to use rational inequalities. The later lemmas show that
 the leading-position comparator agrees with full exponent alignment.
 -/
 
@@ -198,9 +198,9 @@ theorem compare_eq_eq_iff (left right : Dyadic) :
 /-!
 ## Field-level scalable comparison
 
-Optimized rounders often hold the sign, significand, and exponent in local variables rather than
-in a constructed `Dyadic`. These lemmas connect that execution path to the same rational order
-without requiring runtime record construction.
+An optimized rounder often holds the sign, significand, and exponent in local variables and never
+constructs a `Dyadic`, and these lemmas connect that execution path to the same rational order, with
+no record built at runtime.
 -/
 
 private theorem positive_toRat_bounds
@@ -265,8 +265,8 @@ private theorem positive_toRat_lt_of_leading_lt
 /--
 Leading-position magnitude comparison equals ordinary exact nonnegative comparison.
 
-The optimized branch avoids exponent-gap allocation; this theorem keeps the existing exact
-dyadic comparator as its mathematical specification.
+The optimized branch avoids exponent-gap allocation, and this theorem keeps the exact dyadic
+comparator as its mathematical specification.
 -/
 theorem Internal.compareNonzeroMagnitudes_eq_compareNonnegativeFields
     (leftSignificand rightSignificand : Nat)
@@ -361,7 +361,7 @@ private theorem compare_zero_mk
   cases negative <;> rfl
 
 /--
-Exponent-scalable field comparison has exactly the ordinary exact-dyadic result.
+Exponent-scalable field comparison gives the same result as ordinary exact-dyadic comparison.
 
 Kernels can use this equality to justify comparisons over large exponent ranges without
 materializing an integer whose width is the exponent gap.

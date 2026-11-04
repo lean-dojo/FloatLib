@@ -12,9 +12,9 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Runtime conversion sources for configured OCP MX values
 
-E8M0 scales and complete MX blocks expose their exact observations as conversion sources.
-No destination quantizer is installed because construction requires explicit scale-selection,
-element-rounding, length, and exceptional-value policies.
+You can convert from an E8M0 scale or a complete MX block, because both have exact observations.
+Converting into them is another matter. Building a block means choosing a scale, an element
+rounding, a length, and a policy for exceptional values, so no destination quantizer is installed.
 -/
 
 @[expose] public section

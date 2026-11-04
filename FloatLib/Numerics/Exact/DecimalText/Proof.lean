@@ -15,10 +15,11 @@ import all Init.Data.Repr
 /-!
 # Decimal character preservation
 
-Scanning the digits printed for a natural recovers it, and parsing the characters printed for a
-decimal record recovers the record, so `parse` returns the exact rational of formatted text. These
-are statements about the actual character lists, not an assumed parser/formatter inverse. The
-dyadic conversion then preserves value by the identity `10^k = 2^k * 5^k`.
+Scanning the digits printed for a natural number gives the number back, and parsing the characters
+printed for a decimal record gives the record back. So `parse` returns the exact rational of
+formatted text. We prove this about the actual character lists and don't assume that the parser and
+formatter are inverses, and from there the dyadic conversion preserves value by the identity
+`10^k = 2^k * 5^k`.
 -/
 
 @[expose] public section

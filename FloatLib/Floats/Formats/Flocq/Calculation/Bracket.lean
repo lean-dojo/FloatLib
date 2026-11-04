@@ -11,10 +11,11 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Bracketing a Real Value
 
-A location records whether an input is the lower endpoint of a half-open interval or, for an
-interior point, whether it lies below, at, or above the midpoint. The refinement rules transfer
-this information from a subdivision cell to its enclosing interval. These are the Lean
-counterparts of Flocq's `Calc.Bracket` location semantics.
+To round a real you don't need its value, only where it sits between two grid points, and a
+location records that. Either the input is the lower endpoint of a half-open interval, or it's an
+interior point lying below, at, or above the midpoint, which is all nearest rounding asks. The
+refinement rules carry a location from a subdivision cell up to the enclosing interval. Everything
+here is the Lean counterpart of Flocq's `Calc.Bracket` location semantics.
 -/
 
 @[expose] public section

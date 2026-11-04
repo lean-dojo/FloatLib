@@ -12,8 +12,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Hyperbolic.Runtime
 /-!
 # Correct rounding of configured posit hyperbolic functions
 
-Refinement holds for every lawful codec. The real-rounding and exceptional-domain theorems
-therefore apply to every configured width and carrier.
+Each configured hyperbolic function refines its model operation for every lawful codec, which the
+`toModel_tanH` family of simp lemmas records, so the real-rounding theorems such as
+`tanH_eq_real` and the exceptional-domain ones such as `arcCosH_eq_nar_of_lt_one` apply to every
+configured width and carrier.
 -/
 
 @[expose] public section

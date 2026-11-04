@@ -11,15 +11,15 @@ public import FloatLib.Floats.ExecFloat.Core.Operations
 /-!
 # Reference arithmetic for `ExecFloat`
 
-Names for the six reference operations supplied by arithmetic capabilities. Use them with the
-refinement equations in `ExecFloat.Proof` to reason about an executable arithmetic expression.
+These are names for the six reference operations that arithmetic capabilities supply. Use them with
+the refinement equations in `ExecFloat.Proof` to reason about an executable arithmetic expression.
 
-Each reference operation is the `spec` field of the format's `Capability`, and `Capability` is
-indexed by the planning policy `[Backend.PolicyFor F]` because the same class also stores the
-selected implementation. Each refinement theorem refers to the specification in the current
-instance. Policy independence across distinct instances requires them to supply the same
-specification; the capability class imposes no separate law relating those instances. The default
-`PolicyFor` instance is normally inferred at use sites.
+Each reference operation is the `spec` field of the format's `Capability`. Because the same class
+also stores the selected implementation, `Capability` is indexed by the planning policy
+`[Backend.PolicyFor F]`, and each refinement theorem refers to the specification in the current
+instance. Policy independence across distinct instances needs them to supply the same specification,
+since the capability class imposes no law relating those instances. The default `PolicyFor` instance
+is normally inferred at use sites.
 -/
 
 @[expose] public section

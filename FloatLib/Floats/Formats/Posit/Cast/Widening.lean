@@ -11,12 +11,12 @@ public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
 /-!
 # Exact widening of posit words
 
-Appending zero bits preserves the decoded value, including zero and `NaR`, whenever the
-destination is at least as wide as the source. For finite inputs, rounding the exact source
-value at the destination therefore produces precisely that extended word.
+You widen a posit by appending zero bits, and as long as the destination is at least as wide as
+the source, the decoded value doesn't change, zero and `NaR` included. So for a finite input,
+rounding the exact source value at the destination gives back that extended word.
 
-The proof iterates the decoder's one-bit precision identity; neither the storage backend nor
-particular widths enter the argument.
+All the proof does is iterate the decoder's one-bit precision identity. Neither the storage backend
+nor any particular width enters the argument.
 
 ## References
 
@@ -117,7 +117,7 @@ theorem toRat?_widen {source : Format} (target : Format) (hw : source.bits ≤ t
     hsign, hmag, nonnegativeRatAt_widen source target hw
       (magnitudeBits_lt_signMask_of_ne_nar value hn)]
 
-/-- Rounding a finite value into a wider descriptor appends exactly the additional zero bits. -/
+/-- Rounding a finite value into a wider descriptor just appends the additional zero bits. -/
 theorem roundRat_widen {source : Format} (target : Format) (hw : source.bits ≤ target.bits)
     (value : Model source) (q : Rat) (hq : value.toRat? = some q) :
     roundRat target q =

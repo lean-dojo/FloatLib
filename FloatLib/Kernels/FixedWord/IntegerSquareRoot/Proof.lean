@@ -19,15 +19,15 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Verified native and arbitrary-precision integer square root
 
-`sqrtIter_toNat` identifies the native Newton iteration with `Nat.sqrt.iter`, and `sqrt_toNat`
-proves that its initialization computes the floor square root. `sqrtChecked_toNat` does the same
-for the checked floating-point candidate. The native average cannot overflow, and the runtime
-module proves termination by a strictly decreasing guess.
+For words, `sqrtIter_toNat` identifies the native Newton iteration with `Nat.sqrt.iter`,
+`sqrt_toNat` proves that its initialization computes the floor square root, and `sqrtChecked_toNat`
+does the same for the checked floating-point candidate. The native average can't overflow, and the
+runtime module proves termination by a strictly decreasing guess.
 
-`checkRoot?_eq` certifies the increasing-precision candidate by the defining square inequalities.
-`sqrtRem_eq` also gives the remainder, with full-precision iteration as the fallback.
-`natSqrt_eq_sqrtNat` installs both implementations as a compiler substitution for `Nat.sqrt`,
-keeping the native-word branch below `2^64`.
+Larger inputs get the increasing-precision candidate, which `checkRoot?_eq` certifies by the
+defining square inequalities. `sqrtRem_eq` also gives the remainder, with full-precision iteration
+as the fallback. Finally `natSqrt_eq_sqrtNat` installs both implementations as a compiler
+substitution for `Nat.sqrt`, with the native-word branch below `2^64`.
 -/
 
 @[expose] public section

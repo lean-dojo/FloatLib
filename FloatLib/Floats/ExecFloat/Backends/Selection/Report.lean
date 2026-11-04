@@ -11,8 +11,8 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Scoring
 /-!
 # Backend-selection reports
 
-Inspectable explanations of deterministic selector decisions. Reports are intended for
-development tools and calibration; executable arithmetic does not construct them.
+These are inspectable explanations of the deterministic selector's decisions. They're meant for
+development tools and calibration, and executable arithmetic never builds them.
 -/
 
 @[expose] public section
@@ -52,18 +52,18 @@ structure Assessment where
   deriving DecidableEq, Repr
 
 /--
-Explain the candidate at position `index` of a candidate list whose selected member is at
-position `selectedIndex`, under `policy`.
+Explain the candidate at position `index` of a candidate list whose selected member is at position
+`selectedIndex`, under `policy`.
 
-Candidates are identified by position rather than by comparing estimates, so identical estimates
-do not create multiple selected assessments. The selected index takes precedence over memory
-limits: the mandatory baseline may be selected even when it exceeds either cap. Memory rejection
-describes only unselected candidates, and it records that the candidate exceeds that cap
+Candidates are identified by position, so identical estimates don't create several selected
+assessments. The selected index takes precedence over memory limits, which means the mandatory
+baseline may be selected even when it exceeds either cap. Memory rejection describes only unselected
+candidates and records that the candidate exceeds that cap
 (`Candidate.assess_eq_rejectedResidentMemory_iff`,
-`Candidate.assess_eq_rejectedTemporaryMemory_iff`). For an alternative this is why the selector
-skipped it (`Candidate.admissible_eq_false_of_assess_rejected`). The selector never applies the
-caps to the baseline (`selectCandidate`), so an unselected baseline above a cap lost on score or
-tie-break, although its status names the cap.
+`Candidate.assess_eq_rejectedTemporaryMemory_iff`). For an alternative, that's why the selector
+skipped it (`Candidate.admissible_eq_false_of_assess_rejected`). The selector never applies the caps
+to the baseline (`selectCandidate`), so an unselected baseline above a cap lost on score or
+tie-break, even though its status names the cap.
 -/
 def Candidate.assess
     (policy : Policy) (selectedIndex index : Nat) (candidate : Candidate) : Assessment :=
@@ -251,7 +251,7 @@ structure SelectionReport where
 Compute the same result as `selectCandidate` under `policy`, together with an assessment of every
 candidate in `candidates`: the alternatives in order, then the baseline.
 
-This is for inspection and calibration; arithmetic projects the stored `Certified` implementation
+It's meant for inspection and calibration. Arithmetic projects the stored `Certified` implementation
 and never constructs a report on the hot path.
 -/
 def selectionReport

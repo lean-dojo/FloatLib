@@ -12,12 +12,13 @@ public import FloatLib.Floats.Formats.Flocq.Calculation.Round
 /-!
 # Rounded Arithmetic on Mantissa/Exponent Values
 
-Rounded arithmetic on `FloatRep` values uses exact representation operations where finite radix
-expansions suffice. Addition, subtraction, and multiplication first use their exact `FloatRep`
-operations. Division and square root need not have finite radix expansions, so they are formed
-over the reals and rounded directly into the selected format.
+Rounded arithmetic on `FloatRep` values computes exactly wherever it can. A sum, difference or
+product of two finite radix expansions is again one, so addition, subtraction, and multiplication
+start with their exact `FloatRep` operations. Division and square root can leave that world, since
+`1/3` has no finite binary expansion, so they're formed over the reals and rounded straight into
+the selected format.
 
-These definitions model finite rounded arithmetic. IEEE exceptional behavior for zero divisors,
+All of this models finite rounded arithmetic. IEEE exceptional behavior for zero divisors,
 negative square roots, infinities, and NaNs belongs to `FloatLib.Floats.ExecFloat`.
 -/
 

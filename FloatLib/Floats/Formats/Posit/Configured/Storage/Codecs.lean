@@ -12,8 +12,9 @@ public import FloatLib.Floats.ExecFloat.Carrier
 /-!
 # Storage codecs for configured posits
 
-Every storage plan uses the same canonical `Code` conversion pair. The plan remains reducible, so
-a closed configured posit still specializes to its selected primitive, pair, or wide carrier.
+All storage plans share the canonical `Code` conversion pair as their codec. We leave the plan
+reducible, so a closed configured posit specializes to its selected primitive, pair, or wide
+carrier.
 -/
 
 @[expose] public section

@@ -11,12 +11,12 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 /-!
 # Generic rounding properties
 
-Rounding in the generic format scales to an integer, applies a valid integer rounding rule, and
-scales back by a positive radix power. This construction gives the basic order sandwich:
-directed down is below every valid rounding, and directed up is above it.
+Generic-format rounding scales to an integer, applies a valid integer rounding rule, and scales
+back by a positive radix power. From that construction comes the basic order sandwich: rounding
+down gives a value at or below every valid rounding, and rounding up one at or above it.
 
-These results do not assume a concrete precision family. They form the reusable real-valued layer
-used when proving executable binary and rational rounding algorithms.
+No concrete precision family is assumed. These results are the reusable real-valued layer we use
+when proving executable binary and rational rounding algorithms.
 -/
 
 @[expose] public section

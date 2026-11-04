@@ -12,9 +12,9 @@ public import Mathlib.Tactic.Attr.Register
 /-!
 # Attributes for representation-independent numerical automation
 
-The attributes are declared separately so numerical families can register semantic and concrete
+We declare the attributes on their own, so numerical families can register semantic and concrete
 rules without importing the tactic implementation. Semantic rules must be proved equations or
-equivalences. Concrete reduction rules are used only by the explicit closed-term phase.
+equivalences. Concrete reduction rules are used only in the separate closed-term phase.
 -/
 
 declare_aesop_rule_sets [Numerics]

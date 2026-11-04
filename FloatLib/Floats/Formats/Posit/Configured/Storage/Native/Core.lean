@@ -11,8 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Code.Runtime
 /-!
 # Direct native-word capability for configured posits
 
-`NativeCode` records when a built-in packed carrier can be read and written through `UInt64`
-without reconstructing the exact-width model. Its laws connect that fast view to `Code.toModel`.
+Some built-in packed carriers can be read and written through `UInt64` without rebuilding the
+exact-width model, and `NativeCode` records which ones. Its laws connect that fast view to
+`Code.toModel`.
 -/
 
 @[expose] public section
@@ -38,7 +39,7 @@ class NativeCode (format : Format) (plan : StoragePlan format) where
     ∀ code,
       Code.toModel code =
         Model.ofNatBits (format := format) (toUInt64 code).toNat
-  /-- Direct packing denotes exactly the supplied complete encoding. -/
+  /-- Direct packing decodes to the supplied complete encoding. -/
   toModel_ofNat :
     ∀ bits hbits,
       Code.toModel (ofNat bits hbits) =

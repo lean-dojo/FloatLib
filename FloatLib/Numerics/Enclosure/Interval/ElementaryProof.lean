@@ -15,10 +15,10 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Real containment for interval elementary functions
 
-Endpoint monotonicity proves the exponential, logarithm, arctangent, and square-root bounds.
-The sine and cosine proofs use Mathlib's global Lipschitz estimates, so their intervals remain
-valid across extrema. The square-root proof reduces to `Nat.sqrt_le'` and `Nat.lt_succ_sqrt'`.
-No theorem restricts an interval's members to rational values.
+Monotonicity at the endpoints proves the exponential, logarithm, arctangent, and square-root bounds.
+Sine and cosine use Mathlib's global Lipschitz estimates, so their intervals stay valid across
+extrema. The square-root proof comes down to `Nat.sqrt_le'` and `Nat.lt_succ_sqrt'`. None of these
+theorems restricts an interval's members to rational values.
 -/
 
 public section

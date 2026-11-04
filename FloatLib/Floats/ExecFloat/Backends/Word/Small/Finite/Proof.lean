@@ -15,12 +15,11 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 /-!
 # Correctness of native finite decoding for one-word formats
 
-The decoder of `Finite.Runtime` extracts the same sign, significand and stored exponent as the
-format-generic decoder. Addition, fused multiply-add and positive square root then reuse the
-corresponding component kernels.
-
-With this bridge in one place, no operation proof deals with storage masks and field shifts.
-Runtime imports stay small, and the later refinements reason about exact dyadics.
+The decoder in `Finite.Runtime` extracts the same sign, significand, and stored exponent as the
+format-generic decoder, and addition, fused multiply-add, and positive square root then reuse the
+corresponding component kernels. With this bridge in one place, no operation proof has to deal with
+storage masks and field shifts. Runtime imports stay small, and the later refinements reason about
+exact dyadics.
 -/
 
 @[expose] public section

@@ -19,12 +19,12 @@ import Mathlib.Tactic.Ring.RingNF
 # Candidate semantics for direct Posit field rounding
 
 The field-oriented lower-candidate constructor denotes the Posit Standard's one-bit-wider `U1`
-boundary. `Layout` proves the meaning of raw regime/tail words; the theorems below instantiate
-those results with normalized exponent and significand fields and establish the range and
-threshold facts consumed by the interior-rounding proof.
+boundary. `Layout` proves what raw regime/tail words mean. Below we instantiate those results with
+normalized exponent and significand fields and establish the range and threshold facts that the
+interior-rounding proof consumes.
 
-The split between nonnegative and negative regimes mirrors the two encodings. Both use the shared
-finite-stream and tail semantics in `GuardSticky.Spec`.
+Nonnegative and negative regimes are handled apart because the two encodings differ, but both use
+the shared finite-stream and tail semantics of `GuardSticky.Spec`.
 -/
 
 @[expose] public section
@@ -45,9 +45,10 @@ theorem regimeScale_succ (regime : Int) :
 /-!
 ## Saturated regime endpoints
 
-The endpoint decision depends only on the normalized rational scale, not on the representation
-that produced it. Keeping these lemmas over an arbitrary rational significand lets exact dyadics,
-quotient prefixes, and other arithmetic kernels share the same overflow and underflow proof.
+Whether a result saturates depends on its normalized rational scale and on nothing about the
+representation that produced it. So these lemmas are stated over an arbitrary rational
+significand, and exact dyadics, quotient prefixes, and other arithmetic kernels share one overflow
+and underflow proof.
 -/
 
 /--
@@ -139,8 +140,8 @@ theorem normalizedTarget_lt_minPositive_of_saturatedScale
 /-!
 ## Layout of the direct lower candidate
 
-Both regime signs pack the candidate as a regime prefix followed by the retained tail. The
-lemmas below expose that shape and convert the natural run length back to the integer regime.
+For either regime sign, the candidate is packed as a regime prefix followed by the retained tail.
+These lemmas expose that shape and turn the natural run length back into the integer regime.
 -/
 
 /-- A positive-regime lower candidate is its regime prefix plus the retained tail. -/
@@ -295,8 +296,8 @@ theorem lowerCandidateValue_le_normalized_positive
 /--
 The direct negative-regime candidate is never above its normalized exact target.
 
-As in the positive-regime theorem, every live comparison reduces to the retained finite stream;
-the regime scale is strictly positive and therefore preserves order.
+As in the positive-regime theorem, every live comparison reduces to the retained finite stream.
+The regime scale is strictly positive, so it preserves order.
 -/
 theorem lowerCandidateValue_le_normalized_negative
     (format : Format) (targetExponent regime : Int)
@@ -325,7 +326,7 @@ The successor of an interior candidate is strictly above the normalized target.
 `base` is the regime prefix of the candidate and `trailing` the number of retained tail positions.
 When the complete exponent/fraction stream fits, the candidate is exact and global Posit
 monotonicity proves the claim. Otherwise the successor either increments the retained tail or
-carries into the next regime, which `hinterior` and `hcarry` decode; those cases follow from
+carries into the next regime, which `hinterior` and `hcarry` decode. Those cases follow from
 finite-stream order and the universal `trailingRat < 16` regime bound.
 -/
 private theorem normalized_lt_succ_of_interior
@@ -512,7 +513,7 @@ private theorem lowerCodeForPositive_eq_lowerCandidateFromFields_of_bracket
     exact hsuccessor hnext
 
 /--
-For a positive regime, direct field packing returns exactly the specification's lower code.
+For a positive regime, direct field packing returns the specification's lower code.
 
 The normalized-field invariants imply that the candidate lies below the target and its successor
 lies above it. This bracket identifies the result with the specification's bisection result.
@@ -544,7 +545,7 @@ theorem lowerCodeForPositive_eq_lowerCandidateFromFields_positive
       hregime hexponent hlower hupper hscale)
 
 /--
-For a negative regime, direct field packing returns exactly the specification's lower code.
+For a negative regime, direct field packing returns the specification's lower code.
 
 Together with the positive-regime theorem this proves direct lower-code construction for every
 interior normalized target, independently of the machine-word implementation that produced its
@@ -669,7 +670,7 @@ theorem lowerCandidateFromFields_succ_lt_signMask_positive
 /--
 The successor of an interior negative-regime candidate remains below the posit sign bit.
 
-Here the leading regime marker occupies bit `trailing`; the tail and one rounding increment fit
+Here the leading regime marker occupies bit `trailing`. The tail plus one rounding increment fits
 below the next power of two, which itself lies strictly below the sign-bit position.
 -/
 theorem lowerCandidateFromFields_succ_lt_signMask_negative

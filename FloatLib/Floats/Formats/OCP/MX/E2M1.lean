@@ -11,13 +11,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 /-!
 # OCP MX E2M1
 
-`FloatLib.Floats.E2M1` is the four-bit floating element used by OCP microscaling formats, with
-type-level identity `E2M1.Family`. It stores its code in the low four bits of a `UInt8`, and the
-high-bit invariant is erased at runtime. Balanced and throughput planning select exhaustive proved
-tables for all six operations, including the 4,096-entry fused-multiply-add table. Latency planning
-selects arithmetic kernels.
+`FloatLib.Floats.E2M1` is the four-bit floating element of the OCP microscaling formats, with
+type-level identity `E2M1.Family`. Its code sits in the low four bits of a `UInt8`, and the
+invariant that the high bits are clear is erased at runtime. Sixteen values make every table
+small. Even fused multiply-add, with three operands, needs only 4,096 entries, so balanced and
+throughput planning use exhaustive proved tables for all six operations. Latency planning picks the
+arithmetic kernels.
 
-This package implements the scalar element format. OCP block semantics and scale selection are
+This package is the scalar element format only. OCP block semantics and scale selection are
 defined under `FloatLib.Floats.Formats.OCP.MX.Standard`.
 
 ## Reference

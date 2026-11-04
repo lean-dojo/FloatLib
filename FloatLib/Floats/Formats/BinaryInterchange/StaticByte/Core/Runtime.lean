@@ -17,24 +17,23 @@ public import FloatLib.Numerics.Bitwise
 # Static-byte runtime representation
 
 Nominal binary formats of at most eight bits share a compact byte carrier, family interface,
-model adapters, raw table execution, and exact operation specifications. The persistent code is
-a `UInt8` together with an erased range proof. No `FloatFormat`, `BitVec`, or
+model adapters, raw table execution, and exact operation specifications. A value's persistent
+code is a `UInt8` together with an erased range proof. No `FloatFormat`, `BitVec`, or
 arbitrary-precision integer is stored in a value.
 
-Each standards package supplies a nominal type and a `Family` instance. The instance fixes the
+Each standards package supplies a nominal type and a `Family` instance. That instance fixes the
 binary-interchange proof model, proves that its codes fit in one byte, and names the monomorphic
-kernels used at runtime. Table construction is isolated in `Core.Construction`; conversion and
-lifting theorems are isolated in `Core.Proof`.
+kernels used at runtime. Table construction is in `Core.Construction`, and the conversion and
+lifting theorems are in `Core.Proof`.
 
-Nominal `Family` and `Plans.TablePlan` instances use `always_inline` so the compiler can eliminate
-their closed format metadata and policy branches at a public call. The named table definitions
-remain shared and lazy.
+Nominal `Family` and `Plans.TablePlan` instances use `always_inline`, so at a public call the
+compiler can eliminate their closed format metadata and policy branches. Named table definitions
+stay shared and lazy. OCP, IEEE, ONNX, and custom format packages can share these
+carrier and refinement interfaces, while each descriptor still determines its own exceptional-value
+policy.
 
-OCP, IEEE, ONNX, and custom format packages can share these carrier and refinement interfaces.
-Each descriptor still determines its own exceptional-value policy.
-
-Lean represents subtypes identically to their data carrier, so `Code F` has the runtime
-representation of `UInt8`; its bound is proof-only. See Lean `Init.Prelude`,
+Lean represents a subtype the same way as its data carrier, so `Code F` has the runtime
+representation of `UInt8` and its bound is proof-only. See Lean `Init.Prelude`,
 <https://github.com/leanprover/lean4/blob/v4.35.0/src/Init/Prelude.lean#L697-L699>.
 
 `benchmarks/scripts/checks/static-lowbit-codegen.sh` checks the intended allocation and

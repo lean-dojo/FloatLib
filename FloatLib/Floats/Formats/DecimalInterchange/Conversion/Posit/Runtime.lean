@@ -12,17 +12,15 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Runtime
 /-!
 # Numeric conversion between posits and decimal interchange
 
-Both directions decode the source exactly and round once to the destination.
-Posit-to-decimal conversion uses the requested decimal rounding direction and
-prefers quantum zero on an exact result. This preferred quantum is the library's
-nondecimal-conversion policy; the Posit Standard does not prescribe decimal cohorts.
-For an exact result, projection chooses the quantum closest to zero among that
-result's representable cohort members, including when the layout excludes quantum zero.
+Both directions decode the source exactly and round once to the destination. Posit to decimal uses
+the requested decimal rounding direction and prefers quantum zero on an exact result. That
+preference is our policy for every conversion from a non-decimal format, and the Posit Standard
+doesn't prescribe decimal cohorts. For an exact result, projection picks the quantum closest to
+zero among the representable cohort members, even in a layout without quantum zero.
 
-Posit zero becomes positive decimal zero. NaR becomes a quiet decimal NaN with
-zero payload and clear status. In the other direction, decimal NaNs and either
-infinity become NaR, either signed zero becomes posit zero, and finite values use
-the standard appended-bit posit rounding rule.
+Posit zero becomes positive decimal zero, and NaR becomes a quiet decimal NaN with zero payload and
+clear status. Going the other way, decimal NaNs and both infinities become NaR, either signed zero
+becomes posit zero, and finite values follow the standard appended-bit posit rounding rule.
 
 ## References
 
@@ -45,7 +43,7 @@ def fromPosit {fmt : Posit.Format} (target : Format) (mode : RoundingMode)
   | none => { value := .nan false false 0 }
 
 /-- Convert a decimal datum to an arbitrary-width posit. Finite values are rounded
-once by the Posit Standard rule; all decimal nonfinite values become NaR. -/
+once by the Posit Standard rule, and all decimal nonfinite values become NaR. -/
 def toPosit (target : Posit.Format) (x : Datum) : Posit.Model target :=
   match x.toRat? with
   | some value => Posit.Model.roundRat target value

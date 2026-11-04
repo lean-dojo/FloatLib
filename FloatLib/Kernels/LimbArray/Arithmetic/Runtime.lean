@@ -11,23 +11,22 @@ public import FloatLib.Kernels.LimbArray.Core.Runtime
 /-!
 # Limb arrays: addition, subtraction, and multiplication
 
-The carry-propagating loops of multiple-precision integer arithmetic over `LimbArray`. Each loop
-recurses on the number of limbs still to process and writes its result with
-`Array.setIfInBounds`. The 32-bit limbs leave room for the addition and multiplication
-intermediates in `UInt64`.
+These are the carry-propagating loops of multiple-precision integer arithmetic over `LimbArray`.
+Each loop recurses on the number of limbs it still has to process and writes its result with
+`Array.setIfInBounds`. Because the limbs are 32 bits wide, the addition and multiplication
+intermediates fit in `UInt64`.
 
-* `carryLoop` adds one word at a limb position and propagates the carry upward. It is the
-  primitive behind `addWordAt`, `addAt`, and the increment used by rounding.
-* `add` and `sub` are the schoolbook sum and difference with an incoming carry or borrow; `sub`
+* `carryLoop` adds one word at a limb position and propagates the carry upward. It is the primitive
+  behind `addWordAt`, `addAt`, and the increment used by rounding.
+* `add` and `sub` are the schoolbook sum and difference with an incoming carry or borrow. `sub`
   assumes its result is nonnegative and the incoming borrow is at most one.
-* `mul` is the schoolbook product; each row adds one limb of the left operand times the right
+* `mul` is the schoolbook product. Each row adds one limb of the left operand times the right
   operand at the row's offset.
 
-`Arithmetic.Proof` states each kernel's effect on `toNat`, including the required capacity,
-borrow, and accumulator invariants.
-
-For the row-accumulation multiplication algorithm, see Richard P. Brent and Paul Zimmermann,
-*Modern Computer Arithmetic* (2010), §1.3.1, Algorithm 1.2 (`BasecaseMultiply`).
+`Arithmetic.Proof` states each kernel's effect on `toNat`, with the capacity, borrow, and
+accumulator invariants it needs. For the row-accumulation multiplication algorithm, see Richard P.
+Brent and Paul Zimmermann, *Modern Computer Arithmetic* (2010), §1.3.1, Algorithm 1.2
+(`BasecaseMultiply`).
 -/
 
 @[expose] public section
@@ -57,7 +56,7 @@ def carryLoop : Nat → Nat → UInt32 → Array UInt32 → Array UInt32
 /--
 Add `w * 2^k` to the array.
 
-The word is split at the limb boundary containing bit `k`; both halves are added with carry
+The word is split at the limb boundary containing bit `k`, and both halves are added with carry
 propagation. The result is meaningful when the sum still fits the stored limbs.
 -/
 def addAt (v : LimbArray) (k : Nat) (w : UInt32) : LimbArray :=
@@ -90,8 +89,8 @@ def subLoop (a b : LimbArray) : Nat → Nat → UInt32 → Array UInt32 → Arra
 /--
 The difference `a - b - borrow`, in as many limbs as the wider operand.
 
-The result is exact when `borrow ≤ 1` and `b + borrow ≤ a`; `Arithmetic.Proof.toNat_sub`
-states that contract.
+The result is exact when `borrow ≤ 1` and `b + borrow ≤ a`, which is the contract
+`Arithmetic.Proof.toNat_sub` states.
 -/
 def sub (a b : LimbArray) (borrow : UInt32 := 0) : LimbArray :=
   let count := max a.size b.size
@@ -100,8 +99,8 @@ def sub (a b : LimbArray) (borrow : UInt32 := 0) : LimbArray :=
 /-! ## Multiplication -/
 
 /--
-Add `m` times `count` limbs of `b`, starting at limb `j`, into `out` at offset `offset + j`.
-Store the final carry at `offset + j + count`; that slot must initially be zero.
+Add `m` times `count` limbs of `b`, starting at limb `j`, into `out` at offset `offset + j`. The
+final carry goes to `offset + j + count`, and that slot must start out zero.
 
 Every intermediate `m * b_j + out_(offset + j) + carry` is below `2^64`.
 -/

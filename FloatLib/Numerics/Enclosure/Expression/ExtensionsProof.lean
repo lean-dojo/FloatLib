@@ -12,16 +12,19 @@ public import FloatLib.Numerics.Enclosure.Expression.Extensions
 /-!
 # Containment for registered operations
 
-Parallel tables of executable enclosures and real functions are connected by containment proofs.
-Only the executable table participates in the Boolean check. The semantic table and its proofs
-enter the soundness theorem, preserving the same trust boundary as the built-in backend.
+Two parallel tables, one of executable enclosures and one of real functions, are connected by
+containment proofs. Only the executable table takes part in the Boolean check. The semantic table
+and its proofs enter the soundness theorem, so registered operations keep the same trust boundary as
+the built-in backend.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Numerics.Interval
 
-/-- Interpret a registered operation index; unavailable entries have an unused default value. -/
+/--
+Interpret a registered operation index. Unavailable entries get a default value that is never used.
+-/
 noncomputable def extensionValues (functions : List (List ℝ → ℝ)) (index : Nat) : List ℝ → ℝ :=
   functions[index]?.getD (fun _ => 0)
 

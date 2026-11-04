@@ -12,17 +12,17 @@ public import FloatLib.Floats.ExecFloat.Backends.Generic.Kernel.Runtime
 /-!
 # Two-word fused multiply-add runtime
 
-The two-word counterpart of `NativeSmallWordFma`. The exact product of the two significands is a
-four-word value in the product rounder's coordinate; the addend significand joins it either by an
-exact left shift or, when the scales are far apart, through three guard positions and a sticky bit
-below the operand at the larger scale. The combined four-word magnitude is reduced to two words
-with a sticky bit (`normalizeJam128`) and rounded once by the two-word rounder of
-`Addition.Runtime` at scale offset `0`. Correctness proofs live in `Fma.Proof`.
+This is the two-word counterpart of `NativeSmallWordFma`. Here the exact product of the two
+significands is a four-word value in the product rounder's coordinate. The addend significand joins
+it either by an exact left shift or, when the scales are far apart, through three guard positions
+and a sticky bit below the operand at the larger scale. Their combined four-word magnitude is
+reduced to two words with a sticky bit (`normalizeJam128`) and rounded once by the two-word rounder
+of `Addition.Runtime` at scale offset `0`. Correctness proofs live in `Fma.Proof`.
 
-The kernel serves eligible layouts with at most 120 fraction bits and 32 exponent bits, which
-keep every intermediate in four words and every scale in one. It returns `none` for exceptional
-operands, a zero product, a sticky alignment whose higher operand is subnormal, results below the
-normal threshold, and overflow. `fmaFinite?` then falls back to the exact generic kernel.
+It serves eligible layouts with at most 120 fraction bits and 32 exponent bits, which keep every
+intermediate in four words and every scale in one. It returns `none` for exceptional operands, a
+zero product, a sticky alignment whose higher operand is subnormal, results below the normal
+threshold, and overflow, and `fmaFinite?` then falls back to the exact generic kernel.
 -/
 
 @[expose] public section
@@ -96,11 +96,13 @@ apart: `high` shifted left by three guard positions, combined with `low` shifted
 /--
 Round `product * 2 ^ productScale + addend * 2 ^ addendScale` once, in product coordinates.
 
-A zero addend rounds the product alone. An addend at a scale at most `fracWidth + 2` above the
-product is shifted onto the product exactly, and a larger gap leaves the product as a sticky tail
-of the addend. A product at a scale above the addend is aligned exactly for gaps below three and
-otherwise keeps the addend as its sticky tail. A zero product and a sticky alignment whose higher
-operand is below `2 ^ fracWidth` return `none`.
+* A zero addend rounds the product alone.
+* An addend at a scale at most `fracWidth + 2` above the product is shifted onto the product
+  exactly, and a larger gap leaves the product as a sticky tail of the addend.
+* A product at a scale above the addend is aligned exactly for gaps below three, and otherwise the
+  addend becomes its sticky tail.
+* A zero product, or a sticky alignment whose higher operand is below `2 ^ fracWidth`, returns
+  `none`.
 -/
 @[inline] def fmaFieldsWords? (fmt : FloatFormat)
     (productSign : Bool) (product : UInt256) (productScale : UInt64)

@@ -12,9 +12,9 @@ public import Mathlib.Tactic.SplitIfs
 /-!
 # Correctness of Cowlishaw's ten-bit declet table
 
-Encoding a value below 1000 produces a ten-bit declet whose decoding recovers all three decimal
-digits. Re-encoding a ten-bit pattern clears the ignored high bits precisely in the redundant
-cases.
+This file checks Cowlishaw's table in both directions. Encoding a value below 1000 gives a ten-bit
+declet, and decoding that declet gives back all three decimal digits. Going the other way,
+re-encoding a ten-bit pattern clears the ignored high bits in the redundant cases and in no others.
 -/
 
 @[expose] public section
@@ -39,8 +39,8 @@ theorem decodeDeclet_encodeDeclet (n : Nat) (h : n < 1000) :
   exact table ⟨n, h⟩
 
 /-- The only redundant declets have all three digits in `{8, 9}`.
-The canonical representative clears the two ignored high bits, as required by
-IEEE 754-2019 Tables 3.3–3.4; every other ten-bit pattern is already canonical. -/
+Their canonical representative clears the two ignored high bits, as IEEE 754-2019 Tables 3.3
+and 3.4 require, and every other ten-bit pattern is already canonical. -/
 theorem encodeDeclet_decodeDeclet (n : Nat) (h : n < 1024) :
     encodeDeclet (decodeDeclet n) =
       if n / 2 % 8 = 7 ∧ n / 32 % 4 = 3 then n % 256 else n := by

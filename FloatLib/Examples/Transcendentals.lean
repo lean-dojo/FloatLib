@@ -12,18 +12,18 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured
 /-!
 # Elementary functions
 
-What is `sin 0.5` in binary32, and what does FloatLib promise about the answer? This example
-imports `Configured.Transcendentals`, because `import FloatLib` doesn't provide those functions.
-It computes a sine/cosine pair, composes `exp`, `log`, and `tanh` at one format, and then writes
-the same formula once for any scalar type that supplies those functions.
+What is `sin 0.5` in binary32, and what does FloatLib promise about the answer? This example imports
+`Configured.Transcendentals`, because `import FloatLib` doesn't provide those functions. It computes
+a sine/cosine pair, composes `exp`, `log`, and `tanh` at one format, and then writes the same
+formula once for any scalar type that supplies those functions.
 
-The functions used here are deterministic approximations that preserve extra working bits before a
-final rounding. They are not proved correctly rounded, and the API promises neither a general
-ULP bound nor a proved real-error bound for compositions, where each function boundary rounds
-again. These are proved correctly rounded: `pi` for IEEE formats, `pow` of a positive base
-whenever its enclosure search settles, and `ExecFloat.Binary.Certified.exp` and `log` when their
-rational enclosure refinement succeeds. The arithmetic operations have complete refinement
-proofs. The last section switches the generic formula to correctly rounded `exp` and `log`.
+These functions are deterministic approximations that keep extra working bits until a final
+rounding. They aren't proved correctly rounded, and the API promises neither a general ULP bound nor
+a proved real-error bound for compositions, where each function boundary rounds again. A few things
+are proved correctly rounded: `pi` for IEEE formats, `pow` of a positive base whenever its enclosure
+search settles, and `ExecFloat.Binary.Certified.exp` and `log` when their rational enclosure
+refinement succeeds. Arithmetic operations have complete refinement proofs, and the last section
+switches the generic formula over to correctly rounded `exp` and `log`.
 -/
 
 @[expose] public section

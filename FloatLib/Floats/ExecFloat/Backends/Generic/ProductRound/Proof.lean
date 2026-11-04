@@ -15,12 +15,12 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 # Correctness of unsigned-scale product rounding
 
 `round_eq_roundDyadic` identifies unsigned-scale rounding with `roundDyadic` for descriptors
-satisfying `fmt.isIEEE = true`. The equality covers signed zero, subnormal results, carry
-normalization, and overflow.
+satisfying `fmt.isIEEE = true`, with signed zero, subnormal results, carry normalization, and
+overflow included.
 
-`normalSpec_refines` supplies the common natural-number normal-product contract used by word
-backends. It needs a nonzero product with at least `fracWidth + 1` bits; those are caller
-obligations, not checks made by `normalSpec?`. `round_normalized_sum` gives the one-bit
+`normalSpec_refines` gives the common natural-number normal-product contract that word backends use.
+It needs a nonzero product with at least `fracWidth + 1` bits, and those are the caller's
+obligations, because `normalSpec?` doesn't check them. `round_normalized_sum` gives the one-bit
 nearest-even reduction used by equal-exponent addition.
 -/
 
@@ -32,13 +32,13 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteProductRound
 Specification of the successful normal-product path.
 
 The word backends use different integer representations, but their successful normal results all
-have this format-independent meaning. Keeping it here stops one specialized backend from becoming
-a proof dependency of another.
+mean this, and keeping it here stops one specialized backend from becoming a proof dependency of
+another.
 
-The definition does not check that the product is nonzero or that it has at least
-`fracWidth + 1` bits (`fmt.fracWidth ≤ product.log2`); `normalSpec_refines` assumes both. Outside
-those conditions a `some` result need not be the rounded product: a zero product at a large scale
-gives a nonzero normal word.
+The definition doesn't check that the product is nonzero or that it has at least `fracWidth + 1`
+bits (`fmt.fracWidth ≤ product.log2`), and `normalSpec_refines` assumes both. Outside those
+conditions a `some` result need not be the rounded product. A zero product at a large scale, for
+instance, gives a nonzero normal word.
 -/
 def normalSpec? (fmt : FloatFormat) (sign : Bool)
     (xExponent yExponent xMantissa yMantissa : Nat) :

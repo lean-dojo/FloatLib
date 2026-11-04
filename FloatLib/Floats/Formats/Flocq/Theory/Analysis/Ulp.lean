@@ -11,13 +11,13 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Format.Generic
 /-!
 # Unit in the Last Place
 
-The format-generic `ulp` laws cover the negligible-exponent witness used to define `ulp 0`,
-invariance under sign, representability, and the relationship to adjacent rounded values. The
-definitions and hypotheses follow Flocq's `Core/Ulp.v`.
+These are the `ulp` laws that hold in every format. They cover the negligible-exponent witness
+behind `ulp 0`, invariance under sign, representability, and how the ULP relates to adjacent
+rounded values. Definitions and hypotheses follow Flocq's `Core/Ulp.v`.
 
-These are mathematical analysis lemmas rather than executable kernels. Keeping them in the Flocq
-theory namespace makes the provenance and theorem correspondence visible while allowing runtime
-formats to depend on smaller exact-arithmetic modules.
+Nothing here is an executable kernel. We keep these analysis lemmas in the Flocq theory namespace
+so that their provenance and their correspondence with Flocq's theorems stay visible, and runtime
+formats can depend on smaller exact-arithmetic modules.
 -/
 
 @[expose] public section

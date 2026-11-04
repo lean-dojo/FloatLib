@@ -17,11 +17,12 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 /-!
 # Square-root agreement with Lean's floating-point model
 
-These theorems relate FloatLib square root to the Lean logical model underlying the native
-floating-point types. Canonicalization forgets NaN payloads and signs and keeps all numeric bits,
-including the sign of zero. The model equality does not verify the machine instructions used by
-compiled native operations. The configured square root is the first-order instance of
-`Configured.NativeDispatch`, the one a client that imports `Configured` elaborates.
+Square root is the one native bridge that holds on every input. FloatLib's square root matches
+the Lean logical model under the native floating-point types once NaNs are canonicalized, and
+canonicalization forgets only NaN payloads and signs. It keeps all numeric bits, the sign of zero
+included, so `sqrt (-0)` is `-0` in both. This model equality doesn't verify the machine
+instructions that compiled native operations run. The configured square root is the first-order
+instance of `Configured.NativeDispatch`, the one a client that imports `Configured` elaborates.
 -/
 
 @[expose] public section
@@ -74,8 +75,8 @@ private theorem toModel_of_isZero {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   simpa [toDyadic?, hfmt] using toDyadic?_eq_zero_of_isZero_eq_true x hx
 
 /--
-OR-ing any word into one with an all-ones exponent keeps that exponent; the result is a NaN once
-either operand has a nonzero mantissa.
+OR-ing any word into one with an all-ones exponent keeps that exponent, and the result is a NaN
+once either operand has a nonzero mantissa.
 -/
 private theorem unpack_or_eq_notANumber (spec : Format) {x y : BitVec spec.numBits}
     (he : unpackExponent x = -1#_)

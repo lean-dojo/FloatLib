@@ -11,11 +11,11 @@ public import FloatLib.Floats.Formats.Posit.Quire.Model.Core
 /-!
 # Executable exact semantics of a posit quire
 
-Every ordinary quire word denotes an exact rational fixed-point value. The reserved quire NaR word
-denotes `ExceptionalValue.notAReal` and has no rational or dyadic coordinate.
+Every ordinary quire word denotes an exact rational fixed-point value, while the reserved quire NaR
+word denotes `ExceptionalValue.notAReal` and has no rational or dyadic coordinate.
 
-The definitions in this module are the execution boundary used by quire arithmetic and configured
-wrappers. Correctness theorems, real embeddings, and projective views live in separate modules.
+Quire arithmetic and the configured wrappers execute against these definitions, while correctness
+theorems, real embeddings, and projective views come from other modules.
 -/
 
 @[expose] public section
@@ -26,7 +26,7 @@ open FloatLib.Numerics
 
 variable {format : Format}
 
-/-- Exact rational value represented by an ordinary quire, or `none` exactly for quire NaR. -/
+/-- Exact rational value of an ordinary quire, with `none` kept for quire NaR alone. -/
 @[inline] def toRat? (value : Model format) : Option Rat :=
   if value.isNaR then
     none
@@ -44,8 +44,8 @@ variable {format : Format}
 /--
 Exact shared-dyadic view of an ordinary quire.
 
-This is the execution bridge used by `qToP`: the coefficient and fixed scale pass directly to the
-certified posit dyadic rounder without constructing a rational.
+`qToP` executes through this view. The coefficient and fixed scale go to the certified posit
+dyadic rounder as they are, and no rational is ever built.
 -/
 @[inline] def toDyadic?
     (value : Model format) : Option FloatLib.Numerics.Dyadic :=

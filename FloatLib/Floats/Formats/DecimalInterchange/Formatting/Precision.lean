@@ -11,14 +11,15 @@ public import FloatLib.Numerics.Exact.DecimalText.Precision
 /-!
 # Selecting decimal output precision
 
-IEEE 754 §5.12.2 distinguishes preserving the source quantum from requesting a
-number of significant digits, and `Precision` names that choice. Requested
-precision has no format-width cap: the coefficient is rounded once on the
-requested decimal grid, and extra requested digits are supplied by exact zeros.
-The text exponent is an unbounded integer, so output has no exponent overflow.
+When you print a decimal you can keep its quantum or ask for a number of significant digits, and
+IEEE 754 §5.12.2 treats those as two different requests. `Precision` names the choice. A requested
+precision has no cap from the format width. The coefficient is rounded once on the requested
+decimal grid, and any extra digits you ask for are exact zeros, so `1.5` at four digits gets the
+coefficient `1500`. The text exponent is an unbounded integer, so output never overflows its
+exponent.
 
-Zero at precision `p` is written with quantum `1-p`. Special values keep their
-spellings and fields. Only inexact can be raised during finite output.
+Zero at precision `p` is written with quantum `1-p`. Special values keep their spellings and
+fields, and finite output can raise only inexact.
 -/
 
 @[expose] public section
@@ -43,7 +44,7 @@ structure TextOutcome where
   deriving DecidableEq, Repr
 
 /-- Format a datum either exactly or to a requested significant-digit count.
-The inexact flag records a change of value, not a change of quantum. -/
+The inexact flag records a change of value, and a change of quantum alone doesn't raise it. -/
 def format (mode : RoundingMode) (precision : Precision) (value : Datum) : TextOutcome :=
   match precision, value with
   | .significant digits, .finite negative coefficient quantum =>

@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Core.Proof
 /-!
 # Exact semantics with representation metadata
 
-`ExactSemantics` supplements a `NumericalSystem` with a decoder that can retain signed zero,
-NaN metadata, tags, or block structure. It is used in proofs; executable arithmetic calls the
-concrete family functions directly.
+`ExactSemantics` adds to a `NumericalSystem` a decoder that can keep signed zero, NaN metadata,
+tags, or block structure. Proofs use it, while executable arithmetic calls the concrete family
+functions themselves.
 -/
 
 @[expose] public section

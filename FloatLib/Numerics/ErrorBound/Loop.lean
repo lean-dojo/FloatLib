@@ -11,13 +11,13 @@ public import FloatLib.Numerics.MixedError.Basic
 /-!
 # Error bounds through list loops
 
-A loop `input.foldl step initial` is analyzed by bounding one step for a symbolic accumulator
-whose error against its reference is given. These lemmas carry that step bound through the whole
-traversal, in its own order. The conditions of a step are required only at the states the loop
-actually visits (`List.AllSteps`), not at every possible accumulator, and the accumulated budgets
-are the recurrences `List.foldError`, `List.foldRelative` and `List.foldAbsolute` run alongside
-the loop; a step that keeps zero budgets zero keeps them zero (`List.foldBudgets_eq_zero`).
-Arrays, vectors and loops over `Fin n` reach these lemmas through their list traversals.
+A loop `input.foldl step initial` is analyzed by bounding one step for a symbolic accumulator whose
+error against its reference is given, and these lemmas carry that step bound through the whole
+traversal, in its own order. A step's conditions are required only at the states the loop visits
+(`List.AllSteps`) and never at every possible accumulator. Accumulated budgets are the recurrences
+`List.foldError`, `List.foldRelative` and `List.foldAbsolute`, run alongside the loop, and a step
+that keeps zero budgets zero keeps them zero (`List.foldBudgets_eq_zero`). Arrays, vectors, and
+loops over `Fin n` reach these lemmas through their list traversals.
 -/
 
 @[expose] public section

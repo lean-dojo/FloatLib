@@ -13,8 +13,9 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Codecs
 /-!
 # Configured posit-family conversion proofs
 
-The configured runtime/model conversions are mutual inverses. The same codec laws yield
-injectivity, ordinary numerical semantics, and format-indexed exact decoding.
+Converting a configured value to its model and back, in either order, changes nothing, and from
+those two codec laws we get injectivity, the ordinary numerical semantics, and exact decoding
+indexed by format.
 -/
 
 @[expose] public section
@@ -29,8 +30,8 @@ variable {format : Format} {plan : StoragePlan format} {code : Type}
     [codec : FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 /--
-For the built-in storage family, codec decoding is exactly the constructor-indexed
-`Code.toModel` function.
+For the built-in storage family, codec decoding is the constructor-indexed `Code.toModel`
+function.
 -/
 @[simp, grind =] theorem decode_eq_codeToModel
     (value : FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :

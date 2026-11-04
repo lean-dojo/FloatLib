@@ -16,9 +16,9 @@ import FloatLib.Numerics.ShiftRightJam.Proof
 # Correctness of unsigned-scale exact addition
 
 For conventional IEEE descriptors, `roundSum_eq` identifies unsigned-scale alignment and rounding
-with exact dyadic addition followed by `roundDyadic`. The proof includes zero operands and the
-signed-zero result of cancellation. The `roundOffset` parameter covers both addition scales and
-the product scales used by FMA.
+with exact dyadic addition followed by `roundDyadic`. Zero operands and the signed-zero result of
+cancellation are part of the proof, and the `roundOffset` parameter covers both the addition scales
+and the product scales that FMA uses.
 -/
 
 @[expose] public section

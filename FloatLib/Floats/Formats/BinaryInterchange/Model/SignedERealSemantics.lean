@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemanti
 /-!
 # Signed extended-real interpretation of binary models
 
-Executable, policy-aware negation reverses the extended-real interpretation of every non-NaN
-value. The result applies uniformly to finite values and infinities. NaNs are excluded because
-they have no numerical value: `toEReal` sends them to the placeholder zero, and the identity
-would hold there only through that convention (negation keeps a NaN a NaN, `isNaN_neg`).
+Executable, policy-aware negation flips the sign of the extended-real interpretation of every
+non-NaN value, finite or infinite. NaNs are left out because they have no numerical value.
+`toEReal` sends them to a placeholder zero, and the identity would hold there only through that
+convention (negation keeps a NaN a NaN, `isNaN_neg`).
 -/
 
 @[expose] public section
@@ -33,7 +33,7 @@ theorem neg_ite {fmt : FloatFormat} {p : Prop} [Decidable p]
 
 /--
 Negating any non-NaN executable float negates its extended-real interpretation. The NaN premise
-records the numerical domain; on a NaN both sides are the placeholder zero of `toEReal`.
+marks the numerical domain. On a NaN both sides are the placeholder zero of `toEReal`.
 -/
 theorem toEReal_neg_of_isNaN_eq_false
     {fmt : FloatFormat} (x : Model fmt) (hnan : isNaN x = false) :

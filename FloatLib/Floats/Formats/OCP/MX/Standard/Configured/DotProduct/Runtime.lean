@@ -15,9 +15,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 /-!
 # Configured MX dot products
 
-These entry points accept the standard MX carrier with independently chosen element profiles
-and return configured IEEE binary32. Packing preserves the one-rounding exact-accumulation
-policy of `Standard.dot` and `Standard.dotGeneral`.
+These entry points take two standard MX operands, each with its own element profile, and return a
+configured IEEE binary32, so you can take the dot product of an E4M3 block with an INT8 block.
+Packing keeps the policy of `Standard.dot` and `Standard.dotGeneral`, which accumulate exactly and
+round once.
 -/
 
 @[expose] public section

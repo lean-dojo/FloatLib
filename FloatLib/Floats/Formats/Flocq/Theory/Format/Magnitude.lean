@@ -14,7 +14,8 @@ import Mathlib.Analysis.SpecialFunctions.Log.Base
 # Radix Magnitude
 
 The magnitude of a nonzero real $x$ is the unique integer $e$ for which
-$\beta^{e-1}\le|x|<\beta^e$. These bounds are the basic bridge between logarithmic magnitude,
+$\beta^{e-1}\le|x|<\beta^e$. In radix 10 the magnitude of `314` is `3`, and in radix 2 the
+magnitude of `0.75` is `0`. These bounds are the basic bridge between logarithmic magnitude,
 canonical exponents, and generic-format rounding.
 -/
 

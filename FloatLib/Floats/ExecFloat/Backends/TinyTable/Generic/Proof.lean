@@ -11,8 +11,8 @@ public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Runtime
 /-!
 # Semantic refinement of byte-table execution
 
-These theorems prove that each direct byte lookup returns the encoding of the reference exact model
-operation. Format packages can therefore compose fast execution with their own arithmetic proofs
+Each direct byte lookup returns the encoding of the reference exact model operation, and these
+theorems prove it. Format packages can then compose fast execution with their own arithmetic proofs
 without exposing table internals to users.
 -/
 

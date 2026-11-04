@@ -12,9 +12,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Proof
 /-!
 # Neighbor range, status and cohort guarantees
 
-Normalization preserves the input value and exposes its smallest quantum.
-Both coefficient steps return a normalized representation, including signed
-zero and the finite endpoints. NaN propagation is the only source of a flag.
+Normalizing the input keeps its value and exposes its smallest quantum, so in decimal32 `1.2`
+becomes `1.200000`, with seven digits. Both coefficient steps return a normalized representation,
+signed zero and the finite endpoints included. The only source of a flag is NaN propagation.
 -/
 
 @[expose] public section
@@ -94,7 +94,8 @@ theorem nextDown_valid (f : Format) (x : Datum) (hx : x.Valid f) :
     (nextDown f x).value.Valid f := by
   simpa [nextDown_value] using nextUp_valid f x.negate (by simpa using hx)
 
-/-- Neighbor steps raise `invalid` exactly for signaling NaNs and leave all other flags clear. -/
+/-- Neighbor steps raise `invalid` for signaling NaNs and nothing else, and leave all other flags
+clear. -/
 theorem nextUp_status (f : Format) (x : Datum) :
     (nextUp f x).status = { invalid := x.isSNaN } := by
   cases x with
@@ -104,7 +105,8 @@ theorem nextUp_status (f : Format) (x : Datum) :
       simp only [nextUp, Datum.isSNaN]
       split <;> rfl
 
-/-- `nextDown` raises invalid exactly for a signaling NaN and leaves all other flags clear. -/
+/-- `nextDown` raises invalid if and only if the input is a signaling NaN, and leaves all other
+flags clear. -/
 theorem nextDown_status (f : Format) (x : Datum) :
     (nextDown f x).status = { invalid := x.isSNaN } := by
   simp only [nextDown, nextUp_status]

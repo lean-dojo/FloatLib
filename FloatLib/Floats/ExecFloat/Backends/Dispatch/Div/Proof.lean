@@ -17,12 +17,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Word.Narrow.Division.Proof
 /-!
 # Correctness of division backends
 
-`word_eq_spec` identifies the complete dispatcher with `Spec.div` for every descriptor and
-operand pair. The equality includes rounding, signed zeros, infinities, and NaNs.
-
-The specialized kernels provide refinements on their accepted inputs. When an operand or
-intermediate lies outside a kernel's supported domain, the dispatcher uses `generic`, which is
-correct by `generic_eq_spec`.
+`word_eq_spec` identifies the complete dispatcher with `Spec.div` for every descriptor and operand
+pair, with rounding, signed zeros, infinities, and NaNs included. Each specialized kernel is a
+refinement on the inputs it accepts, and when an operand or intermediate lies outside a kernel's
+supported domain, the dispatcher uses `generic`, which is correct by `generic_eq_spec`.
 -/
 
 @[expose] public section

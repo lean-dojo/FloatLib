@@ -13,9 +13,8 @@ public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Sqrt.Proof
 /-!
 # Correctness of square-root dispatch
 
-`dispatch_eq_spec` combines the word and fixed-pair refinements to identify the complete
-dispatcher with `Spec.sqrt`, including exceptional inputs. Runtime clients can import
-`Sqrt.Runtime` separately.
+`dispatch_eq_spec` combines the word and fixed-pair refinements to identify the complete dispatcher
+with `Spec.sqrt`, exceptional inputs included. `Sqrt.Runtime` can be imported without it.
 -/
 
 @[expose] public section

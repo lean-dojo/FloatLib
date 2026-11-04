@@ -12,9 +12,9 @@ public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 /-!
 # Proof contract for configured posit quire decoding
 
-Quire-backed algorithms use the same `ExactDecoder` capability as the other configured formats.
-This bridge identifies that generic operation with the quire's complete public decoder; the
-equality is definitional and adds no second decoding path.
+Quire-backed algorithms reach the quire through the same `ExactDecoder` capability that the other
+configured formats use. This bridge shows that the generic operation is the quire's full public
+decoder, and since that equality is definitional there is no second decoding path.
 -/
 
 @[expose] public section

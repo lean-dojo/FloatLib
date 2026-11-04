@@ -11,9 +11,9 @@ public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
 /-!
 # Compiler certificates for restoring square root
 
-Four word accumulators implement the two-limb recurrence for every radicand, initial state, and
-digit count. The compiler substitutions preserve wrapping arithmetic outside the numeric bounds
-of `RestoringSqrt.Proof`.
+In compiled code, four word accumulators implement the two-limb recurrence for every radicand,
+initial state, and digit count, and outside the numeric bounds of `RestoringSqrt.Proof`, the
+compiler substitutions keep the wrapping arithmetic as it is.
 -/
 
 @[expose] public section

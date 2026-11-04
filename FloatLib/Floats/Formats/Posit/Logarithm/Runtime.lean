@@ -13,13 +13,13 @@ public import FloatLib.Numerics.Exact.RationalPower.Runtime
 /-!
 # Exactly rounded base-two and base-ten posit logarithms
 
-For a base greater than one, comparing `log_base x` with a rational boundary `q` is equivalent
-to comparing `x` with `base ^ q`. The rational-power comparator decides this exactly: it settles
-equality, as in `log2 8 = 3`, by exact roots and capped exponentiation, and separates every other
-boundary with proved logarithm bounds.
+For a base greater than one, comparing `log_base x` with a rational boundary `q` is the same as
+comparing `x` with `base ^ q`. The rational-power comparator decides that exactly. It settles
+equality, as in `log2 8 = 3`, by exact roots and capped exponentiation, and it separates every
+other boundary with proved logarithm bounds.
 
-The `Plus1` functions form `1 + x` exactly before any rounding, so a small posit argument is
-not lost by first adding it to a posit one.
+In the `Plus1` functions, `1 + x` is formed exactly before any rounding, so a small posit argument
+is not lost by first adding it to a posit one.
 
 Reference: Posit Standard (2022), §§4.1, 4.2, 5.1 and 5.5,
 <https://posithub.org/docs/posit_standard-2.pdf>.

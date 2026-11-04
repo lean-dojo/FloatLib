@@ -13,9 +13,9 @@ public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Proof
 /-!
 # Real rounding and exceptional cases for posit two-coordinate arctangent
 
-The operations round the exact principal complex argument, in radians or divided by pi,
-including its value on the negative real axis. NaR and the origin are rejected before the
-comparison search.
+Both operations round the exact principal argument of a complex number, one in radians and one
+divided by pi, and that includes its value on the negative real axis. NaR and the origin are
+rejected before the comparison search starts.
 -/
 
 public section

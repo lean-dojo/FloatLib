@@ -15,9 +15,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Plan.ByteDispatch.Runtime
 /-!
 # Correctness of first-order byte-sized posit dispatch
 
-The tagged selector agrees with the shared planner metadata, and every named execution branch
-implements the independent configured specification. These results ensure that removing closure
-dispatch changes performance only, never arithmetic semantics or inspection metadata.
+Two things are proved here. The tagged selector agrees with the shared planner metadata, and every
+named execution branch implements the independent configured specification. Together they mean
+that dispatching on a tag in place of a closure can change performance and nothing else, neither
+the arithmetic nor the metadata you can inspect.
 -/
 
 @[expose] public section
@@ -52,42 +53,42 @@ theorem select_estimate
 
 /-! ## Agreement with the public certified portfolios -/
 
-/-- Addition exposes exactly the metadata consumed by its first-order selector. -/
+/-- The public addition portfolio carries the metadata its first-order selector reads. -/
 theorem addByteCandidates_estimates
     (format : Format) (width_le : format.bits ≤ 8) :
     (addByteCandidates format width_le).estimates =
       estimates format width_le .add := by
   rfl
 
-/-- Subtraction exposes exactly the metadata consumed by its first-order selector. -/
+/-- The public subtraction portfolio carries the metadata its first-order selector reads. -/
 theorem subByteCandidates_estimates
     (format : Format) (width_le : format.bits ≤ 8) :
     (subByteCandidates format width_le).estimates =
       estimates format width_le .sub := by
   rfl
 
-/-- Multiplication exposes exactly the metadata consumed by its first-order selector. -/
+/-- The public multiplication portfolio carries the metadata its first-order selector reads. -/
 theorem mulByteCandidates_estimates
     (format : Format) (width_le : format.bits ≤ 8) :
     (mulByteCandidates format width_le).estimates =
       estimates format width_le .mul := by
   rfl
 
-/-- Division exposes exactly the metadata consumed by its first-order selector. -/
+/-- The public division portfolio carries the metadata its first-order selector reads. -/
 theorem divByteCandidates_estimates
     (format : Format) (width_le : format.bits ≤ 8) :
     (divByteCandidates format width_le).estimates =
       estimates format width_le .div := by
   rfl
 
-/-- Square root exposes exactly the metadata consumed by its first-order selector. -/
+/-- The public square root portfolio carries the metadata its first-order selector reads. -/
 theorem sqrtByteCandidates_estimates
     (format : Format) (width_le : format.bits ≤ 8) :
     (sqrtByteCandidates format width_le).estimates =
       estimates format width_le .sqrt := by
   rfl
 
-/-- FMA exposes exactly the metadata consumed by its first-order selector. -/
+/-- The public FMA portfolio carries the metadata its first-order selector reads. -/
 theorem fmaByteCandidates_estimates
     (format : Format) (width_le : format.bits ≤ 8) :
     (fmaByteCandidates format width_le).estimates =

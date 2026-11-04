@@ -14,16 +14,16 @@ import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quot
 /-!
 # Positive directed rounding for arbitrary executable float formats
 
-The shift-based directed rounders used by `Model` are related to the independent Flocq-style
-real semantics at the scaled-mantissa boundary, before subnormal and normal values are packed
-into interchange fields.
+This module relates the shift-based directed rounders of `Model` to the independent Flocq-style
+real semantics at the scaled-mantissa boundary, before subnormal and normal values are packed into
+interchange fields.
 
-`roundAt fmt x mode` is the real rounding of every `IEEERoundingMode` on the same grid, Flocq's
-`round` with `nearestEven`, `ceilRound`, and `floorRound` for nearest-even and the two infinity
-directions. Nearest-away rounding is Flocq's `nearestChoice` with the tie choice
+`roundAt fmt x mode` rounds a real on one common grid in any `IEEERoundingMode`. For nearest-even
+and the two infinity directions it is Flocq's `round` with `nearestEven`, `ceilRound` and
+`floorRound`. Nearest-away rounding is Flocq's `nearestChoice` with the tie choice
 `nearestAwayChoice`, and rounding away from zero is `awayRound`.
 
-All definitions are uniform in `FloatFormat`.
+Every definition is uniform in `FloatFormat`.
 -/
 
 @[expose] public section

@@ -12,9 +12,13 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Configured unsigned integer semantics
 
-The codec preserves the model's numerical guarantees: exact unsigned decoding
-after accepted rounding, a half-unit error bound, even halfway results, and the
-MSB-only sentinel rule including its collision with a valid unsigned integer.
+Unsigned conversions keep every numerical guarantee of the model when they go through the codec.
+Those guarantees are
+
+* exact unsigned decoding after accepted rounding,
+* a half-unit error bound,
+* even results at halfway points,
+* the MSB-only sentinel rule, including its collision with a valid unsigned integer.
 -/
 
 @[expose] public section

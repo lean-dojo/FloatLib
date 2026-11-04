@@ -13,13 +13,14 @@ public import FloatLib.Numerics.Reduction.Error
 /-!
 # Finite, repeatedly rounded binary sums
 
-Each internal node uses `Model.add`, with one nearest-even rounding at that node. A finite
-execution certificate excludes exceptional inputs and overflow at every intermediate result.
-The error budget then follows from FloatLib's half-ULP theorem, including subnormal values.
-This API does not change `Model.sum`, which accumulates exactly and rounds only once.
+Here a sum is a tree of additions. Each internal node calls `Model.add` and rounds once, to
+nearest-even. A finite execution certificate excludes exceptional inputs and overflow at every
+intermediate result, and then the error budget follows from FloatLib's half-ULP theorem,
+subnormal values included. `Model.sum` is untouched by this API. It accumulates without error
+and rounds only once.
 
-Each finite addition also has relative error at most `unitRoundoffAt fmt`, with no underflow
-term, because a sum of two grid points below the normal range is exact. This discharges the
+Each finite addition also has relative error at most `unitRoundoffAt fmt` with no underflow
+term, because adding two grid points below the normal range is exact. That fact discharges the
 local premise of the mixed and geometric reduction bounds for `Model.add` trees.
 -/
 

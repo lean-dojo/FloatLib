@@ -13,17 +13,17 @@ import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 /-!
 # Packed native floating-point models
 
-The conversions below connect the descriptor-indexed `Model` to Lean's packed binary32 and
-binary64 models. Converting from a native model retains every bit. Converting to one canonicalizes
-NaN signs and payloads, as required by Lean's packed-value invariant.
+Below, conversions connect the descriptor-indexed `Model` to Lean's packed binary32 and
+binary64 models. Coming from a native model, every bit survives. Going to one, NaN signs and
+payloads are canonicalized, because Lean's packed-value invariant requires it.
 
 Lean has public `nan` and `inf` constants for `Float32`, `Float`, and their packed models, and its
-generic format invariant requires at least two exponent bits. These let both native widths share the
-representation and constant proofs below.
+generic format invariant asks for at least two exponent bits. That's enough for both native widths
+to share the representation and constant proofs below.
 
-The generic representation lemmas imported here separate this normalization from arithmetic
-refinement. They concern Lean's logical definitions; they add no assumption about native machine
-instructions and do not select a floating-point backend.
+The generic representation lemmas imported here keep this normalization apart from arithmetic
+refinement. They're about Lean's logical definitions, so they assume nothing about native machine
+instructions and select no floating-point backend.
 -/
 
 @[expose] public section
@@ -57,7 +57,7 @@ theorem isModelCanonical_ofFloat32Model (value : Float32.Model) :
     ofFloat32Model (Float32.Model.pack value) = ofModel FloatFormat.binary32 value :=
   rfl
 
-/-- Converting to a packed native model and back performs exactly NaN canonicalization. -/
+/-- Converting to a packed native model and back does NaN canonicalization and nothing else. -/
 @[simp] theorem ofFloat32Model_toFloat32Model (value : Model FloatFormat.binary32) :
     ofFloat32Model (toFloat32Model value) = canonicalizeModel value :=
   rfl
@@ -74,7 +74,7 @@ theorem ofFloat32Model_injective : Function.Injective ofFloat32Model := by
       cases h
       rfl
 
-/-- Every native binary32 model round-trips exactly through FloatLib's representation. -/
+/-- Every native binary32 model round-trips unchanged through FloatLib's representation. -/
 @[simp] theorem toFloat32Model_ofFloat32Model (value : Float32.Model) :
     toFloat32Model (ofFloat32Model value) = value := by
   apply ofFloat32Model_injective
@@ -123,7 +123,7 @@ theorem isModelCanonical_ofFloatModel (value : Float.Model) :
     ofFloatModel (Float.Model.pack value) = ofModel FloatFormat.binary64 value :=
   rfl
 
-/-- Converting to a packed native model and back performs exactly NaN canonicalization. -/
+/-- Converting to a packed native model and back does NaN canonicalization and nothing else. -/
 @[simp] theorem ofFloatModel_toFloatModel (value : Model FloatFormat.binary64) :
     ofFloatModel (toFloatModel value) = canonicalizeModel value :=
   rfl
@@ -140,7 +140,7 @@ theorem ofFloatModel_injective : Function.Injective ofFloatModel := by
       cases h
       rfl
 
-/-- Every native binary64 model round-trips exactly through FloatLib's representation. -/
+/-- Every native binary64 model round-trips unchanged through FloatLib's representation. -/
 @[simp] theorem toFloatModel_ofFloatModel (value : Float.Model) :
     toFloatModel (ofFloatModel value) = value := by
   apply ofFloatModel_injective

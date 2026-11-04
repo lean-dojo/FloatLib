@@ -12,10 +12,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 /-!
 # Decimal square-root value, range, and error
 
-Carry normalization preserves the rounded root, and preferred-cohort selection
-preserves its value. The numerical bound compares the returned rational datum
-with the mathematical real square root. Inexactness is tested by an exact
-squaring equality.
+Carry normalization keeps the rounded root, and preferred-cohort selection keeps its value. The
+numerical bound compares the returned rational datum with the real square root, and inexactness is
+decided by an exact squaring equality.
 -/
 
 @[expose] public section
@@ -89,7 +88,7 @@ theorem Arithmetic.sqrt_valid (f : Format) (mode : RoundingMode) (x : Datum) :
       · exact sqrtMagnitude_valid f mode
           (mul_nonneg (Nat.cast_nonneg c) (zpow_pos (by norm_num) q).le) _
 
-/-- The square-root rounder raises overflow exactly when the rounded quantum exceeds the format's
+/-- The square-root rounder raises overflow if and only if the rounded quantum exceeds the format's
 largest quantum. -/
 theorem sqrtMagnitude_overflow_iff (f : Format) (mode : RoundingMode)
     (x : ℚ) (preferred : Int) :

@@ -11,8 +11,8 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.
 /-!
 # Native-word posit field decoding
 
-These primitives extract posit sign, magnitude, regime, exponent, and
-significand data directly from `UInt64`. Their exact-width model refinements live in
+These primitives pull the sign, magnitude, regime, exponent, and significand of a posit out of a
+`UInt64` with masks and shifts on the word itself. Their exact-width model refinements are in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof`.
 -/
 
@@ -50,7 +50,7 @@ the sign mask and modulus once and reuse them for every decoded operand.
 Decode exact dyadic fields for a nonnegative finite candidate word.
 
 Masks, shifts, and the significand use `UInt64`. Field widths and the extracted exponent use
-`Nat`; the final exponent uses `Int`.
+`Nat`, and the final exponent uses `Int`.
 -/
 @[inline] def nonnegativeDyadicAt (format : Format) (code : UInt64) :
     FloatLib.Numerics.Dyadic :=

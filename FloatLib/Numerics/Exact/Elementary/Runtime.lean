@@ -13,16 +13,15 @@ public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridRuntime
 /-!
 # Exact comparisons with natural logarithms and exponentials
 
-The logarithm comparator first tries a finite binary-grid enclosure. Inconclusive probes fall
-back to exact rational enclosures, doubling the Taylor degree until the ordering is known.
-The grid precision limits the precheck and never the result of the comparison.
-The imported termination proof is erased during compilation.
+To compare with a logarithm, we first try a finite binary-grid enclosure, and if that probe is
+inconclusive, we fall back to exact rational enclosures and double the Taylor degree until the
+ordering is known. So the grid precision limits the precheck and never the result of the comparison.
+Compilation erases the imported termination proof.
 
-`compareExp` uses `exp x < y ↔ x < log y` for positive `y`. This avoids materializing an
-enormous exponential when the destination will saturate. `prepareExp` instead caches exponential
-enclosures for arguments in `[-8, 8]`, and uses the logarithmic comparison outside that interval.
-
-The constant `log 2` needs no comparator of its own: `prepareLog 2` compares it with rational
+`compareExp` uses `exp x < y ↔ x < log y` for positive `y`, which avoids materializing an enormous
+exponential when the destination will saturate. `prepareExp` caches exponential enclosures for
+arguments in `[-8, 8]` and uses the logarithmic comparison outside that interval. The constant
+`log 2` doesn't need a comparator of its own, because `prepareLog 2` compares it with rational
 boundaries and shares its enclosures across them.
 -/
 

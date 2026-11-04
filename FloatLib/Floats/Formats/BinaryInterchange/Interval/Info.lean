@@ -14,9 +14,9 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Command
 # Proof-aware inspection of executable binary intervals
 
 The `#float_info` registration for `Model.Interval fmt` describes its carrier and proved
-enclosure contracts. Interval operations are deliberately reported as an outward-rounded
-specialized API, not as scalar `ExecFloat` capabilities. The report distinguishes the raw
-two-endpoint carrier from `Interval.Valid`, and it names the exact hypotheses under which each
+enclosure contracts. Interval operations are reported as an outward-rounded specialized API on
+purpose, and they do not appear as scalar `ExecFloat` capabilities. It tells the raw
+two-endpoint carrier apart from `Interval.Valid`, and it names the hypotheses under which each
 operation is a proved real or extended-real enclosure.
 -/
 

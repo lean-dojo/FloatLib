@@ -12,11 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 /-!
 # Exact real semantics of scaled natural rationals
 
-Scaled natural rationals provide the exact algebraic representation used by directed rational
-rounding. A rational is represented by natural numerator and denominator together with an
-external binary exponent. The shared exact `Numerics.RationalBinary.scaleByPowerOfTwo` operation
-moves that exponent into one side of the quotient; the main theorem proves that this
-transformation preserves the exact real value.
+Directed rational rounding works on scaled natural rationals: a natural numerator and
+denominator together with an external binary exponent. The shared exact operation
+`Numerics.RationalBinary.scaleByPowerOfTwo` moves that exponent into one side of the quotient,
+and the main theorem proves that this keeps the exact real value.
 -/
 
 @[expose] public section

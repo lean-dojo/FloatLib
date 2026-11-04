@@ -11,13 +11,13 @@ public import FloatLib.Numerics.Core.Value
 /-!
 # Encoded numerical systems
 
-`NumericalSystem` is the family-independent interface of FloatLib.  It says only what code type
-is stored, what mathematical scalar domain finite codes denote, and how every code is interpreted.
-It does not assume a radix, exponent field, NaN convention, or rounding rule.
+`NumericalSystem` is FloatLib's family-independent interface. It says only what code type is stored,
+what mathematical scalar domain finite codes denote, and how every code is interpreted, and it
+assumes no radix, exponent field, NaN convention, or rounding rule.
 
-This small interface is broad enough for binary and decimal floats, fixed point, posits,
-logarithmic number systems, block-scaled values, and exact integers.  Concrete arithmetic and its
-proofs remain in the corresponding implementation modules.
+That small interface is enough for binary and decimal floats, fixed point, posits, logarithmic
+number systems, block-scaled values, and exact integers. Concrete arithmetic and its proofs live in
+the corresponding implementation modules.
 -/
 
 @[expose] public section

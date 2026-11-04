@@ -16,9 +16,10 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of rational-free exact posit square-root rounding
 
-A finite posit is dyadic, although its square root need not be. This module proves that exact
-squared comparisons agree with the rational-comparison specification and then connects that
-specification to rounding `Real.sqrt`. Real numbers remain confined to this proof layer.
+A finite posit is dyadic but its square root need not be, so the runtime rounds a root by
+comparing squares. We prove two things about that here. Exact squared comparisons agree with the
+rational-comparison specification, and that specification is the rounding of `Real.sqrt`.
+Real numbers appear in this proof layer and nowhere else.
 -/
 
 @[expose] public section
@@ -88,7 +89,7 @@ theorem lowerSqrtCode_eq_realRounding_lowerCode
   rfl
 
 /--
-Squared-comparison square-root rounding is exactly real-valued rounding of `Real.sqrt`.
+Rounding a square root by squared comparisons gives the real-valued rounding of `Real.sqrt`.
 
 The proof covers the standard's nonzero-underflow saturation, exact roots, overflow saturation,
 appended-bit boundary, and tie-to-even rule for every static posit width.
@@ -164,7 +165,7 @@ namespace FloatLib.Floats.Formats.Posit.Model.DyadicSquareRoot
 
 open FloatLib.Numerics
 
-/-- The dyadic square search follows exactly the reference rational search. -/
+/-- The dyadic square search finds the same lower code as the reference rational search. -/
 theorem lowerCode_eq_reference (format : Format) (radicand : FloatLib.Numerics.Dyadic) :
     lowerCode format radicand =
       Model.lowerSqrtCode format radicand.toRat := by
@@ -176,10 +177,10 @@ theorem lowerCode_eq_reference (format : Format) (radicand : FloatLib.Numerics.D
     DyadicRounding.nonnegativeDyadicAt_toRat]
 
 /--
-Dyadic squared-comparison rounding selects exactly the rational specification's code.
+Dyadic squared-comparison rounding selects the rational specification's code.
 
-The sign premise is the domain condition for square root. Negative finite inputs are handled as
-NaR by the arithmetic operation before reaching this rounder.
+The sign premise is the domain condition for square root. The arithmetic operation turns negative
+finite inputs into NaR before they reach this rounder.
 -/
 theorem roundCode_eq_reference_of_nonnegative
     (format : Format) (radicand : FloatLib.Numerics.Dyadic)
@@ -245,8 +246,8 @@ theorem round_eq_realRounding_sqrt_of_nonnegative
 /--
 A nonzero dyadic whose rational value is not negative carries a clear sign bit.
 
-Square-root rounders state their domain condition as `¬radicand.toRat < 0`; this lemma converts
-that condition into the sign-field premise used by the refinement theorems.
+Square-root rounders state their domain condition as `¬radicand.toRat < 0`, and this lemma turns
+that condition into the sign-field premise of the refinement theorems.
 -/
 theorem negative_eq_false_of_not_toRat_neg
     (radicand : FloatLib.Numerics.Dyadic)

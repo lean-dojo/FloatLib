@@ -13,9 +13,10 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Refinement of configured posit integer conversions
 
-Both adapters refine the model conversions for arbitrary positive integer widths and lawful
-posit codecs. The semantic theorems expose the exact once-rounded integer input and nearest-even
-integer output, including the signed-minimum sentinel collision.
+For any positive integer width and any lawful posit codec, `ofFixedInt` and `toFixedInt` refine
+the model conversions. The semantic theorems, such as `ofFixedInt_eq_roundRat`, then say what comes
+out: the integer input rounded once, the nearest-even integer output, and the case where the
+signed minimum collides with the sentinel.
 -/
 
 @[expose] public section
@@ -34,7 +35,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Packing the integer conversion preserves the model result exactly. -/
+/-- Decoding the packed integer conversion gives back the model conversion. -/
 @[simp] theorem toModel_ofFixedInt {width : Nat} (value : FixedInt width) (hwidth : 0 < width) :
     toModel (ofFixedInt (format := format) (plan := plan) (code := code) value hwidth) =
       Model.ofFixedInt format value hwidth := by
@@ -51,7 +52,7 @@ theorem toModel_ofFixedInt_minCode {width : Nat} (hwidth : 0 < width) :
       (FixedInt.minCode width) hwidth) = Model.nar format := by
   simp
 
-/-- Non-sentinel integer inputs receive exactly one posit rounding of their signed values. -/
+/-- An integer input other than the sentinel is rounded to a posit once, from its signed value. -/
 theorem ofFixedInt_eq_roundRat {width : Nat} (value : FixedInt width) (hwidth : 0 < width)
     (hvalue : value ≠ FixedInt.minCode width) :
     toModel (ofFixedInt (format := format) (plan := plan) (code := code) value hwidth) =

@@ -15,10 +15,10 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Shared proof for finishing a native-word product
 
-This module proves the final stage shared by the one-word and two-word multiplication kernels:
-carry handling, overflow testing and field packing of a rounded `UInt64` significand, and the
-normal-range test before it (`normal_eq_normalSpec`). Product construction stays in each backend,
-where the machine representation and its capacity bounds differ.
+The one-word and two-word multiplication kernels end with the same stage: carry handling, the
+overflow test, and field packing of a rounded `UInt64` significand, preceded by the normal-range
+test (`normal_eq_normalSpec`). We prove that stage here. Product construction stays in each backend,
+because the machine representation and its capacity bounds differ.
 -/
 
 @[expose] public section
@@ -33,8 +33,8 @@ Decoding `finishWord` with its decline marker gives `finish?`.
 
 The decline marker has to be at least `2 ^ fmt.bitWidth`, so that no packed word equals it. Such a
 `UInt64` marker needs spare code space and exists only when `fmt.bitWidth ≤ 63`. The one-word
-multiplier, the only user, has `Eligible` formats of at most 62 bits and the marker `2 ^ 63`;
-binary64 products go through the two-word multiplier, which calls `finishWord?` and declines with
+multiplier, the only user, has `Eligible` formats of at most 62 bits and the marker `2 ^ 63`.
+Binary64 products go through the two-word multiplier, which calls `finishWord?` and declines with
 `none`.
 -/
 theorem finishWord_decode

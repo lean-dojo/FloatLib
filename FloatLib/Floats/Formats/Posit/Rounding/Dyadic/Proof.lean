@@ -13,14 +13,14 @@ import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Correctness of exact-dyadic posit rounding
 
-The executable posit rounder searches codes using exact dyadic comparisons, chooses between
-neighbors with ties-to-even, restores the sign, and packs the final model value. This module proves
-that the complete pipeline is equal to the simple rational specification in `Rounding.Proof`.
+Our executable posit rounder searches codes with exact dyadic comparisons, picks between the two
+neighbours with ties to even, restores the sign, and packs the model value. Here we prove that this
+whole pipeline equals the plain rational specification of `Rounding.Proof` (`round_eq_roundRat`).
+Dyadics keep large rational numerators out of the runtime. They leave the rounding rule alone.
 
-Using dyadics avoids constructing large rational numerators in the runtime, but it does not change
-the rounding rule. The lemmas here are the common semantic boundary for arbitrary-precision,
-native-word, and fixed-limb posit backends, so specialized kernels need only prove that their local
-comparisons agree with this rounder.
+Every posit backend reaches the specification through these lemmas, whether it works in arbitrary
+precision, native words, or fixed limbs. A specialized kernel then has one job left, to show that
+its local comparisons agree with this rounder.
 -/
 
 @[expose] public section
@@ -30,9 +30,9 @@ namespace FloatLib.Floats.Formats.Posit.Model.DyadicRounding
 /--
 A positive code below the sign mask takes the ordinary finite branch of the totalized decoder.
 
-Native-word and fixed-limb backends use this shared fact after proving that their direct field
-decoder agrees with `Model.decodeFields`; the exceptional-value argument therefore lives in one
-place rather than being duplicated by every representation backend.
+Native-word and fixed-limb backends use this fact once they have proved that their own field
+decoder agrees with `Model.decodeFields`. So the exceptional-value argument is written once, here,
+and no representation backend repeats it.
 -/
 theorem nonnegativeDyadicAt_eq_decodeFields_of_nonzero
     (format : Format) (code : Nat)
@@ -81,10 +81,10 @@ theorem lowerCodeForPositive_eq_reference
     nonnegativeDyadicAt_toRat]
 
 /--
-A locally bracketed candidate is exactly the lower code selected by bisection.
+A locally bracketed candidate is the lower code that bisection selects.
 
-This is a property of the exact dyadic specification, not of any execution backend. Direct
-packers use it to prove their field constructors once, then execute without searching.
+The fact belongs to the exact dyadic specification and holds whatever backend runs it. Direct
+packers use it to prove their field constructors once, and after that they run without searching.
 -/
 theorem lowerCodeForPositive_eq_of_bracket
     (format : Format) (target : FloatLib.Numerics.Dyadic) (candidate : Nat)
@@ -255,7 +255,7 @@ theorem minPositive_exponent_le_scale_of_not_special
         hstep, Int.ofNat_eq_natCast]
       omega
 
-/-- The dyadic minimum has exactly the reference minimum's rational denotation. -/
+/-- The dyadic minimum denotes the same rational as the reference minimum. -/
 @[simp] theorem minPositive_toRat (format : Format) :
     (minPositive format).toRat = Model.minPositiveRat format := by
   rw [minPositive_eq_nonnegativeDyadicAt, nonnegativeDyadicAt_toRat]
@@ -269,7 +269,7 @@ theorem minPositiveRat_eq_zpow (format : Format) :
   norm_num [FloatLib.Numerics.Dyadic.toRat,
     FloatLib.Numerics.Dyadic.signedSignificand]
 
-/-- The dyadic threshold has exactly the reference threshold's rational denotation. -/
+/-- The dyadic threshold denotes the same rational as the reference threshold. -/
 @[simp] theorem roundingThreshold_toRat (format : Format) (lowerCode : Nat) :
     (roundingThreshold format lowerCode).toRat =
       Model.roundingThreshold format lowerCode := by
@@ -340,10 +340,10 @@ theorem chooseNearestCode_eq_lower_or_upper
   | gt => exact Or.inr rfl
 
 /--
-Positive dyadic rounding selects exactly the code chosen by the rational specification.
+Positive dyadic rounding selects the code that the rational specification chooses.
 
-The hypothesis is the invariant established by `round`: the temporary magnitude has its sign
-cleared. A zero significand rounds to code zero on both sides.
+The hypothesis is the invariant that `round` sets up, a temporary magnitude with its sign cleared.
+A zero significand rounds to code zero on both sides.
 -/
 theorem roundPositiveCode_eq_reference_of_positive
     (format : Format) (target : FloatLib.Numerics.Dyadic)
@@ -371,7 +371,7 @@ theorem roundPositiveCode_eq_reference_of_positive
 Below `maxPos`, positive dyadic rounding is the nearest-even choice at the lower code.
 
 Direct packers establish the lower code and the positivity of its successor from their own field
-layout; this theorem then discharges the zero, underflow, and `maxPos` branches.
+layout, and this theorem then discharges the zero, underflow, and `maxPos` branches.
 -/
 theorem roundPositiveCode_eq_chooseNearestCode_of_lowerCode
     (format : Format) (target : FloatLib.Numerics.Dyadic) (lower : Nat)
@@ -501,7 +501,7 @@ theorem ofNatBits_restoreSignCode
       exact lt_trans hpositive format.signMaskNat_lt_modulus
   · rfl
 
-/-- Exact-dyadic rounding returns exactly the reference rational specification. -/
+/-- Exact-dyadic rounding agrees with the reference rational specification on every dyadic. -/
 theorem round_eq_roundRat (format : Format) (value : FloatLib.Numerics.Dyadic) :
     round format value = Model.roundRat format value.toRat := by
   by_cases hsignificand : value.significand = 0

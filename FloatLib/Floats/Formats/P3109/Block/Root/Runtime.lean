@@ -12,10 +12,11 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 /-!
 # P3109 block square roots and norms
 
-Block roots normalize the exact root at the result scale before rounding. A finite nonzero
-scale `s` turns `sqrt(q) / s` into the signed root of `q / s²`. Exact square comparisons then
-perform one destination rounding, including negative scales and lane-specific stochastic words.
-The zero, infinite, and NaN scale rules are those of ordinary block projection.
+A block root is normalized at the result scale before it is rounded. A finite nonzero scale `s`
+turns `sqrt(q) / s` into the signed root of `q / s²`, so with `s = -2` and `q = 16` the lane value
+is `-2`. Exact square comparisons then do the one destination rounding, negative scales and
+lane-specific stochastic words included. Zero, infinite, and NaN scales follow the rules of
+ordinary block projection.
 -/
 
 @[expose] public section
@@ -70,7 +71,8 @@ def rounded (format : Format) (mode : RoundingMode) (root : BlockRoot) :
   applySign root.negative
     (Arithmetic.sqrtRounded format (magnitudeMode root.negative mode) root.radicand)
 
-/-- Saturate the rounded signed root in the requested direction, not the magnitude direction. -/
+/-- Saturate the rounded signed root in the requested direction, as given, where rounding the
+magnitude used the direction adjusted for the sign. -/
 def value (format : Format) (policy : ProjectionPolicy) (root : BlockRoot) :
     NumericalValue Numerics.Dyadic :=
   format.saturate policy.saturation policy.rounding (rounded format policy.rounding root)

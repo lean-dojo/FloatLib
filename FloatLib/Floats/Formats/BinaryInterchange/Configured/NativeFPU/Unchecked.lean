@@ -21,9 +21,9 @@ Compiled calls require round-to-nearest, ties-to-even and gradual underflow. Cha
 rounding mode, enabling flush-to-zero, or enabling denormals-are-zero can make a call disagree
 with the proved software operation.
 
-NaNs, zero divisors, and negative square-root inputs retain the software path. This preserves
-FloatLib's payload and invalid-result policies at those boundaries, but it is not a proof that
-the remaining host operations agree bit-for-bit with the software specification.
+NaNs, zero divisors, and negative square-root inputs stay on the software path. That keeps
+FloatLib's payload and invalid-result policies at those boundaries. It proves nothing about
+whether the remaining host operations agree bit-for-bit with the software specification.
 -/
 
 @[expose] public section
@@ -116,14 +116,14 @@ library's exact invalid-result policy are not delegated to host NaN selection.
 /--
 Out-of-line software square root used when the host path declines.
 
-The word dispatcher inlines the complete binary32 kernel; keeping this fallback as a call leaves
-the unchecked entry point small.
+The word dispatcher inlines the complete binary32 kernel, so keeping this fallback as a call
+leaves the unchecked entry point small.
 -/
 @[noinline] def softwareSqrt32 {width_le : FloatFormat.binary32.bitWidth ≤ 32}
     (value : NativeFPU.Binary32Value width_le) : NativeFPU.Binary32Value width_le :=
   Backend.wordSqrt value
 
-/-- Out-of-line software square root for the binary64 host path; see `softwareSqrt32`. -/
+/-- Out-of-line software square root for the binary64 host path, as in `softwareSqrt32`. -/
 @[noinline] def softwareSqrt64 {width_le : FloatFormat.binary64.bitWidth ≤ 64}
     (value : NativeFPU.Binary64Value width_le) : NativeFPU.Binary64Value width_le :=
   Backend.wordSqrt value
@@ -132,7 +132,7 @@ the unchecked entry point small.
 Opt in to guarded host binary32 square root for nonnegative finite inputs and signed zero.
 This function has no refinement certificate.
 
-The explicit zero disjunct admits negative zero, whose sign must be preserved by IEEE square root,
+The zero disjunct in the guard admits negative zero, whose sign IEEE square root must preserve,
 without admitting any negative nonzero input.
 -/
 @[always_inline, inline] def sqrt32
@@ -201,7 +201,7 @@ software. This function has no refinement certificate.
 Opt in to guarded host binary64 square root for nonnegative finite inputs and signed zero.
 This function has no refinement certificate.
 
-The explicit zero disjunct admits negative zero, whose sign must be preserved by IEEE square root,
+The zero disjunct in the guard admits negative zero, whose sign IEEE square root must preserve,
 without admitting any negative nonzero input.
 -/
 @[always_inline, inline] def sqrt64

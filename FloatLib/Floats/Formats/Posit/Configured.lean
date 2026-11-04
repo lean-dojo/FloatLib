@@ -30,28 +30,27 @@ public import FloatLib.Floats.Formats.Posit.Configured.Interval
 # Configured posit `ExecFloat` values
 
 Import this module to use posits. The standard widths are `Posit8`, `Posit16`, `Posit32`, and
-`Posit64`, and any other width is selected by its total encoded width:
+`Posit64`, and you get any other width by giving its total encoded width:
 
 ```lean
 def x : Posit32 := 1.5
 def y : ExecFloat.Posit (bits := 12) := 0.75
 ```
 
-Every configured posit is an ordinary `ExecFloat` value, uses a statically selected
-carrier, and exposes its exact semantics through the common proof infrastructure.
+Both are ordinary `ExecFloat` values. Each width gets a carrier chosen statically, and its exact
+semantics go through the same proof infrastructure as every other format.
 
-`Configured.Type` owns the public type constructor, the modules below `Configured.Storage` own
-packed-carrier selection and codecs, and `Configured.Plan.Dispatch` installs certified operation
-backends. The value layer is split further:
+`Configured.Type` owns the public type constructor, the modules below `Configured.Storage` choose
+the packed carrier and its codecs, and `Configured.Plan.Dispatch` installs the certified operation
+backends. The value layer is split three ways:
 
-* `Configured.Value.Runtime` provides packing, decoding, classification, and raw-word conversion;
-* `Configured.Instances` defines `ofRat` and installs comparison, display, literals, and negation;
+* `Configured.Value.Runtime` provides packing, decoding, classification, and raw-word conversion.
+* `Configured.Instances` defines `ofRat` and installs comparison, display, literals, and negation.
 * `Configured.Value.Proof` proves round trips, special-value semantics, and comparison laws.
 
-Raw words are deliberately lower-level than ordinary numeric construction. They are for
-serialization, conformance vectors, and encoding proofs. Arithmetic clients should build values
-from numeric literals or `.ofRat q` and use the operation interface once the matching certified
-capability is imported.
+Raw words sit deliberately below ordinary numeric construction. We keep them for serialization,
+conformance vectors, and encoding proofs. If you are doing arithmetic, build values from numeric
+literals or `.ofRat q`, import the certified capability you need, and use the operation interface.
 
 ## References
 

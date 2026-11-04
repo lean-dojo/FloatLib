@@ -15,13 +15,13 @@ import all Init.Data.SInt.Float32
 /-!
 # Native floating point to signed integers
 
-Lean defines the signed native casts through its logical floating-point models. They truncate toward
-zero, saturate overflow and infinities, and send NaN to zero. FloatLib's checked conversion reports
-those exceptional cases as errors.
+Lean's signed native casts, defined through its logical floating-point models, truncate toward
+zero, saturate on overflow and infinities, and send NaN to zero. FloatLib's checked conversion
+reports those exceptional cases as errors.
 
 The shared policy below uses the same exact decoder and integral rounder as the checked
-conversion. In-range means that the *truncated integer* is in range: for example, `127.75`
-converts successfully to the signed eight-bit integer `127`.
+conversion. In range means the *truncated integer* is in range, so `127.75` converts to the
+signed eight-bit integer `127` without complaint.
 -/
 
 @[expose] public section

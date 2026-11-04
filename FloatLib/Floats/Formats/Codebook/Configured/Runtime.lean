@@ -11,8 +11,10 @@ public import FloatLib.Floats.Formats.Codebook.Configured.Core
 /-!
 # Executable configured-codebook operations
 
-These operations expose storage and semantic decoding for any selected codebook. Arithmetic is
-deliberately absent: a generic lookup table does not determine how its entries should combine.
+For any selected codebook, these operations read the storage and decode it to its meaning. You
+won't find arithmetic here, and that's on purpose. A generic lookup table says what each word
+means, but nothing about how two entries should combine. Named codebooks with proved arithmetic get
+it in `Configured.Catalog`.
 -/
 
 @[expose] public section

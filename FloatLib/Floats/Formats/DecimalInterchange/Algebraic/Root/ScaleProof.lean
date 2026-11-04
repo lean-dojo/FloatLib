@@ -11,8 +11,10 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.ScaleProof
 /-!
 # Decimal coefficient range for arbitrary integer-degree roots
 
-Dividing the integer decimal logarithm by the positive degree determines a
-fitting root grid. The argument uses exact powers and applies to any format.
+Before a root can be rounded, the rounder has to pick the grid its coefficient lives on. Dividing
+the integer decimal logarithm of the scaled radicand by the degree gives that grid. We prove it is
+large enough for the root to fit the precision, keeps a full leading digit above the subnormal
+range, and is the smallest grid that works. The argument uses exact powers and holds in any format.
 -/
 
 @[expose] public section

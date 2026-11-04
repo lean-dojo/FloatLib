@@ -12,11 +12,12 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
 /-!
 # Mathematical order and extrema for P3109
 
-Finite extrema agree with the rational field's minimum and maximum. Comparisons agree with
-rational order, while NaN stays unordered. Magnitude ties and the preference for finite values
-are stated apart from rounding. The executable extrema use the same `binary` refinement
-as arithmetic, so these identities describe the expression at their single projection boundary.
-Clamping rejects reversed bounds and agrees with the rational interval clamp for ordered bounds.
+On finite values, P3109 extrema are the rational minimum and maximum, and comparisons are rational
+order, with NaN left unordered. Magnitude ties and the preference for finite values are stated
+apart from rounding. Because the executable extrema use the same `binary` refinement as
+arithmetic, these identities describe the expression at their single projection boundary.
+Clamping rejects reversed bounds, and for ordered bounds it agrees with the rational interval
+clamp.
 -/
 
 @[expose] public section

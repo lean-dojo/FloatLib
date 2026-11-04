@@ -10,14 +10,15 @@ module
 /-!
 # Declared zero in exact numerical domains
 
-Checked arithmetic needs a domain-specific way to recognize every representation that should
-behave as zero. Structural equality is enough for ordinary exact domains, but a carrier may
-deliberately retain distinctions that its arithmetic forgets. For example, `SignedRat` has
-separate positive and negative zeros.
+Checked arithmetic needs a way to recognize every representation that should behave as zero. That
+depends on the domain. Structural equality is enough for an ordinary exact domain, but a carrier may
+deliberately keep distinctions that its arithmetic forgets. `SignedRat`, for example, has separate
+positive and negative zeros.
 
-`ExactZero` keeps that choice explicit and executable. The class guarantees only that canonical
-`0` is included; concrete domains provide bridge theorems connecting their declared predicate to
-the representation's numerical meaning. Generic algorithms branch only on this capability.
+`ExactZero` makes that choice a declared, executable predicate. The class guarantees only that
+canonical `0` is included, and each concrete domain provides bridge theorems connecting its declared
+predicate to the numerical meaning of the representation. Generic algorithms branch on this
+capability and nothing else.
 -/
 
 @[expose] public section

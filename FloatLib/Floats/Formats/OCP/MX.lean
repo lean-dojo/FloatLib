@@ -21,12 +21,12 @@ public import FloatLib.Floats.Formats.OCP.MX.Standard.Configured.Proof
 /-!
 # OCP microscaling formats
 
-The one-byte element types `E2M1`, `E2M3`, and `E3M2` used in OCP MX blocks, together with the
-E8M0 shared scale and contextual block semantics.
-`Standard` supplies the six concrete 32-element MX profiles, exact decoding, and destination
-quantization with proved nearest-even rounding at the selected shared scale.
-Its dot products accumulate exact rational products across any number of blocks, then round
-once to binary32.
+In OCP MX, a block of 32 narrow elements shares one scale. Here you'll find the one-byte element
+types `E2M1`, `E2M3`, and `E3M2`, the E8M0 shared scale, and the contextual semantics of a block,
+whose meaning depends on scale and elements together. `Standard` supplies the six concrete
+32-element MX profiles, exact decoding, and destination quantization with proved nearest-even
+rounding at the selected shared scale. Its dot products accumulate exact rational products across
+any number of blocks and round once, at the end, to binary32.
 
 ## E8M0
 
@@ -35,13 +35,13 @@ their standard or family packages under `FloatLib.Floats.Formats`.
 
 This import collects the OCP microscaling concepts:
 
-* E8M0 exponent-only scales, which have no sign bit, zero, or fraction;
-* block decoding with one shared E8M0 scale;
-* concrete 32-element profiles, including fixed-point INT8 with six fractional bits;
-* max-binade scale selection and the SAT/OVF element conversion policies;
-* mixed-profile dot products with exact accumulation and one binary32 projection;
-* their exact numerical-system contracts and `numerics` automation; and
-* optional `#float_info` inspection metadata.
+* E8M0 exponent-only scales, which have no sign bit, zero, or fraction
+* block decoding with one shared E8M0 scale
+* concrete 32-element profiles, including fixed-point INT8 with six fractional bits
+* max-binade scale selection and the SAT/OVF element conversion policies
+* mixed-profile dot products with exact accumulation and one binary32 projection
+* their exact numerical-system contracts and `numerics` automation
+* optional `#float_info` inspection metadata
 -/
 
 @[expose] public section

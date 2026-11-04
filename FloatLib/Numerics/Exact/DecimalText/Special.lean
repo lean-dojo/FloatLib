@@ -7,11 +7,12 @@ module
 
 public import FloatLib.Numerics.Exact.DecimalText.Runtime
 
-/-! # Shared ASCII infinity and NaN spellings
+/-!
+# Shared ASCII infinity and NaN spellings
 
-The caller supplies the special-value constructors and interprets the diagnostic
-suffix. The scanner accepts case-independent Inf/Infinity/NaN/sNaN and decimal
-payload digits. An absent suffix denotes zero; the binding chooses its meaning.
+Inf, Infinity, NaN, and sNaN are accepted in any letter case, with decimal payload digits, while the
+caller supplies the special-value constructors and interprets the diagnostic suffix. An absent
+suffix denotes zero, and the binding chooses its meaning.
 -/
 
 @[expose] public section
@@ -27,7 +28,9 @@ def consumeKeyword : List Char → List Char → Option (List Char)
       if actual.toLower = expected then consumeKeyword word rest else none
   | _, _ => none
 
-/-- A missing diagnostic suffix denotes payload zero; otherwise every character must be a digit. -/
+/--
+A missing diagnostic suffix denotes payload zero, and otherwise every character must be a digit.
+-/
 def parsePayload (characters : List Char) : Option Nat :=
   if characters = [] then some 0
   else

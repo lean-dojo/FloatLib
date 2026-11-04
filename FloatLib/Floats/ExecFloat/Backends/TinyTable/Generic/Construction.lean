@@ -11,10 +11,10 @@ public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Core
 /-!
 # Exhaustive byte-table construction
 
-The `Tabulation` constructors share the row-major generation and lookup equations for arbitrary
-radices. The `Encoding` adapters supply exact model operations and byte-range guarantees. Tables
-are stored in Lean runtime `Thunk` cells, so construction is lazy and memoized while the warm path
-performs no model evaluation.
+The `Tabulation` constructors share the row-major generation and lookup equations for any radix, and
+the `Encoding` adapters supply exact model operations and byte-range guarantees. Tables are stored
+in Lean runtime `Thunk` cells, so construction is lazy and memoized, and the warm path never
+evaluates the model.
 -/
 
 @[expose] public section
@@ -27,7 +27,7 @@ variable {Model : Type u}
 
 namespace Tabulation
 
-/-- Generate a row-major binary table; the coordinate bounds erase at runtime. -/
+/-- Generate a row-major binary table. The coordinate bounds are erased at runtime. -/
 @[inline] abbrev binary (radix : Nat) (entry : Fin radix → Fin radix → UInt8) : ByteArray :=
   ByteArray.ofFn fun index : Fin (radix * radix) =>
     have hradix : 0 < radix := Nat.pos_of_ne_zero fun h => by

@@ -14,13 +14,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 /-!
 # Correctness of binary comparisons
 
-The format-parameterized executable comparison agrees with exact dyadic, real, and extended-real
-order. The selection theorems also specify IEEE `minimum` and `maximum`, including infinities
-and signed-zero tie breaking: on two zeros, in either order, `minimum` returns the zero whose sign
-is the disjunction of the operands' signs and `maximum` the one whose sign is their conjunction
-(`minimum_of_isZero`, `maximum_of_isZero`, and `minimum_zero_zero` for the policy zeros).
+We prove that the executable comparison, written once for every format, agrees with exact dyadic,
+real and extended-real order. The selection theorems specify IEEE `minimum` and `maximum` as well,
+infinities and signed-zero ties included. Given two zeros in either order, `minimum` returns the
+zero whose sign is the disjunction of the operands' signs, so a negative zero wins, and `maximum`
+returns the one whose sign is their conjunction (`minimum_of_isZero`, `maximum_of_isZero`, and
+`minimum_zero_zero` for the policy zeros).
 
-All results are uniform in the binary format.
+Every result is uniform in the binary format.
 -/
 
 @[expose] public section
@@ -38,7 +39,7 @@ theorem chooseNaN2_none_of_not_isNaN {fmt : FloatFormat} (x y : Model fmt)
     chooseNaN2 x y = none :=
   (chooseNaN2_eq_none_iff x y).2 ⟨hx, hy⟩
 
-/-- Comparison is unordered exactly when an operand is a NaN. -/
+/-- Comparison is unordered if and only if an operand is a NaN. -/
 theorem compare_eq_none_iff {fmt : FloatFormat} (x y : Model fmt) :
     compare x y = none ↔ isNaN x = true ∨ isNaN y = true := by
   cases hx : isNaN x <;> cases hy : isNaN y <;> simp [compare, hx, hy]
@@ -223,7 +224,10 @@ theorem minimumNumber_eq_minNum_of_not_isSNaN {fmt : FloatFormat} (x y : Model f
   cases hxNaN : isNaN x <;> cases hyNaN : isNaN y <;>
     simp [minimumNumber, Internal.Value.minimumNumber, minNum, bothNaNNumber, hx, hy, hxNaN, hyNaN]
 
-/-- The `maximumNumber` counterpart of `minimumNumber_eq_minNum_of_not_isSNaN`. -/
+/--
+When neither operand is a signaling NaN, `maximumNumber` agrees with `maxNum`, including when
+one or both operands are quiet NaNs.
+-/
 theorem maximumNumber_eq_maxNum_of_not_isSNaN {fmt : FloatFormat} (x y : Model fmt)
     (hx : isSNaN x = false) (hy : isSNaN y = false) :
     maximumNumber x y = maxNum x y := by
@@ -268,7 +272,7 @@ theorem isNaN_maximumNumber_eq_false_of_not_both
   cases hx : isNaN x <;> cases hy : isNaN y <;>
     simp_all [maximumNumber, Internal.Value.maximumNumber, isNaN_maximum_eq_false_of_isNaN_eq_false]
 
-/-- `minimumNumber` returns a NaN exactly when both operands are NaNs. -/
+/-- `minimumNumber` returns a NaN just when both operands are NaNs. -/
 theorem isNaN_minimumNumber {fmt : FloatFormat} (x y : Model fmt) :
     isNaN (minimumNumber x y) = (isNaN x && isNaN y) := by
   cases hx : isNaN x <;> cases hy : isNaN y <;> simp only [Bool.and_self, Bool.and_false,
@@ -279,7 +283,7 @@ theorem isNaN_minimumNumber {fmt : FloatFormat} (x y : Model fmt) :
   · rw [minimumNumber_of_isNaN_both x y hx hy]
     exact isNaN_bothNaNNumber hx hy
 
-/-- `maximumNumber` returns a NaN exactly when both operands are NaNs. -/
+/-- `maximumNumber` returns a NaN just when both operands are NaNs. -/
 theorem isNaN_maximumNumber {fmt : FloatFormat} (x y : Model fmt) :
     isNaN (maximumNumber x y) = (isNaN x && isNaN y) := by
   cases hx : isNaN x <;> cases hy : isNaN y <;> simp only [Bool.and_self, Bool.and_false,
@@ -328,7 +332,7 @@ theorem compare_eq_some_cmpDyadic_of_toDyadic?
   have hyInf := isInf_eq_false_of_toDyadic?_some hy
   simp [compare, compareNonNaN, hxNaN, hyNaN, hxInf, hyInf, hx, hy]
 
-/-- Finite executable comparison returns `.lt` exactly when the decoded reals are ordered. -/
+/-- Finite executable comparison returns `.lt` just when the decoded reals are ordered. -/
 theorem compare_eq_some_lt_iff_toReal_lt
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
@@ -336,7 +340,7 @@ theorem compare_eq_some_lt_iff_toReal_lt
   simpa [compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy, toReal_eq, hx, hy] using
     cmpDyadic_lt_iff dx dy
 
-/-- Finite executable comparison returns `.eq` exactly when the decoded reals are equal. -/
+/-- Finite executable comparison returns `.eq` just when the decoded reals are equal. -/
 theorem compare_eq_some_eq_iff_toReal_eq
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
@@ -344,7 +348,7 @@ theorem compare_eq_some_eq_iff_toReal_eq
   simpa [compare_eq_some_cmpDyadic_of_toDyadic? x y hx hy, toReal_eq, hx, hy] using
     cmpDyadic_eq_iff dx dy
 
-/-- Finite executable comparison returns `.gt` exactly when the decoded reals are reversed. -/
+/-- Finite executable comparison returns `.gt` just when the decoded reals are reversed. -/
 theorem compare_eq_some_gt_iff_toReal_gt
     {fmt : FloatFormat} (x y : Model fmt) {dx dy : Numerics.Dyadic}
     (hx : toDyadic? x = some dx) (hy : toDyadic? y = some dy) :
@@ -905,12 +909,11 @@ theorem toEReal_maximumNumber_eq_max
   exact toEReal_maximum_eq_max x y hxNaN hyNaN
 
 /--
-`minimumNumber` is commutative up to extended-real value. The interpretation identifies the two
-signed zeros and sends every NaN to zero, so it does not see which word is delivered. On two zeros
-the delivered word does not depend on the order (`minimumNumber_of_isZero`), and a single NaN
-operand is skipped in either order. For two NaN operands both orders deliver a NaN
-(`isNaN_minimumNumber`), but not always the same one: `bothNaNNumber` quiets the left operand
-unless only the right one is signaling, so the sign and payload can depend on the order.
+`minimumNumber` is commutative up to extended-real value, a reading that identifies the two signed
+zeros and sends every NaN to zero. On the words themselves, two zeros give the same word in either
+order (`minimumNumber_of_isZero`) and a single NaN operand is skipped in either order. Two NaN
+operands give a NaN both ways (`isNaN_minimumNumber`), but `bothNaNNumber` quiets the left operand
+unless only the right one is signaling, so sign and payload can depend on the order.
 -/
 theorem toEReal_minimumNumber_comm
     {fmt : FloatFormat} (x y : Model fmt) :

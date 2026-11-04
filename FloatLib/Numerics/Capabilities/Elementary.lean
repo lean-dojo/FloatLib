@@ -17,8 +17,8 @@ public import Mathlib.Basic.Real.Basic
 /-!
 # Elementary scalar capabilities
 
-`MathFunctions` supplies elementary functions, absolute value, and π for a scalar domain.
-The interface is independent of encoded formats, storage layouts, and execution backends.
+`MathFunctions` supplies elementary functions, absolute value, and π for a scalar domain. Nothing in
+the interface depends on encoded formats, storage layouts, or execution backends.
 -/
 
 @[expose] public section
@@ -28,9 +28,9 @@ namespace FloatLib.Numerics
 /--
 Scalar functions and π shared by numerical and model code.
 
-This class records which operations a scalar domain can evaluate; it does not by itself promise
-exactness, an error bound, correct rounding, a selectable rounding mode, or IEEE status flags.
-Those guarantees belong to separate contracts supplied by each implementation.
+This class records which operations a scalar domain can evaluate. On its own it promises no
+exactness, error bound, correct rounding, selectable rounding mode, or IEEE status flags. Those
+guarantees belong to separate contracts supplied by each implementation.
 -/
 class MathFunctions (α : Type) where
   /-- Exponential function. -/

@@ -38,26 +38,26 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 /-!
 # Semantic theorems for format-parameterized executable floats
 
-The binary semantic API combines the exact bit/model bridge, real interpretation, nearest-even
+Import this module when you prove things about binary formats in general. It gathers the
+semantic half of the binary API: the exact bit/model bridge, real interpretation, nearest-even
 rounding, arithmetic refinement, symbolic no-overflow criteria, signed arithmetic,
 arbitrary-format directed-rounding bounds, comparison semantics, extended-real min/max, interval
 enclosure soundness, cross-format casts, finite arithmetic bridges to Lean's unpacked model,
 generic error bounds, mixed-error propagation, and exact-subtraction results.
 
-Import the operation-specific `Arithmetic.Runtime` and `Operations.Runtime` modules when keeping
-runtime dependencies narrow, or the `FloatLib.Floats.Formats.BinaryInterchange` family entry
-point for the complete public API. Import this module for format-generic proofs.
+If you want narrow runtime dependencies, import the operation-specific `Arithmetic.Runtime` and
+`Operations.Runtime` modules. For the complete public API, use the
+`FloatLib.Floats.Formats.BinaryInterchange` family entry point.
 
 ## Packing
 
-This module collects packing facts for special and finite values. Import the smaller modules
-directly when only one representation class is needed.
+Packing facts for special and finite values come in through this module too. When you need only
+one representation class, import its smaller module.
 
 ## Arithmetic
 
-This module exports extended-real lower and upper bounds for directed addition, subtraction,
-multiplication, division, and square root on finite operands, subject to the stated domain
+For directed addition, subtraction, multiplication, division, and square root on finite
+operands, this module exports extended-real lower and upper bounds, subject to the stated domain
 hypotheses. It also exports exactness of the implemented rounding directions on representable
-dyadics. All proofs are parameterized by
-`FloatFormat`.
+dyadics. Every proof is parameterized by `FloatFormat`.
 -/

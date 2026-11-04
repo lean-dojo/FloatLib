@@ -12,10 +12,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Proof
 /-!
 # DPD coefficient correctness and complete datum round trips
 
-DPD coefficient and exponent packing recovers every valid datum after encoding. Decoding always
-produces a valid datum. Canonicalization preserves that datum and is idempotent, and two words
-have the same canonical word exactly when they decode to the same datum, so redundant encodings
-are removed.
+DPD gets the same guarantees as BID, through the shared codec laws. Encoding a valid datum and
+decoding the word gives the datum back, and decoding always produces a valid datum.
+Canonicalization keeps that datum, and applying it twice changes nothing. Two words have the same
+canonical word if and only if they decode to the same datum, so canonicalization removes the
+redundant encodings.
 -/
 
 @[expose] public section
@@ -95,7 +96,7 @@ theorem canonicalize_idempotent (f : Format) (word : BitVec f.bitWidth) :
     canonicalize f (canonicalize f word) = canonicalize f word :=
   codec.canonicalize_idempotent lawful f word
 
-/-- Two DPD words have the same canonical word exactly when they decode to the same datum, so
+/-- Two DPD words have the same canonical word if and only if they decode to the same datum, so
 redundant declets and unused special-value bits are collapsed onto one word. -/
 theorem canonicalize_eq_canonicalize_iff (f : Format) (left right : BitVec f.bitWidth) :
     canonicalize f left = canonicalize f right ↔ decode f left = decode f right :=

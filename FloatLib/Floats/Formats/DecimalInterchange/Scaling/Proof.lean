@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Exponent-operation semantics
 
-The bounds on `decimalExponent` characterize its answer by consecutive radix powers.
-Scaling inherits the actual projection's value, range, rounding and cohort
-guarantees, including signed zero and decimal tininess before rounding.
+Bounds between consecutive powers of ten pin down `decimalExponent`, so for `314` the answer is
+`2`. Scaling inherits the value, range, rounding and cohort guarantees of the projection it calls,
+signed zero and decimal tininess before rounding included.
 -/
 
 @[expose] public section
@@ -42,7 +42,7 @@ theorem scale_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
   | infinity s => trivial
   | nan s t p => exact nanResult_valid ..
 
-/-- The intermediate magnitude is exactly the input magnitude times the radix power. -/
+/-- The intermediate magnitude is the input magnitude times the radix power, unrounded. -/
 theorem scale_exact_magnitude (c : Nat) (q n : Int) :
     (c : ℚ) * (10 : ℚ) ^ (q + n) =
       ((c : ℚ) * (10 : ℚ) ^ q) * (10 : ℚ) ^ n := by
@@ -57,8 +57,8 @@ theorem scale_exact_status (f : Format) (mode : RoundingMode)
   rw [scale_finite]
   exact projectMagnitude_exact_status f mode s c (q + n) (q + n) hvalid
 
-/-- When the shifted representation is valid in the format, scaling delivers exactly the input value
-times `10 ^ n`. -/
+/-- When the shifted representation is valid in the format, scaling delivers the input value times
+`10 ^ n`, unrounded. -/
 theorem scale_exact_value (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int)
     (hvalid : (Datum.finite s c (q + n)).Valid f) :
@@ -69,8 +69,8 @@ theorem scale_exact_value (f : Format) (mode : RoundingMode)
     zpow_add₀ (by norm_num : (10 : ℚ) ≠ 0), mul_assoc] using h
 
 /-- The selected quantum is closest to `q + n` among valid representations of the exact result. The
-shifted representation `(c, q + n)` need not be valid itself; any valid representation `(e, t)` of
-the exact result is at least as far from `q + n`. -/
+shifted representation `(c, q + n)` need not be valid itself, and any valid representation
+`(e, t)` of the exact result is at least as far from `q + n`. -/
 theorem scale_quantum_closest (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int)
     (d : Nat) (r : Int)
@@ -87,8 +87,8 @@ theorem scale_zero (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int) :
       { value := .finite s 0 (max f.minQuantum (min (q + n) f.maxQuantum)) } := by
   simpa [scale_finite] using projectMagnitude_zero f mode s (q + n)
 
-/-- Scaling a finite datum raises inexact exactly when a finite delivered value differs from the
-exact scaled value, also when it overflows to the greatest finite datum. -/
+/-- Scaling a finite datum raises inexact if and only if a finite delivered value differs from the
+exact scaled value, an overflow to the greatest finite datum included. -/
 theorem scale_inexact_iff (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int) (v : ℚ)
     (hv : (scale f mode (.finite s c q) n).value.toRat? = some v) :
@@ -101,7 +101,7 @@ theorem scale_inexact_iff (f : Format) (mode : RoundingMode)
     simpa [Datum.finiteValue, scale_exact_magnitude,
       mul_assoc] using h
 
-/-- Scaling uses the exact, unrounded magnitude in the decimal tininess test; an overflowing
+/-- Scaling uses the exact, unrounded magnitude in the decimal tininess test, and an overflowing
 magnitude is never tiny. -/
 theorem scale_underflow_iff (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q n : Int) :
@@ -124,7 +124,7 @@ theorem decimalExponent_finite (f : Format) (s : Bool) (c : Nat) (q : Int) (hc :
     decimalExponent f (.finite s c q) = { value := q + (Nat.log 10 c : Int) } := by
   cases c <;> simp_all [decimalExponent]
 
-/-- The returned exponent is exactly the unique radix-power bracket for the magnitude. -/
+/-- The returned exponent is the unique radix-power bracket for the magnitude. -/
 theorem decimalExponent_bounds (f : Format) (s : Bool) (c : Nat) (q : Int) (hc : c ≠ 0) :
     (10 : ℚ) ^ (decimalExponent f (.finite s c q)).value ≤ (c : ℚ) * (10 : ℚ) ^ q ∧
       (c : ℚ) * (10 : ℚ) ^ q < (10 : ℚ) ^ ((decimalExponent f (.finite s c q)).value + 1) := by

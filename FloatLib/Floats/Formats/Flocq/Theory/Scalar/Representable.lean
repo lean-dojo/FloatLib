@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Scalar.NF
 /-!
 # Grid Invariants for `NF`
 
-`NF` permits raw real-valued construction for approximation proofs, while its smart constructor and
-primitive arithmetic round onto the declared format. This file proves the corresponding
-`NF.IsRepresentable` closure properties without adding generic-format theory to the core scalar
-module's import surface.
+You can build an `NF` from any raw real, which approximation proofs need, but the smart constructor
+and the primitive arithmetic always round onto the declared format. This file proves the matching
+`NF.IsRepresentable` closure properties. Keeping them here means the core scalar module doesn't
+have to import the generic-format theory.
 -/
 
 @[expose] public section

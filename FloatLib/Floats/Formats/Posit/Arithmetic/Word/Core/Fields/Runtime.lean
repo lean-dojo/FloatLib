@@ -12,9 +12,10 @@ public import FloatLib.Kernels.FixedWord.Core.Runtime
 /-!
 # Scalar-field posit decoding
 
-Compiled native-word kernels consume decoded posit fields through scalar continuations. The
-machine-scalar path keeps layout arithmetic in `UInt64` and `Int64`; total wrappers retain a
-natural-number reference path outside the native backend contract. Refinement proofs live in
+Compiled native-word kernels take decoded posit fields through scalar continuations, and this
+module provides them. The machine-scalar path keeps layout arithmetic in `UInt64` and `Int64`.
+Total wrappers keep a natural-number reference path, which sits outside the native backend
+contract. Its refinement proofs are in
 `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Fields.Proof`.
 -/
 

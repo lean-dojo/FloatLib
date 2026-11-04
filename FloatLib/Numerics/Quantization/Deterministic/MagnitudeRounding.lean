@@ -14,24 +14,24 @@ import Mathlib.Algebra.Order.Group.Nat
 /-!
 # Magnitude rounding rules
 
-Rounding a signed value to a binary grid reduces, once its sign is known, to rounding a
-nonnegative magnitude to one of the two integers around it. Four rules cover the IEEE 754
-rounding directions and MPFR's rounding away from zero: truncation, rounding up, and the two
-nearest rules, which differ only at an exact tie.
+Rounding a signed value to a binary grid reduces, once its sign is known, to rounding a nonnegative
+magnitude to one of the two integers around it. Four rules cover the IEEE 754 rounding directions
+and MPFR's rounding away from zero: truncation, rounding up, and the two nearest rules, which differ
+only at an exact tie.
 
 `MagnitudeRounding` names the four rules, and `MagnitudeRounding.increment` decides each of them
 from the three rounding bits: the least retained bit, the guard bit, and the sticky bit.
 `roundShiftRight` applies a rule to a division by a power of two and `roundQuotient` to a division
-by any natural number. Their nearest-even rules call `roundShiftRightEven` and
-`roundQuotientEven`, so each division keeps one nearest-even implementation. The other rules use
-shifts in `roundShiftRight` and a single division in `roundQuotient`.
+by any natural number. Their nearest-even rules call `roundShiftRightEven` and `roundQuotientEven`,
+so each division keeps one nearest-even implementation. Other rules use shifts in `roundShiftRight`
+and a single division in `roundQuotient`.
 
 The `@[csimp]` machine-word replacements of `roundShiftRightEven` and `roundQuotientEven` apply
 where those functions are called by name. A call through `roundShiftRight` or `roundQuotient` is
-compiled from the definitions here, where those replacements are not yet registered, so it runs
-the arbitrary-precision definition.
+compiled from the definitions here, before those replacements are registered, so it runs the
+arbitrary-precision definition.
 
-The theorems give each rule in guard-and-sticky form, relate the shift and quotient forms, express
+Its theorems give each rule in guard-and-sticky form, relate the shift and quotient forms, express
 nearest-away as nearest-even with ties sent to the ceiling, and read the ternary value (whether the
 delivered value is below, equal to, or above the exact one) off the rounding bits.
 -/

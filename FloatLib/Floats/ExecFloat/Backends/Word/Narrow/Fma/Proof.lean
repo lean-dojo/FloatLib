@@ -19,8 +19,8 @@ import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Proof
 /-!
 # Correctness of native-word fused multiply-add for generic binary32
 
-The `UInt64` fused multiply-add kernel agrees with its exact-dyadic finite specification.
-Runtime clients can import `Fma.Runtime` without the alignment, packing and rounding proofs.
+Here the `UInt64` fused multiply-add kernel is proved to agree with its exact-dyadic finite
+specification. `Fma.Runtime` can be imported without the alignment, packing, and rounding proofs.
 -/
 
 @[expose] public section

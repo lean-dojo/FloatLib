@@ -11,9 +11,9 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 /-!
 # Soundness of partial, representation-independent interval arithmetic
 
-Every enclosure theorem retains the successful-result hypothesis. Failed decoding, unavailable
-outward rounding, and zero-crossing division are not interpreted as valid finite enclosures, and
-`div?_eq_none_of_contains_zero` shows that division rejects every denominator range containing
+Every enclosure theorem keeps the hypothesis that the operation succeeded. A failed decoding, an
+unavailable outward rounding, or a zero-crossing division never counts as a valid finite enclosure,
+and `div?_eq_none_of_contains_zero` shows that division rejects every denominator range containing
 zero.
 -/
 

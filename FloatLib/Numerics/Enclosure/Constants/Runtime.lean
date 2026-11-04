@@ -14,26 +14,26 @@ public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 
 `piLevel bits` holds `π/2` and `2/π`, and `ln2Fixed bits` holds `log 2`, each as a natural number
 `T` with `T ≤ c * 2 ^ bits < T + 2`. Binary splitting sums Machin's formula
-`π/4 = 4 atan (1/5) - atan (1/239)` and the series of `log 2 = log (4/3) - log (2/3)` into
-unreduced integer fractions, so each constant costs one integer division and no rational
-normalization. The fractions are the lower and upper endpoints of `piQuarter (piDegree bits)` and
+`π/4 = 4 atan (1/5) - atan (1/239)` and the series of `log 2 = log (4/3) - log (2/3)` into unreduced
+integer fractions, so each constant costs one integer division and no rational normalization. These
+fractions are the lower and upper endpoints of `piQuarter (piDegree bits)` and
 `logSeries 2 (ln2Degree bits)`, the rational enclosures of `Trigonometric.Runtime` and
 `Elementary.Runtime`, and `Constants.Proof` proves the two-unit bounds at every precision.
 
-Level `k` holds the constants at `64 * 2 ^ k` fractional bits. The first forty levels are cached.
-Each is computed at most once per process, on first use, and then shared. Higher levels are
-computed on each call. A read at `bits` shifts the first level with at least `bits` bits down to
-`bits`, which keeps the two-unit bound. The faithful read of `log 2` takes 64 more bits and is
-within one unit, and the grid read returns an enclosure on a binary grid.
+Level `k` holds the constants at `64 * 2 ^ k` fractional bits. We cache the first forty levels. Each
+is computed at most once per process, on first use, and then shared, and higher levels are computed
+on each call. A read at `bits` shifts the first level with at least `bits` bits down to `bits`,
+which keeps the two-unit bound. A faithful read of `log 2` takes 64 more bits and is within one
+unit, and the grid read returns an enclosure on a binary grid.
 
-The cache is read by the binary sine and cosine reduction, the exponential reduction, generated
-transcendental configurations, the certified binary power and `Model.pi`. Two computations do not
-read it. The rational enclosures behind the exact comparators compute their own `π/4` with
-`piQuarter`, and `BinaryGrid.log`, behind the certified binary and decimal logarithms and the
-logarithm comparator `ElementaryComparison.compareLog`, computes its own `log 2`.
+Five computations read the cache: the binary sine and cosine reduction, the exponential reduction,
+generated transcendental configurations, the certified binary power, and `Model.pi`. Two don't. The
+rational enclosures behind the exact comparators compute their own `π/4` with `piQuarter`, and
+`BinaryGrid.log`, which is behind the certified binary and decimal logarithms and the logarithm
+comparator `ElementaryComparison.compareLog`, computes its own `log 2`.
 
-Module initialization only allocates the cells. The cache definitions disable closed-term
-extraction, and every read goes through `Internal.forceCache`, which is never inlined or extracted.
+Module initialization only allocates the cells. Cache definitions disable closed-term extraction,
+and every read goes through `Internal.forceCache`, which is never inlined or extracted.
 -/
 
 @[expose] public section

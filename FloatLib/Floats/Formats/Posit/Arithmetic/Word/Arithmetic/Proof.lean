@@ -16,10 +16,11 @@ public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.Proof
 /-!
 # Correctness of native-word posit arithmetic
 
-Every direct stored-word result is a valid posit encoding, and each stored-word kernel
-re-encodes to the width-generic direct kernel in `DirectDyadicArithmetic` applied to the decoded
-operands. Refinement to the rational specification then follows from
-`DirectDyadicArithmetic.add_eq_spec` and its siblings.
+The one-word kernels are proved correct in two steps. This module does the first. Every
+direct stored-word result is a valid posit encoding, and each stored-word kernel re-encodes to the
+width-generic direct kernel of `DirectDyadicArithmetic` applied to the decoded operands. The second
+step, refinement to the rational specification, is then `DirectDyadicArithmetic.add_eq_spec` and
+its siblings.
 -/
 
 @[expose] public section

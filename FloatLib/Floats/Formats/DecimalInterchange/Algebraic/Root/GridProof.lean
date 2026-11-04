@@ -14,9 +14,10 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # Rounding an integer-degree root on the coefficient grid
 
-The integer root of the rational floor brackets the nonnegative real root.
-Exact powers compare that root with integer coefficients and their midpoints.
-The degree is any positive natural number.
+The root rounder works with integers and rationals and never computes a real root. The integer
+root of the rational floor, `rootFloor`, and its successor bracket the nonnegative real root, and
+comparisons of exact powers place the root against integer coefficients and against each midpoint
+`k + 1/2`. All of it holds for any positive degree.
 -/
 
 @[expose] public section
@@ -42,21 +43,21 @@ theorem realRoot_pow {degree : Nat} (hn : degree ≠ 0) {x : ℝ} (hx : 0 ≤ x)
     realRoot degree x ^ degree = x :=
   Real.rpow_inv_natCast_pow hx hn
 
-/-- For a positive degree and nonnegative numbers, `a` is at most the real root of `x` exactly when
-`a ^ degree ≤ x`, so root bounds reduce to exact power comparisons. -/
+/-- For a positive degree and nonnegative numbers, `a` is at most the real root of `x` if and only
+if `a ^ degree ≤ x`, so root bounds reduce to exact power comparisons. -/
 theorem le_realRoot_iff {degree : Nat} (hn : degree ≠ 0) {x a : ℝ}
     (hx : 0 ≤ x) (ha : 0 ≤ a) :
     a ≤ realRoot degree x ↔ a ^ degree ≤ x := by
   rw [← pow_le_pow_iff_left₀ ha (realRoot_nonneg degree hx) hn, realRoot_pow hn hx]
 
-/-- For a positive degree and nonnegative numbers, the real root of `x` is at most `a` exactly when
-`x ≤ a ^ degree`. -/
+/-- For a positive degree and nonnegative numbers, the real root of `x` is at most `a` if and only
+if `x ≤ a ^ degree`. -/
 theorem realRoot_le_iff {degree : Nat} (hn : degree ≠ 0) {x a : ℝ}
     (hx : 0 ≤ x) (ha : 0 ≤ a) :
     realRoot degree x ≤ a ↔ x ≤ a ^ degree := by
   rw [← pow_le_pow_iff_left₀ (realRoot_nonneg degree hx) ha hn, realRoot_pow hn hx]
 
-/-- For a positive degree and nonnegative numbers, the real root of `x` is below `a` exactly when
+/-- For a positive degree and nonnegative numbers, the real root of `x` is below `a` if and only if
 `x < a ^ degree`. -/
 theorem realRoot_lt_iff {degree : Nat} (hn : degree ≠ 0) {x a : ℝ}
     (hx : 0 ≤ x) (ha : 0 ≤ a) :

@@ -11,18 +11,19 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Parsing
 /-!
 # Binary character input with explicit resource limits
 
-The byte limit is checked before scanning, including before trimming ASCII whitespace.
-The exponent limit applies to the parsed exponent after fractional digits adjust its scale.
-Both checks precede exact numerical conversion. Accepted values are never clamped or approximated
-to satisfy a limit: their value and exception status agree with `TextParser.run`.
+Text that is too long, or whose exponent is too large, is refused before any exact numerical
+conversion. Byte length is checked before scanning, even before ASCII whitespace is trimmed. For the
+exponent limit, what counts is the parsed exponent after fractional digits adjust its scale. A limit
+never clamps or approximates an accepted value, whose value and exception status agree with
+`TextParser.run`.
 
-Infinity and NaN spellings have exponent magnitude zero. Their text, including every NaN payload
+Infinity and NaN spellings have exponent magnitude zero, but their text, including every NaN payload
 digit, counts toward the byte limit.
 
-`Model.parse` is the caller-facing entrypoint. Resource limits are opt-in with
-`limits := some { maxBytes := 100, maxExponent := 1000 }`, where an omitted field keeps its default,
-and `status := true` includes all IEEE exception flags. The `TextParser` namespace contains
-implementation helpers used by this entrypoint and its correctness proofs.
+`Model.parse` is the caller-facing entry point. Resource limits are opt-in with
+`limits := some { maxBytes := 100, maxExponent := 1000 }`, where an omitted field keeps its
+default, and `status := true` includes all IEEE exception flags. Implementation helpers used by
+this entry point and its correctness proofs live in the `TextParser` namespace.
 -/
 
 @[expose] public section
@@ -88,7 +89,10 @@ def TextParser.runBounded (fmt : FloatFormat) (mode : IEEERoundingMode)
     (limits : ParseLimits) (input : String) : Except ParseError (IEEEOutcome fmt) :=
   (readTextWithLimits limits input).bind (convertText fmt mode input)
 
-/-- A successful bounded scan is exactly an original scan satisfying both resource limits. -/
+/--
+A bounded scan succeeds with a value if and only if the original scan succeeds with it and both
+resource limits hold.
+-/
 theorem readTextWithLimits_eq_ok_iff (limits : ParseLimits) (input : String) (value : TextValue) :
     readTextWithLimits limits input = .ok value ↔
       input.utf8ByteSize ≤ limits.maxBytes ∧

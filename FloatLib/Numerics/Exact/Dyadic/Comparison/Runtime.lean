@@ -11,10 +11,10 @@ public import FloatLib.Numerics.Exact.Dyadic.Basic
 /-!
 # Executable exact-dyadic comparison
 
-The general comparator aligns significands at a common exponent. The `Internal.compareScalable`
-variants first compare leading binary positions, avoiding shifts proportional to a potentially
-huge exponent gap. `Comparison.Proof` connects the field-level entry points and normalization
-tests to the general comparator; rational ordering laws are in `Dyadic.Order`.
+Aligning significands at a common exponent, as the general comparator does, can take a shift as long
+as the exponent gap, which may be huge, so the `Internal.compareScalable` variants compare leading
+binary positions first. `Comparison.Proof` connects the field-level entry points and normalization
+tests to the general comparator, and the rational ordering laws are in `Dyadic.Order`.
 -/
 
 @[expose] public section
@@ -89,8 +89,8 @@ end Internal
 /--
 Compare exact dyadic scalar fields without first allocating either `Dyadic` record.
 
-Format-specific decoders often already expose sign, significand, and exponent separately. This
-entry point preserves that flattened representation through exact comparison.
+Format-specific decoders often have the sign, significand, and exponent as separate values already,
+and this entry point keeps that flattened representation through exact comparison.
 -/
 @[inline] def compareFields
     (leftNegative : Bool) (leftSignificand : Nat) (leftExponent : Int)
@@ -114,8 +114,8 @@ entry point preserves that flattened representation through exact comparison.
 /--
 Compare two exact dyadic values.
 
-The comparison aligns only to the smaller of the two exponents and then compares signed integers;
-it never converts through a host floating-point value.
+The comparison aligns only to the smaller of the two exponents and then compares signed integers. It
+never converts through a host floating-point value.
 -/
 @[inline] def compare (left right : Dyadic) : Ordering :=
   compareFields left.negative left.significand left.exponent

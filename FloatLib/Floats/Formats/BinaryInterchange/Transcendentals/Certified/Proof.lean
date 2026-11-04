@@ -19,19 +19,19 @@ public import Mathlib.Analysis.Complex.ExponentialBounds
 /-!
 # Correct rounding of accepted binary exponential, logarithm, and power results
 
-Taylor enclosure bounds and exact decoding prove that each returned encoding is finite and equals
-nearest-even rounding of the real function. The domain certificates instantiate the finite-real
-contract on the executable success predicate.
+We prove that each encoding the certified kernels return is finite and equals nearest-even
+rounding of the real function, from Taylor enclosure bounds and exact decoding. Domain
+certificates then instantiate the finite-real contract on the executable success predicate.
 
 For powers, `rpow_eq_exp_reduced` writes `(s * 2 ^ e) ^ b` as `exp (b * log s + (b * e - k) *
 log 2) * 2 ^ k` for every integer `k`. The grid enclosures of `log s` and `log 2`, the exponential
 enclosure, and the scaled endpoint check `Enclosure.roundScaled?` then give
 `toReal_of_powRat_eq_ok` and `toReal_of_pow_eq_ok`.
 
-These are partial-correctness theorems: they describe a result whenever the kernel returns
-`.ok`, and few theorems say which inputs succeed. The proved successes are the signed-zero
-passthrough of `expMinus1` and `logPlus1` and the power of one, `pow_posOne`. `exp`, `log`, and
-the other powers have no proved success case.
+These are partial-correctness theorems. They describe a result whenever the kernel returns `.ok`,
+and few theorems say which inputs succeed. Proved successes are the signed-zero passthrough of
+`expMinus1` and `logPlus1` and the power of one, `pow_posOne`. `exp`, `log`, and the other
+powers have no proved success case.
 -/
 
 @[expose] public section
@@ -106,7 +106,9 @@ private theorem expUpper_guard_iff {fmt : FloatFormat} (hfmt : fmt.isIEEE = true
   rw [ElementaryComparison.compareExp_eq_real, cmp_eq_lt_iff]
   exact (exp_lt_upper hfmt (le_of_not_gt hargument)).trans_le (by exact_mod_cast hboundary)
 
-/-- `accept` succeeds exactly with the certified encoding it was given. -/
+/--
+`accept` succeeds with a value if and only if that value is the certified encoding it was given.
+-/
 @[simp] theorem accept_eq_ok {fmt : FloatFormat} {result : Option (Model fmt)}
     {failure : Failure} {value : Model fmt} :
     accept result failure = .ok value ↔ result = some value := by
@@ -301,7 +303,7 @@ theorem isFinite_of_logPlus1Rat_eq_ok {fmt : FloatFormat}
     (hresult : logPlus1Rat fmt argument budget = .ok result) : isFinite result = true :=
   isFinite_of_logRat_eq_ok hresult
 
-/-- Forming `1 + argument` exactly avoids an intermediate floating-point rounding. -/
+/-- Forming the exact sum `1 + argument` avoids an intermediate floating-point rounding. -/
 theorem toReal_of_logPlus1Rat_eq_ok {fmt : FloatFormat}
     {argument : ℚ} {budget : Budget} {result : Model fmt}
     (hresult : logPlus1Rat fmt argument budget = .ok result) :
@@ -473,7 +475,7 @@ theorem toReal_of_logPlus1_eq_ok {fmt : FloatFormat}
 
 /--
 A kernel whose accepted results are finite and correctly rounded meets the finite-real contract on
-its success domain; the zero fallback only fills in the rejected inputs.
+its success domain. The zero fallback only fills in the rejected inputs.
 -/
 private theorem correctlyRoundedCertificateOn_of_ok {fmt : FloatFormat} {f : ℝ → ℝ}
     {kernel : Model fmt → Except Failure (Model fmt)}

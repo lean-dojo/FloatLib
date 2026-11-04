@@ -14,14 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Pr
 /-!
 # Verified exact subtraction for nearby binary64 values
 
-By Sterbenz's lemma, the difference of two finite floating-point values with the same sign and
-magnitudes within a factor of two is representable. The kernel computes the exact significand
-difference in `UInt64` and packs it without entering the arbitrary-precision generic addition
-kernel. This module proves the positive normal-input core, then handles negative operands by
-negating and swapping them. `subSterbenz_refines` shows that every accepted result is the finite
-kernel's, and `subSterbenz?_isSome_iff` states exactly which inputs the positive kernel accepts.
-
-Rejected inputs use the exact generic implementation.
+Sterbenz's lemma says that the difference of two finite floating-point values with the same sign and
+magnitudes within a factor of two is representable, the way 1.5 minus 1.25 gives 0.25 with nothing
+rounded. So the kernel computes the exact significand difference in `UInt64` and packs it, without
+entering the arbitrary-precision generic addition kernel. We prove the positive normal-input core
+first and then handle negative operands by negating and swapping them. `subSterbenz_refines` shows
+that every accepted result is the finite kernel's, and `subSterbenz?_isSome_iff` states which inputs
+the positive kernel accepts. Rejected inputs use the exact generic implementation.
 -/
 
 @[expose] public section
@@ -771,11 +770,12 @@ theorem subSterbenz_refines (x y result : Value)
 
 /--
 `subSterbenz?` returns a result exactly when both operands are positive and normal and their
-exponent fields are equal, or adjacent with the significand of the operand with the larger exponent
-no greater than the other significand. For `x = m_x * 2 ^ (e + 1)` and `y = m_y * 2 ^ e` the
-adjacent test `m_x ≤ m_y` is `x ≤ 2 * y`, the factor-two condition of Sterbenz's lemma.
-`subFinite?` calls it through `subSignedSterbenz?`, which negates and swaps two negative operands.
-When `subSignedSterbenz?` declines, `subFinite?` falls back to `addFinite? x (negate y)`.
+exponent fields are equal, or adjacent with the larger-exponent operand's significand no greater
+than the other's. For `x = m_x * 2 ^ (e + 1)` and `y = m_y * 2 ^ e`, the adjacent test `m_x ≤ m_y`
+is `x ≤ 2 * y`, the factor-two condition of Sterbenz's lemma.
+
+`subFinite?` reaches it through `subSignedSterbenz?`, which negates and swaps two negative operands,
+and falls back to `addFinite? x (negate y)` when `subSignedSterbenz?` declines.
 -/
 theorem subSterbenz?_isSome_iff (x y : Value) :
     (subSterbenz? x y).isSome = true ↔

@@ -12,13 +12,12 @@ public import FloatLib.Numerics.Repr
 # Values of encoded numerical systems
 
 An encoded numerical system may contain ordinary values, signed infinities, and exceptional bit
-patterns. None of this is specific to IEEE floating point: posits have `NaR`, some
-low-precision formats reserve individual words, and fixed-point systems may have no exceptional
-values at all.
+patterns. None of this is specific to IEEE floating point. Posits have `NaR`, some low-precision
+formats reserve individual words, and fixed-point systems may have no exceptional values at all.
 
-`NumericalValue` records this common semantic shape without prescribing a storage layout. The
-finite value type is a parameter, so a system may denote real numbers, rational numbers, integers,
-complex numbers, or another exact mathematical domain.
+`NumericalValue` records this common semantic shape without prescribing a storage layout. Its finite
+value type is a parameter, so a system may denote real numbers, rational numbers, integers, complex
+numbers, or another exact mathematical domain.
 -/
 
 @[expose] public section

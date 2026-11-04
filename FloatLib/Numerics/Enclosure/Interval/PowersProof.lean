@@ -14,8 +14,9 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 /-!
 # Containment for real powers and logarithms with a specified base
 
-The proofs compose logarithm, multiplication, exponential, and division contracts. The real-power
-identity is used only after deriving positivity of every base value from the accepted interval.
+These proofs compose the logarithm, multiplication, exponential, and division contracts. We use the
+real-power identity only after deriving from the accepted interval that every base value is
+positive.
 -/
 
 public section

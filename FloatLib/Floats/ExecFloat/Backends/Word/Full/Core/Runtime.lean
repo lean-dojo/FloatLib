@@ -14,13 +14,13 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 /-!
 # Native-storage binary64 runtime
 
-Binary64 uses the same generic `Model` as every binary-interchange format, but its 64-bit
-encoding fits in one `UInt64`. These adapters hand that native storage to the finite kernels
-without a second user-visible value type.
+Binary64 uses the same generic `Model` as every binary-interchange format, but its 64-bit encoding
+fits in one `UInt64`, so these adapters hand that native storage to the finite kernels and no second
+user-visible value type is needed.
 
-Field extraction, packing and exact intermediate arithmetic live here. Exceptional IEEE behavior
-stays in the shared dispatcher, and `Core.Proof` proves that the native-word routines agree with
-the generic model.
+Field extraction, packing, and exact intermediate arithmetic live here. Exceptional IEEE behavior
+stays in the shared dispatcher, and `Core.Proof` proves that the native-word routines agree with the
+generic model.
 -/
 
 @[expose] public section

@@ -12,8 +12,8 @@ public import FloatLib.Floats.ExecFloat.Dispatch
 /-!
 # Ordinary notation for `ExecFloat`
 
-Ordinary operators call the selected `ExecFloat` operations. Each instance requires the
-corresponding arithmetic or comparison capability. Formats whose values have a lawful total
+With these instances, the ordinary operators call the selected `ExecFloat` operations. Each instance
+needs the matching arithmetic or comparison capability. Formats whose values have a lawful total
 order provide their own `LinearOrder`.
 -/
 

@@ -13,7 +13,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 
 The storage-independent constructors form a lossless equivalence with the exact-width binary
 model and with every in-range complete interchange word. This module depends only on the
-representation interface; importing these proofs does not register arithmetic backends.
+representation interface, and importing these proofs does not register arithmetic backends.
 -/
 
 @[expose] public section

@@ -13,20 +13,21 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Exact reference arithmetic for standardized posits
 
-These operations are the mathematical specifications for executable posit arithmetic.
-Every finite operand is decoded to an exact `Rat`. Rational arithmetic is evaluated exactly
-before one final rounding by the Posit Standard rule; square root uses the boundary comparisons
-described below.
+Executable posit arithmetic refines the definitions in this file, so they are the mathematical
+meaning of every posit operation. Each finite operand is decoded to an exact `Rat`, the arithmetic
+happens exactly in the rationals, and one final rounding applies the Posit Standard rule. Square
+root needs the boundary comparisons described below, because its exact result can be irrational.
 
-NaR is never interpreted as infinity. It propagates through the six core operations. Division by
-zero and square root of a negative finite value produce NaR. Fused multiply-add computes the exact
-rational expression `left * right + addend` and rounds only the final result.
+Exceptional values follow three rules:
 
-Square root is also exact as a rounding decision: `roundSqrtRat` compares the rational
-radicand against squared posit boundaries, so an irrational root never passes through an
-approximate floating-point value.
+* NaR is never interpreted as infinity, and it propagates through the six core operations.
+* Division by zero gives NaR, and so does the square root of a negative finite value.
+* Fused multiply-add computes the exact rational expression `left * right + addend` and rounds
+  only the final result.
 
-Executable backends refine these definitions.
+For square root the rounding decision is exact too. `roundSqrtRat` compares the rational radicand
+against squared posit boundaries, so an irrational root never passes through an approximate
+floating-point value.
 
 ## References
 
@@ -40,7 +41,7 @@ namespace FloatLib.Floats.Formats.Posit.Model.Spec
 
 variable {format : Format}
 
-/-- Exact addition followed by one standardized posit rounding; NaR in either operand gives NaR. -/
+/-- Exact addition followed by one standardized posit rounding. NaR in either operand gives NaR. -/
 @[inline] def add (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
@@ -49,7 +50,7 @@ variable {format : Format}
       nar format
 
 /--
-Exact subtraction followed by one standardized posit rounding; NaR in either operand gives NaR.
+Exact subtraction followed by one standardized posit rounding. NaR in either operand gives NaR.
 -/
 @[inline] def sub (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
@@ -59,7 +60,7 @@ Exact subtraction followed by one standardized posit rounding; NaR in either ope
       nar format
 
 /--
-Exact multiplication followed by one standardized posit rounding; NaR in either operand gives NaR.
+Exact multiplication followed by one standardized posit rounding. NaR in either operand gives NaR.
 -/
 @[inline] def mul (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
@@ -101,7 +102,7 @@ comparisons.
         roundSqrtRat format rational
 
 /--
-Exact fused multiply-add with a single final standardized rounding; NaR in any operand gives NaR.
+Exact fused multiply-add with a single final standardized rounding. NaR in any operand gives NaR.
 -/
 @[inline] def fma (left right addend : Model format) : Model format :=
   match left.toRat?, right.toRat?, addend.toRat? with

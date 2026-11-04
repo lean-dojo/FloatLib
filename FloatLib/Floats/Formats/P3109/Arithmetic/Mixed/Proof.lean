@@ -12,10 +12,10 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Proof
 /-!
 # Semantics of mixed and scaled P3109 arithmetic
 
-These results identify the exact expression passed to the final destination projection.
-The source types, their storage representations, and the destination format are independent.
-Finite hypotheses expose ordinary rational expressions. Without them, the closed operation keeps
-the report's NaN and infinity rules.
+In mixed arithmetic the source types, their storage representations, and the destination format
+can all differ. These results say which exact expression reaches the final destination
+projection. Under finite hypotheses it's an ordinary rational expression, and without them the
+closed operation keeps the report's NaN and infinity rules.
 -/
 
 @[expose] public section

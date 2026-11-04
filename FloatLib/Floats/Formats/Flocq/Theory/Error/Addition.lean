@@ -13,18 +13,18 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 /-!
 # Exactness of Addition Errors
 
-For a valid, monotone exponent function and any nearest rounding rule, the error of adding two
-representable values is itself representable. The proof aligns both operands on the smaller
-canonical grid, represents the rounded result on that same grid, and uses nearestness to
-control the canonical exponent of the error.
+Add two representable values, round to nearest, and the error is itself representable, as long as
+the exponent function is valid and monotone. The proof puts both operands on the smaller canonical
+grid, represents the rounded result on that same grid, and uses nearestness to keep the canonical
+exponent of the error under control.
 
-Nearestness is essential.  For directed rounding the statement fails: with radix `2` and three
-digits of precision, rounding `1 - 2^(-10)` downward gives `7/8`, and the error `2^(-3) - 2^(-10)`
-needs seven digits.
+Nearestness matters. With directed rounding the statement fails: in radix `2` with three digits of
+precision, rounding `1 - 2^(-10)` downward gives `7/8`, and the error `2^(-3) - 2^(-10)` needs
+seven digits.
 
-The representable error is the mathematical content of the TwoSum and FastTwoSum error-free
-transformations: `x + y = round (x + y) + e` with `e` in the format.  The step-by-step exactness of
-the floating-point operations that compute `e` in those algorithms is not formalized here.
+That representable error is the mathematical content of the TwoSum and FastTwoSum error-free
+transformations, `x + y = round (x + y) + e` with `e` in the format. We don't formalize the
+step-by-step exactness of the floating-point operations that compute `e` in those algorithms.
 
 The source counterpart is Flocq 4.2.2, `src/Prop/Plus_error.v`, theorem `plus_error`,
 which states representability of `round (x + y) - (x + y)` under nearest rounding:
@@ -84,8 +84,8 @@ private theorem add_round_error_generic_aux {rnd : ℝ → ℤ} [ValidRndToNeare
 /--
 The addition error of two representable values under any nearest rounding rule is representable.
 
-The rounding rule is implicit because it is determined by the conclusion; `nearestEven` is the
-usual instance.  The statement needs a monotone exponent function and fails for directed rounding.
+The rounding rule is implicit because the conclusion determines it, and `nearestEven` is the
+usual instance. The statement needs a monotone exponent function and fails for directed rounding.
 -/
 theorem add_round_error_generic {rnd : ℝ → ℤ} [ValidRndToNearest rnd] {x y : ℝ}
     (hx : genericFormat β fexp x) (hy : genericFormat β fexp y) :
@@ -101,7 +101,7 @@ Error-free transformation of addition: the exact sum of two representable values
 sum plus a representable error term.
 
 This is the specification met by the TwoSum and FastTwoSum algorithms.  The term `e` is
-`x + y - round (x + y)`; its representability is `add_round_error_generic` up to sign.
+`x + y - round (x + y)`, and its representability is `add_round_error_generic` up to sign.
 -/
 theorem add_round_exact_error {rnd : ℝ → ℤ} [ValidRndToNearest rnd] {x y : ℝ}
     (hx : genericFormat β fexp x) (hy : genericFormat β fexp y) :
@@ -150,7 +150,7 @@ theorem generic_format_FIX_to_FLT_of_abs_le (emin prec : ℤ) (hprec : 0 < prec)
     simp [cexp, fltExp]
     linarith
 
-/-- A sufficiently small sum of two FLT values is exactly FLT-representable. -/
+/-- A small enough sum of two FLT values is itself FLT-representable. -/
 theorem generic_format_FLT_add_small (emin prec : ℤ) (hprec : 0 < prec)
     {x y : ℝ}
     (hx : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x)

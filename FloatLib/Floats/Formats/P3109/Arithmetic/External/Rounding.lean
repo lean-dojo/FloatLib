@@ -12,11 +12,11 @@ public import FloatLib.Floats.Formats.P3109.Projection.Rational.Direction
 /-!
 # Report precision rounding for external binary formats
 
-The external adapter uses its own declared precision and bias in the report formula.
-Its precision is always greater than one, so lower-code parity is integer significand parity.
-The rational selection theorem covers every deterministic mode and every supplied stochastic
-word. These statements concern precision rounding. Saturation is proved in `External.Bounds` and
-encoding in `External.Proof`.
+In the report formula, the external adapter uses its own declared precision and bias. That
+precision is always greater than one, so the parity of the lower code is the parity of the integer
+significand. The rational selection theorem covers every deterministic mode and every supplied
+stochastic word. Everything here is about precision rounding, and saturation and encoding are
+proved in `External.Bounds` and `External.Proof`.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7.4 and 4.8.
 -/

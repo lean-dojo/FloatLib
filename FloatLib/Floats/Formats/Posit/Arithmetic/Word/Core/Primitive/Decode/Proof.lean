@@ -12,9 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Field
 /-!
 # Correctness of native-word posit decoding
 
-Candidate, finite, and total native-word decoders agree with the reference exact-width posit
-model under their explicit storage and range contracts. Executable definitions live in
-`FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Decode.Runtime`.
+We prove the candidate, finite, and total native-word decoders against the reference exact-width
+posit model, each under its own storage and range contract. For the candidate decoder that
+contract is the rounding-search invariant: the candidate is nonzero, lies below the sign code, and
+the format plus its one-bit-wider threshold fit in a machine word. Executable definitions are
+in `FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Decode.Runtime`.
 -/
 
 @[expose] public section
@@ -28,7 +30,7 @@ variable {format : Format}
 /--
 Native candidate decoding agrees with the exact posit field decoder.
 
-The hypotheses are precisely the rounding-search invariant: the candidate is nonzero, lies below
+The hypotheses are the rounding-search invariant: the candidate is nonzero, lies below
 the sign code, and the format plus its one-bit-wider threshold fit in a machine word.
 -/
 theorem nonnegativeDyadicAt_eq_decodeFields

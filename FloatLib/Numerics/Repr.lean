@@ -9,15 +9,15 @@ module
 /-!
 # Printing status records and outcomes
 
-`#eval` shows a status record with only its raised flags, as `{ inexact := true }`, and `{}` when
-none is raised. Every flag defaults to `false`, so the omitted fields are exactly the clear ones.
-Outcomes and failure reasons print their constructors with a leading dot, as in
-`.failure (.infinity .source (negative := false))`, naming a Boolean argument instead of leaving a
+`#eval` shows a status record with only its raised flags, as `{ inexact := true }`, and as `{}` when
+none is raised. Every flag defaults to `false`, so the omitted fields are the clear ones. Outcomes
+and failure reasons print their constructors with a leading dot, as in
+`.failure (.infinity .source (negative := false))`, and a Boolean argument is named, never left as a
 bare `true` or `false`.
 
 The text is meant to be read. The value inside an outcome prints as its format displays it, so
 `inf`, `nan` and `NaR` appear as text, and the default display of a NaN omits its sign and payload.
-A printed outcome is therefore not a serialization format, even where it happens to be valid Lean.
+A printed outcome isn't a serialization format, even where it happens to be valid Lean.
 -/
 
 @[expose] public section

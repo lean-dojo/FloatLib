@@ -11,11 +11,11 @@ public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
 /-!
 # Rational enclosures for inverse hyperbolic functions
 
-These enclosures compose square roots, logarithms, and exact interval arithmetic.
-Inverse hyperbolic cosine accepts inputs at least one; inverse hyperbolic tangent requires
-an interval strictly inside `(-1, 1)`. Inverse hyperbolic sine uses monotonicity and odd symmetry
-to avoid cancellation in its logarithmic formula at negative inputs.
-`InverseHyperbolicProof` proves containment for every real member of an accepted interval.
+These enclosures compose square roots, logarithms, and exact interval arithmetic. Inverse hyperbolic
+cosine accepts inputs of at least one, and inverse hyperbolic tangent needs an interval strictly
+inside `(-1, 1)`. At negative inputs, inverse hyperbolic sine uses monotonicity and odd symmetry to
+avoid cancellation in its logarithmic formula. `InverseHyperbolicProof` proves containment for every
+real member of an accepted interval.
 -/
 
 @[expose] public section

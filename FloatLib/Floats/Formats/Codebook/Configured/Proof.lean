@@ -12,8 +12,8 @@ public import Mathlib.Algebra.Group.Nat.Defs
 /-!
 # Representation theorems for configured codebooks
 
-Wrapping and unwrapping preserve the complete exact-width word. Natural-number construction
-reduces modulo `2 ^ width`.
+Wrapping and unwrapping keep the complete exact-width word. Building a value from a natural number
+reduces it modulo `2 ^ width`, so `5` becomes the word `01` in a two-bit codebook.
 -/
 
 @[expose] public section

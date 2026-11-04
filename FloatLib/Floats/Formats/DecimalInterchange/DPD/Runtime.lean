@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Trailing
 /-!
 # Densely packed decimal interchange encoding
 
-IEEE 754-2019 §3.5.2(c)(1) combines the leading decimal digit and the high exponent
-bits in a five-bit combination field. The remaining digits use Cowlishaw declets.
-All redundant declets decode; encoding chooses the canonical representation.
+DPD, from IEEE 754-2019 §3.5.2(c)(1), puts the leading decimal digit and the high exponent bits
+together in a five-bit combination field and stores the remaining digits as Cowlishaw declets.
+Every redundant declet decodes, and encoding always picks the canonical representation.
 -/
 
 @[expose] public section
@@ -59,7 +59,7 @@ def codec : Codec where
 /-- Decode a DPD word at the selected interchange layout, including redundant declets. -/
 def decode (f : Format) (word : BitVec f.bitWidth) : Datum := codec.decode f word
 
-/-- Encode a datum exactly as DPD, rejecting unrepresentable inputs without rounding. -/
+/-- Encode a datum as DPD without loss, and reject an unrepresentable input without rounding it. -/
 def encode? (f : Format) (d : Datum) : Option (BitVec f.bitWidth) := codec.encode? f d
 
 /-- Replace redundant declets and unused special bits by their canonical encodings. -/

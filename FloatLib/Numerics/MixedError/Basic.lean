@@ -13,28 +13,28 @@ import Mathlib.Tactic.Positivity.Finset
 # Mixed relative and absolute error
 
 `MixedError x x₀ r a` states that `x` approximates `x₀` with relative error `r` and absolute error
-`a`: `|x - x₀| ≤ r * |x₀| + a`, where `r` and `a` are nonnegative. The relative part describes
-rounding in the normal range. The absolute part covers gradual underflow and the error that
+`a`: `|x - x₀| ≤ r * |x₀| + a`, where `r` and `a` are nonnegative. Its relative part describes
+rounding in the normal range, and its absolute part covers gradual underflow and the error that
 cancellation leaves behind. Unlike a relative bound, the predicate makes sense at `x₀ = 0`. For
 nonzero `x₀` the error relative to `|x₀|` is at most `r + a / |x₀|`, so unlike a fixed absolute
-tolerance the bound keeps the leading digits of a small exact value whenever `r` is small and `a`
-is much smaller than `|x₀|`. A zero coefficient describes the shape of the bound, not a measured
+tolerance the bound keeps the leading digits of a small exact value whenever `r` is small and `a` is
+much smaller than `|x₀|`. A zero coefficient describes the shape of the bound and isn't a measured
 error: `r = 0` is a pure absolute bound and `a = 0` a pure relative one.
 
-An error analysis applies one lemma per operation. `MixedError.of_standardModel` reads the
-standard model of a rounding as a mixed error, and `MixedError.trans` composes the error already
-present in the operands of a rounded operation with the error of that rounding. The other lemmas
-carry a bound through an exact real operation with explicit constants: negation, absolute value,
-scaling, sums, products, quotients, square roots, `max` and `min`. Sums of same-sign values keep
-a relative bound, either the larger of the two relative errors or their average weighted by the
-magnitudes of the terms. A difference with cancellation keeps only an absolute one. A purely
-relative error below one keeps the sign of the exact value.
+An error analysis applies one lemma per operation. `MixedError.of_standardModel` reads the standard
+model of a rounding as a mixed error, and `MixedError.trans` composes the error already present in
+the operands of a rounded operation with the error of that rounding. Other lemmas carry a bound
+through an exact real operation with stated constants: negation, absolute value, scaling, sums,
+products, quotients, square roots, `max` and `min`. Sums of same-sign values keep a relative bound,
+either the larger of the two relative errors or their average weighted by the magnitudes of the
+terms. A difference with cancellation keeps only an absolute one. A purely relative error below one
+keeps the sign of the exact value.
 
-The lemmas use Lean's total operations: `x / 0 = 0`, `0⁻¹ = 0`, and `√x = 0` for `x < 0`. The
-quotient and reciprocal bounds therefore also hold when the exact denominator is zero, which forces
-a computed denominator with pure relative error to be zero too, and the square-root bounds allow
-a negative computed argument. The weighted sum bounds divide by `|x₀ + y₀|`, which is `0 / 0 = 0`
-when both exact terms vanish.
+All the lemmas use Lean's total operations: `x / 0 = 0`, `0⁻¹ = 0`, and `√x = 0` for `x < 0`. So the
+quotient and reciprocal bounds also hold when the exact denominator is zero, which forces a computed
+denominator with pure relative error to be zero too, and the square-root bounds allow a negative
+computed argument. The weighted sum bounds divide by `|x₀ + y₀|`, which is `0 / 0 = 0` when both
+exact terms vanish.
 
 ## Main definitions
 
@@ -45,8 +45,8 @@ when both exact terms vanish.
 * `MixedError.trans`: composition of two approximation steps.
 * `MixedError.add_of_mul_nonneg`, `MixedError.add_of_mul_nonneg_weighted`, `MixedError.mul`,
   `MixedError.div`: relative bounds for same-sign sums, products and quotients.
-* `MixedError.sqrt`: square root keeps the relative error and takes the square root of the
-  absolute error.
+* `MixedError.sqrt`: square root keeps the relative error and takes the square root of the absolute
+  error.
 * `MixedError.sqrt_of_pos`: above zero, square root divides the error by
   `√x₀ + √((1 - r) * x₀ - a)`, about `2 * √x₀`.
 -/
@@ -88,7 +88,7 @@ theorem abs_sqrt_sub_sqrt_mul_le (x y : ℝ) : |√x - √y| * (√x + √y) ≤
   · rw [Real.sqrt_eq_zero_of_nonpos hx, Real.sqrt_eq_zero_of_nonpos hy]
     simp
 
-/-- `|√x - √y| ≤ |x - y| / (√x + √y)` for all reals; both sides vanish when `√x + √y = 0`. -/
+/-- `|√x - √y| ≤ |x - y| / (√x + √y)` for all reals. Both sides vanish when `√x + √y = 0`. -/
 theorem abs_sqrt_sub_sqrt_le_div_add (x y : ℝ) : |√x - √y| ≤ |x - y| / (√x + √y) := by
   rcases (add_nonneg (Real.sqrt_nonneg x) (Real.sqrt_nonneg y)).eq_or_lt with hzero | hpos
   · have hx : √x = 0 := by linarith [Real.sqrt_nonneg x, Real.sqrt_nonneg y]

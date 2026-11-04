@@ -12,9 +12,10 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Rela
 /-!
 # The `roundoff` analysis
 
-`analyze` derives an estimate of a real observation of a computation: registered rules first,
-then control flow, container reads, loops, decoding and the expansion of definitions, sharing the
-analysis of repeated subexpressions. `Analyze.recursor` ties the parts of the analysis together.
+`analyze` derives an estimate of a real observation of a computation. It tries registered rules
+first, then control flow, container reads, loops, decoding and the expansion of definitions, and it
+shares the analysis of repeated subexpressions. `Analyze.recursor` ties the parts of the analysis
+together.
 -/
 
 public meta section
@@ -252,7 +253,7 @@ def analyze (r : Recursor) (actual : Q(ℝ)) (fuel : Nat) : AnalyzeM Estimate :=
 reads, loops, decoding, and the expansion of definitions. A hypothesis stated like a generated
 theorem, the contract of a function the program takes, bounds the call against its model at the
 computed argument. Its reference becomes the model at the exact argument when the analysis of that
-reference propagates the argument's error through the model; it stays the model at the decoded
+reference propagates the argument's error through the model. It stays the model at the decoded
 computed argument when the argument is exact data or the analysis has no rule for the model. -/
 def build (r : Recursor) (actual : Q(ℝ)) (fuel : Nat) : AnalyzeM Estimate := do
   let mixed := (← read).mixed

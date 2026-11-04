@@ -16,13 +16,13 @@ public meta import Lean.Elab.Command
 /-!
 # Codebook format inspection
 
-Codebook formats assign a meaning to every stored word by an explicit finite table. Their
-inspection output therefore reports the table-defined denotation and only the operations whose
-refinement theorems are actually available; it does not infer arithmetic from bit width.
+A codebook format gives every stored word its meaning through a finite table. So `#float_info`
+reports that table-defined denotation, lists only the operations with refinement theorems behind
+them, and never guesses arithmetic from the bit width.
 
-Catalog entries additionally report their word denotations and finite-input arithmetic theorems.
-Custom tables receive the generic representation and nearest-codeword guarantees. The public
-family entry point is `FloatLib.Floats.Formats.Codebook`.
+For the catalog entries, the output adds each word's denotation and the finite-input arithmetic
+theorems. A custom table gets the generic representation and nearest-codeword guarantees. The
+public entry point for the whole family is `FloatLib.Floats.Formats.Codebook`.
 -/
 
 @[expose] public section

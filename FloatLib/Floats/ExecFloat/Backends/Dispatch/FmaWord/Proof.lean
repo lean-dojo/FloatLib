@@ -16,12 +16,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 /-!
 # Correctness of word-specialized fused multiply-add dispatch
 
-Fused multiply-add forms the exact product-plus-addend before one rounding step. The refinements
-here establish that contract for the binary32, binary64, one-word `UInt64`, and native-storage
-kernels.
-
-Accepted kernel results and the generic fallback all agree with `Spec.fma`, including its
-exceptional-value policy.
+Fused multiply-add forms the exact product-plus-addend and then rounds once. We establish that
+contract for the binary32, binary64, one-word `UInt64`, and native-storage kernels. Accepted kernel
+results and the generic fallback all agree with `Spec.fma`, exceptional-value policy included.
 -/
 
 @[expose] public section

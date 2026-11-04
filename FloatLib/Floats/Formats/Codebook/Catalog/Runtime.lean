@@ -12,8 +12,10 @@ public import Mathlib.Data.Int.Notation
 /-!
 # Named tiny-codebook definitions
 
-These executable denotation tables illustrate lookup encodings without imposing an IEEE-style
-field layout. Their word-level denotation theorems are isolated in `Catalog.Proof`.
+Two tiny executable tables live here. One is a one-bit bipolar code with `0 ↦ -1` and `1 ↦ +1`,
+and the other a two-bit ternary code for `0`, `+1` and `-1` with one reserved word. They show that
+a lookup encoding needs no IEEE-style field layout. The theorems about each word's denotation are
+in `Catalog.Proof`.
 -/
 
 @[expose] public section

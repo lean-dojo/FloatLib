@@ -13,10 +13,11 @@ public import FloatLib.Numerics.Exact.Dyadic.Order
 /-!
 # Exact rational meaning of report precision rounding
 
-The executable scale, quotient, and remainder represent the report's scaled magnitude, floor,
-and fractional part exactly. The resulting formula is uniform in the rounding mode, including
-each supplied stochastic word. Binary exponent bounds characterize the selected logarithm
-without approximating it by a real-valued computation.
+Rounding a rational in the report's terms needs its scaled magnitude, the floor of that, and the
+fractional part. The executable scale, quotient, and remainder are those three quantities, with
+nothing approximated. The resulting formula is the same for every rounding mode and every supplied
+stochastic word. Binary exponent bounds pin down the selected logarithm, so no real-valued
+computation is needed to approximate it.
 
 Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
 -/
@@ -60,9 +61,10 @@ theorem scaleByPowerOfTwo_fst_lt_pow_mul_snd (numerator denominator : Nat) (expo
     exact_mod_cast Nat.pos_of_ne_zero hden
   exact_mod_cast (div_lt_iff₀ hdenReal).mp hratio
 
-/-- At the precision quantum, the exact quotient is below `2^precision`; a zero numerator gives the
-quotient zero. Clamping the leading exponent to the minimum normal exponent can only decrease the
-quotient. The bound depends on these two parameters, not on an encoding or saturation policy. -/
+/-- At the precision quantum, the exact quotient is below `2^precision`, and a zero numerator gives
+the quotient zero. Clamping the leading exponent to the minimum normal exponent can only decrease
+the quotient. The bound depends on these two parameters alone, and on no encoding or saturation
+policy. -/
 theorem quotientFloor_lt_precision (precision : Nat) (minimumNormalExponent : Int)
     (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
     let leading := RationalBinary.floorLog2 numerator denominator
@@ -111,7 +113,7 @@ def round (precision bias : Nat) (mode : RoundingMode) (value : Rat) : Rat :=
   roundAt mode (quantum precision bias value)
     (codeEven precision bias (quantum precision bias value)) value
 
-/-- The absolute numerator and positive denominator represent the magnitude exactly. -/
+/-- The absolute numerator over the positive denominator is the magnitude. -/
 theorem magnitude_eq_ratio (value : Rat) :
     |value| = (value.num.natAbs : Rat) / value.den := by
   calc
@@ -122,7 +124,7 @@ theorem magnitude_eq_ratio (value : Rat) :
         abs_of_nonneg (Nat.cast_nonneg _)]
       rfl
 
-/-- The stored numerator sign is exactly the sign of the rational input. -/
+/-- The stored numerator sign is the sign of the rational input. -/
 theorem signed_abs (value : Rat) : signed (value.num < 0) |value| = value := by
   by_cases hn : value.num < 0
   · have hv : value < 0 := Rat.num_neg.mp hn
@@ -150,14 +152,14 @@ theorem scaledMagnitude_eq (value : Rat) (quantum : Int) :
         (RationalBinary.scaleByPowerOfTwo value.num.natAbs value.den (-quantum)).2 := by
   rw [scaleByPowerOfTwo_rat, scaledMagnitude, magnitude_eq_ratio]
 
-/-- The quotient is exactly the lower adjacent integer in the report. -/
+/-- The quotient is the report's lower adjacent integer. -/
 theorem floor_scaledMagnitude (value : Rat) (quantum : Int) :
     ⌊scaledMagnitude value quantum⌋₊ =
       (RationalBinary.scaleByPowerOfTwo value.num.natAbs value.den (-quantum)).1 /
         (RationalBinary.scaleByPowerOfTwo value.num.natAbs value.den (-quantum)).2 := by
   rw [scaledMagnitude_eq, Rat.natFloor_natCast_div_natCast]
 
-/-- The remainder ratio is exactly the fractional part, not an approximation to it. -/
+/-- The remainder ratio is the fractional part itself, with no approximation. -/
 theorem fraction_scaledMagnitude (value : Rat) (quantum : Int) :
     scaledMagnitude value quantum - ⌊scaledMagnitude value quantum⌋₊ =
       (((RationalBinary.scaleByPowerOfTwo value.num.natAbs value.den (-quantum)).1 %

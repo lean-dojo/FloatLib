@@ -12,14 +12,14 @@ public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 /-!
 # Cost estimates for configured posit execution
 
-The numeric estimates are engineering priors used only by the deterministic selector. They are
-not performance claims and do not participate in a refinement theorem. Benchmark calibration can
-change them independently of arithmetic semantics.
+Every number in this module is an engineering prior for the deterministic selector, and nothing
+else reads them. They make no claim about performance and appear in no refinement theorem, so
+benchmark calibration can change them without touching arithmetic semantics.
 
-The estimates cover the exact reference implementation, representation-independent integer
-kernels, direct packed-word and packed-pair kernels, and exhaustive byte tables. This module
-depends only on the configured semantic core; certified candidate construction lives in the
-sibling planner modules.
+There is one estimate for each kind of implementation: the exact reference, the
+representation-independent integer kernels, the direct packed-word and packed-pair kernels, and
+the exhaustive byte tables. The module depends only on the configured semantic core. Certified
+candidates are built in the sibling planner modules.
 -/
 
 @[expose] public section
@@ -42,8 +42,8 @@ open FloatLib.Floats.ExecFloat.Backend
 Conservative estimate for the exact-rational reference implementation.
 
 The width term models decoding and logarithmic code search. Allocation and temporary-memory
-fields account for the reference implementation's use of `Nat` and `Rat`; they are estimates,
-not bounds on actual allocations.
+fields account for the reference implementation's use of `Nat` and `Rat`. They are estimates and
+don't bound the actual allocations.
 -/
 def genericEstimate {format : Format}
     (plan : StoragePlan format) (operation : Operation) : Candidate where
@@ -58,13 +58,12 @@ def genericEstimate {format : Format}
 /--
 Engineering estimate for the width-generic exact-integer kernels.
 
-The selected operations decode once and perform their closed exact work on signed integer
-significands and binary exponents. Addition, subtraction, multiplication, and FMA pack an exact
-dyadic result directly. Division constructs the destination-width quotient prefix and rounds it
-from the exact remainder. Square root constructs a destination-width integer-root prefix and
-derives its sticky bit from the exact square remainder. These kernels remain allocation-bearing
-and width-generic, so they are not classified as native word kernels. The operation-specific
-weights are planning priors, not measurements.
+Each operation decodes once and then does exact arithmetic on signed integer significands and
+binary exponents. Addition, subtraction, multiplication, and FMA pack the exact dyadic result.
+Division rounds a destination-width quotient prefix from the exact remainder, and square root
+takes the sticky bit of its integer-root prefix from the exact square remainder. These kernels
+allocate and are width-generic, so they aren't native word kernels. The weights are planning
+priors, never measurements.
 -/
 def dyadicEstimate {format : Format}
     (plan : StoragePlan format) (operation : Operation) : Candidate where
@@ -97,12 +96,12 @@ def dyadicEstimate {format : Format}
 /--
 Engineering estimate for exact arithmetic with two-limb guard/sticky rounding.
 
-This tier covers formats of at most 128 bits. It converts each configured operand to the
-mathematical posit model once, and the retained result prefix stays in a pair of `UInt64` limbs
-while it is rounded. Division and square root use the width-generic quotient-prefix and
-root-prefix kernels and are offered separately by `GeneralCandidates`, without duplicate
-two-limb candidates. The only callers, `nativeLimbAdd?`, `nativeLimbSub?`, `nativeLimbMul?` and
-`nativeLimbFma?`, never request the `.div` and `.sqrt` rows, which describe no kernel.
+This tier covers formats of at most 128 bits. Each operand becomes a mathematical posit model
+once, and the retained result prefix stays in a pair of `UInt64` limbs while it is rounded.
+Division and square root have no two-limb candidates, because `GeneralCandidates` already offers
+their width-generic quotient-prefix and root-prefix kernels. The only callers, `nativeLimbAdd?`,
+`nativeLimbSub?`, `nativeLimbMul?` and `nativeLimbFma?`, never ask for the `.div` and `.sqrt`
+rows, which describe no kernel.
 -/
 def nativeLimbEstimate {format : Format}
     (plan : StoragePlan format) (operation : Operation) : Candidate where
@@ -135,11 +134,11 @@ def nativeLimbEstimate {format : Format}
 /--
 Engineering estimate for the built-in packed-storage native-word kernel.
 
-Operand words are zero-extended directly from `UInt8`, `UInt16`, `UInt32`, or `UInt64`; no input
-`BitVec` model is constructed. Rounding returns the complete encoding and packs it
-directly into the selected built-in carrier. None of the six core operations constructs an output
-`Model`; their result sign, zero, and NaR encodings are handled directly by proved code-level
-boundaries. Exact dyadic intermediates may still allocate.
+Operand words are zero-extended from `UInt8`, `UInt16`, `UInt32`, or `UInt64`, and no input
+`BitVec` model is built. Rounding returns the complete encoding and packs it into the selected
+built-in carrier. None of the six core operations builds an output `Model`, because proved
+code-level boundaries handle the sign, zero, and NaR encodings of the result. Exact dyadic
+intermediates may still allocate.
 -/
 def storedNativeWordEstimate {format : Format}
     (plan : StoragePlan format) (operation : Operation) : Candidate where
@@ -172,12 +171,12 @@ def storedNativeWordEstimate {format : Format}
 /--
 Engineering estimate for the direct built-in two-limb storage kernel.
 
-Formats from 65 through 128 bits use two `UInt64` limbs by default. These kernels decode the
-limbs directly, avoiding input `Model` construction. Exact dyadic intermediates may also allocate,
-so the estimate accounts for reduced carrier overhead without assuming allocation-free arithmetic.
-The dispatcher prices addition, subtraction, multiplication, square root and FMA with it. The
-pair division kernel, which still constructs a result model before packing its code, is priced by
-`dyadicEstimate` instead, so the `.div` row is unused.
+Formats from 65 through 128 bits use two `UInt64` limbs by default, which these kernels decode
+without building an input `Model`. Exact dyadic intermediates can allocate too, so the
+estimate credits the lower carrier overhead without assuming allocation-free arithmetic. The
+dispatcher prices addition, subtraction, multiplication, square root and FMA with it. Pair
+division builds a result model before packing its code, so `dyadicEstimate` prices it and the
+`.div` row goes unused.
 -/
 def storedNativeLimbEstimate {format : Format}
     (operation : Operation) : Candidate where
@@ -228,11 +227,11 @@ well as lookup when the planner compares expected workloads.
 /--
 Engineering estimate for an exhaustive byte-result table.
 
-The setup estimate charges one invocation of the operation's rational-free certified integer
-generator per entry. After construction, lookup uses native index arithmetic and a byte load.
-The larger ternary lookup weight applies to every byte-sized format and accounts for its extra
-index arithmetic. `residentBytes` counts table payload bytes exactly; it excludes array headers
-and other runtime bookkeeping.
+Setup is charged one call of the operation's rational-free certified integer generator per entry.
+After construction, a lookup is native index arithmetic and a byte load. Ternary lookups get a
+larger weight in every byte-sized format, for their extra index arithmetic. `residentBytes`
+counts the table payload bytes exactly and leaves out array headers and other runtime
+bookkeeping.
 -/
 def tableEstimate (format : Format) (width_le : format.bits ≤ 8)
     (operation : Operation) : Candidate :=

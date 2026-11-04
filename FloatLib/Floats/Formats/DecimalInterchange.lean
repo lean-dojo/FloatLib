@@ -22,21 +22,23 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Semantics
 /-!
 # IEEE decimal interchange
 
-The shared `Format` descriptor includes decimal32, decimal64, decimal128, and custom
-layouts. Datums retain a coefficient and quantum exponent, including distinct
-cohort members with the same numerical value. BID and DPD codecs
-preserve complete datums, and arithmetic rounds exact expressions into the chosen
-decimal format with explicit exception outcomes.
+In decimal floating point, `1 × 10^0` and `10 × 10^-1` have the same value but are different
+datums. They belong to the same cohort, and IEEE 754 says which member an operation should
+return. So a datum here keeps its coefficient and its quantum exponent, and cohort members stay
+distinct even when they are numerically equal. One `Format` descriptor covers decimal32,
+decimal64, decimal128, and custom layouts. The BID and DPD codecs preserve complete datums, and
+arithmetic rounds the exact expression into the chosen format and returns its exception outcome
+along with the result.
 
-`Algebraic` adds square, reciprocal square root, hypotenuse, integer powers, and
-integer-degree roots in all five rounding modes. Each rounds the complete expression once.
-Import `DecimalInterchange.Transcendentals.Certified.Proof` for the finite-result
-`expMinus1` and `logPlus1` certificates.
+`Algebraic` adds square, reciprocal square root, hypotenuse, integer powers, and integer-degree
+roots in all five rounding modes, and each of them rounds the whole expression once. For the
+finite-result `expMinus1` and `logPlus1` certificates, import
+`DecimalInterchange.Transcendentals.Certified.Proof`.
 
-`Environment` threads the current rounding direction and sticky exception flags through
-pure computations. Neighbors, remainder, exponent operations, and external text conversion
-use the same datums and projection. Narrower imports separate execution from the
-accompanying numerical and representation proofs.
+`Environment` carries the current rounding direction and the sticky exception flags through pure
+computations. Neighbors, remainder, the exponent operations, and text conversion all work on the
+same datums and the same projection. Each part also has narrower imports, so you can run the code
+without pulling in its numerical and representation proofs.
 
 ## References
 

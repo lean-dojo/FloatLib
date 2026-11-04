@@ -15,28 +15,26 @@ public import FloatLib.Floats.Interval.Rounders
 /-!
 # Quantized real intervals and unbounded division enclosures
 
-Intervals are propagated over `ℝ` or `EReal`, then each endpoint is moved outward by a `Rounder`,
-a pair of maps below and above the identity. With `formatRounder` the new endpoints lie on a
-Flocq-style $(\beta,\mathtt{fexp})$ grid (`genericFormat_roundDown`, `genericFormat_roundUp`).
-The enclosure theorems use only the two inequalities of the `Rounder`, so they hold for every
-rounder, the identity maps included; they do not by themselves say that an endpoint is
-representable.
+This layer is for real-valued enclosure proofs. An interval is propagated over `ℝ` or `EReal`, and
+then each endpoint is moved outward by a `Rounder`, which is a pair of maps below and above the
+identity. With `formatRounder` the new endpoints lie on a Flocq-style $(\beta,\mathtt{fexp})$ grid
+(`genericFormat_roundDown`, `genericFormat_roundUp`). The enclosure theorems use only the two
+inequalities of the `Rounder`, so they hold for every rounder, the identity maps included. On their
+own they don't say that an endpoint is representable.
 
-The usual workflow is:
+A typical proof goes like this:
 
-- start from a real interval $x\in[\mathtt{lo},\mathtt{hi}]$;
-- propagate it through arithmetic or a monotone nonlinear function; and
-- round each new endpoint outward with a `Rounder`, for a representable grid `formatRounder`.
+- start from a real interval $x\in[\mathtt{lo},\mathtt{hi}]$,
+- propagate it through arithmetic or a monotone nonlinear function,
+- round each new endpoint outward with a `Rounder`, using `formatRounder` for a representable grid.
 
-The layer is meant for real-valued enclosure proofs, not bit-level IEEE execution. It therefore
-has no NaN payloads, signed-zero rules, or status flags.
-
-Division returns an `EReal` interval so that a denominator interval containing zero can be enclosed
-by $[-\infty,+\infty]$.
+Because the layer is about real values and not bit-level IEEE execution, it has no NaN payloads,
+signed-zero rules, or status flags. Division returns an `EReal` interval, so a denominator interval
+that contains zero can still be enclosed by $[-\infty,+\infty]$.
 
 The endpoint formulas, outward rounding, and inclusion property are described in S. M. Rump,
 [Verification methods: Rigorous results using floating-point
-arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §§5.1–5.5.
+arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010), §§5.1-5.5.
 -/
 
 @[expose] public section
@@ -161,7 +159,7 @@ theorem mem_tanh {R : Rounder} {A : RInterval} {x : ℝ} (hx : x ∈ A) :
     Real.tanh x ∈ tanh R A :=
   ⟨(R.down_le _).trans (tanh_monotone hx.1), (tanh_monotone hx.2).trans (R.le_up _)⟩
 
-/-- Outward-rounded interval enclosure for `Real.sqrt`; informative when $0\le\mathtt{lo}$. -/
+/-- Outward-rounded interval enclosure for `Real.sqrt`. It is informative when $0\le\mathtt{lo}$. -/
 noncomputable def sqrt (R : Rounder) (A : RInterval) : RInterval :=
   ⟨R.down (Real.sqrt A.lo), R.up (Real.sqrt A.hi)⟩
 
@@ -169,8 +167,8 @@ noncomputable def sqrt (R : Rounder) (A : RInterval) : RInterval :=
 Soundness of `sqrt`: membership is preserved by `Real.sqrt`.
 
 `Real.sqrt` is monotone on all of `ℝ` (it sends every nonpositive input to `0`), so no sign
-hypothesis on `A` is needed; the nonnegativity remark on `sqrt` only describes when the enclosure
-is informative.
+hypothesis on `A` is needed. The nonnegativity remark on `sqrt` only says when the enclosure is
+informative.
 -/
 theorem mem_sqrt {R : Rounder} {A : RInterval} {x : ℝ} (hx : x ∈ A) :
     Real.sqrt x ∈ sqrt R A :=
@@ -245,10 +243,10 @@ namespace RInterval
 open EInterval
 
 /-!
-Division with possibly unbounded results.
+Division whose result may be unbounded.
 
-If the denominator interval contains `0`, the enclosure is `[-∞,+∞]`.
-Otherwise the quotient is enclosed by the four endpoint quotients.
+If the denominator interval contains `0`, the enclosure is `[-∞,+∞]`. Otherwise the four endpoint
+quotients enclose the quotient.
 -/
 /--
 Outward-rounded interval division as an `EReal` enclosure.
@@ -289,9 +287,9 @@ private theorem mem_div_of_nozero {R : Rounder} {A B : RInterval} {x y : ℝ}
 /--
 Soundness of `div` without any hypothesis on the denominator interval.
 
-When `B` contains zero the result is `EInterval.top`, which contains everything; otherwise the four
+When `B` contains zero the result is `EInterval.top`, which contains everything. Otherwise the four
 outward-rounded corner quotients enclose `x / y`. Division by zero itself is Lean's totalized
-`x / 0 = 0`, which the top interval also contains.
+`x / 0 = 0`, and the top interval contains that too.
 -/
 theorem mem_div {R : Rounder} {A B : RInterval} {x y : ℝ}
     (hx : x ∈ A) (hy : y ∈ B) :

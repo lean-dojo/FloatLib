@@ -11,13 +11,14 @@ public import FloatLib.Numerics.Exact.RadixText.Precision
 /-!
 # Requested precision for external decimal text
 
-The digit grid and decade carry depend only on an exact decimal value. A caller
-supplies the signed magnitude-to-integer rounding function; this module makes no
-choice of source format, exponent bounds, cohort policy, or exception handling.
-It applies equally to decimal datums and terminating decimal expansions of dyadics.
+Writing a value with a requested number of significant digits needs a digit grid and a decade carry,
+and both depend only on an exact decimal value. Rounding is the caller's part: it supplies the
+signed magnitude-to-integer rounding function, and this module makes no choice of source format,
+exponent bounds, cohort policy, or exception handling, so it works the same for decimal datums and
+for terminating decimal expansions of dyadics.
 
-Requested precision has no width cap. Zero uses adjusted exponent zero, hence
-quantum `1-p` at precision `p`. Sign preservation includes signed zero.
+There's no width cap on the requested precision. Zero uses adjusted exponent zero, which gives
+quantum `1-p` at precision `p`, and the sign is preserved, signed zero included.
 -/
 
 @[expose] public section

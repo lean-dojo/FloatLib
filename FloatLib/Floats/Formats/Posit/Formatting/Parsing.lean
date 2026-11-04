@@ -12,12 +12,13 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 /-!
 # Posit decimal input
 
-Decimal integers, fractions, and decimal exponents denote exact rationals, rounded once according
-to Posit Standard (2022), §4.1. `NaR` names the unique exceptional value. Empty or malformed input
-returns an explicit error. The decimal grammar does not accept whitespace or radix-two notation.
+A string such as `-0.125` or `+25e-3` denotes an exact rational, and the parser rounds it once,
+following Posit Standard (2022), §4.1. Decimal integers, fractions, and decimal exponents all work
+this way, and `NaR` names the unique exceptional value. Empty or malformed input returns an error.
+Whitespace and radix-two notation aren't part of the grammar.
 
 Together with decimal display, this implements the value-preserving decimal character conversion
-described in §6.3. The character and posit round-trip proofs are in `Formatting.Proof`.
+of §6.3. You'll find the character and posit round-trip proofs in `Formatting.Proof`.
 
 ## References
 
@@ -29,7 +30,7 @@ described in §6.3. The character and posit round-trip proofs are in `Formatting
 
 namespace FloatLib.Floats.Formats.Posit.Model
 
-/-- A decimal-input failure, distinct from the explicit `NaR` spelling. -/
+/-- A decimal-input failure, which is never confused with a written `NaR`. -/
 inductive ParseError where
   /-- The supplied string has no characters. -/
   | emptyInput
@@ -63,7 +64,7 @@ def decimalVanishingExponent (format : Format) (significand : Nat) : Int :=
   -(((significand.log2 + 1 : Nat) : Int) + (((minPositiveRat format).den.log2 + 1 : Nat) : Int))
 
 /--
-Move a decimal exponent into the range where it can still affect posit rounding.
+Move a decimal exponent into the range where it can affect posit rounding.
 
 Posits saturate: every positive value at or above maxPos rounds to maxPos, and every positive value
 below minPos rounds to minPos. Exponents beyond these points are replaced by the nearest endpoint,
@@ -82,9 +83,9 @@ def clampDecimal (format : Format) (value : FloatLib.Numerics.DecimalText.Decima
 Read a decimal rational and round it once to the requested posit width.
 
 Accepted finite syntax includes `12`, `-0.125`, `.5`, `1.`, and `+25e-3`. Only `NaR` requests the
-exceptional value; invalid syntax never silently becomes zero or NaR. Written exponents far outside
-the posit range are clamped first (see `clampDecimal`), which leaves the rounded result unchanged
-and keeps inputs such as `1e1000000000` cheap.
+exceptional value, and invalid syntax never silently becomes zero or NaR. Written exponents far
+outside the posit range are clamped first (see `clampDecimal`), which leaves the rounded result
+unchanged and keeps inputs such as `1e1000000000` cheap.
 -/
 def parse (format : Format) (input : String) : Except ParseError (Model format) :=
   if input = "NaR" then .ok (nar format)

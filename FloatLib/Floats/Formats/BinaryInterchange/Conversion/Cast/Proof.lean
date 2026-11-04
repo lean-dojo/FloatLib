@@ -103,7 +103,9 @@ theorem isFinite_canonicalNaN {fmt : FloatFormat} (hencoding : fmt.encoding = .i
   rw [expField_or_quietBit]
   exact h
 
-/-- The quiet bit of a word is clear exactly when bit `fracWidth - 1` of its fraction is clear. -/
+/--
+The quiet bit of a word is clear if and only if bit `fracWidth - 1` of its fraction is clear.
+-/
 theorem and_quietBit_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
     ((x.bits &&& FloatFormat.quietBit fmt) == 0) = !(fracField x).testBit (fmt.fracWidth - 1) := by
   have hfw := fmt.fracWidth_pos

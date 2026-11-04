@@ -22,24 +22,27 @@ import Mathlib.Data.Rat.Cast.Order
 /-!
 # Executable affine rational quantization
 
-For a positive rational scale `s`, zero point `z`, and integer code interval
-`[qmin, qmax]`, this module executes nearest-even affine quantization:
+For a positive rational scale `s`, zero point `z`, and integer code interval `[qmin, qmax]`, this
+module runs nearest-even affine quantization:
 
 ```text
 quantize x   = clamp (roundEven (x / s) + z)
 dequantize k = s * (k - z)
 ```
 
-Exact rational parameters keep the scalar kernel executable and make its mathematical denotation
-independent of host floating-point behavior. Downstream tensor libraries can lift the scalar
-operation pointwise without introducing a second quantization semantics.
+With scale 1/2, zero point 0 and codes from -8 to 7, for instance, 1.25 divides to 2.5, which rounds
+to the even code 2, and code 2 dequantizes to 1. Exact rational parameters keep the scalar kernel
+executable and make its mathematical meaning independent of host floating-point behavior. Downstream
+tensor libraries can lift the scalar operation pointwise without introducing a second quantization
+semantics.
 
 The reconstruction equation is Jacob et al., "Quantization and Training of Neural Networks for
 Efficient Integer-Arithmetic-Only Inference," CVPR 2018, §2.1, Eq. (1), p. 2706,
-doi:10.1109/CVPR.2018.00286. The nearest-even tie rule is this kernel's policy; Eq. (1) specifies
-the affine reconstruction map. Ties are resolved on `x / s`, before adding the zero point.
-This parameter record permits any integer zero point. Exact zero has a code in the stored interval
-precisely when `qmin ≤ zeroPoint ≤ qmax`, as required by the paper's code-range convention.
+doi:10.1109/CVPR.2018.00286. Eq. (1) specifies the affine reconstruction map, and the nearest-even
+tie rule is this kernel's own policy. Ties are resolved on `x / s`, before the zero point is added.
+
+This parameter record allows any integer zero point. Exact zero has a code in the stored interval
+when and only when `qmin ≤ zeroPoint ≤ qmax`, as the paper's code-range convention requires.
 -/
 
 @[expose] public section

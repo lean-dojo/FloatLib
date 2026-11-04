@@ -16,8 +16,10 @@ public import FloatLib.Floats.Formats.Posit.Comparison
 /-!
 # Rational construction, comparison, display, and literal instances for configured posits
 
-`ofRat` and numerical literals round once from exact rationals. Display and comparison operate on
-the exact-width model independently of the selected packed carrier.
+`ofRat` and numeric literals round once from an exact rational, so `(.ofRat (1 / 3) : Posit16)`
+is one third rounded once into a 16-bit posit, and no value passes through a host float. Display
+and comparison work on the exact-width model, whichever packed carrier the width selected. A value
+prints as its mathematical value, and NaR compares below every real posit.
 -/
 
 @[expose] public section
@@ -51,7 +53,7 @@ instance :
 Configured posit comparison follows the standard's total signed-word order.
 
 NaR compares below every real posit because the standard compares complete words as signed
-two's-complement integers; this does not give NaR a real or infinite numerical meaning.
+two's-complement integers. That ordering gives NaR no real or infinite numerical meaning.
 -/
 instance configuredComparison :
     FloatLib.Floats.ExecFloat.Comparison (Configured.Family format code plan) where

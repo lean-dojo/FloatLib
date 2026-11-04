@@ -13,15 +13,15 @@ public import FloatLib.Numerics.Enclosure.Interval.Runtime
 /-!
 # Posit interval endpoints
 
-`intervalRounding` brackets an exact rational using adjacent posit words for any supported
-width. It reuses the existing monotone-code bisection, rather than assuming the nearest posit
-rounder rounds outward. Negative bounds are obtained by reversing and negating the positive
-bounds. An exactly represented input receives a point enclosure.
+`intervalRounding` brackets an exact rational between two adjacent posit words, at any supported
+width. It gets the bracket from the monotone-code bisection, because nothing promises that the
+nearest posit rounder rounds outward. A negative input reuses the positive bounds, reversed and
+negated, and an input that a posit represents gets a point enclosure.
 
-The distinction from ordinary posit rounding matters at the extremes: a small positive value
-is bracketed by zero and minPos, while a magnitude beyond maxPos cannot have a finite posit
-enclosure and returns `none`. The exact endpoint check rejects NaR and any failed bracket.
-The common `Numerics.Interval` arithmetic uses this same checked rounding operation.
+At the extremes this differs from ordinary posit rounding. A small positive value is
+bracketed by zero and minPos. A magnitude beyond maxPos can't have a finite posit enclosure, so the
+result is `none`. An endpoint check rejects NaR and any failed bracket, and the common
+`Numerics.Interval` arithmetic uses this same checked rounding operation.
 -/
 
 @[expose] public section
@@ -44,8 +44,8 @@ def intervalCandidates (format : Format) (x : ℚ) : Interval format :=
 /--
 Checked outward rounding for arbitrary posit widths.
 
-Overflow is reported as `none`; the standard's saturated maxPos output is not an upper bound
-for values beyond the format's range. No infinity is introduced into the posit representation.
+Overflow comes back as `none`, because the standard's saturated maxPos output is not an upper
+bound for values beyond the format's range. The posit representation gains no infinity.
 -/
 def intervalRounding (format : Format) : Numerics.OutwardRounding (Model format) ℚ :=
   Numerics.OutwardRounding.ofCandidates Model.toRat? (intervalCandidates format)

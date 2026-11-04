@@ -16,22 +16,21 @@ public meta import Mathlib.Util.Qq
 /-!
 # Failure diagnostics for interval proofs
 
-`Tactic.diagnoseFailure` explains a failed binary-grid check without constructing proof evidence.
-Algebraic failures follow the checker's subdivision order and use the existing evaluator to locate
-the first rejected operation. Registered functions are inspected through their actual quoted
-backend. An enclosure that includes a forbidden value is reported as an enclosure obstruction,
-not as a claim about the real subexpression.
+When a binary-grid check fails, `Tactic.diagnoseFailure` explains why without constructing proof
+evidence. Algebraic failures follow the checker's subdivision order and use the evaluator to locate
+the first rejected operation, and registered functions are inspected through their actual quoted
+backend. An enclosure that includes a forbidden value is reported as an enclosure obstruction, and
+the message makes no claim about the real subexpression.
 
-A diagnostic retry doubles the endpoint precision. It describes only the inspected box; the
-tactic must still verify every successful proof with its usual kernel check. All work is
-confined to the failure path, and the entry point restores the caller's metavariable state.
+A diagnostic retry doubles the endpoint precision. It describes only the inspected box, and the
+tactic verifies every successful proof with its usual kernel check regardless. All the work stays on
+the failure path, and the entry point restores the caller's metavariable state.
 
-The diagnostics explain what the enclosures show. Whether a failure came from a heartbeat or
-recursion limit is known only to the caller that caught it, so no message here advises raising a
-budget.
+Diagnostics explain what the enclosures show. Only the caller that caught a failure knows whether a
+heartbeat or recursion limit caused it, so no message here advises raising a budget.
 
-The quoted-syntax readers unfold definitions, so they use `partial` with Lean's resource checks.
-The obstruction walk below instead recurses structurally over the decoded `Interval.Expr`.
+Quoted-syntax readers unfold definitions, so they use `partial` with Lean's resource checks. The
+obstruction walk below recurses structurally over the decoded `Interval.Expr` instead.
 -/
 
 public meta section
@@ -71,7 +70,7 @@ private def readRat (e : Q(ℚ)) : MetaM ℚ := do
   if let some r ← getRatValue? e then return r
   return Rat.divInt (← readInt q(Rat.num $e)) (← readNat q(Rat.den $e))
 
-/-- Read only algebraic syntax; registered functions use the actual quoted backend below. -/
+/-- Read only algebraic syntax. Registered functions use the actual quoted backend below. -/
 private partial def readExpr (e : Q(Interval.Expr)) : MetaM Interval.Expr :=
   withIncRecDepth do
     checkSystem "interval diagnostics"
@@ -436,11 +435,14 @@ private def rejectedOnBox (atoms : Array Lean.Expr) (calls : Array RegisteredCal
 
 end Diagnostics
 
-/-- Inspect the actual registered backend by reduction, within the caller's diagnostic budget.
-The displayed enclosure belongs to the original box; subdivision may have narrower children.
-When the backend rejects an operation on that box, the message names it and, for a registered
-call, quotes the accepted domain from `calls`, the registered calls in call-index order.
-The relation is reduced as in `diagnoseFailure`, and a term that is neither relation is an error. -/
+/--
+Inspect the actual registered backend by reduction, within the caller's diagnostic budget.
+
+The displayed enclosure belongs to the original box, and subdivision may have narrower children.
+When the backend rejects an operation on that box, the message names it and, for a registered call,
+quotes the accepted domain from `calls`, the registered calls in call-index order. The relation is
+reduced as in `diagnoseFailure`, and a term that is neither relation is an error.
+-/
 def diagnoseRegisteredFailure (expression : Q(Interval.Expr)) (backend : Q(Backend Int))
     (box : Q(Box)) (config : Q(Backend.Config)) (relation : Q(Relation)) (depth : Q(Nat))
     (atoms : Array Lean.Expr := #[]) (calls : Array RegisteredCall := #[]) :
@@ -470,8 +472,10 @@ def diagnoseRegisteredFailure (expression : Q(Interval.Expr)) (backend : Q(Backe
     Box: {boxText}. Verification used subdivision depth {depth}. Try tighter input bounds, \
     more subdivision, or higher approximation settings."
 
-/-- Inspect the executable checker before kernel verification. A failed leaf can reject the
-attempt early; this advisory result never supplies evidence for a successful proof. -/
+/--
+Inspect the executable checker before kernel verification. A failed leaf can reject the attempt
+early, but this advisory result never supplies evidence for a successful proof.
+-/
 def preflightCheck (expression : Q(Interval.Expr)) (box : Q(Box))
     (config : Q(Backend.Config)) (relation : Q(Relation)) (depth : Q(Nat)) :
     MetaM (Option Bool) := withoutModifyingState do
@@ -494,14 +498,14 @@ def preflightCheck (expression : Q(Interval.Expr)) (box : Q(Box))
     | .limited => none
 
 /--
-Explain a failed `Expr.check` using its quoted expression, box, binary-grid configuration, relation,
-and subdivision depth. The optional `atoms` array supplies the original real terms in variable
-index order; otherwise variables are displayed as `x[i]`.
+Explain a failed `Expr.check` from its quoted expression, box, binary-grid configuration, relation,
+and subdivision depth. The optional `atoms` array supplies the original real terms in variable index
+order, and without it variables are displayed as `x[i]`.
 
-Call only after the kernel verification fails. This function returns advisory text, never proof
-evidence. It restores Meta state even on exceptions and propagates interrupts, heartbeat exhaustion,
-and recursion limits. Unknown inspection failures receive a generic diagnostic. A bounded search
-can report that its own diagnostic budget ran out, without claiming subdivision was exhausted.
+Call it only after kernel verification fails. It returns advisory text and never proof evidence,
+restores Meta state even on exceptions, and propagates interrupts, heartbeat exhaustion, and
+recursion limits. Unknown inspection failures get a generic diagnostic, and a bounded search can
+report that its own diagnostic budget ran out without claiming that subdivision was exhausted.
 -/
 def diagnoseFailure (expression : Q(Interval.Expr)) (box : Q(Box))
     (config : Q(Backend.Config)) (relation : Q(Relation)) (depth : Q(Nat))

@@ -12,7 +12,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 # Default static-byte backend runtime
 
 A static-byte family's selected backend supplies six arithmetic operations and a shared cost
-estimate. Refinement theorems live in `Backend.Proof`; capability instances live in
+estimate. Refinement theorems are in `Backend.Proof`, and capability instances are in
 `Backend.Construction`.
 -/
 
@@ -72,9 +72,9 @@ def Backend.familyEstimate (operation : String) :
 namespace Backend.Table
 
 /--
-Run any certified binary byte table directly on a nominal static-byte format.
+Run any certified binary byte table on a nominal static-byte format.
 
-The table is an explicit argument so a closed format package can expose a first-order,
+The table is an ordinary argument, so a closed format package can expose a first-order,
 monomorphic kernel without projecting a function from its `Family` dictionary.
 -/
 @[always_inline, inline] def binary {F : Type u} [Family F]
@@ -90,7 +90,7 @@ monomorphic kernel without projecting a function from its `Family` dictionary.
   FloatLib.Floats.ExecFloat.ofRaw <|
     runBinary width_le_eight table left.raw right.raw
 
-/-- Run any certified unary byte table directly on a nominal static-byte format. -/
+/-- Run any certified unary byte table on a nominal static-byte format. -/
 @[always_inline, inline] def unary {F : Type u} [Family F]
     {modelSpec :
       ModelValue (Family.format (F := F)) →
@@ -103,7 +103,7 @@ monomorphic kernel without projecting a function from its `Family` dictionary.
   FloatLib.Floats.ExecFloat.ofRaw <|
     runUnary width_le_eight table value.raw
 
-/-- Run any certified ternary byte table directly on a nominal static-byte format. -/
+/-- Run any certified ternary byte table on a nominal static-byte format. -/
 @[always_inline, inline] def ternary {F : Type u} [Family F]
     {modelSpec :
       ModelValue (Family.format (F := F)) →

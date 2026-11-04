@@ -12,8 +12,8 @@ public import FloatLib.Floats.ExecFloat.Conversion.Core
 /-!
 # Shared-scale block conversion runtime
 
-Conversion takes the common binary exponent as an explicit `Int` context and rounds each lane
-to the corresponding grid. `Conversion.Instances` installs this contextual quantizer without a
+Conversion takes the common binary exponent as an `Int` argument and rounds each lane to the grid
+that exponent defines. `Conversion.Instances` installs it as a contextual quantizer, with no
 `DefaultQuantizer` instance.
 -/
 
@@ -33,7 +33,7 @@ variable {lanes : Nat}
     FloatLib.Floats.ExecFloat.ConversionStatus :=
   { inexact := decide (ExecFloat.SharedScale.decode rounded ≠ exact) }
 
-/-- Quantize a complete block observation at an explicitly supplied shared exponent. -/
+/-- Quantize a complete block observation at the shared exponent the caller supplies. -/
 @[inline] def run (exponent : Int) :
     NumericalValue (Vector Rat lanes) →
       FloatLib.Floats.ExecFloat.ConversionOutcome (ExecFloat.SharedScale lanes)

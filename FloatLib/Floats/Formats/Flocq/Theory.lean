@@ -45,44 +45,42 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Special.FTZ
 /-!
 # Flocq-style rounded-real theory
 
-This umbrella exports the radix-parametric format and rounding theory, exact mantissa/exponent
-negation and multiplication, and the rounded scalar `NF`. The theory is independent of concrete
-IEEE bit encodings. Its main definitions are `FloatRep`, `genericFormat`, `round`, `ulp`, and
-`bpow`.
-
-Import a child module for a smaller dependency set, or this module for the full theory.
+Import this module for the whole rounded-real theory: the radix-parametric format and rounding
+theory, exact mantissa and exponent negation and multiplication, and the rounded scalar `NF`. None
+of it depends on concrete IEEE bit encodings. The definitions you'll meet most are `FloatRep`,
+`genericFormat`, `round`, `ulp`, and `bpow`. For a smaller dependency set, import a child module.
 
 ## Analysis
 
-The `Analysis` modules provide ULP functions, adjacent representable values, and Sterbenz
-exact-subtraction results. The representability of the rounded-addition error, which is the
-specification of the TwoSum and FastTwoSum error-free transformations, is proved in
-`Theory.Error.Addition`. The operation-level exactness of those algorithms is not formalized.
+The `Analysis` modules provide ULP functions, adjacent representable values, and Sterbenz's
+exact-subtraction results. `Theory.Error.Addition` proves that the error of a rounded addition is
+representable, which is the specification of the TwoSum and FastTwoSum error-free transformations.
+The step-by-step exactness of those algorithms themselves is not formalized.
 
 ## Error
 
-The `Error` modules collect the generic error results used by format-specific
-`BinaryInterchange.Model.roundAt` theorems, runtime-refinement proofs, verifier margins, and
-numerical analyses.
+The `Error` modules collect generic error results. Format-specific `BinaryInterchange.Model.roundAt`
+theorems use them, and so do runtime-refinement proofs, verifier margins, and numerical analyses.
 
 ## Format
 
-The `Format` modules develop magnitude, exponent selection, and representability, following
-Flocq's generic-format organization. A client that only needs a format predicate can import its
-defining module without the rounding and error theory.
+The `Format` modules develop magnitude, exponent selection, and representability, organized the
+way Flocq organizes its generic formats. If all you need is a format predicate, import its defining
+module and skip the rounding and error theory.
 
 ## Rounding
 
-The `Rounding` modules contain rounding functions and their semantic laws: directed modes, nearest
-choices, order properties, round-to-odd, round-away, and double rounding. A format supplies the
-representable grid and a rounding policy selects a point on that grid. `Rounding.Modes` names six
-of these rules: the five IEEE 754 rounding-direction attributes and rounding away from zero.
+The `Rounding` modules hold rounding functions and their semantic laws: directed modes, nearest
+choices, order properties, round-to-odd, round-away, and double rounding. The split is simple. A
+format supplies the grid of representable values, and a rounding policy picks a point on it.
+`Rounding.Modes` names six of these rules, the five IEEE 754 rounding-direction attributes and
+rounding away from zero.
 
 ## Scalar
 
-`NF` is the scalar-facing interface to generic rounding. This folder keeps the carrier and its
-representability invariant together. The raw carrier may contain any real value, so statements
-that require membership in the declared grid assume `NF.IsRepresentable`.
+`NF` is the scalar face of generic rounding, and this folder keeps the carrier and its
+representability invariant together. A raw `NF` may hold any real value, so a statement that needs
+the value on the declared grid assumes `NF.IsRepresentable`.
 
 ## References
 

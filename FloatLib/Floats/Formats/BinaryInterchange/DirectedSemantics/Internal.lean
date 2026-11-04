@@ -13,14 +13,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Dyadic
 /-!
 # Shared internal facts for directed binary semantics
 
-These descriptor and field-packing facts are common to dyadic and rational directed rounding.
-Keeping them below both proof layers prevents each numerical representation from rebuilding the
-same IEEE-specialization arguments.
+Dyadic and rational directed rounding share these descriptor and field-packing facts, which sit
+below both proof layers so that neither numerical representation rebuilds the same
+IEEE-specialization arguments.
 
 ## Dyadic
 
-This module exports the format-generic normalization, executable branch, grid-bound, and
-field-packing theorems for directed dyadic rounding.
+For directed dyadic rounding, this module exports the format-generic normalization, executable
+branch, grid-bound and field-packing theorems.
 -/
 
 @[expose] public section

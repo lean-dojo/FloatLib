@@ -15,8 +15,8 @@ public import Mathlib.Analysis.SpecialFunctions.Artanh
 /-!
 # Real semantics of hyperbolic comparisons
 
-Each comparator returns the exact real ordering, including equality at rational special
-values. The inverse identities are used only on the appropriate real domains.
+Each comparator returns the exact real ordering, with equality at the rational special values. We
+use the inverse identities only on their proper real domains.
 -/
 
 public section

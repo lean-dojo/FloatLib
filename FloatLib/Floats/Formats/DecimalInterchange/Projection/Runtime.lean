@@ -13,12 +13,13 @@ public import FloatLib.Numerics.IEEEStatus
 /-!
 # Cohort-aware rational projection
 
-Precision rounding precedes the overflow test (IEEE 754-2019 §7.4). Decimal
-tininess is detected before rounding (§7.5), and the underflow flag requires
-both tininess and inexactness. Exact results select the cohort member closest
-to the preferred quantum (§5.2).
-`projectMagnitude` requires a nonnegative input. `project` handles either sign
-and takes the sign of an exact zero as its own argument.
+This is the rounding step behind decimal arithmetic, and its order follows IEEE 754-2019.
+Precision rounding comes before the overflow test (§7.4). Decimal tininess is detected before
+rounding (§7.5), and the underflow flag needs both tininess and inexactness. Exact results select
+the cohort member closest to the preferred quantum (§5.2).
+
+`projectMagnitude` requires a nonnegative input. `project` handles either sign and takes the sign
+of an exact zero as an argument of its own.
 -/
 
 @[expose] public section
@@ -42,7 +43,7 @@ def Format.maxFinite (f : Format) (negative : Bool) : Datum :=
   .finite negative (f.coefficientBound - 1) f.maxQuantum
 
 /-- Precision-rounded coefficient and exponent with an unbounded upper exponent.
-The only possible carry is exactly `10 ^ precision`. -/
+The only possible carry is `10 ^ precision`. -/
 def roundedPair (f : Format) (mode : RoundingMode) (negative : Bool) (magnitude : ℚ) :
     Nat × Int :=
   let q := roundingQuantum f magnitude

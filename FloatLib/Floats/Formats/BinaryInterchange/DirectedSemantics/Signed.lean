@@ -11,11 +11,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Positi
 /-!
 # Signed directed rounding for arbitrary executable float formats
 
-Signed floor and ceiling semantics follow from the positive scaled-mantissa results. For
-negative inputs, downward rounding uses the upward-rounded magnitude and upward rounding uses
-the downward-rounded magnitude. The final theorems lift these integer identities through `round`
-to exact real equations for every dyadic when `fmt.isIEEE = true`; a zero significand gives zero on
-both sides, and only the private helper they share needs a nonzero significand.
+Signed floor and ceiling semantics follow from the positive scaled-mantissa results. For a
+negative input, downward rounding uses the upward-rounded magnitude, and upward rounding uses the
+downward-rounded one. When `fmt.isIEEE = true`, the final theorems lift these integer identities
+through `round` to exact real equations for every dyadic. A zero significand gives zero on both
+sides, and only the private helper they share needs a nonzero significand.
 -/
 
 @[expose] public section

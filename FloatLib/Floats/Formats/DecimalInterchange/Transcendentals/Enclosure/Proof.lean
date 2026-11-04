@@ -13,9 +13,10 @@ public import FloatLib.Numerics.Enclosure.Rational.Proof
 /-!
 # Real correctness of decimal enclosure acceptance
 
-Finite endpoint projections equal real nearest-even rounding. Flocq monotonicity then forces
-every enclosed real value to have the same rounded result. Success proves destination validity
-and finiteness as well as the equality to the real specification.
+Accepting an enclosure is sound for a simple reason. Projecting each finite endpoint is real
+nearest-even rounding, and Flocq's monotonicity then forces every real value in between to round
+to the same result. So a success proves destination validity and finiteness along with equality to
+the real specification.
 -/
 
 @[expose] public section

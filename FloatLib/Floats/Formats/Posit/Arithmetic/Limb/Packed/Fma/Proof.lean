@@ -16,13 +16,13 @@ public import Mathlib.Analysis.Real.Sqrt
 /-!
 # Refinement of direct packed-pair posit fused multiply-add
 
-The packed FMA reads three pair-limb codes, forms the exact product plus addend, and rounds once
-without first constructing model wrappers. This file proves the generated code is in range and
-re-encodes to the already verified two-limb model operation.
+The packed FMA reads three pair-limb codes, forms the exact product plus addend, and rounds once,
+without building model wrappers first. We prove that the code it produces is in range and that it
+re-encodes to the two-limb model operation, which is verified already.
 
-That two-stage argument keeps packed field extraction and carry arithmetic out of the public Posit
-specification while retaining the one-rounding FMA guarantee. NaR handling follows the common
-packed boundary rather than a private fallback.
+Splitting the argument in two keeps packed field extraction and carry arithmetic out of the public
+Posit specification, and the one-rounding FMA guarantee comes through intact. NaR handling uses
+the common packed boundary and has no private fallback.
 -/
 
 @[expose] public section

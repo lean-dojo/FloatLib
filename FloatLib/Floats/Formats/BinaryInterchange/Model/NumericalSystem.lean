@@ -16,14 +16,15 @@ public import Mathlib.Algebra.Order.Algebra
 /-!
 # Binary models as numerical systems
 
-The `NumericalSystem` interface gives `Model fmt` a representation-independent semantic view.
-Its ordinary semantic domain is `ℝ`; supported infinities retain their signs, and NaNs retain
-their diagnostic payload without the quiet bit, together with their sign bit and signaling class.
-Both zeros denote the real `0`, so the refinement theorems stated through this interface say
-nothing about the sign of a zero result; signed-zero behaviour has its own word-level theorems.
+Through the `NumericalSystem` interface, `Model fmt` gets a semantic view that doesn't depend on
+its representation. Its ordinary semantic domain is `ℝ`. Supported infinities keep their signs,
+and a NaN keeps its diagnostic payload without the quiet bit, along with its sign bit and
+signaling class. Both zeros denote the real `0`, so refinement theorems stated through this
+interface say nothing about the sign of a zero result. Signed-zero behaviour has word-level
+theorems of its own.
 
-`Model.toDyadic?` supplies the executable exact dyadic decoder. This real-valued view lets
-generic refinement results compose with other numerical families.
+`Model.toDyadic?` is the executable exact dyadic decoder. With this real-valued view, generic
+refinement results compose with other numerical families.
 -/
 
 @[expose] public section
@@ -53,7 +54,7 @@ noncomputable abbrev numericalSystem (fmt : FloatFormat) : NumericalSystem where
 /--
 Proof-facing real interpretation of an executable float.
 
-This is a relation on the existing `Model fmt` carrier, not a second floating-point type.
+It is a relation on the existing `Model fmt` carrier and adds no second floating-point type.
 `Represents x r` says that the exact bits stored by `x` have the ordinary finite meaning `r`.
 -/
 abbrev Represents {fmt : FloatFormat} (x : Model fmt) (r : ℝ) : Prop :=
@@ -79,14 +80,14 @@ theorem numericalSystem_denote_of_isFinite {fmt : FloatFormat} (x : Model fmt)
     (numericalSystem fmt).denote x = .finite (toReal x) := by
   exact toNumericalValue_of_isFinite x hx
 
-/-- The general interface represents exactly the real value used by finite arithmetic theorems. -/
+/-- The general interface represents a finite float by the real value finite arithmetic uses. -/
 theorem numericalSystem_represents_of_isFinite {fmt : FloatFormat} (x : Model fmt)
     (hx : isFinite x = true) :
     (numericalSystem fmt).Represents x (toReal x) :=
   numericalSystem_denote_of_isFinite x hx
 
 /--
-An executable float represents a real exactly when it is finite and its exact decoding is that
+An executable float represents a real if and only if it is finite and its exact decoding is that
 real. This is the main bridge from the single executable carrier to proof-oriented real reasoning.
 -/
 @[simp] theorem represents_iff {fmt : FloatFormat} (x : Model fmt) (r : ℝ) :
@@ -105,7 +106,7 @@ real. This is the main bridge from the single executable carrier to proof-orient
   · rintro ⟨hfinite, rfl⟩
     exact numericalSystem_represents_of_isFinite x hfinite
 
-/-- The real decoding of `x` is represented exactly when `x` is finite. -/
+/-- The real decoding of `x` is represented if and only if `x` is finite. -/
 theorem represents_toReal_iff {fmt : FloatFormat} (x : Model fmt) :
     Represents x (toReal x) ↔ isFinite x = true := by
   simp

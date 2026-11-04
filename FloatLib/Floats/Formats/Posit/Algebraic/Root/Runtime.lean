@@ -12,10 +12,11 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Runtime
 /-!
 # Exactly rounded integer roots of posits
 
-For positive degree, raising a nonnegative candidate to that degree preserves order. Exact
-rational powers therefore decide which side of every posit rounding boundary contains the root,
-even when the root is irrational. The shared comparator rounder supplies the bisection, saturation,
-and appended-bit tie rule. Negative degrees invert the exact radicand before the search.
+Even an irrational root gets rounded correctly here. For positive degree, raising a nonnegative
+candidate to that degree preserves order, so exact rational powers decide which side of each posit
+rounding boundary the root lies on. Everything else comes from the shared comparator rounder: the
+bisection, saturation, and the appended-bit tie rule. A negative degree inverts the exact radicand
+before the search starts.
 
 ## Reference
 
@@ -32,8 +33,8 @@ namespace RootRounding
 Compare a nonnegative root with a rational candidate using exact integer powers.
 
 For positive degree and nonnegative radicand, this is real comparison with the root. Negative
-candidates lie below it. At zero, compare the radicand with zero directly, preserving zero and
-nonpositive-input handling even outside the positive-degree contract.
+candidates lie below it. At zero, compare the radicand with zero itself. That keeps the handling
+of zero and nonpositive inputs even outside the positive-degree contract.
 -/
 @[inline] def compareRoot (radicand : Rat) (degree : Nat) (candidate : Rat) : Ordering :=
   if candidate < 0 then .gt

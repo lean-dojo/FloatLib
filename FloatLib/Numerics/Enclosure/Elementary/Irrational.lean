@@ -13,13 +13,12 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 /-!
 # Irrationality of exponentials at nonzero rational arguments
 
-Adaptive rounding needs more than convergent intervals: an interval can straddle an exact
-rounding boundary forever. For the exponential at a nonzero rational argument, irrationality
-rules out that case.
+Convergent intervals aren't enough for adaptive rounding, because an interval can straddle an exact
+rounding boundary forever. For the exponential at a nonzero rational argument, irrationality rules
+that out.
 
-The transcendence theorem in `Elementary.Transcendental` supplies the non-boundary fact.
-Inverting the exponential gives the corresponding logarithm result, with `log 1 = 0` handled
-separately.
+The fact comes from the transcendence theorem in `Elementary.Transcendental`. Inverting the
+exponential gives the matching logarithm result, with `log 1 = 0` handled on its own.
 -/
 
 public section

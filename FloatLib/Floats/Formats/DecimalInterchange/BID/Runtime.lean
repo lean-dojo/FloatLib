@@ -10,12 +10,11 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Runtime
 /-!
 # Binary integer decimal encoding
 
-IEEE 754-2019 §3.5.2(c)(2) stores the decimal coefficient as a binary integer.
-The `11` steering bits move the exponent field and imply coefficient prefix
-`100`. A finite coefficient exceeding `10^precision - 1` denotes zero,
-preserving its sign and quantum exponent. Excessive NaN payloads also denote zero.
-The decoder implements these rules rather than reducing the coefficient modulo
-a decimal power.
+BID, from IEEE 754-2019 §3.5.2(c)(2), stores the decimal coefficient as a binary integer. When the
+steering bits are `11`, the exponent field moves over and the coefficient gets the implied prefix
+`100`. A finite coefficient above `10^precision - 1` denotes zero, with its sign and quantum
+exponent kept, and an oversized NaN payload denotes zero as well. The decoder follows these rules.
+It never reduces a coefficient modulo a power of ten.
 -/
 
 @[expose] public section
@@ -38,7 +37,7 @@ def rawCoefficient (f : Format) (n : Nat) : Nat :=
     8 * f.trailingBase +
       (n - 24 * (f.exponentBase * f.trailingBase)) % (2 * f.trailingBase)
 
-/-- Read the biased exponent; subtracting the steering prefix exposes its field. -/
+/-- Read the biased exponent. Subtracting the steering prefix exposes its field. -/
 def biasedExponent (f : Format) (n : Nat) : Nat :=
   if n < 24 * (f.exponentBase * f.trailingBase) then
     n / (8 * f.trailingBase)
