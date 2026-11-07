@@ -16,7 +16,7 @@ So how would you split sixteen bits? Binary16 spends ten on the fraction, which 
 
 ## How to describe a format
 
-FloatLib doesn't have to pick a side. It writes the split down in a descriptor, a small record of type [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat]]. Think of it as the format's recipe. It holds `expWidth`, `fracWidth`, the `exponentBias` subtracted from the stored exponent, and an `encoding` ([[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.Encoding]]) that says what the reserved bit patterns, such as an all-ones exponent, mean. This chapter uses `.ieee`, and [the chapter on small formats](#/chapter/low-precision-formats-for-machine-learning) covers the other three encodings.
+FloatLib records the field layout in a descriptor of type [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat]]. The record contains `expWidth`, `fracWidth`, the `exponentBias` subtracted from the stored exponent, and an `encoding` ([[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.Encoding]]) that says what the reserved bit patterns, such as an all-ones exponent, mean. This chapter uses `.ieee`, and [the chapter on small formats](#/chapter/low-precision-formats-for-machine-learning) covers the other three encodings.
 
 A descriptor also has four [proof fields](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Format/Definition.lean), which hold proofs instead of data. They're checked when you build a descriptor, free at run time, and ask for at least two exponent bits, at least one fraction bit, a positive bias, and a bias no larger than the largest finite exponent code. One fraction bit is enough for quiet NaNs, and signaling NaNs need two. The `ieee` constructor takes the two widths and fills in the conventional bias and the `.ieee` encoding.
 
@@ -107,7 +107,7 @@ E = \lfloor W / 2^{w_f} \rfloor \bmod 2^{w_e}, \qquad
 F = W \bmod 2^{w_f}.
 $$
 
-When $1 \le E \le 2^{w_e} - 2$ the word is normal and stands for $(-1)^s (1 + F/2^{w_f}) \cdot 2^{E - b}$. The part in parentheses is called the significand, because it holds the significant bits. Its leading one isn't stored, so that bit comes for free, and it's the extra one in $p = w_f + 1$. When $E = 0$ and $F \ne 0$ the word is subnormal, a tiny value below the least normal number, and stands for $(-1)^s F \cdot 2^{e_{\min} - w_f}$, with no free bit. $E = 0$ with $F = 0$ is a signed zero. An all-ones exponent is an infinity when $F = 0$ and a NaN otherwise.
+When $1\le E\le2^{w_e}-2$, the word is normal and denotes $(-1)^s(1+F/2^{w_f})\cdot2^{E-b}$. The factor $1+F/2^{w_f}$ is the significand. Its leading one is implicit, so $w_f$ stored fraction bits provide $p=w_f+1$ bits of precision. When $E=0$ and $F\ne0$, the word is subnormal and denotes $(-1)^sF\cdot2^{e_{\min}-w_f}$, without an implicit leading one. When $E=0$ and $F=0$, the word is a signed zero. An all-ones exponent denotes an infinity when $F=0$ and a NaN otherwise.
 
 In a program you'll normally use [[FloatLib.Floats.ExecFloat.Binary]], which takes the two widths and fills in the `.ieee` encoding and the conventional bias. It and its named types, `Binary16`, `BFloat16`, `Binary32`, `Binary64`, `Binary128` and a wider `Binary256`, make up what we call the configured API, and `toModel` lets the model theorems apply to their values. Here's the binary32 value nearest $\pi$, and the smallest positive one:
 
@@ -195,11 +195,11 @@ def negZero : Binary32 := ExecFloat.Binary.ofBits32 0x80000000
 -- -inf
 ```
 
-In `ExactValue.nan false false 4194304` the three fields are the sign, whether it's signaling, and the stored fraction, and $4194304 = 2^{22}$ is the quiet bit alone. The second result is `0x7f800001` quieted, and its fraction $4194305 = 2^{22} + 1$ keeps the original low bit. The two zeros are equal under `==`, IEEE numerical comparison, and yet their words differ :) Divide one by negative zero and you get $-\infty$, so the sign of zero isn't decoration. It changes arithmetic.
+In `ExactValue.nan false false 4194304` the three fields are the sign, whether it's signaling, and the stored fraction, and $4194304 = 2^{22}$ is the quiet bit alone. The second result is `0x7f800001` quieted, and its fraction $4194305 = 2^{22} + 1$ keeps the original low bit. The two zeros are equal under `==`, IEEE numerical comparison, but their stored words differ. Dividing one by negative zero gives $-\infty$, so the zero sign affects subsequent arithmetic.
 
 ## How to read the status flags
 
-We said a signaling NaN raises the invalid flag. So what's a flag? IEEE 754 asks every operation to report five exceptions: invalid operation, division by zero, overflow, underflow and inexact. Think of them as a receipt that comes with the result, here the five Booleans of [[FloatLib.Numerics.IEEEStatus]]. Pass `(status := true)` to an arithmetic operation or a conversion and you get an [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEOutcome]] with the value, its flags and the [ternary value](#/chapter/the-mathematics-of-rounding/how-to-choose-a-rounding-direction). The ternary value gets its name from its three possible answers: the result was rounded up, down or not at all. On the configured types you read a flag as a field:
+IEEE 754 defines five exception flags: invalid operation, division by zero, overflow, underflow and inexact. FloatLib represents these as the five Boolean fields of [[FloatLib.Numerics.IEEEStatus]]. Pass `(status := true)` to an arithmetic operation or a conversion and you get an [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEOutcome]] with the value, its flags and the [ternary value](#/chapter/the-mathematics-of-rounding/how-to-choose-a-rounding-direction). The ternary value gets its name from its three possible answers: the result was rounded up, down or not at all. On the configured types you read a flag as a field:
 
 ```lean
 def largest : Binary32 := ExecFloat.Binary.maxFinite
@@ -231,7 +231,7 @@ example (x : Model FloatFormat.binary64) (mode : Model.IEEERoundingMode)
   Model.sqrt_inexact_iff mode hfinite hsign
 ```
 
-Let's read those receipts. One over positive zero gives $\infty$ and divide-by-zero, while $0/0$ gives a NaN and invalid. Overflow always comes with inexact. The product $2^{-149} \cdot 0.5$ lands exactly halfway between $0$ and the least subnormal, ties to even picks $0$, and tiny plus inexact raises underflow. The ternary value is `Ordering.gt` for the overflow and for one third rounded up, `Ordering.lt` for the product rounded down to zero, and `Ordering.eq` for the exact infinity and both NaNs.
+Dividing one by positive zero produces $\infty$ and raises `divideByZero`; $0/0$ produces a NaN and raises `invalid`. Overflow also raises `inexact`. The product $2^{-149}\cdot0.5$ is halfway between zero and the least positive subnormal. Nearest-even returns zero, and the inexact result below the normal range raises `underflow`. The ternary value is `Ordering.gt` for the overflow and the upward-rounded third, `Ordering.lt` for the product rounded to zero, and `Ordering.eq` for the exact infinity and the two NaN results.
 
 **Note:** As in [how running code and proofs fit together](#/chapter/the-numerical-models/how-to-see-which-flags-an-operation-raised), overflow is decided on the result rounded with an unbounded exponent range. A nonzero result is tiny when, rounded to the destination precision with an unbounded exponent range, its magnitude is below the least normal number. That's what deciding tininess after rounding means. Underflow means tiny *and* inexact, so an exact subnormal result raises neither flag.
 
@@ -435,7 +435,7 @@ def cancelledDownward : ExecFloat.ConversionOutcome Binary32 :=
 -- .success 2147483648
 ```
 
-That word is `0x80000000`, the sign bit and nothing else, so one plus negative one really is negative zero here :) `Mixed.add`, `Mixed.sub` and `Mixed.fma` take this cancellation rule from their own `mode`.
+That word is `0x80000000`, the sign bit and nothing else, so this directed addition returns negative zero. `Mixed.add`, `Mixed.sub` and `Mixed.fma` take this cancellation rule from their own `mode`.
 
 ## How to work with complex numbers
 

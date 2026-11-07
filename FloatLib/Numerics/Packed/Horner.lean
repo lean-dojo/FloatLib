@@ -48,9 +48,9 @@ per lane plus two products of big numbers, one of them by a short row. The bound
 in `l1_compose` is loose for a short interval, but it only decides the lane width, and a few spare
 bits per lane cost much less than a sharper check would.
 
-What I find neat here is that the change of basis is never trusted. The untrusted generator
+The kernel verifies the change of basis. The untrusted generator
 computes the same composed row in Python to build its certificate, but the kernel recomputes it
-from the coefficients of the goal, so a wrong basis change can't sneak into a proof. With
+from the coefficients of the goal, so an incorrect basis change fails the check. With
 `[lo, hi] = [0, 1]` and `p(x) = x² - x`, for instance, `m = r = 1/2` gives `M = R = 1` and
 `D = 2`, the rows `a = [0, 4]` and `b = [1, 2, 1]`, and the composed row `[1, 0, -2, 0, 1]`.
 Centred at lane `2` it is `z⁻² - 2 + z² = 2 cos (2 u) - 2`, which is `(2 D) ^ 2 p(x) = 16 p(x)`.

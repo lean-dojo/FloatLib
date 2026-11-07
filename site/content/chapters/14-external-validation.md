@@ -5,13 +5,13 @@ title: How we test FloatLib
 summary: "Why a proved library still needs testing, which independent libraries and tables we compared FloatLib with, which runs tried every input and which sampled, and every difference we found and its cause."
 ---
 
-So far you've seen what FloatLib proves. This last chapter shows how we test it, by running it next to libraries other people wrote and comparing the answers, and what we learned from every place where the answers differed.
+FloatLib's proofs establish that implementations satisfy their specifications. Independent tests compare the resulting values and exception flags with other libraries and published format tables. This chapter describes those comparisons, the differences they found and the conclusions each test supports.
 
 ## Why does a proved library need testing?
 
 Suppose we misread a standard such as IEEE 754 somewhere. How would you know? Not from our proofs. A proof shows that the code matches our specification, our mathematical statement of what each operation returns. If the specification is wrong, the two agree perfectly on the wrong answer.
 
-Think of checking code against our own specification as checking a clock against the watch you set it from. They agree even when the watch is wrong. An independent implementation is a second watch, set by someone else who read the same standard.
+A refinement proof establishes that an implementation agrees with its specification. If that specification misinterprets the standard, the proof alone cannot identify the error. Comparisons with independent implementations can reveal such discrepancies.
 
 ## What did we compare FloatLib against?
 
@@ -54,7 +54,7 @@ Separately, IBM's test generator FPgen [@ibmFpgen] supplied 81,513 more inputs, 
 
 ## What can a value table check?
 
-Not every second watch is a library. Our format-table suite checked 7,602,160 P3109 cases, from the public 4.0.3 tables at encoded widths 3 through 16, and 1,296 cases from ONNX, the machine-learning model format, with zero mismatches. That shows FloatLib's decoding agrees with the tables. Think of a multiplication table: checking every label along its edges doesn't check the entries inside, and in the same way this doesn't establish P3109 arithmetic, exception handling, saturation, block scaling or OCP MX interoperability.
+Published format tables provide another independent reference. The format-table suite checked 7,602,160 P3109 cases from the public 4.0.3 tables at widths 3 through 16, and 1,296 ONNX cases, with zero mismatches. These tests establish agreement of decoding with the tables for the tested entries. They do not establish correctness of P3109 arithmetic, exception handling, saturation, block scaling or OCP MX interoperability.
 
 Checking entries is where MPFR comes in. Our suites against it passed 400 primitive cases, 672 cases of exact sums and dot products, and 131,072 binary16 cases split between addition and multiplication, 65,536 of each operation's $2^{32}=4,294,967,296$ pairs, in the four IEEE rounding directions. MPFR checks rounded finite values, though, and can't check every NaN payload or NaN-selection rule.
 
@@ -88,16 +88,16 @@ $$
 2560\cdot\frac{165}{8}+2^{-56}=52800+2^{-56}.
 $$
 
-The two nearest result words are `0x7b9c`, which is 52,736, and `0x7b9d`, which is 52,864. Their midpoint is 52,800, so the exact answer sits a hair above it and the upper word is closer. FloatLib picks `0x7b9d`. SoftPosit's generic pX2 code returned `0x7b9c`, the answer you'd get by dropping the $2^{-56}$ and sending the exact tie to the even lower word.
+The adjacent result words are `0x7b9c`, denoting $52736$, and `0x7b9d`, denoting $52864$. Their midpoint is $52800$. The exact result $52800+2^{-56}$ is strictly above the midpoint, so nearest rounding selects the upper word, `0x7b9d`, as FloatLib does. SoftPosit's generic pX2 code returned `0x7b9c`, the result obtained by discarding $2^{-56}$ and rounding the resulting tie to the even lower word.
 
-What went wrong? Remembering the "and a bit" in "52,800 and a bit" is the job of the sticky bit, which records whether any discarded low bits were nonzero. It's called sticky because once it's set, it should stay set. The pX2 code does record it. It just overwrites it later. SoftPosit's other 16-bit case, $-65536000-2^{-50}$, loses it just below a midpoint, and so do these:
+A sticky bit records whether any discarded low-order bits were nonzero. Once set, it must remain set as further bits are discarded. The pX2 code initially records this information but later overwrites it. The other 16-bit case, $-65536000-2^{-50}$, loses the sticky information just below a midpoint. The following cases have the same problem:
 
 | Width | Exact FMA result | SoftPosit result | FloatLib result |
 | --- | --- | ---: | ---: |
 | 14 | $64768 + 2^{-48}$ | 64,512 | 65,024 |
 | 15 | $-3060 - 2^{-52}$ | -3,056 | -3,064 |
 
-The fix is one character long :) In a copy of SoftPosit's `s_mulAddPX2.c`, changing `bitsMore = ...` to `bitsMore |= ...`, which ORs the new bits into the old ones instead of replacing them, keeps the earlier sticky information and corrects all four FMA results. The counts above are for the original code, and the patched copy tells us about these four inputs only.
+In a copy of SoftPosit's `s_mulAddPX2.c`, changing `bitsMore = ...` to `bitsMore |= ...` preserves previously recorded sticky information by combining the new bits with the old ones. This change corrects all four FMA results. The counts above refer to the original version; the patched comparison establishes agreement only for these four inputs.
 
 ### Where SoftPosit disagrees with itself
 
@@ -107,7 +107,7 @@ After its sign bit, a posit word starts with the regime, a run of identical bits
 
 ## What bugs did we find in MPFX?
 
-Our MPFX [@saikiDoubleRounding2026] comparisons found four bugs in that library, and they're easier to follow once you've seen its trick. It simulates a narrow format by computing a round-to-odd result in a C `double` or `float` container, the wider hardware format that holds the value, and rounding it again. Round-to-odd is the sticky bit in another costume. An inexact result always gets an odd last bit, so the second rounding can't mistake it for a tie, as [the rounding chapter](#/chapter/the-mathematics-of-rounding/why-rounding-twice-can-go-wrong) explains.
+The comparisons with MPFX [@saikiDoubleRounding2026] found four bugs. MPFX simulates a narrow format using a wider C `double` or `float` as a container. It first computes a round-to-odd result, then rounds that value to the target format. The odd last bit distinguishes an inexact intermediate result from an exact midpoint under the precision conditions described in the [rounding chapter](#/chapter/the-mathematics-of-rounding/why-rounding-twice-can-go-wrong).
 
 MPFX's rounding theorems need format-containment conditions, such as two extra precision bits for nearest rounding, and a final rounding that doesn't overflow. One fast engine gets round-to-odd from the hardware's round-toward-zero mode and inexact flag, the other from an error-free transformation (EFT), extra operations that compute the rounding error.
 
@@ -115,7 +115,7 @@ To find the bugs, we compared both engines with FloatLib on binary16, bfloat16, 
 
 The first bug is the sign of zero. Under roundTowardNegative, the standard's name for rounding down, IEEE 754 makes an exact zero sum such as $1 + (-1)$ equal to $-0$, but MPFX returns $+0$ for every such sum, difference and FMA, in both engines and every format. That's 63,488 binary16 pairs and 65,280 bfloat16 pairs per operation, one $x - x$ for each finite $x$. The next two are missing flags. MPFX's square root of $-\infty$ returns a NaN without the invalid flag, and when the container's own result overflows, as for large bfloat16 products in a `float`, the overflow flag goes missing although the rounded result is infinite.
 
-The fourth is quieter, and it's in the EFT engine. When the residual, the rounding error it computes with an FMA for a product, quotient or square root, rounds to zero in the container, it takes the result for exact. In bfloat16 that loses every product that underflows the `float` container: $2^{-70}\cdot 2^{-90}$ rounded toward positive infinity has to give $2^{-133}$, the least positive value, and comes back zero with no inexact or underflow flag. Rounding $\sqrt{3\cdot 2^{-1072}}$ to 51 bits, the engine returns `0x1.bb67ae8584ca8p-536`, one unit below the `0x1.bb67ae8584cacp-536` of the hardware engine and FloatLib.
+The fourth bug is in the EFT engine. The engine uses an FMA to compute the residual for a product, quotient or square root. If that residual rounds to zero in the container format, the engine treats the result as exact. In bfloat16, $2^{-70}\cdot2^{-90}$ rounded toward positive infinity should produce $2^{-133}$, the least positive value. Instead, it returns zero without inexact or underflow flags because the product underflows in the `float` container. When rounding $\sqrt{3\cdot2^{-1072}}$ to 51 bits, the engine returns `0x1.bb67ae8584ca8p-536`, one unit below the `0x1.bb67ae8584cacp-536` returned by the hardware engine and FloatLib.
 
 MPFX's notes record this failure for binary64 products, quotients and FMAs, but not for square root or the `float` container. We reported all four classes in [bksaiki/mpfx#36](https://github.com/bksaiki/mpfx/issues/36), with reproducers that use only MPFR, SoftFloat and the host FPU.
 
@@ -125,7 +125,7 @@ MPFX's notes record this failure for binary64 products, quotients and FMAs, but 
 
 A comparison can also decide what's fair to time. Some timing markers are missing on purpose, and [Figure 14.3](#/chapter/external-validation/figure-ch11-universal-preflight) shows why. Before timing posits against the Universal library, we compared six operations at thirteen posit widths from 5 through 4,096 bits on the sixteen inputs the benchmark uses, which doesn't imply agreement on every input. Of these 78 combinations, 71 agreed and seven differed, all in square root, at widths 64, 128, 256, 512, 1,024, 2,048 and 4,096. Universal's square root goes through a host binary64 conversion, so its passing measurements are labelled hardware-assisted and kept apart from software posit arithmetic, and the differing ones stay out of the timing plots.
 
-Rounding a wide posit to binary64 loses precision that converting the host's answer back can't recover, any more than enlarging a thumbnail brings back the original photo's detail. That doesn't diagnose every differing input, but it's why a host-assisted result needs its own agreement check and can't stand in for arbitrary-precision posit square root.
+Converting a wide posit to binary64 can discard precision. Converting the host result back to a posit cannot recover the discarded information. This observation does not explain every disagreement, but it shows why a host-assisted implementation needs an independent agreement check and cannot serve as a general reference for arbitrary-precision posit square root.
 
 ## How does FloatLib relate to other verified libraries?
 

@@ -6,13 +6,13 @@ summary: "What it means to round a number to a grid, how far rounding can move i
 phases: [rounding-theory, planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
-A floating-point format can store only some numbers, so when the exact answer to a calculation falls between two of them, the format has to pick one. That pick is rounding, and the gap it leaves is rounding error. We'll round numbers by hand and in Lean, see how far rounding can move a number, and meet the two places where it surprises people most: subtractions that turn out exact, and roundings done twice.
+Rounding maps an exact value to a value representable in a numerical format. The rounding error is the difference between the rounded value and the exact value. This chapter develops bounds on that error, conditions for exact subtraction, and results about rounding more than once.
 
-Picturing a float as a real number with a little noise on it can't tell you when an operation adds no noise at all, or why computing in a wider format first can leave the narrower answer incorrectly rounded. A grid of points on the real line can. The grid needs no bit layout, so we study rounding on the real line alone, following Boldo and Melquiond's Flocq, a floating-point library for the Coq prover [@boldoMelquiond2011], in Lean on top of Mathlib [@leanMathlib2020]. Once the operations of a packed format, one stored as bits, are proved to agree with rounding on its grid, each grid theorem applies to that format under the theorem's own hypotheses, so one proof covers binary32, binary128 and custom IEEE-style descriptors (the records that give a format its field widths).
+FloatLib describes representable values as a grid on the real line. This separates the mathematics of rounding from a format's bit layout, following the approach of Flocq, a floating-point library for Coq [@boldoMelquiond2011], and using Lean and Mathlib [@leanMathlib2020]. Once an executable operation is proved to agree with rounding on its grid, the grid theorems apply under their stated hypotheses. The same results can be used with binary32, binary128 and custom IEEE-style descriptors.
 
 ## What is rounding?
 
-Let's start with a sum that surprises people. If you add one and a hundred-millionth in binary32, IEEE's single-precision format, and ask for the next binary32 number above one:
+Consider adding $10^{-8}$ to one in binary32. The following commands evaluate the sum and identify the next representable binary32 value above one:
 
 ```lean
 open FloatLib.Floats
@@ -26,7 +26,7 @@ open FloatLib.Floats.Formats.Flocq
 -- 1.0000001
 ```
 
-you get one, and then $1 + 2^{-23}$. Picture the numbers a format can store as the ticks on a ruler. Just above one, binary32's ticks are $2^{-23}$ apart, and $10^{-8}$ is only about $0.084$ of that gap, well short of the midpoint. So rounding to nearest sends the true sum `1 + 1e-8` back to one, as we saw in [Chapter 03](#/chapter/the-numerical-models). In general a rounding function maps every real number onto the representable ones, the numbers the format can store, leaves each of those alone, and is monotone: a bigger input never gets a smaller output.
+The results are one and $1+2^{-23}$, respectively. The spacing immediately above one is $2^{-23}$, and $10^{-8}$ is approximately $0.084$ times that spacing. The exact sum is therefore below the midpoint, so nearest rounding returns one, as in [Chapter 03](#/chapter/the-numerical-models). In general, a rounding function maps real inputs to representable values, fixes values that are already representable, and is monotone.
 
 ## How to round a number to a grid
 
@@ -69,7 +69,7 @@ The word `0x33800000` holds $2^{-24}$, so the true sum $1 + 2^{-24}$ lies exactl
 
 ## How does a grid know its spacing?
 
-The steps of that staircase doubled at each power of two, so a grid has to say how its spacing depends on the size of a number. It does that with a radix $\beta$ and a function $\mathrm{fexp} : \mathbb{Z} \to \mathbb{Z}$ giving the exponent for each magnitude. Think of $\mathrm{fexp}$ as the rule that hands out rulers: for numbers of each size, it says how far apart the ticks are. There are [three exponent families](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Format/Formats.lean), named as in Flocq:
+The spacing doubles at each power of two. To describe how spacing depends on magnitude, a grid specifies a radix $\beta$ and an exponent function $\mathrm{fexp}:\mathbb{Z}\to\mathbb{Z}$. The function determines the grid spacing for each magnitude. FloatLib provides [three exponent families](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Format/Formats.lean), named as in Flocq:
 
 - `fixExp` ($e \mapsto e_{\min}$) is fixed point, one spacing everywhere.
 - [[FloatLib.Floats.Formats.Flocq.flxExp]] ($e \mapsto e - p$) gives the FLX grid, $p$ digits everywhere, and never underflows.
@@ -104,7 +104,7 @@ Monotonicity also traps the integer rule between floor and ceiling. That gives t
 
 ## What is a ulp?
 
-Before we can bound an error we need a unit to measure it in, and the grid hands us one. A ulp, short for unit in the last place, is the grid spacing at a point, one tick's width on the ruler there, so at any nonzero $x$, [[FloatLib.Floats.Formats.Flocq.ulp]] is $\beta^{\mathrm{cexp}(x)}$. Following Flocq, the ulp of zero is the smallest subnormal, $\beta^{e_{\min}}$, for FLT, and for FLX, which has no smallest positive number, it's zero. Our [ulp proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/Ulp.lean) and [neighbour proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/Neighbors.lean) show that the directed roundings of a nonrepresentable $x$ are one ulp apart, and that `succ` and `pred` (successor and predecessor), the neighbouring grid points, land on the grid, even at a radix power.
+A ulp, or unit in the last place, measures the grid spacing at a point. For nonzero $x$, [[FloatLib.Floats.Formats.Flocq.ulp]] is $\beta^{\mathrm{cexp}(x)}$. Following Flocq, the ulp of zero is the smallest subnormal, $\beta^{e_{\min}}$, for FLT, and for FLX, which has no smallest positive number, it's zero. Our [ulp proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/Ulp.lean) and [neighbour proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Analysis/Neighbors.lean) show that the directed roundings of a nonrepresentable $x$ are one ulp apart, and that `succ` and `pred` (successor and predecessor), the neighbouring grid points, land on the grid, even at a radix power.
 
 For a packed binary format, [[FloatLib.Floats.Formats.BinaryInterchange.Model.fexpOf]] computes the exponent function from the descriptor of [chapter 03](#/chapter/the-numerical-models). It's `fltExp` at the minimum subnormal exponent, with precision one more than the fraction width. For binary32 that's $e_{\min} = -149$ and $p = 24$, and Lean will check both for you:
 
@@ -126,7 +126,7 @@ $$
 |\mathrm{round}_{\mathrm{rnd}}(x) - x| \;\le\; \frac{\mathrm{ulp}(x)}{2} \qquad \text{for every } \mathrm{rnd} \text{ with } |\mathrm{rnd}(t) - t| \le \tfrac12.
 $$
 
-That bound is absolute. Our [relative-error proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Error/Bounds.lean) also give the error as a fraction of $x$, in the form $\mathrm{fl}(x) = x(1 + \delta)$ for the rounded value $\mathrm{fl}(x)$. For FLX with $p$ digits, [[FloatLib.Floats.Formats.Flocq.round_relative_error_FLX]] proves $|\delta| \le \beta^{1-p}/2$, the unit roundoff $u$. The FLT version requires a normal-range input, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal]] applies it to packed formats with $u = 2^{-p}$, the $2^{-24}$ for binary32 that `#float_info [errors]` shows in [chapter 01](#/chapter/using-the-library). The sharper $u/(1+u)$ for FLX with at least two digits, from [Jeannerod and Rump (2018), Theorem 2.1](https://doi.org/10.1090/mcom/3234), we haven't proved :)
+That bound is absolute. Our [relative-error proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Flocq/Theory/Error/Bounds.lean) also give the error as a fraction of $x$, in the form $\mathrm{fl}(x) = x(1 + \delta)$ for the rounded value $\mathrm{fl}(x)$. For FLX with $p$ digits, [[FloatLib.Floats.Formats.Flocq.round_relative_error_FLX]] proves $|\delta| \le \beta^{1-p}/2$, the unit roundoff $u$. The FLT version requires a normal-range input, and [[FloatLib.Floats.Formats.BinaryInterchange.Model.relativeError_roundAt_le_of_normal]] applies it to packed formats with $u = 2^{-p}$, the $2^{-24}$ for binary32 that `#float_info [errors]` shows in [chapter 01](#/chapter/using-the-library). The sharper $u/(1+u)$ for FLX with at least two digits, from [Jeannerod and Rump (2018), Theorem 2.1](https://doi.org/10.1090/mcom/3234), has not been formalized here.
 
 Here are the bounds in Lean: the two grid theorems, then the binary32 half-ulp bound and the binary32 relative bound, which needs a normal input. The second example writes `@round` with every argument given because its validity instance depends on `hprec`, the proof that the precision is positive.
 
@@ -164,13 +164,13 @@ $$
 = \frac{\beta^{1-p}}{2}.
 $$
 
-Error and value grow together through each binade, so their ratio forgets $e$. That's the whole trick, and it breaks down below the normal range, where the spacing stops shrinking. The real input $2^{-150}$, halfway between zero and the least binary32 subnormal, rounds to zero with relative error one. It's like rounding half a cent to whole cents: ties to even gives you zero cents, and the whole amount is gone. The half-ulp bound survives this and the relative one doesn't.
+Within each binade, both the error bound and the value scale by the same power of two, so their ratio does not depend on $e$. Below the normal range, the spacing is constant and this relative-error argument no longer applies. For example, $2^{-150}$ is halfway between zero and the least positive binary32 subnormal. Nearest-even rounding returns zero, giving relative error one. The half-ulp absolute-error bound still holds.
 
 ![Two binary16 panels for fltExp (-24) 11: Absolute spacing plots ulp and half ulp; Relative bound plots half ulp divided by x, between u/2 and u in the normal range and increasing as positive subnormal inputs approach zero](assets/ch07-ulp.png "Binary16 absolute and relative error bounds: the uniform relative bound requires a normal input.")
 
 ### How to drop the normal-range hypothesis
 
-If you allow one more error term, the normal-range hypothesis can go. The standard model with gradual underflow of Higham [@higham2002] and [Demmel (1984)](https://doi.org/10.1137/0905062) writes $\mathrm{fl}(x) = x(1+\delta) + \eta$ with $|\delta| \le u$ and $|\eta| \le \eta_0$, at most one of the two nonzero, where $\eta_0 = 2^{e_{\min}-1}$ is half the subnormal spacing. Think of $\delta$ as the relative error of the normal range and $\eta$ as the absolute error the subnormals allow. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_standardModel]] proves it for every binary format with no hypothesis on $x$, and directed versions hold with both constants doubled. For binary32 it reads like this, with `δ * η = 0` saying at most one term is nonzero:
+If you allow one more error term, the normal-range hypothesis can go. The standard model with gradual underflow of Higham [@higham2002] and [Demmel (1984)](https://doi.org/10.1137/0905062) writes $\mathrm{fl}(x) = x(1+\delta) + \eta$ with $|\delta| \le u$ and $|\eta| \le \eta_0$, at most one of the two nonzero, where $\eta_0 = 2^{e_{\min}-1}$ is half the subnormal spacing. The term $\delta$ bounds relative error, while $\eta$ accounts for absolute error below the normal range. [[FloatLib.Floats.Formats.BinaryInterchange.Model.roundAt_standardModel]] proves it for every binary format with no hypothesis on $x$, and directed versions hold with both constants doubled. For binary32 it reads like this, with `δ * η = 0` saying at most one term is nonzero:
 
 ```lean
 example (x : ℝ) :
@@ -272,7 +272,7 @@ The binary64 fused multiply-add gives $1 + 2^{-24}$ and the cast gives $1$, whil
 
 ### How to round twice safely
 
-There's a nice trick for this, called round to odd. It sends an inexact result to the neighbour with an odd last digit, and so keeps the information that nearest rounding lost. [Boldo and Melquiond (2008)](https://doi.org/10.1109/TC.2007.70819) develop the technique for floating-point double rounding and FMA emulation. An inexact round-to-odd result lands on an odd index, and with at least two extra binary digits no coarse midpoint does, so an inexact result never poses as a tie. We prove that, with at least two extra binary digits, round to odd followed by nearest even equals one nearest-even rounding on the integer grid, and [[FloatLib.Floats.Formats.Flocq.roundAtScale_nearestEven_after_odd_binary_extra]] extends this to any fixed grid of positive step.
+Round to odd maps an inexact result to the neighbouring representable value whose last digit is odd. [Boldo and Melquiond (2008)](https://doi.org/10.1109/TC.2007.70819) develop this technique for floating-point double rounding and FMA emulation. With at least two extra binary digits, an inexact round-to-odd result has an odd grid index, while every midpoint of the coarser grid has an even index. The second rounding therefore cannot confuse an inexact intermediate result with an exact midpoint. FloatLib proves that round to odd followed by nearest-even equals a single nearest-even rounding under this precision condition. [[FloatLib.Floats.Formats.Flocq.roundAtScale_nearestEven_after_odd_binary_extra]] extends the result to any fixed grid with positive step.
 
 Both grids must be fixed, with one spacing everywhere, so this covers fixed point and affine quantization (integers standing for evenly spaced reals), and we haven't proved a floating-point version whose exponent depends on the input. Round to odd lands on the grid (`generic_format_round_odd`) and meets `round_odd_point`, which says an inexact result is a directed neighbour with an odd mantissa at the input's selected exponent. The Flocq-style `RoundOddCanonicalPoint` tests the canonical mantissa instead, which can differ under abrupt underflow, and we prove it for fixed grids (`round_odd_canonical_point_FIX`). In the example below, the odd-then-even theorem's first argument counts extra digits beyond the mandatory two, so zero means a fine step of $\mathrm{step}/2^{0+2}$:
 
@@ -289,7 +289,7 @@ example (step x : ℝ) (hstep : 0 < step) :
 
 So how do the library's basic operations avoid rounding twice? Each basic reference operation on a binary format uses exact arithmetic to decide a single rounding. [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_add_eq_roundAt]] equates the decoded executable sum with $\mathrm{roundAt}$ of the exact sum, [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_fma_eq_roundAt]] does the same for $xy + z$, and the other basic operations have one too, each an exact equality under its format, domain and finiteness hypotheses. That's how `ExecFloat.Mixed.fma` beat the cast: mixed-format operations decode the operands into a common exact domain, evaluate, and quantize (round into the target) once (the [mixed-format conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Conversion/Proof.lean) `Mixed.preparedSpec_fma`). `roundOnce` quantizes an exact expression once (`preparedSpec_roundOnce`) and doesn't undo rounding done while building it.
 
-What's one plus negative one? Zero, but IEEE formats have two zeros, so which one? With a signed-zero destination, a cancelled zero gets its sign during exact addition and subtraction, so inside `roundOnce` the operations `ExactExpression.add` and `ExactExpression.sub` take the final rounding's `mode`. Ordinary `SignedRat` arithmetic (exact rationals with an IEEE sign bit) always uses the nearest-even rule, so there the answer is positive zero, and quantizing it downward keeps it positive. `ExactExpression.add` with `mode := .down` gives negative zero. The quantizer's contract covers only the last rounding, and keeping an exact operation faithful to its family's IEEE rules is the job of the family's `addExact` and `subExact`.
+IEEE formats distinguish positive and negative zero. Exact cancellation therefore needs a rule for the sign of the result. With a signed-zero destination, a cancelled zero gets its sign during exact addition and subtraction, so inside `roundOnce` the operations `ExactExpression.add` and `ExactExpression.sub` take the final rounding's `mode`. Ordinary `SignedRat` arithmetic (exact rationals with an IEEE sign bit) always uses the nearest-even rule, so there the answer is positive zero, and quantizing it downward keeps it positive. `ExactExpression.add` with `mode := .down` gives negative zero. The quantizer's contract covers only the last rounding, and keeping an exact operation faithful to its family's IEEE rules is the job of the family's `addExact` and `subExact`.
 
 ### How to add a list with one rounding
 
@@ -324,7 +324,7 @@ Two more theorems carry this over to proofs. [[FloatLib.Floats.Formats.BinaryInt
 
 ## What if every addition rounds?
 
-Not every sum gets to round once at the end, though. Say you add 2048, 1 and minus 2048 in binary16, like the binary32 fold above. When a reduction rounds every intermediate addition like this, the error depends on the evaluation order. A [[FloatLib.Numerics.ReductionTree]] holds the input occurrences at its leaves and the combining operations at its nodes, for a nonempty reduction (an empty one needs an identity chosen outside the tree). Think of the tree as the sum's brackets, drawn as a picture. If you build two trees that hold those three values with the cancellation in different places:
+Not every sum gets to round once at the end, though. Say you add 2048, 1 and minus 2048 in binary16, like the binary32 fold above. When a reduction rounds every intermediate addition like this, the error depends on the evaluation order. A [[FloatLib.Numerics.ReductionTree]] holds the input occurrences at its leaves and the combining operations at its nodes, for a nonempty reduction (an empty one needs an identity chosen outside the tree). The tree specifies the order in which the additions are evaluated. If you build two trees that hold those three values with the cancellation in different places:
 
 ```lean
 open FloatLib.Numerics (ReductionTree)

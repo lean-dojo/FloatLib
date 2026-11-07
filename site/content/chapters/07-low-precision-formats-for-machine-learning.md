@@ -6,9 +6,9 @@ summary: "How FloatLib describes, rounds and proves things about the 16-, 8-, 6-
 phases: [ml-formats, p3109]
 ---
 
-Why would anyone store a number in four bits? A neural network is mostly a huge collection of weights, the numbers it learns, multiplied and added over and over. A binary32 float, the usual kind, takes 32 bits. In 16 bits, or 8, or 4, the same memory holds two, four or eight times as many numbers, with that much less data to move. If names like FP8 are new to you, that's fine. This chapter explains each one as it comes up.
+Low precision formats reduce the memory and data transfer needed for numerical arrays. Compared with binary32, a fixed amount of memory holds twice as many 16-bit values, four times as many 8-bit values or eight times as many 4-bit values. Neural-network workloads often use these formats for weights and intermediate results. This chapter describes the formats supported by FloatLib and the arithmetic rules they use.
 
-The catch is the budget. Eight bits give only 256 bit patterns, or codes. Every code spent on infinity or NaN ("not a number", the code for an undefined result) is a number the format can't write, and every bit moved from the exponent, which sets a number's size, to the fraction, which holds its digits, brings the numbers closer together and narrows their range. So different groups made different choices.
+A format's width limits both its range and its precision. Eight bits provide 256 distinct bit patterns. Patterns reserved for infinities and NaNs are unavailable for finite numbers. Allocating more bits to the exponent increases the range, while allocating more bits to the fraction increases the precision. Different low precision formats make different choices.
 
 ## What does "FP8" mean?
 
@@ -16,7 +16,7 @@ The name is short for "floating point, eight bits", a float in one byte with a s
 
 ## What is a format family?
 
-These formats share four parts: an exponent width, a fraction width, a bias (subtracted from the stored exponent so that exponents can be negative) and an encoding saying which codes are infinities, NaNs and zeros. FloatLib writes them in one record, a descriptor, of type [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat]], with an [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.Encoding]] for the last part. Think of it as a recipe, and a format family as everything such a recipe produces as you turn its knobs.
+These formats share four parts: an exponent width, a fraction width, a bias (subtracted from the stored exponent so that exponents can be negative) and an encoding saying which codes are infinities, NaNs and zeros. FloatLib writes them in one record, a descriptor, of type [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat]], with an [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.Encoding]] for the last part. A format family consists of the formats obtained by varying these descriptor parameters.
 
 The encoding also decides which proofs you get. Bfloat16, TF32 and E5M2 use the IEEE encoding and get its real-number theorems for free. Those compare results with exact reals and give the IEEE real error bounds. The others use one of three encodings with fewer exceptional patterns. Each finite code still means one exact number $m \cdot 2^e$ (a whole number times a power of two, called a dyadic), and refinement proofs show that what you run matches its reference definition, the plain version of what it should compute. They don't get those error bounds, as we'll see later.
 
@@ -142,7 +142,7 @@ The element formats of the OCP Microscaling (MX) specification [@ocpMx], FP6 as 
 
 $$0,\ \pm\tfrac{1}{2},\ \pm 1,\ \pm\tfrac{3}{2},\ \pm 2,\ \pm 3,\ \pm 4,\ \pm 6,$$
 
-fifteen distinct values (the two zeros are equal), a very coarse ruler. Lean can list them, and each format's largest finite value:
+fifteen distinct numerical values, since the two zeros are equal. Lean can list them, and each format's largest finite value:
 
 ```lean
 example (x : Model FloatFormat.e2m1) : Model.isNaN x = false :=
@@ -245,7 +245,7 @@ example (x y : E4M3FN) : x + y = ExecFloat.Spec.add x y :=
   ExecFloat.Proof.add_eq_spec x y
 ```
 
-In E4M3FN, 1 plus 2 is 3 and 448 plus itself is NaN, code 127. E5M2 overflows to infinity, E4M3FNUZ to its NaN, and negating FNUZ zero gives zero, since there's no other zero to give :) [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] says the `+` on any static-byte family, the kind behind each one-byte type, equals [[FloatLib.Floats.ExecFloat.Spec.add]], the exact dyadic sum rounded once in the family's descriptor, and matching theorems cover subtraction, multiplication, division, square root and FMA. The [ONNX comparison](#/chapter/external-validation) checks the model's decoding against an independent implementation of the specification, which doesn't settle how hardware converts values or how block arithmetic behaves.
+In E4M3FN, 1 plus 2 is 3 and 448 plus itself is NaN, code 127. E5M2 overflows to infinity, E4M3FNUZ to its NaN, and negating FNUZ zero gives zero, because the format has only one zero encoding. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] says the `+` on any static-byte family, the kind behind each one-byte type, equals [[FloatLib.Floats.ExecFloat.Spec.add]], the exact dyadic sum rounded once in the family's descriptor, and matching theorems cover subtraction, multiplication, division, square root and FMA. The [ONNX comparison](#/chapter/external-validation) checks the model's decoding against an independent implementation of the specification, which doesn't settle how hardware converts values or how block arithmetic behaves.
 
 ## What is a block with a shared scale?
 
@@ -346,7 +346,7 @@ $$
 \frac{15/8}{2^{-8}}=480.
 $$
 
-E4M3 ends at 448, so saturation reconstructs $448\cdot2^{-8}=7/4$, an error of $1/8$, where $2^{-7}$ would have kept $15/8$ exactly :) So our error theorem fixes the scale first. We prove the block follows the selected scale and element policy, and at a finite selected scale `quantizeFinite_error_le` proves each saturated lane has the smallest absolute reconstruction error among all finite element words **at that scale**. The [scale-selection proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/OCP/MX/Standard/ScaleProof.lean) give the binade and scale bounds, and the element proofs give exactness for representable inputs and the even choice on ties.
+E4M3 ends at 448, so saturation reconstructs $448\cdot2^{-8}=7/4$, an error of $1/8$, where $2^{-7}$ would have represented $15/8$ exactly. So our error theorem fixes the scale first. We prove the block follows the selected scale and element policy, and at a finite selected scale `quantizeFinite_error_le` proves each saturated lane has the smallest absolute reconstruction error among all finite element words **at that scale**. The [scale-selection proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/OCP/MX/Standard/ScaleProof.lean) give the binade and scale bounds, and the element proofs give exactness for representable inputs and the even choice on ties.
 
 Beyond that, the choices are ours:
 
@@ -694,7 +694,7 @@ Here 3/16 comes back unchanged. The quantum near one third is $2^{-5}$, so neare
 
 ### What do the status flags mean?
 
-`convert` also hands back status flags, our own, since the report defines none, like a receipt. The record is shared with the [beginners' chapter](#/chapter/using-the-library):
+`convert` also returns FloatLib status flags. The P3109 report does not define these flags. They use the same record as the [beginners' chapter](#/chapter/using-the-library):
 
 | Flag | Raised in a P3109 conversion when |
 | --- | --- |

@@ -6,13 +6,13 @@ summary: "How fast FloatLib's proved arithmetic runs next to MPFR, SoftFloat, Fl
 phases: [kernels, backends, planner-and-configured, execution, trust]
 ---
 
-You might expect proved code to be slow, but it doesn't have to be. Multiply two binary64 numbers (the 64-bit floats that C calls `double`) with FloatLib's ordinary `x * y` and it takes 11.2 nanoseconds (ns). MPFR, a C library that rounds each result correctly at any precision you set, takes 27.0 ns at the same precision and exponent range, so the proved software is about 2.4 times faster. This chapter shows where FloatLib is fast and where it's slow, how it picks the code for your format, why a bad pick can cost speed but never correctness, and how we measured.
+This chapter compares the performance of FloatLib's public arithmetic operations with other implementations and explains how its planner selects a backend. In the public-call benchmark, binary64 multiplication takes 11.2 nanoseconds (ns) in FloatLib and 27.0 ns in MPFR at the same precision and exponent range, a factor of about 2.4. The sections below describe the measured workloads, the faster and slower cases, and the limits of these comparisons.
 
 ## How fast is FloatLib?
 
-Let's start with the wins. Across binary16, bfloat16, binary32 and binary64, FloatLib's public calls beat MPFR in 17 of the 24 format and operation pairs, and binary64 addition and subtraction are about 1.5 times faster. Against other proved implementations it wins nearly everywhere, beating extracted Flocq in 65 of 66 entries, by a median factor of 52, and FLoPS in 11 of 12 P3109 pairs.
+Across binary16, bfloat16, binary32 and binary64, FloatLib has lower measured times than MPFR in 17 of the 24 format-operation pairs. Binary64 addition and subtraction are about 1.5 times faster. The comparisons with other proved implementations show lower times than extracted Flocq in 65 of 66 entries, by a median factor of 52, and lower times than FLoPS in 11 of 12 P3109 pairs.
 
-Then the losses. Over all 84 public-call pairs, from 7 to 4,096 bits, FloatLib is faster in only 25, and above 64 bits MPFR wins every one. Berkeley SoftFloat, a C library of software IEEE arithmetic, was 2 to 6 times faster on all six operations in the October binary128 benchmark, and TensorLib, a Lean library for tensors, won all eight conversions we timed. Each loss gets its cause below.
+Across all 84 public-call pairs, from 7 to 4,096 bits, FloatLib is faster than MPFR in 25. MPFR is faster in every measured pair above 64 bits. Berkeley SoftFloat, a C library of software IEEE arithmetic, was 2 to 6 times faster on all six operations in the October binary128 benchmark. TensorLib, a Lean tensor library, was faster in all eight measured conversions. The following sections examine the implementation costs behind these results.
 
 We measured the FloatLib 2.0.0 release on 2026-10-31, on an Intel Xeon Platinum 8275CL. We haven't timed 3.0.0 itself, but comparing the code Lean generates for the two releases shows the same arithmetic on every path we time against MPFR, Flocq, SoftFloat, Universal, FLoPS and TensorLib. None of the times includes proof checking, because Lean erases proof terms during compilation [@leanReference].
 
@@ -252,7 +252,7 @@ The [limb carrier](#/chapter/performance/how-to-store-wide-numbers-as-limbs) off
 
 ## How does FloatLib pick the code that runs?
 
-When you write `x + y`, FloatLib has to pick the code that does the addition. An eight-bit float has 256 bit patterns, so there are only 65,536 ordered pairs you could ever add, few enough to work out every sum once and keep them in a 64 KiB table. Is that worth it? Think of a monthly transit pass, which costs a lot up front and makes every ride cheap, so it pays off only if you ride enough. A policy says how many rides to expect. For IEEE E4M3 addition the default policy expects 100,000 calls and picks a word kernel, while the throughput policy expects five million and builds the table.
+For each call to `x+y`, the planner selects an addition implementation. An eight-bit format has 256 encodings and 65,536 ordered operand pairs, so all results can be stored in a 64 KiB lookup table. Building the table has an initial cost that must be compared with the saving per call. The policy supplies the expected number of calls for this comparison. For IEEE E4M3 addition, the default policy expects 100,000 calls and selects a word kernel; the throughput policy expects five million calls and selects the table.
 
 So one addition can have three implementations: the table, a word kernel and the exact baseline. The planner picks among those that exist for your format, operation and storage, its *candidates*. Every candidate carries a proof that its `run` equals the same specification, and the winner keeps its proof, so a bad cost estimate can pick slow code but never wrong code.
 
@@ -541,7 +541,7 @@ open FloatLib.Floats.ExecFloat.Backend in
 
 </details>
 
-[[FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.wideLimbAdd?]] and its siblings offer limb kernels only for eligible descriptors. For division and square root both candidates are charged the same integer work, so only the baseline's estimated cost of converting between the limb carrier and the proof model makes the direct one win. That's a planning estimate, so please don't read it as a measured speedup :)
+[[FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.wideLimbAdd?]] and its siblings offer limb kernels only for eligible descriptors. For division and square root both candidates are charged the same integer work, so only the baseline's estimated cost of converting between the limb carrier and the proof model makes the direct one win. This is a planning estimate rather than a measured speedup.
 
 ## Why isn't the host FPU a candidate?
 
@@ -937,7 +937,7 @@ Several certificates have capacity hypotheses: a divisor below $2^{63}$ for the 
 
 The sixteen input sets are rationals that each adapter converts before timing, and MPFR converts them itself, so no earlier binary64 rounding gets in.
 
-Think of a choose-your-own-adventure book with sixteen pages. Each result picks the next page, so every operation waits for the previous one, but a result never becomes an operand, so the workload can't drift. Each ns/op therefore covers lookup, adapter work, the call and observing the result, and native C's 8.33 ns addition is more than an add instruction. Independent operations, a vectorized kernel or a subnormal-heavy workload could compare differently, the line uops.info [@abelUopsInfo2019] draws between dependent chains and independent operations.
+The workload uses sixteen fixed input entries. Each result selects the next entry, making each operation depend on the previous result. The selected entry supplies the next operands, so repeated operations do not change the numerical input distribution. Each reported ns/op includes lookup, adapter work, the arithmetic call and observation of the result. Native C's 8.33 ns addition therefore measures more than one addition instruction. Independent operations, vectorized kernels and workloads concentrated on subnormal inputs may give different comparisons. uops.info [@abelUopsInfo2019] distinguishes dependent instruction chains from independent operations.
 
 Before timing MPFR, SoftFloat, native C and Python, we compare 256 operations per format with FloatLib through two checksums, over the results and over the chosen inputs, since one rounding difference can send the loop to another page. That's evidence of agreement on these inputs, not a proof about every intermediate result.
 
@@ -945,7 +945,7 @@ Before timing MPFR, SoftFloat, native C and Python, we compare 256 operations pe
 
 Each library runs through an adapter in its own representation, and that cost stays inside the measured loop, MPFR reusing a destination object and Python creating Python result objects. Our [MPFR adapter](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/c/exact_format_mpfr.c), on MPFR 4.1.0 [@fousseMpfr2007], sets the binary companion's precision and exponent range at each width and calls `mpfr_subnormalize` after every operation, since precision alone would miss the tiny formats' overflow and gradual underflow.
 
-SoftFloat runs at revision `a0c6494`, built with the recipe our [benchmark driver](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/scripts/format-comparison.sh) selects, through the [SoftFloat adapter](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/c/softfloat_ieee.c), with nearest-even rounding and tininess detected after rounding. The native adapter uses C `float` and `double` without `-ffast-math` and checks the host representation and rounding mode first, though no check in the benchmark record targets flush-to-zero. The measured interpreter was CPython 3.12.13, which has no `math.fma`.
+SoftFloat runs at revision `a0c6494`, built with the configuration our [benchmark driver](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/scripts/format-comparison.sh) selects, through the [SoftFloat adapter](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/c/softfloat_ieee.c), with nearest-even rounding and tininess detected after rounding. The native adapter uses C `float` and `double` without `-ffast-math` and checks the host representation and rounding mode first, though no check in the benchmark record targets flush-to-zero. The measured interpreter was CPython 3.12.13, which has no `math.fma`.
 
 We used Stillwater Universal [@stillwaterUniversal] at revision `26e69f5` with `posit<width, 2, uint64_t>`, and timed an operation only when all sixteen results agreed with FloatLib's. Of 78 operation-and-width combinations 71 agreed, square root differing at every width from 64 through 4,096 bits, and widths below five are out because of Universal's generic `es=2` FMA constraint. Agreement here is evidence for this workload, not an exhaustive posit conformance result.
 
@@ -966,7 +966,7 @@ To rerun the nine-trial loop, start from the [benchmark method](https://github.c
 <details>
 <summary>Public binary measurement record</summary>
 
-The public-call [measurements](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/public-binary/measurements.csv) and [metadata](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/public-binary/metadata.json) keep every trial and the build: Lean 4.35.0 and Mathlib `56a00585`, against MPFR 4.1.0-p13 with GMP 6.2.1. Calibration aimed at 40 ms per interval, but 99 of the 1,512 timed intervals came in under 36 ms, the shortest at 22.2 ms, and recorded CPU-quota throttling was zero. The [fixture archive](assets/public-binary-fixtures.zip) holds the inputs, expected outputs and agreement receipts for the 84 plotted cases, the [benchmark bundle](assets/public-binary-benchmark.tar.gz) lets you compare a FloatLib checkout with MPFR yourself, and the [figure script](https://github.com/lean-dojo/FloatLib/blob/main/site/content/assets/figures/ch15_public_binary.py) regenerates both PNGs from the retained data without rerunning the benchmark:
+The public-call [measurements](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/public-binary/measurements.csv) and [metadata](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/public-binary/metadata.json) keep every trial and the build: Lean 4.35.0 and Mathlib `56a00585`, against MPFR 4.1.0-p13 with GMP 6.2.1. Calibration aimed at 40 ms per interval, but 99 of the 1,512 timed intervals came in under 36 ms, the shortest at 22.2 ms, and recorded CPU-quota throttling was zero. The [fixture archive](assets/public-binary-fixtures.zip) holds the inputs, expected outputs and agreement reports for the 84 plotted cases, the [benchmark bundle](assets/public-binary-benchmark.tar.gz) lets you compare a FloatLib checkout with MPFR yourself, and the [figure script](https://github.com/lean-dojo/FloatLib/blob/main/site/content/assets/figures/ch15_public_binary.py) regenerates both PNGs from the retained data without rerunning the benchmark:
 
 ```bash
 python3 site/content/assets/figures/ch15_public_binary.py

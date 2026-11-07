@@ -6,7 +6,7 @@ summary: "What a floating-point number is, why 0.1 can't be stored exactly, how 
 phases: [numerical-models, binary-format]
 ---
 
-A floating-point number is how a computer keeps a real number such as 0.1 or $\pi$ in a fixed number of bits, much like scientific notation in base two: a sign, a fixed number of significant digits, and an exponent that says where the point goes. In this chapter we'll take one apart, see why `0.1` can't be stored exactly and how rounding picks the value you get, and then see why arithmetic built on rounding is hard to get right and to prove right. For the full mathematics, see the handbook of Muller and his coauthors [@mullerHandbook].
+A finite binary floating-point number consists of a sign, a significand with a bounded number of binary digits, and an exponent. Its value is the signed significand multiplied by a power of two. This chapter explains how these components encode numbers, why values such as `0.1` require rounding, and how rounding affects arithmetic and its proofs. Muller and his coauthors give a detailed account of the mathematics [@mullerHandbook].
 
 ## What is a floating-point number?
 
@@ -14,9 +14,9 @@ A float, short for floating-point number, approximates a real number. In a Lean 
 
 A computer stores a number in a word, a fixed group of bits. A 32-bit word has $2^{32}$ possible patterns, about 4.3 billion, and no number of bits will represent every real number. Even the exact sum of two stored values can be missing, so a format also needs a rounding rule.
 
-Fixed point, named for a binary point that never moves, spends those patterns on one ruler with evenly spaced ticks. With $k$ bits after the binary point, rounding to nearest within range is off by at most $2^{-k-1}$ at every magnitude, so relative error, the error as a fraction of the value, grows near zero.
+Fixed point uses evenly spaced representable values at a fixed scale. With $k$ bits after the binary point, rounding to nearest within range is off by at most $2^{-k-1}$ at every magnitude, so relative error, the error as a fraction of the value, grows near zero.
 
-Floating point fixes the number $p$ of significant bits, the precision, and stores an exponent with each value. A normal value is $\pm m \cdot 2^e$ with $2^{p-1} \le m < 2^p$. Picture one ruler, always with the same number of ticks, for each stretch between consecutive powers of two, called a binade. Notice that the exponent changes jobs here: it labels the binade $[2^e, 2^{e+1})$, whose spacing is $2^{e-p+1}$. The gaps grow with the numbers, so relative error stays roughly constant across the normal range.
+Floating point fixes the number $p$ of significant bits, the precision, and stores an exponent with each value. A normal value is $\pm m \cdot 2^e$ with $2^{p-1} \le m < 2^p$. The interval between consecutive powers of two is called a binade. If $e$ denotes its lower exponent, the binade is $[2^e, 2^{e+1})$, whose spacing is $2^{e-p+1}$. The gaps grow with the numbers, so relative error stays roughly constant across the normal range.
 
 ## Why can't 0.1 be stored exactly?
 
@@ -80,7 +80,7 @@ theorem tenth_not_dyadic (F n : ℕ) : (F : ℚ) / 2 ^ n ≠ 1 / 10 := by
 
 ## How does a word store a number?
 
-Think of a word as recording a sign, which ruler and which tick. From the most significant end it holds a sign bit $s$, an exponent field $E$ of $w_e$ bits and a fraction field $F$ of $w_f$ bits. In the library a format is a [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat]] record of those widths, a bias and an encoding policy for the special values. We'll call it a format descriptor.
+A stored word contains a sign bit $s$, an exponent field $E$ of $w_e$ bits and a fraction field $F$ of $w_f$ bits. In the library a format is a [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat]] record of those widths, a bias and an encoding policy for the special values. We'll call it a format descriptor.
 
 A normal significand always starts with a $1$, so this hidden bit isn't stored, and binary32 keeps 23 fraction bits for 24 bits of precision. The exponent field is unsigned, so it holds $E = e + b$, the exponent shifted up by a bias $b = 2^{w_e - 1} - 1$. `ieeeBias` computes the conventional bias, $127$ for eight exponent bits and $1023$ for eleven. A normal word stands for
 
@@ -186,7 +186,7 @@ Infinities have the all-ones exponent field and a zero fraction. Dividing a fini
 
 One over zero is `inf`, and `3.5e38`, past the threshold, overflows to `inf`.
 
-In the IEEE encodings, a nonzero fraction under the all-ones field is a NaN, short for "not a number", the answer to invalid operations such as $0/0$, $\infty - \infty$, $0 \cdot \infty$ or $\sqrt{-1}$. Arithmetic passes it along, and its fraction can carry a payload of extra information. Binary32 has $2^{24} - 2$ NaN words, a lot of ways to say "not a number" :) They all print the same:
+In the IEEE encodings, a nonzero fraction under the all-ones field is a NaN, short for "not a number", the answer to invalid operations such as $0/0$, $\infty - \infty$, $0 \cdot \infty$ or $\sqrt{-1}$. Arithmetic passes it along, and its fraction can carry a payload of extra information. Binary32 has $2^{24}-2$ NaN encodings. They all produce the same text output:
 
 ```lean
 #eval (0 : Binary32) / 0
@@ -356,7 +356,7 @@ The integer lines print nineteen digits without another floating-point conversio
 
 ### Why does moving parentheses change the answer?
 
-Rearranging an expression changes which intermediate results get rounded, so rounding breaks associativity and distributivity, the rules for regrouping and multiplying out. Let's add $2^{-24}$, half the spacing at one in binary32, to one twice, building it from its bit pattern so no decimal conversion sneaks in:
+Rearranging an expression changes which intermediate results get rounded, so rounding breaks associativity and distributivity, the rules for regrouping and multiplying out. Let's add $2^{-24}$, half the spacing at one in binary32, to one twice, constructing it from its bit pattern to avoid decimal conversion:
 
 ```lean
 open FloatLib.Floats
@@ -387,7 +387,7 @@ $x + y = x$ doesn't imply $y = 0$ either. [[FloatLib.Floats.ExecFloat.Binary.add
 -- { inexact := true }
 ```
 
-You get $2^{24}$ back, with only `inexact` raised. Above $2^{24}$ the binary32 integers are two apart, so adding one is a tie that goes to even, the original value. The `inexact` flag says the addition wasn't exact, not how much was lost, and a counter that adds one gets stuck at $2^{24}$ :)
+You get $2^{24}$ back, with only `inexact` raised. Above $2^{24}$ the binary32 integers are two apart, so adding one is a tie that goes to even, the original value. The `inexact` flag says the addition wasn't exact, not how much was lost, and repeatedly adding one at $2^{24}$ does not increase the stored value.
 
 Sterbenz's lemma [@sterbenz1974] says nearby floating-point values subtract exactly, and an exact difference can still be a poor answer. Try adding $10^{-6}$ to one and then subtracting one:
 
@@ -445,7 +445,7 @@ Ten thousand exact copies of the stored tenth come to just over 1000, yet both t
 
 ![Ten thousand binary32 additions of 0.1 under nearest-even and toward-zero rounding, as the running total minus k/10, with the points where the total reaches a new binade marked](assets/ch03-binary32-accumulation.png "Accumulated error after repeated binary32 additions of 0.1, measured against the exact decimal total. Rounding direction changes the drift, and each binade changes the step size.")
 
-The last line's addition raises `inexact`. [[FloatLib.Numerics.IEEEStatus.union]] combines flags across a loop with logical OR. Think of a check-engine light that stays on: one inexact addition looks the same as ten thousand. Only a rounding analysis bounds the error.
+The last addition raises `inexact`. [[FloatLib.Numerics.IEEEStatus.union]] combines flags across a loop using logical OR. A flag records whether an exception occurred at least once; it does not record how often it occurred or bound the accumulated numerical error. An error bound requires a separate rounding analysis.
 
 ### What happens when you chop instead of round?
 
@@ -597,7 +597,7 @@ Dividing by zero and dividing zero by zero raise different flags of [[FloatLib.N
 -- { invalid := true }
 ```
 
-One over zero raises `divideByZero`, and zero over zero raises `invalid`. We hand the flags back with each result, like a receipt. [[FloatLib.Floats.Formats.BinaryInterchange.Model.div_divideByZero]] says the divide-by-zero flag is set exactly when a finite nonzero operand is divided by a zero, and `div_invalid` does the same for `invalid`, including signaling NaN operands and infinity over infinity. None of this survives decoding the result to a real number.
+Dividing one by zero raises `divideByZero`, and dividing zero by zero raises `invalid`. These flags are returned with the result. [[FloatLib.Floats.Formats.BinaryInterchange.Model.div_divideByZero]] states that the divide-by-zero flag is set exactly when a finite nonzero operand is divided by zero. The theorem `div_invalid` characterizes invalid division, including signaling NaN operands and infinity divided by infinity. Decoding only the result to a real number discards this exception information.
 
 ### What happens when a number doesn't fit?
 
@@ -682,4 +682,4 @@ Machine-checked proofs of hardware arithmetic followed the Pentium bug, such as 
 
 IEEE 854 [@ieee854_1987] restated the rules for radix 2 or 10, and the 2008 revision [@ieee754_2008] merged the two, adding decimal formats ([the decimal chapter](#/chapter/decimal-arithmetic/how-decimal-numbers-are-stored-in-bits)) and requiring fused multiply-add. IEEE 754-1985 hadn't covered transcendental functions at all, and the revision also recommends correctly rounded $\exp$ and $\log$, whose values near a rounding midpoint may need far more digits than the destination stores, the table maker's dilemma [@deDinechinLog2007].
 
-Deep learning revived narrow formats, from binary16 in mixed-precision training [@micikevicius2018mixed] and [bfloat16 on Google's TPU v2 and v3](https://cloud.google.com/blog/products/ai-machine-learning/bfloat16-the-secret-to-high-performance-on-cloud-tpus) to the 8-bit E5M2 and E4M3 [@micikevicius2022fp8] of OCP's OFP8 [@ocpOfp8], with FNUZ variants in ONNX [@onnxFloat8] and block scales, one scale shared by a block of numbers, in OCP's Microscaling [@ocpMx]. [Chapter 07](#/chapter/low-precision-formats-for-machine-learning) covers them, and we met their [overflow policies](#/chapter/from-reals-to-machine-numbers/what-happens-when-a-number-doesnt-fit) above. Posits [@gustafsonYonemoto2017], standardized in 2022 [@positStandard2022], spend their bits differently and add the quire, an accumulator that sums products exactly until its range runs out, though one accuracy comparison tells you nothing about a calculation spanning a wide range [@deDinechinPosits2019] ([Chapter 08](#/chapter/posits-and-the-quire)). An interim report of the IEEE P3109 working group [@p3109InterimReport], not an approved standard, proposes a recipe for many low-precision formats, and [Chapter 07](#/chapter/low-precision-formats-for-machine-learning/what-is-ieee-p3109) has our proofs against it. [Chapter 14](#/chapter/external-validation) compares posit arithmetic with an independent implementation and checks our P3109 decoding against the group's value tables, which test how a word is read and not arithmetic, exceptions or hardware.
+Deep learning revived narrow formats, from binary16 in mixed-precision training [@micikevicius2018mixed] and [bfloat16 on Google's TPU v2 and v3](https://cloud.google.com/blog/products/ai-machine-learning/bfloat16-the-secret-to-high-performance-on-cloud-tpus) to the 8-bit E5M2 and E4M3 [@micikevicius2022fp8] of OCP's OFP8 [@ocpOfp8], with FNUZ variants in ONNX [@onnxFloat8] and block scales, one scale shared by a block of numbers, in OCP's Microscaling [@ocpMx]. [Chapter 07](#/chapter/low-precision-formats-for-machine-learning) covers them, and we met their [overflow policies](#/chapter/from-reals-to-machine-numbers/what-happens-when-a-number-doesnt-fit) above. Posits [@gustafsonYonemoto2017], standardized in 2022 [@positStandard2022], spend their bits differently and add the quire, an accumulator that sums products exactly until its range runs out, though one accuracy comparison tells you nothing about a calculation spanning a wide range [@deDinechinPosits2019] ([Chapter 08](#/chapter/posits-and-the-quire)). An interim report of the IEEE P3109 working group [@p3109InterimReport], not an approved standard, specifies a parameterized family of low-precision formats, and [Chapter 07](#/chapter/low-precision-formats-for-machine-learning/what-is-ieee-p3109) has our proofs against it. [Chapter 14](#/chapter/external-validation) compares posit arithmetic with an independent implementation and checks our P3109 decoding against the group's value tables, which test how a word is read and not arithmetic, exceptions or hardware.

@@ -6,7 +6,7 @@ summary: "Why decimal numbers store 1.20 and 1.2 differently, and how FloatLib c
 phases: [ieee-formats, status-and-directed]
 ---
 
-A decimal floating-point number is a whole number times a power of ten, which is what people who handle money want. By the end of this chapter you'll know why $1.20$ and $1.2$ are stored differently.
+A finite decimal floating-point value has the form $c\cdot10^q$, where the coefficient $c$ and exponent $q$ are integers. Different coefficient-exponent pairs can denote the same rational number. For example, $120\cdot10^{-2}$ and $12\cdot10^{-1}$ both denote $1.2$, but record different decimal scales. This chapter explains these representations and the arithmetic operations on them.
 
 ## Why use decimal numbers?
 
@@ -14,9 +14,9 @@ Binary formats store a whole number times a power of two, and no finite binary f
 
 ## What is a decimal number?
 
-Are $1.20$ and $1.2$ the same number? As rationals, sure. Count them out in coins, though, and $1.20$ is a hundred and twenty cents while $1.2$ is twelve dimes (ten-cent coins). Same money, counted two ways, and that's how they're stored, as $120\cdot10^{-2}$ and $12\cdot10^{-1}$. The whole number is called the *coefficient*. The power of ten, the size of one step in the last digit, is the *quantum*, and its exponent is the *quantum exponent*. Think of the quantum as the coin you count in.
+The representations $120\cdot10^{-2}$ and $12\cdot10^{-1}$ have the same rational value. Their coefficients are $120$ and $12$, and their exponents are $-2$ and $-1$. The exponent, called the *quantum exponent*, determines the *quantum*, the value of one unit in the last stored decimal place: $0.01$ in the first representation and $0.1$ in the second. IEEE decimal formats retain this distinction, so equality of numerical values does not imply equality of representations.
 
-FloatLib calls one stored value a *datum* (plural *data*): a sign, coefficient and quantum exponent, or else an infinity or a NaN ("not a number"). Data with the same value form a *cohort*, so $1.20$ and $1.2$ belong to one cohort. The trailing zero of $1.20$ isn't decoration. Drop it and you change the datum, and a rational equality test can't even see the difference.
+FloatLib calls a stored representation a *datum* (plural *data*). A finite datum contains a sign, coefficient and quantum exponent; other data represent infinities and NaNs. Data with the same numerical value form a *cohort*, so the representations of $1.20$ and $1.2$ belong to the same cohort. Removing the trailing zero changes the datum while preserving its rational value.
 
 ## What are decimal32, decimal64 and decimal128?
 
@@ -89,7 +89,7 @@ How far off can a result be? Given finite operands and no reported overflow, the
 
 ## How to keep track of exception flags
 
-An `Outcome` covers one operation, but a calculation has to remember earlier exceptions. Say decimal32 division rounds $1/3$ to $0.3333333$ and raises inexact. A following division of $1$ by zero mustn't erase that flag. Think of an `Outcome` as a receipt and an environment as the running tab, a value holding the rounding direction and the flags so far. `Environment.run` supplies the current rounding direction and adds the returned flags, so the inexact from $1/3$ survives the division by zero.
+An `Outcome` records the result and flags for one operation. An environment records the current rounding direction and the flags accumulated across a calculation. For example, decimal32 division rounds $1/3$ to $0.3333333$ and raises `inexact`. A subsequent division of one by zero must retain that flag as well as raising `divideByZero`. `Environment.run` supplies the rounding direction and combines the returned flags with the existing flags.
 
 For groups of exceptions there's `saveAllFlags`, `testFlags`, `testSavedFlags`, `restoreFlags`, and `lowerFlags` and `raiseFlags` to clear and set them. Restoring a flag that was clear when saved clears it, and flags outside the group stay as they were. `Environment.withRounding` changes the rounding for one computation. Round $1/3$ toward positive infinity there to get $0.3333334$. The caller gets its rounding back, and the new inexact flag stays on the tab. Our proofs describe every flag after an operation, a clear or a restore, and show that regrouping operations doesn't change the accumulated flags.
 
@@ -117,7 +117,7 @@ Neighbours in decimal can be lopsided. In decimal32 the value just below $1.0000
 
 ## How to scale and take a remainder
 
-`scale` multiplies by $10^n$ by shifting the quantum, rounding once if the result no longer fits. `decimalExponent` reports the exponent of the leading digit. `remainder` uses the nearest-even integer quotient. Seven halves is a tie between three and four, nearest-even picks four, and so the remainder of $7/2$ is $7-4\cdot2=-1$. Yes, negative :) We prove it's exactly representable and at most half the divisor in magnitude, and that ties take the even quotient.
+`scale` multiplies by $10^n$ by shifting the quantum, rounding once if the result no longer fits. `decimalExponent` reports the exponent of the leading digit. `remainder` uses the nearest-even integer quotient. Seven halves is a tie between three and four, nearest-even picks four, and so the remainder of $7/2$ is $7-4\cdot2=-1$. The remainder is negative because the selected integer quotient is four. FloatLib proves it's exactly representable and at most half the divisor in magnitude, and that ties take the even quotient.
 
 ## How decimal numbers are stored in bits
 

@@ -6,9 +6,9 @@ summary: "How to compute square roots, exponentials, logarithms and sines with F
 phases: [binary-arithmetic, status-and-directed, elementary-functions]
 ---
 
-The *elementary functions* are the ones on a calculator's keys: square roots, powers, $e^x$, logarithms, sine and cosine. This chapter shows you how to compute them with FloatLib and which version to pick.
+FloatLib provides square roots, powers, exponentials, logarithms and trigonometric functions. Their interfaces differ in the guarantees they provide: some kernels return approximations, certified searches return correctly rounded results when they succeed, and total correctly rounded operations prove that a result always exists. This chapter explains how to choose and use these interfaces.
 
-Why more than one version? You can round $\sqrt{2}$ without knowing a single digit of it. Square the midpoint of the two floating-point candidates on either side of the root and compare it with 2. A bigger square means the root lies below the midpoint, so the lower candidate wins. That comparison is exact, even though the root is irrational, and that's the trick. For $\exp x$ or $\log x$ there's no test that simple. So we trap the exact answer between two bounds and squeeze until both ends round to the same value, and that squeeze can run out of budget before it settles. What happens then sets the three kinds of function apart.
+Square root can be rounded by comparing the square of a candidate midpoint with the input. That comparison is exact even when the root is irrational. Exponential and logarithm use enclosures instead: a computation finds lower and upper bounds, then checks whether both round to the same format value. If they disagree, the search needs tighter bounds. A bounded search can stop before this condition is established.
 
 ## What are the three kinds of function?
 
@@ -62,7 +62,7 @@ def largeForHypot : Binary32 := 100000000000000000000
 -- true
 ```
 
-The last example is the triangle: the plain product overflows, while `hypot` stays finite. A finite float is a sign, a whole number called its *significand*, and a power of two. Squaring removes the sign, and both squared significands are nonnegative integers, so their sum is exact. Roots are the $\sqrt{2}$ trick in general form. The radicand (the number under the root) is scaled to a rational $a/b$. Then an integer-root kernel, a small routine for whole-number roots, computes the significand $c$ with a proof of $c^n b \le a < (c+1)^n b$, and an exact midpoint comparison picks the nearest-even neighbour. The [integer-root theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/IntegerRoot/Proof.lean) proves the kernel equal to Mathlib's `Nat.nthRoot` for every input and degree, and since precision and exponent range come from the descriptor, the proofs cover custom widths too.
+In the last example, direct multiplication overflows while `hypot` returns a finite result. Its computation uses the integer significands and exponents to form the exact sum of squares before rounding the root. More generally, a root computation scales the radicand to a rational $a/b$. The integer-root kernel computes a significand $c$ satisfying $c^n b\le a<(c+1)^n b$, and an exact midpoint comparison determines the nearest-even result. The [integer-root theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels/IntegerRoot/Proof.lean) proves agreement with Mathlib's `Nat.nthRoot` for every input and degree. Precision and exponent range are descriptor parameters, so the proofs also apply to custom widths.
 
 ### What is proved about these operations?
 
@@ -99,7 +99,7 @@ example (x : Binary32) :
   ExecFloat.Binary.toModel_exp x
 ```
 
-You get `2.7182817`, which is $2850325 \cdot 2^{-20} = 2.71828174591\ldots$, the binary32 value nearest to $e$, and `toBits32` shows its *word* (the raw bits read as a whole number), 1076754516 or `0x402df854`. Take the logarithm of that value and you get $1 - 2^{-24}$ instead of $1$ :) That happens to be correctly rounded, since the value sits a little below $e$. And $e^{100}$ is too big for binary32, so it prints `inf`.
+You get `2.7182817`, which is $2850325 \cdot 2^{-20} = 2.71828174591\ldots$, the binary32 value nearest to $e$, and `toBits32` shows its *word* (the raw bits read as a whole number), 1076754516 or `0x402df854`. Take the logarithm of that value and you get $1 - 2^{-24}$ instead of $1$. That happens to be correctly rounded, because the stored value is less than $e$. And $e^{100}$ is too big for binary32, so it prints `inf`.
 
 The `example` at the end uses `toModel_exp`, which says the configured call decodes to `Model.exp` of the decoded input. Every function has this lemma, so model proofs carry over, but it relates two implementations, the configured call and the model, and says nothing about the real exponential. For that you need the [correctly rounded functions](#/chapter/elementary-functions/how-to-get-a-correctly-rounded-answer-every-time) below or our [posit functions](#/chapter/posits-and-the-quire/how-to-compute-exponentials-and-logarithms), which come with proved real-rounding equations.
 
@@ -125,9 +125,9 @@ The approximation kernels themselves have no general accuracy proof, so we measu
 
 ## How to get an exp or log with a proof
 
-Here is the certified search we promised. The certified functions make the opposite trade. Every answer they give comes with a proof, and sometimes they don't give one. Think of `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1` and `logPlus1` as a measurement with error bars: if both ends of the bar round to the same number, so does the true value. They refine rational bounds until both endpoints round to the same finite encoding and return `.ok result`, and the success theorems prove this result finite and equal to the nearest-even rounding of the real function. A call that can't certify returns `.error` with the reason. It can fail on a valid input, and it never falls back to the approximation.
+The functions `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1` and `logPlus1` refine rational enclosures until both endpoints round to the same finite encoding. A successful call returns `.ok result`. The success theorems prove that this result is finite and equals nearest-even rounding of the real function. If the search does not establish the condition, the call returns `.error` with a reason. A valid input can therefore produce an error when the search budget is insufficient. These functions do not return an uncertified approximation on failure.
 
-Inside, a [containment proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Enclosure/Elementary/BinaryGridProof.lean) combines Mathlib's series bounds with polynomial evaluation on a binary grid, rounded outward so the true value stays inside, at every working width, and a failed check retries with a higher degree or a wider grid. The logarithm's series uses *rectangular splitting*, a trick we like a lot for evaluating long series with fewer expensive multiplications, from [Johansson's account of elementary-function implementation](https://arxiv.org/abs/1410.7176). Watch the budget in these calls: it allows the first call twelve enclosure attempts and the third none.
+Inside, a [containment proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Enclosure/Elementary/BinaryGridProof.lean) combines Mathlib's series bounds with polynomial evaluation on a binary grid, rounded outward so the true value stays inside, at every working width, and a failed check retries with a higher degree or a wider grid. The logarithm's series uses *rectangular splitting*, a method that reduces the number of expensive multiplications in a long series, from [Johansson's account of elementary-function implementation](https://arxiv.org/abs/1410.7176). Watch the budget in these calls: it allows the first call twelve enclosure attempts and the third none.
 
 ```lean standalone
 import FloatLib
@@ -157,7 +157,7 @@ example (x y : Binary32) (budget : Certified.Budget)
   ExecFloat.Binary.Certified.toReal_of_exp_eq_ok h
 ```
 
-The first call returns 1076754516, the same word the approximation gave for $e$, and this time it comes with a proof. In the third, even the valid input 1 comes back `inconclusive`, because no enclosure attempts are allowed :) The fourth fails with `domain`, and the `example` is the success theorem for `exp`.
+The first call returns 1076754516, the same word the approximation gave for $e$, and this time it comes with a proof. In the third, even the valid input 1 comes back `inconclusive`, because its budget permits no enclosure attempts. The fourth fails with `domain`, and the `example` is the success theorem for `exp`.
 
 ### What does the budget count?
 
@@ -197,7 +197,7 @@ Both certified calls come back `.ok` with `tiny` itself. The success theorems `C
 
 ## How to get a correctly rounded answer every time
 
-A certified call gives up when its search doesn't settle, and sometimes you need an answer anyway. `ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and `expMul`, where `expMul x w`, exp then multiply, rounds $e^x w$ once, never give up. They live in the [correctly rounded module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/CorrectlyRounded.lean), which the transcendental module also imports. Each first runs an enclosure search within its `budget` (for `exp` and `expMinus1`, the certified search). If that doesn't settle, exact comparisons of the real result with rational rounding candidates decide, as they do for `Model.pi` and the [posit functions](#/chapter/posits-and-the-quire/how-to-compute-exponentials-and-logarithms). Think of this as the $\sqrt{2}$ trick again, with a loop around it.
+A bounded certified search can return an error even for a valid input. `ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and `expMul`, where `expMul x w`, exp then multiply, rounds $e^x w$ once, are total operations. They live in the [correctly rounded module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/CorrectlyRounded.lean), which the transcendental module also imports. Each first runs an enclosure search within its `budget` (for `exp` and `expMinus1`, the certified search). If that doesn't settle, exact comparisons of the real result with rational rounding candidates decide, as they do for `Model.pi` and the [posit functions](#/chapter/posits-and-the-quire/how-to-compute-exponentials-and-logarithms). This fallback uses exact comparisons to determine the rounded result when the bounded enclosure search is inconclusive.
 
 If you start with no enclosure attempts at all, you can watch the exact comparisons take over:
 

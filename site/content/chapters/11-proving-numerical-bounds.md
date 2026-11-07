@@ -6,11 +6,7 @@ summary: "How to prove a real inequality with the `interval` tactic, how to get 
 phases: [status-and-directed, planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
-A plot can convince you that a curve stays under a line, but it only samples finitely many points.
-So how can a computer prove an inequality at every real number in an interval, when there are
-infinitely many of them? FloatLib does it with *tactics*, Lean commands that build a proof for you,
-which Lean then checks. This chapter teaches you two of them, `interval` and `roundoff`, and the
-way `interval` handles a polynomial over its whole domain, from its coefficients.
+The `interval` tactic proves real inequalities by evaluating certified bounds on expressions. The `roundoff` tactic proves error bounds for floating-point programs. Both produce proof terms that Lean checks. This chapter introduces these tactics and the coefficient-based bounds that `interval` can use for polynomials over a whole domain.
 
 ## How to prove an inequality with `interval`
 
@@ -22,16 +18,12 @@ example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
   interval (depth := 4)
 ```
 
-That's a complete proof with nothing but `import FloatLib`, about an arbitrary real $x$ that needn't
-be rational, a float, or known when Lean checks the proof. Instead of sampling, `interval` computes
-bounds that cover every value `hx` allows. Think of them as a pair of fence posts that promise the
-exact answer is somewhere between them. That pair is an interval, and computing one is called
-*enclosing*. For those who like precise definitions, an enclosure contains the expression's value at
-every point of the input intervals. So FloatLib encloses $x(1-x)$ and keeps cutting the input
-interval into pieces until every piece proves the bound. Then it closes the inequality with its
-soundness theorem, which says a passing check proves the goal. We will come back to how that works
-at the end of the chapter. Division and elementary functions work the same way. Here are some
-examples:
+This proof applies to every real $x$ satisfying `hx`; the value of $x$ need not be known when
+Lean checks it. An *enclosure* is an interval containing the expression's value at every point
+of the input intervals. The tactic computes an enclosure for $x(1-x)$ and, if necessary,
+subdivides the input interval until the bound holds on every part. Its soundness theorem turns
+the successful check into a proof of the goal. The same procedure supports division and
+elementary functions:
 
 ```lean
 example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : Real.exp x * Real.cos x < 3 := by
@@ -87,9 +79,9 @@ example (x : ℝ) (hx : x ∈ Set.Icc 1 2) : Real.log x + Real.sqrt x < 5 / 2 :=
 ```
 
 - `precision` is the number of **fractional bits** in the endpoint grid. With precision $p$, an
-  integer $z$ of any size stands for $z\,2^{-p}$, like a ruler with a tick every $2^{-p}$ that runs
-  as far as you need. That's a fixed absolute spacing, not a floating-point significand width. Lower
-  endpoints round down and upper endpoints up.
+  integer $z$ of any size represents $z\,2^{-p}$. The grid has fixed absolute spacing $2^{-p}$
+  and no bound on the integer part. This parameter differs from a floating-point significand
+  width. Lower endpoints round down and upper endpoints round up.
 - `degree` controls the rational Taylor approximations for elementary functions. These are
   polynomials that stand in for `exp` and its relatives, and their remainder bounds go into the
   enclosure.
@@ -260,10 +252,10 @@ It reads the computation as written on configured values, FloatLib's executable 
 the implementation FloatLib picked for that operation. For `+` that theorem is
 `ExecFloat.Binary.add_rounding`.
 
-Then it composes those local errors into a bound against a *reference*: the same computation in
-exact real arithmetic on the decoded inputs, apart from a few cases we'll come back to. Think of it
-as bookkeeping. Every operation adds a small rounding charge, later operations scale the charges
-already on the books, and the tactic keeps the running total.
+The tactic combines these local errors into a bound against a *reference*: the corresponding
+computation in exact real arithmetic on the decoded inputs, with the exceptions described below.
+Each operation contributes a local rounding error and propagates errors from its operands.
+The composition theorems bound the resulting error of the complete expression.
 
 The bound compares the computed value with the reference. It's absolute, $|x-x_0|\le\beta$, or
 mixed, where `MixedError x x₀ r a` means $|x-x_0|\le r|x_0|+a$, a relative part plus an absolute
@@ -649,8 +641,8 @@ def decimalBackend :=
 
 You get the same $[0,1/2]$ as with rational endpoints. A finite format that can't enclose an output
 endpoint returns `none`. Any representation can supply the same contract without changing the
-expression language or its proof, so if you have a favourite format and can prove its outward
-rounding, you can plug it in :)
+expression language or its proof. A custom endpoint format can use the same evaluator once its
+outward-rounding contract has been proved.
 
 ## How to bound a polynomial on the whole circle
 
@@ -724,8 +716,9 @@ example : ∀ x ∈ Set.Icc (-1 : ℝ) 1, -1/4 ≤
 A polynomial in the power basis works on any interval $[\mathrm{lo}, \mathrm{hi}]$. Put
 $x = m + r\cos u$, with the midpoint $m$ and the radius $r$: then $p(x)$ is a cosine polynomial of
 the same degree, and the kernel builds its coefficients itself, with Horner's rule on packed rows
-[@horner1819]. I liked how little this needed: the substitution is the one behind every Chebyshev
-method [@trefethen2013], and in integers it is a handful of big-number products. On $[0, 1]$,
+[@horner1819]. This substitution relates power polynomials on an interval to cosine polynomials,
+as in Chebyshev approximation [@trefethen2013]. Packed integer arithmetic computes the transformed
+coefficients. On $[0, 1]$,
 $x^2 - x = \cos(2u)/8 - 1/8$, so the coefficients alone give the exact minimum:
 
 ```lean
@@ -733,7 +726,7 @@ example : ∀ x ∈ Set.Icc (0 : ℝ) 1, -1/4 ≤ x ^ 2 - x := by
   interval
 ```
 
-If the coefficients fail on an interval, the boxes still get their turn. And on the unit circle of
+If the coefficient method does not prove an interval bound, the tactic tries subdivision. On the unit circle of
 $\mathbb{C}$, `interval` bounds the norm of a polynomial with Gaussian rational coefficients, from
 above or from below, by the same checks on $|p|^2$:
 
@@ -769,10 +762,10 @@ example :
   decide +kernel
 ```
 
-Sums are cheap too. Since $2^w \equiv 1$ modulo $2^w - 1$, one remainder adds up all the lanes of
+Since $2^w \equiv 1$ modulo $2^w - 1$, one remainder adds up all the lanes of
 a row, and two of them, with masks that pick out the positive and the negative entries, give the
-$\ell^1$ norm. This is my favourite trick in the whole engine. It's casting out nines in base
-$2^w$: the lanes $3, 1, 4$ make the number $3 + 1 \cdot 256 + 4 \cdot 256^2 = 262403$, and
+$\ell^1$ norm. For example, in base $2^8$, the lanes $3, 1, 4$ encode
+$3 + 1 \cdot 256 + 4 \cdot 256^2 = 262403$, and
 $262403 \bmod 255 = 8 = 3 + 1 + 4$. HAKMEM counts the bits of a word the same way, with a remainder
 modulo $63$ [@beelerHakmem1972].
 
@@ -843,9 +836,8 @@ $\sum_n |c_n| < \infty$ form a Banach algebra, the Wiener algebra [@wiener1932],
 whose product is the convolution of the coefficients, so the Neumann series gives
 `Coeff.inv_of_defect`: if $\delta < 1$, then $f$ is invertible and
 $\|f^{-1} - v\| \le \|v\|\,\delta/(1 - \delta)$. The norm bounds the function, so this bounds
-$|1/f(u) - v(u)|$ at every $u$. I took the idea of working in this algebra, rather than function by
-function, from PlasmaLean [@plasmaLean], which builds the same ring for its plasma-physics
-certificates.
+$|1/f(u) - v(u)|$ at every $u$. This use of the Wiener algebra follows PlasmaLean
+[@plasmaLean], which constructs the same ring for its plasma-physics certificates.
 
 Here is the smallest example. For $f = 2 + \cos u$, which is the row $[1, 4, 1]$ over $2$, take
 $v = [-2, 7, -2]/12$. Then $vf = [-2, -1, 24, -1, -2]/24$, so $\delta = 6/24 = 1/4$, which is one

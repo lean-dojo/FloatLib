@@ -6,13 +6,13 @@ summary: "Set up FloatLib, do arithmetic in a floating-point format, see the exa
 phases: [planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
-Welcome to the absolute beginner's guide to FloatLib. FloatLib is a library of floating-point arithmetic, the arithmetic computers use for numbers like $0.1$ and $3.75$, written in Lean 4, a programming language that also checks proofs. You can compute with it as with any number library, see which number was really stored, choose which way each result rounds, and prove theorems about the code that ran. By the end of this chapter you will have done all four.
+FloatLib implements numerical formats and proves properties of their arithmetic in Lean 4. This chapter introduces the library through binary32 calculations. You will evaluate expressions, inspect their exact stored values, select a rounding direction, read exception flags and prove a theorem about an operation.
 
 ## What is a floating-point number?
 
 A computer keeps each number in a fixed number of bits, so it can't keep every real number. A finite binary floating-point number is an integer with a limited number of binary digits times a power of two, like scientific notation in base two. The power of two moves, or floats, the binary point, hence the name. A format fixes how many bits each part gets. Two common formats are binary32 and binary64, the 32-bit and 64-bit binary formats of the IEEE 754 standard. Most real numbers, $0.1$ among them, don't fit a format exactly, so the format stores a nearby number that does. That step is called rounding.
 
-Rounding can surprise you. Add 0.1 and 0.2 in binary32, and `0.1 + 0.2 == 0.3` comes back `true`. Ask binary64 the same thing and it comes back `false`. You don't have to take either answer on faith. Switching between the two formats only means changing a type annotation, and FloatLib shows you exactly which two numbers each comparison saw. It even proves things about the additions that made them.
+The expression `0.1 + 0.2 == 0.3` evaluates to `true` in binary32 and `false` in binary64. These comparisons use the stored values of the literals and the rounded sum. The examples below show how to inspect those values and explain the difference.
 
 ## How to set up a project
 
@@ -63,7 +63,7 @@ You can also make your own. `Binary32` is just a name for [[FloatLib.Floats.Exec
 
 ## How to see the exact value
 
-Now back to the question we started with. Unlike `1.5` and `2.25`, decimals such as `0.1` and `0.2` do need rounding, and the printed answer hides it well. If you add them, compare the sum with `0.3` and ask what was actually stored, you get:
+The values `1.5` and `2.25` have exact finite binary representations. The decimals `0.1` and `0.2` do not, so reading them as binary32 values requires rounding. The following commands evaluate their sum, compare it with the binary32 literal `0.3`, and display its exact rational value:
 
 ```lean
 #eval (0.1 : Binary32) + 0.2
@@ -76,11 +76,11 @@ Now back to the question we started with. Unlike `1.5` and `2.25`, decimals such
 
 Neither $0.1$ nor $0.2$ is a finite binary fraction, so each literal is rounded when it's read, and the sum is rounded once more. Three roundings later, what's stored is $5033165 \cdot 2^{-24}$, and the binary32 literal `0.3` lands on that same number. That's why the comparison says `true`. [[FloatLib.Floats.ExecFloat.Binary.toRat?]] returns that exact rational, or, as the `?` in its name warns, `none` for NaN ("not a number") and infinity. [The next chapter](#/chapter/from-reals-to-machine-numbers) works out the stored values and explains why the equality breaks at binary64 precision.
 
-**Note:** That `true` compares two stored numbers, neither of them the exact rational three tenths. `==` is IEEE numerical equality, which treats the positive and the negative zero as equal and says a NaN isn't equal to itself :) In proofs, `=` between two values of a format means equality of their stored bits, which we call the value's word. It tells the zeros apart, and every word, NaN included, equals itself.
+**Note:** The result `true` compares two stored binary32 values. Neither is the exact rational $3/10$. The operator `==` uses IEEE numerical equality: positive and negative zero compare equal, and a NaN compares unequal to every value, including itself. In proofs, `=` between two format values means equality of their stored bit patterns. It distinguishes the signed zeros, and every bit pattern, including a NaN encoding, equals itself.
 
 ## Why does the sum print as 0.3?
 
-So why does the first line say `0.3`? Because `#eval` prints a decimal that converts back to the stored number, normally the shortest one. Think of `0.3` as a short name for the sum's stored value $0.300000011920928955078125$, while $3.75$ has a short exact expansion and prints in full. Formatting never goes through a host float, the machine's own hardware number, so it never rounds a second time. String interpolation with `s!` uses the same formatter: `s!"sum = {x + y}"` gives `sum = 3.75`.
+The formatter normally prints the shortest decimal that rounds back to the stored value. The exact decimal expansion of the sum is $0.300000011920928955078125$, but the shorter decimal `0.3` rounds to the same binary32 value. An exactly representable value such as $3.75$ has a short decimal expansion. Formatting works directly from the stored value without conversion through the host's floating-point type. String interpolation uses the same formatter: `s!"sum = {x + y}"` gives `sum = 3.75`.
 
 ## How to choose a rounding direction
 
@@ -109,7 +109,7 @@ Those are the two binary32 neighbours of one third, $11184810 \cdot 2^{-25}$, ab
 
 A direction decides which neighbour you get, and the flags tell you what happened in that one operation. IEEE 754 asks each operation to report five conditions: invalid, divide by zero, overflow, underflow and inexact. The standard calls them exceptions, though nothing is thrown.
 
-With `(status := true)` the result comes with a receipt. `value` is the result, `status` holds the five Booleans as an [[FloatLib.Numerics.IEEEStatus]], and `ternary`, named for its three possible answers, says whether the value lies below, at or above the exact result, the way the MPFR library's ternary value does. [[FloatLib.Floats.Formats.BinaryInterchange.Model.value_add]] states that asking for status doesn't change the value addition returns. Here are some examples, the downward third and three operations that go wrong:
+With `(status := true)`, the operation returns three fields. `value` is the rounded result, `status` is an [[FloatLib.Numerics.IEEEStatus]] containing the five exception flags, and `ternary` records whether the result is below, equal to or above the exact value. This is the same three-way comparison used by MPFR. [[FloatLib.Floats.Formats.BinaryInterchange.Model.value_add]] states that requesting status does not change the value returned by addition. The following examples show downward rounding and operations that raise exception flags:
 
 ```lean standalone
 import FloatLib
@@ -213,7 +213,7 @@ The theorems prove two things, validity and membership. An interval is valid whe
 
 `total_mem` never computes the sum's endpoints. It applies [[FloatLib.Floats.ExecFloat.Binary.Interval.add_sound]] instead, a soundness theorem: whenever both intervals are valid and enclose reals $x$ and $y$, the sum interval encloses $x + y$. Its conclusion lives in the extended reals, the reals with $\pm\infty$ added, so an upper endpoint may overflow to $+\infty$, and `eRealMem_coe_iff_of_valid` brings a valid result back to the reals. The theorem also needs the format to be IEEE encoded, a default argument that `decide` supplies for binary32.
 
-Chaining operations is where finiteness comes back. Feed the result into another addition, subtraction, multiplication or division, and its soundness theorem needs finite `Valid` bounds again, so an infinite endpoint that is fine in one conclusion fails the next operation's finite-input premise. The number inside is a different story. `RealMem oneThird x` says the decoded endpoints bracket `x`, which doesn't have to be representable. The [endpoint-adapter recipe](#/chapter/proving-numerical-bounds/how-to-choose-a-different-endpoint-format) uses the same enclosure idea for decimal and posit bounds.
+Chaining operations is where finiteness comes back. Feed the result into another addition, subtraction, multiplication or division, and its soundness theorem needs finite `Valid` bounds again, so an infinite endpoint that is fine in one conclusion fails the next operation's finite-input premise. The number inside is a different story. `RealMem oneThird x` says the decoded endpoints bracket `x`, which doesn't have to be representable. The [endpoint-adapter interface](#/chapter/proving-numerical-bounds/how-to-choose-a-different-endpoint-format) uses the same enclosure idea for decimal and posit bounds.
 
 ## How to look up a format's properties
 
@@ -235,7 +235,7 @@ For `Binary32`, the report includes these entries:
 
 The report also lists the format's constants. For binary32 the largest finite value is $(2 - 2^{-23}) \cdot 2^{127} \approx 3.40282 \cdot 10^{38}$, machine epsilon, the gap between one and the next binary32 number, is $2^{-23}$, and the least normal and subnormal values are there too. All four are also values of the type, `ExecFloat.Binary.maxFinite`, `minNormal`, `minSubnormal` and `epsilon`, and `ExecFloat.Binary.ulp x` gives the spacing around `x`, the ulp (unit in the last place, the value of a one in the last stored digit) that the error-bound entry is measured in.
 
-`#float_info! Binary32` adds the planner's cost estimates, and `#float_info! [errors] Binary32` lists every theorem behind each bound with a summary of its scope. Hover over a theorem name in your editor to see its exact statement. These are contracts for the whole type, so applying one to a particular expression needs the relevant finiteness, domain and range proofs for it. `#float_help` lists the command options, for when you forget them :)
+`#float_info! Binary32` adds the planner's cost estimates, and `#float_info! [errors] Binary32` lists every theorem behind each bound with a summary of its scope. Hover over a theorem name in your editor to see its exact statement. These are contracts for the whole type, so applying one to a particular expression needs the relevant finiteness, domain and range proofs for it. `#float_help` lists the command options.
 
 ## Which import do you need?
 

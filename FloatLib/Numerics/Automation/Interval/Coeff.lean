@@ -82,9 +82,9 @@ The lane width is the smallest that the headroom conditions allow, computed from
 the target, the factor and the scales, so every product and every defect fits its lanes. A strict
 bound lowers the constant `kc` by one, the smallest step an integer check can see.
 
-I took the shape of this from the box route next door: a reified goal, one closed Boolean check
-for the kernel, and the soundness theorem applied to it. The difference is that here the check is a
-handful of big-number operations, so it costs milliseconds where splitting would never finish.
+The coefficient route follows the same proof construction as the box evaluator: reify the goal,
+verify a closed Boolean check in the kernel, and apply its soundness theorem. Here the check uses
+packed integer operations instead of evaluating subdivisions of the domain.
 
 ## References
 

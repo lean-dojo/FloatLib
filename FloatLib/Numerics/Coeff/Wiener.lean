@@ -55,8 +55,8 @@ that an element with no zero on the circle is a unit, is the qualitative fact be
 `Coeff.inv_of_defect`; the defect version says the same thing with a number attached, which is what
 a certificate needs.
 
-I took the idea of doing these bounds in the algebra, rather than function by function, from
-PlasmaLean, which builds the same `ℓ¹(ℤ)` ring for its KAM certificates (`ConvAlgebra`).
+This approach follows PlasmaLean, which constructs the same `ℓ¹(ℤ)` ring for its KAM
+certificates (`ConvAlgebra`).
 RadiiPolynomial realizes weighted sequence spaces on the circle with the same product rule. The
 proofs here are our own.
 

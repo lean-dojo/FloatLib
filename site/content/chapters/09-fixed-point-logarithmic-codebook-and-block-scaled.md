@@ -6,11 +6,11 @@ summary: How to use fixed point, logarithmic numbers, codebooks, affine quantiza
 phases: [exact-and-quantized, numerical-models]
 ---
 
-Not every number format is floating point. Fixed point stores whole cents, a logarithmic number stores a power, a codebook looks values up in a table, affine formats store integers with a scale, and block-scaled formats share one scale across a block of elements. You'd reach for them for money that has to add up exactly, for exact products, or for the small codes of machine learning.
+FloatLib also supports fixed-point, logarithmic, codebook, affine and block-scaled representations. Fixed-point formats use integers at a fixed scale. Logarithmic formats store exponents, codebooks assign values to finite codes, affine formats use a scale and a zero point, and block-scaled formats share a scale across several elements. Each representation has its own exact operations and range conditions.
 
-Let's start with a little shopping arithmetic. Store a price of $1.25$ in cents and you're storing the integer 125. Multiply it by a quantity of $2.50$, also kept to two decimal places, and the integers give $125\cdot250=31250$. But the denominator is now $100\cdot100=10000$, so the product is $3.125$, one more decimal place than cents can hold. Nothing has rounded. The product lives at a finer scale than either input, and getting back to cents would mean deciding what to do with half a cent.
+For a fixed-point representation with two decimal places, $1.25$ is stored as the integer $125$ and $2.50$ as $250$. Multiplying the integers gives $31250$. The product has denominator $100\cdot100=10000$, so its value is $3.125$. This computation is exact, but the result requires more than two decimal places. Converting it back to the input scale would require rounding.
 
-So FloatLib puts the scale, the number of fractional digits, in the type. This product's type has four, and the multiplication theorem says exactly which rational it is, half cent and all.
+FloatLib records the scale in the type. The exact product in this example has a type with four decimal places, and its multiplication theorem identifies the rational value $3.125$.
 
 ## What is a fixed-point number?
 
@@ -18,7 +18,7 @@ Fixed point is named for its point, which stays put instead of floating. A fixed
 
 $$\left\{ \frac{m}{\beta^d} : m \in \mathbb{Z} \right\},$$
 
-an evenly spaced grid, like the marks on a ruler, with no exponent, signed zero, infinity or NaN (not a number). The radix is a [[FloatLib.Numerics.Radix]], a natural base of at least two, such as [[FloatLib.Numerics.decimalRadix]] or `binaryRadix`. The coefficient is a Lean `Int`, which grows as needed, so it can't overflow. The proofs work in $\mathbb{Q}$, the rationals, where Lean can settle a goal about a particular value by computing it.
+an evenly spaced grid, with no exponent, signed zero, infinity or NaN (not a number). The radix is a [[FloatLib.Numerics.Radix]], a natural base of at least two, such as [[FloatLib.Numerics.decimalRadix]] or `binaryRadix`. The coefficient is a Lean `Int`, which grows as needed, so it can't overflow. The proofs work in $\mathbb{Q}$, the rationals, where Lean can settle a goal about a particular value by computing it.
 
 ## How to add and multiply fixed-point numbers
 
@@ -138,11 +138,11 @@ def small : Q8 := FixedInt.ofInt 16
 -- none
 ```
 
-The exact coefficient sum is 136, which doesn't fit in eight signed bits. `wrapAdd` is `BitVec` addition, Lean's fixed-width bit arithmetic, and that works like a clock face. Count nine past 127 and you come round to $-120$, the value $-1.20$. Two positive numbers just added up to a negative one, which is what wrapping means :) `checkedAdd` returns `none`, meaning no result, and `saturatingAdd` pins the coefficient at 127, as full as it gets, hence the name. Multiplication takes one more argument, the destination width. $120 \times 16 = 1920$ fits sixteen bits, giving $0.1920$ at scale four, while `checkedMul` into eight bits returns `none`.
+The exact coefficient sum is $136$, outside the range of an eight-bit signed integer. `wrapAdd` uses `BitVec` addition modulo $256$, so the stored coefficient represents $-120$, giving the value $-1.20$. `checkedAdd` returns `none` because the exact coefficient is out of range. `saturatingAdd` returns the largest coefficient, $127$. Multiplication also takes a destination width: $120\times16=1920$ fits in sixteen bits and denotes $0.1920$ at scale four, while `checkedMul` into eight bits returns `none`.
 
 ## What does each overflow policy promise?
 
-Wrapping has a total `Finite2` contract against the exact sum reduced by `Int.bmod` modulo $2^w$. The b is for balanced. Think of it as the clock face again, centered on zero. Checked addition can fail, and `checkedAdd_refines` is a `Checked2On` contract against rational addition, with [[FloatLib.Numerics.Representations.FixedInt.InRange]] on the exact coefficient sum as its precondition. It promises success on finite inputs that meet the precondition. Saturation's contract is against exact addition followed by `clamp`. These, and the wrapping contracts for subtraction and multiplication, hold at every width, even zero.
+Wrapping has a total `Finite2` contract against the exact coefficient sum reduced by `Int.bmod` modulo $2^w$, using signed representatives centred on zero. Checked addition has a `Checked2On` contract against rational addition, with [[FloatLib.Numerics.Representations.FixedInt.InRange]] on the exact coefficient sum as its precondition. The theorem `checkedAdd_refines` guarantees success on finite inputs satisfying this condition. Saturating addition has a contract against exact addition followed by `clamp`. These contracts, and the wrapping contracts for subtraction and multiplication, hold at every width, including zero.
 
 The [bounded arithmetic definition](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/FixedPoint/Bounded/Core.lean) makes `wrapMul` exact multiplication followed by centered reduction, and `wrapMul_refines` proves it against `wrapMulValue` at the composed scale. Checked and saturating multiplication test or clamp the exact `Int` product, each with its own contract. Here are the saturating and checked addition contracts at work:
 
@@ -188,7 +188,7 @@ Five is 500 hundredths, and 500 wrapped into eight signed bits is $-12$. Ask for
 
 ## What is a logarithmic number?
 
-A logarithmic number system gets its name from storing a value's logarithm, its exponent, in place of its significand (its digits). It's built for products, since multiplying means adding exponents. That's the slide rule's trick, and like a slide rule it has no easy way to add. [[FloatLib.Floats.Formats.Logarithmic.Code]] has two constructors, `zero`, since zero has no logarithm, and `value negative exponent`, which denotes $\pm\beta^e$ with a sign flag and an unbounded integer exponent. `mul` lets zero absorb, combines the signs by exclusive or (negative when exactly one input is) and adds the exponents,
+A logarithmic number system stores an exponent instead of a significand. Nonzero values have the form $\pm\beta^e$, so multiplication adds exponents and combines signs. Addition generally requires a separate approximation. [[FloatLib.Floats.Formats.Logarithmic.Code]] has two constructors: `zero` and `value negative exponent`, with a sign flag and an unbounded integer exponent. The operation `mul` returns zero if either operand is zero; otherwise it combines the signs by exclusive or and adds the exponents,
 
 $$(\pm\beta^{a})(\pm\beta^{b}) = \pm\beta^{a+b},$$
 
@@ -269,7 +269,7 @@ In the last line zero sits exactly between $-1$ and $+1$, and the lower-word rul
 
 ## What is affine quantization?
 
-When the codes stand for evenly spaced values, [[FloatLib.Numerics.Quantization.AffineQuantizer]] computes the code with a formula in place of a table (affine means a scaling plus a shift). It implements the scale-and-zero-point scheme of integer neural network inference, described by [Jacob and colleagues (2018), §2.1](https://openaccess.thecvf.com/content_cvpr_2018/html/Jacob_Quantization_and_Training_CVPR_2018_paper.html). Picture a ruler with integer ticks: the `scale` is their spacing, and the integer `zeroPoint` is the tick that means zero.
+When the codes stand for evenly spaced values, [[FloatLib.Numerics.Quantization.AffineQuantizer]] computes the code with a formula in place of a table (affine means a scaling plus a shift). It implements the scale-and-zero-point scheme of integer neural network inference, described by [Jacob and colleagues (2018), §2.1](https://openaccess.thecvf.com/content_cvpr_2018/html/Jacob_Quantization_and_Training_CVPR_2018_paper.html). The `scale` determines the spacing between decoded values, and the integer `zeroPoint` is the code that decodes to zero.
 
 Writing $s$ for the scale and $z$ for the zero point, quantizing an exact rational $x$ computes $\operatorname{roundEven}(x / s) + z$ with [[FloatLib.Numerics.roundRatEven]] and clamps it into the code interval from `qmin` to `qmax`. Dequantizing a code $k$ back to a number returns $s\,(k - z)$, so a code's meaning never depends on host floating point. With $s=\tfrac14$, $z=3$ and codes 0 through 7, the codes reconstruct to
 

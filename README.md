@@ -4,17 +4,19 @@
 </h1>
 
 FloatLib is a Lean library for arbitrary precision floating-point arithmetic with
-machine-checked proofs, and we built it so the code you run is the code you prove things about.
-Ask binary32 for `0.1 + 0.2` and it prints `0.3`. Ask for the exact value it stored and you get
-`5033165 / 16777216`, a hair above three tenths, which binary32 can't hold exactly. And the
-addition that produced it is the one the theorem talks about, whichever backend the planner
-picked. You pick a numerical format, write ordinary arithmetic with it, and those theorems are
-there to use anywhere in your Lean development.
+machine-checked proofs. It provides executable operations, numerical specifications and
+theorems connecting them. You can select a format, compute with it and apply its arithmetic
+theorems in a Lean development.
+
+For example, binary32 addition of `0.1` and `0.2` produces a value displayed as `0.3`.
+Its exact value is `5033165 / 16777216`, or `0.300000011920928955078125` in decimal.
+FloatLib lets you inspect this value and prove properties of the addition, using the same
+specification for every certified backend.
 
 It covers IEEE binary and decimal, posits with exact quire accumulation, and the small formats
 people use in ML. Have a different format in mind? You can define it yourself on top of the
 shared integer kernels and rounding theory. We follow the standard literature down to the
-details that bite in real programs: rounding modes, NaNs, infinities and both signed zeros.
+rules for rounding modes, NaNs, infinities and both signed zeros.
 
 Our [guide](site/content/chapters) works through calculations, proofs and the algorithms behind
 them, and its [first chapter](site/content/chapters/01-using-the-library.md) is the place to

@@ -53,8 +53,8 @@ imaginary part costs nothing: the kernel reverses `q` in zero steps and multipli
 
 The factor of a real target can always be taken real, and then `sosCheck` is the plain
 `h ⋆ reverse h` check. With sine terms the target is a Hermitian row with a genuinely imaginary
-part, and its spectral factor has complex coefficients. I liked that this needed no other kernel
-program: the imaginary part of the factor enters through two more products, and the shifts by
+part, and its spectral factor has complex coefficients. The check uses the same kernel operations:
+the imaginary part of the factor contributes two more products, and the shifts by
 `n - m` and `n - m'` line up rows of different lengths at the same centre.
 
 For example, `1 + sin u` is the pair `t = [0, 2, 0]`, `s = [-1, 0, 1]` over `2`, read as

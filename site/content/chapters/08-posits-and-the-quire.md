@@ -8,7 +8,7 @@ phases: [posits]
 
 A posit stores a real number in a fixed number of bits, as an IEEE float does, but it splits them differently between the number's size and its digits, the significand bits. In binary32, the usual 32-bit float, a number near one and a number near $2^{64}$ get the same 24 significand bits. Ask a 32-bit posit for the number right after one and it says $1 + 2^{-27}$, where binary32 says $1 + 2^{-23}$, so near one the posit's grid is sixteen times finer. Near $2^{64}$ the posit has 12 significand bits left, half of binary32's 24.
 
-It's like a city map that spends its ink on fine detail downtown, near one, and rougher strokes the farther out you go, toward huge numbers or tiny ones. Same 32 bits, spent differently. The trick is the regime, a run of identical bits that holds part of the exponent, the power of two that sets the size. The farther a value is from one, the longer the run and the fewer bits are left for the fraction, which holds the digits.
+Posits vary the number of significand bits through the *regime*, a run of identical bits that encodes part of the exponent. A longer regime leaves fewer bits for the fraction. This variable allocation gives posits higher precision near magnitude one and lower precision at large or small magnitudes.
 
 The 2022 Standard for Posit Arithmetic [@positStandard2022] fixes the rest, and it's a short list: one width parameter, one rounding rule, one exceptional value called NaR (not a real), no signed zero, no infinities, and an exact accumulator called the quire. The quire adds up products without rounding, so a whole dot product, a sum like $a_1 b_1 + a_2 b_2 + a_3 b_3$, rounds once, as long as its running sum stays in range.
 
@@ -92,7 +92,7 @@ $$
 m = \begin{cases} w & \text{if the sign bit is } 0, \\ 2^n - w & \text{otherwise.} \end{cases}
 $$
 
-The low $n - 1$ bits of $m$ start with the regime, a run of identical bits that stops at the first opposite bit, the terminator, or at the end of the word. Think of it as a tally. A run of $r$ ones counts up, $k = r - 1$, a run of $r$ zeros counts down, $k = -r$, and each mark moves the value by a factor of 16. Like any tally it's cheap for small counts and expensive for big ones, and that's where the taper comes from. Then come up to two exponent bits $e$ (missing ones count as zero) and an $f$-bit fraction $F$, and the word means
+The low $n-1$ bits of $m$ begin with the regime. This run of identical bits ends at the first opposite bit, called the terminator, or at the end of the word. A run of $r$ ones encodes $k=r-1$, and a run of $r$ zeros encodes $k=-r$. Each increment of $k$ multiplies the value by $16$. Longer regimes leave fewer bits for the exponent and fraction. After the regime come up to two exponent bits $e$, with missing bits treated as zero, followed by an $f$-bit fraction $F$. The word denotes
 
 $$
 (-1)^s \cdot (2^{f} + F) \cdot 2^{4k + e - f},
@@ -136,7 +136,7 @@ open FloatLib.Floats.Formats.Posit in
 
 ### How to print and parse decimal text
 
-A finite posit's denominator is a power of two, so its decimal expansion terminates: $3\cdot2^{-3}=375\cdot10^{-3}$ prints as `0.375`. `Model.display` and the configured `ToString` print that exact decimal, and parsing reads a decimal exactly and rounds once. We prove every word at every valid width comes back from its text, NaR included, and on the configured type for any lawful codec, any way of packing words into storage that obeys the codec laws. The text is exact, not shortest, so a redundant zero can survive :)
+A finite posit's denominator is a power of two, so its decimal expansion terminates: $3\cdot2^{-3}=375\cdot10^{-3}$ prints as `0.375`. `Model.display` and the configured `ToString` print that exact decimal, and parsing reads a decimal exactly and rounds once. We prove every word at every valid width comes back from its text, NaR included, and on the configured type for any lawful codec, any way of packing words into storage that obeys the codec laws. The text is exact, not shortest, so it can retain a redundant trailing zero.
 
 ### How to move to a wider posit
 
@@ -160,7 +160,7 @@ $$
 \quad\longmapsto\quad 2^{4\cdot5+2}=2^{22}.
 $$
 
-The extra one is the high exponent bit, so the threshold is $2^{22}$, not the midpoint $17\cdot2^{19}$. Now round $2^{23}$. It's above the threshold and goes to `0x7f`, though its distances to the lower and upper neighbours are $7\cdot2^{20}$ and $8\cdot2^{20}$. The rounding picked the neighbour farther away :)
+The extra one is the high exponent bit, so the threshold is $2^{22}$, not the midpoint $17\cdot2^{19}$. Now round $2^{23}$. It's above the threshold and goes to `0x7f`, though its distances to the lower and upper neighbours are $7\cdot2^{20}$ and $8\cdot2^{20}$. In this case the rounding rule selects the more distant neighbour.
 
 **Note:** Agreeing with `roundRat` guarantees the standard's boundary rule, not nearest-value rounding, so an IEEE half-ulp argument, which bounds the error by half the gap between neighbours, doesn't carry over as is.
 
@@ -393,7 +393,7 @@ How far do the real-rounding proofs reach? Every finite input in the domain, ext
 
 ### How to round a number you can't write down
 
-How do you round $\exp(1/2)$ when you can never write it down? You trap it between rationals, a pair of bounds called an enclosure. `Numerics.Enclosure.exp` computes rational bounds, `Numerics.Enclosure.contains_exp` proves the real exponential lies between them, and at degree five both endpoints select the same eight-bit posit:
+To round $\exp(1/2)$, FloatLib computes a rational enclosure: lower and upper bounds containing the exact value. `Numerics.Enclosure.exp` computes the bounds, and `Numerics.Enclosure.contains_exp` proves containment. At degree five, both endpoints round to the same eight-bit posit:
 
 ```lean standalone
 import FloatLib.Floats.Formats.Posit.Rounding.Enclosure.Proof

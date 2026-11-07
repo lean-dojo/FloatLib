@@ -8,11 +8,11 @@ phases: [trust]
 
 Lean has two float types built in, `Float32` for binary32 numbers and `Float` for binary64. Each stores a number as a word, a raw pattern of 32 or 64 bits that we'll print in hexadecimal, and FloatLib's `Binary32` and `Binary64` hold the same finite values.
 
-Let's start with a surprise. A NaN ("not a number") is the special value you get from something like $0/0$, and its spare bits, its payload, can carry extra information. Hand `Float32` the NaN word `0x7f812345`, read the bits straight back, and you get `0x7fc00000`. The payload is gone, and no arithmetic ran. Lean's model of a float keeps one canonical NaN, a single standard NaN word, and FloatLib keeps NaN payloads, so the two part ways right at the conversion.
+Lean's native types canonicalize NaNs. A NaN is an exceptional value such as the result of $0/0$, and its encoding can contain extra information called a payload. Converting the word `0x7f812345` to `Float32` and reading its bits back produces `0x7fc00000`. The conversion replaces the original payload with Lean's canonical NaN, even though no arithmetic has been performed. FloatLib retains NaN payloads, so the conversion between the two representations can change the stored word.
 
 ## What are Float and Float32?
 
-So what does Lean actually do when you add two `Float32`s? It depends on who's asking, a proof or the compiled program. A proof checked by Lean's kernel, its small trusted proof checker, sees a logical model, the definitions Lean's logic reasons about. The logical models arrived in Lean 4.33, and 4.34 connects the signed integer conversions to them [@lean434Release]. In that model a `Float32` contains a `Float32.Model`, a `UInt32` word with a validity proof, and `Float` has the same structure over `UInt64`. Lean's logical arithmetic unpacks, computes, rounds to nearest even (to the closest float, breaking ties toward an even last bit) and repacks.
+Lean distinguishes the logical definition of native floating-point arithmetic from its runtime implementation. Kernel-checked proofs use the logical model. Compiled programs use native operations. The logical models were introduced in Lean 4.33, and Lean 4.34 connects signed integer conversions to them [@lean434Release]. In the model, a `Float32` contains a `Float32.Model`: a `UInt32` word together with a validity proof. The type `Float` has the corresponding structure over `UInt64`. Logical arithmetic decodes the operands, computes the result, rounds to nearest even and encodes the result again.
 
 The compiled program goes somewhere else. Definitions that run carry `@[extern]`, a forwarding address to external code, so compiled `Float32.add` uses C floating-point addition and compiled `Float32.sqrt` calls `sqrtf`. The work then happens on the host, the machine your program runs on. That split matters, because a theorem about the logical definition doesn't by itself verify what actually runs.
 
@@ -75,7 +75,7 @@ That's one sum. Our native comparisons cover the corners: ties, cancellation, si
 
 ## Why do NaNs come out different?
 
-NaNs are another story, and they're where a word-by-word test can fail even though both sides returned a NaN. A binary32 NaN's fraction field, the low bits of its word, carries payload bits and the quiet/signaling distinction (a quiet NaN passes through arithmetic, a signaling one flags an invalid operation when used), and `Float32.ofBits` canonicalizes it, so two correct answers can disagree :) `rawDisagreements32` runs a raw host operation and a software operation on fourteen input pairs, two of them with NaN operands, and returns the pairs whose output words differ:
+Two implementations can return NaNs with different stored words. A binary32 NaN's fraction field, the low bits of its word, carries payload bits and the quiet/signaling distinction (a quiet NaN passes through arithmetic, a signaling one flags an invalid operation when used), and `Float32.ofBits` canonicalizes it, so two implementations can return different NaN encodings while satisfying their respective specifications. `rawDisagreements32` runs a raw host operation and a software operation on fourteen input pairs, two of them with NaN operands, and returns the pairs whose output words differ:
 
 ```lean
 /-- The fourteen binary32 operand pairs of `tests/FloatLibTests/Fixtures/NativeIEEE.lean`. -/
@@ -289,7 +289,7 @@ The upper neighbour is half as far away, so nearest-even picks it without needin
 
 ### How to see the exception flags
 
-Exception flags are something you ask for too. Think of them as a receipt that comes with the result. With `(status := true)` an operation returns an [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEOutcome]] holding the value, an [[FloatLib.Numerics.IEEEStatus]] with the five IEEE flags, and the ternary (three-way) value of the [rounding chapter](#/chapter/the-mathematics-of-rounding), which says whether the result was rounded up, down or not at all:
+With `(status := true)`, an operation returns an [[FloatLib.Floats.Formats.BinaryInterchange.Model.IEEEOutcome]] containing the result, an [[FloatLib.Numerics.IEEEStatus]] with five exception flags, and a ternary value. The ternary value records whether the result was rounded upward, downward or was exact, as described in the [rounding chapter](#/chapter/the-mathematics-of-rounding):
 
 ```lean
 #eval (1 : Float32) / 0
@@ -306,7 +306,7 @@ Exception flags are something you ask for too. Think of them as a receipt that c
 -- { value := 0, status := { underflow := true, inexact := true }, ternary := Ordering.lt }
 ```
 
-Lean's native $1/0$ and $0/0$ just give you values, and the receipts add why, division by zero and invalid operation. Doubling the largest finite word overflows with `inexact`. The last line is subtler. Halving the smallest positive subnormal ties between zero and it, and nearest-even returns zero, which sets `underflow` and `inexact`. A subnormal result alone isn't enough for underflow, because FloatLib detects tininess (a result below the normal range) after rounding and also requires inexactness. FloatLib writes the receipt from the operands, the exact arithmetic and the delivered result, and doesn't read the host's status register. For more on the status and rounding contracts, see the [IEEE binary formats chapter](#/chapter/ieee-binary-formats).
+The status fields distinguish division by zero from an invalid operation: $1/0$ raises `divideByZero`, while $0/0$ raises `invalid`. Doubling the largest finite value raises overflow and inexactness. Halving the smallest positive subnormal is an exact midpoint case; nearest-even returns zero and raises `underflow` and `inexact`. A subnormal result alone does not imply underflow. FloatLib detects tininess after rounding and also requires inexactness. It computes the flags from the operands, exact arithmetic and returned value, without reading the host's status register. See the [IEEE binary formats chapter](#/chapter/ieee-binary-formats) for the status and rounding contracts.
 
 ### What the refinement theorem gives you
 
