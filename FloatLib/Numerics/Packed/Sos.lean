@@ -48,8 +48,8 @@ Gaussian-integer row `p + i q`, whose `|p + i q|²` has the pair of rows `normSq
 The integers `kT`, `kc` and `kH` carry the scales: with `kT > 0` a pass says `kT T(u) + kc ≥ 0`,
 a lower bound `T ≥ -kc / kT`, and with `kT < 0` an upper bound. A factor of `m = m' = 0` lanes is
 the empty square, and then the check is just centre dominance of `kT T + kc`, the bound that the
-`l1` norm of the coefficients gives with no certificate at all. A real factor has `m' = 0`, so its
-imaginary part costs nothing: the kernel reverses `q` in zero steps and multiplies by zero.
+`l1` norm of the coefficients gives without a supplied factor. A real factor has `m' = 0`, so
+the imaginary-factor row is empty and its products are zero.
 
 The factor of a real target can always be taken real, and then `sosCheck` is the plain
 `h ⋆ reverse h` check. With sine terms the target is a Hermitian row with a genuinely imaginary

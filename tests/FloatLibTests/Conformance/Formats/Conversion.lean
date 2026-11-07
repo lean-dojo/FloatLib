@@ -778,9 +778,9 @@ example (mode : RoundingMode) (policy : BinaryPolicy) :
   simp
 
 /-!
-A context has no rounding direction, so a 2.0.0 context that names one is rejected when the call
-is elaborated rather than ignored: the binary direction field, the stochastic recipe with its
-record ascribed to the quantizer's full context, and a P3109 projection-policy record.
+A context has no rounding direction. These examples reject a binary direction field, a stochastic
+rounding record ascribed to the quantizer's full context, and a P3109 projection-policy record
+when the call is elaborated.
 -/
 /--
 error: `quantization` is not a field of structure `ExecFloat.Binary.Conversion.Policy`

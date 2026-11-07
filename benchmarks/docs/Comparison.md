@@ -245,7 +245,7 @@ trials. Its cache starts empty and is tied to the compiled executable's SHA-256.
 
 For Flocq the website uses the [matched results](../results/flocq-matched/README.md), and the
 [main archive](../results/main/README.md) has no Flocq rows. If you supply your own
-executable, its hash is recorded alongside its results, so keep its build recipe and
+executable, its hash is recorded alongside its results, so keep its build instructions and
 dependency versions too.
 
 Before timing Universal, the C++ adapter checks all 16 operation results against fixed-width

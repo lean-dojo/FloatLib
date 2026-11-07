@@ -500,7 +500,7 @@ def addLocalRewrites (theorems : SimpTheorems) : MetaM SimpTheorems := do
         theorems ← theorems.add (.fvar declaration.fvarId) #[] proof (post := false)
   return theorems
 
-/-- Observational equalities remove representation plumbing. Compiler equalities recover the
+/-- Observational equalities simplify representation access. Compiler equalities recover the
 source computation, including its operation order. Scalar accuracy is handled elsewhere. -/
 def addProgramRewrites (theorems : SimpTheorems) (rewrites : Array (Name × Bool)) :
     MetaM SimpTheorems := do

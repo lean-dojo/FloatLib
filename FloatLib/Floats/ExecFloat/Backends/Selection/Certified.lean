@@ -18,7 +18,7 @@ binary, ternary, stateful, and family-specific kernels.
 Selection is a deterministic fold over alternatives that are already certified, plus a mandatory
 exact baseline. The cost heuristic only decides which implementation runs. It never takes part in
 the arithmetic proof. Erasing proofs gives the same estimate that the inspection tools select, so
-the reported plan can't quietly diverge from execution.
+the reported plan agrees with the one used for execution.
 -/
 
 @[expose] public section

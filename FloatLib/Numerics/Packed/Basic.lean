@@ -413,7 +413,7 @@ theorem nonneg_of_mem_conv : ∀ {xs ys : List Int}, (∀ x ∈ xs, 0 ≤ x) →
 theorem l1_reverse (xs : List Int) : l1 xs.reverse = l1 xs := by
   simp [l1, List.map_reverse, List.sum_reverse]
 
-/-- `l1` adds up over concatenation, so zeros put in front of a row cost nothing. -/
+/-- The `l1` norm of a concatenation is the sum of the two norms. -/
 theorem l1_append (xs ys : List Int) : l1 (xs ++ ys) = l1 xs + l1 ys := by
   simp [l1, List.map_append, List.sum_append]
 

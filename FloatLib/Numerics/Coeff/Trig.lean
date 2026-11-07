@@ -55,7 +55,7 @@ minimum `0` exactly: its sine term needs the imaginary part.
 
 The Chebyshev bridge is Mathlib's `Polynomial.Chebyshev.T_real_cos`, `Tₖ (cos u) = cos (k u)`,
 applied term by term, so a Chebyshev series needs no packed program of its own: its coefficients
-are the half row of a cosine polynomial as they stand. I find that a nice bit of economy. The
+are already the half row of a cosine polynomial. The
 power basis needs `Packed.horner` only because its coefficients are not already in that form.
 
 ## References

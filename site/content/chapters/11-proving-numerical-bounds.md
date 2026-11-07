@@ -606,13 +606,13 @@ integer decimal) picks the other IEEE decimal encoding, and a custom endpoint ty
 
 Interval operations that take an `OutwardRounding` return `Option`. A `some` result comes with an
 enclosure theorem, and `none` means the call couldn't produce finite endpoints that enclose the
-answer, as when a denominator interval crosses zero or a posit calculation overflows. Why not
-saturate, clamping to the largest finite number? That would break the fence-post promise, because
-that number isn't an upper bound for a larger exact result. The
+answer, as when a denominator interval crosses zero or a posit calculation overflows. Clamping
+an upper endpoint to the largest finite value would violate containment when the exact result
+is larger than that value. The
 [binary-specific API in the getting-started chapter](#/chapter/using-the-library/how-to-trap-a-number-between-two-roundings)
 supports infinite endpoints and keeps its whole-range fallback.
 
-What the rational endpoints fence in can be any real number.
+The enclosed real value need not be rational or representable in the endpoint format.
 [[FloatLib.Numerics.Interval.ContainsReal]] reads the finite bounds in $\mathbb{R}$, and
 [[FloatLib.Numerics.Interval.containsReal_mul?]] proves that a successful interval multiplication
 encloses the product of any two real members, representable in the endpoint format or not. The
@@ -714,7 +714,7 @@ example : ∀ x ∈ Set.Icc (-1 : ℝ) 1, -1/4 ≤
   interval (lower := [1, 1, 1])
 ```
 
-A polynomial in the power basis works on any interval $[\mathrm{lo}, \mathrm{hi}]$. Put
+A polynomial in the power basis works on an interval $[\mathrm{lo}, \mathrm{hi}]$ with rational endpoints. Put
 $x = m + r\cos u$, with the midpoint $m$ and the radius $r$: then $p(x)$ is a cosine polynomial of
 the same degree, and the kernel builds its coefficients itself, with Horner's rule on packed rows
 [@horner1819]. This substitution relates power polynomials on an interval to cosine polynomials,

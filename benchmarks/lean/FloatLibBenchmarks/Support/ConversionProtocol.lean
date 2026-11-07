@@ -26,7 +26,7 @@ private def writeWords (path : System.FilePath) (words : Array UInt32) : IO Unit
       bytes := bytes.push (word >>> shift).toUInt8
   IO.FS.writeBinFile path bytes
 
-/-- Measure a dependent sequence, including lookup, conversion, and checksum bookkeeping. -/
+/-- Measure a dependent sequence, including lookup, conversion, and checksum updates. -/
 @[noinline] def chain {α : Type} [Inhabited α] (operation : α → UInt32)
     (inputs : Array α) (iterations : Nat) : IO UInt64 := do
   let mut index := 0

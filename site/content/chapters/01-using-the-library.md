@@ -157,7 +157,7 @@ FloatLib's source has three parts, and that one proof uses all of them, as [Figu
 
 ## How to trap a number between two roundings
 
-Let's put the [rounding directions](#/chapter/using-the-library/how-to-choose-a-rounding-direction) to work. One third falls between two binary32 values, so why not keep both? Round the division down for a lower bound and up for an upper bound, and the pair traps the exact quotient even though neither endpoint equals it. A pair like that, with the promise that the exact answer lies between its ends, is called an interval.
+An interval contains every real value between its lower and upper endpoints. To enclose one third, use the [rounding directions](#/chapter/using-the-library/how-to-choose-a-rounding-direction) to round the division downward for a lower bound and upward for an upper bound. The exact quotient lies between these binary32 endpoints even though neither endpoint equals it.
 
 `oneThird` and `twoThirds` below pass the direction through `mode`, and our `enclose` builds an interval from the pair with `Interval.ofBounds`, which falls back to the whole range if the pair is out of order or a NaN. [[FloatLib.Floats.ExecFloat.Binary.Interval]] keeps both endpoints in the configured scalar type, here `Binary32`, and `Interval.add` adds the lower endpoints downward and the upper endpoints upward.
 

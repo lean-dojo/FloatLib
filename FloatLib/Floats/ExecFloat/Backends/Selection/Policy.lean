@@ -48,8 +48,8 @@ namespace Policy
 /--
 First-call-oriented policy.
 
-This profile is appropriate when an operation may be used only a handful of times and a large
-one-time setup cost would dominate. Resource ceilings remain identical to `Policy.default`.
+This profile models a single expected call, so the selector accounts for the full setup cost.
+Resource ceilings remain identical to `Policy.default`.
 -/
 def latency : Policy where
   expectedCalls := 1

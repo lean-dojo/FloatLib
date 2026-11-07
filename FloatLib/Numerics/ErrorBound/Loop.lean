@@ -100,7 +100,7 @@ theorem foldl_induction {step : α → β → α} {initial : α} {input : List �
   AllSteps.invariant (condition := fun _ _ => True) (AllSteps.of_forall _ _ _ _ fun _ _ => trivial)
     hinit fun state value _ => hstep state value
 
-/-- One iteration of the absolute-error bookkeeping: the original step, the real reference and
+/-- One iteration of absolute-error propagation: the original step, the real reference and
 the error budget. -/
 def foldStep (step : α → β → α) (reference : ℝ → β → ℝ) (error : α → ℝ → ℝ → β → ℝ)
     (state : α × ℝ × ℝ) (value : β) : α × ℝ × ℝ :=
@@ -140,7 +140,7 @@ theorem fold_error (observe : α → ℝ) (step : α → β → α) (reference :
   | nil => exact hinit
   | cons value rest ih => exact ih _ _ _ (hstep _ _ _ _ hvalid.1 hinit) hvalid.2
 
-/-- One iteration of the mixed-error bookkeeping: the original step, the real reference, and the
+/-- One iteration of mixed-error propagation: the original step, the real reference, and the
 relative and absolute parts of the error. -/
 def mixedFoldStep (step : α → β → α) (reference : ℝ → β → ℝ)
     (relative absolute : α → ℝ → ℝ → ℝ → β → ℝ) (state : α × ℝ × ℝ × ℝ) (value : β) :

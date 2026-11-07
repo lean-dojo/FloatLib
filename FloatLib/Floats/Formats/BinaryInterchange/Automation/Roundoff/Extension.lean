@@ -508,7 +508,7 @@ structure Loop where
   initial : Nat
   /-- The position of the traversed input. -/
   input : Nat
-  /-- One iteration of the absolute-error bookkeeping, as `List.foldStep`. -/
+  /-- One iteration of absolute-error propagation, as `List.foldStep`. -/
   foldStep : Name
   /-- The conditions at the visited steps, as `List.AllSteps`. -/
   allSteps : Name
@@ -522,7 +522,7 @@ structure Loop where
   foldErrorIdentity : Name
   /-- The absolute bound through the loop, as `List.fold_error`. -/
   errorBound : Name
-  /-- One iteration of the mixed-error bookkeeping, as `List.mixedFoldStep`. -/
+  /-- One iteration of mixed-error propagation, as `List.mixedFoldStep`. -/
   mixedFoldStep : Name
   /-- The accumulated relative error, as `List.foldRelative`. -/
   foldRelative : Name

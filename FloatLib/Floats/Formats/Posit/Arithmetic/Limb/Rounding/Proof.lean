@@ -17,8 +17,8 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 Two-limb rounding has two branches. A significand that fits in 128 bits gets guard/sticky
 rounding on two limbs, and a larger one goes to the arbitrary-width direct rounder. Both branches
 agree with the shared exact-dyadic rounding specification. The same refinement also shows that
-squeezing a four-limb product into a two-limb window with a sticky bit doesn't change the rounded
-result.
+reducing a four-limb product to a two-limb window while retaining a sticky bit preserves the
+rounded result.
 -/
 
 @[expose] public section

@@ -195,7 +195,7 @@ In the IEEE encodings, a nonzero fraction under the all-ones field is a NaN, sho
 
 Zero over zero gives `nan`.
 
-With these, every operation has an answer for every input. For those who like precise definitions, the format is closed and every operation is a total function on words. [[FloatLib.Floats.Formats.BinaryInterchange.Model.exactValue]] records a word's complete meaning: a finite dyadic with its sign of zero, a signed infinity, or a NaN with its sign, signaling class and payload.
+Including exceptional values makes each arithmetic operation a total function on stored words: every input has a specified result. [[FloatLib.Floats.Formats.BinaryInterchange.Model.exactValue]] records a word's complete meaning: a finite dyadic with its sign of zero, a signed infinity, or a NaN with its sign, signaling class and payload.
 
 ## How does rounding work?
 

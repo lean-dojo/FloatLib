@@ -15,7 +15,7 @@ public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 /-!
 # Basic posit functions
 
-Section 5.2 of the 2022 Posit Standard lists a handful of basic functions, and this module
+Section 5.2 of the 2022 Posit Standard specifies the basic functions that this module
 defines them: absolute value, sign, integer rounding, and the representation successor and
 predecessor. Negation is defined with the model.
 

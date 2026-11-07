@@ -42,8 +42,8 @@ first file, see the
 
 ## A calculation and a proof
 
-Here's the whole idea in a few lines. It picks binary32, adds two numbers, and proves that the
-executable addition returns the specification's result. Save it as `Main.lean` in the
+The following example evaluates binary32 addition and proves that the executable operation
+returns the specification's result. Save it as `Main.lean` in the
 repository and run `lake env lean Main.lean`:
 
 ```lean
@@ -62,11 +62,11 @@ example : x + y = ExecFloat.Spec.add x y :=
   ExecFloat.Proof.add_eq_spec x y
 ```
 
-The sum is `3.75`. Nothing was lost to rounding, because 1.5, 2.25 and 3.75 are all short
-binary fractions. That's one run on two numbers, but `add_eq_spec` holds for any operands, and
-it pins down the whole result word, right down to how an exceptional value or a signed zero is
-encoded. So what you get is an equation you can use inside a larger proof. And `#float_info` at
-the top shows the chosen representation, its backends and the theorems available for it.
+The sum is `3.75`. The operands and result are exactly representable in binary32, so this
+addition requires no rounding. The theorem `add_eq_spec` applies to any operands and states
+equality of the complete result word, including exceptional values and signed zeros. It can
+be used to rewrite executable operations inside a larger proof. The command `#float_info`
+reports the representation, selected backends and available theorems.
 
 A bound on rounding error takes more than the result bits. It needs assumptions about the
 format, finiteness and range, and we work through those in the
@@ -93,9 +93,9 @@ and adapt it to your own calculation.
   finiteness assumptions.
 - **The `roundoff` tactic.** With the `Automation.Roundoff` import, the tactic proves error
   bounds for configured computations, loops over lists, arrays, vectors and matrices included.
-  Underneath, `MixedError` carries a relative and an absolute error through binary operations,
-  casts and sums. The `roundoff theorem` and `roundoff mixed theorem` commands go a step
-  further and write the theorem and its proof for you, stating the range conditions they need.
+  `MixedError` propagates relative and absolute error bounds through binary operations,
+  casts and sums. The `roundoff theorem` and `roundoff mixed theorem` commands generate a
+  theorem and its proof, with the required range conditions as hypotheses.
   See the
   [roundoff guide](site/content/chapters/11-proving-numerical-bounds.md#how-to-get-an-error-bound-for-floating-point-code).
 - **Intervals and affine quantization.** One interval API takes binary, decimal, posit and
@@ -105,12 +105,12 @@ and adapt it to your own calculation.
   quantization has a real-valued specification with a rounding rule you supply, plus a proof
   connecting nearest-even quantization to the executable rational implementation.
 - **Bounds from coefficients.** The same `interval` tactic proves bounds over a whole domain from
-  coefficients: trigonometric polynomials with cosine and sine terms on the circle, polynomials
-  and Chebyshev series on any interval, and norms of polynomials on the unit circle of `ℂ`, with
+  coefficients: trigonometric polynomials with cosine and sine terms on the circle, power
+  polynomials on intervals with rational endpoints, Chebyshev series after affine rescaling,
+  and norms of polynomials on the unit circle of `ℂ`, with
   rational coefficients or the exact values of float data. Lean's kernel checks sum-of-squares
-  certificates on packed rows, lists of integers kept in one big number so that a product or an
-  `l1` norm takes a few big-number operations, and a posteriori defects give inverses and inverse
-  square roots of such polynomials. See
+  certificates using packed integer rows. Wiener algebra defect theorems also bound the errors
+  of approximations to inverse and inverse square root functions. See
   [the coefficient guide](site/content/chapters/11-proving-numerical-bounds.md#how-to-bound-a-polynomial-on-the-whole-circle).
 - **Repeatedly rounded sums.** A reduction tree fixes the order of the additions, and its error
   bounds account for rounding at every node, absolute-error terms near underflow included. For
@@ -153,10 +153,10 @@ On ordinary binary64 calls, FloatLib's proved addition, subtraction and multipli
 MPFR at the same precision, multiplication by about 2.4 times. Our
 [benchmarks](site/content/chapters/12-performance.md) compare scalar operations from 2 to 4,096
 bits, so you can see where the kernels win and where MPFR is faster. Lean checks the proofs
-before anything runs and erases them when it compiles, so they cost nothing at runtime. Want a
-second opinion? Run the opt-in command
-`FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh` and it also replays the compiled
-FloatLib declarations through Lean's kernel with `leanchecker`.
+before execution and erases them during compilation, so the compiled arithmetic does not
+check proofs at runtime. To replay the compiled FloatLib declarations through Lean's kernel
+with `leanchecker`, run the opt-in command
+`FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh`.
 
 A proof only shows that the code matches the specification we wrote, so we test the
 specifications too, against other people's implementations. Our saved runs matched Berkeley

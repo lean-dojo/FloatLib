@@ -338,7 +338,7 @@ A failure restores the original proof state and names the operation whose enclos
 the bound that wasn't small enough. It suggests a larger `maxHeartbeats`, naming the attempt, only
 when kernel verification of that attempt ran out of its heartbeat budget.
 
-A bound over a whole domain is proved from coefficients first, where boxes would never finish:
+For supported whole-domain polynomial goals, the tactic tries coefficient bounds before boxes:
 
 * `∀ u : ℝ, lo ≤ S u`, `S u ≤ hi`, `|S u| ≤ c` and the strict versions, for a trigonometric
   polynomial `S` with cosine and sine terms,

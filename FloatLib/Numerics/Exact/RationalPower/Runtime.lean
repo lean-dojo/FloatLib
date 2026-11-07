@@ -23,7 +23,7 @@ front, and equality comes next, from the exact-root descriptor and capped expone
 target differs from the power, so its logarithm difference is nonzero, and the shared enclosure
 search doubles the series degree until the bound excludes zero.
 
-The obvious approach compares `base ^ exponent.num` with `target ^ exponent.den`, and that needs
+Direct exponentiation would compare `base ^ exponent.num` with `target ^ exponent.den`, requiring
 integers which can be enormous even for small inputs: a binary exponent with denominator `2 ^ 1074`
 gives a target power of that degree. So the target is never raised to a power, and the root is
 raised to the exponent's numerator only by capped exponentiation against the target's parts. No
