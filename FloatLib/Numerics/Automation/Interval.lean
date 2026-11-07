@@ -7,8 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Automation.Interval.Bounds
+public import FloatLib.Numerics.Coeff.Bound
 public import FloatLib.Numerics.Enclosure.Expression.BackendsProof
 public import FloatLib.Numerics.Enclosure.Expression.CheckProof
+public meta import FloatLib.Numerics.Automation.Interval.Coeff
 public meta import FloatLib.Numerics.Automation.Interval.Diagnostics
 public meta import FloatLib.Numerics.Automation.Interval.Reify
 public meta import Lean.Elab.Tactic.Decide
@@ -29,6 +31,13 @@ Three options tune the search. `precision` sets the fractional endpoint bits, `d
 elementary-function approximation degree, and `depth` the subdivision depth. Lean's kernel verifies
 a closed Boolean check, and the expression equality and the input bounds are proved as well. No
 sampled values enter the proof.
+
+A bound over a whole domain, `∀ u : ℝ, …` for a trigonometric polynomial, `∀ x ∈ Set.Icc lo hi, …`
+for a power or Chebyshev series, or `∀ z : ℂ, ‖z‖ = 1 → …` for a polynomial in `z`, goes to the
+coefficient route of `FloatLib.Numerics.Automation.Interval.Coeff` first, where splitting would
+never end. The coefficients alone settle many of these goals, and the options `lower` and `upper`
+take sum-of-squares certificates for sharp bounds. On an interval the boxes still get their turn if
+the coefficients fail.
 -/
 
 public meta section
@@ -233,6 +242,71 @@ def close (precision degree depth : Nat)
     pure q(sub_nonpos.mp $h)
   closeMainGoal `interval proof
 
+/-- `∀ x, x ∈ Set.Icc lo hi → P x` with the two binders introduced, for the boxes. -/
+private def introInterval? (goal : MVarId) : MetaM (Option MVarId) := do
+  let .forallE _ dom body _ ← whnfR (← goal.getType) | return none
+  unless ← isDefEq dom q(ℝ) do return none
+  let .forallE _ mem _ _ := body | return none
+  let_expr Membership.mem _ _ _ s _ := mem | return none
+  unless s.isAppOf ``Set.Icc do return none
+  let (_, goal) ← goal.intro1P
+  let (_, goal) ← goal.intro1P
+  return some goal
+
+/-- Run `interval` on the main goal: the coefficient route for a bound over a whole domain, then
+the boxes, and for a trigonometric polynomial in a free variable the coefficient route again once
+the boxes fail for want of bounds on that variable. -/
+def run (precision degree depth maxHeartbeats : Nat) (certs : Coeff.Certs) : TacticM Unit := do
+  let goal ← getMainGoal
+  let verify (p : Lean.Expr) : TacticM Lean.Expr := do
+    try verifyClosedCheck p maxHeartbeats
+    catch error =>
+      if error.isInterrupt then throw error
+      let advice := resourceAdvice "the coefficient check" maxHeartbeats (← resourceLimit? error)
+      throwError "interval: the kernel refused the coefficient check: {error.toMessageData}{advice}"
+  let attempt (route : TacticM Coeff.Outcome) : TacticM (Except Exception Coeff.Outcome) := do
+    let saved ← saveState
+    try return .ok (← route)
+    catch error =>
+      if error.isInterrupt then throw error
+      saved.restore
+      return .error error
+  match ← attempt (Coeff.run goal certs verify) with
+  | .ok .proved => replaceMainGoal []; return
+  | .ok .notMine =>
+      if certs.isEmpty then
+        if let some boxGoal ← introInterval? goal then
+          setGoals [boxGoal]
+          close precision degree depth maxHeartbeats
+          return
+  | .error error =>
+      -- a bound on a whole interval may still follow from boxes
+      if certs.isEmpty then
+        if let some boxGoal ← introInterval? goal then
+          let saved ← saveState
+          setGoals [boxGoal]
+          try close precision degree depth maxHeartbeats; return
+          catch boxError =>
+            if boxError.isInterrupt then throw boxError
+            saved.restore
+            throwError "{error.toMessageData}\nThe boxes did not prove it either: \
+              {boxError.toMessageData}"
+      throw error
+  unless certs.isEmpty do
+    match ← attempt (Coeff.runFree goal certs verify) with
+    | .ok .proved => replaceMainGoal []; return
+    | .ok .notMine => throwError "interval: `lower` and `upper` are certificates for a bound on \
+        a polynomial or series over its whole domain, and this goal is not one"
+    | .error error => throw error
+  try close precision degree depth maxHeartbeats
+  catch boxError =>
+    if boxError.isInterrupt then throw boxError
+    match ← attempt (Coeff.runFree goal certs verify) with
+    | .ok .proved => replaceMainGoal []
+    | .ok .notMine => throw boxError
+    | .error error => throwError "{boxError.toMessageData}\nThe coefficient route did not prove \
+        it either: {error.toMessageData}"
+
 end FloatLib.Numerics.Interval.Tactic
 
 /--
@@ -263,31 +337,55 @@ real function:
 A failure restores the original proof state and names the operation whose enclosure was rejected or
 the bound that wasn't small enough. It suggests a larger `maxHeartbeats`, naming the attempt, only
 when kernel verification of that attempt ran out of its heartbeat budget.
+
+A bound over a whole domain is proved from coefficients first, where boxes would never finish:
+
+* `∀ u : ℝ, lo ≤ S u`, `S u ≤ hi`, `|S u| ≤ c` and the strict versions, for a trigonometric
+  polynomial `S` with cosine and sine terms,
+* the same under `∀ x ∈ Set.Icc lo hi` for a polynomial in `x` or a Chebyshev series at a point of
+  `[-1, 1]`,
+* `∀ z : ℂ, ‖z‖ = 1 → ‖p z‖ ≤ c` or `c ≤ ‖p z‖` for a polynomial with Gaussian rational
+  coefficients.
+
+Without options the coefficients alone give the bound, the constant term plus or minus the sum of
+the absolute values of the others. `(lower := h)` and `(upper := h)` take a sum-of-squares
+certificate for that side: a list of integers, a file of integers next to the source, or a pair
+`(p, q)` for a factor `p + i q`. `scripts/coeff_cert.py` writes them. On an interval the boxes run
+when the coefficients fail, and a trigonometric polynomial in a free variable goes to the
+coefficients when the boxes find no bounds for it.
 -/
-syntax (name := interval) "interval" (ppSpace "(" ident " := " num ")")* : tactic
+syntax (name := interval) "interval" (ppSpace "(" ident " := " term ")")* : tactic
 
 elab_rules : tactic
-  | `(tactic| interval $[($option:ident := $value:num)]*) => do
+  | `(tactic| interval $[($option:ident := $value:term)]*) => do
     let mut precision := 64
     let mut degree := 16
     let mut depth := 8
     let mut maxHeartbeats := 20000
+    let mut certs : FloatLib.Numerics.Interval.Tactic.Coeff.Certs := {}
     let mut seen : Array Name := #[]
     for option in option, value in value do
       let key := option.getId.eraseMacroScopes
       if seen.contains key then
         throwErrorAt option "duplicate interval option {key}"
       seen := seen.push key
-      match key with
-      | `precision => precision := value.getNat
-      | `degree => degree := value.getNat
-      | `depth => depth := value.getNat
-      | `maxHeartbeats =>
-        maxHeartbeats := value.getNat
+      let term : Term := ⟨value⟩
+      let number : Option Nat := value.isNatLit?
+      match key, number with
+      | `precision, some v => precision := v
+      | `degree, some v => degree := v
+      | `depth, some v => depth := v
+      | `maxHeartbeats, some v =>
+        maxHeartbeats := v
         if maxHeartbeats == 0 then
-          throwErrorAt value.raw "interval maxHeartbeats must be positive"
-      | _ => throwErrorAt option "expected precision, degree, depth, or maxHeartbeats"
+          throwErrorAt value "interval maxHeartbeats must be positive"
+      | `precision, none | `degree, none | `depth, none | `maxHeartbeats, none =>
+        throwErrorAt value "interval {key} must be a natural number literal"
+      | `lower, _ => certs := { certs with lower := some term }
+      | `upper, _ => certs := { certs with upper := some term }
+      | _, _ =>
+        throwErrorAt option "expected precision, degree, depth, maxHeartbeats, lower, or upper"
     let saved ← saveState
     discard <| tryFinally'
-      (FloatLib.Numerics.Interval.Tactic.close precision degree depth maxHeartbeats)
+      (FloatLib.Numerics.Interval.Tactic.run precision degree depth maxHeartbeats certs)
       (fun result => unless result.isSome do saved.restore)

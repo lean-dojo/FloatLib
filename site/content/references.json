@@ -626,6 +626,79 @@
     "url": "https://coqinterval.gitlabpages.inria.fr/"
   },
   {
+    "key": "fejer1916",
+    "authors": "Lipót Fejér",
+    "title": "Über trigonometrische Polynome",
+    "venue": "Journal für die reine und angewandte Mathematik, volume 146, pages 53–82",
+    "year": "1916",
+    "url": "https://doi.org/10.1515/crll.1916.146.53"
+  },
+  {
+    "key": "harvey2009",
+    "authors": "David Harvey",
+    "title": "Faster polynomial multiplication via multipoint Kronecker substitution",
+    "venue": "Journal of Symbolic Computation, volume 44, pages 1502–1510",
+    "year": "2009",
+    "url": "https://doi.org/10.1016/j.jsc.2009.05.004"
+  },
+  {
+    "key": "horner1819",
+    "authors": "William George Horner",
+    "title": "A new method of solving numerical equations of all orders, by continuous approximation",
+    "venue": "Philosophical Transactions of the Royal Society of London, volume 109, pages 308–335",
+    "year": "1819",
+    "url": "https://doi.org/10.1098/rstl.1819.0023"
+  },
+  {
+    "key": "trefethen2013",
+    "authors": "Lloyd N. Trefethen",
+    "title": "Approximation Theory and Approximation Practice",
+    "venue": "SIAM",
+    "year": "2013",
+    "url": "https://people.maths.ox.ac.uk/trefethen/ATAP/"
+  },
+  {
+    "key": "riesz1916",
+    "authors": "Friedrich Riesz",
+    "title": "Über ein Problem des Herrn Carathéodory",
+    "venue": "Journal für die reine und angewandte Mathematik, volume 146, pages 83–87",
+    "year": "1916",
+    "url": "https://doi.org/10.1515/crll.1916.146.83"
+  },
+  {
+    "key": "kronecker1882",
+    "authors": "Leopold Kronecker",
+    "title": "Grundzüge einer arithmetischen Theorie der algebraischen Grössen",
+    "venue": "Journal für die reine und angewandte Mathematik, volume 92, pages 1–122",
+    "year": "1882",
+    "url": "https://doi.org/10.1515/crll.1882.92.1"
+  },
+  {
+    "key": "beelerHakmem1972",
+    "authors": "Michael Beeler, R. William Gosper, and Richard Schroeppel",
+    "title": "HAKMEM",
+    "venue": "MIT Artificial Intelligence Laboratory, AI Memo 239, item 169",
+    "year": "1972",
+    "url": "https://dspace.mit.edu/handle/1721.1/6086"
+  },
+  {
+    "key": "wiener1932",
+    "authors": "Norbert Wiener",
+    "title": "Tauberian theorems",
+    "venue": "Annals of Mathematics, volume 33, pages 1–100",
+    "year": "1932",
+    "url": "https://doi.org/10.2307/1968102"
+  },
+  {
+    "key": "plasmaLean",
+    "authors": "Siddhartha Gadgil and PlasmaLean contributors",
+    "title": "PlasmaLean",
+    "venue": "Lean 4 library, Certificates/ConvAlgebra.lean and Theory/KAM/InvSqrtApprox.lean",
+    "year": "",
+    "url": "https://github.com/siddhartha-gadgil/PlasmaLean",
+    "accessed": "2026-11-07"
+  },
+  {
     "key": "saikiDoubleRounding2026",
     "authors": "Brett Saiki, Bill Zorn, Cynthia Richey, and Zachary Tatlock",
     "title": "When Double Rounding is Correct",

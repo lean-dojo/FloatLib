@@ -24,6 +24,11 @@ public import FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations
 public import FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples
 public import FloatLibTests.Conformance.Execution.Certificates
+public import FloatLibTests.Conformance.Formats.PackedValues
+public import FloatLibTests.Conformance.Numerics.Coeff
+public import FloatLibTests.Conformance.Numerics.IntervalCoeff
+public import FloatLibTests.Conformance.Numerics.Packed
+public import FloatLibTests.Conformance.Numerics.Wiener
 public import FloatLibTests.Conformance.Posit.Quire
 public meta import Lean.Compiler.CSimpAttr
 public meta import Lean.Compiler.ImplementedByAttr
@@ -41,8 +46,9 @@ The imports cover the public root, the optional binary and decimal transcendenta
 `roundoff` analysis.
 The quotient, integer square root, and checked square root compiler certificates are loaded
 explicitly because their clients import them privately.
-Unimported modules are outside this check. Symbolic certificate, quire, and native-model regression
-declarations are checked separately because they belong to `FloatLibTests`.
+Unimported modules are outside this check. Symbolic certificate, quire, native-model, packed-row and
+coefficient-bound regression declarations are checked separately because they belong to
+`FloatLibTests`.
 
 The production traversal includes `@[csimp]` equality proofs. For the sole permitted
 `@[implemented_by]` declaration, the audit also reads Lean's attribute and checks that its
@@ -195,7 +201,84 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.Posit.Quire.posit8_quire_shape,
     ``FloatLibTests.Conformance.Posit.Quire.posit8_quire_exact_product,
     ``FloatLibTests.Conformance.Posit.Quire.posit8_quire_positive_overflow_is_nar,
-    ``FloatLibTests.Conformance.Posit.Quire.posit8_quire_nar_propagation
+    ``FloatLibTests.Conformance.Posit.Quire.posit8_quire_nar_propagation,
+    ``FloatLibTests.Conformance.Numerics.Packed.small_eq,
+    ``FloatLibTests.Conformance.Numerics.Packed.small_entries,
+    ``FloatLibTests.Conformance.Numerics.Packed.small_sums,
+    ``FloatLibTests.Conformance.Numerics.Packed.small_mul,
+    ``FloatLibTests.Conformance.Numerics.Packed.count_checks,
+    ``FloatLibTests.Conformance.Numerics.Packed.count_rev_pack,
+    ``FloatLibTests.Conformance.Numerics.Packed.lanes_three_seven,
+    ``FloatLibTests.Conformance.Numerics.Packed.xy_check,
+    ``FloatLibTests.Conformance.Numerics.Packed.entries_xy,
+    ``FloatLibTests.Conformance.Numerics.Packed.xy_values,
+    ``FloatLibTests.Conformance.Numerics.Packed.window_and_rounding,
+    ``FloatLibTests.Conformance.Numerics.Packed.symmetric_rows,
+    ``FloatLibTests.Conformance.Numerics.Packed.rounding_spec,
+    ``FloatLibTests.Conformance.Numerics.Packed.signs_spec,
+    ``FloatLibTests.Conformance.Numerics.Packed.pack_spec,
+    ``FloatLibTests.Conformance.Numerics.Packed.fine_autocorr,
+    ``FloatLibTests.Conformance.Numerics.Packed.small_squares,
+    ``FloatLibTests.Conformance.Numerics.Packed.guard_refuses,
+    ``FloatLibTests.Conformance.Numerics.Packed.wrong_product,
+    ``FloatLibTests.Conformance.Numerics.Packed.overflow_breaks_lanes,
+    ``FloatLibTests.Conformance.Numerics.Packed.wrong_values,
+    ``FloatLibTests.Conformance.Numerics.Packed.absSum_overflows,
+    ``FloatLibTests.Conformance.Numerics.Packed.linked_checks,
+    ``FloatLibTests.Conformance.Numerics.Coeff.sup_check,
+    ``FloatLibTests.Conformance.Numerics.Coeff.sup_bound,
+    ``FloatLibTests.Conformance.Numerics.Coeff.l1_value,
+    ``FloatLibTests.Conformance.Numerics.Coeff.chebyshev_bound,
+    ``FloatLibTests.Conformance.Numerics.Coeff.deriv_cos,
+    ``FloatLibTests.Conformance.Numerics.Coeff.l1_bounds,
+    ``FloatLibTests.Conformance.Numerics.Coeff.deriv_bound,
+    ``FloatLibTests.Conformance.Numerics.Coeff.hilbert_bound,
+    ``FloatLibTests.Conformance.Numerics.Coeff.small_hilbert_and_deriv,
+    ``FloatLibTests.Conformance.Numerics.Coeff.small_product,
+    ``FloatLibTests.Conformance.Numerics.Coeff.below_sup_refused,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.exact_min,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.exact_min_monomials,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.sine_ball,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.free_sine,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.ramp_ball,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.sine_exact,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.difference,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.mixed_abs,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.row_bound,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.chebyshev_min,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.chebyshev_ball,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.power_exact,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.power_lower,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.power_boxes,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.norm_ball,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.norm_upper,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.norm_lower,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.exact_min_check,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.complex_check,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.wrong_link,
+    ``FloatLibTests.Conformance.Numerics.IntervalCoeff.wrong_horner,
+    ``FloatLibTests.Conformance.Numerics.Wiener.check,
+    ``FloatLibTests.Conformance.Numerics.Wiener.eval_f,
+    ``FloatLibTests.Conformance.Numerics.Wiener.defect_inv,
+    ``FloatLibTests.Conformance.Numerics.Wiener.norm_v,
+    ``FloatLibTests.Conformance.Numerics.Wiener.inverse_bound,
+    ``FloatLibTests.Conformance.Numerics.Wiener.eval_g,
+    ``FloatLibTests.Conformance.Numerics.Wiener.norm_g,
+    ``FloatLibTests.Conformance.Numerics.Wiener.defect_invSqrt,
+    ``FloatLibTests.Conformance.Numerics.Wiener.invSqrt_bound,
+    ``FloatLibTests.Conformance.Numerics.Wiener.wrong_inverse,
+    ``FloatLibTests.Conformance.Formats.PackedValues.single_row,
+    ``FloatLibTests.Conformance.Formats.PackedValues.other_rows,
+    ``FloatLibTests.Conformance.Formats.PackedValues.single_value,
+    ``FloatLibTests.Conformance.Formats.PackedValues.lower_bound,
+    ``FloatLibTests.Conformance.Formats.PackedValues.upper_bound,
+    ``FloatLibTests.Conformance.Formats.PackedValues.sine_bound,
+    ``FloatLibTests.Conformance.Formats.PackedValues.wrong_denominator,
+    ``FloatLibTests.Conformance.Formats.PackedValues.singleRow.link,
+    ``FloatLibTests.Conformance.Formats.PackedValues.positRow.link,
+    ``FloatLibTests.Conformance.Formats.PackedValues.centRow.link,
+    ``FloatLibTests.Conformance.Formats.PackedValues.fractionRow.link,
+    ``FloatLibTests.Conformance.Formats.PackedValues.blockRow.link
   ]
 
 /-- Use the defining module, since private and generated names need not start with `FloatLib`. -/

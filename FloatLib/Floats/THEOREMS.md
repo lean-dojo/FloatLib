@@ -164,6 +164,96 @@ to write down. Capped exponentiation decides equality with a boundary at a cost 
 bit lengths of the base, the exponent and the boundary, and not in the exponent's magnitude. Logarithm enclosures of increasing degree separate every other boundary, and the search
 ends because the logarithm difference is then nonzero.
 
+## Packed rows for kernel certificates
+
+Import `FloatLib.Numerics.Packed.Sos`, and `FloatLib.Numerics.Packed.Literal` for `packed_row`.
+A biased row `u` keeps `n` integers in lanes of `w` bits of one natural number, and the kernel
+programs check it with a few big-number operations. Each theorem says what a passing check means
+for the integer list the row stands for.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Numerics.Packed.eval_entries` | A biased row below `2 ^ (w * n)` stands for the value of its signed entries in base `2 ^ w`. |
+| `Numerics.Packed.entries_ofInt_eval`, `Numerics.Packed.entry_ofInt_eval` | A list whose entries fit comes back out of the biased row of its value, padded with zeros. |
+| `Numerics.Packed.guard_sound` | One range check bounds every signed entry by `2 ^ g` and rules out lanes beyond the row. |
+| `Numerics.Packed.eval_conv` | Kronecker substitution: the value of the Cauchy product is the product of the values. |
+| `Numerics.Packed.entries_mul`, `Numerics.Packed.entries_autocorr` | Two range checks and `n * 2 ^ gx * (m * 2 ^ gy) < 2 ^ (w - 1)` make the product row hold the Cauchy product; the same for a row times its reverse. |
+| `Numerics.Packed.absSum_eval`, `Numerics.Packed.sum_eval`, `Numerics.Packed.posSum_eval` | Masked remainders modulo `2 ^ w - 1` compute the `l1` norm, the sum and the positive part of a row whose `l1` norm is below `2 ^ (w - 1)`. |
+| `Numerics.Packed.absSum_toInt`, `Numerics.Packed.sum_toInt` | The same on a guarded row with entries in `[-2 ^ g, 2 ^ g)`, when `n * 2 ^ g < 2 ^ (w - 1)`. |
+| `Numerics.Packed.entries_rev`, `Numerics.Packed.lanes_rev`, `Numerics.Packed.pack_eq_ofInt` | Reversal reverses the entries and the lanes, and packing a list gives the biased row of its value. |
+| `Numerics.Packed.eval_lanes`, `Numerics.Packed.lanes_lt_of_guard`, `Numerics.Packed.laneSum_eq` | Rows of natural numbers: a row is the value of its lanes, the unsigned range check bounds every lane by `2 ^ g`, and one remainder computes the lane sum. |
+| `Numerics.Packed.lanes_mul`, `Numerics.Packed.lanes_pack` | Two unsigned range checks and `n * 2 ^ gx * (m * 2 ^ gy) < 2 ^ w` make `u * v` hold the Cauchy product of the lanes; unsigned packing keeps the entries. |
+| `Numerics.Packed.restrict_eq`, `Numerics.Packed.signs_eq` | One shift and one mask read a window of lanes; `signs` multiplies lane `k` of a two-sided row by the sign of `k - (n - 1)`. |
+| `Numerics.Packed.eval_shiftDown_add_low`, `Numerics.Packed.laneSum_low`, `Numerics.Packed.shiftDown_eval` | Rounding every entry down to a multiple of `2 ^ s` in place: the row is `2 ^ s` times the rounding plus the remainders, and one remainder reads their sum, the `l1` error. |
+| `Numerics.Packed.entries_ofInt_unfold`, `Numerics.Packed.signRow_mirror`, `Numerics.Packed.signRow_mirror_odd` | A guarded half row unfolds to its cosine or sine row; on these rows the signs are a relabelling. |
+| `Numerics.Packed.entries_ramp` | The derivative weights: entry `k` times `k`, read back under `n * 2 ^ g ≤ 2 ^ (w - 1)`. |
+| `Numerics.Packed.sosCheck_sound` | A passing sum-of-squares check gives `l1 e₁ + l1 e₂ ≤ 2 e₁[n - 1]` for the rows `e₁ - i e₂` of `kT (T - i S) + kc - kH |P + i Q|²`, with the constant `kc` in entry `n - 1`. |
+| `Numerics.Packed.sqRe_eq`, `Numerics.Packed.sqIm_eq`, `Numerics.Packed.l1_normSq_le` | Four Kronecker products and two reversals give the two rows of `|P + i Q|²` centred at `n - 1`, and their `l1` norms are at most `((|P| + |Q|) 2 ^ g)²`. |
+| `Numerics.Packed.horner_eq`, `Numerics.Packed.entries_ofInt_horner` | Horner's rule on a packed row is the value of the composed row `∑ cₖ bᵏ a ^ (n - 1 - k)`, which reads back under `n 2 ^ g K ^ (n - 1) < 2 ^ (w - 1)` for rows `a` and `b` of any length. |
+| `Numerics.Packed.linked_sound` | A passing `linked w d u k xs` says that lane `k + i` of `u` holds `xs[i] * d`, as `num * d = entry * den`. |
+
+## Coefficient bounds on the circle and on intervals
+
+Import `FloatLib.Numerics.Coeff.Trig`. An integer row with centre lane `c` stands for the Laurent
+polynomial `∑ k, xs[k] z ^ (k - c)`, `Numerics.Coeff.laurent`, whose polynomial part is Mathlib's
+`Polynomial.ofCoeffList xs`, and on `z = exp (u i)` for a trigonometric polynomial.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Numerics.Coeff.ofCoeffList_conv`, `Numerics.Coeff.laurent_conv`, `Numerics.Coeff.laurent_entries_mul` | The polynomial or the Laurent polynomial of a Cauchy product, or of a guarded Kronecker product, is the product. |
+| `Numerics.Coeff.norm_laurent_le`, `Numerics.Coeff.norm_laurent_le_absSum` | On the unit circle a row is bounded by its `l1` norm, which one `absSum` computes. |
+| `Numerics.Coeff.laurent_reverse`, `Numerics.Coeff.conj_laurent`, `Numerics.Coeff.laurent_autocorr` | Reversal substitutes `z⁻¹`, which is conjugation on the circle, so `h ⋆ reverse h` is `|h|²`. |
+| `Numerics.Coeff.laurent_normSq` | The two rows of `Packed.normSq n P Q`, read as `t - i s`, are `|P + i Q|²` on the circle. |
+| `Numerics.Coeff.re_laurent_nonneg`, `Numerics.Coeff.laurent_sosCheck` | A centre entry that dominates all other entries of a pair of rows gives a nonnegative real part; a passing `sosCheck` gives `kH |p + i q|² ≤ kT Re (t - i s) + kc`. |
+| `Numerics.Coeff.trig_sosCheck`, `Numerics.Coeff.power_sosCheck`, `Numerics.Coeff.normSq_sosCheck` | One check bounds from one side a trigonometric polynomial with cosine and sine terms, a polynomial at `x = (M + R cos u) / D` through Horner's rule, or the norm square of a Gaussian-integer polynomial on the circle. |
+| `Numerics.Coeff.laurent_compose` | The row of Horner's rule is the composed polynomial on the circle. |
+| `Numerics.Coeff.laurent_exp`, `Numerics.Coeff.re_laurent_exp`, `Numerics.Coeff.im_laurent_exp` | At `z = exp (u i)` a row is a trigonometric sum, whose real and imaginary parts are the cosine and sine sums of its lanes. |
+| `Numerics.Coeff.laurent_mirror`, `Numerics.Coeff.laurent_mirror_odd`, `Numerics.Coeff.abs_cos_sum_le`, `Numerics.Coeff.abs_sin_sum_le` | Mirrored rows are twice the cosine polynomial and `2 i` times the sine polynomial, each bounded by the `l1` norm of its half row. |
+| `Numerics.Coeff.hasDerivAt_cos_sum`, `Numerics.Coeff.hasDerivAt_sin_sum`, `Numerics.Coeff.hasDerivAt_cos_ramp` | Derivatives of cosine and sine polynomials, with the derivative row of a packed row computed by `ramp`. |
+| `Numerics.Coeff.hilbert_mirror`, `Numerics.Coeff.hilbert_mirror_odd` | The Hilbert transform, the multiplier `-i sgn m`, takes `cos (k u)` to `sin (k u)` and `sin (k u)` to `-cos (k u)`. |
+| `Numerics.Coeff.chebyshev_cos`, `Numerics.Coeff.forall_Icc_chebyshev`, `Numerics.Coeff.forall_Icc_of_cos` | A Chebyshev series at `cos u` is a cosine polynomial, so a bound for all `u` holds for the Chebyshev series on `[-1, 1]`, and in `(lo + hi) / 2 + (hi - lo) / 2 * cos u` on any interval `[lo, hi]`. |
+
+## Bounds on series with rational coefficients
+
+Import `FloatLib.Numerics.Automation.Interval` for `interval`, whose coefficient route applies
+these theorems to a bound over a whole domain. `Numerics.Coeff.series f xs` is
+`∑ k < xs.length, xs[k] * f k`, and `Numerics.Coeff.rowCheck w g n d A xs` checks in the kernel that
+the packed row `A` holds the rationals `xs` at the common denominator `d`.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Numerics.Coeff.series_add`, `Numerics.Coeff.series_smul`, `Numerics.Coeff.series_single`, `Numerics.Coeff.sum_eq_series` | `series` is linear in the list, a single coefficient is a monomial, and a block `∑ k ∈ range n, a k * f k` is the `series` of its coefficients. |
+| `Numerics.Coeff.trig_sos` | One check gives `0 ≤ kT (2 d (∑ aₖ cos (k u) + ∑ bₖ sin (k u))) + kc` at every `u`. |
+| `Numerics.Coeff.norm_sos` | One check gives `0 ≤ kT (d² ‖∑ aₖ zᵏ + i ∑ bₖ zᵏ‖²) + kc` at every `z` with `‖z‖ = 1`. |
+| `Numerics.Coeff.power_sos` | One check on the row of Horner's rule gives `0 ≤ kT (d (2 D) ^ (n - 1) ∑ aₖ xᵏ) + kc` at every `x` of `[lo, hi]`. |
+| `Numerics.Coeff.bound_le_of_sos`, `Numerics.Coeff.bound_lt_of_sos`, `Numerics.Coeff.le_bound_of_sos`, `Numerics.Coeff.lt_bound_of_sos` | `0 ≤ kT (K F) + kc` with `kT K b + kc ≤ 0` (or `< 0`) gives `b ≤ F` or `b < F` for `kT > 0`, and `F ≤ b` or `F < b` for `kT < 0`. |
+
+## The Wiener algebra and a posteriori defects
+
+Import `FloatLib.Numerics.Coeff.Defect`. `Numerics.Coeff.Wiener` is `ℓ¹(ℤ)` with convolution, a
+complete normed commutative `ℂ`-algebra with `‖1‖ = 1`; `Wiener.eval u` evaluates an element at
+the point `u` of the circle, and `Wiener.ofRow xs c` is the element of an integer row.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `Numerics.Coeff.Wiener.norm_eval_le`, `Numerics.Coeff.Wiener.continuous_eval_apply` | On the circle an element is bounded by its norm, and it is a continuous function. |
+| `Numerics.Coeff.Wiener.eval_ofRow`, `Numerics.Coeff.Wiener.ofRow_conv`, `Numerics.Coeff.Wiener.norm_ofRow_le` | A row is its Laurent polynomial on the circle, Cauchy products of rows are products, and the norm of a row is at most its `l1` norm. |
+| `Numerics.Coeff.inv_of_defect` | In a complete normed commutative ring with `‖1‖ = 1`, `‖1 - v f‖ ≤ δ < 1` makes `f` a unit with `‖f⁻¹ - v‖ ≤ ‖v‖ δ / (1 - δ)`. |
+| `Numerics.Coeff.invSqrtOneSub_sq_mul`, `Numerics.Coeff.norm_invSqrtOneSub_sub_one_le` | The binomial series `(1 - d) ^ (-1/2)` squares to `(1 - d)⁻¹`, and `‖(1 - d) ^ (-1/2) - 1‖ ≤ δ / (2 (1 - δ))` for `‖d‖ ≤ δ < 1`. |
+| `Numerics.Coeff.invSqrt_of_defect` | `‖1 - x g²‖ ≤ δ < 1` gives `r` with `r² x = 1` and `‖r - g‖ ≤ ‖g‖ δ / (2 (1 - δ))`. |
+| `Numerics.Coeff.Wiener.eval_invSqrt_of_defect` | If `x` and `g` are real on the circle and `g (0) > 0`, that `r` is `1 / √(x u)`, and `x` is positive. |
+| `Numerics.Coeff.Wiener.norm_one_sub_ofRow_mul_le` | One Kronecker product and one `absSum` bound the defect `‖1 - u v / 2 ^ K‖` of two packed rows. |
+
+## Packed rows of format values
+
+Import `FloatLib.Floats.ExecFloat.Packed`. `ExecFloat.ExactLanes` gives the exact rational lanes of a
+value of any format with an exact decoder, one for a scalar and one per element for a block, and
+`packed_values` brings a list of them in as one row at a common denominator.
+
+| Theorem | Informal statement |
+| --- | --- |
+| `ExecFloat.Packed.link_sound` | A passing `link w d vs u` says that every lane of `vs` is finite and is entry `k` of `u` divided by `d`. |
+
 ## Binary interchange formats
 
 Import `FloatLib.Floats.Formats.BinaryInterchange.Semantics`. The names below are in

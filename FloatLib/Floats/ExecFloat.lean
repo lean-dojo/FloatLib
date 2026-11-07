@@ -13,6 +13,7 @@ public import FloatLib.Floats.ExecFloat.Spec.Arithmetic
 public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
 public import FloatLib.Floats.ExecFloat.Proof.Certificate
 public import FloatLib.Floats.ExecFloat.Automation
+public import FloatLib.Floats.ExecFloat.Packed
 
 /-!
 # Executable numerical values
@@ -30,6 +31,9 @@ Which backend a format gets is decided from certified candidates and their cost 
 `#float_info` shows you that choice and the theorems that come with it. The directory README
 explains conversion, backend definitions and the checks on generated code. If you only need the
 runtime pieces, without proofs or inspection commands, import `FloatLib.Floats.ExecFloat.Runtime`.
+
+`packed_values` brings a list of values of any format with an exact rational meaning into a packed
+row at one common scale, for kernel-checked certificates about the numbers a program computed.
 -/
 
 @[expose] public section

@@ -2,14 +2,15 @@
 number: "11"
 slug: proving-numerical-bounds
 title: Proving error bounds
-summary: "How to prove a real inequality with the `interval` tactic, how to get an error bound for floating-point code with the `roundoff` tactic, and what each one assumes."
+summary: "How to prove a real inequality with the `interval` tactic, how to get an error bound for floating-point code with the `roundoff` tactic, how `interval` bounds a polynomial over its whole domain from its coefficients, and what each one assumes."
 phases: [status-and-directed, planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
 A plot can convince you that a curve stays under a line, but it only samples finitely many points.
 So how can a computer prove an inequality at every real number in an interval, when there are
 infinitely many of them? FloatLib does it with *tactics*, Lean commands that build a proof for you,
-which Lean then checks. This chapter teaches you two of them, `interval` and `roundoff`.
+which Lean then checks. This chapter teaches you two of them, `interval` and `roundoff`, and the
+way `interval` handles a polynomial over its whole domain, from its coefficients.
 
 ## How to prove an inequality with `interval`
 
@@ -650,3 +651,230 @@ You get the same $[0,1/2]$ as with rational endpoints. A finite format that can'
 endpoint returns `none`. Any representation can supply the same contract without changing the
 expression language or its proof, so if you have a favourite format and can prove its outward
 rounding, you can plug it in :)
+
+## How to bound a polynomial on the whole circle
+
+Some bounds are about a function of an angle. Take
+
+$$p(u) = \tfrac12 + \cos u + \tfrac12 \cos 2u.$$
+
+Is $p(u) \ge -1/4$ for every real $u$? Cutting $[0, 2\pi]$ into pieces gets expensive as the
+number of terms grows or the bound gets tighter. But $p$ is described completely by its three
+coefficients, and `interval` notices that. When a goal bounds a series over
+its whole domain, `∀ u : ℝ, …` here, it works with the coefficients before it tries any box:
+
+```lean
+open Finset in
+example : ∀ u : ℝ,
+    -1/4 ≤ ∑ k ∈ range 3, (([1/2, 1, 1/2] : List ℚ).getD k 0 : ℝ) * Real.cos (k * u) := by
+  interval (lower := [1, 1, 1])
+```
+
+The list `[1, 1, 1]` is a *certificate*, the evidence the proof is built from. Write $z = e^{iu}$
+for the point on the unit circle. Since $\cos 2u = 2\cos^2 u - 1$, we have
+$p(u) = (\cos u + \tfrac12)^2 - \tfrac14$. And $1 + z + z^2 = z(z^{-1} + 1 + z) = z(1 + 2\cos u)$,
+so $(\cos u + \tfrac12)^2 = |1 + z + z^2|^2/4$. That makes $p + \tfrac14 = |h(z)|^2/4$ for the
+polynomial $h(z) = 1 + z + z^2$, whose coefficients are the certificate. A square is never
+negative, so $p \ge -1/4$ everywhere, with equality where $\cos u = -1/2$. The goal may be written
+any way you like, as long as it is a sum of such blocks and monomials: the same certificate proves
+`∀ u : ℝ, -1/4 ≤ 1/2 + Real.cos u + Real.cos (2 * u) / 2`.
+
+That is the general shape. To prove $p \ge \mathrm{lo}$, the certificate is a polynomial $h$ with
+integer coefficients such that $p - \mathrm{lo} - c\,|h|^2$, for a scale $c > 0$ that the tactic
+finds, is a trigonometric polynomial whose constant coefficient is at least the sum of the
+absolute values of its other coefficients. Such a remainder can't go negative, because
+$|e^{iku}| = 1$. A trigonometric polynomial that is nonnegative everywhere is always a square
+$|h|^2$, which is the Fejér-Riesz theorem [@fejer1916] [@riesz1916], so a certificate exists for
+every lower bound below the minimum. It only has to be found.
+
+Without a certificate, `interval` uses the bound the coefficients give on their own: the constant
+term, plus or minus the sum of the absolute values of the others. Here it proves
+$|2\sin u - \sin 2u| \le 3$, and needs nothing else:
+
+```lean
+example : ∀ u : ℝ,
+    |∑ k ∈ Finset.range 3, (([0, 2, -1] : List ℚ).getD k 0 : ℝ) * Real.sin (k * u)| ≤ 3 := by
+  interval
+```
+
+That bound is fully automatic but often loose: for $p$ it only gives $1/2 - 3/2 = -1$ in place of
+$-1/4$. `(lower := h)` and `(upper := h)` give sharp bounds on either side, and both together a
+sharp bound on $|p|$. With sine terms the factor needs complex coefficients, given as a pair of
+rows for its real and imaginary parts. For instance $1 + \sin u = |1 - iz|^2/2$, so the factor
+$1 - iz$ proves that $1 + \sin u \ge 0$:
+
+```lean
+example : ∀ u : ℝ, 0 ≤ 1 + Real.sin u := by
+  interval (lower := ([1, 0], [0, -1]))
+```
+
+### What about intervals and the unit circle of $\mathbb{C}$?
+
+Chebyshev series work, because the Chebyshev polynomials satisfy $T_k(\cos u) = \cos ku$. The same
+certificate proves the same minimum on $[-1, 1]$, and the tactic accepts any point that `linarith`
+can place in $[-1, 1]$, such as $(x - 4)/2$ for $x \in [2, 6]$:
+
+```lean
+example : ∀ x ∈ Set.Icc (-1 : ℝ) 1, -1/4 ≤
+    ∑ k ∈ Finset.range 3, (([1/2, 1, 1/2] : List ℚ).getD k 0 : ℝ) *
+      (Polynomial.Chebyshev.T ℝ k).eval x := by
+  interval (lower := [1, 1, 1])
+```
+
+A polynomial in the power basis works on any interval $[\mathrm{lo}, \mathrm{hi}]$. Put
+$x = m + r\cos u$, with the midpoint $m$ and the radius $r$: then $p(x)$ is a cosine polynomial of
+the same degree, and the kernel builds its coefficients itself, with Horner's rule on packed rows
+[@horner1819]. I liked how little this needed: the substitution is the one behind every Chebyshev
+method [@trefethen2013], and in integers it is a handful of big-number products. On $[0, 1]$,
+$x^2 - x = \cos(2u)/8 - 1/8$, so the coefficients alone give the exact minimum:
+
+```lean
+example : ∀ x ∈ Set.Icc (0 : ℝ) 1, -1/4 ≤ x ^ 2 - x := by
+  interval
+```
+
+If the coefficients fail on an interval, the boxes still get their turn. And on the unit circle of
+$\mathbb{C}$, `interval` bounds the norm of a polynomial with Gaussian rational coefficients, from
+above or from below, by the same checks on $|p|^2$:
+
+```lean
+example : ∀ z : ℂ, ‖z‖ = 1 → 1 ≤ ‖2 + z‖ := by
+  interval
+```
+
+### How does the kernel check a certificate so fast?
+
+Every check ends in Lean's kernel. The kernel computes fifteen operations on natural-number
+literals with the GMP library, among them addition, multiplication, division, remainder, the
+bitwise operations and the shifts, and it interprets everything else one small step at a time. A
+check that walks a list costs tens of microseconds per entry, while one multiplication of two
+numbers with a million bits takes a few milliseconds. So FloatLib keeps a whole list of integers
+in one natural number, a *packed row*, with one integer per *lane* of $w$ bits. The row
+$[1, -2, 3]$ in lanes of 8 bits stores $x + 128$ in each lane, so it is the number
+$129 + 126 \cdot 256 + 131 \cdot 256^2 = 8617601$, and it stands for the integer
+$1 - 2 \cdot 256 + 3 \cdot 256^2 = 196097$.
+
+Integers multiply the way rows do. The row $[4, -5]$ stands for $4 - 5 \cdot 256 = -1276$, and
+$196097 \cdot (-1276)$ is the integer of $[4, -13, 22, -15]$, the coefficients of
+$(1 - 2z + 3z^2)(4 - 5z)$, because every coefficient of the product fits its lane. This is
+Kronecker substitution [@kronecker1882] [@harvey2009]: one big multiplication computes the whole
+product. Here the
+kernel checks it:
+
+```lean
+open FloatLib.Numerics.Packed in
+example :
+    entries 8 4 (ofInt 8 4 (toInt 8 3 (pack 8 [1, -2, 3]) * toInt 8 2 (pack 8 [4, -5]))) =
+      [4, -13, 22, -15] := by
+  decide +kernel
+```
+
+Sums are cheap too. Since $2^w \equiv 1$ modulo $2^w - 1$, one remainder adds up all the lanes of
+a row, and two of them, with masks that pick out the positive and the negative entries, give the
+$\ell^1$ norm. This is my favourite trick in the whole engine. It's casting out nines in base
+$2^w$: the lanes $3, 1, 4$ make the number $3 + 1 \cdot 256 + 4 \cdot 256^2 = 262403$, and
+$262403 \bmod 255 = 8 = 3 + 1 + 4$. HAKMEM counts the bits of a word the same way, with a remainder
+modulo $63$ [@beelerHakmem1972].
+
+A range check is one addition, one bitwise conjunction and one comparison. So a sum-of-squares
+check on a polynomial with $n$ coefficients is one product, $h$ times its reverse, which is $|h|^2$
+on the circle, then one subtraction, one lane read and one $\ell^1$ norm, plus the range checks
+that rule out a lane overflowing. A complex factor $p + iq$ adds three more products and one more
+reversal. `Packed.sosCheck_sound` says what a passing check means for the lists of integers, and
+`Coeff.laurent_sosCheck` turns it into the inequality on the circle.
+
+In our measurements on Lean 4.35, a two-sided bound on a cosine polynomial with 200 integer
+coefficients below $2^{80}$ takes about 0.14 s of kernel time, most of it the link between the 200
+coefficients of the goal and their row, and the whole tactic call about as long. The certified
+bound is within $4 \cdot 10^{-7}$ of the maximum, relative to its size, while the $\ell^1$ bound is
+3.45 times larger.
+
+### Where do certificates come from?
+
+From any program you like, because nothing it computes is trusted. FloatLib ships
+`scripts/coeff_cert.py`, which factors $p - \mathrm{lo} - \eta$, for a small slack $\eta$, from
+its roots, rounds the factor to Gaussian integers, and checks the result in exact arithmetic before
+it writes it. It reads coefficients as integers, fractions, decimals or the bit patterns of IEEE
+values, and `--sin`, `--interval lo hi` and `--laurent` select the other families:
+
+```bash
+python3 scripts/coeff_cert.py coefficients.txt --abs auto --slack 1e-7 -o bound
+```
+
+This writes `bound_lower.txt` and `bound_upper.txt`, one integer per line, and a second file for
+the imaginary part when the factor has one, and prints the bound it certified and the option to
+use. `interval (lower := "bound_lower.txt") (upper := "bound_upper.txt")` reads the files from the
+directory of the Lean source. For the 200-coefficient polynomial above, the script takes about 6 s
+with python-flint [@pythonFlint] and 41 s with mpmath alone. If the certificate is wrong, or the
+bound is false, the kernel's check fails and so does the proof.
+
+### How to use coefficients that are floating-point numbers
+
+Coefficients often come out of a numerical program. FloatLib formats with an exact rational meaning
+decode to that rational exactly, so a list of binary32, binary64, posit or fixed-point values is a
+list of rationals, and `interval` reads the decoded values itself:
+
+```lean
+open FloatLib.Floats in
+def floatCoefficients : List Binary32 := [0.5, 1, 0.5]
+
+open FloatLib.Floats.ExecFloat.Packed in
+def floatValues : List ℚ := (values floatCoefficients).map (·.getD 0)
+
+example : ∀ u : ℝ,
+    -1/4 ≤ ∑ k ∈ Finset.range 3, (floatValues.getD k 0 : ℝ) * Real.cos (k * u) := by
+  interval (lower := [1, 1, 1])
+```
+
+`values` lists the exact value of each lane, `none` for an infinity or a NaN, and the kernel
+decodes the values while it checks the link, at about 2 ms per binary64 value. For certificates
+written by hand, `packed_values r (width := w) := xs` brings a list of values in as one packed row
+at their common denominator, together with a theorem `r.link` that the kernel checked once. The
+binary32 values $1.5$, $-0.25$ and $3$, for example, become the row $[6, -1, 12]$ over the
+denominator $4$.
+
+### What about $1/f$ and $f^{-1/2}$?
+
+A function like $1/(2 + \cos u)$ is not a polynomial, and its coefficients never end. FloatLib
+handles it *a posteriori*, the standard move of verification methods [@rump2010]. An untrusted
+program supplies an approximation $v$, and the kernel computes the *defect* $1 - vf$ exactly, as a
+finite row, and its $\ell^1$ norm $\delta$. The functions $\sum_n c_n e^{inu}$ with
+$\sum_n |c_n| < \infty$ form a Banach algebra, the Wiener algebra [@wiener1932], `Coeff.Wiener`,
+whose product is the convolution of the coefficients, so the Neumann series gives
+`Coeff.inv_of_defect`: if $\delta < 1$, then $f$ is invertible and
+$\|f^{-1} - v\| \le \|v\|\,\delta/(1 - \delta)$. The norm bounds the function, so this bounds
+$|1/f(u) - v(u)|$ at every $u$. I took the idea of working in this algebra, rather than function by
+function, from PlasmaLean [@plasmaLean], which builds the same ring for its plasma-physics
+certificates.
+
+Here is the smallest example. For $f = 2 + \cos u$, which is the row $[1, 4, 1]$ over $2$, take
+$v = [-2, 7, -2]/12$. Then $vf = [-2, -1, 24, -1, -2]/24$, so $\delta = 6/24 = 1/4$, which is one
+product and one $\ell^1$ norm in the kernel:
+
+```lean
+open FloatLib.Numerics.Packed in
+example : absSum 16 5 (shift 16 2 24 - toInt 16 3 (pack 16 [-2, 7, -2]) *
+    toInt 16 3 (pack 16 [1, 4, 1])) = 6 := by
+  decide +kernel
+```
+
+With $\|v\| = 11/12$, `inv_of_defect` gives
+$|1/(2 + \cos u) - v(u)| \le (11/12)(1/4)/(3/4) = 11/36$ for every $u$. A longer $v$, with 25
+coefficients at $2^{-40}$, brings the error down to $1.003 \cdot 10^{-7}$. The binomial series of
+$(1 - t)^{-1/2}$, whose coefficients are all positive, does the same for inverse square roots
+(`Coeff.invSqrt_of_defect` and `Coeff.Wiener.eval_invSqrt_of_defect`). From a defect of
+$1.6 \cdot 10^{-10}$, the test suite proves $|1/\sqrt{2 + \cos u} - g(u)| \le 8 \cdot 10^{-11}$ for
+a cosine polynomial $g$ with 33 coefficients. These are theorems you apply yourself, because
+`interval` doesn't read inverses of series yet.
+
+### What exactly is proved?
+
+`interval` proves the goal as stated, for every real $u$, every $x$ in the interval or every $z$ on
+the unit circle, with no sampling. The coefficients are exact rationals, so a float coefficient
+means its exact decoded value, not a nearby decimal, and the bound has to be a term that `norm_num`
+evaluates to a rational. The kernel checks the link between the coefficients of the goal and their
+packed rows, the range of every lane and one sum-of-squares check per side. The tactic then applies
+`Coeff.trig_sos`, `Coeff.power_sos` or `Coeff.norm_sos`, one of the four bound lemmas such as
+`Coeff.bound_le_of_sos`, and for a Chebyshev series `Coeff.forall_Icc_chebyshev`. All of them depend
+only on Lean's three standard axioms. The goal's polynomial side is read as a sum of rational
+multiples of blocks, monomials and constants, so products of polynomials and inverses aren't read.

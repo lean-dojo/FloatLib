@@ -107,6 +107,14 @@ and adapt it to your own calculation.
   inequalities, elementary functions included, by certified evaluation and subdivision. Affine
   quantization has a real-valued specification with a rounding rule you supply, plus a proof
   connecting nearest-even quantization to the executable rational implementation.
+- **Bounds from coefficients.** The same `interval` tactic proves bounds over a whole domain from
+  coefficients: trigonometric polynomials with cosine and sine terms on the circle, polynomials
+  and Chebyshev series on any interval, and norms of polynomials on the unit circle of `ℂ`, with
+  rational coefficients or the exact values of float data. Lean's kernel checks sum-of-squares
+  certificates on packed rows, lists of integers kept in one big number so that a product or an
+  `l1` norm takes a few big-number operations, and a posteriori defects give inverses and inverse
+  square roots of such polynomials. See
+  [the coefficient guide](site/content/chapters/11-proving-numerical-bounds.md#how-to-bound-a-polynomial-on-the-whole-circle).
 - **Repeatedly rounded sums.** A reduction tree fixes the order of the additions, and its error
   bounds account for rounding at every node, absolute-error terms near underflow included. For
   a sum that rounds only once, use the exact accumulators.
@@ -172,7 +180,7 @@ of the library:
 
 | Directory | What belongs here |
 | --- | --- |
-| [`FloatLib/Numerics`](FloatLib/Numerics) | Representation-independent meaning, exact arithmetic, contracts, and enclosures |
+| [`FloatLib/Numerics`](FloatLib/Numerics) | Representation-independent meaning, exact arithmetic, contracts, enclosures, packed rows for kernel certificates, and coefficient bounds |
 | [`FloatLib/Kernels`](FloatLib/Kernels) | Shared word and limb algorithms with refinement proofs |
 | [`FloatLib/Floats`](FloatLib/Floats) | Concrete formats, real-valued rounding theory, executable operations, and their proofs |
 
