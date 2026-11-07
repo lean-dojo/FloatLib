@@ -6,7 +6,7 @@ summary: "Set up FloatLib, do arithmetic in a floating-point format, see the exa
 phases: [planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
-FloatLib implements numerical formats and proves properties of their arithmetic in Lean 4. This chapter introduces the library through binary32 calculations. You will evaluate expressions, inspect their exact stored values, select a rounding direction, read exception flags and prove a theorem about an operation.
+Welcome to the absolute beginner's guide to FloatLib. FloatLib implements numerical formats and proves properties of their arithmetic in Lean 4. This chapter introduces the library through binary32 calculations. You will evaluate expressions, inspect their exact stored values, select a rounding direction, read exception flags and prove a theorem about an operation.
 
 ## What is a floating-point number?
 

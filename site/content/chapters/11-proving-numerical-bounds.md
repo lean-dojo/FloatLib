@@ -642,7 +642,8 @@ def decimalBackend :=
 You get the same $[0,1/2]$ as with rational endpoints. A finite format that can't enclose an output
 endpoint returns `none`. Any representation can supply the same contract without changing the
 expression language or its proof. A custom endpoint format can use the same evaluator once its
-outward-rounding contract has been proved.
+outward-rounding contract has been proved. If you have an endpoint format you'd like to use,
+you can connect it through this contract :)
 
 ## How to bound a polynomial on the whole circle
 

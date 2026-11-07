@@ -3,20 +3,15 @@
   Verified Floating-Point Arithmetic in Lean
 </h1>
 
-FloatLib is a Lean library for arbitrary precision floating-point arithmetic with
-machine-checked proofs. It provides executable operations, numerical specifications and
-theorems connecting them. You can select a format, compute with it and apply its arithmetic
-theorems in a Lean development.
+FloatLib is a Lean 4 library for arbitrary precision floating-point arithmetic and verified
+numerical computation. It provides executable operations, numerical specifications and
+proofs connecting them, together with rounding theorems, error bounds and numerical proof
+automation.
 
-For example, binary32 addition of `0.1` and `0.2` produces a value displayed as `0.3`.
-Its exact value is `5033165 / 16777216`, or `0.300000011920928955078125` in decimal.
-FloatLib lets you inspect this value and prove properties of the addition, using the same
-specification for every certified backend.
-
-It covers IEEE binary and decimal, posits with exact quire accumulation, and the small formats
-people use in ML. Have a different format in mind? You can define it yourself on top of the
-shared integer kernels and rounding theory. We follow the standard literature down to the
-rules for rounding modes, NaNs, infinities and both signed zeros.
+The library supports IEEE binary and decimal formats, posits with exact quire accumulation,
+and low precision formats for machine learning. Shared integer kernels and numerical
+interfaces support custom formats and rounding rules. The specifications include signed
+zeros, infinities, NaNs and exception flags.
 
 Our [guide](site/content/chapters) works through calculations, proofs and the algorithms behind
 them, and its [first chapter](site/content/chapters/01-using-the-library.md) is the place to
@@ -193,8 +188,10 @@ dependency graphs that show how the definitions and proofs fit together.
 ## Contributing
 
 Thanks for your interest in FloatLib. If you have a format you want to add, a kernel you think
-could be faster, or a proof that could be simpler, we'd love to hear from you. FloatLib builds
-on Mathlib and follows its proof style and naming conventions, and the
+could be faster, or a proof that could be simpler, we'd love to hear from you :) You can
+[reach out with questions or ideas](https://github.com/lean-dojo/FloatLib/issues).
+
+FloatLib builds on Mathlib and follows its proof style and naming conventions, and the
 [contributing guide](CONTRIBUTING.md) explains how to get started.
 
 For a local check of the library and website:
