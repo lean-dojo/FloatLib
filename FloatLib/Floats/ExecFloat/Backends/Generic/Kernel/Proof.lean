@@ -266,7 +266,7 @@ theorem Internal.addComponents_eq
   by_cases hfmt : fmt.isIEEE = true
   · rw [ite_eq_left hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
     rw [addScaleDyadics_eq fmt hfmt]
-  · rw [ite_eq_right hfmt]
+  · rw [ite_eq_right hfmt, roundDyadic_addDyadicForRounding]
 
 /-- Compile finite addition through unsigned scale alignment on conventional IEEE formats. -/
 @[csimp] theorem addComponents_eq_internal :
@@ -441,7 +441,7 @@ theorem Internal.fmaComponents_eq
   by_cases hfmt : fmt.isIEEE = true
   · rw [ite_eq_left hfmt, FiniteScaleAdd.roundSum_eq fmt hfmt]
     rw [addScaledProduct_eq fmt hfmt]
-  · rw [ite_eq_right hfmt]
+  · rw [ite_eq_right hfmt, roundDyadic_addDyadicForRounding]
 
 /--
 An aligned same-sign FMA reduces to one product-round call for every IEEE binary format.
@@ -562,7 +562,10 @@ theorem addFields_eq
       Internal.addComponents_eq fmt
         { sign := xSign, exponent := xExponent, mantissa := xMantissa }
         { sign := ySign, exponent := yExponent, mantissa := yMantissa }
-  · simp [addFields, hieee]
+  · simpa [addFields, hieee] using
+      Internal.addComponents_eq fmt
+        { sign := xSign, exponent := xExponent, mantissa := xMantissa }
+        { sign := ySign, exponent := yExponent, mantissa := yMantissa }
 
 /-- Scalar-field addition `addRuntime?` agrees with `add?`. -/
 theorem addRuntime_eq {fmt : FloatFormat} (x y : Model fmt) :
@@ -666,7 +669,11 @@ theorem fmaFields_eq
         { sign := xSign, exponent := xExponent, mantissa := xMantissa }
         { sign := ySign, exponent := yExponent, mantissa := yMantissa }
         { sign := zSign, exponent := zExponent, mantissa := zMantissa }
-  · simp [fmaFields, hieee]
+  · simpa [fmaFields, hieee] using
+      Internal.fmaComponents_eq fmt
+        { sign := xSign, exponent := xExponent, mantissa := xMantissa }
+        { sign := ySign, exponent := yExponent, mantissa := yMantissa }
+        { sign := zSign, exponent := zExponent, mantissa := zMantissa }
 
 /-- Scalar-field FMA `fmaRuntime?` agrees with `fma?`. -/
 theorem fmaRuntime_eq {fmt : FloatFormat} (x y z : Model fmt) :

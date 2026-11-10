@@ -53,8 +53,9 @@ For an IEEE descriptor, `Model.pow` is correctly rounded for a finite base and a
 integral exponent whenever its result is finite (`Model.Power.toReal_pow_of_eq_intCast`). A
 finite positive base with any other finite exponent goes to the certified enclosure search
 `Model.Transcendentals.Certified.pow`, and the result is correctly rounded whenever that search
-settles (`Model.Power.pow_spec_of_certified`). Overflow, most exact results on a rounding
-boundary, and an exhausted search fall back to `exp (y * log x)`.
+settles (`Model.Power.pow_spec_of_certified`). A certified overflow gives positive infinity, the
+format's overflow result. Most exact results on a rounding boundary and an exhausted search fall
+back to `exp (y * log x)`.
 
 ## Overflow by encoding
 
@@ -75,5 +76,7 @@ The other two finite-only policies reserve a NaN encoding, as the table shows.
 
 Ordinary notation rounds to nearest-even. For another direction, every operation takes
 `(mode := ...)`, and `(status := true)` returns the value with its flags and ternary value.
-`Model.Interval fmt` uses directed kernels, and if a denominator contains zero, or the endpoints
-are NaN or unordered, you get `whole fmt`.
+`Model.Interval fmt` uses directed kernels. Addition, subtraction, multiplication and division
+give `whole fmt` when a denominator contains zero or the computed endpoints are NaN or unordered.
+The other operations keep their endpoints as computed, a NaN included, except that square root
+clips a lower endpoint below zero to `+0`, so `sqrt [-1, 4]` is `[0, 2]`.

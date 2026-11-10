@@ -5,8 +5,8 @@ Chapter 11 gives the quire of an n-bit posit as a signed two's-complement word o
 least significant bit is worth 2^(16 - 8n), and works out the capacity argument in words: the
 square of the largest posit is 2^240, and 2^31 such products come to exactly 2^511 coefficient
 units, one past the largest ordinary quire coefficient. This figure draws the word to scale,
-bit 511 on the left, with three value landmarks and the thirty carry bits above the largest
-product. Its capacity strip states the strict bound from a zero accumulator for finite
+bit 511 on the left, with three value landmarks and the fields of the Posit Standard (2022),
+Section 3.4: the sign bit, 31 carry-guard bits, 8n - 16 integer bits and 8n - 16 fraction bits. Its capacity strip states the strict bound from a zero accumulator for finite
 products; the longer derivation stays in the chapter.
 
 Everything drawn is arithmetic on the parameters of FloatLib/Floats/Formats/Posit/Quire/Model/
@@ -14,8 +14,8 @@ Core.lean (width = 16 * bits, scaleExponent = 16 - 8 * bits) and of
 FloatLib/Floats/Formats/Posit/Descriptor.lean for the posit range, which the chapter states as
 [2^-120, 2^120] for 32 bits: bit i of the quire has weight 2^(i + scaleExponent), so the least
 significant bit is 2^-240 (the square of the smallest posit), bit 240 is one, bit 120 is the
-smallest posit, bit 360 is the largest posit, bit 480 is the square of the largest posit, bits 481
-to 510 are the thirty bits above it, and bit 511 is the sign.
+smallest posit, bit 360 is the largest posit, bit 480 is the square of the largest posit and the
+lowest carry-guard bit, bits 480 to 510 are the carry guard, and bit 511 is the sign.
 
 Run from anywhere: python3 ch14_quire.py [--out PNG]
 """
@@ -40,10 +40,11 @@ BIT_ONE = -SCALE_EXPONENT                          # weight 2^0
 BIT_MIN_POSIT = BIT_ONE - MAX_POSIT_EXPONENT       # weight 2^-120
 BIT_MAX_PRODUCT = BIT_ONE + 2 * MAX_POSIT_EXPONENT  # weight 2^240
 BIT_SIGN = WIDTH - 1
-HEADROOM = BIT_SIGN - BIT_MAX_PRODUCT - 1          # 30 bits strictly between them
+BIT_CARRY = 2 * (8 * POSIT_BITS - 16)              # the carry guard starts above 8n - 16 + 8n - 16 bits
+CARRY_BITS = BIT_SIGN - BIT_CARRY                  # 31 carry-guard bits, the standard's C30 to C0
 
 assert BIT_MIN_POSIT * 2 == BIT_ONE == 240, (BIT_MIN_POSIT, BIT_ONE)
-assert BIT_MAX_PRODUCT == 480 and HEADROOM == 30
+assert BIT_MAX_PRODUCT == BIT_CARRY == 480 and CARRY_BITS == 31
 
 
 def x_of(bit: int) -> float:
@@ -60,13 +61,13 @@ def draw(mobile: bool):
     ax.set(xlim=(-6, WIDTH + 6), ylim=(-1.15, 2.7))
     ax.axis("off")
     segments = [(BIT_SIGN, BIT_SIGN, fs.VERMILION),
-                (BIT_MAX_PRODUCT + 1, BIT_SIGN - 1, fs.GREEN),
-                (BIT_ONE, BIT_MAX_PRODUCT, fs.BLUE), (0, BIT_ONE - 1, fs.SKY)]
+                (BIT_CARRY, BIT_SIGN - 1, fs.GREEN),
+                (BIT_ONE, BIT_CARRY - 1, fs.BLUE), (0, BIT_ONE - 1, fs.SKY)]
     for lo, hi, colour in segments:
         ax.add_patch(Rectangle((x_of(hi), 0), hi - lo + 1, 0.7,
                                facecolor=colour, edgecolor=fs.INK, lw=0.6))
     for bit, y, label in [(BIT_SIGN, 2.25, "sign: bit 511"),
-                           (496, 1.35, "30 carry bits: 481 to 510")]:
+                           (496, 1.35, "31 carry-guard bits: 480 to 510")]:
         x = x_of(bit) + 0.5
         ax.plot([x, x], [0.72, y - 0.08], color=fs.MUTED, lw=0.9)
         ax.text(x + 4, y, label, fontsize=11.5, va="center")
@@ -79,12 +80,12 @@ def draw(mobile: bool):
         ax.plot([x, x], [0, -0.18], color=fs.MUTED, lw=0.8)
         ax.text(x, -0.3, f"bit {bit}\n{value}", fontsize=11.5, ha=ha, va="top", linespacing=1.4)
     fig.text(0.035, 0.32 if mobile else 0.24,
-             "Largest product reaches bit 480.\nBits above it absorb carries." if mobile else
-             "Largest product: $2^{240}$, at bit 480.  The 30 bits above it absorb carries.",
+             "Largest product reaches bit 480,\nthe lowest carry-guard bit." if mobile else
+             "Largest product: $2^{240}$, at bit 480, the lowest carry-guard bit.  The guard absorbs carries.",
              fontsize=12, linespacing=1.5)
     fig.text(0.035, 0.21 if mobile else 0.15,
-             "Blue: 241 integer positions\nLight blue: 240 fractional positions" if mobile else
-             "Blue: 241 integer positions.  Light blue: 240 fractional positions.",
+             "Blue: 240 integer positions\nLight blue: 240 fractional positions" if mobile else
+             "Blue: 240 integer positions.  Light blue: 240 fractional positions.",
              fontsize=11.5, linespacing=1.5, color=fs.MUTED)
     fig.text(0.035, 0.025,
              "From zero, strictly fewer than $2^{31}$\nfinite products accumulate exactly."

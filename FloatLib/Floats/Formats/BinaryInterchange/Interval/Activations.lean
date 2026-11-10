@@ -44,11 +44,15 @@ def abs {fmt : FloatFormat} (A : Interval fmt) : Interval fmt :=
 /--
 Outward-rounded square-root image.
 
-The executable operation is total. A real-valued enclosure theorem also requires a conventional
-IEEE descriptor and a valid input interval with nonnegative lower endpoint.
+A lower endpoint below zero is clipped to `+0`, the square root of the interval's nonnegative
+part, so `sqrt [-1, 4]` is `[0, 2]`. A NaN endpoint stays NaN. The executable operation is total.
+The real-valued enclosure theorems also require a conventional IEEE descriptor and a valid input
+interval whose upper endpoint is nonnegative.
 -/
 @[inline] def sqrt {fmt : FloatFormat} (A : Interval fmt) : Interval fmt :=
-  { lo := Model.sqrt A.lo (mode := .down)
+  { lo :=
+      if leB (Model.zero fmt true) A.lo || Model.isNaN A.lo then Model.sqrt A.lo (mode := .down)
+      else Model.zero fmt false
     hi := Model.sqrt A.hi (mode := .up) }
 
 end Interval

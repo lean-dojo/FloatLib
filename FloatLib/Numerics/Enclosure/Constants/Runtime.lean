@@ -26,8 +26,9 @@ on each call. A read at `bits` shifts the first level with at least `bits` bits 
 which keeps the two-unit bound. A faithful read of `log 2` takes 64 more bits and is within one
 unit, and the grid read returns an enclosure on a binary grid.
 
-Five computations read the cache: the binary sine and cosine reduction, the exponential reduction,
-generated transcendental configurations, the certified binary power, and `Model.pi`. Two don't. The
+Seven computations read the cache: the binary sine and cosine reduction, the exponential
+reduction, generated transcendental configurations, the certified binary power, the correctly
+rounded logarithm and weighted exponential searches, and `Model.pi`. Two don't. The
 rational enclosures behind the exact comparators compute their own `π/4` with `piQuarter`, and
 `BinaryGrid.log`, which is behind the certified binary and decimal logarithms and the logarithm
 comparator `ElementaryComparison.compareLog`, computes its own `log 2`.

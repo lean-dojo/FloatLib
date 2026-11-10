@@ -31,8 +31,9 @@ decision.
 
 `Constants` caches proved integer bounds of `π / 2`, `2 / π` and `log 2` at every precision. Binary
 interchange kernels read them: sine and cosine reduction, exponential reduction, generated
-configurations, the certified power, and `Model.pi`. Only the exact comparators and `BinaryGrid.log`
-compute their own `π / 4` and `log 2`. `ArgumentReduction` reduces an argument `m * 2 ^ e` modulo
+configurations, the certified power, the correctly rounded logarithm and weighted exponential
+searches, and `Model.pi`. Only the exact comparators and `BinaryGrid.log` compute their own `π / 4`
+and `log 2`. `ArgumentReduction` reduces an argument `m * 2 ^ e` modulo
 `π / 2` by the method of Payne and Hanek, from a window of the cached `2 / π`, with a proved bound
 on the error of its remainder.
 

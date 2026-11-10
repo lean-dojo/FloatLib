@@ -23,8 +23,9 @@ packed_row g (width := 300) from "g.txt"
 ```
 
 The first form takes the entries in the source. The second reads them from a text file in the
-directory of the source file, separated by white space or commas, with `#` starting a comment that
-runs to the end of the line. Either way the command checks that every entry `x` fits,
+directory of the source file: plain decimal integers, ASCII digits after an optional `-`, separated
+by white space or commas, with `#` starting a comment that runs to the end of the line. Any other
+token, such as `1_000` or `+5`, is an error. Either way the command checks that every entry `x` fits,
 `-2 ^ (w - 1) ≤ x < 2 ^ (w - 1)`, and lane `k` of the constant then holds `xs[k] + 2 ^ (w - 1)`.
 So `entries 64 5 h = [3, -1, 4, -1, 5]` holds by `decide +kernel`. With `(signed := false)` the
 entries are natural numbers below `2 ^ w`, stored as they are, and
@@ -113,15 +114,21 @@ def packSlice (w : Nat) (lanes : Array Nat) (lo len : Nat) : Nat :=
 termination_by len
 decreasing_by all_goals omega
 
-/-- The value of a string of decimal digits, read in blocks of at most eighteen digits that are
-joined by halving, so that a long entry costs about one multiplication per level. -/
+/-- The value of a nonempty string of ASCII decimal digits, read in blocks of at most eighteen
+digits that are joined by halving, so that a long entry costs about one multiplication per level.
+Any other character, such as a `_` separator, gives `none`. -/
 partial def natOfDigits (s : String.Slice) : Option Nat :=
-  let n := s.utf8ByteSize
-  if n ≤ 18 then s.toNat? else
-    let low := n / 2
-    match natOfDigits (s.take (n - low)), natOfDigits (s.drop (n - low)) with
-    | some a, some b => some (a * 10 ^ low + b)
-    | _, _ => none
+  if s.isEmpty || !s.all Char.isDigit then none else digits s
+where
+  /-- The halving reader. Every character is an ASCII digit, so bytes count digits and both
+  halves are shorter than `s`. -/
+  digits (s : String.Slice) : Option Nat :=
+    let n := s.utf8ByteSize
+    if n ≤ 18 then s.toNat? else
+      let low := n / 2
+      match digits (s.take (n - low)), digits (s.drop (n - low)) with
+      | some a, some b => some (a * 10 ^ low + b)
+      | _, _ => none
 
 /-- A decimal integer with an optional leading minus sign. -/
 def intOfToken (s : String) : Option Int :=
@@ -130,8 +137,8 @@ def intOfToken (s : String) : Option Int :=
   else
     (natOfDigits s.toSlice).map fun n => (n : Int)
 
-/-- The entries of a rows file: decimal integers separated by white space or commas, with `#`
-starting a comment that runs to the end of the line. The pieces are cut with `String.splitOn`,
+/-- The entries of a rows file: decimal integers, ASCII digits after an optional `-`, separated by
+white space or commas, with `#` starting a comment that runs to the end of the line. The pieces are cut with `String.splitOn`,
 which is much faster here than `String.replace`. -/
 def parseEntries (text : String) : Except String (Array Int) := do
   let mut out := #[]

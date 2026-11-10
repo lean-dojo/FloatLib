@@ -142,6 +142,7 @@ Python interpreter for the Lean adapter.
 | `native_decide` in conformance | `FloatLibTests/Conformance/**` | exact counts in `checks/trust-surface.sh`; none in library semantics |
 | `unsafe` expression evaluation in the inspection command | `ExecFloat/Info/Inspection.lean` | one use in `readString`, counted by `checks/trust-surface.sh` |
 | `unsafe` site-export entry point | `site/tooling/ExportNodes.lean` | one use in `main`, counted by `checks/trust-surface.sh` |
+| `unsafe` evaluation of a registered extension | `Automation/Roundoff/Extension.lean` | one `evalConstCheck` use, counted by `checks/trust-surface.sh` |
 
 We use `native_decide` when native evaluation makes a useful finite check faster. It saves time
 while the build proves the proposition and does nothing for FloatLib's arithmetic at runtime. In
@@ -150,18 +151,23 @@ apart from the library's general proofs. A useful native check belongs here, and
 experiment goes in scratch like any other.
 
 The inspection command evaluates a closed string in `MetaM` to display a chosen execution plan,
-and the site exporter loads a Lean environment with initializers enabled. Both are tooling.
+and the site exporter loads a Lean environment with initializers enabled. Both are tooling. The
+`roundoff` analysis evaluates each `@[roundoff_extension]` definition to read the extension it
+registers. That value only configures the analysis: every theorem it produces is still checked by
+the kernel.
 Aesop's `unsafe` rule annotations are a different thing: they only steer proof search and never
 use Lean's unchecked execution.
 
 `checks/trust-surface.sh` inventories native proof evaluation, compiler replacements, unchecked
 imports, and `unsafe` uses across library, test, benchmark, and site Lean sources.
-[Axioms.lean](FloatLibTests/Conformance/Trust/Axioms.lean) audits every loaded production
-declaration from the public root, the optional binary transcendental and correctly rounded
-imports, the decimal certified proofs, and the `roundoff` analysis, including available private
-declarations and `@[csimp]` lemmas. We add imports for the quotient, integer square root, and
-checked square root compiler certificates because their clients use a private import, and other
-modules that aren't imported fall outside the audit. Axioms.lean also compares the posit decoder's
+[Axioms.lean](FloatLibTests/Conformance/Trust/Axioms.lean) audits every production declaration
+its environment holds from the public root, the optional binary transcendental and correctly
+rounded imports, the decimal certified proofs, and the `roundoff` analysis, including private
+declarations and `@[csimp]` lemmas. A declaration it doesn't hold is checked through the ones that
+use it. We add `import all` for the compiler certificates and backend proof modules that every
+client imports privately, so their declarations are checked directly. Declarations neither held
+nor used, mostly compiler-generated auxiliaries, and modules that aren't imported fall outside the
+audit, though `checks/trust-surface.sh` rejects `sorry` and `axiom` in every source. Axioms.lean also compares the posit decoder's
 actual replacement with the two endpoints of its general equality theorem, since collecting
 axioms alone can't establish that relationship.
 [RootImports.lean](FloatLibTests/Conformance/Trust/RootImports.lean) inspects the root's complete

@@ -215,6 +215,15 @@ theorem toReal_posMaxFinite (fmt : FloatFormat) :
   simp only [Bool.false_eq_true, ite_false, one_mul]
   congr 1
 
+/-- `toReal_posMaxFinite` with its two parts given as values, so that a bound on a concrete format
+closes by arithmetic once the parts are computed. -/
+theorem toReal_posMaxFinite_of_eq (fmt : FloatFormat) {significand : Nat} {exponent : Int}
+    (hsignificand : pow2 fmt.fracWidth + fmt.maxFiniteFracField = significand)
+    (hexponent : fmt.maxNormalExponent - Int.ofNat fmt.fracWidth = exponent) :
+    toReal (posMaxFinite fmt) = (significand : ℝ) * (2 : ℝ) ^ exponent := by
+  rw [toReal_posMaxFinite, hsignificand, hexponent]
+  simp [bpow, FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
+
 /-- A signed magnitude `±mantissa * 2^exponent` has the magnitude as its absolute value. -/
 private theorem abs_signed_mul_bpow (sign : Bool) (mantissa : Nat) (exponent : Int) :
     |(if sign then (-1 : ℝ) else 1) * (mantissa : ℝ) * bpow exponent| =

@@ -152,11 +152,34 @@ theorem abs_sound
 
 /-! ## Directed square root -/
 
+/-- For a finite lower endpoint that is not below zero, `sqrt` rounds that endpoint downward. -/
+private theorem sqrt_lo_of_nonneg {fmt : FloatFormat} {A : Interval fmt}
+    (hfinite : isFinite A.lo = true) (hnonnegative : 0 ≤ toReal A.lo) :
+    (sqrt A).lo = Model.sqrt A.lo (mode := .down) := by
+  have hkeep : leB (zero fmt true) A.lo = true := by
+    rw [leB_eq_true_iff_toEReal_le_of_isNaN_eq_false _ _ (isNaN_zero fmt true)
+      (isNaN_eq_false_of_isFinite_eq_true A.lo hfinite),
+      toEReal_eq_coe_toReal_of_isFinite A.lo hfinite, toEReal_zero]
+    exact EReal.coe_nonneg.2 hnonnegative
+  simp [sqrt, hkeep]
+
+/-- For a finite lower endpoint below zero, `sqrt` clips the lower endpoint to `+0`. -/
+private theorem sqrt_lo_of_neg {fmt : FloatFormat} {A : Interval fmt}
+    (hfinite : isFinite A.lo = true) (hnegative : toReal A.lo < 0) :
+    (sqrt A).lo = zero fmt false := by
+  have hclip : leB (zero fmt true) A.lo = false := by
+    rw [Bool.eq_false_iff, ne_eq, leB_eq_true_iff_toEReal_le_of_isNaN_eq_false _ _
+      (isNaN_zero fmt true) (isNaN_eq_false_of_isFinite_eq_true A.lo hfinite),
+      toEReal_eq_coe_toReal_of_isFinite A.lo hfinite, toEReal_zero, not_le]
+    exact EReal.coe_lt_coe_iff.2 hnegative
+  simp [sqrt, hclip, isNaN_eq_false_of_isFinite_eq_true A.lo hfinite]
+
 /--
 Executable interval square root encloses the square root of every represented real value.
 
 The lower endpoint's decoded value must be nonnegative. Validity and endpoint order then imply
-that the upper endpoint is nonnegative as well.
+that the upper endpoint is nonnegative as well. `sqrt_sound_of_hi_nonneg` needs only the upper
+endpoint to be nonnegative.
 -/
 theorem sqrt_sound
     {fmt : FloatFormat} (A : Interval fmt) (hfmt : fmt.isIEEE = true) (hA : Valid A)
@@ -166,14 +189,37 @@ theorem sqrt_sound
   have hhiNonnegative : 0 ≤ toReal A.hi :=
     hnonnegative.trans hA.toReal_ordered
   constructor
-  · change
-      toEReal (Model.sqrt A.lo (mode := .down)) ≤ ((Real.sqrt x : ℝ) : EReal)
+  · rw [sqrt_lo_of_nonneg hA.lo_isFinite hnonnegative]
     calc
       toEReal (Model.sqrt A.lo (mode := .down)) ≤
           ((Real.sqrt (toReal A.lo) : ℝ) : EReal) :=
         toEReal_sqrt_down_le_of_nonnegative A.lo hfmt hA.lo_isFinite hnonnegative
       _ ≤ ((Real.sqrt x : ℝ) : EReal) :=
         EReal.coe_le_coe_iff.2 (Real.sqrt_le_sqrt hx.1)
+  · change
+      ((Real.sqrt x : ℝ) : EReal) ≤ toEReal (Model.sqrt A.hi (mode := .up))
+    calc
+      ((Real.sqrt x : ℝ) : EReal) ≤
+          ((Real.sqrt (toReal A.hi) : ℝ) : EReal) :=
+        EReal.coe_le_coe_iff.2 (Real.sqrt_le_sqrt hx.2)
+      _ ≤ toEReal (Model.sqrt A.hi (mode := .up)) :=
+        le_toEReal_sqrt_up_of_nonnegative A.hi hfmt hA.hi_isFinite hhiNonnegative
+
+/--
+Interval square root also encloses intervals that reach below zero: with the lower endpoint
+clipped to `+0`, it contains the square root of every member, which `Real.sqrt` takes to be zero
+below zero. Only the upper endpoint has to be nonnegative.
+-/
+theorem sqrt_sound_of_hi_nonneg
+    {fmt : FloatFormat} (A : Interval fmt) (hfmt : fmt.isIEEE = true) (hA : Valid A)
+    (hhiNonnegative : 0 ≤ toReal A.hi)
+    {x : ℝ} (hx : RealMem A x) :
+    ERealMem (sqrt A) ((Real.sqrt x : ℝ) : EReal) := by
+  by_cases hnonnegative : 0 ≤ toReal A.lo
+  · exact sqrt_sound A hfmt hA hnonnegative hx
+  constructor
+  · rw [sqrt_lo_of_neg hA.lo_isFinite (lt_of_not_ge hnonnegative), toEReal_zero]
+    exact EReal.coe_nonneg.2 (Real.sqrt_nonneg x)
   · change
       ((Real.sqrt x : ℝ) : EReal) ≤ toEReal (Model.sqrt A.hi (mode := .up))
     calc
@@ -193,8 +239,9 @@ theorem sqrt_validExtended
     ValidExtended (sqrt A) := by
   have hhiNonnegative : 0 ≤ toReal A.hi :=
     hnonnegative.trans hA.toReal_ordered
-  have hloNaN : isNaN (Model.sqrt A.lo (mode := .down)) = false :=
-    isNaN_sqrt_down_eq_false_of_isFinite_of_nonnegative
+  have hloNaN : isNaN (sqrt A).lo = false := by
+    rw [sqrt_lo_of_nonneg hA.lo_isFinite hnonnegative]
+    exact isNaN_sqrt_down_eq_false_of_isFinite_of_nonnegative
       A.lo hA.lo_isFinite hnonnegative
   have hhiNaN : isNaN (Model.sqrt A.hi (mode := .up)) = false :=
     isNaN_sqrt_up_eq_false_of_isFinite_of_nonnegative

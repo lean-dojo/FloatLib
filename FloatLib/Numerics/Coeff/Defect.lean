@@ -38,8 +38,8 @@ at lane `1`, has `v f = (-2, -1, 24, -1, -2) / 24`, so `‖1 - v f‖ = 6 / 24 =
 * `inv_of_defect`: if `‖1 - v f‖ ≤ δ < 1`, then `f` is a unit and
   `‖f⁻¹ - v‖ ≤ ‖v‖ δ / (1 - δ)`. This is the Neumann series of `v f = 1 - d`.
 * `invSqrtOneSub_sq_mul` and `norm_invSqrtOneSub_sub_one_le`: `(1 - d) ^ (-1/2)` squares to
-  `(1 - d)⁻¹`, and since every coefficient is positive,
-  `‖(1 - d) ^ (-1/2) - 1‖ ≤ (1 - δ) ^ (-1/2) - 1 ≤ δ / (2 (1 - δ))`.
+  `(1 - d)⁻¹`, and `‖(1 - d) ^ (-1/2) - 1‖ ≤ δ / (2 (1 - δ))`. The proof passes through
+  `(1 - δ) ^ (-1/2) - 1`, the same series at `δ`, since every coefficient is positive.
 * `invSqrt_of_defect`: if `‖1 - x g²‖ ≤ δ < 1`, then `r = g (1 - d) ^ (-1/2)` satisfies
   `r² x = 1` and `‖r - g‖ ≤ ‖g‖ δ / (2 (1 - δ))`. With `x = qᵏ` this is `q ^ (-k/2)`.
 * `Wiener.eval_invSqrt_of_defect`: on the circle, `r` is the function `1 / √(x u)` when `x` and
@@ -246,8 +246,8 @@ private theorem inv_sqrt_sub_one_le {δ : ℝ} (h0 : 0 ≤ δ) (h1 : δ < 1) :
   rw [inv_eq_one_div, div_sub_one hy.ne', div_le_div_iff₀ hy (by nlinarith)]
   nlinarith [mul_nonneg hy.le (sq_nonneg (1 - y))]
 
-/-- The distance of `(1 - d) ^ (-1/2)` from `1`: at most `(1 - δ) ^ (-1/2) - 1`, and so at most
-`δ / (2 (1 - δ))`, when `‖d‖ ≤ δ < 1`. -/
+/-- The distance of `(1 - d) ^ (-1/2)` from `1` is at most `δ / (2 (1 - δ))` when `‖d‖ ≤ δ < 1`.
+The proof bounds it by `(1 - δ) ^ (-1/2) - 1` first, the same series at `δ`. -/
 theorem norm_invSqrtOneSub_sub_one_le {d : A} {δ : ℝ} (hd : ‖d‖ ≤ δ) (hδ : δ < 1) :
     ‖invSqrtOneSub d - 1‖ ≤ δ / (2 * (1 - δ)) := by
   have hδ0 : 0 ≤ δ := (norm_nonneg _).trans hd

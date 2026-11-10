@@ -16,6 +16,7 @@ public import FloatLib.Floats.ExecFloat.Backends.Dispatch.FmaWord.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Type
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Runtime
 
 /-!
 # Wide-limb regression checks
@@ -26,7 +27,9 @@ structured operands (zeros, subnormals, the smallest and largest normals, infini
 deterministic pseudo-random normal operands at chosen exponent distances, including the
 cancellation, sticky-bit, carry, overflow, and underflow boundaries, and checks that both the limb
 kernel and the exact baseline route are exercised. Hand-written 256-bit fixtures check the
-public `ExecFloat.BinaryLimbs` carrier, its planner selections, and all six operations.
+public `ExecFloat.BinaryLimbs` carrier, its planner selections, and all six operations. Additions
+and FMAs on 32- and 33-bit exponent fields check that operands further apart than any shiftable
+width still round correctly.
 -/
 
 @[expose] public section
@@ -338,15 +341,59 @@ def publicChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
   , ("sqrtInvalid", sameLimbBits (ExecFloat.sqrt negativeOne) nan)
   , ("sqrtNaNPayload", sameLimbBits (ExecFloat.sqrt signalingNaN) quietNaN) ]⟩
 
+/-! ## Exponent fields of 32 bits and more -/
+
+/-- A limb carrier whose 32-bit exponent field allows exponent gaps beyond `2 ^ 32` bits. -/
+abbrev Limb133 := ExecFloat.BinaryLimbs 32 100
+
+/-- The default carrier with a 33-bit exponent field, for the directed kernels. -/
+abbrev Wide134 := ExecFloat.Binary (exponentBits := 33) (fractionBits := 100)
+
+/-- A 33-bit exponent field in the finite-only encoding, served by the generic baseline. -/
+abbrev Finite54 := ExecFloat.Binary (exponentBits := 33) (fractionBits := 20)
+  (encoding := FloatFormat.Encoding.finite)
+
+/--
+Additions and FMAs whose operands lie further apart in exponent than any integer the runtime can
+shift by. The exact sums need `2 ^ 32` bits and more, so these checks pass only because the kernels
+fold the far operand into a sticky bit before rounding.
+-/
+def wideExponentChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
+  let limb (bits : Nat) : Limb133 := ExecFloat.Binary.ofNatBits bits
+  let limbSame (x y : Limb133) := ExecFloat.Binary.toNatBits x == ExecFloat.Binary.toNatBits y
+  let limbOne := limb ((2 ^ 31 - 1) * 2 ^ 100)
+  let limbLargest := limb ((2 ^ 32 - 2) * 2 ^ 100 + (2 ^ 100 - 1))
+  let limbLeast := limb 1
+  let wide (bits : Nat) : Wide134 := ExecFloat.Binary.ofNatBits bits
+  let wideLargest := wide ((2 ^ 33 - 2) * 2 ^ 100 + (2 ^ 100 - 1))
+  let wideLeast := wide 1
+  let finite (bits : Nat) : Finite54 := ExecFloat.Binary.ofNatBits bits
+  let finiteBig := finite ((2 ^ 33 - 2) * 2 ^ 20)
+  [ ("limbFmaTinyProduct", limbSame (ExecFloat.fma limbLeast limbLeast limbLargest) limbLargest)
+  , ("limbFmaTinyProductOne", limbSame (ExecFloat.fma limbLeast limbLeast limbOne) limbOne)
+  , ("limbAddLeast", limbSame (limbOne + limbLeast) limbOne)
+  , ("limbAddLeastLargest", limbSame (limbLargest + limbLeast) limbLargest)
+  , ("limbSubLeast", limbSame (limbOne - limbLeast) limbOne)
+  , ("limbSubLargest", limbSame (limbLeast - limbLargest) (-limbLargest))
+  , ("directedAddUp", ExecFloat.Binary.isInf (ExecFloat.Binary.add wideLargest wideLeast
+      (mode := .up)))
+  , ("directedAddDown", ExecFloat.Binary.toNatBits (ExecFloat.Binary.add wideLargest wideLeast
+      (mode := .down)) == ExecFloat.Binary.toNatBits wideLargest)
+  , ("finiteEncodingAdd", ExecFloat.Binary.toNatBits (finiteBig + finite 1) ==
+      ExecFloat.Binary.toNatBits finiteBig) ]⟩
+
 def totalFailures : Thunk Nat := ⟨fun _ =>
   results.get.foldl (fun total result => total + result.totalFailures) 0 +
-    countWhereFailures publicChecks.get (·.2)⟩
+    countWhereFailures publicChecks.get (·.2) + countWhereFailures wideExponentChecks.get (·.2)⟩
 
 /-- Executable fixture report consumed by the regression runner. -/
 def report : Thunk String := ⟨fun _ =>
   let publicRows := publicChecks.get.map fun (name, passes) =>
     (s!"wide256 public {name}", failureCount passes)
+  let wideRows := wideExponentChecks.get.map fun (name, passes) =>
+    (s!"wide exponent {name}", failureCount passes)
   String.intercalate "\n"
-    ((results.get.map FormatResult.report).toList ++ [renderFailureReport publicRows])⟩
+    ((results.get.map FormatResult.report).toList ++
+      [renderFailureReport publicRows, renderFailureReport wideRows])⟩
 
 end FloatLibTests.Regression.BinaryInterchange.WideLimb

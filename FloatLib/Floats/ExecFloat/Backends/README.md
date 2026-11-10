@@ -33,7 +33,7 @@ their own.
 | `Word/TwoWordMul/` | via fixed-limb route | IEEE ≤ 64 bits, 32–62 fraction bits | mul | proved |
 | `Word/Narrow/` | fixed-format | exactly binary32 | six | proved |
 | `Word/Full/` | fixed-format | exactly binary64 | six | proved |
-| `FixedLimb/Pair/` | two `UInt64` limbs | IEEE, `64 < fracWidth`, `bitWidth ≤ 128` | six; sqrt declines some layouts | proved |
+| `FixedLimb/Pair/` | two `UInt64` limbs | IEEE, `64 < fracWidth`, `bitWidth ≤ 128` | six; sqrt declines some layouts, and FMA every layout with more than 120 fraction or 32 exponent bits | proved |
 | `WideLimb/` | 32-bit limbs | IEEE > 128 bits, exponent ≤ 32; `ExecFloat.BinaryLimbs` | six; div/sqrt use integer arithmetic | proved |
 | `Generic/` | exact baseline | every binary descriptor | six | proved |
 | `Configured/NativeFPU/Unchecked.lean` | not a planner class | binary32/64, explicit call site | add, sub, mul, div, sqrt (not fma) | unchecked |
@@ -51,6 +51,14 @@ individual inputs. Wide-limb multiplication and FMA, for example, require normal
 check the result's leading position both before rounding and after the rounding carry. So a
 value just below the normal range can take the fallback even when it would round to the smallest
 normal value. FMA's alignment core accepts exact cancellation as positive zero.
+
+The exact fallback, the generic baseline and the directed kernels add operands that lie far apart
+in exponent with `Model.addDyadicForRounding`, which folds the far operand into a sticky bit before
+rounding and is proved to round like the exact sum. So addition, subtraction and FMA also run on
+exponent fields of 32 bits and more, where an exact sum can be wider than any shift the runtime
+supports. The operations with status flags (`(status := true)`) and the quantization-policy
+arithmetic of `Model.Policy`, stochastic rounding included, still form exact sums and rationals,
+so on such formats they can exhaust memory or stop with a panic.
 
 Posits use `Formats/Posit/Configured/Backend/` with the same `Certified` / `PolicyFor` machinery.
 
@@ -70,10 +78,12 @@ open scoped FloatLib.Floats.ExecFloat.Backend.PlanningThroughput   -- 5M calls, 
 
 A local `PolicyFor` instance can retune one family. Because the equality `run = spec` holds for
 every candidate, changing that choice keeps the same values, literals, and arithmetic theorems.
-Binary32/64 use proved software under every policy. If you want the host FPU, call its
-operations by name:
+Binary32/64 use proved software under every policy. If you want the host FPU, import
+`FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked`, which `import FloatLib`
+does not load, and call its operations by name:
 
 ```lean
+open FloatLib.Floats.Formats.BinaryInterchange.Configured in
 NativeFPU.Unchecked.add32 x y
 ```
 

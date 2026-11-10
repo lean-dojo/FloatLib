@@ -119,7 +119,9 @@ def unaryImagesEnclosed {fmt : FloatFormat} (values : List (Model fmt))
     if Model.Interval.leB (Model.posZero fmt) A.lo then
       imageEnclosed values A sqrtResult Model.sqrt
     else
-      true
+      -- An interval reaching below zero is clipped there; its nonnegative members stay enclosed.
+      imageEnclosed (values.filter (Model.Interval.leB (Model.posZero fmt))) A sqrtResult
+        Model.sqrt
 
 def tinyPairFailures (fmt : FloatFormat) : Nat :=
   let intervals := validIntervals fmt

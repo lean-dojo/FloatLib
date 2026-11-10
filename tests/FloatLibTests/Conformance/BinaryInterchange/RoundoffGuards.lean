@@ -154,4 +154,56 @@ example : @flip_sum_error = @flip_sum_entry_error := rfl
 
 end Pointwise
 
+/-! ## Closed conditions on literals
+
+A literal's range is decided: one that holds leaves no premise, and one that fails, like a division
+by the literal `0`, stops the analysis instead of producing a theorem with a false premise. -/
+
+namespace Literals
+
+/-- `1e40` lies above the largest finite binary32 value. -/
+def big (x : Binary32) : Binary32 := x + 1e40
+
+/--
+error: roundoff: a required numerical condition is false: |↑1e40| ≤
+  (Model.posMaxFinite
+      (ExecFloat.Binary.descriptor 8 23 FloatFormat.Encoding.ieee (FloatFormat.Encoding.ieee.defaultBias 8)
+        ExecFloat.Binary.descriptor_binary32._proof_1 ExecFloat.Binary.descriptor_binary32._proof_2
+        ExecFloat.Binary.descriptor_binary32._proof_3 ExecFloat.Binary.descriptor_binary32._proof_4)).toReal
+-/
+#guard_msgs (error) in
+roundoff mixed theorem big_error := fun (x : Binary32) => ExecFloat.Binary.toReal (big x)
+
+/--
+error: roundoff: a required numerical condition is false: Model.isFinite
+    (Model.ofRat
+      (ExecFloat.Binary.descriptor 8 23 FloatFormat.Encoding.ieee (FloatFormat.Encoding.ieee.defaultBias 8)
+        ExecFloat.Binary.descriptor_binary32._proof_1 ExecFloat.Binary.descriptor_binary32._proof_2
+        ExecFloat.Binary.descriptor_binary32._proof_3 ExecFloat.Binary.descriptor_binary32._proof_4)
+      1e40) =
+  true
+-/
+#guard_msgs (error) in
+roundoff theorem big_absolute := fun (x : Binary32) => ExecFloat.Binary.toReal (big x)
+
+/-- Division by the literal `0`. -/
+def byZero (x : Binary32) : Binary32 := x / 0
+
+/-- error: roundoff: a required numerical condition is false: 0 < 0 -/
+#guard_msgs (error) in
+roundoff mixed theorem byZero_error := fun (x : Binary32) => ExecFloat.Binary.toReal (byZero x)
+
+/-- `1.5` is in range, a fact the comparison with one alone does not establish. -/
+def shift (x : Binary32) : Binary32 := x + 1.5
+
+roundoff mixed theorem shift_error := fun (x : Binary32) => ExecFloat.Binary.toReal (shift x)
+
+/-- The theorem keeps no premise about the literal. -/
+example (x : Binary32) (hx : ExecFloat.Binary.isFinite x = true)
+    (hrange : |ExecFloat.Binary.toReal x + 1.5| ≤ (Model.posMaxFinite FloatFormat.binary32).toReal) :
+    ExecFloat.Binary.isFinite (shift x) = true :=
+  (shift_error x ⟨hx, hrange⟩).1
+
+end Literals
+
 end FloatLibTests.Conformance.BinaryInterchange.RoundoffGuards

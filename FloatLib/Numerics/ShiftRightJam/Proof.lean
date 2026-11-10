@@ -127,6 +127,20 @@ theorem roundShiftRightEven_shiftRightJam (x j s : Nat) (hj : j + 2 ≤ s) :
     roundShiftRightEven (shiftRightJam x j) (s - j) = roundShiftRightEven x s :=
   roundShiftRight_shiftRightJam .nearestEven x j s hj
 
+/--
+Jamming keeps ties: if `j + 2 ≤ s`, the jammed value discards one half of a unit under a shift by
+`s - j` exactly when the original value does under a shift by `s`, because the jam keeps the guard
+bit and whether any lower bit is set.
+-/
+theorem shiftRightIsTie_shiftRightJam (x j s : Nat) (hj : j + 2 ≤ s) :
+    shiftRightIsTie (shiftRightJam x j) (s - j) = shiftRightIsTie x s := by
+  rw [shiftRightIsTie_eq_guard_and_not_sticky _ _ (by omega),
+    shiftRightIsTie_eq_guard_and_not_sticky _ _ (by omega),
+    shiftRightJam_testBit x j (s - j - 1) (by omega), show j + (s - j - 1) = s - 1 by omega]
+  have hsticky := shiftRightJam_mod_pow_ne_zero_iff x j (s - j - 1) (by omega)
+  rw [show j + (s - j - 1) = s - 1 by omega] at hsticky
+  simp only [hsticky]
+
 /-- The jammed quotient of an aligned sum `A * 2^j + B`, in terms of `A` and `B`. -/
 theorem shiftRightJam_add_mul_two_pow (A B j : Nat) :
     shiftRightJam (A * 2 ^ j + B) j =

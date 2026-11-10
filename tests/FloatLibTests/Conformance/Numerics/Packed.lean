@@ -430,4 +430,15 @@ packed_row negative (width := 8) (signed := false) := [-1]
 #guard_msgs (error) in
 packed_row tooWideUnsigned (width := 8) (signed := false) := [256]
 
+/-! Rows files hold plain decimal integers. Digit separators, signs other than a leading `-`, and
+other characters are errors, also in tokens long enough to be read in blocks. -/
+
+#guard (parseEntries "12, -3  # comment\n7").toOption == some #[12, -3, 7]
+#guard (parseEntries "123456789012345678901234567890 -42").toOption ==
+  some #[123456789012345678901234567890, -42]
+#guard (parseEntries "1_000").toOption == none
+#guard (parseEntries "10000000000000_0000000000").toOption == none
+#guard (parseEntries "+5").toOption == none
+#guard (parseEntries "éééééééééé").toOption == none
+
 end FloatLibTests.Conformance.Numerics.Packed

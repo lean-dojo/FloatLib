@@ -9,6 +9,8 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
+public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
+import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
 # Directed rounding of exact dyadics
@@ -201,6 +203,177 @@ Nearest-even is `Model.roundDyadic`.
   | .up => roundDyadicUp fmt value
   | .down => roundDyadicDown fmt value
   | .away => roundDyadicAway fmt value
+
+end Internal.Directed
+
+/-! ## Sticky folding of low bits
+
+Every directed rounder reads a magnitude only down to the bit below its guard bit, so a sticky
+quotient that keeps `fracWidth + 2` bits below the leading one rounds like the magnitude. Compiled
+directed addition and FMA use this to round `addDyadicForRounding` instead of the exact sum.
+-/
+
+/-- Below the normal range a sticky quotient by `2 ^ discard` lands on the same subnormal shift. -/
+private theorem subnormalShift_of_shiftRightJam (fmt : FloatFormat) (magnitude : Nat)
+    (exponent : Int) (discard : Nat) (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2)
+    (hsub : Int.ofNat magnitude.log2 + exponent < fmt.minNormalExponent) :
+    ∃ n : Nat, 1 ≤ n ∧ exponent + discard - fmt.minSubnormalExponent = Int.negSucc n ∧
+      exponent - fmt.minSubnormalExponent = Int.negSucc (n + discard) := by
+  have hbelow : exponent + discard - fmt.minSubnormalExponent ≤ -3 := by
+    simp only [FloatFormat.minSubnormalExponent, Int.ofNat_eq_natCast] at hsub ⊢
+    omega
+  refine ⟨(fmt.minSubnormalExponent - exponent - discard).toNat - 1, by omega, ?_, ?_⟩ <;>
+    rw [Int.negSucc_eq] <;> push_cast <;> omega
+
+/-- Downward magnitude rounding of a sticky quotient that keeps `fracWidth + 2` bits. -/
+theorem roundDyadicMagnitudeDown_shiftRightJam (fmt : FloatFormat) (sign : Bool)
+    (magnitude : Nat) (exponent : Int) (discard : Nat)
+    (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
+    roundDyadicMagnitudeDown fmt sign (Numerics.shiftRightJam magnitude discard)
+        (exponent + discard) =
+      roundDyadicMagnitudeDown fmt sign magnitude exponent := by
+  have hlog := Numerics.log2_shiftRightJam magnitude discard
+  have htotal : Int.ofNat (magnitude.log2 - discard) + (exponent + discard) =
+      Int.ofNat magnitude.log2 + exponent := by
+    simp only [Int.ofNat_eq_natCast]
+    omega
+  have hnormal : Nat.shiftRight (Numerics.shiftRightJam magnitude discard)
+      (magnitude.log2 - discard - fmt.fracWidth) =
+        Nat.shiftRight magnitude (magnitude.log2 - fmt.fracWidth) := by
+    have := Numerics.roundShiftRight_shiftRightJam .down magnitude discard
+      (magnitude.log2 - fmt.fracWidth) (by omega)
+    rwa [show magnitude.log2 - fmt.fracWidth - discard =
+      magnitude.log2 - discard - fmt.fracWidth by omega] at this
+  unfold roundDyadicMagnitudeDown
+  simp only [hlog, htotal, ge_iff_le, show fmt.fracWidth ≤ magnitude.log2 - discard by omega,
+    show fmt.fracWidth ≤ magnitude.log2 by omega, ite_true, hnormal]
+  by_cases hover : Int.ofNat magnitude.log2 + exponent > fmt.maxNormalExponent
+  · simp only [hover, ite_true]
+  simp only [hover, ite_false]
+  by_cases htiny : Int.ofNat magnitude.log2 + exponent < fmt.minSubnormalExponent
+  · simp only [htiny, ite_true]
+  simp only [htiny, ite_false]
+  by_cases hsub : Int.ofNat magnitude.log2 + exponent < fmt.minNormalExponent
+  · obtain ⟨n, hn, hjam, hexact⟩ :=
+      subnormalShift_of_shiftRightJam fmt magnitude exponent discard hleading hsub
+    have hshift := Numerics.roundShiftRight_shiftRightJam .down magnitude discard
+      (n + discard + 1) (by omega)
+    rw [show n + discard + 1 - discard = n + 1 by omega] at hshift
+    simp only [hsub, ite_true, hjam, hexact]
+    simp only [Numerics.roundShiftRight_down] at hshift
+    rw [hshift]
+  · simp only [hsub, ite_false]
+
+/-- Upward magnitude rounding of a sticky quotient that keeps `fracWidth + 2` bits. -/
+theorem roundDyadicMagnitudeUp_shiftRightJam (fmt : FloatFormat) (sign : Bool)
+    (magnitude : Nat) (exponent : Int) (discard : Nat)
+    (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
+    roundDyadicMagnitudeUp fmt sign (Numerics.shiftRightJam magnitude discard)
+        (exponent + discard) =
+      roundDyadicMagnitudeUp fmt sign magnitude exponent := by
+  have hlog := Numerics.log2_shiftRightJam magnitude discard
+  have htotal : Int.ofNat (magnitude.log2 - discard) + (exponent + discard) =
+      Int.ofNat magnitude.log2 + exponent := by
+    simp only [Int.ofNat_eq_natCast]
+    omega
+  have hnormal : Numerics.shiftRightCeil (Numerics.shiftRightJam magnitude discard)
+      (magnitude.log2 - discard - fmt.fracWidth) =
+        Numerics.shiftRightCeil magnitude (magnitude.log2 - fmt.fracWidth) := by
+    have := Numerics.roundShiftRight_shiftRightJam .up magnitude discard
+      (magnitude.log2 - fmt.fracWidth) (by omega)
+    rwa [show magnitude.log2 - fmt.fracWidth - discard =
+      magnitude.log2 - discard - fmt.fracWidth by omega] at this
+  unfold roundDyadicMagnitudeUp
+  simp only [hlog, htotal, ge_iff_le, show fmt.fracWidth ≤ magnitude.log2 - discard by omega,
+    show fmt.fracWidth ≤ magnitude.log2 by omega, ite_true, hnormal]
+  by_cases hover : Int.ofNat magnitude.log2 + exponent > fmt.maxNormalExponent
+  · simp only [hover, ite_true]
+  simp only [hover, ite_false]
+  by_cases htiny : Int.ofNat magnitude.log2 + exponent < fmt.minSubnormalExponent
+  · simp only [htiny, ite_true]
+  simp only [htiny, ite_false]
+  by_cases hsub : Int.ofNat magnitude.log2 + exponent < fmt.minNormalExponent
+  · obtain ⟨n, hn, hjam, hexact⟩ :=
+      subnormalShift_of_shiftRightJam fmt magnitude exponent discard hleading hsub
+    have hshift := Numerics.roundShiftRight_shiftRightJam .up magnitude discard
+      (n + discard + 1) (by omega)
+    rw [show n + discard + 1 - discard = n + 1 by omega] at hshift
+    simp only [hsub, ite_true, hjam, hexact]
+    simp only [Numerics.roundShiftRight_up] at hshift
+    rw [hshift]
+  · simp only [hsub, ite_false]
+
+/-- A sticky quotient that keeps `fracWidth + 2` bits is a grid tie exactly when the magnitude is. -/
+theorem dyadicIsGridTie_shiftRightJam (fmt : FloatFormat) (sign : Bool) (magnitude : Nat)
+    (exponent : Int) (discard : Nat) (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
+    dyadicIsGridTie fmt
+        { negative := sign
+          significand := Numerics.shiftRightJam magnitude discard
+          exponent := exponent + discard } =
+      dyadicIsGridTie fmt { negative := sign, significand := magnitude, exponent } := by
+  have hlog := Numerics.log2_shiftRightJam magnitude discard
+  unfold dyadicIsGridTie
+  simp only [hlog]
+  have hspacing : max fmt.minSubnormalExponent
+      (((magnitude.log2 - discard : Nat) : Int) + (exponent + discard) - fmt.fracWidth) =
+        max fmt.minSubnormalExponent ((magnitude.log2 : Int) + exponent - fmt.fracWidth) := by
+    congr 1
+    omega
+  rw [hspacing]
+  generalize hspacingDef :
+    max fmt.minSubnormalExponent ((magnitude.log2 : Int) + exponent - fmt.fracWidth) = spacing
+  have hle : (magnitude.log2 : Int) + exponent - fmt.fracWidth ≤ spacing := by
+    rw [← hspacingDef]
+    exact le_max_right _ _
+  obtain ⟨n, hjam, hexact⟩ : ∃ n : Nat, exponent + discard - spacing = Int.negSucc n ∧
+      exponent - spacing = Int.negSucc (n + discard) :=
+    ⟨(spacing - exponent - discard).toNat - 1, by rw [Int.negSucc_eq]; omega,
+      by rw [Int.negSucc_eq]; push_cast; omega⟩
+  have hn : 1 ≤ n := by
+    rw [Int.negSucc_eq] at hjam
+    omega
+  rw [hjam, hexact]
+  dsimp only
+  rw [← Numerics.shiftRightIsTie_shiftRightJam magnitude discard (n + discard + 1) (by omega),
+    show n + discard + 1 - discard = n + 1 by omega]
+
+namespace Internal.Directed
+
+/--
+Directed rounding in every IEEE direction cannot tell a sticky quotient that keeps
+`fracWidth + 2` bits from the magnitude it folds.
+-/
+theorem roundDyadic_shiftRightJam (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : Bool)
+    (magnitude : Nat) (exponent : Int) (discard : Nat)
+    (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
+    Internal.Directed.roundDyadic fmt mode
+        { negative := sign
+          significand := Numerics.shiftRightJam magnitude discard
+          exponent := exponent + discard } =
+      Internal.Directed.roundDyadic fmt mode
+        { negative := sign, significand := magnitude, exponent } := by
+  have hpos : magnitude ≠ 0 := by
+    rintro rfl
+    simp at hleading
+  have hjam : Numerics.shiftRightJam magnitude discard ≠ 0 :=
+    Numerics.shiftRightJam_ne_zero magnitude discard
+      ((Nat.pow_le_pow_right (by decide) (by omega)).trans (Nat.log2_self_le hpos))
+  cases mode <;>
+    simp only [Internal.Directed.roundDyadic, roundDyadicNearestAway, roundDyadicTowardZero,
+      roundDyadicUp, roundDyadicDown, roundDyadicAway, beq_iff_eq, hpos, hjam, ite_false,
+      Model.roundDyadic_shiftRightJam fmt sign magnitude exponent discard hleading,
+      dyadicIsGridTie_shiftRightJam fmt sign magnitude exponent discard hleading,
+      roundDyadicMagnitudeDown_shiftRightJam fmt _ magnitude exponent discard hleading,
+      roundDyadicMagnitudeUp_shiftRightJam fmt _ magnitude exponent discard hleading]
+
+/-- Directed rounding cannot tell `addDyadicForRounding (fmt.fracWidth + 3)` from the exact sum. -/
+theorem roundDyadic_addDyadicForRounding (fmt : FloatFormat) (mode : IEEERoundingMode)
+    (a b : Numerics.Dyadic) :
+    Internal.Directed.roundDyadic fmt mode (addDyadicForRounding (fmt.fracWidth + 3) a b) =
+      Internal.Directed.roundDyadic fmt mode (Model.addDyadic a b) := by
+  rcases addDyadicForRounding_eq (fmt.fracWidth + 3) a b with h | ⟨discard, -, hlog, h⟩
+  · rw [h]
+  · rw [h, roundDyadic_shiftRightJam _ _ _ _ _ _ (by omega)]
 
 end Internal.Directed
 

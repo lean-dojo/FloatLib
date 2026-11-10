@@ -27,7 +27,8 @@ Each operation decodes its operands, maps them into the destination's exact doma
 - `mode` is the rounding direction. Binary and nominal static-byte destinations take a
   `Numerics.RoundingMode`, which is one of the six directions of `IEEERoundingMode` or
   `.stochastic`. P3109 destinations take a P3109 `RoundingMode`. A family without directed
-  conversion has the single mode `()`, so naming a direction for it is a type error.
+  conversion has the single mode `{}` of `NoRoundingDirection`, so naming a direction for it is a
+  type error.
 - `context` is the destination's `RoundingModes.Policy`, which is everything about the policy except
   the direction, such as a rejected infinity, binary saturation or flush-to-zero, stochastic
   entropy, P3109 saturation, a saturating bounded fixed point, or a shared block exponent. A call

@@ -220,6 +220,47 @@ def add {fmt : FloatFormat} (mode : IEEERoundingMode)
             Internal.Directed.roundDyadic fmt mode exact
 
 /--
+`add` as compiled code runs it: finite operands are added with `addDyadicForRounding`, so operands
+far apart in exponent build no integer as wide as their exponent gap.
+-/
+@[inline] def addBounded {fmt : FloatFormat} (mode : IEEERoundingMode)
+    (x y : Model fmt) : Model fmt :=
+  match mode with
+  | .nearest => Nearest.add x y
+  | .nearestAway | .towardZero | .up | .down
+    | .away =>
+      withNaNSelection (chooseNaN2 x y) fun hnan =>
+        let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
+        if hxInf : isInf x then
+          if isInf y then
+            if Model.signBit x == Model.signBit y then x else invalidResult fmt
+          else
+            x
+        else if hyInf : isInf y then
+          y
+        else
+          let hxFinite :=
+            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
+              (Bool.eq_false_of_not_eq_true hxInf)
+          let hyFinite :=
+            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2
+              (Bool.eq_false_of_not_eq_true hyInf)
+          let dx := finiteDyadic x hxFinite
+          let dy := finiteDyadic y hyFinite
+          let sum := addDyadicForRounding (fmt.fracWidth + 3) dx dy
+          if sum.significand == 0 then
+            zeroForExactSum fmt mode dx.negative dy.negative
+          else
+            Internal.Directed.roundDyadic fmt mode sum
+
+/-- Compiled directed addition rounds the bounded sum, which rounds like the exact one. -/
+@[csimp] theorem add_eq_addBounded : @add = @addBounded := by
+  funext fmt mode x y
+  simp only [add, addBounded, beq_iff_eq,
+    addDyadicForRounding_significand_eq_zero_iff (fmt.fracWidth + 3) (by omega),
+    roundDyadic_addDyadicForRounding]
+
+/--
 IEEE subtraction in rounding direction `mode`, the kernel of `Model.sub x y (mode := mode)`:
 directed addition of the negated right operand.
 -/
@@ -355,6 +396,65 @@ def fma {fmt : FloatFormat} (mode : IEEERoundingMode)
             zeroForExactSum fmt mode product.negative dz.negative
           else
             Internal.Directed.roundDyadic fmt mode exact
+
+/--
+`fma` as compiled code runs it: the product and the addend are added with `addDyadicForRounding`.
+-/
+@[inline] def fmaBounded {fmt : FloatFormat} (mode : IEEERoundingMode)
+    (x y z : Model fmt) : Model fmt :=
+  match mode with
+  | .nearest => Nearest.fma x y z
+  | .nearestAway | .towardZero | .up | .down
+    | .away =>
+      withNaNSelection (chooseNaN3 x y z) fun hnan =>
+        let hnotNaN := (chooseNaN3_eq_none_iff x y z).1 hnan
+        if hxyInf : isInf x || isInf y then
+          if isZero x || isZero y then
+            invalidResult fmt
+          else
+            let productSign := Bool.xor (Model.signBit x) (Model.signBit y)
+            let productInfinity := nativeOverflow fmt productSign
+            if isInf z then
+              if Model.signBit z != productSign then invalidResult fmt else productInfinity
+            else
+              productInfinity
+        else if hzInf : isInf z then
+          z
+        else
+          let hxInf : isInf x = false := by
+            cases hx : isInf x
+            · rfl
+            · simp [hx] at hxyInf
+          let hyInf : isInf y = false := by
+            cases hy : isInf y
+            · rfl
+            · simp [hy] at hxyInf
+          let hxFinite :=
+            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1 hxInf
+          let hyFinite :=
+            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2.1 hyInf
+          let hzFinite :=
+            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false z hnotNaN.2.2
+              (Bool.eq_false_of_not_eq_true hzInf)
+          let dx := finiteDyadic x hxFinite
+          let dy := finiteDyadic y hyFinite
+          let dz := finiteDyadic z hzFinite
+          let product : Numerics.Dyadic :=
+            { negative := Bool.xor dx.negative dy.negative
+              significand := dx.significand * dy.significand
+              exponent := dx.exponent + dy.exponent }
+          let sum := addDyadicForRounding (fmt.fracWidth + 3) product dz
+          if sum.significand == 0 then
+            zeroForExactSum fmt mode product.negative dz.negative
+          else
+            Internal.Directed.roundDyadic fmt mode sum
+
+/-- Compiled directed FMA rounds the bounded sum of the product and the addend. -/
+@[csimp] theorem fma_eq_fmaBounded : @fma = @fmaBounded := by
+  funext fmt mode x y z
+  simp only [fma, fmaBounded, beq_iff_eq,
+    addDyadicForRounding_significand_eq_zero_iff (fmt.fracWidth + 3) (by omega),
+    roundDyadic_addDyadicForRounding]
 
 end Internal.Directed
 

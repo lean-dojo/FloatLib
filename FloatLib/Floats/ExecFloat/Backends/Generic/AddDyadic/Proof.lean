@@ -8,7 +8,10 @@ module
 
 public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
+public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
+import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
 # Correctness of signed-magnitude dyadic addition
@@ -20,6 +23,10 @@ the signed-zero rule included.
 Its `@[csimp]` theorem `addDyadic_eq_internal` supplies the equality that the compiler substitution
 needs, and the remaining public lemmas describe the equal- and adjacent-exponent cases that native
 arithmetic refinements use.
+
+`addDyadicForRounding_eq` shows that `addDyadicForRounding` is the exact sum or the exact sum with
+its low bits folded into a sticky bit, and `roundDyadic_addDyadicForRounding` that rounding to
+nearest even cannot tell the two apart.
 -/
 
 @[expose] public section
@@ -320,5 +327,140 @@ theorem addDyadic_comm (a b : Numerics.Dyadic) :
     addDyadic = Internal.addDyadic := by
   funext a b
   exact (Internal.addDyadic_eq a b).symm
+
+/-! ## Sums for rounding -/
+
+/--
+Two nonzero dyadics `gap` exponents apart, the lower significand below `2 ^ (gap - 1)`: their exact
+sum is the aligned signed magnitude, with the sign of the higher operand.
+-/
+private theorem addDyadic_far (low high : Numerics.Dyadic) (gap : Nat)
+    (hexponent : high.exponent = low.exponent + gap)
+    (hlowZero : low.significand ≠ 0) (hhighZero : high.significand ≠ 0)
+    (hlow : low.significand < 2 ^ (gap - 1)) :
+    addDyadic low high =
+      { negative := high.negative
+        significand :=
+          if high.negative = low.negative then high.significand * 2 ^ gap + low.significand
+          else high.significand * 2 ^ gap - low.significand
+        exponent := low.exponent } := by
+  have hle : low.exponent ≤ high.exponent := by omega
+  have hgap : (high.exponent - low.exponent).toNat = gap := by omega
+  have hbig : low.significand < high.significand * 2 ^ gap := by
+    have hpow : 2 ^ (gap - 1) ≤ 2 ^ gap := Nat.pow_le_pow_right (by decide) (Nat.sub_le _ _)
+    have hmul : 2 ^ gap ≤ high.significand * 2 ^ gap :=
+      Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hhighZero)
+    omega
+  have hshift : Nat.shiftLeft high.significand gap = high.significand * 2 ^ gap :=
+    Nat.shiftLeft_eq _ _
+  rw [← Internal.addDyadic_eq]
+  unfold Internal.addDyadic addDyadicMagnitudes
+  simp only [beq_iff_eq, hlowZero, hhighZero, hle, ite_false, ite_true, hgap, hshift]
+  by_cases hsign : high.negative = low.negative
+  · simp only [hsign, ite_true, Numerics.Dyadic.mk.injEq, true_and, and_true]
+    omega
+  · have hsign' : ¬low.negative = high.negative := fun h => hsign h.symm
+    simp [hsign, hsign', Nat.ne_of_lt hbig, hbig]
+
+/-- `addDyadicForRounding.aligned` is the exact sum, or the exact sum folded by a sticky shift. -/
+private theorem aligned_eq (keep : Nat) (low high : Numerics.Dyadic)
+    (hle : low.exponent ≤ high.exponent) :
+    addDyadicForRounding.aligned keep low high = addDyadic low high ∨
+      ∃ discard, (addDyadic low high).significand ≠ 0 ∧
+        discard + keep ≤ (addDyadic low high).significand.log2 + 1 ∧
+        addDyadicForRounding.aligned keep low high =
+          { negative := (addDyadic low high).negative
+            significand := Numerics.shiftRightJam (addDyadic low high).significand discard
+            exponent := (addDyadic low high).exponent + discard } := by
+  unfold addDyadicForRounding.aligned
+  dsimp only
+  split
+  · rename_i h
+    obtain ⟨hgap, hlowLog, hhigh, hlowZero⟩ := h
+    right
+    generalize hgapDef : (high.exponent - low.exponent).toNat = gap at *
+    have hexponent : high.exponent = low.exponent + gap := by omega
+    have hlow : low.significand < 2 ^ (gap - 1) :=
+      Nat.lt_log2_self.trans_le (Nat.pow_le_pow_right (by decide) (by omega))
+    rw [addDyadic_far low high gap hexponent hlowZero hhigh hlow]
+    have hhalf : 2 ^ gap = 2 ^ (gap - 1) + 2 ^ (gap - 1) := by
+      rw [← two_mul, ← pow_succ']
+      congr 1
+      omega
+    have hhighBound : 2 ^ gap ≤ high.significand * 2 ^ gap :=
+      Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hhigh)
+    have hbound : 2 ^ (gap - 1) ≤
+        (if high.negative = low.negative then high.significand * 2 ^ gap + low.significand
+          else high.significand * 2 ^ gap - low.significand) := by
+      split <;> omega
+    have hpos := (Nat.two_pow_pos (gap - 1)).trans_le hbound
+    refine ⟨gap - keep, Nat.pos_iff_ne_zero.1 hpos, ?_, ?_⟩
+    · have := (Nat.le_log2 (Nat.pos_iff_ne_zero.1 hpos)).2 hbound
+      dsimp only
+      omega
+    · have hsplit : keep + (gap - keep) = gap := by omega
+      have hshift : high.significand * 2 ^ gap =
+          (high.significand * 2 ^ keep) * 2 ^ (gap - keep) := by
+        rw [Nat.mul_assoc, ← pow_add, hsplit]
+      have hexact : (low.significand / 2 ^ (gap - keep) ≠ 0 ∧
+          low.significand = low.significand / 2 ^ (gap - keep) * 2 ^ (gap - keep)) ↔
+            low.significand % 2 ^ (gap - keep) = 0 := by
+        have := Nat.div_add_mod' low.significand (2 ^ (gap - keep))
+        by_cases hq : low.significand / 2 ^ (gap - keep) = 0
+        · simp only [hq, ne_eq, not_true_eq_false, false_and, false_iff, Nat.zero_mul] at this ⊢
+          omega
+        · simp only [ne_eq, hq, not_false_eq_true, true_and]
+          omega
+      simp only [Nat.shiftLeft_eq, Nat.shiftRight_eq_div_pow, bne_iff_ne, beq_iff_eq,
+        Bool.and_eq_true, hexact]
+      by_cases hsign : high.negative = low.negative
+      · simp only [hsign, ite_true, hshift, Numerics.shiftRightJam_add_mul_two_pow]
+      · have hsub : low.significand ≤ (high.significand * 2 ^ keep) * 2 ^ (gap - keep) := by
+          rw [← hshift]
+          omega
+        simp only [hsign, ite_false, hshift, Numerics.shiftRightJam_mul_two_pow_sub _ _ _ hsub]
+  · left
+    exact Internal.addDyadic_eq low high
+
+/--
+`addDyadicForRounding keep` is the exact sum, or, when its operands are far apart, the nonzero
+exact sum with its low `discard` bits folded into a sticky bit, keeping at least `keep - 1` bits
+above them.
+-/
+theorem addDyadicForRounding_eq (keep : Nat) (a b : Numerics.Dyadic) :
+    addDyadicForRounding keep a b = addDyadic a b ∨
+      ∃ discard, (addDyadic a b).significand ≠ 0 ∧
+        discard + keep ≤ (addDyadic a b).significand.log2 + 1 ∧
+        addDyadicForRounding keep a b =
+          { negative := (addDyadic a b).negative
+            significand := Numerics.shiftRightJam (addDyadic a b).significand discard
+            exponent := (addDyadic a b).exponent + discard } := by
+  unfold addDyadicForRounding
+  split
+  · exact aligned_eq keep a b ‹_›
+  · rw [addDyadic_comm a b]
+    exact aligned_eq keep b a (by omega)
+
+/-- `addDyadicForRounding` with at least one bit kept is zero exactly when the exact sum is. -/
+theorem addDyadicForRounding_significand_eq_zero_iff (keep : Nat) (hkeep : 1 ≤ keep)
+    (a b : Numerics.Dyadic) :
+    (addDyadicForRounding keep a b).significand = 0 ↔ (addDyadic a b).significand = 0 := by
+  rcases addDyadicForRounding_eq keep a b with h | ⟨discard, hzero, hlog, h⟩
+  · rw [h]
+  · rw [h]
+    refine iff_of_false ?_ hzero
+    exact Numerics.shiftRightJam_ne_zero _ _
+      ((Nat.pow_le_pow_right (by decide) (by omega)).trans (Nat.log2_self_le hzero))
+
+/--
+Rounding to nearest even cannot tell `addDyadicForRounding (fmt.fracWidth + 3)` from the exact
+sum, so compiled code may round the bounded sum instead of building the exact one.
+-/
+theorem roundDyadic_addDyadicForRounding (fmt : FloatFormat) (a b : Numerics.Dyadic) :
+    roundDyadic fmt (addDyadicForRounding (fmt.fracWidth + 3) a b) =
+      roundDyadic fmt (addDyadic a b) := by
+  rcases addDyadicForRounding_eq (fmt.fracWidth + 3) a b with h | ⟨discard, -, hlog, h⟩
+  · rw [h]
+  · rw [h, roundDyadic_shiftRightJam _ _ _ _ _ (by omega)]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

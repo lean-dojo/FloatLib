@@ -55,4 +55,38 @@ rounding occurs here.
     addDyadicMagnitudes a.negative b.negative
       (Nat.shiftLeft a.significand shift) b.significand b.exponent
 
+/--
+Dyadic addition for a sum that is rounded next, to at most `keep - 3` fraction bits.
+
+It is `Internal.addDyadic` unless the operands are far apart: when both are nonzero and the gap
+between their exponents exceeds both `2 * keep` and the bit length of the lower significand. Then
+the higher significand is aligned only `keep` positions down, and the lower one is folded into
+those positions with a sticky bit, exactly as `Numerics.shiftRightJam` folds the exact sum. A
+large exponent gap therefore builds no correspondingly large integer, and rounding the result
+gives the rounding of the exact sum (`roundDyadic_addDyadicForRounding`).
+-/
+@[inline] def addDyadicForRounding (keep : Nat) (a b : Numerics.Dyadic) : Numerics.Dyadic :=
+  if a.exponent ≤ b.exponent then aligned keep a b else aligned keep b a
+where
+  /-- The sum of `low` and `high`, where `high` has the larger exponent. -/
+  @[inline] aligned (keep : Nat) (low high : Numerics.Dyadic) : Numerics.Dyadic :=
+    let gap := Int.toNat (high.exponent - low.exponent)
+    if 2 * keep < gap ∧ low.significand.log2 + 1 < gap ∧ high.significand ≠ 0 ∧
+        low.significand ≠ 0 then
+      let discard := gap - keep
+      let upper := high.significand <<< keep
+      let lower := low.significand >>> discard
+      -- A zero `lower` means a nonzero discarded part, and is tested first so that no shift by
+      -- `discard` is formed.
+      let exact := lower != 0 && low.significand == lower <<< discard
+      { negative := high.negative
+        significand :=
+          if high.negative == low.negative then
+            if exact then upper + lower else (upper + lower) ||| 1
+          else
+            if exact then upper - lower else (upper - lower - 1) ||| 1
+        exponent := low.exponent + discard }
+    else
+      Internal.addDyadic low high
+
 end FloatLib.Floats.Formats.BinaryInterchange.Model

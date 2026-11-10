@@ -88,6 +88,123 @@ def sameBoundValue (bound : Array Lean.Expr) (fact target : Lean.Expr) : MetaM B
     return ← agree left right
   return true
 
+/-- The value of a closed natural-number or integer term, by kernel reduction. -/
+private partial def kernelInt? (term : Lean.Expr) : MetaM (Option Int) := do
+  let .ok value := Kernel.whnf (← getEnv) (← getLCtx) term | return none
+  match value with
+  | .lit (.natVal n) => return some n
+  | .app (.const ``Int.ofNat _) n => return (← kernelInt? n)
+  | .app (.const ``Int.negSucc _) n => return (← kernelInt? n).map (-· - 1)
+  | _ => return none
+
+/-- The formats `f` of the subterms `Model.posMaxFinite f` of `term`, each once. -/
+private partial def largestFiniteFormats (term : Lean.Expr) (found : Array Lean.Expr) :
+    Array Lean.Expr :=
+  match term with
+  | .app function argument =>
+    let found := largestFiniteFormats argument (largestFiniteFormats function found)
+    if term.isAppOfArity ``Model.posMaxFinite 1 && !found.contains argument then
+      found.push argument
+    else found
+  | .lam _ type body _ | .forallE _ type body _ =>
+    largestFiniteFormats body (largestFiniteFormats type found)
+  | .letE _ type value body _ =>
+    largestFiniteFormats body (largestFiniteFormats value (largestFiniteFormats type found))
+  | .mdata _ inner | .proj _ _ inner => largestFiniteFormats inner found
+  | _ => found
+
+/-- The widest exponent and fraction fields for which closed conditions on a format are evaluated:
+the closed form of its largest finite value, and the kernel evaluation of a converted literal. A
+format beyond them keeps such conditions symbolic, so that no huge power is built. -/
+def closedFormatLimit : Nat := 20
+
+/-- Whether the closed format `format` has exponent and fraction fields within
+`closedFormatLimit` and `2 ^ closedFormatLimit` bits, both read by the kernel before anything
+larger is computed. -/
+private def smallFormat (format : Lean.Expr) : MetaM Bool := do
+  let some width ← kernelInt? (mkApp (mkConst ``FloatFormat.expWidth) format) | return false
+  let some precision ← kernelInt? (mkApp (mkConst ``FloatFormat.fracWidth) format) | return false
+  return width ≤ closedFormatLimit && precision ≤ 2 ^ closedFormatLimit
+
+/--
+Rewrite the largest finite value of every concrete format in the target of `goal` to its closed
+form `significand * 2 ^ exponent`, with both parts computed by the kernel
+(`Model.toReal_posMaxFinite_of_eq`). A format with a free variable, or outside `smallFormat`, is
+left as it is.
+-/
+def unfoldLargestFinite (goal : MVarId) : MetaM MVarId := goal.withContext do
+  let target ← instantiateMVars (← goal.getType)
+  let formats := largestFiniteFormats target #[]
+  let mut goal := goal
+  for format in formats do
+    if format.hasFVar || format.hasMVar then continue
+    unless ← smallFormat format do continue
+    let fracWidth := mkApp (mkConst ``FloatFormat.fracWidth) format
+    let significandTerm ← mkAppM ``HAdd.hAdd #[mkApp (mkConst ``Model.pow2) fracWidth,
+      mkApp (mkConst ``FloatFormat.maxFiniteFracField) format]
+    let exponentTerm ← mkAppM ``HSub.hSub #[mkApp (mkConst ``FloatFormat.maxNormalExponent) format,
+      mkApp (mkConst ``Int.ofNat) fracWidth]
+    let some significand ← kernelInt? significandTerm | continue
+    let some exponent ← kernelInt? exponentTerm | continue
+    unless significand ≥ 0 do continue
+    let significand := toExpr significand.toNat
+    let exponent := toExpr exponent
+    -- The kernel checks both reflexivity proofs against the computed values.
+    let equation := mkAppN (mkConst ``Model.toReal_posMaxFinite_of_eq)
+      #[format, significand, exponent, ← mkEqRefl significand, ← mkEqRefl exponent]
+    let result ← goal.rewrite (← goal.getType) equation
+    goal ← goal.replaceTargetEq result.eNew result.eqProof
+  return goal
+
+/--
+Close a closed goal about real numbers by arithmetic, with the largest finite value of each
+concrete format in closed form. This decides the range of a literal such as `1.5` or `3e38` in
+binary32, which a comparison with one does not.
+-/
+def closeByArithmetic (goal : MVarId) : TacticM Bool := do
+  let solved? ← attempt? 2000 do
+    let goal ← goal.withContext do goal.replaceTargetDefEq (← zetaReduce (← goal.getType))
+    let goal ← unfoldLargestFinite goal
+    let remaining ← Lean.Elab.Tactic.run goal (evalTactic (←
+      `(tactic| set_option exponentiation.threshold 1048576 in norm_num)))
+    return if remaining.isEmpty then some () else none
+  return solved?.isSome
+
+/-- Whether `q` is a decimal literal, such as `1e40` or `3`, of at most `2 ^ 12` digits and
+exponent, so that evaluating its conversion is cheap. -/
+private def smallLiteral (q : Lean.Expr) : MetaM Bool := do
+  let bound : Nat := 2 ^ 12
+  let small (term : Lean.Expr) : MetaM Bool := do
+    let some value ← kernelInt? term | return false
+    return value.natAbs < 10 ^ bound
+  if q.isAppOfArity ``OfScientific.ofScientific 5 then
+    let some exponent ← kernelInt? (q.getArg! 4) | return false
+    return (← small (q.getArg! 2)) && exponent ≤ (bound : Int)
+  if q.isAppOfArity ``OfNat.ofNat 3 then return ← small (q.getArg! 1)
+  return false
+
+/--
+Whether the closed condition `condition` is known to be false. A proposition over the reals is
+when arithmetic proves its negation (`closeByArithmetic`). The finiteness of a converted literal,
+`Model.isFinite (Model.ofRat format q) = true`, is when the kernel evaluates it to `false`, for a
+format within `smallFormat` and a decimal literal `q` of at most `2 ^ 12` digits and exponent. A
+condition outside these cases is not refuted. The decision only refuses a theorem; nothing is
+proved from it.
+-/
+def refutesClosed (condition : Lean.Expr) : TacticM Bool := withoutModifyingState do
+  if condition.hasFVar || condition.hasMVar then return false
+  if isFiniteness condition then
+    let value := condition.getArg! 1
+    let converted := value.getAppArgs.back!
+    unless value.isAppOf ``Model.isFinite && converted.isAppOf ``Model.ofRat do
+      return false
+    unless ← smallFormat (converted.getArg! 0) do return false
+    unless ← smallLiteral (converted.getArg! 1) do return false
+    let .ok result := Kernel.whnf (← getEnv) (← getLCtx) value | return false
+    return result.isConstOf ``Bool.false
+  let negation ← mkFreshExprMVar (mkNot condition)
+  closeByArithmetic negation.mvarId!
+
 /-- Attempt inexpensive side conditions without hiding an unsolved premise. -/
 def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.withContext do
   let target ← instantiateMVars (← goal.getType)
@@ -187,6 +304,9 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
         unless related do unrelatedSteps := unrelatedSteps.push declaration.fvarId
       attempts := attempts.push
         (unrelatedSteps, ← `(tactic| (apply $ofForall; intros; solve_by_elim)), 1000)
+  -- A closed range condition, or the finiteness of a converted literal, that the cheap attempts
+  -- below leave open is tried by arithmetic on the largest finite value afterwards.
+  let mut arithmetic : Option Bool := none
   -- Match decide's own preprocessing: local let-values may close an otherwise symbolic type.
   let decidableTarget ← if target.hasFVar then zetaReduce target else pure target
   if !decidableTarget.hasFVar && !decidableTarget.hasMVar then
@@ -202,6 +322,9 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
       let finite := mkIdent ``Model.isFinite_ofRat
       attempts := attempts.push (#[], ← `(tactic|
         (refine $finite _ (by decide) ?_; refine le_trans ?_ ($maximum _); norm_num)), 1000)
+      arithmetic := some true
+    else if (target.find? (·.isAppOf ``Model.posMaxFinite)).isSome then
+      arithmetic := some false
   for index in [:attempts.size + 1] do
     if simplifyAt == some index then
       if (← attempt? 1000 (simpWithHypotheses session goal)).isSome then return true
@@ -210,6 +333,18 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
       let remaining ← Lean.Elab.Tactic.run (← goal.tryClearMany cleared) (evalTactic attempt)
       return if remaining.isEmpty then some () else none
     if solved?.isSome then return true
+  -- A literal above one, such as `1.5` or `3e38` in binary32, needs the largest finite value.
+  match arithmetic with
+  | some true =>
+      let finite := mkIdent ``Model.isFinite_ofRat
+      let ranged? ← attempt? 1000 do
+        let remaining ← Lean.Elab.Tactic.run goal (evalTactic (← `(tactic|
+          refine $finite _ (by decide) ?_)))
+        let [range] := remaining | return none
+        return if ← closeByArithmetic range then some () else none
+      if ranged?.isSome then return true
+  | some false => if ← closeByArithmetic goal then return true
+  | none => pure ()
   -- Range evidence can describe the same operation through a different certified provider.
   -- This is an equality proof, not an assumption that similarly named backends agree.
   let target ← instantiateMVars (← goal.getType)

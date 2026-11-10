@@ -24,7 +24,9 @@ directions and exception-status results belong to the operation APIs.
 
 The specifications also execute when a backend declines an operand. So the rounding refinement
 must be imported before they are defined, because it replaces the logical rounder's repeated
-one-bit shifts with bulk integer rounding in their compiled code.
+one-bit shifts with bulk integer rounding in their compiled code. Compiled addition and FMA
+(`Internal.add`, `Internal.fma`) add with `addDyadicForRounding`, so operands far apart in
+exponent build no integer as wide as their gap.
 -/
 
 @[expose] public section
@@ -50,6 +52,25 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.Spec
             y
           else
             invalidResult fmt
+
+/--
+`add` as compiled code runs it. Finite operands far apart in exponent are added with
+`addDyadicForRounding`, which builds no aligned integer as wide as their exponent gap and rounds
+like the exact sum (`roundDyadic_addDyadicForRounding`).
+-/
+@[inline] def Internal.add {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
+  match toDyadic? x, toDyadic? y with
+  | some dx, some dy => roundDyadic fmt (addDyadicForRounding (fmt.fracWidth + 3) dx dy)
+  | _, _ => Spec.add x y
+
+/-- Compiled addition rounds the bounded sum, which rounds like the exact one. -/
+@[csimp] theorem add_eq_internal : @add = @Internal.add := by
+  funext fmt x y
+  unfold Internal.add
+  split
+  · rename_i dx dy hx hy
+    simp only [add, hx, hy, roundDyadic_addDyadicForRounding]
+  · rfl
 
 /--
 Subtraction as addition of the negated right operand.
@@ -120,5 +141,40 @@ shares the convention.
                 exponent := dx.exponent + dy.exponent }
             roundDyadic fmt (addDyadic product dz)
         | _, _, _ => invalidResult fmt
+
+/--
+`fma` as compiled code runs it: the product and the addend are added with `addDyadicForRounding`,
+so an addend far from the product in exponent builds no correspondingly wide integer.
+-/
+@[inline] def Internal.fma {fmt : FloatFormat} (x y z : Model fmt) : Model fmt :=
+  match chooseNaN3 x y z with
+  | some nan => nan
+  | none =>
+      if isInf x || isInf y then
+        if isZero x || isZero y then
+          invalidResult fmt
+        else
+          let prodSign := Bool.xor (signBit x) (signBit y)
+          let prodInf := nativeOverflow fmt prodSign
+          if isInf z then
+            if signBit z != prodSign then invalidResult fmt else prodInf
+          else
+            prodInf
+      else if isInf z then
+        z
+      else
+        match toDyadic? x, toDyadic? y, toDyadic? z with
+        | some dx, some dy, some dz =>
+            let product : Numerics.Dyadic :=
+              { negative := Bool.xor dx.negative dy.negative
+                significand := dx.significand * dy.significand
+                exponent := dx.exponent + dy.exponent }
+            roundDyadic fmt (addDyadicForRounding (fmt.fracWidth + 3) product dz)
+        | _, _, _ => invalidResult fmt
+
+/-- Compiled FMA rounds the bounded sum of the product and the addend. -/
+@[csimp] theorem fma_eq_internal : @fma = @Internal.fma := by
+  funext fmt x y z
+  simp only [fma, Internal.fma, roundDyadic_addDyadicForRounding]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.Spec

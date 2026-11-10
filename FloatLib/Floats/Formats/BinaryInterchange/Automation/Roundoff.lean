@@ -56,10 +56,12 @@ premises must already be provable. To generate a reusable conditional theorem, u
 statement records the required conditions, and you prove them when you apply it.
 
 `roundoff mixed theorem` states a mixed bound instead, against the exact computation on the decoded
-inputs, except at a contracted call whose model the analysis cannot read (see the contracts below).
+inputs, except at a contracted call whose model the analysis cannot read (see the contracts below)
+and at the choices listed under the trust assumptions, which stay as the program makes them.
 With `using` an equation whose left side is the inferred reference, written before `:=`, a mixed
 theorem states the bound against the right side. When the observation is a configured
-`ExecFloat.Binary.toReal value`, the bound is preceded by `isFinite value = true`. A model
+`ExecFloat.Binary.toReal value`, the bound is preceded by `isFinite value = true`, derived from
+range conditions or, where the analysis cannot derive it, assumed in the premise. A model
 observation `Model.toReal`, or an observation under another function, states the mixed bound alone.
 
 The mixed reference reads a stored function only at index data and casts only index data to the
@@ -155,8 +157,12 @@ data.
 
 Inputs are decoded as stored. Floating-point literals and casts inside the computation carry
 conversion error relative to their exact real values, except a literal that the format represents,
-such as `127` in binary32, which converts without error. Closed conditions on a literal, such as its
-range, are decided. The conversion of an integer or a natural number has relative error `u` and
+such as `127` in binary32, which converts without error. A closed condition on a literal, such as
+its range, is checked by arithmetic with the largest finite value of the format in closed form. One
+the check proves is discharged, and one it refutes, such as the range of `1e40` in binary32 or the
+nonzero divisor of a division by the literal `0`, stops the analysis with an error. A condition the
+bounded check settles neither way stays a premise, as in a format with more than 20 exponent bits
+or `2 ^ 20` fraction bits. The conversion of an integer or a natural number has relative error `u` and
 keeps its sign. It is exact at magnitudes up to `2 ^ p`, `p = fracWidth + 1`, as a hypothesis can
 show. Rounding to an integral value moves a value by at most one half to nearest and one otherwise,
 and a C integer cast reads that rounding. An `int8_t` cast keeps its integer when the integer's
@@ -166,8 +172,10 @@ The primitive float rules require finite results, and division a finite divisor.
 requires a finite operand in its domain, which the sign of the operand establishes, and above zero
 it divides the error of its operand by about `2 √x₀`. A weak sign of a rounded value needs no
 finiteness, because a NaN or an infinity has real value zero. Finiteness of a result follows from a
-range condition on the enclosure of its exact value, an inequality on the inputs and budgets. A
-supplied error tolerance still has to bound the generated budget.
+range condition on the enclosure of its exact value, an inequality on the inputs and budgets.
+Where the analysis cannot derive the finiteness of an output, such as the value a `match` on an
+option returns, the finiteness stays a premise, and a mixed theorem then assumes the finiteness it
+concludes. A supplied error tolerance still has to bound the generated budget.
 
 ## Elementary functions
 
@@ -333,8 +341,10 @@ elab "roundoff" "(" value:term ")" : tactic => withMainContext do
   goal.assign proof
   replaceMainGoal []
 
-/-- Refuse a generated conditional theorem when a closed obligation computes to false. The check
-is bounded, and it cannot decide whether arbitrary premises are consistent. -/
+/-- Refuse a generated conditional theorem when a closed obligation is false: when it computes to
+false, or when arithmetic refutes it (`refutesClosed`), such as the range of the literal `1e40` in
+binary32 or the condition `0 < 0` of a division by the literal `0`. The check is bounded, and it
+cannot decide whether arbitrary premises are consistent. -/
 def checkGeneratedConditions (pending : Array MVarId) : TacticM Unit := do
   for goal in pending do
     if ← goal.isAssigned then continue
@@ -343,7 +353,7 @@ def checkGeneratedConditions (pending : Array MVarId) : TacticM Unit := do
     let refuted? ← attempt? 500 do
       let decision ← withDefault (whnf (← mkDecide condition))
       return if decision.isConstOf ``Bool.false then some () else none
-    if refuted?.isSome then
+    if refuted?.isSome || (← refutesClosed condition) then
       throwError "roundoff: a required numerical condition is false: {condition}"
 
 /-- The number of nodes of `expression`, counting shared subterms once per occurrence, up to

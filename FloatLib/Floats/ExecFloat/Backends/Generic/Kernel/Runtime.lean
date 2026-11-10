@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ProductRound.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.QuotientRound.Runtime
 public import FloatLib.Floats.ExecFloat.Backends.Generic.ScaleAdd.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Runtime
 
@@ -114,7 +115,8 @@ The IEEE branch converts the storage word to `Nat` once and does not allocate an
 /--
 Compiled finite addition aligns unsigned field scales before entering the rounder.
 
-For non-IEEE descriptors it evaluates the same exact-dyadic definition used in the logic.
+For non-IEEE descriptors it rounds `addDyadicForRounding`, which rounds like the exact dyadic sum
+of the logic but builds no integer as wide as a large exponent gap.
 -/
 @[inline] def Internal.addComponents
     (fmt : FloatFormat) (x y : Components) : Model fmt :=
@@ -123,7 +125,8 @@ For non-IEEE descriptors it evaluates the same exact-dyadic definition used in t
       x.sign y.sign x.mantissa (scale x.exponent)
       y.mantissa (scale y.exponent)
   else
-    Internal.roundDyadic fmt <| addDyadic (x.toDyadic fmt) (y.toDyadic fmt)
+    Internal.roundDyadic fmt <|
+      addDyadicForRounding (fmt.fracWidth + 3) (x.toDyadic fmt) (y.toDyadic fmt)
 
 /--
 Add two already-decoded finite values and round once to `fmt`.
@@ -232,7 +235,8 @@ two-offset coordinate. No intermediate dyadic exponent is allocated on the IEEE 
       (x.mantissa * y.mantissa) (scale x.exponent + scale y.exponent)
       z.mantissa (scale z.exponent + finiteScaleOffset fmt)
   else
-    Internal.roundDyadic fmt <| addDyadic (productDyadic fmt x y) (z.toDyadic fmt)
+    Internal.roundDyadic fmt <|
+      addDyadicForRounding (fmt.fracWidth + 3) (productDyadic fmt x y) (z.toDyadic fmt)
 
 /--
 Exact finite fused multiply-add from three already-decoded values.
@@ -269,7 +273,7 @@ rounded once, at every precision.
       xSign ySign xMantissa (scale xExponent)
       yMantissa (scale yExponent)
   else
-    addComponents fmt
+    Internal.addComponents fmt
       { sign := xSign, exponent := xExponent, mantissa := xMantissa }
       { sign := ySign, exponent := yExponent, mantissa := yMantissa }
 
@@ -361,7 +365,7 @@ leading-bit positions.
       (xMantissa * yMantissa) (scale xExponent + scale yExponent)
       zMantissa (scale zExponent + finiteScaleOffset fmt)
   else
-    fmaComponents fmt
+    Internal.fmaComponents fmt
       { sign := xSign, exponent := xExponent, mantissa := xMantissa }
       { sign := ySign, exponent := yExponent, mantissa := yMantissa }
       { sign := zSign, exponent := zExponent, mantissa := zMantissa }

@@ -8,8 +8,10 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Runtime
+public import FloatLib.Numerics.ShiftRightJam
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Bounds
+import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
 # Correctness of direct generic dyadic rounding
@@ -751,6 +753,72 @@ theorem roundDyadicGeneral_eq_roundDyadic
   · simp [roundDyadic, Internal.roundDyadic, hieee,
       ieeeRoundDyadic_eq_internal]
   · simp [roundDyadic, Internal.roundDyadic, hieee]
+
+/-! ## Sticky folding of low bits -/
+
+/--
+Nearest-even rounding reads a magnitude only down to the bit below its guard bit, so the sticky
+quotient `Numerics.shiftRightJam magnitude discard`, which keeps `fracWidth + 2` bits below the
+leading one, rounds like the magnitude itself.
+-/
+theorem roundDyadicGeneral_shiftRightJam (fmt : FloatFormat) (sign : Bool) (magnitude : Nat)
+    (exponent : Int) (discard : Nat) (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
+    roundDyadicGeneral fmt
+        { negative := sign
+          significand := Numerics.shiftRightJam magnitude discard
+          exponent := exponent + discard } =
+      roundDyadicGeneral fmt { negative := sign, significand := magnitude, exponent } := by
+  have hpos : magnitude ≠ 0 := by
+    rintro rfl
+    simp at hleading
+  have hjam : Numerics.shiftRightJam magnitude discard ≠ 0 :=
+    Numerics.shiftRightJam_ne_zero magnitude discard
+      ((Nat.pow_le_pow_right (by decide) (by omega)).trans (Nat.log2_self_le hpos))
+  have hlog := Numerics.log2_shiftRightJam magnitude discard
+  have htotal : ((magnitude.log2 - discard : Nat) : Int) + (exponent + discard) =
+      (magnitude.log2 : Int) + exponent := by
+    omega
+  unfold roundDyadicGeneral
+  simp only [beq_iff_eq, hpos, hjam, ite_false, hlog, htotal]
+  split_ifs with hover hsub
+  · rfl
+  · -- Below the normal range, both magnitudes shift right past the subnormal grid.
+    have hbelow : exponent + discard - fmt.minSubnormalExponent ≤ -3 := by
+      simp only [FloatFormat.minSubnormalExponent, Int.ofNat_eq_natCast]
+      omega
+    obtain ⟨n, hn⟩ : ∃ n : Nat, exponent + discard - fmt.minSubnormalExponent = Int.negSucc n :=
+      ⟨(fmt.minSubnormalExponent - exponent - discard).toNat - 1, by rw [Int.negSucc_eq]; omega⟩
+    have hn' : exponent - fmt.minSubnormalExponent = Int.negSucc (n + discard) := by
+      rw [Int.negSucc_eq] at hn ⊢
+      push_cast
+      omega
+    have hn2 : 2 ≤ n + 1 := by
+      rw [Int.negSucc_eq] at hn
+      omega
+    rw [hn, hn']
+    dsimp only
+    rw [← Numerics.roundShiftRightEven_shiftRightJam magnitude discard (n + discard + 1)
+      (by omega), show n + discard + 1 - discard = n + 1 by omega]
+  · -- In the normal range, both keep `fracWidth` bits below the leading one.
+    rw [← Numerics.roundShiftRightEven_shiftRightJam magnitude discard
+        (magnitude.log2 - fmt.fracWidth) (by omega),
+      show magnitude.log2 - fmt.fracWidth - discard = magnitude.log2 - discard - fmt.fracWidth by
+        omega]
+  all_goals exfalso; omega
+
+/--
+`roundDyadicGeneral_shiftRightJam` for `roundDyadic`, the nearest-even rounding of every complete
+descriptor.
+-/
+theorem roundDyadic_shiftRightJam (fmt : FloatFormat) (sign : Bool) (magnitude : Nat)
+    (exponent : Int) (discard : Nat) (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
+    roundDyadic fmt
+        { negative := sign
+          significand := Numerics.shiftRightJam magnitude discard
+          exponent := exponent + discard } =
+      roundDyadic fmt { negative := sign, significand := magnitude, exponent } := by
+  rw [← roundDyadicGeneral_eq_roundDyadic, ← roundDyadicGeneral_eq_roundDyadic,
+    roundDyadicGeneral_shiftRightJam fmt sign magnitude exponent discard hleading]
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

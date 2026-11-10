@@ -875,8 +875,9 @@ invalid result.
 For an IEEE descriptor the constant `Model.pi` is correctly rounded. It rounds an enclosure from the
 cache of proved constants in `FloatLib.Numerics.Enclosure.Constants` (import
 `FloatLib.Numerics.Enclosure`), which also supplies the `2 / pi` and `pi / 2` of sine and cosine
-reduction, the `log 2` of exponential reduction and of generated configurations, and the `log 2` of
-the certified power. Each precision level of the cache is computed once, on first use, and these
+reduction, the `log 2` of exponential reduction and of generated configurations, the `log 2` of
+the certified power, and the `log 2` of the correctly rounded logarithm and weighted exponential
+searches. Each precision level of the cache is computed once, on first use, and these
 readers share it from then on. The exact comparators and the certified logarithm are the
 exception, since they compute their own `pi / 4` and `log 2`.
 
@@ -902,9 +903,9 @@ finite encoding. Stable variants perform the subtraction or addition of one exac
 They return `.ok result` on success, and otherwise `.error (failure : Certified.Failure)`: an
 unsupported format, a nonfinite input, a domain or range failure, or an inconclusive search.
 Certification never falls back to an approximation. The theorems below are partial correctness.
-They describe every `.ok` result, but no theorem says which inputs succeed, and the only proved
-success is the signed-zero passthrough `Model.Transcendentals.Certified.expMinus1_of_isZero` and
-`logPlus1_of_isZero`. You set the starting degree and the number of enclosure attempts with the
+They describe every `.ok` result, but no theorem says which inputs succeed in general. The proved
+successes are the signed-zero passthrough `Model.Transcendentals.Certified.expMinus1_of_isZero` and
+`logPlus1_of_isZero`, and the power of one, `Model.Transcendentals.Certified.pow_posOne`. You set the starting degree and the number of enclosure attempts with the
 `budget` option, a `Certified.Budget`, which bounds the attempts and not the total work. On the
 model,
 `Model.Transcendentals.Certified.pow` (finite floating inputs) and `powRat` (exact rationals) refine

@@ -14,6 +14,10 @@ import all FloatLib.Floats.Formats.Posit.Model.Decode
 import all FloatLib.Kernels.FixedWord.Quotient.Compiler
 import all FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
 import all FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
+import all FloatLib.Floats.ExecFloat.Backends.Word.NormalPair.Proof
+import all FloatLib.Floats.ExecFloat.Backends.Word.ProductRound.Proof
+import all FloatLib.Floats.ExecFloat.Backends.Word.Small.Fma.Proof
+import all FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Internal
 public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
 public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
 public import FloatLibTests.Conformance.BinaryInterchange.MixedError
@@ -39,14 +43,19 @@ public meta import Lean.Util.CollectAxioms
 /-!
 # Kernel-axiom audit
 
-At build time, collect the transitive axioms of every loaded declaration whose originating
-module belongs to `FloatLib`, including private declarations available in this environment.
-Only propositional extensionality, quotient soundness, and classical choice are accepted.
-The imports cover the public root, the optional binary and decimal transcendental proofs and the
-`roundoff` analysis.
-The quotient, integer square root, and checked square root compiler certificates are loaded
-explicitly because their clients import them privately.
-Unimported modules are outside this check. Symbolic certificate, quire, native-model, packed-row and
+At build time, collect the transitive axioms of every declaration of a `FloatLib` module that this
+environment holds, private declarations included. Only propositional extensionality, quotient
+soundness, and classical choice are accepted. The imports cover the public root, the optional
+binary and decimal transcendental proofs and the `roundoff` analysis.
+
+This file reaches the library through public imports, so it holds what each module exports. A
+declaration it does not hold is checked through the declarations that use it, whose collected
+axioms include its own. The modules that every client imports privately, such as the quotient,
+integer square root and checked square root compiler certificates and four backend proof modules,
+are loaded with `import all` so that their declarations are checked directly. A declaration that is
+neither held nor used, mostly compiler-generated auxiliaries and a few unused private lemmas, is
+outside this check; the source scan of `tests/checks/trust-surface.sh` still rejects `sorry` and
+`axiom` there. Unimported modules are outside this check. Symbolic certificate, quire, native-model, packed-row and
 coefficient-bound regression declarations are checked separately because they belong to
 `FloatLibTests`.
 

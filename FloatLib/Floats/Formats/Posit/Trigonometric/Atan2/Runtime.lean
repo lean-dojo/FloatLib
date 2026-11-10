@@ -12,7 +12,7 @@ public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Runtime
 /-!
 # Correctly rounded two-coordinate posit arctangent
 
-The Posit Standard (2022), §5.5, orders the coordinates as `(x, y)`, so the result is the
+The Posit Standard (2022), §5.6, orders the coordinates as `(x, y)`, so the result is the
 principal argument of `x + i*y` and the negative real axis has angle pi. NaR propagates. At the
 origin Mathlib's totalized angle is zero, but the posit operation produces NaR there.
 

@@ -28,7 +28,9 @@ private theorem cmp_ratCast (value target : ℚ) :
   have hgt : target < value ↔ (target : ℝ) < value := by norm_cast
   simp only [cmp, cmpUsing, hlt, hgt]
 
-/-- For every `base ≥ 0`, `compare` returns the ordering of the real power and the target. -/
+/-- For every `base ≥ 0`, `compare` returns the ordering of the real power and the target. At
+`base = 0` with a negative exponent the real power is Mathlib's `0 ^ y = 0`, not a pole, so callers
+that need the pole handle that case first. -/
 theorem compare_eq_real (base exponent target : ℚ) (hbase : 0 ≤ base) :
     compare base exponent target = cmp ((base : ℝ) ^ (exponent : ℝ)) (target : ℝ) := by
   unfold compare

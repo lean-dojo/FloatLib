@@ -258,7 +258,7 @@ Each arithmetic operation so far rounds once, so a dot product summed in a posit
 
 For an $n$-bit posit the standard fixes a two's-complement word of $16n$ bits whose least significant bit is worth $2^{16 - 8n}$, 512 bits at a scale of $2^{-240}$ for `Posit32`. The most negative word is quire NaR, and the bits above the largest product in [Figure 8.3](#/chapter/posits-and-the-quire/figure-ch14-quire) are headroom for carries.
 
-![The 512-bit posit32 quire as a fixed-point word, with landmark weights 2^240 at bit 480, 1 at bit 240, and 2^-240 at bit 0, plus thirty carry bits and the sign bit](assets/ch14-quire.png "From zero, the quire accumulates strictly fewer than 2^31 finite posit32 products exactly.")
+![The 512-bit posit32 quire as a fixed-point word, with landmark weights 2^240 at bit 480, 1 at bit 240, and 2^-240 at bit 0, plus the 31 carry-guard bits from bit 480 to bit 510 and the sign bit](assets/ch14-quire.png "From zero, the quire accumulates strictly fewer than 2^31 finite posit32 products exactly.")
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
@@ -344,7 +344,7 @@ example (q : Quire.Model (ExecFloat.Posit.descriptor 32)) :
 
 ### How many products fit in a quire?
 
-How many entries fit before the ledger overflows? Let's count products first. The largest posit squared, $2^{240}$, sits at bit 480 of the 512-bit word, under the figure's thirty carry bits, and $2^{31}$ copies of it come to $2^{16n - 1}$ units, one past the largest ordinary coefficient. So fewer than $2^{31}$ exact products fit, and that bound is tight. The standard reads two ways here, though, "at most $2^{31}$ terms" in Section 3.2 and "length less than $2^{31}$" in Section 4.2, and the proof takes the second.
+How many entries fit before the ledger overflows? Let's count products first. The largest posit squared, $2^{240}$, sits at bit 480 of the 512-bit word, the lowest of the standard's 31 carry-guard bits, and $2^{31}$ copies of it come to $2^{16n - 1}$ units, one past the largest ordinary coefficient. So fewer than $2^{31}$ exact products fit, and that bound is tight. The standard reads two ways here, though, "at most $2^{31}$ terms" in Section 3.2 and "length less than $2^{31}$" in Section 4.2, and the proof takes the second.
 
 For posit addends the limit is $2^{23 + 4n}$, the standard's quire sum limit, the least number of additions that can overflow, so fewer is safe. In Lean they're `productSumTermLimit` and `positSumTermLimit`, the standard's term limits, both exclusive. Our [capacity proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Quire/Capacity.lean) bounds what one posit or product can contribute, and the [accumulation proof](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Quire/Accumulation.lean) carries those bounds through a loop, giving both.
 
