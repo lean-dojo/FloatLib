@@ -230,8 +230,11 @@ def Estimate.closeFinite (estimate : Estimate) (goal : MVarId) : TacticM Bool :=
   if given == type then
     goal.assign finite
     return true
-  -- The finiteness of another carrier, such as of the decoded model, is not this one.
-  unless (given.getArg! 1).getAppFn == (type.getArg! 1).getAppFn do return false
+  -- Each is a finiteness `test value = true`. That of another carrier, such as of the decoded
+  -- model, is not this one, and a proposition of another form, such as the invariant `True` of a
+  -- loop whose state decodes no value, proves no finiteness.
+  let (some (_, derived, _), some (_, wanted, _)) := (given.eq?, type.eq?) | return false
+  unless derived.getAppFn == wanted.getAppFn do return false
   -- Program definitions may be kept folded by the surrounding analysis; unfold them here. Such a
   -- comparison settles quickly when it succeeds.
   let matched? ← attempt? 200 <| withCanUnfoldPred (fun _ _ => pure true) <| withDefault do
@@ -277,6 +280,18 @@ structure PrimitiveContract where
   /-- The rounding of the real reference in the attribute of the call, and the finiteness of
   that result. -/
   attribute? : Option (Name × Name) := none
+  /-- The constants that head the dictionary methods of `implementations`, or `none` when one of
+  them is not read off its statement. -/
+  methods? : Option (Array Name) := some #[]
+
+/-- Whether a theorem of `contract` can observe the call `source`: its head is the primitive or
+a dictionary method equal to it. The theorems of a primitive that the program does not call are
+then not instantiated. -/
+def PrimitiveContract.observes (contract : PrimitiveContract) (source : Lean.Expr) : Bool :=
+  match contract.methods?, source.getAppFn.constName? with
+  | some methods, some head => head == contract.primitive || methods.contains head
+  | some _, none => false
+  | none, _ => true
 
 /-- The rounding theorems of a contract, each with the finiteness of its result: those of the
 default attribute first. -/
@@ -327,12 +342,20 @@ def primitives : Array PrimitiveContract := #[
       ``ExecFloat.Binary.CorrectlyRounded.toReal_expMul_pos,
       ``ExecFloat.Binary.CorrectlyRounded.toReal_expMul_lt_zero] }]
 
-/-- The primitive contracts with the implementation equalities registered for them. -/
+/-- The primitive contracts with the implementation equalities registered for them, and the
+heads of the methods these equate with the primitive (`PrimitiveContract.observes`). -/
 def primitiveContracts : CoreM (Array PrimitiveContract) := do
   let bridges := (← extension).bridges
-  return primitives.map fun contract => { contract with
-    implementations := bridges.filterMap fun (primitive, bridge) =>
-      if primitive == contract.primitive then some bridge else none }
+  let environment ← getEnv
+  return primitives.map fun contract =>
+    let implementations := bridges.filterMap fun (primitive, bridge) =>
+      if primitive == contract.primitive then some bridge else none
+    -- The method is the left side of the equality that the implementation theorem states.
+    let methods? := implementations.mapM fun bridge => do
+      let info ← environment.find? bridge
+      let (_, method, _) ← info.type.getForallBody.consumeMData.eq?
+      method.getAppFn.constName?
+    { contract with implementations, methods? }
 
 /-- Local proof construction for a loop body, before its accumulator variables are closed. -/
 structure StepEstimate where
@@ -581,9 +604,16 @@ structure Rule where
   exact : Bool
   /-- The prepared statement, its universes and remaining metavariables abstracted. -/
   prepared : AbstractMVarsResult
-  /-- Position among the candidates for one computation, that of its registration. The analysis
-  tries lower first. -/
+  /-- Position among the candidates for one computation, that of its registration, or among the
+  exact operations for one of them. The analysis tries lower first. -/
   order : Nat := 0
+  /-- An exact observation that a premise selects (`selects`): it states one case of its
+  computation, where one without such a premise restates the computation and always applies. -/
+  selective : Bool := false
+  /-- A mixed bound stated in ulps of the format (`Model.halfUlpAt`). The constants of the
+  standard model are numerals for a format without variables, and arithmetic evaluates them,
+  so the other mixed bounds of the computation are tried first there. -/
+  ulps : Bool := false
 
 /-- Compare rules by theorem name and `exact` flag, ignoring the prepared statement, so the index
 keeps one copy of a theorem registered twice. -/
@@ -813,6 +843,15 @@ structure Session where
   /-- Sign goals that `positivity` did not prove, with the facts of their scope
   (`Session.scopeFacts`). It uses no other hypothesis. -/
   positivityFailures : IO.Ref (Std.HashMap Lean.Expr (Array (Array FVarId)))
+  /-- Orders that linear arithmetic did not derive from the hypotheses (`orderByHypotheses`),
+  with the facts of their scope (`Session.scopeFacts`). -/
+  orderFailures : IO.Ref (Std.HashMap Lean.Expr (Array (Array FVarId)))
+  /-- The lookup keys with their numerical operands exposed (`registeredBound?`), or `none` for
+  a key whose exposure ran out of its budget. -/
+  exposed : IO.Ref (Std.HashMap Lean.Expr (Option Lean.Expr))
+  /-- The constants that head the computation of an indexed rule, or the value it observes. A
+  rule reads such a constant as written, so the exposure of a lookup key does not unfold it. -/
+  ruled : NameSet := {}
   /-- Sign goals whose search failed, with the local context and the largest depth that failed.
   Unlike the signs of a scope, they outlive a rolled-back attempt. -/
   signFailures : IO.Ref (Std.HashMap (Array FVarId × Lean.Expr) Nat)
@@ -845,8 +884,12 @@ def finiteDepth : Nat := 64
 derivation that needs its own conclusion, through one rule or several, would repeat without end.
 Only goals whose values have the same head are compared by unification. -/
 def Session.deriving (session : Session) (type : Lean.Expr) : MetaM Bool := do
+  -- A finiteness is an equality `test value = true`. Another proposition, such as the invariant
+  -- `True` of a loop whose state decodes no value, is compared as it is.
   let value (finiteness : Lean.Expr) : Lean.Expr :=
-    ((finiteness.getArg! 1).getAppArgs.back?).getD finiteness
+    match finiteness.eq? with
+    | some (_, test, _) => test.getAppArgs.back?.getD finiteness
+    | none => finiteness
   let head := value type
   let refused ← if session.finiteGoals.size ≥ finiteDepth then pure true
     else session.finiteGoals.anyM fun active => do

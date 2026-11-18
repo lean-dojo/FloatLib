@@ -938,17 +938,14 @@ def normalizeRule (session : Session) (rule : Lean.Expr) : MetaM Lean.Expr := do
     mkLambdaFVars arguments proof
 
 /-- Index complete computation patterns. The tree ignores instance arguments, but applying a
-candidate still checks its complete statement, including every selected dictionary. With
-`maskParameters := false`, retain the original parameters for a lookup key. -/
-partial def numericalPattern (expression : Lean.Expr) (root : Bool := true)
-    (maskParameters : Bool := true) : MetaM Lean.Expr := do
-  let expression ← if maskParameters then pure expression else whnf expression
+candidate still checks its complete statement, including every selected dictionary. -/
+partial def numericalPattern (expression : Lean.Expr) (root : Bool := true) :
+    MetaM Lean.Expr := do
   let expression ← DiscrTree.reduceDT expression root
   let mut function := expression.getAppFn
   if let .proj name index source := function then
-    let source ← if isClass (← getEnv) name then
-        pure (if maskParameters then DiscrTree.mkNoindexAnnotation source else source)
-      else numericalPattern source false maskParameters
+    let source ← if isClass (← getEnv) name then pure (DiscrTree.mkNoindexAnnotation source)
+      else numericalPattern source false
     function := .proj name index source
   let arguments := expression.getAppArgs
   let info ← getFunInfoNArgs function arguments.size
@@ -958,8 +955,8 @@ partial def numericalPattern (expression : Lean.Expr) (root : Bool := true)
     let ignore := info.paramInfo[index]?.any fun parameter =>
       parameter.isInstance || parameter.isImplicit || parameter.isStrictImplicit
     let argument ← if ignore || (← isType argument) || (← isProof argument) then
-        pure (if maskParameters then DiscrTree.mkNoindexAnnotation argument else argument)
-      else numericalPattern argument false maskParameters
+        pure (DiscrTree.mkNoindexAnnotation argument)
+      else numericalPattern argument false
     prepared := prepared.push argument
   return mkAppN function prepared
 
@@ -1113,6 +1110,49 @@ private def equalityLeft? (relation : Lean.Expr) : Option Lean.Expr :=
 private def mixedValue? (bound : Lean.Expr) : Option Lean.Expr :=
   if bound.isAppOfArity ``MixedError 4 then some bound.getAppArgs[0]! else none
 
+/-- An equality or disequality directly about a format's encoding policy. Cast rules must
+establish it before applying, since alternatives cover different overflow and saturation policies.
+Encoding fields inside a configured carrier's type do not make its finiteness a policy premise. -/
+def isEncodingPolicy (type : Lean.Expr) : Bool :=
+  (type.isAppOfArity ``Eq 3 || type.isAppOfArity ``Ne 3) &&
+    (type.getAppArgs.extract 1 3).any fun term =>
+      term.isAppOf ``FloatFormat.isIEEE || term.isAppOf ``FloatFormat.encoding
+
+/-- A premise that chooses between rules: a real order or equality, a comparison of the
+precisions or of an exponent bound of formats, or an executable zero. A mixed analysis proves it
+or tries the next rule, and it never becomes a caller obligation. Exact widening cannot leave an
+impossible precision premise on narrowing. Such a comparison has the same quantity on both of
+its sides, as `src.fracWidth ≤ dst.fracWidth` has. A relation between two quantities of a
+format, as between its precision and its largest exponent, is a condition on that format and
+stays an obligation when the format is a variable. Encoding policies also select cast rules;
+ordinary arithmetic keeps its existing format obligations. -/
+def isSelection (type : Lean.Expr) : MetaM Bool := do
+  let type := type.consumeMData
+  if type.isAppOfArity ``LE.le 4 || type.isAppOfArity ``LT.lt 4 then
+    let domain ← whnfR type.getAppArgs[0]!
+    if domain.isConstOf ``Real then return true
+    unless domain.isConstOf ``Nat || domain.isConstOf ``Int do return false
+    let states (side : Lean.Expr) (field : Name) := (side.find? (·.isAppOf field)).isSome
+    return #[``FloatFormat.fracWidth, ``FloatFormat.minSubnormalExponent,
+      ``FloatFormat.minNormalExponent, ``FloatFormat.maxNormalExponent].any fun field =>
+        states type.getAppArgs[2]! field && states type.getAppArgs[3]! field
+  unless type.isAppOfArity ``Eq 3 do return false
+  if (← whnfR type.getAppArgs[0]!).isConstOf ``Real then return true
+  return type.getAppArgs[1]!.isAppOf ``ExecFloat.Binary.isZero &&
+    type.getAppArgs[2]!.isConstOf ``Bool.true
+
+/-- The exactness of a conversion: a decoded value `toRat? x = some q`, such as that of a
+literal, which evaluation decides. -/
+def isDecodedRational (type : Lean.Expr) : Bool :=
+  type.isAppOfArity ``Eq 3 && type.getAppArgs[1]!.isAppOf ``Model.toRat?
+
+/-- Whether the premise `type` selects the exact rule it belongs to: a selection (`isSelection`)
+or the exactness of a conversion. An exact rule with such a premise states one case of its
+computation, and one with none restates the computation in every case. The format premise
+`format.isIEEE = true` of nearly every rule selects nothing. -/
+def selects (type : Lean.Expr) : MetaM Bool :=
+  pure (isDecodedRational type) <||> isSelection type
+
 /-- Index the registered numerical rules by their computation patterns. Type arguments are
 wildcards even when a format is reconstructed from its widths, and a retrieved theorem must still
 unify with the original, fully typed computation. -/
@@ -1125,6 +1165,11 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
   let mut orders : Array Rule := #[]
   let mut observations : NameSet := {}
   let mut refutations : Array Name := #[]
+  -- The heads of the indexed computations and of the values they observe (`Session.ruled`).
+  let ruled ← IO.mkRef ({} : NameSet)
+  let record (computation : Lean.Expr) : MetaM Unit := do
+    for term in #[computation] ++ computation.getAppArgs.back?.toArray do
+      if let some head := term.consumeMData.getAppFn.constName? then ruled.modify (·.insert head)
   -- Index a mixed, exact or finiteness rule by the computation `observed` reads from its
   -- conclusion: the left side of an equality, or the value a bound concerns.
   let insert (tree : DiscrTree Rule) (name : Name) (exact : Bool) (order : Nat)
@@ -1135,6 +1180,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
     let some computation := observed conclusion | do
       trace[roundoff] "rule {name} not indexed: its conclusion is {conclusion}"
       return tree
+    record computation
     let pattern ← withReducible <| withCanUnfoldPred (programCanUnfold session.boundaries false)
       (numericalPattern computation)
     withCanUnfoldPred (fun _ _ => pure false)
@@ -1176,11 +1222,14 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
       let some computation := observed conclusion | do
         trace[roundoff] "a conclusion of rule {name} is not indexed: normalized, it is {conclusion}"
         return tree
+      record computation
       let pattern ← withReducible <|
         withCanUnfoldPred (programCanUnfold session.boundaries false)
           (numericalPattern computation)
+      let ulps := conclusion.isAppOfArity ``MixedError 4 &&
+        conclusion.getAppArgs[3]!.isAppOf ``Model.halfUlpAt
       withCanUnfoldPred (fun _ _ => pure false)
-        (tree.insertIfSpecific pattern { name, exact := false, prepared, order })
+        (tree.insertIfSpecific pattern { name, exact := false, prepared, order, ulps })
   if mixed then
     for h : index in [:exactOperations.size] do
       if environment.contains exactOperations[index] then
@@ -1201,8 +1250,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
               trace[roundoff] "rule {name} not indexed: {error.toMessageData}"
               pure none
           if let some prepared := prepared? then
-            mixedEntries ← insertPrepared mixedEntries name prepared (exactOperations.size + index)
-              mixedValue?
+            mixedEntries ← insertPrepared mixedEntries name prepared index mixedValue?
         continue
     | .finiteness =>
         if mixed then
@@ -1238,8 +1286,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
           let projected ← forallTelescopeReducing (← ruleType rule) fun arguments _ => do
             mkLambdaFVars arguments (← mkAppM ``And.right #[mkAppN rule arguments])
           abstractMVars (← normalizeRule session projected)
-        mixedEntries ← insertPrepared mixedEntries name bound (exactOperations.size + index)
-          mixedValue?
+        mixedEntries ← insertPrepared mixedEntries name bound index mixedValue?
         let finite ← normalizeFact name ``And.left
         finiteness ← insertPrepared finiteness name finite index equalityLeft?
       continue
@@ -1255,8 +1302,11 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
         pure none
       let some rule := rule? | return none
       let prepared ← abstractMVars rule
-      let (_, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
+      let (arguments, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
       let some (actual, _, exact) ← numericalConclusion? conclusion | return none
+      record actual
+      let selective ← pure exact <&&> arguments.anyM fun argument => do
+        selects (← instantiateMVars (← inferType argument))
       let reference? ← if exact then
           pure (conclusion.eq?.map fun (_, _, reference) => reference)
         else do
@@ -1269,7 +1319,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
           pure actual.getAppFn.constName?
         else pure none
       let indexed ← withCanUnfoldPred (fun _ _ => pure false)
-        (entries.insertIfSpecific pattern { name, exact, prepared, order := index })
+        (entries.insertIfSpecific pattern { name, exact, prepared, order := index, selective })
       pure (some (indexed, observation?))
     if let some (indexed, observation?) := entry? then
       trace[roundoff] "rule {name}: {observation?.getD .anonymous}"
@@ -1319,6 +1369,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
   return { session with
     bounds := entries, observations, helpers, mixed, mixedBounds := mixedEntries, finiteness,
     refutations, orders, orderShapes, base := .ofArray (← getLCtx).getFVarIds,
+    ruled := ← ruled.get,
     dischargeSimp := some (simplification.ctx, simplification.simprocs) }
 /-- Whether a helper lemma can apply to the target. Its index decides most targets, and the others
 are compared by unification that keeps the helper's heads and selected class methods opaque. -/

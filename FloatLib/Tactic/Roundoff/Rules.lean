@@ -47,6 +47,14 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Roundoff
 
 open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
 
+/-- Nearest-even rounding misses a real by at most half an ulp there:
+`Model.abs_roundAt_sub_le` as a mixed bound with no relative part. This is the bound that mixed
+analysis states for one rounding to nearest, of a literal for example; the unit roundoff and
+the underflow allowance of `Model.mixedError_roundAt` are at least as large. -/
+theorem mixedError_roundAt_halfUlp (format : FloatFormat) (t : ℝ) :
+    MixedError (Model.roundAt format t) t 0 (Model.halfUlpAt format t) :=
+  MixedError.of_abs_sub_le (Model.abs_roundAt_sub_le format t)
+
 -- FloatLib's numerical theorems use the same rule mechanism as a user's.
 attribute [roundoff_rule]
   ExecFloat.Binary.abs_toReal_add_sub_le
@@ -107,8 +115,10 @@ attribute [roundoff_rule]
 -- Mixed-error rules, in the order the analysis prefers them: Sterbenz subtraction, which does
 -- not round, the local rounding of each configured operation, then exact real operations with
 -- their sign-aware and more specific forms first, such as `exp x - 1` before a difference. A
--- rounding of a real, and a sum, a difference, a product or a fused multiply-add with a rounding
--- attribute, states the unit roundoff of its attribute. The Sterbenz rule is stated
+-- rounding of a real to nearest states half an ulp at that real, or the unit roundoff and the
+-- underflow allowance of a format without variables, which are numerals. A rounding of a real
+-- in another attribute, and a sum, a difference, a product or a fused multiply-add with a
+-- rounding attribute, states the unit roundoff of its attribute. The Sterbenz rule is stated
 -- like a generated theorem, so the difference is finite with no range condition. Range theorems
 -- derive finiteness from an enclosure of the exact result, and order facts supply signs.
 attribute [roundoff_rule]
@@ -127,7 +137,7 @@ attribute [roundoff_rule]
   MixedError.min_of_nonpos MixedError.min MixedError.sqrt_of_pos MixedError.sqrt
   MixedError.exp MixedError.log MixedError.rpow_const MixedError.rpow
   MixedError.log_one_add MixedError.log_one_add_of_le
-  Model.mixedError_roundAt Model.mixedError_roundAt_mode
+  mixedError_roundAt_halfUlp Model.mixedError_roundAt Model.mixedError_roundAt_mode
   ExecFloat.Binary.isFinite_add_of_mixedError ExecFloat.Binary.isFinite_sub_of_mixedError
   ExecFloat.Binary.isFinite_mul_of_mixedError ExecFloat.Binary.isFinite_div_of_mixedError
   ExecFloat.Binary.isFinite_add_of_mixedError_mode ExecFloat.Binary.isFinite_sub_of_mixedError_mode

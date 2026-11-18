@@ -662,6 +662,7 @@ def primitiveFinite? (goal : MVarId) : TacticM (Option (Array MVarId)) := do
     return none
   let source := observed.getAppArgs.back!.consumeMData
   for contract in ← primitiveContracts do
+    unless contract.observes source do continue
     for (_, finite) in contract.roundings do
       let premises? ← attempt? 2000 do
         let some (proof, premises) ← instantiatePrimitive contract finite source |
@@ -715,34 +716,6 @@ def rewriteSimp (estimate : Estimate) (actual observe source : Lean.Expr) (carry
         normalized.expr == (mkApp observe value.expr).headBeta then
       return ← rewriteValue estimate observe (← value.getProof' source)
   rewriteActual estimate (← normalized.getProof' actual)
-
-/-- An equality or disequality directly about a format's encoding policy. Cast rules must
-establish it before applying, since alternatives cover different overflow and saturation policies.
-Encoding fields inside a configured carrier's type do not make its finiteness a policy premise. -/
-def isEncodingPolicy (type : Lean.Expr) : Bool :=
-  (type.isAppOfArity ``Eq 3 || type.isAppOfArity ``Ne 3) &&
-    (type.getAppArgs.extract 1 3).any fun term =>
-      term.isAppOf ``FloatFormat.isIEEE || term.isAppOf ``FloatFormat.encoding
-
-/-- A premise that chooses between rules: a real order or equality, a precision or exponent
-comparison, or an executable zero. A mixed analysis proves it or tries the next rule, and it
-never becomes a caller obligation. Exact widening cannot leave an impossible precision premise
-on narrowing. Encoding policies also select cast rules; ordinary arithmetic keeps its existing
-format obligations. -/
-def isSelection (type : Lean.Expr) : MetaM Bool := do
-  let type := type.consumeMData
-  if type.isAppOfArity ``LE.le 4 || type.isAppOfArity ``LT.lt 4 then
-    let domain ← whnfR type.getAppArgs[0]!
-    if domain.isConstOf ``Real then return true
-    return (domain.isConstOf ``Nat || domain.isConstOf ``Int) &&
-      (type.find? fun term => term.isAppOf ``FloatFormat.fracWidth ||
-        term.isAppOf ``FloatFormat.minSubnormalExponent ||
-        term.isAppOf ``FloatFormat.minNormalExponent ||
-        term.isAppOf ``FloatFormat.maxNormalExponent).isSome
-  unless type.isAppOfArity ``Eq 3 do return false
-  if (← whnfR type.getAppArgs[0]!).isConstOf ``Real then return true
-  return type.getAppArgs[1]!.isAppOf ``ExecFloat.Binary.isZero &&
-    type.getAppArgs[2]!.isConstOf ``Bool.true
 
 /-- Whether `bound` is the enclosure `(1 + relative) * |reference| + absolute` of a mixed bound. -/
 def isEnclosure (bound : Lean.Expr) : Bool :=

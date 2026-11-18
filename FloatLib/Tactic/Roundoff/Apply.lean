@@ -223,7 +223,7 @@ def applyRule? (actual : Q(ℝ)) (label : Name) (prepare : MetaM Lean.Expr) (exa
       unless ← isProp type do continue
       -- The exactness of a conversion, a decoded value `toRat? x = some q` such as that of a
       -- literal, is evaluated; the rule applies only when it holds.
-      if exact && type.isAppOfArity ``Eq 3 && (type.getArg! 1).isAppOf ``Model.toRat? then
+      if exact && isDecodedRational type then
         if type.hasFVar || type.hasMVar then return none
         let decided? ← attempt? 10000 do
           let remaining ← Lean.Elab.Tactic.run goal (evalTactic (← `(tactic| decide +kernel)))
@@ -321,31 +321,112 @@ def applyRule? (actual : Q(ℝ)) (label : Name) (prepare : MetaM Lean.Expr) (exa
     return some (estimate, propagatesInputs)
   return none
 
+/-- `expression` with the definitions at its head unfolded while they compute an application of
+a constant, at most `fuel` of them: the operation that a definition of the program stands for.
+No recursion, `match` or projection is evaluated, as weak head normalization would. -/
+partial def exposeHead (expression : Lean.Expr) (fuel : Nat := 8) : MetaM Lean.Expr := do
+  if fuel == 0 || !expression.getAppFn.isConst then return expression
+  let some unfolded ← unfoldDefinition? expression | return expression
+  let unfolded := unfolded.headBeta
+  if unfolded.getAppFn.isConst then exposeHead unfolded (fuel - 1) else return expression
+
+/-- `expression`, a lookup key, with the operations shown that definitions of the program compute
+at its head and in its numerical operands (`exposeHead`): the explicit arguments whose type is a
+carrier or a type parameter (`carrierHead`) or a constant that holds numerical values, such as
+the alias `Binary32` (`carries`). Types, proofs, instances and implicit arguments stay as
+written, and so do index data and containers, which hide no operation of a rule: unfolding them
+would evaluate shape arithmetic. -/
+partial def exposeOperands (carriers : CarrierCache) (expression : Lean.Expr)
+    (root : Bool := true) : MetaM Lean.Expr := do
+  let expression ← DiscrTree.reduceDT (← exposeHead expression) root
+  let mut function := expression.getAppFn
+  if let .proj name index source := function then
+    unless isClass (← getEnv) name do
+      function := .proj name index (← exposeOperands carriers source false)
+  let arguments := expression.getAppArgs
+  let info ← getFunInfoNArgs function arguments.size
+  let mut exposed := #[]
+  for h : index in [:arguments.size] do
+    let argument := arguments[index]
+    let ignore := info.paramInfo[index]?.any fun parameter =>
+      parameter.isInstance || parameter.isImplicit || parameter.isStrictImplicit
+    let numerical ← if ignore || (← isType argument) || (← isProof argument) then pure false
+      else do
+        let type ← inferType argument
+        carrierHead type (some carriers) <||>
+          (match type.getAppFn.constName? with
+            | some name => carries carriers false name
+            | none => pure false)
+    exposed := exposed.push
+      (← if numerical then exposeOperands carriers argument false else pure argument)
+  return mkAppN function exposed
+
+/-- The lookup key `key` of `actual` with the operations shown that definitions of the program
+compute in its numerical operands (`exposeOperands`), so that a rule stated on those operations
+is found: a definition can hide a cast underneath a multiplication, and the index itself unfolds
+reducible definitions only. The rule is still checked against the computation as written, with
+every dictionary, by `applyRule?`.
+
+Literals, class methods, FloatLib's arithmetic, registered storage and every constant that a
+rule reads (`Session.ruled`) stay as written. A value that a definition of the program computes,
+when no rule reads that definition, has no rule of its own: the analysis opens it, keeping its
+finiteness, and exposes the operation it computes then. Each key is exposed once in a session
+(`Session.exposed`). -/
+def Session.exposedKey (session : Session) (actual key : Lean.Expr) :
+    TacticM (Option Lean.Expr) := do
+  let source := (actual.getAppArgs.back?.getD actual).consumeMData
+  let wrapped ← match source.getAppFn.constName? with
+    | some head => do
+        if session.ruled.contains head || literalHeads.contains head ||
+            (← getProjectionFnInfo? head).isSome then pure false
+        else match (← getEnv).find? head with
+          | some info@(.defnInfo _) =>
+              programCanUnfold session.boundaries false (← getConfig) info
+          | _ => pure false
+    | none => pure false
+  if wrapped then return none
+  if let some exposed? := (← session.exposed.get).get? key then return exposed?
+  let exposed? ← attempt? 1000 do
+    some <$> withCanUnfoldPred (fun config info => do
+      if (← getProjectionFnInfo? info.name).any (·.fromClass) then return false
+      if literalHeads.contains info.name || session.ruled.contains info.name then return false
+      programCanUnfold session.boundaries false config info)
+      (withDefault (exposeOperands session.carriers key))
+  -- The exposure depends on the key alone.
+  unless key.hasMVar do session.exposed.modify (·.insert key exposed?)
+  return exposed?
+
 /-- Retrieve candidate laws for this computation before checking their full statements. -/
 def registeredBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimate)
     (prove : MVarId → AnalyzeM Bool) : AnalyzeM (Option (Estimate × Bool)) := do
   let session ← read
   let key ← session.indexKey actual
-  -- User definitions can hide a cast underneath multiplication. DiscrTree itself only unfolds
-  -- reducible definitions; expose ordinary wrappers while preserving arithmetic and storage.
-  -- The original computation, including every dictionary, is still checked by `applyRule?`.
-  let exposed? ← attempt? 1000 do
-    some <$> withCanUnfoldPred (fun config info => do
-      if (← getProjectionFnInfo? info.name).any (·.fromClass) then return false
-      programCanUnfold session.boundaries false config info)
-      (withDefault (numericalPattern key (maskParameters := false)))
-  let key := exposed?.getD key
+  let key := (← session.exposedKey actual key).getD key
   let candidates ← withCanUnfoldPred (programCanUnfold session.boundaries false) do
     -- The rules of one computation are tried in the order of their registration, so that a
     -- rule for one case, such as the default rounding attribute, comes before a general one.
     let ordinary := (← rulesFor session.bounds actual key).qsort (·.order < ·.order)
     unless session.mixed do return ordinary
-    -- Exact operations, including registered observation equalities, precede rounding rules.
-    -- Otherwise an imported exact cast or product law loses to its one-rounding fallback.
+    -- Mixed analysis tries the exact cases first: the exact operations, then the registered
+    -- equalities that a premise selects, such as an exact cast or product, which would
+    -- otherwise lose to their one-rounding fallback. The mixed bounds and the other
+    -- equalities follow in the order of their registration: an equality without a selecting
+    -- premise always applies, so one registered after a mixed bound of its computation, as
+    -- the definition of a producer, does not hide that bound, and one registered before, as
+    -- the default form of a written attribute, is read first. The absolute bounds come last.
     let preferred ← rulesFor session.mixedBounds actual key
     let preferred := preferred.qsort (·.order < ·.order)
-    return preferred.filter (·.exact) ++ ordinary.filter (·.exact) ++
-      preferred.filter (!·.exact) ++ ordinary.filter (!·.exact)
+    let restated := ordinary.filter fun rule => rule.exact && !rule.selective
+    let bounds := (preferred.filter (!·.exact) ++ restated).qsort (·.order < ·.order)
+    -- A bound in ulps is the tightest statement of a rounding to nearest. For a format
+    -- without variables the constants of the standard model are numerals, which arithmetic
+    -- evaluates and `interval` bounds, so the standard-model bounds come first there.
+    let concrete ← actual.getAppArgs.anyM fun argument => do
+      if argument.hasFVar || argument.hasMVar then return false
+      return (← whnfR (← inferType argument)).isConstOf ``FloatFormat
+    let bounds := if concrete then bounds.filter (!·.ulps) ++ bounds.filter (·.ulps) else bounds
+    return preferred.filter (·.exact) ++ ordinary.filter (·.selective) ++ bounds ++
+      ordinary.filter (!·.exact)
   let incompatible ← match actual.getAppArgs.back? with
     | some source => isNonBooleanTest source
     | none => pure false
@@ -413,6 +494,7 @@ def primitiveBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimat
   let source := actual.getAppArgs.back!
   let session ← read
   for contract in ← primitiveContracts do
+    unless contract.observes source do continue
     for name in contract.exact do
       let exactCase? ← speculate? do
         let some (proof, premises) ← instantiatePrimitive contract name source |
@@ -784,8 +866,8 @@ def deriveStep (observe step inputType stateType : Lean.Expr)
             throwError "roundoff: a loop condition depends on its proof argument"
           if mentions estimate.reference fun id =>
               id == accumulator.fvarId! || id == budget.fvarId! then
-            throwError "roundoff: the loop's real reference depends on its rounded accumulator; \
-              establish agreement of its branch conditions first"
+            throwError "roundoff: no numerical rule for a loop whose real reference depends on \
+              its rounded accumulator; establish agreement of its branch conditions first"
           let referenceFunction ← mkLambdaFVars #[reference, value] estimate.reference
           let errorFunction ← mkLambdaFVars #[accumulator, reference, budget, value] error
           let conditionFunction ← mkLambdaFVars #[accumulator, reference, budget, value] condition

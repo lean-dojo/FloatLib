@@ -455,6 +455,7 @@ def primitiveSign (r : Recursor) (goal : MVarId) (value : Q(ℝ)) (fuel depth : 
   let source := value.getAppArgs.back!
   let type ← instantiateMVars (← goal.getType)
   for contract in ← primitiveContracts do
+    unless contract.observes source do continue
     for name in contract.signs do
       let proved? ← speculate? do
         let some (proof, premises) ← instantiatePrimitive contract name source |
@@ -481,6 +482,7 @@ def roundingSign (r : Recursor) (goal : MVarId) (value : Q(ℝ)) (nonneg : Bool)
   unless value.isAppOf ``ExecFloat.Binary.toReal do return false
   let source := value.getAppArgs.back!
   for contract in ← primitiveContracts do
+    unless contract.observes source do continue
     let proved? ← speculate? do
       let some (rounding, premises) ← instantiatePrimitive contract contract.rounding source |
         throwError "roundoff: {contract.rounding} does not apply"

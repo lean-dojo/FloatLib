@@ -275,7 +275,13 @@ fix the sign of the result. It reports. It proves nothing and nothing depends on
 
 Order conditions that select a rule follow from the order hypotheses of the context by linear
 arithmetic, also from interval facts, so a subtraction of two values within a factor of two is
-exact in every mode when the hypotheses say so. `Model.roundAt` in a rounding attribute has the
+exact in every mode when the hypotheses say so. The arithmetic is tried once for an order under
+the facts of its scope. A rounding of a real to nearest, `Model.roundAt format x`, states half an
+ulp at `x` in the mixed analysis too, with no relative part, and so does the conversion of a
+literal: half an ulp is at most the unit roundoff times the magnitude plus the underflow
+allowance. For a format without variables, such as binary32, those two constants are numerals
+that arithmetic evaluates and `interval` bounds, so the rounding states them there instead.
+`Model.roundAt` in another rounding attribute has the
 unit roundoff of that attribute (`Model.unitRoundoffIn`), and so has a sum, a difference, a
 product or a fused multiply-add called with an attribute, such as
 `ExecFloat.Binary.add x y (mode := .down)` or `Model.add x y (mode := .down)`, in the
@@ -294,6 +300,28 @@ a finite value, decides a branch guard on that test when the context discharges 
 premises and its instantiated proof keeps no unresolved obligation. Only the other branch is then
 analyzed. The rules that match one computation are tried in the order of their registration, so
 a rule for one case, such as the default rounding attribute, comes before a later general one.
+Mixed analysis tries the exact cases first: the exact operations, then the registered equalities
+that a premise selects (a real order or equality, a comparison of the precisions or of an
+exponent bound of two formats, an executable zero, a decoded literal), such as an exact cast or
+product. The mixed bounds and the other equalities follow in the order of their registration,
+and the absolute bounds come last. An equality without a selecting premise always applies. One
+registered after a mixed bound of its computation, as the definition of a producer that
+absolute analysis reads, therefore does not hide that bound, and one registered before it, as
+the default form of a written rounding attribute, is read first. A relation between two
+quantities of one format, such as `fracWidth ≤ maxNormalExponent`, selects nothing: it is
+proved for a given format and stays a premise for a format variable.
+
+Rules are found by the head of the computation. The lookup also shows the operations that
+definitions of the program compute in the numerical operands (`Session.exposedKey`), so that a
+rule on a cast under a multiplication is found behind a definition; index data, containers,
+literals and the constants that a rule reads stay as written. The theorems of a correctly
+rounded primitive are instantiated only for a call of that primitive or of a method equal to it.
+
+A program shape that the analysis has no rule for is refused with a message that begins
+`roundoff: no numerical rule` or `roundoff: no proved arithmetic rule`: an operation without a
+rule, a native operation without a law, a producer that is not exposed, a `match` that takes a
+computed value apart, a loop whose real reference would depend on its rounded accumulator. A
+caller can tell these from a failed proof search, which reports what it could not prove.
 
 Quantified input-error assumptions can be reused at each coordinate. A hypothesis stated like a
 generated theorem, such as the contract of a function the program takes, is used as a registered

@@ -218,8 +218,9 @@ def mixedFold (r : Recursor) (loop : Loop)
                   throwError "roundoff: a loop condition depends on its proof argument"
               if mentions nextReference fun id => id == accumulator.fvarId! ||
                   id == relative.fvarId! || id == absolute.fvarId! then
-                throwError "roundoff: the loop's real reference depends on its rounded \
-                  accumulator; establish agreement of its branch conditions first"
+                throwError "roundoff: no numerical rule for a loop whose real reference \
+                  depends on its rounded accumulator; establish agreement of its branch \
+                  conditions first"
               let state := #[accumulator, reference, relative, absolute, value]
               let invariantBody : Q(Prop) := q($finiteProp ∧ $signProp)
               let conclusion ← mkAppM ``And.intro

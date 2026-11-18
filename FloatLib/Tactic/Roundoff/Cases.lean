@@ -128,16 +128,16 @@ def checkDiscriminants (app : MatcherApp) (patterns : Array Lean.Expr) : Analyze
     if ← isProof discriminant then continue
     let stored ← isStoredInput discriminant <||> indexClosed discriminant (cache? := some cache)
     unless stored do
-      throwError "roundoff: the `match` on `{discriminant}` binds parts of a value computed from \
-        numerical values, so the reference would keep them; match on index data or on a stored \
-        input"
+      throwError "roundoff: no numerical rule for the `match` on `{discriminant}`: it binds \
+        parts of a value computed from numerical values, so the reference would keep them; \
+        match on index data or on a stored input"
     if ← carrierHead (← inferType discriminant) (some cache) then
       for pattern in patterns, count in app.altNumParams do
         let whole ← lambdaBoundedTelescope pattern count fun _ body =>
           return body.getAppArgs[position]?.any (·.isFVar)
         unless whole do
-          throwError "roundoff: the `match` takes the numerical value `{discriminant}` apart, \
-            so the reference would keep its parts"
+          throwError "roundoff: no numerical rule for the `match` that takes the numerical \
+            value `{discriminant}` apart: the reference would keep its parts"
 
 /-- Whether the alternatives of `app` can be analyzed one by one (`checkDiscriminants` passes). -/
 def analyzable (app : MatcherApp) : AnalyzeM Bool := do

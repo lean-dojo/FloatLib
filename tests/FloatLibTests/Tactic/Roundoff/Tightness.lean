@@ -394,14 +394,24 @@ section Attributes
 
 variable {format : FloatFormat}
 
-/-- Nearest-even keeps the unit roundoff of the format. -/
+/-- Nearest-even states half an ulp at the real, with no relative part: the bound of one
+rounding that the unit roundoff and the underflow allowance of the format are at least. -/
 roundoff mixed theorem nearest_mixedError :=
   fun (x : ℝ) (hformat : format.isIEEE = true) => Model.roundAt format x
 
 example (x : ℝ) (hformat : format.isIEEE = true) :
-    MixedError (Model.roundAt format x) x (Model.unitRoundoffAt format)
-      (Model.underflowErrorAt format) :=
+    MixedError (Model.roundAt format x) x 0 (Model.halfUlpAt format x) :=
   nearest_mixedError x hformat
+
+/-- For a format without variables the constants of the standard model are numerals, and the
+rounding states them. -/
+roundoff mixed theorem nearest32_mixedError :=
+  fun (x : ℝ) => Model.roundAt FloatFormat.binary32 x
+
+example (x : ℝ) :
+    MixedError (Model.roundAt FloatFormat.binary32 x) x
+      (Model.unitRoundoffAt FloatFormat.binary32) (Model.underflowErrorAt FloatFormat.binary32) :=
+  nearest32_mixedError x
 
 /-- A directed rounding states the unit roundoff of its attribute. -/
 roundoff mixed theorem down_mixedError :=

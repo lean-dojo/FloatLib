@@ -1020,8 +1020,8 @@ def recordMean (xs : List Value) (start : Value) : Value :=
     else state) (start, 0, 0)).2.2
 
 /--
-error: roundoff: the loop's real reference depends on its rounded accumulator; establish agreement
-of its branch conditions first
+error: roundoff: no numerical rule for a loop whose real reference depends on its rounded
+accumulator; establish agreement of its branch conditions first
 -/
 #guard_msgs (whitespace := lax) in
 roundoff mixed theorem record_mean_mixedError :=
@@ -1042,8 +1042,8 @@ def neumaier (xs : List Value) : Value :=
   final.1 + final.2
 
 /--
-error: roundoff: the loop's real reference depends on its rounded accumulator; establish agreement
-of its branch conditions first
+error: roundoff: no numerical rule for a loop whose real reference depends on its rounded
+accumulator; establish agreement of its branch conditions first
 -/
 #guard_msgs (whitespace := lax) in
 roundoff mixed theorem neumaier_mixedError :=

@@ -940,8 +940,8 @@ def tupleAttempt (r : Recursor) (setting : Setting) (facts : Array Facts)
       let forbidden := actuals ++ otherActuals ++ budgetVariables ++ hypotheses
       for shadow in nextShadows do
         if mentions shadow (forbidden.contains <| .fvar ·) then
-          throwError "roundoff: the loop's real reference depends on its rounded \
-            accumulator; establish agreement of its branch conditions first"
+          throwError "roundoff: no numerical rule for a loop whose real reference depends \
+            on its rounded accumulator; establish agreement of its branch conditions first"
       let budgetEntries ← (Array.range count).filterMapM fun index => do
         unless leaves[index]!.float && !facts[index]!.exact do return none
         let parts := nextBudgets[index]!

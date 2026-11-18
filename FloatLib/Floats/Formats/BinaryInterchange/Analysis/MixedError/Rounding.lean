@@ -223,7 +223,7 @@ attribute [roundoff_rule] add_rounding sub_rounding mul_rounding div_rounding sq
   cast_rounding_of_no_saturation cast_rounding_policy
   cast_exact_of_gridExtension cast_exact_of_gridExtension_policy
   toReal_mul_cast_exact toReal_mul_pow_two_exact
-  scale_rounding toReal_scale_exact
+  toReal_scale_exact scale_rounding
   bpow_eq_rpow toReal_zero
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

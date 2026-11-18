@@ -392,8 +392,8 @@ def partOf (step : Value → Value ⊕ Value) (x : Value) : Value :=
 
 -- The pattern variables would be parts of a computed value, and the reference would keep them.
 /--
-error: roundoff: the `match` on `step x` binds parts of a value computed from numerical values, so
-the reference would keep them; match on index data or on a stored input
+error: roundoff: no numerical rule for the `match` on `step x`: it binds parts of a value computed
+from numerical values, so the reference would keep them; match on index data or on a stored input
 -/
 #guard_msgs (whitespace := lax) in
 roundoff mixed theorem partOf_mixedError :=

@@ -289,7 +289,9 @@ an obligation on the inputs, and so does the finiteness of an input. -/
 def deriveFinite (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := goal.withContext do
   let session ← read
   let type ← instantiateMVars (← goal.getType)
-  let observed := type.getAppArgs[1]!
+  -- A finiteness is an equality `test value = true`. No other proposition is derived here, such
+  -- as the invariant `True` of a loop whose state decodes no value.
+  let some (_, observed, _) := type.eq? | return false
   -- The decoded finiteness of a configured value is its finiteness, by definition.
   if observed.isAppOfArity ``Model.isFinite 2 &&
       observed.appArg!.isAppOf ``ExecFloat.Binary.toModel then
@@ -509,6 +511,7 @@ def deriveFinite (r : Recursor) (goal : MVarId) (fuel : Nat) : AnalyzeM Bool := 
   -- of the input or a zero input, or else the domain and range conditions. Its implementation
   -- is not unfolded.
   for contract in ← primitiveContracts do
+    unless contract.observes value do continue
     for (name, withoutRange) in contract.finiteWithoutRange.map (·, true) ++
         contract.roundings.map (·.2, false) do
       let applied? ← speculate? do
@@ -588,9 +591,10 @@ partial def orderFacts (proof type : Lean.Expr) : MetaM (Array Lean.Expr) := do
     let bounds := mkAnd (← mkAppM ``LE.le #[interval.getArg! 2, value])
       (← mkAppM ``LE.le #[value, interval.getArg! 3])
     return ← orderFacts (← mkExpectedTypeHint proof bounds) bounds
-  let relation := type.isAppOfArity ``LE.le 4 || type.isAppOfArity ``LT.lt 4 ||
-    type.isAppOfArity ``Eq 3
-  unless relation && (← whnfR (type.getArg! 0)).isConstOf ``Real do return #[]
+  -- Any other hypothesis states no order, also one that is no application, such as `True`.
+  unless type.isAppOfArity ``LE.le 4 || type.isAppOfArity ``LT.lt 4 ||
+      type.isAppOfArity ``Eq 3 do return #[]
+  unless (← whnfR type.getAppArgs[0]!).isConstOf ``Real do return #[]
   return #[proof]
 
 /-- A real order between values that the order hypotheses of the context give by linear
@@ -598,8 +602,10 @@ arithmetic: interval facts about inputs, such as `1 ≤ toReal x` and `toReal x 
 bounds `toReal y / 2 ≤ toReal x` and `toReal x ≤ 2 * toReal y` of an exact subtraction. The goal
 may be a linear order, the sign of a product of two terms of one known sign, or an order
 between multiples of two magnitudes of known sign. It is tried only when a hypothesis shares a
-variable with the goal. -/
-def orderByHypotheses (goal : MVarId) : TacticM Bool := goal.withContext do
+variable with the goal, and once for an order under the facts of its scope
+(`Session.scopeFacts`). The forms that rewrite a magnitude are tried only on a goal that has
+one. -/
+def orderByHypotheses (session : Session) (goal : MVarId) : TacticM Bool := goal.withContext do
   let type ← instantiateMVars (← goal.getType)
   if type.hasMVar || !type.hasFVar then return false
   let wanted := (collectFVars {} type).fvarSet
@@ -617,20 +623,32 @@ def orderByHypotheses (goal : MVarId) : TacticM Bool := goal.withContext do
     relevant := true
     unless found.size == 1 && found[0]! == declaration.toExpr do facts := facts ++ found
   unless relevant do return false
+  -- The search fails alike wherever the scopes state the same facts about the goal.
+  let scope ← session.scopeFacts type
+  if ((← session.orderFailures.get).getD type #[]).contains scope then return false
+  let depths ← depthsCaught
   let closed? ← attempt? 4000 do
     let hypotheses ← facts.mapM fun fact => do
       return ({ userName := `fact, type := ← inferType fact, value := fact } : Hypothesis)
     let (_, next) ← goal.assertHypotheses hypotheses
-    let remaining ← Lean.Elab.Tactic.run next do
-      evalTactic (← `(tactic| first
-        | linarith
-        | (apply mul_nonneg <;> linarith)
-        | (apply mul_nonneg_of_nonpos_of_nonpos <;> linarith)
-        | (rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith)]; linarith)
-        | (rw [abs_of_nonpos (by linarith), abs_of_nonpos (by linarith)]; linarith)
-        | (rw [abs_le]; constructor <;> linarith)
-        | (rw [abs_lt]; constructor <;> linarith)))
+    let linear ← `(tactic| first
+      | linarith
+      | (apply mul_nonneg <;> linarith)
+      | (apply mul_nonneg_of_nonpos_of_nonpos <;> linarith))
+    let magnitude ← `(tactic| first
+      | (rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith)]; linarith)
+      | (rw [abs_of_nonpos (by linarith), abs_of_nonpos (by linarith)]; linarith)
+      | (rw [abs_le]; constructor <;> linarith)
+      | (rw [abs_lt]; constructor <;> linarith))
+    let tactic ← if (type.find? (·.isAppOf ``abs)).isSome then
+        `(tactic| first | $linear:tactic | $magnitude:tactic)
+      else pure linear
+    let remaining ← Lean.Elab.Tactic.run next (evalTactic tactic)
     return if remaining.isEmpty then some () else none
+  -- A search that a caught recursion depth may have cut off is not kept as failed.
+  if closed?.isNone && (← depthsCaught) == depths then
+    session.orderFailures.modify fun failures =>
+      failures.insert type ((failures.getD type #[]).push scope)
   return closed?.isSome
 
 /-- A selection premise: an executable zero, a unit magnitude, a real sign or order,
@@ -646,7 +664,7 @@ def proveSelection (r : Recursor) (goal : MVarId) (fuel : Nat) :
     if ← r.proveSign goal fuel signDepth then return true
     -- An order that the hypotheses give by linear arithmetic, such as the factor-of-two
     -- condition of an exact subtraction from interval facts about the inputs.
-    if ← orderByHypotheses goal then return true
+    if ← orderByHypotheses session goal then return true
     -- A closed order, such as the range in which a converted numeral is exact, is decided by
     -- arithmetic.
     if type.hasFVar || type.hasMVar then return false
