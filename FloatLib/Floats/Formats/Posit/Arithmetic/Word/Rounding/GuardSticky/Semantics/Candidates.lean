@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,10 +8,9 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Layout
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Midpoint
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Stream
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Tail
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
+
 import FloatLib.Numerics.Exact.Dyadic.Order
 import Mathlib.Tactic.Ring.RingNF
 
@@ -37,10 +36,10 @@ open FloatLib.Numerics
 theorem regimeScale_succ (regime : Int) :
     (2 : Rat) ^ ((regime + 1) * 4) =
       16 * (2 : Rat) ^ (regime * 4) := by
-  rw [show (regime + 1) * 4 = regime * 4 + 4 by ring]
+  rw [show (regime + 1) * 4 = regime * 4 + 4 by omega]
   rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
   norm_num
-  ring
+  ac_rfl
 
 /-!
 ## Saturated regime endpoints
@@ -70,9 +69,6 @@ theorem lowerCodeForPositive_eq_maxPositive_of_saturatedScale
   apply Model.lowerCodeForPositive_eq_of_bracket
   · exact Nat.sub_lt format.signMaskNat_pos (by decide)
   · rw [nonnegativeRatAt_maxPositive]
-    have hsaturatedInt :
-        (format.payloadBits : Int) ≤ (regime.toNat : Int) + 1 := by
-      exact_mod_cast hsaturated
     have hregimeNat : (regime.toNat : Int) = regime :=
       Int.toNat_of_nonneg hregime
     have hregimePayload :
@@ -359,8 +355,6 @@ private theorem normalized_lt_succ_of_interior
   set raw := exactTailRaw exponentField significand leading
   set width := leading + 2
   set tail := DirectDyadicPacking.tailPrefix exponentField significand leading trailing
-  have hraw : raw < 2 ^ width :=
-    exactTailRaw_lt_two_pow exponentField significand leading hexponent hlower hupper
   have htailBound : tail < 2 ^ trailing :=
     DirectDyadicPacking.tailPrefix_lt_two_pow exponentField significand leading trailing
       hexponent hlower hupper

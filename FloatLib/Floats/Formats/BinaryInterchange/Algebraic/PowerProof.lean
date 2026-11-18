@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -51,33 +51,33 @@ theorem toReal_roundAlgebraicRat (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
       hfmt hfinite, Algebraic.signedScaledRatToReal_eq_cast]
 
 /-- A signaling NaN is quieted before every exponent case, including exponent zero. -/
-theorem powInt_of_isSNaN {fmt : FloatFormat} (value : Model fmt) (exponent : Int)
-    (hsignaling : isSNaN value = true) :
-    powInt value exponent = quietNaN value := by
+theorem pown_of_isSignaling {fmt : FloatFormat} (value : Model fmt) (exponent : Int)
+    (hsignaling : isSignaling value = true) :
+    pown value exponent = quietNaN value := by
   have hnan : isNaN value = true := by
     cases hclass : isNaN value
-    · have := isSNaN_eq_false_of_isNaN_eq_false value hclass
+    · have := isSignaling_eq_false_of_isNaN_eq_false value hclass
       simp [hsignaling] at this
     · rfl
-  simp [powInt, hsignaling, chooseNaN1, hnan]
+  simp [pown, hsignaling, chooseNaN1, hnan]
 
 /-- The zero exponent returns one unless the base is a signaling NaN. -/
-@[simp] theorem powInt_zero {fmt : FloatFormat} (value : Model fmt)
-    (hnan : isSNaN value = false) :
-    powInt value 0 = posOne fmt := by
-  simp [powInt, hnan]
+@[simp] theorem pown_zero {fmt : FloatFormat} (value : Model fmt)
+    (hnan : isSignaling value = false) :
+    pown value 0 = posOne fmt := by
+  simp [pown, hnan]
 
 /-- A finite nonzero base uses a single rational rounding for every nonzero exponent. -/
-theorem powInt_eq_roundAlgebraicRat {fmt : FloatFormat} (value : Model fmt)
+theorem pown_eq_roundAlgebraicRat {fmt : FloatFormat} (value : Model fmt)
     (exponent : Int) {q : Rat} (hvalue : toRat? value = some q)
     (hzero : isZero value = false) (hexponent : exponent ≠ 0) :
-    powInt value exponent = roundAlgebraicRat fmt (q ^ exponent) := by
+    pown value exponent = roundAlgebraicRat fmt (q ^ exponent) := by
   have hfinite := Algebraic.isFinite_of_toRat?_eq_some hvalue
   have hnan : chooseNaN1 value = none := by
     simp [chooseNaN1, isNaN_eq_false_of_isFinite_eq_true value hfinite]
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hfinite
-  simp [powInt, isSNaN_eq_false_of_toDyadic?_some hd, hexponent, hnan, hzero,
-    isInf_eq_false_of_toDyadic?_some hd, hvalue]
+  simp [pown, isSignaling_eq_false_of_toDyadic?_some hd, hexponent, hnan, hzero,
+    isInfinite_eq_false_of_toDyadic?_some hd, hvalue]
 
 /--
 Integer powers of finite inputs round the exact real power once, for positive, negative and zero
@@ -85,26 +85,26 @@ integer exponents. A zero base gives a signed zero for positive exponents, while
 exponent overflows and is excluded with every other overflow by the finite-result premise. The
 output may be subnormal or zero.
 -/
-theorem toReal_powInt_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (exponent : Int)
+theorem toReal_pown_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (exponent : Int)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)
-    (hfinite : isFinite (powInt value exponent) = true) :
-    toReal (powInt value exponent) = roundAt fmt (toReal value ^ exponent) := by
+    (hfinite : isFinite (pown value exponent) = true) :
+    toReal (pown value exponent) = roundAt fmt (toReal value ^ exponent) := by
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hvalue
   by_cases hexponent : exponent = 0
   · subst exponent
-    simp [isSNaN_eq_false_of_toDyadic?_some hd]
+    simp [isSignaling_eq_false_of_toDyadic?_some hd]
   by_cases hzero : isZero value = true
   · have hnan : chooseNaN1 value = none := by
       simp [chooseNaN1, isNaN_eq_false_of_isFinite_eq_true value hvalue]
-    have hsignaling := isSNaN_eq_false_of_toDyadic?_some hd
+    have hsignaling := isSignaling_eq_false_of_toDyadic?_some hd
     rcases lt_or_gt_of_ne hexponent with hnegative | hpositive
-    · simp [powInt, hsignaling, hexponent, hnan, hzero, hnegative,
+    · simp [pown, hsignaling, hexponent, hnan, hzero, hnegative,
         isFinite_nativeOverflow hfmt] at hfinite
-    · simp [powInt, hsignaling, hexponent, hnan, hzero, not_lt.mpr hpositive.le,
+    · simp [pown, hsignaling, hexponent, hnan, hzero, not_lt.mpr hpositive.le,
         toReal_eq_zero_of_isZero value hzero, zero_zpow _ hexponent]
   · rw [Bool.not_eq_true] at hzero
     have hq : toRat? value = some d.toRat := by simp [toRat?, hd]
-    rw [powInt_eq_roundAlgebraicRat value exponent hq hzero hexponent] at hfinite ⊢
+    rw [pown_eq_roundAlgebraicRat value exponent hq hzero hexponent] at hfinite ⊢
     rw [toReal_roundAlgebraicRat fmt hfmt _ hfinite,
       Algebraic.toReal_of_toRat?_eq_some hq, Rat.cast_zpow]
 

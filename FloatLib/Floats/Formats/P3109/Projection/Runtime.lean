@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -31,8 +31,9 @@ range.
 ## Reference
 
 * IEEE Working Group P3109, *Interim Report on Arithmetic Formats for Machine Learning*,
-  version 4.0.3 (1 September 2026), Sections 4.7.3--4.7.6, repository revision `34f5964`,
-  <https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308>.
+  version 4.1 (14 September 2026), Sections 4.7.3–4.7.6, repository revision `2d45cf2`,
+  <https://github.com/P3109/Public/tree/2d45cf2fe0314d32251f5439d9d3ed078f93fbb9>.
+  This is an unapproved draft.
 -/
 
 @[expose] public section
@@ -41,7 +42,10 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109
 
-/-- Exact random bits supplied to one P3109 stochastic-rounding decision. -/
+/-- Exact random bits supplied to one P3109 stochastic-rounding decision.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.4.
+-/
 structure RandomBits where
   /-- Number of random bits (`N` in the report). -/
   width : Nat
@@ -107,6 +111,8 @@ Complete policy of one P3109 projection.
 The default `{}` is nearest-even rounding with no saturation request. Executable operations take
 the two fields as their `mode` and `saturation` options. This record is the conversion context of
 P3109 destinations and the parameter of the specification functions such as `projectValue`.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.3–4.7.5.
 -/
 structure ProjectionPolicy where
   /-- Rule used when precision rounding discards nonzero low bits. -/
@@ -203,6 +209,8 @@ Round one exact finite dyadic to P3109 precision before saturation.
 The quantum is
 `max(floor(log2 |X|), 1 - B) - P + 1`, so the same implementation handles normals,
 subnormals, `P = 1`, and arbitrary descriptor widths.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.4.
 -/
 @[inline] def roundFiniteToPrecision
     (format : Format) (mode : RoundingMode)
@@ -242,7 +250,10 @@ subnormals, `P = 1`, and arbitrary descriptor widths.
             exponent := quantumExponent
           }
 
-/-- Apply P3109 precision rounding while preserving infinities and mapping exceptions to NaN. -/
+/-- Apply P3109 precision rounding while preserving infinities and mapping exceptions to NaN.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.4.
+-/
 @[inline] def roundToPrecision
     (format : Format) (mode : RoundingMode)
     (value : NumericalValue Numerics.Dyadic) :
@@ -321,6 +332,8 @@ end Internal
 
 /--
 Mathematical result of P3109 projection before encoding: precision rounding, then saturation.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.4.
 -/
 @[inline] def projectValue
     (format : Format) (policy : ProjectionPolicy)
@@ -381,6 +394,8 @@ P3109 equality of datum meanings.
 
 Finite values are equal numerically, infinity signs must match, and every NaN payload denotes the
 format's single NaN datum. Other exceptional categories are not P3109 datums.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2–4.7.6.
 -/
 def SameDatum :
     NumericalValue Numerics.Dyadic →
@@ -396,6 +411,8 @@ Executable equality of P3109 datum meanings.
 Finite dyadics are compared numerically, so harmless differences in significand normalization do
 not make a representable value fail the checked encoder. P3109 has one NaN, so its optional
 payload is not semantically observable here.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2 and 4.7.6.
 -/
 @[inline] def datumEqual :
   NumericalValue Numerics.Dyadic →
@@ -412,6 +429,8 @@ Encode a value only when it belongs to this descriptor's datum set.
 There is no rounding or saturation. The operation computes the P3109 code, decodes it, and
 accepts the code only when the decoded datum has the same P3109 numerical meaning as `value`
 (`SameDatum`).
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2–4.7.6.
 -/
 @[inline] def encode?
     (format : Format) (value : NumericalValue Numerics.Dyadic) :
@@ -442,6 +461,8 @@ Project an exact finite, infinite, or NaN value into a P3109 descriptor.
 
 The operation rounds once to P3109 precision in `mode`, applies `saturation`, and encodes the
 result, never going through IEEE 754 or a host float.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.4.
 -/
 @[inline] def project
     (value : NumericalValue Numerics.Dyadic)
@@ -450,7 +471,10 @@ result, never going through IEEE 754 or a host float.
     ExecFloat.P3109 format :=
   ExecFloat.Codebook.ofCode (format.projectCode { rounding := mode, saturation } value)
 
-/-- Project one exact finite dyadic into a P3109 descriptor, with the options of `project`. -/
+/-- Project one exact finite dyadic into a P3109 descriptor, with the options of `project`.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2–4.7.6.
+-/
 @[inline] def ofDyadic
     (value : Numerics.Dyadic)
     (mode : Formats.P3109.RoundingMode := .nearest)
@@ -458,10 +482,19 @@ result, never going through IEEE 754 or a host float.
     ExecFloat.P3109 format :=
   project (.finite value) mode saturation
 
-/-- Encode an already representable P3109 datum without rounding it. -/
+/-- Encode an already representable P3109 datum without rounding it.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.6. -/
 @[inline] def encode?
     (value : NumericalValue Numerics.Dyadic) :
     Option (ExecFloat.P3109 format) :=
   (format.encode? value).map ExecFloat.Codebook.ofCode
 
 end FloatLib.Floats.ExecFloat.P3109
+
+namespace FloatLib.Floats.Formats.P3109.SaturationMode
+
+/-- Reconstruct a `SaturationMode` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.P3109.SaturationMode

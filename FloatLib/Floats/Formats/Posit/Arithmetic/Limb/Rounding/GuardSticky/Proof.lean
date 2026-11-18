@@ -1,22 +1,22 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
-public import FloatLib.Kernels.FixedWord.LimbRound.Proof
 
 /-!
 # Correctness of direct two-limb guard-and-sticky rounding
 
-Much of this proof comes from the shared carrier theorems. `candidateCarrierLawful` shows that the
+Much of this proof comes from the shared carrier theorems.
+`lawfulCandidateCarrier_candidateCarrier` shows that the
 `UInt128` candidate carrier satisfies the shared carrier laws at capacity 128, and the packing and
 rounding refinement follow. What's left connects the two-limb entry points, which add three steps of
 their own (the zero test, the exact minimum-positive comparison, and exact-width sign
@@ -61,7 +61,7 @@ Bit and suffix reads are exact at every width. The arithmetic laws hold under th
 shared rounder establishes: shifts stay below 128 positions, sums and successors fit two limbs,
 and masks are narrower than two limbs.
 -/
-theorem candidateCarrierLawful :
+theorem lawfulCandidateCarrier_candidateCarrier :
     GuardStickyCarrier.LawfulCandidateCarrier candidateCarrier FixedWord.UInt128.toNat 128 where
   bitAt_eq_testBit := NativeLimb.bitAt_eq_testBit
   hasLowBits_eq value width := by
@@ -70,25 +70,23 @@ theorem candidateCarrierLawful :
     rfl
   toNat_lt := FixedWord.UInt128.toNat_lt
   toNat_ofWord word := by
-    show (FixedWord.UInt128.mk 0 word).toNat = word.toNat
+    change (FixedWord.UInt128.mk 0 word).toNat = word.toNat
     simp only [FixedWord.UInt128.toNat, UInt64.toNat_zero, zero_mul, add_zero]
   shiftLeft_toNat value shift hshift hfit := by
-    show (shiftLeft value shift).toNat = value.toNat <<< shift
+    change (shiftLeft value shift).toNat = value.toNat <<< shift
     unfold shiftLeft
     rw [ite_eq_left hshift]
     exact FixedWord.UInt128.shiftLeft_toNat value shift hfit
   shiftRight_toNat value shift _ := by
-    show (FixedWord.UInt128.shiftRight value shift).toNat = value.toNat >>> shift
+    change (FixedWord.UInt128.shiftRight value shift).toNat = value.toNat >>> shift
     rw [FixedWord.UInt128.shiftRight_toNat, Nat.shiftRight_eq_div_pow]
   fractionBelow_toNat value leading _ hlower hupper := by
-    show (NativeLimb.lowBits value leading).toNat = value.toNat - 2 ^ leading
+    change (NativeLimb.lowBits value leading).toNat = value.toNat - 2 ^ leading
     rw [NativeLimb.lowBits_toNat, Nat.mod_eq_sub_mod hlower, Nat.mod_eq_of_lt]
-    have hpower : 2 ^ (leading + 1) = 2 ^ leading * 2 := by
-      rw [pow_succ]
     omega
   add_toNat left right hfit := FixedWord.add128_value_toNat_of_lt left right hfit
   lowOnes_toNat width hwidth := by
-    show (NativeLimb.lowBits ⟨0xffffffffffffffff, 0xffffffffffffffff⟩ width).toNat =
+    change (NativeLimb.lowBits ⟨0xffffffffffffffff, 0xffffffffffffffff⟩ width).toNat =
       2 ^ width - 1
     have hmax :
         (FixedWord.UInt128.mk 0xffffffffffffffff 0xffffffffffffffff).toNat = 2 ^ 128 - 1 := by
@@ -152,7 +150,8 @@ theorem roundPositiveCodeWord_toNat_eq_direct
       (NativeLimb.isZero_eq_true_iff significand).1 hzero
     unfold roundPositiveCodeWord
     rw [ite_eq_left hzero]
-    simp [DirectDyadicPacking.roundPositiveCode, hzeroNat]
+    simp only [DirectDyadicPacking.roundPositiveCode, hzeroNat, BEq.rfl, Bool.or_false,
+      ↓reduceIte]
     unfold FixedWord.UInt128.toNat
     rfl
   · have hnonzero : significand.toNat ≠ 0 :=
@@ -172,7 +171,8 @@ theorem roundPositiveCodeWord_toNat_eq_direct
       simp only [FloatLib.Numerics.FixedWord.UInt128.toNat,
         UInt64.toNat_zero, UInt64.toNat_one, zero_mul, add_zero]
     · rw [ite_eq_right hunderflow]
-      exact GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
+      exact GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct
+        lawfulCandidateCarrier_candidateCarrier
         format significand exponent (payloadBits_lt_of_eligible format heligible) hnonzero
 
 private theorem roundPositiveCodeWord_lt_signMask_direct
@@ -205,7 +205,7 @@ theorem restoreSignWord_toNat
       by_cases hzero : NativeLimb.isZero positiveCode
       · have hzeroNat : positiveCode.toNat = 0 :=
           (NativeLimb.isZero_eq_true_iff positiveCode).1 hzero
-        simp [hzero, hzeroNat, DyadicRounding.restoreSignCode]
+        simp only [hzero, ↓reduceIte, DyadicRounding.restoreSignCode, hzeroNat, BEq.rfl]
         unfold FixedWord.UInt128.toNat
         rfl
       · have hnonzero : positiveCode.toNat ≠ 0 :=

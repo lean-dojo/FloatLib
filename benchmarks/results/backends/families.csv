@@ -1,0 +1,34 @@
+operation,as_written_us,rules_us
+"fixed-point(2,8) add",936.8,272.2
+"fixed-point(2,8) sub",951.5,277.0
+logarithmic(10) mul,1267.5,606.8
+p3109-binary8p4se add,5235.0,371.8
+p3109-binary8p4se mul,5386.3,404.0
+p3109-binary8p4se div,5750.4,407.0
+posit8 add,9072.2,290.2
+posit8 mul,9098.2,251.4
+posit8 div,13727.8,272.2
+posit16 add,9511.1,302.2
+posit16 mul,9390.3,314.6
+posit32 add,10499.1,298.1
+posit32 mul,9195.1,261.3
+posit32 div,27791.4,280.0
+posit64 add,9593.2,307.1
+posit64 mul,10000.1,297.7
+"posit16 quire 3 + 3 * 5, rounded",32080.2,431.8
+posit32 literal 0.1,62272.2,194.6
+posit16 literals 1.5 + 2.25,79265.5,588.8
+decimal32 add,7000.7,264.4
+decimal64 add,7683.1,313.6
+decimal64 mul,8509.8,337.8
+decimal64 add-rounded,6689.9,420.4
+decimal128 add,9214.5,265.7
+mx-e2m1 quantize,37323.2,1332.0
+mx-e2m3 quantize,163196.9,1412.1
+mx-e4m3 quantize,721138.5,1480.6
+mx-e5m2 quantize,709388.1,1489.7
+mx-int8 quantize,588827.9,1200.2
+"mx-e4m3 block of 4, one element",823184.3,7969.0
+"mx-e4m3 block of 32, one element",797544.9,24604.8
+"mx-e4m3 dequantize (value of a word, compared with 9/4)",2529.2,575.2
+"mx-e4m3 block of 4, scale (compared with 1/32)",16038.3,5813.5

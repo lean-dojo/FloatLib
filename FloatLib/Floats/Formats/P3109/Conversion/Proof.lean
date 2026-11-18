@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Runtime
 public import FloatLib.Floats.Formats.P3109.Conversion.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Proof
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 
 /-!
 # P3109 conversion proofs

@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
+public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.ScaleProof
 public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
-public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Proof
 
 /-!
 # Value, range, and error of rational projection

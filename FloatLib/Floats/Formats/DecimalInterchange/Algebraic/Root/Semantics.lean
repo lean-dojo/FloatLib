@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -11,7 +11,7 @@ public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 /-!
 # Public integer-root semantics
 
-This file says in real numbers what `rootN` should return and proves that it does. For a negative
+This file says in real numbers what `rootn` should return and proves that it does. For a negative
 degree, the exact rational magnitude is inverted before rounding, and the specification is the
 signed real root of that magnitude. A negative nonzero operand needs an odd degree. A rational
 value forgets both the sign of zero and the exponent, so zero signs and preferred exponents get
@@ -78,10 +78,10 @@ theorem abs_integerRoot (n : Int) (a : ℚ) :
 
 /-- Every nonzero finite operand in the real domain goes through `rootMagnitude`, with some
 preferred quantum. -/
-theorem rootN_eq_rootMagnitude (f : Format) (mode : RoundingMode)
+theorem rootn_eq_rootMagnitude (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1) :
-    ∃ preferred, rootN f mode x n =
+    ∃ preferred, rootn f mode x n =
       rootMagnitude f mode (decide (a < 0)) n.natAbs (integerRootRadicand n a) preferred := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
@@ -93,39 +93,39 @@ theorem rootN_eq_rootMagnitude (f : Format) (mode : RoundingMode)
     mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hc) (zpow_pos (by norm_num) q)
   cases s
   · refine ⟨(if n < 0 then -q else q) / (n.natAbs : Int), ?_⟩
-    simp [rootN, hn, hc, integerRootRadicand, abs_of_pos hm, not_lt.mpr hm.le]
+    simp [rootn, hn, hc, integerRootRadicand, abs_of_pos hm, not_lt.mpr hm.le]
   · have ho : n % 2 = 1 :=
       hdom (by simpa only [↓reduceIte, neg_mul, one_mul] using neg_neg_of_pos hm)
     refine ⟨(if n < 0 then -q else q) / (n.natAbs : Int), ?_⟩
-    simp [rootN, hn, hc, ho, integerRootRadicand, neg_mul,
+    simp [rootn, hn, hc, ho, integerRootRadicand, neg_mul,
       abs_of_pos hm, neg_neg_of_pos hm]
 
 /-- In both nearest modes, a nonoverflowing root of a nonzero finite datum in the real domain
 (nonzero degree, odd degree for a negative operand) is finite and within half a grid unit of the
 signed real root, taken of the reciprocal for a negative degree. -/
-theorem rootN_error_le_half (f : Format) (mode : RoundingMode)
+theorem rootn_error_le_half (f : Format) (mode : RoundingMode)
     (hm : mode = .nearest ∨ mode = .nearestAway)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1)
-    (hfinite : (rootN f mode x n).status.overflow = false) :
-    ∃ value : ℚ, (rootN f mode x n).value.toRat? = some value ∧
+    (hfinite : (rootn f mode x n).status.overflow = false) :
+    ∃ value : ℚ, (rootn f mode x n).value.toRat? = some value ∧
       |(value : ℝ) - integerRoot n (a : ℝ)| ≤
         (10 : ℝ) ^ rootQuantum f n.natAbs (integerRootRadicand n a) / 2 := by
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f mode x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f mode x a hx ha n hn hdom
   rw [he] at hfinite ⊢
   simpa only [integerRoot_cast] using rootMagnitude_error_le_half f mode (decide (a < 0))
     hm (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred hfinite
 
 /-- In every rounding direction, a nonoverflowing root of a nonzero finite datum in the real domain
 is finite and less than one grid unit from the signed real root. -/
-theorem rootN_error_lt_one (f : Format) (mode : RoundingMode)
+theorem rootn_error_lt_one (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1)
-    (hfinite : (rootN f mode x n).status.overflow = false) :
-    ∃ value : ℚ, (rootN f mode x n).value.toRat? = some value ∧
+    (hfinite : (rootn f mode x n).status.overflow = false) :
+    ∃ value : ℚ, (rootn f mode x n).value.toRat? = some value ∧
       |(value : ℝ) - integerRoot n (a : ℝ)| <
         (10 : ℝ) ^ rootQuantum f n.natAbs (integerRootRadicand n a) := by
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f mode x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f mode x a hx ha n hn hdom
   rw [he] at hfinite ⊢
   simpa only [integerRoot_cast] using rootMagnitude_error_lt_one f mode (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred hfinite
@@ -133,21 +133,21 @@ theorem rootN_error_lt_one (f : Format) (mode : RoundingMode)
 /-- Outside the root-rounding path (degree zero, a zero operand, or a negative operand at an even
 degree), a root of a finite datum raises neither underflow nor inexact, and a finite result is the
 exact zero root of a zero operand at a nonzero degree. -/
-private theorem rootN_of_not_path (f : Format) (mode : RoundingMode) (x : Datum) (a : ℚ)
+private theorem rootn_of_not_path (f : Format) (mode : RoundingMode) (x : Datum) (a : ℚ)
     (hx : x.toRat? = some a) (n : Int) (h : ¬(a ≠ 0 ∧ n ≠ 0 ∧ (a < 0 → n % 2 = 1))) :
-    (rootN f mode x n).status.underflow = false ∧ (rootN f mode x n).status.inexact = false ∧
-      ∀ value, (rootN f mode x n).value.toRat? = some value → value = 0 ∧ a = 0 ∧ n ≠ 0 := by
+    (rootn f mode x n).status.underflow = false ∧ (rootn f mode x n).status.inexact = false ∧
+      ∀ value, (rootn f mode x n).value.toRat? = some value → value = 0 ∧ a = 0 ∧ n ≠ 0 := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   rename_i s c q
   by_cases hn : n = 0
-  · simp [rootN, hn, invalidResult, Datum.toRat?_eq]
+  · simp [rootn, hn, invalidResult, Datum.toRat?_eq]
   have hp : (10 : ℚ) ^ q ≠ 0 := (zpow_pos (by norm_num) _).ne'
   by_cases hc : c = 0
   · subst hc
     have ha : a = 0 := by rw [← hx]; simp
     by_cases hneg : n < 0
-    · simp [rootN, hn, hneg, Datum.toRat?_eq]
-    · simp [rootN, hn, hneg, projectMagnitude_zero, Datum.toRat?_eq, ha]
+    · simp [rootn, hn, hneg, Datum.toRat?_eq]
+    · simp [rootn, hn, hneg, projectMagnitude_zero, Datum.toRat?_eq, ha]
   have ha : a ≠ 0 := by rw [← hx]; cases s <;> simp [hc, hp]
   push Not at h
   obtain ⟨hneg, hodd⟩ := h ha hn
@@ -155,24 +155,24 @@ private theorem rootN_of_not_path (f : Format) (mode : RoundingMode) (x : Datum)
   · simp only [Bool.false_eq_true, ↓reduceIte, one_mul] at hx
     have hpos : (0 : ℚ) < (c : ℚ) * (10 : ℚ) ^ q :=
       mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hc) (zpow_pos (by norm_num) _)
-    linarith
-  · simp [rootN, hn, hc, show n % 2 = 0 by omega, invalidResult, Datum.toRat?_eq]
+    exact False.elim (hneg.not_ge (hx ▸ hpos.le))
+  · simp [rootn, hn, hc, show n % 2 = 0 by omega, invalidResult, Datum.toRat?_eq]
 
 /-- Without overflow, a root of a finite datum raises inexact if and only if a finite result differs
 from the signed real root. Degree zero and a negative operand at an even degree give a NaN, and a
 zero operand gives an exact zero or a pole, so a finite result needs no domain premise. -/
-theorem rootN_inexact_iff (f : Format) (mode : RoundingMode)
+theorem rootn_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a) (n : Int)
-    (hfinite : (rootN f mode x n).status.overflow = false)
-    (hv : (rootN f mode x n).value.toRat? = some value) :
-    (rootN f mode x n).status.inexact = true ↔ (value : ℝ) ≠ integerRoot n (a : ℝ) := by
+    (hfinite : (rootn f mode x n).status.overflow = false)
+    (hv : (rootn f mode x n).value.toRat? = some value) :
+    (rootn f mode x n).status.inexact = true ↔ (value : ℝ) ≠ integerRoot n (a : ℝ) := by
   by_cases hpath : a ≠ 0 ∧ n ≠ 0 ∧ (a < 0 → n % 2 = 1)
   swap
-  · obtain ⟨-, hi, hval⟩ := rootN_of_not_path f mode x a hx n hpath
+  · obtain ⟨-, hi, hval⟩ := rootn_of_not_path f mode x a hx n hpath
     obtain ⟨rfl, rfl, hn⟩ := hval value hv
     simp [hi, integerRoot, realRoot, Real.zero_rpow, hn]
   obtain ⟨ha, hn, hdom⟩ := hpath
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f mode x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f mode x a hx ha n hn hdom
   rw [he] at hfinite hv ⊢
   simpa only [integerRoot_cast] using rootMagnitude_inexact_iff f mode (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) value preferred hfinite hv
@@ -180,43 +180,43 @@ theorem rootN_inexact_iff (f : Format) (mode : RoundingMode)
 /-- A root of a finite datum raises underflow if and only if the real root is below the least normal
 magnitude in absolute value and the result is inexact. Outside the real domain, at degree zero and
 at a zero operand the root raises neither flag, and an overflowing root is never tiny. -/
-theorem rootN_underflow_iff (f : Format) (mode : RoundingMode)
+theorem rootn_underflow_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) :
-    (rootN f mode x n).status.underflow = true ↔
+    (rootn f mode x n).status.underflow = true ↔
       |integerRoot n (a : ℝ)| < (f.minNormal : ℝ) ∧
-        (rootN f mode x n).status.inexact = true := by
+        (rootn f mode x n).status.inexact = true := by
   by_cases hpath : a ≠ 0 ∧ n ≠ 0 ∧ (a < 0 → n % 2 = 1)
   swap
-  · obtain ⟨hu, hi, -⟩ := rootN_of_not_path f mode x a hx n hpath
+  · obtain ⟨hu, hi, -⟩ := rootn_of_not_path f mode x a hx n hpath
     simp [hu, hi]
   obtain ⟨ha, hn, hdom⟩ := hpath
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f mode x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f mode x a hx ha n hn hdom
   rw [he, abs_integerRoot]
   exact rootMagnitude_underflow_iff f mode (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred
 
 /-- Rounding toward positive, a nonoverflowing root of a nonzero finite datum in the real domain is
 finite and at least the signed real root. -/
-theorem le_rootN_up (f : Format)
+theorem le_rootn_up (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1)
-    (hfinite : (rootN f .up x n).status.overflow = false) :
-    ∃ value : ℚ, (rootN f .up x n).value.toRat? = some value ∧
+    (hfinite : (rootn f .up x n).status.overflow = false) :
+    ∃ value : ℚ, (rootn f .up x n).value.toRat? = some value ∧
       integerRoot n (a : ℝ) ≤ (value : ℝ) := by
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f .up x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f .up x a hx ha n hn hdom
   rw [he] at hfinite ⊢
   simpa only [integerRoot_cast] using le_rootMagnitude_up f (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred hfinite
 
 /-- Rounding toward negative, a nonoverflowing root of a nonzero finite datum in the real domain is
 finite and at most the signed real root. -/
-theorem rootN_down_le (f : Format)
+theorem rootn_down_le (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1)
-    (hfinite : (rootN f .down x n).status.overflow = false) :
-    ∃ value : ℚ, (rootN f .down x n).value.toRat? = some value ∧
+    (hfinite : (rootn f .down x n).status.overflow = false) :
+    ∃ value : ℚ, (rootn f .down x n).value.toRat? = some value ∧
       (value : ℝ) ≤ integerRoot n (a : ℝ) := by
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f .down x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f .down x a hx ha n hn hdom
   rw [he] at hfinite ⊢
   simpa only [integerRoot_cast] using rootMagnitude_down_le f (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred hfinite
@@ -224,52 +224,52 @@ theorem rootN_down_le (f : Format)
 /-- Rounding toward zero, a root of a nonzero finite datum in the real domain is finite and no
 larger in magnitude than the signed real root, also when it overflows to the greatest finite datum.
 -/
-theorem abs_rootN_towardZero_le (f : Format)
+theorem abs_rootn_towardZero_le (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : a ≠ 0)
     (n : Int) (hn : n ≠ 0) (hdom : a < 0 → n % 2 = 1) :
-    ∃ value : ℚ, (rootN f .towardZero x n).value.toRat? = some value ∧
+    ∃ value : ℚ, (rootn f .towardZero x n).value.toRat? = some value ∧
       |(value : ℝ)| ≤ |integerRoot n (a : ℝ)| := by
-  obtain ⟨preferred, he⟩ := rootN_eq_rootMagnitude f .towardZero x a hx ha n hn hdom
+  obtain ⟨preferred, he⟩ := rootn_eq_rootMagnitude f .towardZero x a hx ha n hn hdom
   rw [he, abs_integerRoot]
   exact abs_rootMagnitude_towardZero_le f (decide (a < 0))
     (Int.natAbs_ne_zero.mpr hn) (integerRootRadicand_nonneg n a) preferred
 
 /-- Positive-degree zero is exact. Even degrees clear its sign and odd degrees keep it. -/
-theorem rootN_zero_pos (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
+theorem rootn_zero_pos (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
     (hn : 0 < n) :
-    rootN f mode (.finite s 0 q) n =
+    rootn f mode (.finite s 0 q) n =
       { value := .finite (s && decide (n % 2 = 1)) 0
           (max f.minQuantum (min (q / (n.natAbs : Int)) f.maxQuantum)) } := by
-  simp [rootN, hn.ne', not_lt.mpr hn.le, projectMagnitude_zero]
+  simp [rootn, hn.ne', not_lt.mpr hn.le, projectMagnitude_zero]
 
 /-- Negative-degree zero is a pole with the same odd-degree sign rule. -/
-theorem rootN_zero_neg (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
+theorem rootn_zero_neg (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
     (hn : n < 0) :
-    rootN f mode (.finite s 0 q) n =
+    rootn f mode (.finite s 0 q) n =
       { value := .infinity (s && decide (n % 2 = 1))
         status := { divideByZero := true } } := by
-  simp [rootN, hn.ne, hn]
+  simp [rootn, hn.ne, hn]
 
 /-- The degree-zero root of any finite datum, either zero included, is the default quiet NaN with
 the invalid flag. -/
-theorem rootN_degree_zero_finite (f : Format) (mode : RoundingMode)
+theorem rootn_degree_zero_finite (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) :
-    rootN f mode (.finite s c q) 0 = invalidResult := by
-  simp [rootN]
+    rootn f mode (.finite s c q) 0 = invalidResult := by
+  simp [rootn]
 
 /-- The degree-zero root of either infinity is the default quiet NaN with the invalid flag. -/
-theorem rootN_degree_zero_infinity (f : Format) (mode : RoundingMode) (s : Bool) :
-    rootN f mode (.infinity s) 0 = invalidResult := by
-  simp [rootN]
+theorem rootn_degree_zero_infinity (f : Format) (mode : RoundingMode) (s : Bool) :
+    rootn f mode (.infinity s) 0 = invalidResult := by
+  simp [rootn]
 
 /-- A root of even degree, positive, negative or zero, of a negative nonzero finite datum is the
 default quiet NaN with the invalid flag. -/
-theorem rootN_negative_even (f : Format) (mode : RoundingMode) (c : Nat) (q n : Int)
+theorem rootn_negative_even (f : Format) (mode : RoundingMode) (c : Nat) (q n : Int)
     (hc : c ≠ 0) (he : n % 2 = 0) :
-    rootN f mode (.finite true c q) n = invalidResult := by
+    rootn f mode (.finite true c q) n = invalidResult := by
   by_cases hn : n = 0
-  · simp [rootN, hn]
-  · simp [rootN, hc, hn, he]
+  · simp [rootn, hn]
+  · simp [rootn, hc, hn, he]
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module
 
 import FloatLibBenchmarks.Public.Sweep
 import FloatLibBenchmarks.Support.CSV
-import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Candidates
+import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Instances
 
 /-!
 # Cold-start and warm-kernel calibration
@@ -21,8 +21,10 @@ descriptor planner. It is intentionally separate from the public precision sweep
 * `selected` records whether the current deterministic policy chooses that candidate.
 
 The calibration formats straddle every tiny-table threshold and include a non-IEEE descriptor.
-Candidate availability still comes from structural predicates in `Descriptor.Plan`; the harness
-does not maintain a second list of eligible algorithms.
+The candidates are those of the descriptor's capability: its baseline and every candidate tagged
+`@[compiler_optimize]` for the descriptor operation in the modules this file imports, so a newly
+tagged candidate is measured with no change here. The harness does not maintain a second list of
+eligible algorithms.
 
 Elapsed time is empirical data, whereas candidate estimates are portable static priors. Repeated
 runs should be summarized with a robust statistic before changing those priors.
@@ -162,17 +164,17 @@ private def calibrateFormat
     (formatName : String) (format : FloatFormat) (precision iterations : Nat) :
     IO Unit := do
   calibrateBinary formatName precision .add
-    (Descriptor.Plan.addCandidates format) iterations
+    (ExecFloat.Add.candidates (F := Descriptor format)) iterations
   calibrateBinary formatName precision .sub
-    (Descriptor.Plan.subCandidates format) iterations
+    (ExecFloat.Sub.candidates (F := Descriptor format)) iterations
   calibrateBinary formatName precision .mul
-    (Descriptor.Plan.mulCandidates format) iterations
+    (ExecFloat.Mul.candidates (F := Descriptor format)) iterations
   calibrateBinary formatName precision .div
-    (Descriptor.Plan.divCandidates format) iterations
+    (ExecFloat.Div.candidates (F := Descriptor format)) iterations
   calibrateUnary formatName precision .sqrt
-    (Descriptor.Plan.sqrtCandidates format) iterations
+    (ExecFloat.Sqrt.candidates (F := Descriptor format)) iterations
   calibrateTernary formatName precision .fma
-    (Descriptor.Plan.fmaCandidates format) iterations
+    (ExecFloat.Fma.candidates (F := Descriptor format)) iterations
 
 def run : IO Unit := do
   let iterations ← positiveNat "CALIBRATION_ITERATIONS" 100000

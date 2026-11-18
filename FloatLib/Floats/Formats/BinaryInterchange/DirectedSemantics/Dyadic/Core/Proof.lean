@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -284,7 +284,6 @@ theorem roundMantissaAtExponentDown_eq_zero_of_lt_minSubnormal
     roundMantissaAtExponentDown mantissa exponent
         (fmt.minSubnormalExponent) = 0 := by
   have hexponentLe : exponent ≤ fmt.minSubnormalExponent := by
-    have hlog : (0 : Int) ≤ mantissa.log2 := by omega
     omega
   let shift := (fmt.minSubnormalExponent - exponent).toNat
   have hshiftInt :
@@ -674,10 +673,6 @@ theorem roundMantissaAtExponentDown_minSubnormal_lt_pow2
     have hshiftInt :
         (shift : Int) = fmt.minSubnormalExponent - exponent :=
       Int.toNat_of_nonneg (sub_nonneg.mpr hle)
-    have hlogInt :
-        (mantissa.log2 : Int) + 1 ≤ (fmt.fracWidth : Int) + shift := by
-      rw [hshiftInt]
-      omega
     have hlogNat : mantissa.log2 < fmt.fracWidth + shift := by
       omega
     have hq : mantissa >>> shift < pow2 fmt.fracWidth := by
@@ -689,12 +684,6 @@ theorem roundMantissaAtExponentDown_minSubnormal_lt_pow2
     have hshiftInt :
         (shift : Int) = exponent - fmt.minSubnormalExponent :=
       Int.toNat_of_nonneg (sub_nonneg.mpr hlt.le)
-    have hlogInt :
-        (mantissa.log2 : Int) + shift < fmt.fracWidth := by
-      rw [hshiftInt]
-      omega
-    have hlogNat : mantissa.log2 + shift < fmt.fracWidth := by
-      exact_mod_cast hlogInt
     have hraw :=
       Nat.shiftLeft_lt (m := shift) (Nat.lt_log2_self (n := mantissa))
     have hexponent : mantissa.log2 + 1 + shift ≤ fmt.fracWidth := by

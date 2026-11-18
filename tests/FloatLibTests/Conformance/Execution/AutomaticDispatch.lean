@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.Selection.Report
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Backends
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Instances
-public import FloatLib.Floats.Formats.OCP.FP8.E4M3FN
+public import FloatLib.Floats.Formats.OCP.FP8.E4M3
 public import FloatLib.Floats.Formats.OCP.MX.E2M1
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Report
 
 /-!
 # Automatic dispatch across format families
@@ -78,41 +78,77 @@ variable (format : FloatFormat) (plan : Configured.StoragePlan format) (code : T
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
     [planning : PolicyFor (Configured.Family format code plan)]
 
-/-- Configured addition runs the certificate selected from its complete portfolio. -/
+/--
+Configured addition runs the certificate that the planner selects from the capability's
+candidates, whose baseline is the generic kernel of the family's own portfolio.
+-/
 example :
     ExecFloat.Add.selected (F := Configured.Family format code plan) =
-      selectCertified planning.policy (Configured.Plan.addCandidates format plan) := by
-  exact ExecFloat.Add.selected_eq_planner
+        selectCertified planning.policy
+          (ExecFloat.Add.candidates (F := Configured.Family format code plan)) ∧
+      (ExecFloat.Add.candidates (F := Configured.Family format code plan)).baseline =
+        (Configured.Plan.addCandidates format plan).baseline :=
+  ⟨ExecFloat.Add.selected_eq_planner, rfl⟩
 
-/-- Configured subtraction runs the selected certified implementation. -/
+/--
+Configured subtraction runs the certificate that the planner selects from the capability's
+candidates, whose baseline is the generic kernel of the family's own portfolio.
+-/
 example :
     ExecFloat.Sub.selected (F := Configured.Family format code plan) =
-      selectCertified planning.policy (Configured.Plan.subCandidates format plan) := by
-  exact ExecFloat.Sub.selected_eq_planner
+        selectCertified planning.policy
+          (ExecFloat.Sub.candidates (F := Configured.Family format code plan)) ∧
+      (ExecFloat.Sub.candidates (F := Configured.Family format code plan)).baseline =
+        (Configured.Plan.subCandidates format plan).baseline :=
+  ⟨ExecFloat.Sub.selected_eq_planner, rfl⟩
 
-/-- Configured multiplication runs the selected certified implementation. -/
+/--
+Configured multiplication runs the certificate that the planner selects from the capability's
+candidates, whose baseline is the generic kernel of the family's own portfolio.
+-/
 example :
     ExecFloat.Mul.selected (F := Configured.Family format code plan) =
-      selectCertified planning.policy (Configured.Plan.mulCandidates format plan) := by
-  exact ExecFloat.Mul.selected_eq_planner
+        selectCertified planning.policy
+          (ExecFloat.Mul.candidates (F := Configured.Family format code plan)) ∧
+      (ExecFloat.Mul.candidates (F := Configured.Family format code plan)).baseline =
+        (Configured.Plan.mulCandidates format plan).baseline :=
+  ⟨ExecFloat.Mul.selected_eq_planner, rfl⟩
 
-/-- Configured division runs the selected certified implementation. -/
+/--
+Configured division runs the certificate that the planner selects from the capability's
+candidates, whose baseline is the generic kernel of the family's own portfolio.
+-/
 example :
     ExecFloat.Div.selected (F := Configured.Family format code plan) =
-      selectCertified planning.policy (Configured.Plan.divCandidates format plan) := by
-  exact ExecFloat.Div.selected_eq_planner
+        selectCertified planning.policy
+          (ExecFloat.Div.candidates (F := Configured.Family format code plan)) ∧
+      (ExecFloat.Div.candidates (F := Configured.Family format code plan)).baseline =
+        (Configured.Plan.divCandidates format plan).baseline :=
+  ⟨ExecFloat.Div.selected_eq_planner, rfl⟩
 
-/-- Configured square root runs the selected certified implementation. -/
+/--
+Configured square root runs the certificate that the planner selects from the capability's
+candidates, whose baseline is the generic kernel of the family's own portfolio.
+-/
 example :
     ExecFloat.Sqrt.selected (F := Configured.Family format code plan) =
-      selectCertified planning.policy (Configured.Plan.sqrtCandidates format plan) := by
-  exact ExecFloat.Sqrt.selected_eq_planner
+        selectCertified planning.policy
+          (ExecFloat.Sqrt.candidates (F := Configured.Family format code plan)) ∧
+      (ExecFloat.Sqrt.candidates (F := Configured.Family format code plan)).baseline =
+        (Configured.Plan.sqrtCandidates format plan).baseline :=
+  ⟨ExecFloat.Sqrt.selected_eq_planner, rfl⟩
 
-/-- Configured FMA runs the selected certified implementation. -/
+/--
+Configured FMA runs the certificate that the planner selects from the capability's
+candidates, whose baseline is the generic kernel of the family's own portfolio.
+-/
 example :
     ExecFloat.Fma.selected (F := Configured.Family format code plan) =
-      selectCertified planning.policy (Configured.Plan.fmaCandidates format plan) := by
-  exact ExecFloat.Fma.selected_eq_planner
+        selectCertified planning.policy
+          (ExecFloat.Fma.candidates (F := Configured.Family format code plan)) ∧
+      (ExecFloat.Fma.candidates (F := Configured.Family format code plan)).baseline =
+        (Configured.Plan.fmaCandidates format plan).baseline :=
+  ⟨ExecFloat.Fma.selected_eq_planner, rfl⟩
 
 end EveryConfiguredCarrier
 
@@ -123,47 +159,78 @@ section EveryBinaryDescriptor
 variable (format : FloatFormat)
     [planning : PolicyFor (Descriptor format)]
 
-/-- Arbitrary-format addition runs the planner's selected certificate. -/
+/--
+Arbitrary-format addition runs the planner's selected certificate, chosen among the tagged
+candidates and the generic baseline.
+-/
 example :
     ExecFloat.Add.selected (F := Descriptor format) =
-      selectCertified planning.policy (Descriptor.Plan.addCandidates format) := by
-  exact ExecFloat.Add.selected_eq_planner
+        selectCertified planning.policy (ExecFloat.Add.candidates (F := Descriptor format)) ∧
+      (ExecFloat.Add.candidates (F := Descriptor format)).baseline =
+        Descriptor.Plan.addGeneric format :=
+  ⟨ExecFloat.Add.selected_eq_planner, rfl⟩
 
-/-- Arbitrary-format subtraction runs the planner's selected certificate. -/
+/--
+Arbitrary-format subtraction runs the planner's selected certificate, chosen among the tagged
+candidates and the generic baseline.
+-/
 example :
     ExecFloat.Sub.selected (F := Descriptor format) =
-      selectCertified planning.policy (Descriptor.Plan.subCandidates format) := by
-  exact ExecFloat.Sub.selected_eq_planner
+        selectCertified planning.policy (ExecFloat.Sub.candidates (F := Descriptor format)) ∧
+      (ExecFloat.Sub.candidates (F := Descriptor format)).baseline =
+        Descriptor.Plan.subGeneric format :=
+  ⟨ExecFloat.Sub.selected_eq_planner, rfl⟩
 
-/-- Arbitrary-format multiplication runs the planner's selected certificate. -/
+/--
+Arbitrary-format multiplication runs the planner's selected certificate, chosen among the tagged
+candidates and the generic baseline.
+-/
 example :
     ExecFloat.Mul.selected (F := Descriptor format) =
-      selectCertified planning.policy (Descriptor.Plan.mulCandidates format) := by
-  exact ExecFloat.Mul.selected_eq_planner
+        selectCertified planning.policy (ExecFloat.Mul.candidates (F := Descriptor format)) ∧
+      (ExecFloat.Mul.candidates (F := Descriptor format)).baseline =
+        Descriptor.Plan.mulGeneric format :=
+  ⟨ExecFloat.Mul.selected_eq_planner, rfl⟩
 
-/-- Arbitrary-format division runs the planner's selected certificate. -/
+/--
+Arbitrary-format division runs the planner's selected certificate, chosen among the tagged
+candidates and the generic baseline.
+-/
 example :
     ExecFloat.Div.selected (F := Descriptor format) =
-      selectCertified planning.policy (Descriptor.Plan.divCandidates format) := by
-  exact ExecFloat.Div.selected_eq_planner
+        selectCertified planning.policy (ExecFloat.Div.candidates (F := Descriptor format)) ∧
+      (ExecFloat.Div.candidates (F := Descriptor format)).baseline =
+        Descriptor.Plan.divGeneric format :=
+  ⟨ExecFloat.Div.selected_eq_planner, rfl⟩
 
-/-- Arbitrary-format square root runs the planner's selected certificate. -/
+/--
+Arbitrary-format square root runs the planner's selected certificate, chosen among the tagged
+candidates and the generic baseline.
+-/
 example :
     ExecFloat.Sqrt.selected (F := Descriptor format) =
-      selectCertified planning.policy (Descriptor.Plan.sqrtCandidates format) := by
-  exact ExecFloat.Sqrt.selected_eq_planner
+        selectCertified planning.policy (ExecFloat.Sqrt.candidates (F := Descriptor format)) ∧
+      (ExecFloat.Sqrt.candidates (F := Descriptor format)).baseline =
+        Descriptor.Plan.sqrtGeneric format :=
+  ⟨ExecFloat.Sqrt.selected_eq_planner, rfl⟩
 
-/-- Arbitrary-format fused multiply-add runs the planner's selected certificate. -/
+/--
+Arbitrary-format FMA runs the planner's selected certificate, chosen among the tagged
+candidates and the generic baseline.
+-/
 example :
     ExecFloat.Fma.selected (F := Descriptor format) =
-      selectCertified planning.policy (Descriptor.Plan.fmaCandidates format) := by
-  exact ExecFloat.Fma.selected_eq_planner
+        selectCertified planning.policy (ExecFloat.Fma.candidates (F := Descriptor format)) ∧
+      (ExecFloat.Fma.candidates (F := Descriptor format)).baseline =
+        Descriptor.Plan.fmaGeneric format :=
+  ⟨ExecFloat.Fma.selected_eq_planner, rfl⟩
 
 end EveryBinaryDescriptor
 
 /-! ## Closed structural selections -/
 
-/-- Families below are definitionally the same families used by the public `ExecFloat.Binary` type. -/
+/-- Families below are definitionally the same families used by the public `ExecFloat.Binary`
+type. -/
 private abbrev TinyBinary := ExecFloat.Binary.Family 2 1
 private abbrev Binary7 := ExecFloat.Binary.Family 3 3
 private abbrev Binary8 := ExecFloat.Binary.Family 4 3
@@ -190,13 +257,13 @@ example :
   rfl
 
 example :
-    [ (Descriptor.Plan.addCandidates (FloatFormat.ieee 2 1)).alternatives.length
-    , (Descriptor.Plan.addCandidates FloatFormat.binary32).alternatives.length
-    , (Descriptor.Plan.mulCandidates FloatFormat.binary128).alternatives.length
-    , (Descriptor.Plan.fmaCandidates
-        (FloatFormat.ieee 19 4095)).alternatives.length
+    [ (ExecFloat.Add.candidates (F := Descriptor (FloatFormat.ieee 2 1))).alternatives.length
+    , (ExecFloat.Add.candidates (F := Descriptor FloatFormat.binary32)).alternatives.length
+    , (ExecFloat.Mul.candidates (F := Descriptor FloatFormat.binary128)).alternatives.length
+    , (ExecFloat.Fma.candidates
+        (F := Descriptor (FloatFormat.ieee 19 4095))).alternatives.length
     ] = [2, 1, 1, 0] := by
-  rfl
+  decide +kernel
 
 /-- A configured binary32 value is stored in a `UInt32` carrier chosen from its encoded width. -/
 example :
@@ -208,10 +275,10 @@ A static-byte family reports its `UInt8` carrier for the table candidate and for
 baseline, which decodes to the proof model only while it computes.
 -/
 example :
-    [ (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).storage
-    , (ExecFloat.Fma.selectedCandidate (F := E4M3FN.Family)).storage
+    [ (ExecFloat.Add.selectedCandidate (F := E4M3.Family)).storage
+    , (ExecFloat.Fma.selectedCandidate (F := E4M3.Family)).storage
     , (StaticByte.Plans.exactEstimate .add).storage
-    , (StaticByte.Plans.tableEstimate FloatFormat.e4m3fn "table" .add).storage
+    , (StaticByte.Plans.tableEstimate FloatFormat.e4m3 "table" .add).storage
     ] = [.byte, .byte, .byte, .byte] := by
   rfl
 
@@ -372,12 +439,12 @@ example :
 Balanced OCP FP8 amortizes all admissible direct-byte tables and keeps FMA on the exact baseline.
 -/
 example :
-    [ (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).kind
-    , (ExecFloat.Sub.selectedCandidate (F := E4M3FN.Family)).kind
-    , (ExecFloat.Mul.selectedCandidate (F := E4M3FN.Family)).kind
-    , (ExecFloat.Div.selectedCandidate (F := E4M3FN.Family)).kind
-    , (ExecFloat.Sqrt.selectedCandidate (F := E4M3FN.Family)).kind
-    , (ExecFloat.Fma.selectedCandidate (F := E4M3FN.Family)).kind
+    [ (ExecFloat.Add.selectedCandidate (F := E4M3.Family)).kind
+    , (ExecFloat.Sub.selectedCandidate (F := E4M3.Family)).kind
+    , (ExecFloat.Mul.selectedCandidate (F := E4M3.Family)).kind
+    , (ExecFloat.Div.selectedCandidate (F := E4M3.Family)).kind
+    , (ExecFloat.Sqrt.selectedCandidate (F := E4M3.Family)).kind
+    , (ExecFloat.Fma.selectedCandidate (F := E4M3.Family)).kind
     ] =
       [ .exhaustiveTable, .exhaustiveTable, .exhaustiveTable
       , .exhaustiveTable, .exhaustiveTable, .generic
@@ -443,7 +510,7 @@ example :
 
 /-- A first-call OCP FP8 workload avoids paying for the lazy 65,536-entry addition table. -/
 example :
-    (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).kind = .generic := by
+    (ExecFloat.Add.selectedCandidate (F := E4M3.Family)).kind = .generic := by
   rfl
 
 /-- A first-call OCP MX workload avoids setup for all six four-bit operation tables. -/
@@ -480,7 +547,7 @@ example :
 
 /-- Sustained OCP FP8 addition amortizes its direct-byte exhaustive table. -/
 example :
-    (ExecFloat.Add.selectedCandidate (F := E4M3FN.Family)).kind = .exhaustiveTable := by
+    (ExecFloat.Add.selectedCandidate (F := E4M3.Family)).kind = .exhaustiveTable := by
   rfl
 
 /--
@@ -515,7 +582,7 @@ standard-owned wrapper for the table planner to apply.
 -/
 example :
     (ExecFloat.Add.selectedCandidate
-      (F := Descriptor FloatFormat.e4m3fn)).kind = .exhaustiveTable := by
+      (F := Descriptor FloatFormat.e4m3)).kind = .exhaustiveTable := by
   rfl
 
 /--

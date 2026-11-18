@@ -1,21 +1,21 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.ShiftRightJam
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof.UInt128
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Data.Rat.Cast.Order
+
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Verified four-limb rounding
@@ -96,7 +96,7 @@ private theorem mod_two_pow_eq_low_pair
         low + (high * 2 ^ (128 - width)) * 2 ^ width := by
     unfold low high
     rw [toNat_eq_pairs, hpower]
-    ring
+    ac_rfl
   rw [hvalue, Nat.add_mul_mod_self_right]
 
 /-- Modulo at most `2^64`, a two-limb value depends only on its low limb. -/
@@ -111,7 +111,7 @@ private theorem low_pair_mod_two_pow_of_le64
   rw [hpower]
   rw [show
     value.limb1.toNat * (2 ^ width * 2 ^ (64 - width)) =
-      (value.limb1.toNat * 2 ^ (64 - width)) * 2 ^ width by ring]
+      (value.limb1.toNat * 2 ^ (64 - width)) * 2 ^ width by ac_rfl]
   rw [Nat.add_mul_mod_self_right]
 
 /--
@@ -150,8 +150,7 @@ private theorem hasNonzeroBelow_eq_of_le128
     rw [Nat.mod_one]
     decide
   by_cases hsmall : width < 64
-  · have hpositive : 0 < width := Nat.pos_of_ne_zero hzero
-    unfold hasNonzeroBelow
+  · unfold hasNonzeroBelow
     simp only [beq_iff_eq, hzero, ite_false, hsmall, ite_true]
     rw [low_pair_mod_two_pow_of_le64 value width hsmall.le]
     have hbits :=
@@ -174,7 +173,6 @@ private theorem hasNonzeroBelow_eq_of_le128
   by_cases hbelow : width < 128
   · have hlarge : 64 < width := by omega
     let inner := width - 64
-    have hinnerPositive : 0 < inner := by omega
     have hinner : inner < 64 := by omega
     unfold hasNonzeroBelow
     simp only [beq_iff_eq, hzero, ite_false, hsmall, hword,
@@ -326,7 +324,8 @@ theorem hasNonzeroBelow_eq
       show ¬width < 256 by omega]
     apply Bool.eq_iff_iff.mpr
     simp only [Bool.or_eq_true, bne_iff_ne]
-    simp [UInt256.toNat, uint64_toNat_eq_zero]
+    simp only [ne_eq, toNat, Nat.reducePow, Nat.add_eq_zero_iff, uint64_toNat_eq_zero,
+      mul_eq_zero, OfNat.ofNat_ne_zero, or_false, not_and, and_imp]
     tauto
 
 /-- Four-limb shifting by less than one word agrees with `>>>` when the quotient fits two limbs. -/
@@ -425,9 +424,6 @@ private theorem shiftRight128_toNat_of_ge128
     · by_cases htop : inner < 128
       · have hlarge : 64 < inner := by omega
         let tail := inner - 64
-        have htailPositive : 0 < tail := by
-          unfold tail
-          omega
         have htail : tail < 64 := by
           unfold tail
           omega
@@ -570,7 +566,7 @@ theorem shiftRight128_toNat_of_quotient_lt
           omega
         rw [show 2 ^ (shift + 128) =
             2 ^ shift * 2 ^ 128 by rw [pow_add]] at hvalue
-        nlinarith [Nat.two_pow_pos 128]
+        omega
       rw [← Nat.shiftRight_eq_div_pow]
       exact shiftRight128_toNat_of_lt64
         value shift hsmall hlimb3 htop
@@ -592,7 +588,7 @@ theorem shiftRight128_toNat_of_quotient_lt
                 shift + 128 = (shift - 64) + 192 := by
               omega
             rw [hexponent, pow_add] at hvalue
-            nlinarith [Nat.two_pow_pos 192]
+            omega
           rw [← Nat.shiftRight_eq_div_pow]
           exact shiftRight128_toNat
             value shift hlarge hlimb3
@@ -728,7 +724,6 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
       FloatLib.Numerics.roundShiftRightEven
         value.toNat shift := by
   let inner := shift - 64
-  have hinnerPositive : 0 < inner := by omega
   have hinner : inner < 64 := by omega
   have hshiftEq : shift = 64 + inner := by omega
   have hquotient : (shiftRight128 value shift).toNat = value.toNat >>> shift := by
@@ -837,13 +832,12 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
     rw [hexponent, pow_add]
   rw [hpowHalf]
   have hlowBound := value.limb0.toNat_lt
-  have hpowPositive : 0 < 2 ^ 64 := by positivity
   by_cases hless :
       value.limb1.toNat % 2 ^ inner < 2 ^ (inner - 1)
   · have hremainderLess :
         remainder < 2 ^ (inner - 1) * 2 ^ 64 := by
       unfold remainder
-      nlinarith
+      omega
     rw [ite_eq_left hless, ite_eq_left hremainderLess]
     simpa using hquotient
   by_cases hgreater :
@@ -851,7 +845,7 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
   · have hremainderGreater :
         remainder > 2 ^ (inner - 1) * 2 ^ 64 := by
       unfold remainder
-      nlinarith
+      omega
     have hremainderNotLess :
         ¬remainder < 2 ^ (inner - 1) * 2 ^ 64 :=
       Nat.not_lt_of_ge (Nat.le_of_lt hremainderGreater)
@@ -869,8 +863,10 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
       simp [remainder, hlowNat, hequal]
     by_cases hevenNative : ((shiftRight128 value shift).lo &&& 1) == 0
     · have hevenNat := heven.mp hevenNative
-      simp [hequal, hlowZero, hremainderEqual,
-        hevenNative, hquotient]
+      simp only [hequal, lt_self_iff_false, ↓reduceIte, decide_false, hlowZero, bne_self_eq_false,
+        Bool.or_self, Bool.false_eq_true, hevenNative, hquotient, hremainderEqual, Nat.reducePow,
+        Nat.shiftRight_eq', beq_iff_eq, left_eq_ite_iff, Nat.mod_two_not_eq_zero,
+        Nat.left_eq_add, one_ne_zero, imp_false, Nat.mod_two_not_eq_one]
       change value.toNat.shiftRight shift % 2 = 0
       simpa only [beq_iff_eq] using hevenNat
     · have hevenNat : ¬value.toNat.shiftRight shift % 2 == 0 := by
@@ -882,8 +878,10 @@ theorem roundShiftRightEven128_toNat (value : UInt256) (shift : Nat)
           apply hevenNat
           simpa only [beq_iff_eq] using hzero
         omega
-      simp [hequal, hlowZero, hremainderEqual,
-        hevenNative, hincrement]
+      simp only [hequal, lt_self_iff_false, ↓reduceIte, decide_false, hlowZero, bne_self_eq_false,
+        Bool.or_self, Bool.false_eq_true, hevenNative, hincrement, hremainderEqual, Nat.reducePow,
+        Nat.shiftRight_eq', beq_iff_eq, right_eq_ite_iff, Nat.add_eq_left, one_ne_zero,
+        imp_false, Nat.mod_two_not_eq_zero]
       change value.toNat.shiftRight shift % 2 = 1
       exact hoddNat
   · have hlowPositive : 0 < value.limb0.toNat :=

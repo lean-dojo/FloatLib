@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -137,12 +137,9 @@ theorem addRaw_lt_modulus
     (hright : carrier.toNat right < format.modulus) :
     carrier.toNat (addRaw carrier format width_le left right hleft hright) <
       format.modulus := by
-  unfold addRaw
-  exact observed_lt_modulus (carrier.toNat_narrow _)
-    (packedAdd_lt_modulus (le_trans width_le carrier.capacity_le)
-      (carrier.toUInt64 left) (carrier.toUInt64 right)
-      (widened_lt_modulus carrier hleft)
-      (widened_lt_modulus carrier hright))
+  exact (carrier.toNat_narrow_le _).trans_lt <|
+    packedAdd_lt_modulus _ _ _ (widened_lt_modulus carrier hleft)
+      (widened_lt_modulus carrier hright)
 
 /-- Raw subtraction of in-range words returns a word below the posit modulus. -/
 theorem subRaw_lt_modulus
@@ -153,12 +150,9 @@ theorem subRaw_lt_modulus
     (hright : carrier.toNat right < format.modulus) :
     carrier.toNat (subRaw carrier format width_le left right hleft hright) <
       format.modulus := by
-  unfold subRaw
-  exact observed_lt_modulus (carrier.toNat_narrow _)
-    (packedSub_lt_modulus (le_trans width_le carrier.capacity_le)
-      (carrier.toUInt64 left) (carrier.toUInt64 right)
-      (widened_lt_modulus carrier hleft)
-      (widened_lt_modulus carrier hright))
+  exact (carrier.toNat_narrow_le _).trans_lt <|
+    packedSub_lt_modulus _ _ _ (widened_lt_modulus carrier hleft)
+      (widened_lt_modulus carrier hright)
 
 /-- Raw multiplication of in-range words returns a word below the posit modulus. -/
 theorem mulRaw_lt_modulus
@@ -169,12 +163,9 @@ theorem mulRaw_lt_modulus
     (hright : carrier.toNat right < format.modulus) :
     carrier.toNat (mulRaw carrier format width_le left right hleft hright) <
       format.modulus := by
-  unfold mulRaw
-  exact observed_lt_modulus (carrier.toNat_narrow _)
-    (packedMul_lt_modulus (le_trans width_le carrier.capacity_le)
-      (carrier.toUInt64 left) (carrier.toUInt64 right)
-      (widened_lt_modulus carrier hleft)
-      (widened_lt_modulus carrier hright))
+  exact (carrier.toNat_narrow_le _).trans_lt <|
+    packedMul_lt_modulus _ _ _ (widened_lt_modulus carrier hleft)
+      (widened_lt_modulus carrier hright)
 
 /-- Raw division of in-range words returns a word below the posit modulus. -/
 theorem divRaw_lt_modulus
@@ -185,12 +176,9 @@ theorem divRaw_lt_modulus
     (hright : carrier.toNat right < format.modulus) :
     carrier.toNat (divRaw carrier format width_le left right hleft hright) <
       format.modulus := by
-  unfold divRaw
-  exact observed_lt_modulus (carrier.toNat_narrow _)
-    (packedDiv_lt_modulus (le_trans width_le carrier.capacity_le)
-      (carrier.toUInt64 left) (carrier.toUInt64 right)
-      (widened_lt_modulus carrier hleft)
-      (widened_lt_modulus carrier hright))
+  exact (carrier.toNat_narrow_le _).trans_lt <|
+    packedDiv_lt_modulus _ _ _ (widened_lt_modulus carrier hleft)
+      (widened_lt_modulus carrier hright)
 
 /-- The raw square root of an in-range word is below the posit modulus. -/
 theorem sqrtRaw_lt_modulus
@@ -200,11 +188,8 @@ theorem sqrtRaw_lt_modulus
     (hvalue : carrier.toNat value < format.modulus) :
     carrier.toNat (sqrtRaw carrier format width_le value hvalue) <
       format.modulus := by
-  unfold sqrtRaw
-  exact observed_lt_modulus (carrier.toNat_narrow _)
-    (packedSqrt_lt_modulus (le_trans width_le carrier.capacity_le)
-      (carrier.toUInt64 value)
-      (widened_lt_modulus carrier hvalue))
+  exact (carrier.toNat_narrow_le _).trans_lt <|
+    packedSqrt_lt_modulus _ _ (widened_lt_modulus carrier hvalue)
 
 /-- Raw fused multiply-add of in-range words returns a word below the posit modulus. -/
 theorem fmaRaw_lt_modulus
@@ -218,14 +203,9 @@ theorem fmaRaw_lt_modulus
         (fmaRaw carrier format width_le left right addend
           hleft hright haddend) <
       format.modulus := by
-  unfold fmaRaw
-  exact observed_lt_modulus (carrier.toNat_narrow _)
-    (packedFma_lt_modulus (le_trans width_le carrier.capacity_le)
-      (carrier.toUInt64 left) (carrier.toUInt64 right)
-      (carrier.toUInt64 addend)
-      (widened_lt_modulus carrier hleft)
-      (widened_lt_modulus carrier hright)
-      (widened_lt_modulus carrier haddend))
+  exact (carrier.toNat_narrow_le _).trans_lt <|
+    packedFma_lt_modulus _ _ _ _ (widened_lt_modulus carrier hleft)
+      (widened_lt_modulus carrier hright) (widened_lt_modulus carrier haddend)
 
 /-! ## Shared observations used by semantic refinement -/
 
@@ -419,13 +399,13 @@ theorem addCode_eq
             (widened_lt_modulus carrier left.2)
             (widened_lt_modulus carrier right.2))⟩ := by
   apply validCode_eq_of_toNat_eq carrier
-  exact Model.NativeWordArithmetic.addWordsCodeFlatValid_lt_modulus
-    (le_trans width_le carrier.capacity_le)
-    (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
-    (widened_lt_modulus carrier left.2)
-    (widened_lt_modulus carrier right.2)
-  exact addRaw_toNat_eq carrier width_le
-    left.1 right.1 left.2 right.2
+  · exact Model.NativeWordArithmetic.addWordsCodeFlatValid_lt_modulus
+      (le_trans width_le carrier.capacity_le)
+      (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
+      (widened_lt_modulus carrier left.2)
+      (widened_lt_modulus carrier right.2)
+  · exact addRaw_toNat_eq carrier width_le
+      left.1 right.1 left.2 right.2
 
 /-- Fixed-carrier subtraction returns the same code as exact native-word packing. -/
 theorem subCode_eq
@@ -451,13 +431,13 @@ theorem subCode_eq
             (widened_lt_modulus carrier left.2)
             (widened_lt_modulus carrier right.2))⟩ := by
   apply validCode_eq_of_toNat_eq carrier
-  exact Model.NativeWordArithmetic.subWordsCodeFlatValid_lt_modulus
-    (le_trans width_le carrier.capacity_le)
-    (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
-    (widened_lt_modulus carrier left.2)
-    (widened_lt_modulus carrier right.2)
-  exact subRaw_toNat_eq carrier width_le
-    left.1 right.1 left.2 right.2
+  · exact Model.NativeWordArithmetic.subWordsCodeFlatValid_lt_modulus
+      (le_trans width_le carrier.capacity_le)
+      (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
+      (widened_lt_modulus carrier left.2)
+      (widened_lt_modulus carrier right.2)
+  · exact subRaw_toNat_eq carrier width_le
+      left.1 right.1 left.2 right.2
 
 /-- Fixed-carrier multiplication returns the same code as exact native-word packing. -/
 theorem mulCode_eq
@@ -483,13 +463,13 @@ theorem mulCode_eq
             (widened_lt_modulus carrier left.2)
             (widened_lt_modulus carrier right.2))⟩ := by
   apply validCode_eq_of_toNat_eq carrier
-  exact Model.NativeWordArithmetic.PackedProduct.mulWordsCodeValid_lt_modulus
-    (le_trans width_le carrier.capacity_le)
-    (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
-    (widened_lt_modulus carrier left.2)
-    (widened_lt_modulus carrier right.2)
-  exact mulRaw_toNat_eq carrier width_le
-    left.1 right.1 left.2 right.2
+  · exact Model.NativeWordArithmetic.PackedProduct.mulWordsCodeValid_lt_modulus
+      (le_trans width_le carrier.capacity_le)
+      (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
+      (widened_lt_modulus carrier left.2)
+      (widened_lt_modulus carrier right.2)
+  · exact mulRaw_toNat_eq carrier width_le
+      left.1 right.1 left.2 right.2
 
 /-- Fixed-carrier division returns the same code as exact native-word packing. -/
 theorem divCode_eq
@@ -515,13 +495,13 @@ theorem divCode_eq
             (widened_lt_modulus carrier left.2)
             (widened_lt_modulus carrier right.2))⟩ := by
   apply validCode_eq_of_toNat_eq carrier
-  exact Model.NativeWordArithmetic.PackedQuotient.divWordsCodeValid_lt_modulus
-    (le_trans width_le carrier.capacity_le)
-    (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
-    (widened_lt_modulus carrier left.2)
-    (widened_lt_modulus carrier right.2)
-  exact divRaw_toNat_eq carrier width_le
-    left.1 right.1 left.2 right.2
+  · exact Model.NativeWordArithmetic.PackedQuotient.divWordsCodeValid_lt_modulus
+      (le_trans width_le carrier.capacity_le)
+      (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
+      (widened_lt_modulus carrier left.2)
+      (widened_lt_modulus carrier right.2)
+  · exact divRaw_toNat_eq carrier width_le
+      left.1 right.1 left.2 right.2
 
 /-- Fixed-carrier square root returns the same code as exact native-word packing. -/
 theorem sqrtCode_eq
@@ -543,11 +523,11 @@ theorem sqrtCode_eq
             (carrier.toUInt64 value.1)
             (widened_lt_modulus carrier value.2))⟩ := by
   apply validCode_eq_of_toNat_eq carrier
-  exact Model.NativeWordArithmetic.PackedSquareRoot.sqrtWordCodeValid_lt_modulus
-    (le_trans width_le carrier.capacity_le)
-    (carrier.toUInt64 value.1)
-    (widened_lt_modulus carrier value.2)
-  exact sqrtRaw_toNat_eq carrier width_le value.1 value.2
+  · exact Model.NativeWordArithmetic.PackedSquareRoot.sqrtWordCodeValid_lt_modulus
+      (le_trans width_le carrier.capacity_le)
+      (carrier.toUInt64 value.1)
+      (widened_lt_modulus carrier value.2)
+  · exact sqrtRaw_toNat_eq carrier width_le value.1 value.2
 
 /-- Fixed-carrier FMA returns the same code as exact native-word packing. -/
 theorem fmaCode_eq
@@ -578,14 +558,14 @@ theorem fmaCode_eq
             (widened_lt_modulus carrier right.2)
             (widened_lt_modulus carrier addend.2))⟩ := by
   apply validCode_eq_of_toNat_eq carrier
-  exact Model.NativeWordArithmetic.fmaWordsCodeFlatValid_lt_modulus
-    (le_trans width_le carrier.capacity_le)
-    (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
-    (carrier.toUInt64 addend.1)
-    (widened_lt_modulus carrier left.2)
-    (widened_lt_modulus carrier right.2)
-    (widened_lt_modulus carrier addend.2)
-  exact fmaRaw_toNat_eq carrier width_le
-    left.1 right.1 addend.1 left.2 right.2 addend.2
+  · exact Model.NativeWordArithmetic.fmaWordsCodeFlatValid_lt_modulus
+      (le_trans width_le carrier.capacity_le)
+      (carrier.toUInt64 left.1) (carrier.toUInt64 right.1)
+      (carrier.toUInt64 addend.1)
+      (widened_lt_modulus carrier left.2)
+      (widened_lt_modulus carrier right.2)
+      (widened_lt_modulus carrier addend.2)
+  · exact fmaRaw_toNat_eq carrier width_le
+      left.1 right.1 addend.1 left.2 right.2 addend.2
 
 end FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords

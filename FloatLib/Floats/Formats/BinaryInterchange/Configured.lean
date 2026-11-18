@@ -1,34 +1,28 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-public import FloatLib.Floats.Formats.BinaryInterchange.Status
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Classification.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.MixedError
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Comparison.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Square
+public meta import FloatLib.Kernels.Execution.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Algebraic.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Classification.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Comparison.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.PrecisionProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.MixedError
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Square
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.DecimalFormattingProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Roundtrip
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Reduction
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
-public meta import FloatLib.Floats.ExecFloat.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Status
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Recommended.Proof
 
 /-!
 # Configured binary values and literals
@@ -76,6 +70,9 @@ install certified operation backends. What a user of the values meets is split f
   the text conversion proofs establish rounding bounds and exact round trips.
 * `Configured.Reduction` provides exact accumulation with one final rounding, and error bounds for
   trees of additions that each round on their own.
+* `Configured.Recommended` provides the recommended operations of IEEE 754-2019 §9.4 to §9.7:
+  minimum and maximum by magnitude, the NaN payload operations, the augmented operations, and
+  the reductions `sumAbs`, `sumSquare`, `scaledProd`, `scaledProdSum` and `scaledProdDiff`.
 * `Configured.Interval` provides outward-rounded intervals with configured endpoints, reusing the
   model interval arithmetic and enclosure proofs.
 
@@ -84,13 +81,13 @@ deterministic elementary-function kernels and the power to this type, and adds t
 searches of `ExecFloat.Binary.Certified`, which return a correctly rounded result or say why the
 search did not certify one. `import FloatLib` does not install `ExecFloat.Binary.exp`,
 `ExecFloat.Binary.pow`, `Model.exp`, `Model.pow`, or the binary `MathFunctions` instances.
-`Configured.CorrectlyRounded` has total `exp`, `log`, `expMinus1`, `logPlus1` and `expMul`. For an
+`Configured.CorrectlyRounded` has total `exp`, `log`, `expm1`, `logp1` and `expMul`. For an
 IEEE format their finite results on finite inputs are correctly rounded, whatever the search
 budget, and an overflowing result is the infinity with the sign of the exact result.
 
 Natural and scientific literals are rounded once from exact rationals into the destination format.
 They never pass through Lean's host `Float`, C `double`, or an IEEE bit-pattern parser. If you also
-want `#float_info`, import `FloatLib.Floats.Formats.BinaryInterchange.Info.Command` as well.
+want `#float_info`, import `FloatLib.Tactic.FloatInfo.BinaryInterchange.Command` as well.
 
 ## References
 

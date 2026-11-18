@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -20,8 +20,8 @@ refinement equations, and the executable report checks canonical construction an
 arithmetic codes.
 
 The exhaustive table-to-specification proofs live beside their kernels in
-`ExecFloat.Backends.TinyTable`. This module guards the nominal packaging and direct byte boundary
-against integration regressions. It also checks the distinct E8M0 shared-scale
+`ExecFloat.Backends.Compiled.TinyTable`. This module guards the nominal packaging and direct byte
+boundary against integration regressions. It also checks the distinct E8M0 shared-scale
 contract and representative block decoding behavior.
 
 ## References
@@ -32,6 +32,9 @@ contract and representative block decoding behavior.
   <https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf>.
 * ONNX, *Float stored in 8 bits*,
   <https://onnx.ai/onnx/technical/float8.html>.
+
+Reference: OCP 8-bit Floating Point Specification (OFP8), revision 1.0, §5.1; OCP Microscaling
+Formats (MX) Specification v1.0, §§5.1–5.4.
 -/
 
 @[expose] public section
@@ -82,11 +85,11 @@ def constructorFailures (F : Type) [StaticByte.Family F] (codeCount samples : Na
 /-- Representative public additions guard the nominal dispatch and byte repacking boundaries. -/
 def arithmeticFailures : Thunk Nat := ⟨fun _ =>
   countFailures
-    [ E4M3FN.toUInt8
-      (FloatLib.Floats.ExecFloat.add (E4M3FN.ofNatBits 0x38) (E4M3FN.ofNatBits 0x40)) ==
+    [ E4M3.toUInt8
+      (FloatLib.Floats.ExecFloat.add (E4M3.ofNatBits 0x38) (E4M3.ofNatBits 0x40)) ==
         0x44
-    , E4M3FN.toUInt8
-      (FloatLib.Floats.ExecFloat.add (E4M3FN.ofNatBits 0xfe) (E4M3FN.ofNatBits 0xfe)) ==
+    , E4M3.toUInt8
+      (FloatLib.Floats.ExecFloat.add (E4M3.ofNatBits 0xfe) (E4M3.ofNatBits 0xfe)) ==
         0xff
     , E5M2.toUInt8
       (FloatLib.Floats.ExecFloat.add (E5M2.ofNatBits 0x3c) (E5M2.ofNatBits 0x40)) ==
@@ -139,20 +142,15 @@ example : exponent? (ofNatBits 254) = some 127 := by
 example : isNaN (ofNatBits 255) = true := by
   native_decide
 
+/-- A stored MXFP4 block of two elements with scale `2 ^ 1` decodes to `1 * 2` and `6 * 2`. -/
 example :
-    decodeBlock? (ofNatBits 128)
-      #[Model.ofNatBits (fmt := FloatFormat.e2m1) 0x02,
-        Model.ofNatBits (fmt := FloatFormat.e2m1) 0x07] =
-      some #[{ negative := false, significand := 2, exponent := 0 },
-        { negative := false, significand := 3, exponent := 2 }] := by
-  native_decide
-
-example (scale : FloatLib.Floats.ExecFloat.OCP.MX.E8M0)
-    (elements : Array (FloatLib.Floats.E2M1)) :
-    FloatLib.Floats.ExecFloat.OCP.MX.Block.values
-        (FloatLib.Floats.ExecFloat.OCP.MX.Block.ofElements scale elements) =
-      elements.map fun value => StaticByte.toModel value := by
-  exact FloatLib.Floats.ExecFloat.OCP.MX.Block.values_ofElements scale elements
+    Array.ofFn
+        (({ scales := (fun _ => ofNatBits 128, ())
+            elements := fun lane => if lane = 0 then 0x2#4 else 0x7#4 } :
+          FloatLib.Floats.Formats.Block.Tensor
+            (Standard.format (fun _ : Fin 2 => ()) .e2m1)).value) =
+      #[2, 12] := by
+  decide +kernel
 
 end E8M0
 
@@ -161,7 +159,7 @@ def totalFailures : Thunk Nat := ⟨fun _ =>
   constructorFailures E2M1.Family 16 512 +
   constructorFailures E2M3.Family 64 512 +
   constructorFailures E3M2.Family 64 512 +
-  constructorFailures E4M3FN.Family 256 512 +
+  constructorFailures E4M3.Family 256 512 +
   constructorFailures E5M2.Family 256 512 +
   constructorFailures E4M3FNUZ.Family 256 512 +
   constructorFailures E5M2FNUZ.Family 256 512 +

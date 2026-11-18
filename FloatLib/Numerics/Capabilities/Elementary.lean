@@ -1,18 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Algebra.Order.Group.Unbundled.Abs
-public import Mathlib.Analysis.Complex.Exponential
-public import Mathlib.Analysis.Complex.Trigonometric
-public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
-public import Mathlib.Basic.Real.Basic
 
 /-!
 # Elementary scalar capabilities

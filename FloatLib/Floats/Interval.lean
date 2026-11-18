@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module -- shake: keep-all
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval
 public import FloatLib.Floats.Interval.Quantized
-public import FloatLib.Floats.Interval.RealBounds
+public import FloatLib.Numerics.Enclosure.Interval.Bounds
 public import FloatLib.Floats.Interval.Rounders
 
 /-!

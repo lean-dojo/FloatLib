@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Config
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Config
 
 /-!
 # Format-generic executable exponential and logarithm
@@ -97,7 +96,8 @@ where
         else
           go fuel (count + 1)
 
-/-- Exact common-denominator coefficients of `sum k in [0, terms], x^k/k!`, as `(terms!, coefficients)`. -/
+/-- Exact common-denominator coefficients of `sum k in [0, terms], x^k/k!`, as `(terms!,
+coefficients)`. -/
 def expTaylorData (terms : Nat) : Nat × List Int :=
   let denominator := Config.factorial terms
   (denominator, (List.range (terms + 1)).map fun index =>
@@ -162,7 +162,7 @@ def expWithProvider {fmt : FloatFormat}
     (getConfig : Unit → Transcendentals.Config) (x : Model fmt) : Model fmt :=
   if isNaN x then
     quietNaN x
-  else if isInf x then
+  else if isInfinite x then
     if signBit x then zero fmt false else nativeOverflow fmt false
   else
     match toDyadic? x with
@@ -216,7 +216,7 @@ def logWithProvider {fmt : FloatFormat}
     (getConfig : Unit → Transcendentals.Config) (x : Model fmt) : Model fmt :=
   if isNaN x then
     quietNaN x
-  else if isInf x then
+  else if isInfinite x then
     if signBit x then invalidResult fmt else nativeOverflow fmt false
   else if isZero x then
     nativeOverflow fmt true

@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Proof
 public import FloatLib.Floats.Formats.P3109.Projection.Runtime
-public import FloatLib.Numerics.Exact.Dyadic.Order
+public import FloatLib.Floats.Formats.P3109.Proof
 
 /-!
 # Direct encoding for P3109 projection
@@ -18,6 +17,8 @@ laws it uses. Further contracts relate executable datum comparison to the mathem
 relation and pin down the checked encoder, which returns a code if and only if that code decodes
 to the same datum as its input. The direct encoder looks only at the datum, so `3 * 2^0` and
 `6 * 2^-1` encode alike. Precision rounding and saturation correctness come in later modules.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2 and 4.7.6.
 -/
 
 @[expose] public section
@@ -132,6 +133,8 @@ Encoding any decoded natural-number code recovers that code.
 
 The statement is intentionally independent of a bit-width bound. Width reduction belongs to
 `BitVec`, and the P3109 row formulas themselves are inverse for every natural row number.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
 -/
 private theorem encodeDatumNat_decodeNat
     (format : Format) (bits : Nat) :
@@ -145,7 +148,6 @@ private theorem encodeDatumNat_decodeNat
   have hsigned := format.positiveInfinityBits_ne_signBoundary
   have hsigned' := format.negativeInfinityBits_ne_signBoundary
   have hsigned'' := format.negativeInfinityBits_ne_positiveInfinityBits
-  have hunsigned := format.positiveInfinityBits_ne_nanBits
   have hnan : ∀ e, Internal.encodeDatumNat format (.exceptional e) = format.nanBits :=
     fun _ => rfl
   have hpinf : Internal.encodeDatumNat format (.infinity false) = format.positiveInfinityBits :=
@@ -153,9 +155,14 @@ private theorem encodeDatumNat_decodeNat
   have hninf : Internal.encodeDatumNat format (.infinity true) = format.negativeInfinityBits :=
     rfl
   unfold decodeNat
-  split <;> rename_i hs hd <;> split_ifs <;> simp_all [nanBits, -Numerics.Dyadic.neg_eq] <;> omega
+  split <;> rename_i hs hd <;> split_ifs <;>
+    simp_all only [lt_self_iff_false, tsub_self, decodePositiveFinite_zero, add_zero,
+    IsEmpty.forall_iff, ne_eq, nanBits, not_false_eq_true, forall_const, not_lt] <;> omega
 
-/-- Every P3109 code decodes to a datum for which `SameDatum` is reflexive. -/
+/-- Every P3109 code decodes to a datum for which `SameDatum` is reflexive.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
+-/
 private theorem sameDatum_decode_self
     (format : Format) (code : BitVec format.bitWidth) :
     SameDatum (format.decode code) (format.decode code) := by
@@ -179,7 +186,9 @@ private theorem directCode_decode
   rw [BitVec.ofNat_toNat, BitVec.setWidth_eq]
 
 /-- Executable datum equality holds if and only if both sides are the same mathematical P3109
-datum. -/
+datum.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2. -/
 theorem datumEqual_eq_true_iff
     (left right : NumericalValue Numerics.Dyadic) :
     datumEqual left right = true ↔ SameDatum left right := by
@@ -204,23 +213,28 @@ theorem datumEqual_eq_true_iff
       | exceptional right =>
           cases left <;> cases right <;> simp [datumEqual, SameDatum]
 
-/-- Checked encoding is a left inverse of P3109 decoding. -/
+/-- Checked encoding is a left inverse of P3109 decoding.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
+-/
 @[simp] theorem encode?_decode
     (format : Format) (code : BitVec format.bitWidth) :
     format.encode? (format.decode code) = some code := by
   unfold encode?
   rw [format.directCode_decode]
   have same := format.sameDatum_decode_self code
-  have equal :
+  have CompareEqual :
       datumEqual (format.decode code) (format.decode code) = true :=
     (datumEqual_eq_true_iff _ _).2 same
-  simp [equal]
+  simp [CompareEqual]
 
 /--
 A successful checked encoding decodes to the same P3109 datum as its input.
 
 No rounding occurs in `encode?`. The converse, that `encode?` accepts every value some code denotes,
 is `encode?_eq_some_iff`.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
 -/
 theorem sameDatum_decode_of_encode?_eq_some
     (format : Format)
@@ -241,7 +255,8 @@ theorem sameDatum_decode_of_encode?_eq_some
 /-- Doubling the significand and lowering the exponent by one does not change the encoding. -/
 private theorem encodePositiveFinite_double (format : Format) (value : Numerics.Dyadic)
     (hzero : value.significand ≠ 0) :
-    Internal.encodePositiveFinite format ⟨value.negative, 2 * value.significand, value.exponent - 1⟩ =
+    Internal.encodePositiveFinite format ⟨value.negative, 2 * value.significand, value.exponent -
+      1⟩ =
       Internal.encodePositiveFinite format value := by
   have hlog := Nat.log2_two_mul hzero
   have htwo : 2 * value.significand ≠ 0 := by omega
@@ -259,7 +274,8 @@ private theorem encodePositiveFinite_double (format : Format) (value : Numerics.
   rw [hw]
   generalize hw' : z - 1 = w
   have hdouble (shift : Nat) :
-      Nat.shiftLeft (2 * value.significand) shift = Nat.shiftLeft value.significand (shift + 1) := by
+      Nat.shiftLeft (2 * value.significand) shift = Nat.shiftLeft value.significand (shift +
+        1) := by
     simp only [Nat.shiftLeft_eq', Nat.shiftLeft_eq]
     rw [Nat.pow_succ, Nat.mul_comm 2 value.significand, Nat.mul_assoc, Nat.mul_comm 2]
   have hhalve (shift : Nat) :
@@ -274,7 +290,8 @@ private theorem encodePositiveFinite_double (format : Format) (value : Numerics.
   · omega
   · obtain rfl : b = 0 := by omega
     obtain rfl : a = 0 := by omega
-    have hone : Nat.shiftRight (2 * value.significand) (0 + 1) = Nat.shiftLeft value.significand 0 := by
+    have hone : Nat.shiftRight (2 * value.significand) (0 + 1) = Nat.shiftLeft value.significand
+      0 := by
       simp only [Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq', Nat.shiftLeft_eq]
       simp
     simp only [hone]
@@ -396,7 +413,10 @@ private theorem encodeDatumNat_eq_of_sameDatum (format : Format)
       | infinity _ => exact absurd h (by cases e <;> simp [SameDatum])
 
 /-- Checked encoding succeeds on the P3109 datums and nowhere else: it returns `code` if and only if
-`code` decodes to the same datum as the input. -/
+`code` decodes to the same datum as the input.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
+-/
 theorem encode?_eq_some_iff (format : Format) (value : NumericalValue Numerics.Dyadic)
     (code : BitVec format.bitWidth) :
     format.encode? value = some code ↔ SameDatum (format.decode code) value := by

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.ExactValue
+
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 
 /-!
@@ -50,7 +51,6 @@ theorem eq_of_toDyadic?_eq_some {fmt : FloatFormat} {x y : Model fmt}
     (hxshape.symm.trans hyshape)
   have hxfrac := fracField_lt_pow2 x
   have hyfrac := fracField_lt_pow2 y
-  have hpow : 0 < pow2 fmt.fracWidth := by simp [pow2_eq_two_pow]
   have hsame : expField x = expField y ∧ fracField x = fracField y := by
     split_ifs at hfields <;>
       simp only [Option.map_some, Option.some.injEq, Prod.mk.injEq,
@@ -64,16 +64,16 @@ theorem eq_of_toDyadic?_eq_some {fmt : FloatFormat} {x y : Model fmt}
 /-- Classification as NaN exposes all the exact metadata used by total ordering. -/
 theorem exactValue_eq_nan_of_isNaN {fmt : FloatFormat} {x : Model fmt}
     (hx : isNaN x = true) :
-    exactValue x = .nan (signBit x) (isSNaN x) (fracField x) := by
+    exactValue x = .nan (signBit x) (isSignaling x) (fracField x) := by
   have hdecode := toDyadic?_eq_none_of_isNaN hx
-  have hinf : isInf x = false := by
-    cases he : fmt.encoding <;> simp_all [isNaN, isInf, IEEE.isNaN, IEEE.isInf]
+  have hinf : isInfinite x = false := by
+    cases he : fmt.encoding <;> simp_all [isNaN, isInfinite, IEEE.isNaN, IEEE.isInfinite]
   simp [exactValue, hdecode, hinf]
 
 /-- An infinity decodes to the exact infinity of its own sign. -/
-theorem exactValue_eq_infinity_of_isInf {fmt : FloatFormat} {x : Model fmt}
-    (hx : isInf x = true) : exactValue x = .infinity (signBit x) := by
-  simp [exactValue, toDyadic?_eq_none_of_isInf_eq_true hx, hx]
+theorem exactValue_eq_infinity_of_isInfinite {fmt : FloatFormat} {x : Model fmt}
+    (hx : isInfinite x = true) : exactValue x = .infinity (signBit x) := by
+  simp [exactValue, toDyadic?_eq_none_of_isInfinite_eq_true hx, hx]
 
 /-- Complete exact interpretation is injective for every binary format descriptor. -/
 theorem exactValue_injective {fmt : FloatFormat} :
@@ -90,7 +90,7 @@ theorem exactValue_injective {fmt : FloatFormat} :
           have := exactValue_eq_finite_iff.mp hexact
           simp [hx] at this
       | none =>
-          cases hi : isInf x <;> cases hj : isInf y <;>
+          cases hi : isInfinite x <;> cases hj : isInfinite y <;>
             simp only [exactValue, hx, hy, hi, hj, Bool.false_eq_true, ite_false,
               ite_true, ExactValue.nan.injEq, ExactValue.infinity.injEq,
               reduceCtorEq] at h
@@ -119,11 +119,11 @@ theorem exactValue_injective {fmt : FloatFormat} :
                 exact congrArg (ofBits (fmt := fmt)) (hxb.trans hyb.symm)
             | finite => simp [isFinite, hfmt] at hxf
           · have hfmt : fmt.encoding = .ieee := by
-              cases he : fmt.encoding <;> simp_all [isInf]
+              cases he : fmt.encoding <;> simp_all [isInfinite]
             have hxf : expField x = fmt.expAllOnesNat ∧ fracField x = 0 := by
-              simpa [isInf, hfmt, IEEE.isInf] using hi
+              simpa [isInfinite, hfmt, IEEE.isInfinite] using hi
             have hyf : expField y = fmt.expAllOnesNat ∧ fracField y = 0 := by
-              simpa [isInf, hfmt, IEEE.isInf] using hj
+              simpa [isInfinite, hfmt, IEEE.isInfinite] using hj
             exact eq_of_signBit_expField_fracField_eq h
               (hxf.1.trans hyf.1.symm) (hxf.2.trans hyf.2.symm)
 

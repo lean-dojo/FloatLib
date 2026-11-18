@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -60,7 +60,7 @@ The shared bisection routine guarantees that the optimized and reference searche
 control flow once their comparison predicates are related.
 -/
 @[inline] def lowerCodeForPositive (format : Format) (target : FloatLib.Numerics.Dyadic) : Nat :=
-  Model.lowerCodeByBisection
+  Numerics.bisect
     (fun code => (nonnegativeDyadicAt format code).isLessOrEqual target)
     format.bits 0 format.signMaskNat
 
@@ -127,6 +127,8 @@ Round any exact dyadic value using unique posit zero and whole-word negative sym
 
 The sign stored on an exact dyadic zero is forgotten because the Posit Standard (2022) has one
 zero encoding.
+
+Reference: Standard for Posit Arithmetic (2022), §§3.3 and 4.1.
 -/
 @[noinline] def round (format : Format) (value : FloatLib.Numerics.Dyadic) : Model format :=
   if value.significand == 0 then
@@ -134,7 +136,7 @@ zero encoding.
   else
     let magnitude := magnitude value
     if value.negative then
-      Model.neg (roundPositive format magnitude)
+      Model.negate (roundPositive format magnitude)
     else
       roundPositive format magnitude
 

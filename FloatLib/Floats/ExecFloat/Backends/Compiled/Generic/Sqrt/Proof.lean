@@ -1,0 +1,273 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.Kernel.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.ModelSqrt.Proof
+
+import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
+
+/-!
+# Correctness of compact finite square root
+
+The executable descriptor-aware square-root kernels live in `Sqrt.Runtime`. We prove that they agree
+with the exact dyadic and unpacked-model specifications, and we install the verified compiler
+substitution.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteSqrt
+
+open Float.Model.UnpackedFloat in
+private theorem roundRoot_eq (root remainder shift : Nat) :
+    roundRoot root remainder shift =
+      (ExtendedMantissa.ofMantissaAndAccuracy root
+        (if remainder = 0 then .exact
+          else .inexact (if remainder ≤ root then .lt else .gt)) >>> shift).roundedMantissa := by
+  cases shift with
+  | zero =>
+    by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+      simp [roundRoot, hz, hle, HShiftRight.hShiftRight, Nat.repeat,
+        ExtendedMantissa.ofMantissaAndAccuracy, ExtendedMantissa.roundedMantissa,
+        ExtendedMantissa.accuracy, Accuracy.roundToNearestEven]
+  | succ k =>
+    rw [ScaledSqrt.shift_extended_succ]
+    have hp : 0 < 2 ^ k := Nat.two_pow_pos k
+    have hm := Nat.mod_lt root hp
+    have hdisc : root - root / (2 ^ k * 2) * (2 ^ k * 2) =
+        root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) := by
+      rw [← Nat.mod_eq_sub_div_mul, Nat.mod_mul]
+    simp only [roundRoot, Nat.succ_ne_zero, beq_iff_eq, ite_false,
+      Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq, Nat.pow_succ,
+      Nat.add_sub_cancel, pow2_eq_two_pow, hdisc]
+    rcases Nat.mod_two_eq_zero_or_one (root / 2 ^ k) with hb | hb
+    · have hlt : root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) < 2 ^ k := by
+        simp [hb, hm]
+      simp only [hlt, ite_true]
+      cases hsticky : (root % 2 ^ k != 0) <;>
+        by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+        simp [hz, hle, ExtendedMantissa.ofMantissaAndAccuracy,
+          ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+          Accuracy.roundToNearestEven, hb, hsticky]
+    · by_cases hlow : root % 2 ^ k = 0
+      · have heq : root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) = 2 ^ k := by
+          simp [hb, hlow]
+        simp only [heq, Nat.lt_irrefl, gt_iff_lt, ite_false]
+        rcases Nat.mod_two_eq_zero_or_one (root / (2 ^ k * 2)) with hparity | hparity <;>
+          by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+          simp [hz, hle, ExtendedMantissa.ofMantissaAndAccuracy,
+            ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hb, hlow, hparity]
+      · have hgt : 2 ^ k < root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) := by
+          simp only [hb, Nat.mul_one]
+          omega
+        have hnlt : ¬ root % 2 ^ k + 2 ^ k * (root / 2 ^ k % 2) < 2 ^ k := by omega
+        have hsticky : (root % 2 ^ k != 0) = true := by
+          have heq : (root % 2 ^ k == 0) = false :=
+            Bool.eq_false_of_not_eq_true (fun h => hlow (beq_iff_eq.mp h))
+          simp [bne, heq]
+        simp only [hnlt, hgt, ite_false, ite_true]
+        by_cases hz : remainder = 0 <;> by_cases hle : remainder ≤ root <;>
+          simp [hz, hle, ExtendedMantissa.ofMantissaAndAccuracy,
+            ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hb, hsticky]
+
+/-- The scaled kernel `sqrtGeneral` equals the full-radicand algorithm. -/
+theorem sqrtGeneral_eq_unscaled
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int) :
+    sqrtGeneral fmt mantissa exponent =
+      if mantissa == 0 then
+        posZero fmt
+      else
+        let finalExponent := targetExponent fmt mantissa exponent
+        let rootExponent := min (exponent.ediv 2) finalExponent
+        let scaledMantissa := mantissa <<< (exponent - 2 * rootExponent).toNat
+        let root := Nat.sqrt scaledMantissa
+        let remainder := scaledMantissa - root * root
+        Internal.roundDyadic fmt
+          { negative := false
+            significand := roundRoot root remainder (finalExponent - rootExponent).toNat
+            exponent := finalExponent } := by
+  simp only [sqrtGeneral, ScaledSqrt.shifted_eq, ScaledSqrt.accuracy, ← roundRoot_eq]
+
+/--
+For a conventional IEEE descriptor, exact-dyadic square root agrees with the unpacked model
+`UnpackedFloat.sqrt` applied to the encoded value. A positive zero is its own square root.
+-/
+theorem sqrtPositiveDyadic_eq_model_of_ieee
+    {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fmt) (value : Numerics.Dyadic)
+    (hdecode : toDyadic? x = some value)
+    (hsign : value.negative = false) :
+    sqrtPositiveDyadic fmt value.significand value.exponent =
+      ofModel fmt
+        (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt) (toModel x)) := by
+  have hieeeDecode : ieeeToDyadic? x = some value := by
+    simpa [toDyadic?, hfmt] using hdecode
+  by_cases hmantissa : value.significand = 0
+  · obtain ⟨negative, significand, exponent⟩ := value
+    simp only at hsign hmantissa
+    subst hsign hmantissa
+    rw [toModel_eq_zero_of_ieeeToDyadic?_eq_some x false exponent hieeeDecode]
+    simp [sqrtPositiveDyadic, modelSign, Float.Model.UnpackedFloat.sqrt, posZero_eq_ofModel_zero]
+  have hmodel :=
+    toModel_eq_finite_of_ieeeToDyadic?_eq_some
+      x value.negative value.significand value.exponent hmantissa hieeeDecode
+  simp [sqrtPositiveDyadic, hfmt, hmantissa, hmodel, hsign,
+    NativeModelSqrt.sqrt_eq]
+
+/-- Compact positive square root agrees with the exact-dyadic specification. -/
+theorem sqrtPositive_eq_spec {fmt : FloatFormat} (x : Model fmt) :
+    sqrtPositive? x =
+      match toDyadic? x with
+      | none => none
+      | some value =>
+          if value.negative then
+            none
+          else if value.significand == 0 then
+            none
+          else
+            some <| sqrtPositiveDyadic fmt value.significand value.exponent := by
+  rw [FiniteKernel.toDyadic_eq_decode]
+  cases hdecode : FiniteKernel.decode? x with
+  | none => simp [sqrtPositive?, hdecode]
+  | some value =>
+      by_cases hsign : value.sign = true
+      · by_cases hzero : value.mantissa = 0 <;>
+          simp [sqrtPositive?, sqrtComponents?, hdecode, hsign,
+            FiniteKernel.Components.toDyadic, hzero]
+      · have hsignFalse : value.sign = false :=
+          Bool.eq_false_of_not_eq_true hsign
+        by_cases hzero : value.mantissa = 0
+        · simp [sqrtPositive?, sqrtComponents?, hdecode, hsignFalse,
+            FiniteKernel.Components.toDyadic, hzero]
+        · simp [sqrtPositive?, sqrtComponents?, hdecode, hsignFalse,
+            FiniteKernel.Components.toDyadic, hzero]
+
+/-- Scalar-field square root `sqrtPositiveRuntime?` agrees with `sqrtPositive?`. -/
+theorem sqrtPositiveRuntime_eq {fmt : FloatFormat} (x : Model fmt) :
+    sqrtPositiveRuntime? x = sqrtPositive? x := by
+  simp only [sqrtPositiveRuntime?, FiniteKernel.withFinite_eq]
+  unfold sqrtPositive? sqrtFields? sqrtComponents?
+  cases FiniteKernel.decode? x <;>
+    rfl
+
+/--
+On a positive finite nonzero input, the optional scalar decoder returns `sqrtPositiveRuntime`.
+-/
+theorem sqrtPositiveRuntime_eq_some {fmt : FloatFormat}
+    (x : Model fmt)
+    (hfinite : isFinite x = true)
+    (hnonzero : isZero x = false)
+    (hpositive : signBit x = false) :
+    sqrtPositiveRuntime? x =
+      some (sqrtPositiveRuntime x hfinite hnonzero hpositive) := by
+  -- A positive finite value with zero exponent and fraction fields is zero in every encoding.
+  have hfraction (hexponentZero : expField x = 0) : fracField x ≠ 0 := by
+    intro hfraction
+    have hzero : isZero x = true := by
+      have hreconstruct := ofFields_signBit_expField_fracField x
+      have hreconstructZero :
+          ofFields fmt false 0 0 = x := by
+        simpa [hpositive, hexponentZero, hfraction] using hreconstruct
+      cases hencoding : fmt.encoding with
+      | ieee | finiteMaxNaN | finite =>
+          simp [isZero, hencoding, IEEE.isZero, hexponentZero, hfraction]
+      | finiteUnsignedZero =>
+          have hbits : x.bits = 0 := by
+            simpa [posZero, ofNatBits, ofBits, FloatFormat.ofWordNat] using
+              (congrArg (fun value : Model fmt => value.bits)
+                hreconstructZero).symm
+          simp [isZero, hencoding, hbits]
+    simp [hzero] at hnonzero
+  -- Both decoding routes reach the scalar kernel on the same nonzero fields.
+  have hfields :
+      sqrtFields? fmt false (expField x)
+          (FiniteKernel.decodeMantissa fmt (expField x) (fracField x)) =
+        some (sqrtPositiveDyadic fmt
+          (FiniteKernel.decodeMantissa fmt (expField x) (fracField x))
+          (FiniteKernel.dyadicExponent fmt (expField x))) := by
+    unfold sqrtFields?
+    simp only [Bool.false_eq_true, ite_false]
+    by_cases hexponentZero : expField x = 0
+    · simp [FiniteKernel.decodeMantissa, hexponentZero, hfraction hexponentZero]
+    · have hpowne : pow2 fmt.fracWidth ≠ 0 := by
+        simp [pow2_eq_two_pow]
+      simp [FiniteKernel.decodeMantissa, hexponentZero, hpowne]
+  unfold sqrtPositiveRuntime? FiniteKernel.withFinite? sqrtPositiveRuntime
+  by_cases hieee : fmt.isIEEE = true
+  · simp only [hieee, ite_true]
+    change
+      (if Internal.expField x == FloatFormat.expAllOnesNat fmt then
+          none
+        else
+          sqrtFields? fmt (Internal.signBit x) (Internal.expField x)
+            (FiniteKernel.decodeMantissa fmt (Internal.expField x) (Internal.fracField x))) =
+        some
+          (sqrtPositiveDyadic fmt
+            (FiniteKernel.decodeMantissa fmt (Internal.expField x) (Internal.fracField x))
+            (FiniteKernel.dyadicExponent fmt (Internal.expField x)))
+    have hencoding : fmt.encoding = .ieee :=
+      ((FloatFormat.isIEEE_eq_true_iff fmt).mp hieee).1
+    have hexponent :
+        Internal.expField x ≠ FloatFormat.expAllOnesNat fmt := by
+      rw [← expField_eq_internal_apply]
+      simpa [isFinite, hencoding, IEEE.isFinite] using hfinite
+    split
+    · rename_i heq
+      exact (hexponent ((beq_iff_eq).1 heq)).elim
+    · rw [signBit_eq_internal_apply] at hpositive
+      rw [← expField_eq_internal_apply x, ← fracField_eq_internal_apply x, hpositive]
+      exact hfields
+  · simp only [hieee]
+    unfold FiniteKernel.decode?
+    simp only [hfinite, Bool.not_true, Bool.false_eq_true, ite_false]
+    rw [hpositive]
+    exact hfields
+
+/--
+`sqrtPositiveRuntime` takes the square root of the exact dyadic that its finite input
+represents.
+-/
+theorem sqrtPositiveRuntime_eq_finiteDyadic {fmt : FloatFormat}
+    (x : Model fmt)
+    (hfinite : isFinite x = true)
+    (hnonzero : isZero x = false)
+    (hpositive : signBit x = false) :
+    sqrtPositiveRuntime x hfinite hnonzero hpositive =
+      let value := finiteDyadic x hfinite
+      sqrtPositiveDyadic fmt value.significand value.exponent := by
+  obtain ⟨value, hdecode⟩ := exists_toDyadic?_of_isFinite hfinite
+  have hvalue : finiteDyadic x hfinite = value :=
+    finiteDyadic_eq_of_toDyadic hfinite hdecode
+  have hsign : value.negative = false :=
+    (sign_eq_signBit_of_toDyadic?_some hdecode).trans hpositive
+  have hmantissa : value.significand ≠ 0 := by
+    intro hzero
+    have hzeroSource :=
+      isZero_eq_true_of_toDyadic?_some_of_mant_eq_zero hdecode hzero
+    rw [hnonzero] at hzeroSource
+    contradiction
+  have hruntime :
+      sqrtPositiveRuntime? x =
+        some (sqrtPositiveDyadic fmt value.significand value.exponent) := by
+    rw [sqrtPositiveRuntime_eq, sqrtPositive_eq_spec, hdecode]
+    simp [hsign, hmantissa]
+  rw [sqrtPositiveRuntime_eq_some x hfinite hnonzero hpositive] at hruntime
+  have hresult :
+      sqrtPositiveRuntime x hfinite hnonzero hpositive =
+        sqrtPositiveDyadic fmt value.significand value.exponent :=
+    Option.some.inj hruntime
+  simpa [hvalue] using hresult
+
+/-- Compile positive square root through the scalar decoder. -/
+@[csimp] theorem sqrtPositive_eq_sqrtPositiveRuntime :
+    @sqrtPositive? = @sqrtPositiveRuntime? := by
+  funext fmt x
+  exact (sqrtPositiveRuntime_eq x).symm
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteSqrt

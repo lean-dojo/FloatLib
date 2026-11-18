@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,16 +7,18 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Core.Runtime
+
+import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Data.Rat.Cast.Order
 import Mathlib.Tactic.Bound
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
+
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Data.Rat.Cast.Order
-import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Verified single-word primitives for executable numerical arithmetic
@@ -176,7 +178,7 @@ theorem log2_low_add_high_mul_pow (low high offset : Nat)
     calc
       low + high * 2 ^ offset < 2 ^ offset + high * 2 ^ offset :=
         Nat.add_lt_add_right hlow _
-      _ = 2 ^ offset * (high + 1) := by ring
+      _ = 2 ^ offset * (high + 1) := by rw [mul_add]; ac_rfl
       _ ≤ 2 ^ offset * 2 ^ (high.log2 + 1) :=
         Nat.mul_le_mul_left _ (Nat.succ_le_iff.mpr Nat.lt_log2_self)
 
@@ -510,7 +512,7 @@ theorem loop_represents
               digitsValue digitAt source (steps + 1) := by
         dsimp only [nextValue, digit]
         rw [place_succ, digitsValue]
-        ring
+        rw [add_mul]; ac_rfl
       have hnextFit :
           nextValue * place steps + digitsValue digitAt source steps <
             bound := by
@@ -535,6 +537,12 @@ theorem wordDigits_eq_mod
       simp only [place, Nat.pow_mul]
       rw [Nat.mod_pow_succ (b := 2 ^ 2) (k := steps)]
       ac_rfl
+
+/-- All thirty-two base-four digits reconstruct a complete 64-bit word. -/
+@[simp] theorem wordDigits_full (value : UInt64) :
+    wordDigits value 32 = value.toNat := by
+  rw [wordDigits_eq_mod value 32 le_rfl]
+  exact Nat.mod_eq_of_lt value.toNat_lt
 
 end BaseFour
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,7 +36,7 @@ def namedTinyFormats : List FloatFormat :=
   [ FloatFormat.e2m1
   , FloatFormat.e2m3
   , FloatFormat.e3m2
-  , FloatFormat.e4m3fn
+  , FloatFormat.e4m3
   , FloatFormat.e5m2
   , FloatFormat.e4m3fnuz
   , FloatFormat.e5m2fnuz

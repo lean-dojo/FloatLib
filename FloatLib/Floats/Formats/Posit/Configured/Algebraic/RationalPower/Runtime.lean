@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,26 +36,29 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/--
+/-- Posit Standard (2022), §5.6.
 Correctly rounded power. NaR propagates, zero requires a positive exponent, and negative
-bases require integral exponents.
--/
+bases require integral exponents. -/
 @[inline] def pow (base exponent : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.pow base exponent
 
-/-- Correctly rounded base-two exponential. NaR propagates. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded base-two exponential. NaR propagates. -/
 @[inline] def exp2 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp2 value
 
-/-- Correctly rounded base-ten exponential. NaR propagates. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded base-ten exponential. NaR propagates. -/
 @[inline] def exp10 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp10 value
 
-/-- Base-two exponential minus one, rounded once after the subtraction. NaR propagates. -/
+/-- Posit Standard (2022), §5.5.
+Base-two exponential minus one, rounded once after the subtraction. NaR propagates. -/
 @[inline] def exp2Minus1 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp2Minus1 value
 
-/-- Base-ten exponential minus one, rounded once after the subtraction. NaR propagates. -/
+/-- Posit Standard (2022), §5.5.
+Base-ten exponential minus one, rounded once after the subtraction. NaR propagates. -/
 @[inline] def exp10Minus1 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.exp10Minus1 value
 

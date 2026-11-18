@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Numerics.Exact.DecimalText.Runtime
 public import FloatLib.Numerics.Exact.RadixText.Precision
-public import FloatLib.Numerics.Exact.RadixText.Runtime
 
 /-!
 # Exact hexadecimal external character sequences
@@ -36,7 +35,8 @@ def parseExponent : List Char → Option Int
   | 'p' :: rest | 'P' :: rest => DecimalText.parseInteger rest
   | _ => none
 
-/-- Decode a hexadecimal significand with a `0x` prefix and `p` exponent to an exact signed dyadic. -/
+/-- Decode a hexadecimal significand with a `0x` prefix and `p` exponent to an exact signed
+dyadic. -/
 def parseCharacters (characters : List Char) : Option Dyadic := do
   let (negative, rest) := DecimalText.splitSign characters
   let magnitude ← match rest with

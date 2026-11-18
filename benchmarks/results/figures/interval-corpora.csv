@@ -1,0 +1,13 @@
+corpus,engine,closed,goals,median_seconds
+FloatLib tests of interval,Mathlib dyadic_interval,1,52,6.62
+FloatLib tests of interval,SymLean cega,13,52,6.81
+FloatLib tests of interval,FloatLib interval,46,52,6.53
+Mathlib tests of dyadic_interval,Mathlib dyadic_interval,56,56,2.79
+Mathlib tests of dyadic_interval,SymLean cega,34,56,4.04
+Mathlib tests of dyadic_interval,FloatLib interval,55,56,2.85
+SymLean tests of cega,Mathlib dyadic_interval,9,56,12.32
+SymLean tests of cega,SymLean cega,56,56,6.93
+SymLean tests of cega,FloatLib interval,55,56,6.01
+IEANTN floors,Mathlib dyadic_interval,0,5,
+IEANTN floors,SymLean cega,5,5,7.22
+IEANTN floors,FloatLib interval,5,5,5.95

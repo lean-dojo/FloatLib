@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,11 +7,12 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Order
-public import FloatLib.Floats.Formats.P3109.Projection.Rounding
 public import FloatLib.Floats.Formats.P3109.Projection.Finite
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
+public import FloatLib.Floats.Formats.P3109.Projection.Rounding
+
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.NormNum.Pow
 
 /-!
@@ -21,6 +22,8 @@ The direct encoder computes a code from a rounded dyadic, with no search through
 codebook. This module proves that an in-range value on the descriptor's precision grid produces an
 in-range code that decodes to the same numerical datum. One argument covers every bit width,
 precision, signedness, and finite or extended domain.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
 -/
 
 @[expose] public section
@@ -39,10 +42,13 @@ theorem maxFiniteBits_lt_modulus (format : Format) :
         format.positiveInfinityBits_lt_modulus
   | extended =>
       have hcode := format.positiveInfinityBits_lt_modulus
-      simp [maxFiniteBits, domain]
+      simp only [maxFiniteBits, domain, gt_iff_lt]
       omega
 
-/-- Every valid P3109 descriptor has a nonzero positive finite endpoint. -/
+/-- Every valid P3109 descriptor has a nonzero positive finite endpoint.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2–4.7.6.
+-/
 theorem maxFiniteBits_pos (format : Format) :
     0 < format.maxFiniteBits := by
   have hboundary : 2 < format.signBoundary := by
@@ -61,8 +67,8 @@ theorem maxFiniteBits_pos (format : Format) :
     omega
   cases signedness : format.signedness <;>
     cases domain : format.domain <;>
-    simp [maxFiniteBits, positiveInfinityBits,
-      signedness, domain] <;>
+    simp only [maxFiniteBits, domain, positiveInfinityBits, signedness, tsub_pos_iff_lt,
+      gt_iff_lt] <;>
     omega
 
 /-- Positive finite codes stay below the sign boundary of a signed descriptor. -/
@@ -71,7 +77,8 @@ theorem maxFiniteBits_lt_signBoundary_of_signed
     format.maxFiniteBits < format.signBoundary := by
   have hboundary := format.one_lt_signBoundary
   cases domain : format.domain <;>
-    simp [maxFiniteBits, positiveInfinityBits, signed, domain] <;>
+    simp only [maxFiniteBits, domain, positiveInfinityBits, signed, tsub_lt_self_iff, zero_lt_one,
+      and_true, gt_iff_lt] <;>
     omega
 
 /--
@@ -107,7 +114,6 @@ theorem decodePositiveFinite_fitsPrecisionGrid
   · subst bits
     simp [FitsPrecisionGrid]
   let unit := 2 ^ format.trailingBits
-  have hunit : 0 < unit := Nat.two_pow_pos _
   have hprecision :
       2 ^ format.precision = 2 * unit := by
     unfold unit
@@ -119,7 +125,6 @@ theorem decodePositiveFinite_fitsPrecisionGrid
     right
     constructor
     · dsimp only
-      have hmod := Nat.mod_lt bits hunit
       omega
     · rfl
   · rw [format.decodePositiveFinite_of_biasedExponent_ne_zero
@@ -127,7 +132,6 @@ theorem decodePositiveFinite_fitsPrecisionGrid
     right
     constructor
     · dsimp only
-      have hmod := Nat.mod_lt bits hunit
       omega
     · dsimp only
       have hrowPositive : 0 < bits / unit :=
@@ -193,7 +197,7 @@ private theorem lt_positiveInfinityBits_of_le_maxFiniteBits (format : Format)
     (by simpa [maxFiniteBits, hdomain] using hbits)
 
 /-- Codes up to the largest finite code decode as nonnegative finite values. -/
-private theorem decodeNat_of_le_maxFiniteBits
+theorem decodeNat_of_le_maxFiniteBits
     (format : Format) (bits : Nat)
     (hbits : bits ≤ format.maxFiniteBits) :
     format.decodeNat bits =
@@ -214,13 +218,14 @@ private theorem decodeNat_of_le_maxFiniteBits
           have hlt := format.lt_positiveInfinityBits_of_le_maxFiniteBits domain hbits
           have hpositive :
               format.positiveInfinityBits < format.signBoundary := by
-            simp [positiveInfinityBits, signedness]
+            simp only [positiveInfinityBits, signedness, tsub_lt_self_iff, zero_lt_one, and_true]
             omega
           have hnegative :
               bits ≠ format.negativeInfinityBits := by
             have hnegativeCode := format.negativeInfinityBits_lt_modulus
             have hmodulus := format.modulus_eq_two_mul_signBoundary
-            simp [negativeInfinityBits] at hnegativeCode ⊢
+            simp only [negativeInfinityBits, tsub_lt_self_iff, zero_lt_one,
+              and_true, ne_eq] at hnegativeCode ⊢
             omega
           simp [decodeNat, signedness, domain,
             ne_of_lt (lt_trans hlt hpositive),
@@ -244,7 +249,7 @@ private theorem decodeNat_of_le_maxFiniteBits
           have hlt := format.lt_positiveInfinityBits_of_le_maxFiniteBits domain hbits
           have hinfinityNan :
               format.positiveInfinityBits < format.nanBits := by
-            simp [positiveInfinityBits, nanBits, signedness]
+            simp only [positiveInfinityBits, signedness, nanBits]
             omega
           simp [decodeNat, signedness, domain, ne_of_lt hlt,
             ne_of_lt (lt_trans hlt hinfinityNan)]
@@ -267,19 +272,19 @@ private theorem decodeNat_signBoundary_add_of_signed
       have hmaxBits :
           format.maxFiniteBits =
             format.signBoundary - 2 := by
-        simp [maxFiniteBits, positiveInfinityBits, signed, domain]
+        simp only [maxFiniteBits, domain, positiveInfinityBits, signed]
         omega
       have hmodulus := format.modulus_eq_two_mul_signBoundary
       have hcodeLtNegativeInfinity :
           format.signBoundary + magnitude <
             format.negativeInfinityBits := by
-        simp [negativeInfinityBits]
+        simp only [negativeInfinityBits]
         rw [hmodulus]
         omega
       have hnotPositiveInfinity :
           format.signBoundary + magnitude ≠
             format.positiveInfinityBits := by
-        simp [positiveInfinityBits, signed]
+        simp only [positiveInfinityBits, signed, ne_eq]
         omega
       simp [decodeNat, signed, domain, hnotPositiveInfinity,
         ne_of_lt hcodeLtNegativeInfinity, habove, hpositive.ne']
@@ -314,7 +319,8 @@ private theorem sameDatum_decode_encodePositiveFinite
       value hnegative hprecision hexponent
   have hencoded :
       Internal.encodeDatumNat format (.finite value) = code := by
-    simp [Internal.encodeDatumNat, hzero, hnegative, code]
+    simp only [Internal.encodeDatumNat, beq_iff_eq, hzero, ↓reduceIte, hnegative,
+      Bool.false_eq_true, code]
     apply congrArg (Internal.encodePositiveFinite format)
     apply Numerics.Dyadic.ext <;> simp [hnegative]
   rw [hencoded]

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,14 +7,15 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.CertifiedDivision.Runtime
-import FloatLib.Kernels.FixedWord.Quotient.Restoring128Proof
+
 import FloatLib.Kernels.FixedWord.Quotient.Compiler
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.NormNum.Pow
+import FloatLib.Kernels.FixedWord.Quotient.Restoring128Proof
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Verified fixed-word division candidates
@@ -32,14 +33,15 @@ namespace FloatLib.Numerics.FixedWord.CertifiedDivision
 
 private theorem widenLow_toNat (value : FloatLib.Numerics.FixedWord.UInt128) :
     (widenLow value).toNat = value.toNat := by
-  unfold widenLow FloatLib.Numerics.FixedWord.UInt256.toNat FloatLib.Numerics.FixedWord.UInt128.toNat
+  unfold widenLow FloatLib.Numerics.FixedWord.UInt256.toNat
+    FloatLib.Numerics.FixedWord.UInt128.toNat
   simp
 
 /-- Both candidate shifts of an in-range precision lie strictly between one and two words. -/
 theorem CandidateShift.toNat_bounds (precision : Nat)
     (hprecision : 64 < precision ∧ precision ≤ 126) (shift : CandidateShift) :
     64 < shift.toNat precision ∧ shift.toNat precision < 128 := by
-  cases shift <;> simp [CandidateShift.toNat] <;> omega
+  cases shift <;> simp only [toNat] <;> omega
 
 private theorem widenShift_toNat (precision : Nat)
     (hprecision : 64 < precision ∧ precision ≤ 126)
@@ -221,12 +223,8 @@ theorem restoringCandidate_complete (precision : Nat)
     exact Nat.pow_le_pow_right (by decide) (by omega)
   by_cases hle : den.toNat ≤ num.toNat
   · have hless :
-        FloatLib.Numerics.FixedWord.UInt128.less num den = false := by
-      apply Bool.eq_false_iff.mpr
-      intro htrue
-      exact (Nat.not_lt_of_ge hle)
-        ((FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff num den).1
-          htrue)
+        FloatLib.Numerics.FixedWord.UInt128.less num den = false :=
+      (FloatLib.Numerics.FixedWord.UInt128.less_eq_false_iff num den).2 hle
     let initial :
         FloatLib.Numerics.FixedWord.RestoringQuotient.QuotientState
           FloatLib.Numerics.FixedWord.UInt128 :=
@@ -425,12 +423,8 @@ theorem roundQuotient_toNat
   by_cases hbelow : 2 * remainder.toNat < den.toNat
   · have hnativeAbove :
         FloatLib.Numerics.FixedWord.UInt128.less den doubled.value = false := by
-      apply Bool.eq_false_iff.mpr
-      intro htrue
-      have hlt :=
-        (FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff den doubled.value).1 htrue
-      rw [hdouble] at hlt
-      omega
+      apply (FloatLib.Numerics.FixedWord.UInt128.less_eq_false_iff _ _).2
+      simpa only [hdouble] using hbelow.le
     have hnativeEqual : doubled.value ≠ den := by
       intro heq
       have hnat := congrArg FloatLib.Numerics.FixedWord.UInt128.toNat heq
@@ -450,26 +444,16 @@ theorem roundQuotient_toNat
         hquotient, hremainderEq, hincrement]
     · have htie : 2 * remainder.toNat = den.toNat := by
         omega
-      have hnativeAbove :
-          FloatLib.Numerics.FixedWord.UInt128.less den doubled.value = false := by
-        apply Bool.eq_false_iff.mpr
-        intro htrue
-        have hlt :=
-          (FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff den doubled.value).1 htrue
-        rw [hdouble, htie] at hlt
-        omega
       have hnativeEqual : doubled.value = den := by
         apply FloatLib.Numerics.FixedWord.UInt128.toNat_injective
         rw [hdouble, htie]
       have hlessSelf :
-          FloatLib.Numerics.FixedWord.UInt128.less den den = false := by
-        apply Bool.eq_false_iff.mpr
-        intro htrue
-        exact (Nat.lt_irrefl den.toNat)
-          ((FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff den den).1 htrue)
+          FloatLib.Numerics.FixedWord.UInt128.less den den = false :=
+        (FloatLib.Numerics.FixedWord.UInt128.less_eq_false_iff _ _).2 le_rfl
       unfold roundQuotient Numerics.roundQuotientEven
-      simp [doubled, hdoubleCarry, hnativeEqual, hlessSelf,
-        htie, hquotient, hremainderEq, heven]
+      simp only [hdoubleCarry, bne_self_eq_false, hnativeEqual, hlessSelf, Bool.or_self,
+        Bool.false_eq_true, ↓reduceIte, BEq.rfl, heven, hremainderEq, htie, lt_self_iff_false,
+        hquotient, beq_iff_eq, doubled]
       by_cases hparity : quotient.toNat % 2 = 0
       · simp [hparity]
       · simp [hparity, hincrement]

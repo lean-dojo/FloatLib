@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Interval.Basic
 public import Mathlib.Algebra.Order.Field.Basic
 
 /-!
@@ -99,16 +98,9 @@ theorem div_bounds_Icc (a b c d x y : β)
   have hinv : y⁻¹ ∈ Set.Icc d⁻¹ c⁻¹ := by
     simpa [one_div] using hinvOne
   have hmul := mul_bounds_Icc a b d⁻¹ c⁻¹ x y⁻¹ hx hinv
-  have hmin :
-      minOfFour (a * d⁻¹) (a * c⁻¹) (b * d⁻¹) (b * c⁻¹) =
-        minOfFour (a / c) (a / d) (b / c) (b / d) := by
-    simp [minOfFour, div_eq_mul_inv, min_comm]
-  have hmax :
-      maxOfFour (a * d⁻¹) (a * c⁻¹) (b * d⁻¹) (b * c⁻¹) =
-        maxOfFour (a / c) (a / d) (b / c) (b / d) := by
-    simp [maxOfFour, div_eq_mul_inv, max_comm]
-  refine ⟨?_, ?_⟩
-  · simpa [div_eq_mul_inv, hmin] using hmul.1
-  · simpa [div_eq_mul_inv, hmax] using hmul.2
+  -- The corners of the product are those of the quotient with each pair swapped.
+  simp only [minOfFour, maxOfFour, div_eq_mul_inv]
+  rw [min_comm (a * c⁻¹), min_comm (b * c⁻¹), max_comm (a * c⁻¹), max_comm (b * c⁻¹)]
+  exact hmul
 
 end FloatLib.Numerics.Interval

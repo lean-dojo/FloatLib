@@ -9,10 +9,10 @@ open FloatLib.Floats.Formats.P3109
 private def select (format : Format) :
     String → Option (ExecFloat.P3109 format → ExecFloat.P3109 format →
       ExecFloat.P3109 format → Nat)
-  | "add" => some fun x y _ => (ExecFloat.P3109.add x y).toNatBits
-  | "mul" => some fun x y _ => (ExecFloat.P3109.mul x y).toNatBits
-  | "div" => some fun x y _ => (ExecFloat.P3109.div x y).toNatBits
-  | "fma" => some fun x y z => (ExecFloat.P3109.fma x y z).toNatBits
+  | "add" => some fun x y _ => (ExecFloat.P3109.Add x y).toNatBits
+  | "mul" => some fun x y _ => (ExecFloat.P3109.Multiply x y).toNatBits
+  | "div" => some fun x y _ => (ExecFloat.P3109.Divide x y).toNatBits
+  | "fma" => some fun x y z => (ExecFloat.P3109.FMA x y z).toNatBits
   | _ => none
 
 public def main (args : List String) : IO Unit := do

@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.AtanProof
 public import FloatLib.Numerics.Enclosure.Rational.AffineConvergence
 public import FloatLib.Numerics.Enclosure.Rational.Convergence
+public import FloatLib.Numerics.Enclosure.Trigonometric.AtanProof
 
 /-!
 # Convergence of rational arctangent bounds
@@ -57,18 +57,18 @@ theorem tendsto_atanSmall_hi (x : ℚ) (hx : |x| < 1) :
 /-- The lower rational bounds for π/4 approach π/4. -/
 theorem tendsto_piQuarter_lo :
     Tendsto (fun n : Nat => ((piQuarter n).lo : ℝ)) atTop (𝓝 (Real.pi / 4)) := by
-  simpa [piQuarter, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using
+  simpa [piQuarter_def, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using
     RationalInterval.tendsto_sub_lo
       (RationalInterval.tendsto_scaleNonnegative_lo (tendsto_atanSmall_lo (1 / 5) (by norm_num)) 4)
-      (tendsto_atanSmall_hi (1 / 239) (by norm_num))
+      (tendsto_atanSmall_hi (1 / 239) (by decide +kernel))
 
 /-- The upper rational bounds for π/4 approach π/4. -/
 theorem tendsto_piQuarter_hi :
     Tendsto (fun n : Nat => ((piQuarter n).hi : ℝ)) atTop (𝓝 (Real.pi / 4)) := by
-  simpa [piQuarter, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using
+  simpa [piQuarter_def, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using
     RationalInterval.tendsto_sub_hi
       (RationalInterval.tendsto_scaleNonnegative_hi (tendsto_atanSmall_hi (1 / 5) (by norm_num)) 4)
-      (tendsto_atanSmall_lo (1 / 239) (by norm_num))
+      (tendsto_atanSmall_lo (1 / 239) (by decide +kernel))
 
 /-- Arctangent reduction preserves lower-endpoint convergence for every nonnegative input. -/
 theorem tendsto_atanUnit_lo (x : ℚ) (hx : 0 ≤ x) :
@@ -76,9 +76,9 @@ theorem tendsto_atanUnit_lo (x : ℚ) (hx : 0 ≤ x) :
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1 / 2
   · have hsmall : |x| < 1 := by rw [abs_of_nonneg hx]; linarith
-    simpa only [atanUnit, ite_eq_left h] using tendsto_atanSmall_lo x hsmall
+    simpa only [atanUnit_def, ite_eq_left h] using tendsto_atanSmall_lo x hsmall
   · have ht : |(x - 1) / (x + 1)| < 1 := abs_atan_unit_argument_lt_one x (by linarith)
-    simpa only [atanUnit, ite_eq_right h, atan_unit_identity x hx] using
+    simpa only [atanUnit_def, ite_eq_right h, atan_unit_identity x hx] using
       RationalInterval.tendsto_add_lo tendsto_piQuarter_lo (tendsto_atanSmall_lo _ ht)
 
 /-- Arctangent reduction preserves upper-endpoint convergence for every nonnegative input. -/
@@ -87,9 +87,9 @@ theorem tendsto_atanUnit_hi (x : ℚ) (hx : 0 ≤ x) :
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1 / 2
   · have hsmall : |x| < 1 := by rw [abs_of_nonneg hx]; linarith
-    simpa only [atanUnit, ite_eq_left h] using tendsto_atanSmall_hi x hsmall
+    simpa only [atanUnit_def, ite_eq_left h] using tendsto_atanSmall_hi x hsmall
   · have ht : |(x - 1) / (x + 1)| < 1 := abs_atan_unit_argument_lt_one x (by linarith)
-    simpa only [atanUnit, ite_eq_right h, atan_unit_identity x hx] using
+    simpa only [atanUnit_def, ite_eq_right h, atan_unit_identity x hx] using
       RationalInterval.tendsto_add_hi tendsto_piQuarter_hi (tendsto_atanSmall_hi _ ht)
 
 private theorem atan_inversion_identity (x : ℚ) (hx : 0 < x) :
@@ -103,8 +103,8 @@ theorem tendsto_atanNonnegative_lo (x : ℚ) (hx : 0 ≤ x) :
     Tendsto (fun n : Nat => ((atanNonnegative x n).lo : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1
-  · simpa only [atanNonnegative, ite_eq_left h] using tendsto_atanUnit_lo x hx
-  · simpa only [atanNonnegative, ite_eq_right h, Rat.cast_ofNat,
+  · simpa only [atanNonnegative_def, ite_eq_left h] using tendsto_atanUnit_lo x hx
+  · simpa only [atanNonnegative_def, ite_eq_right h, Rat.cast_ofNat,
       atan_inversion_identity x (by linarith)] using
       RationalInterval.tendsto_sub_lo (RationalInterval.tendsto_scaleNonnegative_lo
         tendsto_piQuarter_lo 2) (tendsto_atanUnit_hi x⁻¹ (inv_nonneg.mpr hx))
@@ -114,8 +114,8 @@ theorem tendsto_atanNonnegative_hi (x : ℚ) (hx : 0 ≤ x) :
     Tendsto (fun n : Nat => ((atanNonnegative x n).hi : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x ≤ 1
-  · simpa only [atanNonnegative, ite_eq_left h] using tendsto_atanUnit_hi x hx
-  · simpa only [atanNonnegative, ite_eq_right h, Rat.cast_ofNat,
+  · simpa only [atanNonnegative_def, ite_eq_left h] using tendsto_atanUnit_hi x hx
+  · simpa only [atanNonnegative_def, ite_eq_right h, Rat.cast_ofNat,
       atan_inversion_identity x (by linarith)] using
       RationalInterval.tendsto_sub_hi (RationalInterval.tendsto_scaleNonnegative_hi
         tendsto_piQuarter_hi 2) (tendsto_atanUnit_lo x⁻¹ (inv_nonneg.mpr hx))
@@ -125,17 +125,17 @@ theorem tendsto_atan_lo (x : ℚ) :
     Tendsto (fun n : Nat => ((atan x n).lo : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x < 0
-  · simpa only [atan, ite_eq_left h, Rat.cast_neg, Real.arctan_neg, neg_neg] using
+  · simpa only [atan_def, ite_eq_left h, Rat.cast_neg, Real.arctan_neg, neg_neg] using
       RationalInterval.tendsto_neg_lo (tendsto_atanNonnegative_hi (-x) (by linarith))
-  · simpa only [atan, ite_eq_right h] using tendsto_atanNonnegative_lo x (by linarith)
+  · simpa only [atan_def, ite_eq_right h] using tendsto_atanNonnegative_lo x (by exact not_lt.mp h)
 
 /-- The upper enclosure endpoints converge for every rational arctangent input. -/
 theorem tendsto_atan_hi (x : ℚ) :
     Tendsto (fun n : Nat => ((atan x n).hi : ℝ)) atTop
       (𝓝 (Real.arctan (x : ℝ))) := by
   by_cases h : x < 0
-  · simpa only [atan, ite_eq_left h, Rat.cast_neg, Real.arctan_neg, neg_neg] using
+  · simpa only [atan_def, ite_eq_left h, Rat.cast_neg, Real.arctan_neg, neg_neg] using
       RationalInterval.tendsto_neg_hi (tendsto_atanNonnegative_lo (-x) (by linarith))
-  · simpa only [atan, ite_eq_right h] using tendsto_atanNonnegative_hi x (by linarith)
+  · simpa only [atan_def, ite_eq_right h] using tendsto_atanNonnegative_hi x (by exact not_lt.mp h)
 
 end FloatLib.Numerics.Enclosure

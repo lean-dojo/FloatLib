@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -67,8 +67,11 @@ private theorem round_addFields_eq_normalize
     · simp only [roundDyadic, hfmt, ite_true, ieeeRoundDyadic,
         Bool.false_and, Bool.true_and, modelSign_false, modelSign_true,
         round_exact_zero]
-      simp_all [Float.Model.UnpackedFloat.normalize]
-      all_goals omega
+      first
+        | (simp_all only [Int.ofNat_eq_natCast, Nat.shiftLeft_eq', Nat.shiftLeft_zero,
+            Float.Model.UnpackedFloat.normalize, Std.compare_self]; done)
+        | (simp_all only [Int.ofNat_eq_natCast, Nat.shiftLeft_eq', Nat.shiftLeft_zero,
+            Float.Model.UnpackedFloat.normalize, Std.compare_self]; omega)
     · simp only [roundDyadic, hfmt, ite_true, ieeeRoundDyadic]
       rw [← round_natAbs_eq_normalize]
       rfl

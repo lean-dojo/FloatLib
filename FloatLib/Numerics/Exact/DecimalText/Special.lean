@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -21,7 +21,8 @@ namespace FloatLib.Numerics.SpecialText
 
 open DecimalText
 
-/-- Match a lowercase ASCII keyword case-insensitively, leaving the remaining characters unchanged. -/
+/-- Match a lowercase ASCII keyword case-insensitively, leaving the remaining characters
+unchanged. -/
 def consumeKeyword : List Char → List Char → Option (List Char)
   | [], rest => some rest
   | expected :: word, actual :: rest =>

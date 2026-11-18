@@ -1,0 +1,30 @@
+domain,source,width,operation,status,cases,median_ns,p90_ns,max_ns,mpfr_median_ns,core_math_median_ns
+real,CORE-MATH,64,exp,matched,16384,139158,278785,953248,2450,82
+complex,CORE-MATH,64,exp,matched,32768,766396,876694,876694,,
+real,CORE-MATH,64,expm1,matched,16384,107173,193182,1590672,6351,138
+complex,CORE-MATH,64,expm1,matched,32766,2520897,2669302,2669302,,
+complex,CORE-MATH,64,expm1,excluded,2,,,,,
+real,CORE-MATH,64,log,matched,16384,124792,233313,1096424,4894,304
+complex,CORE-MATH,64,log,matched,32768,728612,830374,830374,,
+real,CORE-MATH,64,log1p,matched,16384,70048,178872,2108153,4905,62
+complex,CORE-MATH,64,log1p,matched,32768,3172161,3267475,3267475,,
+real,Lefèvre testlibm,64,exp,matched,4800,155374,199278,723855,2507,84
+complex,Lefèvre testlibm,64,exp,matched,9600,937199,1038006,1038006,,
+real,Lefèvre testlibm,64,exp,translation_refusal,4,,,,,
+complex,Lefèvre testlibm,64,exp,translation_refusal,8,,,,,
+real,Lefèvre testlibm,64,expm1,matched,15156,149768,186979,597296,4520,136
+complex,Lefèvre testlibm,64,expm1,matched,30312,2473912,4120427,4120427,,
+real,Lefèvre testlibm,64,log,matched,5583,134620,173393,559579,5061,322
+complex,Lefèvre testlibm,64,log,matched,11166,822987,872498,872498,,
+real,Lefèvre testlibm,64,log,translation_refusal,12,,,,,
+complex,Lefèvre testlibm,64,log,translation_refusal,24,,,,,
+real,Lefèvre testlibm,64,log1p,matched,15100,121268,170767,840684,1456,76
+complex,Lefèvre testlibm,64,log1p,matched,30200,1436144,1672512,1672512,,
+real,CORE-MATH binary32 exhaustive input screen,32,exp,matched,256,121054,145463,272375,1965,34
+complex,CORE-MATH binary32 exhaustive input screen,32,exp,matched,512,1515068,1515068,1515068,,
+real,CORE-MATH binary32 exhaustive input screen,32,expm1,matched,256,143450,159560,287030,2770,32
+complex,CORE-MATH binary32 exhaustive input screen,32,expm1,matched,512,1771226,1771226,1771226,,
+real,CORE-MATH binary32 exhaustive input screen,32,log,matched,256,99379,112141,415416,4342,43
+complex,CORE-MATH binary32 exhaustive input screen,32,log,matched,512,591619,591619,591619,,
+real,CORE-MATH binary32 exhaustive input screen,32,log1p,matched,256,102446,125730,303032,4638,52
+complex,CORE-MATH binary32 exhaustive input screen,32,log1p,matched,512,1440284,1440284,1440284,,

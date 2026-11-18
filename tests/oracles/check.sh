@@ -257,8 +257,7 @@ run_adapter_unit_tests() {
   python3 -B -m unittest \
     tests/oracles/ibm_fpgen_test.py \
     tests/oracles/smt_fp_test.py \
-    tests/oracles/transcendental_test.py \
-    tests/oracles/verify_release_evidence_test.py
+    tests/oracles/transcendental_test.py
   floatlib_test_lake build oracle
   python3 -B tests/oracles/softposit_protocol_test.py \
     "$(floatlib_build_path bin/oracle)"

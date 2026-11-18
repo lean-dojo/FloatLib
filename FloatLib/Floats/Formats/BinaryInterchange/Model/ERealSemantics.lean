@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Data.EReal.Basic
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 
 /-!
@@ -30,7 +29,7 @@ section
 noncomputable def toEReal? {fmt : FloatFormat} (x : Model fmt) : Option EReal :=
   if isNaN x then
     none
-  else if isInf x then
+  else if isInfinite x then
     some (if signBit x then (⊥ : EReal) else (⊤ : EReal))
   else
     some (toReal x : EReal)
@@ -42,32 +41,33 @@ noncomputable def toEReal {fmt : FloatFormat} (x : Model fmt) : EReal :=
 /-- The partial extended-real interpretation is undefined on NaNs and nowhere else. -/
 theorem toEReal?_eq_none_iff_isNaN_eq_true {fmt : FloatFormat} (x : Model fmt) :
     toEReal? x = none ↔ isNaN x = true := by
-  cases hnan : isNaN x <;> cases hinf : isInf x <;> simp [toEReal?, hnan, hinf]
+  cases hnan : isNaN x <;> cases hinf : isInfinite x <;> simp [toEReal?, hnan, hinf]
 
 /-- Only an IEEE encoding has infinities, which carry the all-ones exponent and zero fraction. -/
-private theorem encoding_eq_ieee_and_fields_of_isInf_eq_true {fmt : FloatFormat} {x : Model fmt}
-    (hx : isInf x = true) :
+private theorem encoding_eq_ieee_and_fields_of_isInfinite_eq_true {fmt : FloatFormat}
+    {x : Model fmt}
+    (hx : isInfinite x = true) :
     fmt.encoding = .ieee ∧ expField x = FloatFormat.expAllOnesNat fmt ∧ fracField x = 0 := by
   cases hencoding : fmt.encoding with
   | ieee =>
-      have hxIEEE : IEEE.isInf x = true := by
-        simpa [isInf, hencoding] using hx
-      exact ⟨rfl, by simpa [IEEE.isInf, Bool.and_eq_true] using hxIEEE⟩
+      have hxIEEE : IEEE.isInfinite x = true := by
+        simpa [isInfinite, hencoding] using hx
+      exact ⟨rfl, by simpa [IEEE.isInfinite, Bool.and_eq_true] using hxIEEE⟩
   | finiteMaxNaN | finiteUnsignedZero | finite =>
-      simp [isInf, hencoding] at hx
+      simp [isInfinite, hencoding] at hx
 
 /-- A value classified as infinity is not classified as NaN. -/
-theorem isNaN_eq_false_of_isInf_eq_true {fmt : FloatFormat} (x : Model fmt)
-    (hx : isInf x = true) :
+theorem isNaN_eq_false_of_isInfinite_eq_true {fmt : FloatFormat} (x : Model fmt)
+    (hx : isInfinite x = true) :
     isNaN x = false := by
-  obtain ⟨hencoding, -, hfraction⟩ := encoding_eq_ieee_and_fields_of_isInf_eq_true hx
+  obtain ⟨hencoding, -, hfraction⟩ := encoding_eq_ieee_and_fields_of_isInfinite_eq_true hx
   simp [isNaN, hencoding, IEEE.isNaN, hfraction]
 
 /-- A value classified as infinity is not classified as zero. -/
-theorem isZero_eq_false_of_isInf_eq_true {fmt : FloatFormat} (x : Model fmt)
-    (hx : isInf x = true) :
+theorem isZero_eq_false_of_isInfinite_eq_true {fmt : FloatFormat} (x : Model fmt)
+    (hx : isInfinite x = true) :
     isZero x = false := by
-  obtain ⟨hencoding, hexponent, -⟩ := encoding_eq_ieee_and_fields_of_isInf_eq_true hx
+  obtain ⟨hencoding, hexponent, -⟩ := encoding_eq_ieee_and_fields_of_isInfinite_eq_true hx
   have hexponentNe : FloatFormat.expAllOnesNat fmt ≠ 0 :=
     (FloatFormat.expAllOnesNat_pos fmt).ne'
   simp [isZero, hencoding, IEEE.isZero, hexponent, hexponentNe]
@@ -77,7 +77,7 @@ theorem toEReal?_eq_some_toReal_of_isFinite_eq_true
     {fmt : FloatFormat} (x : Model fmt) (hx : isFinite x = true) :
     toEReal? x = some (toReal x : EReal) := by
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hx
   simp [toEReal?, hnan, hinf]
 
 /-- Totalization agrees with every successful partial interpretation. -/
@@ -97,12 +97,12 @@ theorem toEReal_eq_ite {fmt : FloatFormat} (x : Model fmt) :
     toEReal x =
       if isNaN x then
         0
-      else if isInf x then
+      else if isInfinite x then
         if signBit x then ⊥ else ⊤
       else
         (toReal x : EReal) := by
   unfold toEReal toEReal?
-  cases hnan : isNaN x <;> cases hinf : isInf x <;> simp
+  cases hnan : isNaN x <;> cases hinf : isInfinite x <;> simp
 
 /-- On finite values, the total interpretation is the coercion of `toReal`. -/
 theorem toEReal_eq_coe_toReal_of_isFinite

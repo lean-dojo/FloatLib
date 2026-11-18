@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -53,6 +53,11 @@ theorem isModelCanonical_ofFloat32 (value : Float32) :
       change Float32.ofModel (Model.toFloat32Model (Model.ofFloat32Model model)) = _
       rw [Model.toFloat32Model_ofFloat32Model]
 
+/-- A finite native binary32 value imports to a finite unpacked model. -/
+theorem isFinite_toModel_ofFloat32Model {x : Float32} (hx : x.isFinite = true) :
+    (Model.toModel (Model.ofFloat32Model x.toModel)).isFinite = true := by
+  simpa only [Model.toModel_ofFloat32Model, Float32.isFinite, Float32.Model.isFinite] using hx
+
 /-- Lean's binary32 NaN imports as FloatLib's canonical quiet NaN. -/
 theorem toModel_ofFloat32_nan :
     toModel (ofFloat32 Float32.nan : Binary32) = Model.canonicalNaN FloatFormat.binary32 :=
@@ -87,6 +92,11 @@ theorem isModelCanonical_ofFloat (value : Float) :
   | ofModel model =>
       change Float.ofModel (Model.toFloatModel (Model.ofFloatModel model)) = _
       rw [Model.toFloatModel_ofFloatModel]
+
+/-- A finite native binary64 value imports to a finite unpacked model. -/
+theorem isFinite_toModel_ofFloatModel {x : Float} (hx : x.isFinite = true) :
+    (Model.toModel (Model.ofFloatModel x.toModel)).isFinite = true := by
+  simpa only [Model.toModel_ofFloatModel, Float.isFinite, Float.Model.isFinite] using hx
 
 /-- Lean's binary64 NaN imports as FloatLib's canonical quiet NaN. -/
 theorem toModel_ofFloat_nan :

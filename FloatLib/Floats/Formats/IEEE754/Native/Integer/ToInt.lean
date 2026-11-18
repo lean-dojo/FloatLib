@@ -1,14 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.DType.Semantics
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.Rounding
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
-public import FloatLib.Floats.Formats.BinaryInterchange.DType.Semantics
+
 import all Init.Data.SInt.Float
 import all Init.Data.SInt.Float32
 
@@ -53,7 +54,7 @@ theorem toInt_toModel_eq {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     · have hfrac : fracField x = 0 := by
         rw [← unpackMantissa_toNat x, hMantissa]
         rfl
-      simp only [unpackedToDyadic?, isInf, hencoding, IEEE.isInf, hexp, hfrac,
+      simp only [unpackedToDyadic?, isInfinite, hencoding, IEEE.isInfinite, hexp, hfrac,
         beq_self_eq_true, Bool.and_self, ↓reduceIte]
       rw [← modelSignBit_ofBitVec_unpackSign x]
       cases Sign.ofBitVec (unpackSign (toModelBits x)) <;> rfl
@@ -63,7 +64,7 @@ theorem toInt_toModel_eq {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
         apply BitVec.toNat_inj.mp
         rw [unpackMantissa_toNat x, h]
         rfl
-      simp [unpackedToDyadic?, isInf, hencoding, IEEE.isInf, hexp, hfrac, toInt]
+      simp [unpackedToDyadic?, isInfinite, hencoding, IEEE.isInfinite, hexp, hfrac, toInt]
   · split
     · split
       · simp [unpackedToDyadic?, toInt, roundDyadicToInt]
@@ -83,7 +84,8 @@ Toward-zero signed conversion with Lean's native exceptional-value policy.
 It uses the checked conversion's exact decoder and integral rounder, then saturates finite
 overflow. Infinities select their signed endpoint and NaN selects zero.
 -/
-def floatToIntSaturating {fmt : FloatFormat} (width : Nat) (x : Model fmt) : FixedInt width :=
+def convertToIntegerExactSaturating {fmt : FloatFormat} (width : Nat) (x : Model fmt)
+    : FixedInt width :=
   match Model.exactValue x with
   | .finite d => FixedInt.ofIntSaturating (Model.roundDyadicToInt .towardZero d)
   | .infinity negative => if negative then FixedInt.minCode width else FixedInt.maxCode width
@@ -93,14 +95,14 @@ def floatToIntSaturating {fmt : FloatFormat} (width : Nat) (x : Model fmt) : Fix
 The native policy is the saturating integer encoder applied to Lean's model result. At width zero
 both sides are the unique empty word.
 -/
-theorem floatToIntSaturating_eq_ofIntSaturating_toModel
+theorem convertToIntegerExactSaturating_eq_ofIntSaturating_toModel
     {fmt : FloatFormat} {width : Nat} (hfmt : fmt.isIEEE = true)
     (x : Model fmt) :
-    floatToIntSaturating width x =
+    convertToIntegerExactSaturating width x =
       FixedInt.ofIntSaturating
         ((Model.toModel x).toInt (FixedInt.minValue width) (FixedInt.maxValue width)) := by
   rcases Nat.eq_zero_or_pos width with rfl | hwidth
-  · cases floatToIntSaturating 0 x
+  · cases convertToIntegerExactSaturating 0 x
     cases FixedInt.ofIntSaturating (width := 0)
       ((Model.toModel x).toInt (FixedInt.minValue 0) (FixedInt.maxValue 0))
     congr 1
@@ -115,74 +117,80 @@ theorem floatToIntSaturating_eq_ofIntSaturating_toModel
     have hp : (0 : Int) < 2 ^ (width - 1) := Int.pow_pos (by decide)
     omega
   cases hv : Model.exactValue x with
-  | finite d => simp [floatToIntSaturating, hv]
+  | finite d => simp [convertToIntegerExactSaturating, hv]
   | infinity negative =>
       cases negative <;>
-        simp only [floatToIntSaturating, hv, Bool.false_eq_true, ↓reduceIte,
+        simp only [convertToIntegerExactSaturating, hv, Bool.false_eq_true, ↓reduceIte,
           FixedInt.ofIntSaturating, FixedInt.clamp_eq_self hlower,
           FixedInt.clamp_eq_self hupper]
       · exact (FixedInt.ofInt_toInt (FixedInt.maxCode width)).symm
       · exact (FixedInt.ofInt_toInt (FixedInt.minCode width)).symm
   | nan negative signaling payload =>
-      simp [floatToIntSaturating, hv, FixedInt.ofIntSaturating, FixedInt.clamp_eq_self hzero]
+      simp [convertToIntegerExactSaturating, hv, FixedInt.ofIntSaturating,
+        FixedInt.clamp_eq_self hzero]
 
 /-- Checked conversion agrees with native saturation whenever its rounded integer is in range. -/
-theorem floatToIntSaturating_of_exactValue_eq_finite_of_inRange
+theorem convertToIntegerExactSaturating_of_exactValue_eq_finite_of_inRange
     {fmt : FloatFormat} {width : Nat} (x : Model fmt) (d : Numerics.Dyadic)
     (hvalue : Model.exactValue x = .finite d)
     (hrange : FixedInt.InRange width (Model.roundDyadicToInt .towardZero d)) :
-    floatToInt (width := width) x .towardZero =
-      .success (floatToIntSaturating width x) { inexact := !Model.dyadicIsIntegral d } := by
-  rw [floatToInt_of_exactValue_eq_finite_of_inRange x .towardZero d hvalue hrange]
-  simp [floatToIntSaturating, hvalue, FixedInt.ofIntSaturating, FixedInt.clamp_eq_self hrange]
+    convertToIntegerExact (width := width) x .towardZero =
+      .success (convertToIntegerExactSaturating width x)
+        { inexact := !Model.dyadicIsIntegral d } := by
+  rw [convertToIntegerExact_of_exactValue_eq_finite_of_inRange x .towardZero d hvalue hrange]
+  simp [convertToIntegerExactSaturating, hvalue, FixedInt.ofIntSaturating,
+    FixedInt.clamp_eq_self hrange]
 
 /-- On an in-range truncated integer, native saturation and the checked API return the same code. -/
-theorem floatToIntSaturating_of_exactValue_eq_finite_of_real_inRange
+theorem convertToIntegerExactSaturating_of_exactValue_eq_finite_of_real_inRange
     {fmt : FloatFormat} {width : Nat} (x : Model fmt) (d : Numerics.Dyadic)
     (hvalue : Model.exactValue x = .finite d)
     (hrange : FixedInt.InRange width
       (if 0 ≤ d.toReal then ⌊d.toReal⌋ else ⌈d.toReal⌉)) :
-    floatToInt (width := width) x .towardZero =
-      .success (floatToIntSaturating width x) { inexact := !Model.dyadicIsIntegral d } := by
-  rw [floatToInt_towardZero_of_exactValue_eq_finite_of_inRange x d hvalue hrange]
+    convertToIntegerExact (width := width) x .towardZero =
+      .success (convertToIntegerExactSaturating width x)
+        { inexact := !Model.dyadicIsIntegral d } := by
+  rw [convertToIntegerExact_towardZero_of_exactValue_eq_finite_of_inRange x d hvalue hrange]
   rw [← Model.roundDyadicToInt_towardZero] at hrange ⊢
-  simp [floatToIntSaturating, hvalue, FixedInt.ofIntSaturating, FixedInt.clamp_eq_self hrange]
+  simp [convertToIntegerExactSaturating, hvalue, FixedInt.ofIntSaturating,
+    FixedInt.clamp_eq_self hrange]
 
 /-- Out-of-range finite values saturate natively but are rejected by the checked conversion. -/
-theorem floatToIntSaturating_of_exactValue_eq_finite_of_not_inRange
+theorem convertToIntegerExactSaturating_of_exactValue_eq_finite_of_not_inRange
     {fmt : FloatFormat} {width : Nat} (x : Model fmt) (d : Numerics.Dyadic)
     (hvalue : Model.exactValue x = .finite d)
     (hrange : ¬FixedInt.InRange width (Model.roundDyadicToInt .towardZero d)) :
-    floatToIntSaturating width x =
+    convertToIntegerExactSaturating width x =
         FixedInt.ofIntSaturating (Model.roundDyadicToInt .towardZero d) ∧
-      floatToInt (width := width) x .towardZero = .failure .outOfRange := by
-  exact ⟨by simp [floatToIntSaturating, hvalue],
-    floatToInt_of_exactValue_eq_finite_of_not_inRange x .towardZero d hvalue hrange⟩
+      convertToIntegerExact (width := width) x .towardZero = .failure .outOfRange := by
+  exact ⟨by simp [convertToIntegerExactSaturating, hvalue],
+    convertToIntegerExact_of_exactValue_eq_finite_of_not_inRange x .towardZero d hvalue hrange⟩
 
 /-- Infinity saturates to its signed endpoint while the checked API reports signed infinity. -/
-theorem floatToIntSaturating_of_exactValue_eq_infinity
+theorem convertToIntegerExactSaturating_of_exactValue_eq_infinity
     {fmt : FloatFormat} (width : Nat) (x : Model fmt) (negative : Bool)
     (hvalue : Model.exactValue x = .infinity negative) :
-    floatToIntSaturating width x =
+    convertToIntegerExactSaturating width x =
         (if negative then FixedInt.minCode width else FixedInt.maxCode width) ∧
-      floatToInt (width := width) x .towardZero =
+      convertToIntegerExact (width := width) x .towardZero =
         .failure (.infinity .source negative) := by
-  exact ⟨by simp [floatToIntSaturating, hvalue],
-    floatToInt_of_exactValue_eq_infinity x .towardZero negative hvalue⟩
+  exact ⟨by simp [convertToIntegerExactSaturating, hvalue],
+    convertToIntegerExact_of_exactValue_eq_infinity x .towardZero negative hvalue⟩
 
 /--
 NaN maps to zero natively. The checked failure keeps its sign, signaling class, and diagnostic
 payload without the quiet bit.
 -/
-theorem floatToIntSaturating_of_exactValue_eq_nan
+theorem convertToIntegerExactSaturating_of_exactValue_eq_nan
     {fmt : FloatFormat} (width : Nat) (x : Model fmt) (negative signaling : Bool) (payload : Nat)
     (hvalue : Model.exactValue x = .nan negative signaling payload) :
-    floatToIntSaturating width x = FixedInt.ofInt 0 ∧
-      floatToInt (width := width) x .towardZero =
+    convertToIntegerExactSaturating width x = FixedInt.ofInt 0 ∧
+      convertToIntegerExact (width := width) x .towardZero =
         .failure (.exceptional .source
-          (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative signaling)) := by
-  exact ⟨by simp [floatToIntSaturating, hvalue],
-    floatToInt_of_exactValue_eq_nan x .towardZero negative signaling payload hvalue⟩
+          (.nan (some (Model.payloadOfNaNField signaling payload fmt.encoding)) negative
+            signaling)) := by
+  exact ⟨by simp [convertToIntegerExactSaturating, hvalue],
+    convertToIntegerExact_of_exactValue_eq_nan x .towardZero negative signaling payload hvalue⟩
 
 end FloatLib.Floats.Formats.BinaryInterchange.ExecDType
 
@@ -260,74 +268,75 @@ open Formats.BinaryInterchange
 open Numerics.Representations
 
 /-- Native binary64 to `Int8` uses the shared toward-zero, saturation, and NaN-to-zero policy. -/
-theorem floatToInt8_eq_floatToIntSaturating (x : Float) :
+theorem convertToIntegerExact8_eq_convertToIntegerExactSaturating (x : Float) :
     (⟨x.toInt8.toBitVec⟩ : FixedInt 8) =
-      ExecDType.floatToIntSaturating 8 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 8 (toModel (ofFloat x : Binary64)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int8_ofIntClamp _
 
 /-- Native binary64 to `Int16` uses the shared signed conversion policy. -/
-theorem floatToInt16_eq_floatToIntSaturating (x : Float) :
+theorem convertToIntegerExact16_eq_convertToIntegerExactSaturating (x : Float) :
     (⟨x.toInt16.toBitVec⟩ : FixedInt 16) =
-      ExecDType.floatToIntSaturating 16 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 16 (toModel (ofFloat x : Binary64)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int16_ofIntClamp _
 
 /-- Native binary64 to `Int32` uses the shared signed conversion policy. -/
-theorem floatToInt32_eq_floatToIntSaturating (x : Float) :
+theorem convertToIntegerExact32_eq_convertToIntegerExactSaturating (x : Float) :
     (⟨x.toInt32.toBitVec⟩ : FixedInt 32) =
-      ExecDType.floatToIntSaturating 32 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 32 (toModel (ofFloat x : Binary64)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int32_ofIntClamp _
 
 /-- Native binary64 to `Int64` uses the shared signed conversion policy. -/
-theorem floatToInt64_eq_floatToIntSaturating (x : Float) :
+theorem convertToIntegerExact64_eq_convertToIntegerExactSaturating (x : Float) :
     (⟨x.toInt64.toBitVec⟩ : FixedInt 64) =
-      ExecDType.floatToIntSaturating 64 (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 64 (toModel (ofFloat x : Binary64)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int64_ofIntClamp _
 
 /-- Native binary64 to `ISize` saturates to the platform's signed interval. -/
-theorem floatToISize_eq_floatToIntSaturating (x : Float) :
+theorem floatToISize_eq_convertToIntegerExactSaturating (x : Float) :
     (⟨x.toISize.toBitVec⟩ : FixedInt System.Platform.numBits) =
-      ExecDType.floatToIntSaturating System.Platform.numBits (toModel (ofFloat x : Binary64)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating System.Platform.numBits (toModel
+        (ofFloat x : Binary64)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.iSize_ofIntClamp_bounds x.toModel.unpack.toInt
 
 /-- Native binary32 to `Int8` uses the shared toward-zero, saturation, and NaN-to-zero policy. -/
-theorem float32ToInt8_eq_floatToIntSaturating (x : Float32) :
+theorem float32ToInt8_eq_convertToIntegerExactSaturating (x : Float32) :
     (⟨x.toInt8.toBitVec⟩ : FixedInt 8) =
-      ExecDType.floatToIntSaturating 8 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 8 (toModel (ofFloat32 x : Binary32)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int8_ofIntClamp _
 
 /-- Native binary32 to `Int16` uses the shared signed conversion policy. -/
-theorem float32ToInt16_eq_floatToIntSaturating (x : Float32) :
+theorem float32ToInt16_eq_convertToIntegerExactSaturating (x : Float32) :
     (⟨x.toInt16.toBitVec⟩ : FixedInt 16) =
-      ExecDType.floatToIntSaturating 16 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 16 (toModel (ofFloat32 x : Binary32)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int16_ofIntClamp _
 
 /-- Native binary32 to `Int32` uses the shared signed conversion policy. -/
-theorem float32ToInt32_eq_floatToIntSaturating (x : Float32) :
+theorem float32ToInt32_eq_convertToIntegerExactSaturating (x : Float32) :
     (⟨x.toInt32.toBitVec⟩ : FixedInt 32) =
-      ExecDType.floatToIntSaturating 32 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 32 (toModel (ofFloat32 x : Binary32)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int32_ofIntClamp _
 
 /-- Native binary32 to `Int64` uses the shared signed conversion policy. -/
-theorem float32ToInt64_eq_floatToIntSaturating (x : Float32) :
+theorem float32ToInt64_eq_convertToIntegerExactSaturating (x : Float32) :
     (⟨x.toInt64.toBitVec⟩ : FixedInt 64) =
-      ExecDType.floatToIntSaturating 64 (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+      ExecDType.convertToIntegerExactSaturating 64 (toModel (ofFloat32 x : Binary32)) := by
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.int64_ofIntClamp _
 
 /-- Native binary32 to `ISize` saturates to the platform's signed interval. -/
-theorem float32ToISize_eq_floatToIntSaturating (x : Float32) :
+theorem float32ToISize_eq_convertToIntegerExactSaturating (x : Float32) :
     (⟨x.toISize.toBitVec⟩ : FixedInt System.Platform.numBits) =
-      ExecDType.floatToIntSaturating System.Platform.numBits
+      ExecDType.convertToIntegerExactSaturating System.Platform.numBits
         (toModel (ofFloat32 x : Binary32)) := by
-  rw [ExecDType.floatToIntSaturating_eq_ofIntSaturating_toModel (by decide)]
+  rw [ExecDType.convertToIntegerExactSaturating_eq_ofIntSaturating_toModel (by decide)]
   exact FixedInt.iSize_ofIntClamp_bounds x.toModel.unpack.toInt
 
 end FloatLib.Floats.ExecFloat.Binary

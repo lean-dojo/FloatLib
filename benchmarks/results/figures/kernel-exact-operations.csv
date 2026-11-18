@@ -1,0 +1,33 @@
+operation,size,as_written_us,kernel_us,coq_vm_us
+integer sum,64 bits,75.9,16.3,9.3
+integer product,64 bits,67.1,17.4,
+integer comparison,64 bits,89.99999999999999,6.62,1.55
+integer quotient,64 bits,85.2,39.5,
+fraction sum and comparison,64 bits,890.0,36.3,225.0
+fraction product and comparison,64 bits,638.0,34.7,
+bit length,64 bits,446.0,46.0,
+one bit,64 bits,53.699999999999996,8.52,
+population count,64 bits,4269.999999999999,40.599999999999994,
+integer square root,64 bits,873.0,148.0,
+modular power,64 bits,837.0,298.0,
+dyadic sum,64 bits,,28.7,
+ball product,64 bits,,21.4,
+complex ball product,64 bits,,87.6,
+length of a list of 256,64 bits,22700.0,3190.0,
+entry 200 of a list of 256,64 bits,23100.000000000004,3590.0,
+integer sum,"1,024 bits",76.3,17.0,59.6
+integer product,"1,024 bits",67.19999999999999,17.6,
+integer comparison,"1,024 bits",89.4,6.61,23.3
+integer quotient,"1,024 bits",85.7,40.2,
+fraction sum and comparison,"1,024 bits",847.0,37.5,39500.0
+fraction product and comparison,"1,024 bits",695.0,36.0,
+bit length,"1,024 bits",8240.0,137.0,
+one bit,"1,024 bits",54.2,8.83,
+population count,"1,024 bits",84200.00000000001,292.99999999999994,
+integer square root,"1,024 bits",9230.0,316.0,
+modular power,"1,024 bits",16000.0,8060.000000000001,
+dyadic sum,"1,024 bits",,29.0,
+ball product,"1,024 bits",,21.7,
+complex ball product,"1,024 bits",,88.2,
+length of a list of 256,"1,024 bits",22300.0,3190.0,
+entry 200 of a list of 256,"1,024 bits",23200.0,3580.0000000000005,

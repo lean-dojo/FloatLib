@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -10,6 +10,7 @@ public import FloatLib.Floats.Formats.Posit.Elementary.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Comparison.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 public import FloatLib.Numerics.Exact.Elementary.Proof
+import Mathlib.Tactic.Bound
 
 /-!
 # Correct rounding of natural posit elementary functions
@@ -108,7 +109,7 @@ theorem logPlus1_eq_real (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : -1 < q) :
     logPlus1 value = RealRounding.round format (Real.log (1 + (q : ℝ))) := by
   simpa [logPlus1, add_comm] using
-    Elementary.applyLog_eq_real 1 value hvalue (by linarith)
+    Elementary.applyLog_eq_real 1 value hvalue (by bound)
 
 /-- Natural exponential propagates NaR. -/
 @[simp] theorem exp_nar : exp (nar format) = nar format := Elementary.applyExp_nar _
@@ -127,6 +128,6 @@ theorem log_eq_nar_of_nonpos (value : Model format) {q : Rat}
 /-- Natural `Plus1` logarithm rejects finite values at or below `-1`. -/
 theorem logPlus1_eq_nar_of_le_neg_one (value : Model format) {q : Rat}
     (hvalue : value.toRat? = some q) (hq : q ≤ -1) : logPlus1 value = nar format :=
-  Elementary.applyLog_eq_nar 1 value hvalue (by linarith)
+  Elementary.applyLog_eq_nar 1 value hvalue (by bound)
 
 end FloatLib.Floats.Formats.Posit.Model

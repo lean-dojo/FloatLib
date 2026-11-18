@@ -1,0 +1,310 @@
+{
+  "purpose": "Source-contract audit of published regression observations",
+  "paths": "Commands name their outputs relative to the export directory and their inputs relative to the pinned FPTaylor checkout.",
+  "source_revision": "46e0d2ff37fa84e513048d3445be8c030831b11f",
+  "exporter_source_sha256": "dc550d1a6a12523c22de786b8a6ed04212366037a80e13e06ab736f7c9dbb654",
+  "exporter_binary_sha256": "b5527e95d57fc70c3b44b664520ebef10ad705f3495b0d54f4764ba8eb5a5c7a",
+  "export_configuration_sha256": "2b644ec20e080907a0e1a5646da9c5b3c5770b58fd9c1daa6ef392f25468ce47",
+  "build_commands": [
+    [
+      "make",
+      "-j1",
+      "INCLUDE=simple_interval",
+      "out_fpcore.cmi",
+      "out_fpcore.cmo",
+      "export_main.cmo"
+    ],
+    [
+      "ocamlc",
+      "-o",
+      "export",
+      "-I",
+      "simple_interval",
+      "unix.cma",
+      "str.cma",
+      "nums.cma",
+      "simple_interval/interval.cma",
+      "version.cmo",
+      "lib.cmo",
+      "func.cmo",
+      "log.cmo",
+      "more_num.cmo",
+      "rounding.cmo",
+      "binary_float.cmo",
+      "const.cmo",
+      "expr.cmo",
+      "exprOut.cmo",
+      "eval.cmo",
+      "task.cmo",
+      "config.cmo",
+      "input_parser_env.cmo",
+      "input_parser.cmo",
+      "input_lexer.cmo",
+      "parser.cmo",
+      "out_fpcore.cmo",
+      "export_main.cmo"
+    ]
+  ],
+  "exports": [
+    {
+      "input_file": "tests/core/carbonGas.txt",
+      "input_sha256": "c55fa17436da9aff2b7801316e9bca3d592950cef701eca7584359ee401fd88d",
+      "output_file": "carbonGas.txt.fpcore",
+      "output_sha256": "c8fa7d79df8571451df04485463ad771fbb0c5b442d70283def877dda37c4e69",
+      "elapsed_seconds": 0.006410172001778847,
+      "command": [
+        "export",
+        "-o",
+        "carbonGas.txt.fpcore",
+        "tests/core/carbonGas.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/doppler1.txt",
+      "input_sha256": "d137b24ae4c7b05da749a9e153ee60a44617e59220050306ef44edb9752551f2",
+      "output_file": "doppler1.txt.fpcore",
+      "output_sha256": "51658e82e8a25ce88c517ea49d463f60e06a6e5df0862b050fceeb49be0d7ada",
+      "elapsed_seconds": 0.0054547580002690665,
+      "command": [
+        "export",
+        "-o",
+        "doppler1.txt.fpcore",
+        "tests/core/doppler1.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/doppler2.txt",
+      "input_sha256": "fadf5b6787abf6e8b65a54913e7aa241fdfab86806a5997d46c2e3c972118e6b",
+      "output_file": "doppler2.txt.fpcore",
+      "output_sha256": "f63afe026cda4532ac9f40d1d722926e2525df8d47e025b1400d0f451c995dfd",
+      "elapsed_seconds": 0.005600754000624875,
+      "command": [
+        "export",
+        "-o",
+        "doppler2.txt.fpcore",
+        "tests/core/doppler2.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/doppler3.txt",
+      "input_sha256": "140639f7fe51dc4ab142ea97a56e825475d717ee0ddc3dfcccfd3bdbb26411e1",
+      "output_file": "doppler3.txt.fpcore",
+      "output_sha256": "4f4512382c9dec8d4b76af42332f27fb1f7bfd0818f382ddec6c9c20e681a950",
+      "elapsed_seconds": 0.005602590998023516,
+      "command": [
+        "export",
+        "-o",
+        "doppler3.txt.fpcore",
+        "tests/core/doppler3.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/himmilbeau.txt",
+      "input_sha256": "2738babd3fdea72e6b0fe5b90946d1f8fcc2bb6198860a8845afae94409a693a",
+      "output_file": "himmilbeau.txt.fpcore",
+      "output_sha256": "414c1ededd413741acfcb0e329cbd609de80c857ec99e5d08b272c394d076935",
+      "elapsed_seconds": 0.006321138000203064,
+      "command": [
+        "export",
+        "-o",
+        "himmilbeau.txt.fpcore",
+        "tests/core/himmilbeau.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/jet.txt",
+      "input_sha256": "4fb05419532591ebefaa0f4d96aa5afc5a7c38721fbb6a4e83999d8b30e8db3e",
+      "output_file": "jet.txt.fpcore",
+      "output_sha256": "4e2e527f6cb3376574a8a56fc7e876df74f2822278de0586956f7048404daba2",
+      "elapsed_seconds": 0.008287127999210497,
+      "command": [
+        "export",
+        "-o",
+        "jet.txt.fpcore",
+        "tests/core/jet.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/kepler0.txt",
+      "input_sha256": "388d9fe401aa9d14f3020f49abff82ab22770d4334420c8859248746e0fbdb70",
+      "output_file": "kepler0.txt.fpcore",
+      "output_sha256": "42f026de17b39a1ca56df1d4aa1079b55da1651d2e1b21c6536cbebe00f9188f",
+      "elapsed_seconds": 0.00664889100153232,
+      "command": [
+        "export",
+        "-o",
+        "kepler0.txt.fpcore",
+        "tests/core/kepler0.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/kepler1.txt",
+      "input_sha256": "db98d3f78736d3ad9c8c5c0c6cde6ef357588d90780b063a12c6f11952995342",
+      "output_file": "kepler1.txt.fpcore",
+      "output_sha256": "a7e06e60d6489d5aa395e3d3f02da917ebd8444addcd818ac97254178b064027",
+      "elapsed_seconds": 0.00614574299834203,
+      "command": [
+        "export",
+        "-o",
+        "kepler1.txt.fpcore",
+        "tests/core/kepler1.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/kepler2.txt",
+      "input_sha256": "c7705c20a8767b2fceeaa11579035354d6ea63e220288cbfcacf7272014ac5e4",
+      "output_file": "kepler2.txt.fpcore",
+      "output_sha256": "5978e2d3c76bb743431b40b0f0f43a85cd924c21a539e47fbb4d4938358586ff",
+      "elapsed_seconds": 0.006834414001787081,
+      "command": [
+        "export",
+        "-o",
+        "kepler2.txt.fpcore",
+        "tests/core/kepler2.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/predatorPrey.txt",
+      "input_sha256": "b155f4f0af867cd29edabec1579193767a154b4ea220daa9fbb89edb1e80ae35",
+      "output_file": "predatorPrey.txt.fpcore",
+      "output_sha256": "3306bb233501927afd316a97ff6e084a9d48ec966741e960aa78b5d4e59e1fec",
+      "elapsed_seconds": 0.005196396999963326,
+      "command": [
+        "export",
+        "-o",
+        "predatorPrey.txt.fpcore",
+        "tests/core/predatorPrey.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/rigidBody1.txt",
+      "input_sha256": "937d94115e56bfa69d8d1f59abed05cb275590fb549bfaefa7c1188f44b77da2",
+      "output_file": "rigidBody1.txt.fpcore",
+      "output_sha256": "6e71da5700843c1332cb19812b8ca27aa0ff2e36b20fb059d22321e8bdea4e65",
+      "elapsed_seconds": 0.005299284999637166,
+      "command": [
+        "export",
+        "-o",
+        "rigidBody1.txt.fpcore",
+        "tests/core/rigidBody1.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/rigidBody2.txt",
+      "input_sha256": "5b5b09f39805d7ac8845b2146b552952a6d627c7085738b420dc478f7a552712",
+      "output_file": "rigidBody2.txt.fpcore",
+      "output_sha256": "f3c63510da536f6825c8f30793abbf80056db737488b92badbd42497d6089e4f",
+      "elapsed_seconds": 0.005626145000860561,
+      "command": [
+        "export",
+        "-o",
+        "rigidBody2.txt.fpcore",
+        "tests/core/rigidBody2.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/sine.txt",
+      "input_sha256": "212c369be59c639356fc3a8293ef6d2ca016d50cf31da9261e016c35f296a426",
+      "output_file": "sine.txt.fpcore",
+      "output_sha256": "0b8569d5d76838db32dc3301b0dd19d9c6b2e848bfb7c45b81440633bbd3f485",
+      "elapsed_seconds": 0.005815822001750348,
+      "command": [
+        "export",
+        "-o",
+        "sine.txt.fpcore",
+        "tests/core/sine.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/sineOrder3.txt",
+      "input_sha256": "6f7809cece4e6874923c661d144d71e6e2972905d4425dc1087f9f61b110f546",
+      "output_file": "sineOrder3.txt.fpcore",
+      "output_sha256": "92d11527de2580b0cc148df8c3d0e814a16797b381e780723dcbfc36b5ab404b",
+      "elapsed_seconds": 0.0055561109984409995,
+      "command": [
+        "export",
+        "-o",
+        "sineOrder3.txt.fpcore",
+        "tests/core/sineOrder3.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/sqroot.txt",
+      "input_sha256": "b10e1e1bb539b1e3eec64c0b9004e4b29a4824bf4c29caa5c733709573157542",
+      "output_file": "sqroot.txt.fpcore",
+      "output_sha256": "c9d4e0e532058ef4a9156179f2ae4a20a1bb53a6d76779bce3d2b6e34ec96055",
+      "elapsed_seconds": 0.005211288000282366,
+      "command": [
+        "export",
+        "-o",
+        "sqroot.txt.fpcore",
+        "tests/core/sqroot.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/t_div_t1.txt",
+      "input_sha256": "81abff8f0347a4468533ce7f49bc5abf801e4a9765700cfc1fc191624de49f5c",
+      "output_file": "t_div_t1.txt.fpcore",
+      "output_sha256": "4ab57c297e57b15193403b9d7039e386e0e6fae6fe820a7b2875850fc7e70555",
+      "elapsed_seconds": 0.004617599002813222,
+      "command": [
+        "export",
+        "-o",
+        "t_div_t1.txt.fpcore",
+        "tests/core/t_div_t1.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/turbine1.txt",
+      "input_sha256": "017a61745c54afd1bd74572f4324756bc374b7c56579609e083fac98b44b5a94",
+      "output_file": "turbine1.txt.fpcore",
+      "output_sha256": "5a35d4d035b2a7b9c928944d698bc252bde4a5078e0121e79b4c42d394f0c7c1",
+      "elapsed_seconds": 0.0058589729997038376,
+      "command": [
+        "export",
+        "-o",
+        "turbine1.txt.fpcore",
+        "tests/core/turbine1.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/turbine2.txt",
+      "input_sha256": "de9d17a39aaa27b134af0c72df7174ec3934207cd4e5265757d2e3604e8cec42",
+      "output_file": "turbine2.txt.fpcore",
+      "output_sha256": "a7c355fb4089998400d9fa86a138ec05fc89bd24c80cb188e8d2d4027e395ec6",
+      "elapsed_seconds": 0.005552154998440528,
+      "command": [
+        "export",
+        "-o",
+        "turbine2.txt.fpcore",
+        "tests/core/turbine2.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/turbine3.txt",
+      "input_sha256": "c1ae15cef959269f311ca70f44fef51223af2e5504b8bac22cecfa303f485b46",
+      "output_file": "turbine3.txt.fpcore",
+      "output_sha256": "4298a1e441854a456c9dcd441ebbdf0351c684b8dfa1f946033bc123d82aaf76",
+      "elapsed_seconds": 0.005623835997539572,
+      "command": [
+        "export",
+        "-o",
+        "turbine3.txt.fpcore",
+        "tests/core/turbine3.txt"
+      ]
+    },
+    {
+      "input_file": "tests/core/verhulst.txt",
+      "input_sha256": "cf92a34041893c47c9814b148729b8ddb15f282dcc49d61a0eceb82aa1b4fbb8",
+      "output_file": "verhulst.txt.fpcore",
+      "output_sha256": "faccd5f006569c7e6383455acfa01734ce25a0799f198b09f48482624430dc72",
+      "elapsed_seconds": 0.005021778000809718,
+      "command": [
+        "export",
+        "-o",
+        "verhulst.txt.fpcore",
+        "tests/core/verhulst.txt"
+      ]
+    }
+  ]
+}

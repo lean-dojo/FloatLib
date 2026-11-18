@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -15,7 +15,7 @@ public import FloatLib.Floats.Formats.OCP
 
 These exported entry points let `benchmarks/scripts/checks/static-lowbit-codegen.sh` inspect the compiler
 output of the public universal API. The OCP E2M1 probes cover six direct exhaustive tables. The
-E2M3, E3M2, E4M3FN, E5M2, E4M3FNUZ and E5M2FNUZ probes cover five tables each and an FMA on the
+E2M3, E3M2, E4M3, E5M2, E4M3FNUZ and E5M2FNUZ probes cover five tables each and an FMA on the
 generic single-rounding kernel, and two throughput probes cover the E2M3 and E3M2 FMA tables.
 The FNUZ probes also guard the finite-only formats' own exceptional-value policy.
 
@@ -23,7 +23,7 @@ The required result is a native `uint8_t` boundary with the nominal format and c
 dictionaries specialized away. This follows Lean's documented erased-subtype representation and
 runtime code-generation model:
 
-* <https://github.com/leanprover/lean4/blob/v4.35.0/src/Init/Prelude.lean#L697-L699>
+* <https://github.com/leanprover/lean4/blob/v4.36.0/src/Init/Prelude.lean#L697-L699>
 * <https://lean-lang.org/doc/reference/latest/Run-Time-Code-Generation/>.
 -/
 
@@ -145,34 +145,34 @@ one-time construction and must compile to the direct lookup.
 
 end ThroughputPlan
 
-/-- Retained public OCP E4M3FN addition boundary. -/
+/-- Retained public OCP E4M3 addition boundary. -/
 @[noinline] def e4m3fnAdd
-    (left right : E4M3FN) : E4M3FN :=
+    (left right : E4M3) : E4M3 :=
   ExecFloat.add left right
 
-/-- Retained public OCP E4M3FN subtraction boundary. -/
+/-- Retained public OCP E4M3 subtraction boundary. -/
 @[noinline] def e4m3fnSub
-    (left right : E4M3FN) : E4M3FN :=
+    (left right : E4M3) : E4M3 :=
   ExecFloat.sub left right
 
-/-- Retained public OCP E4M3FN multiplication boundary. -/
+/-- Retained public OCP E4M3 multiplication boundary. -/
 @[noinline] def e4m3fnMul
-    (left right : E4M3FN) : E4M3FN :=
+    (left right : E4M3) : E4M3 :=
   ExecFloat.mul left right
 
-/-- Retained public OCP E4M3FN division boundary. -/
+/-- Retained public OCP E4M3 division boundary. -/
 @[noinline] def e4m3fnDiv
-    (left right : E4M3FN) : E4M3FN :=
+    (left right : E4M3) : E4M3 :=
   ExecFloat.div left right
 
-/-- Retained public OCP E4M3FN square-root boundary. -/
+/-- Retained public OCP E4M3 square-root boundary. -/
 @[noinline] def e4m3fnSqrt
-    (value : E4M3FN) : E4M3FN :=
+    (value : E4M3) : E4M3 :=
   ExecFloat.sqrt value
 
-/-- Retained public OCP E4M3FN fused multiply-add boundary. -/
+/-- Retained public OCP E4M3 fused multiply-add boundary. -/
 @[noinline] def e4m3fnFma
-    (left right addend : E4M3FN) : E4M3FN :=
+    (left right addend : E4M3) : E4M3 :=
   ExecFloat.fma left right addend
 
 /-- Retained public OCP E5M2 addition boundary. -/

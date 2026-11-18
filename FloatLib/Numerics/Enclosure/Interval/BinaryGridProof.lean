@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Interval.BinaryGrid
 public import FloatLib.Numerics.Enclosure.Interval.Real
-public import Mathlib.Data.Rat.Floor
 
 /-!
 # Real containment for integer binary-grid intervals
@@ -25,7 +24,7 @@ namespace FloatLib.Numerics.Interval.BinaryGrid
 
 /-- The shift-based scale is `2 ^ precision`. -/
 theorem scale_eq_pow (precision : Nat) : scale precision = (2 : Int) ^ precision := by
-  simp [scale, Int.shiftLeft_eq]
+  simp [scale_def, Int.shiftLeft_eq]
 
 /-- Every binary grid has a positive scale. -/
 theorem scale_pos (precision : Nat) : 0 < scale precision := by
@@ -43,7 +42,7 @@ private theorem real_scale_pos (precision : Nat) : (0 : ℝ) < scale precision :
 @[simp]
 theorem cast_toRat (precision : Nat) (z : Int) :
     (toRat precision z : ℝ) = value precision z := by
-  simp [toRat, value, Rat.divInt_eq_div]
+  simp [toRat_def, value, Rat.divInt_eq_div]
 
 /-- Real membership in a binary-grid interval is given by its scaled endpoint inequalities. -/
 @[simp]
@@ -132,11 +131,12 @@ private theorem fdiv_eq_rat_floor (a b : Int) :
 private theorem divBounds_rat_bounds (a b : Int) (hb : b ≠ 0) :
     ((divBounds a b).lo : ℚ) ≤ (a : ℚ) / b ∧
       (a : ℚ) / b ≤ ((divBounds a b).hi : ℚ) := by
+  rw [divBounds_def]
   refine ⟨?_, ?_⟩
   · change (a.fdiv b : ℚ) ≤ _
     rw [fdiv_eq_rat_floor]
     exact Int.floor_le _
-  · dsimp [divBounds]
+  · dsimp only
     split_ifs with h
     · have hb' : (b : ℚ) ≠ 0 := by exact_mod_cast hb
       apply le_of_eq
@@ -157,15 +157,16 @@ theorem divBounds_bounds {α : Type*} [Field α] [LinearOrder α]
 theorem roundDown_le (precision : Nat) (z : Int) :
     (roundDown precision z : ℝ) ≤ value precision z := by
   have h := (divBounds_bounds (α := ℝ) z (scale precision) (ne_of_gt (scale_pos precision))).1
+  rw [divBounds_def] at h
   change (z.fdiv (scale precision) : ℝ) ≤ _ at h
   rw [Int.fdiv_eq_ediv_of_nonneg _ (scale_pos precision).le] at h
-  simpa [roundDown, value, scale_eq_pow, Int.shiftRight_eq_div_pow] using h
+  simpa [roundDown_def, value, scale_eq_pow, Int.shiftRight_eq_div_pow] using h
 
 /-- Rounding up by a signed shift stays above the exact scaled coefficient. -/
 theorem le_roundUp (precision : Nat) (z : Int) :
     value precision z ≤ (roundUp precision z : ℝ) := by
   have h := neg_le_neg (roundDown_le precision (-z))
-  simpa [roundUp, roundDown] using h
+  simpa [roundUp_def, roundDown_def] using h
 
 /-- Coarsening a grid interval keeps every real member, on the coarser grid. -/
 theorem containsReal_coarsen {shift precision : Nat} {I : Interval Int} {x : ℝ}
@@ -214,8 +215,8 @@ theorem contains_enclose (precision : Nat) (q : ℚ) :
   rw [Int.cast_natCast, Rat.num_div_den] at h
   refine ⟨toRat precision (enclose precision q).lo,
     toRat precision (enclose precision q).hi, rfl, rfl, ?_, ?_⟩
-  · simpa [enclose, toRat, Rat.divInt_eq_div] using h.1
-  · simpa [enclose, toRat, Rat.divInt_eq_div] using h.2
+  · simpa [enclose_def, toRat_def, Rat.divInt_eq_div] using h.1
+  · simpa [enclose_def, toRat_def, Rat.divInt_eq_div] using h.2
 
 /-- Total outward rounding from exact rationals onto a fixed binary grid. -/
 def rounding (precision : Nat) : OutwardRounding Int ℚ where
@@ -237,7 +238,7 @@ theorem containsReal_neg (precision : Nat) {I : Interval Int} {x : ℝ}
     (hx : I.ContainsReal (decode precision) x) :
     (neg I).ContainsReal (decode precision) (-x) := by
   rw [containsReal_iff] at hx ⊢
-  simpa [neg] using And.intro (neg_le_neg hx.2) (neg_le_neg hx.1)
+  simpa [neg_def] using And.intro (neg_le_neg hx.2) (neg_le_neg hx.1)
 
 /-- Exact grid addition encloses the sum of arbitrary real input members. -/
 theorem containsReal_add (precision : Nat) {I J : Interval Int} {x y : ℝ}
@@ -245,7 +246,7 @@ theorem containsReal_add (precision : Nat) {I J : Interval Int} {x y : ℝ}
     (hy : J.ContainsReal (decode precision) y) :
     (add I J).ContainsReal (decode precision) (x + y) := by
   rw [containsReal_iff] at hx hy ⊢
-  simpa [add] using And.intro (add_le_add hx.1 hy.1) (add_le_add hx.2 hy.2)
+  simpa [add_def] using And.intro (add_le_add hx.1 hy.1) (add_le_add hx.2 hy.2)
 
 /-- Exact grid subtraction encloses the difference of arbitrary real input members. -/
 theorem containsReal_sub (precision : Nat) {I J : Interval Int} {x y : ℝ}
@@ -253,7 +254,7 @@ theorem containsReal_sub (precision : Nat) {I J : Interval Int} {x y : ℝ}
     (hy : J.ContainsReal (decode precision) y) :
     (sub I J).ContainsReal (decode precision) (x - y) := by
   rw [containsReal_iff] at hx hy ⊢
-  simpa [sub] using And.intro (sub_le_sub hx.1 hy.2) (sub_le_sub hx.2 hy.1)
+  simpa [sub_def] using And.intro (sub_le_sub hx.1 hy.2) (sub_le_sub hx.2 hy.1)
 
 /--
 Integer four-corner multiplication encloses products of arbitrary real input members: the corner
@@ -264,6 +265,7 @@ theorem containsReal_mul (precision : Nat) {I J : Interval Int} {x y : ℝ}
     (hy : J.ContainsReal (decode precision) y) :
     (mul precision I J).ContainsReal (decode precision) (x * y) := by
   rw [containsReal_iff] at hx hy
+  rw [mul_def]
   refine containsReal_coarsen (I := ⟨_, _⟩) (shift := precision) ?_
   rw [containsReal_iff]
   simpa only [minOfFour, maxOfFour, value_min, value_max, value_mul, Set.mem_Icc] using
@@ -301,13 +303,13 @@ theorem containsReal_div? (precision : Nat) {I J K : Interval Int}
     have hb := value_divBounds precision I.lo J.hi hhi
     have hc := value_divBounds precision I.hi J.lo hlo
     have hd := value_divBounds precision I.hi J.hi hhi
-    simp only [div?, hz, ↓reduceIte, Option.some.injEq] at h
+    simp only [div?_def, hz, ↓reduceIte, Option.some.injEq] at h
     subst K
     simpa only [minOfFour, maxOfFour, value_min, value_max] using
       And.intro
         ((min_le_min (min_le_min ha.1 hb.1) (min_le_min hc.1 hd.1)).trans hxy.1)
         (hxy.2.trans (max_le_max (max_le_max ha.2 hb.2) (max_le_max hc.2 hd.2)))
-  · simp [div?, hz] at h
+  · simp [div?_def, hz] at h
 
 /-- Exact grid absolute value encloses the absolute value of every real input member. -/
 theorem containsReal_abs (precision : Nat) {I : Interval Int} {x : ℝ}
@@ -317,13 +319,13 @@ theorem containsReal_abs (precision : Nat) {I : Interval Int} {x : ℝ}
   by_cases hlo : 0 ≤ I.lo
   · have hl : 0 ≤ value precision I.lo := by
       simpa only [← value_zero precision, value_le_value_iff] using hlo
-    simpa [abs, hlo, abs_of_nonneg (hl.trans hx.1)] using hx
+    simpa [abs_def, hlo, abs_of_nonneg (hl.trans hx.1)] using hx
   · by_cases hhi : I.hi ≤ 0
     · have hh : value precision I.hi ≤ 0 := by
         simpa only [← value_zero precision, value_le_value_iff] using hhi
-      simpa [abs, hlo, hhi, neg, abs_of_nonpos (hx.2.trans hh)] using
+      simpa [abs_def, hlo, hhi, neg_def, abs_of_nonpos (hx.2.trans hh)] using
         And.intro (neg_le_neg hx.2) (neg_le_neg hx.1)
-    · simp only [abs, hlo, hhi, ↓reduceIte, value_zero, value_max, value_neg]
+    · simp only [abs_def, hlo, hhi, ↓reduceIte, value_zero, value_max, value_neg]
       refine ⟨abs_nonneg x, abs_le.2 ⟨?_, ?_⟩⟩
       · have hl : -max (-value precision I.lo) (value precision I.hi) ≤
             value precision I.lo := by
@@ -344,6 +346,7 @@ theorem containsReal_square (precision : Nat) {I : Interval Int} {x : ℝ}
     (hx : I.ContainsReal (decode precision) x) :
     (square precision I).ContainsReal (decode precision) (x ^ 2) := by
   rw [containsReal_iff] at hx
+  rw [square_def]
   refine containsReal_coarsen (I := ⟨_, _⟩) (shift := precision) ?_
   rw [containsReal_iff]
   refine ⟨?_, ?_⟩
@@ -364,16 +367,16 @@ private theorem containsReal_pow_internal (precision : Nat) {I : Interval Int} {
     (hx : I.ContainsReal (decode precision) x) (n : Nat) :
     (Internal.pow precision I n).ContainsReal (decode precision) (x ^ n) := by
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | ind n ih =>
     by_cases hn : n = 0
     · subst n
-      simp [Internal.pow, containsReal_iff, point]
+      simp [Internal.pow_def, containsReal_iff, point]
     · by_cases hone : n = 1
       · subst n
-        simpa [Internal.pow] using hx
+        simpa [Internal.pow_def] using hx
       · have hhalf : n / 2 < n := Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by decide)
         have hs := containsReal_square precision (ih (n / 2) hhalf)
-        rw [Internal.pow, dite_eq_right hn, ite_eq_right hone]
+        rw [Internal.pow_def, ite_eq_right hn, ite_eq_right hone]
         by_cases heven : n % 2 = 0
         · rw [ite_eq_left heven]
           have hn' : n / 2 * 2 = n := by omega
@@ -388,11 +391,11 @@ theorem containsReal_pow (precision : Nat) {I : Interval Int} {x : ℝ}
     (pow precision I n).ContainsReal (decode precision) (x ^ n) := by
   by_cases hn : n = 0
   · subst n
-    simp [pow, containsReal_iff, point]
+    simp [pow_def, containsReal_iff, point]
   by_cases hone : n = 1
   · subst n
-    simpa [pow] using hx
-  rw [pow, ite_eq_right hn, ite_eq_right hone]
+    simpa [pow_def] using hx
+  rw [pow_def, ite_eq_right hn, ite_eq_right hone]
   by_cases heven : n % 2 = 0
   · rw [ite_eq_left heven]
     simpa only [(Nat.even_iff.mpr heven).pow_abs x] using

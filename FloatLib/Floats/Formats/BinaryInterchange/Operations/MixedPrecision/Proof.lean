@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Accumulation
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Error bounds for mixed-precision accumulation
@@ -100,17 +102,13 @@ theorem mulAcc_abs_error_le_budget (p : SitePolicy) (a b : Model p.storage)
   have hmulError := abs_toReal_mul_sub_le aP bP hproduct hproductFinite
   have hproductCastError := abs_toReal_cast_sub_le product haccumulator hproductA
   have haddError := abs_toReal_add_sub_le productA acc haccumulator hresult
-  have habs : ∀ u v w x y : ℝ, |u + v + w + x + y| ≤ |u| + |v| + |w| + |x| + |y| := by
-    intro u v w x y
-    refine (abs_add_le _ _).trans (add_le_add ?_ le_rfl)
-    refine (abs_add_le _ _).trans (add_le_add ?_ le_rfl)
-    refine (abs_add_le _ _).trans (add_le_add ?_ le_rfl)
-    exact abs_add_le _ _
-  rw [mulAccError_eq_site_residuals]
-  dsimp only [mulAccErrorBudget]
-  refine (habs _ _ _ _ _).trans ?_
-  rw [abs_mul, abs_mul]
-  gcongr
+  have hinputs := Numerics.Backward.deviation_mul_mixed hbError haError
+  have hrounded := Numerics.compose_error hmulError
+    (by simpa only [mul_comm] using hinputs)
+  have hcast := Numerics.compose_error hproductCastError hrounded
+  have hexact : |toReal acc - toReal acc| ≤ (0 : ℝ) := by simp
+  simpa only [mulAccError, mulAccErrorBudget, mulAcc, add_zero, zero_add, add_comm,
+    add_left_comm, add_assoc, mul_comm] using Numerics.add_error hcast hexact haddError
 
 /-- Accumulator state after the first `count` sequential product-add sites. -/
 def sequentialAccumulator (p : SitePolicy)
@@ -220,20 +218,7 @@ theorem dotSequential_abs_error_le_budget (p : SitePolicy)
     houtput hresultFinite
   have haccError := sequentialAccumulator_abs_error_le_budget p xs ys xs.size
     hproduct haccumulator hfinite
-  calc
-    |toReal (cast p.accumulator p.output (sequentialAccumulator p xs ys xs.size)) -
-        sequentialDotReal p xs ys xs.size| =
-        |(toReal (cast p.accumulator p.output (sequentialAccumulator p xs ys xs.size)) -
-            toReal (sequentialAccumulator p xs ys xs.size)) +
-          (toReal (sequentialAccumulator p xs ys xs.size) -
-            sequentialDotReal p xs ys xs.size)| := by ring_nf
-    _ ≤
-        |toReal (cast p.accumulator p.output (sequentialAccumulator p xs ys xs.size)) -
-          toReal (sequentialAccumulator p xs ys xs.size)| +
-        |toReal (sequentialAccumulator p xs ys xs.size) -
-          sequentialDotReal p xs ys xs.size| := abs_add_le _ _
-    _ ≤ halfUlpAt p.output (toReal (sequentialAccumulator p xs ys xs.size)) +
-        sequentialErrorBudget p xs ys xs.size := add_le_add hcast haccError
+  simpa only [add_comm] using Numerics.compose_error hcast haccError
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026 FloatLib
+ * Copyright (c) 2026 FloatLib. All rights reserved.
  * Released under MIT license as described in the file LICENSE.
  *
  * Correctly rounded MPFR references for the transcendental comparison.

@@ -1,19 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
+public meta import FloatLib.Tactic.Roundoff.Extension
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.PowerProof
-public import FloatLib.Numerics.Capabilities.Elementary
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-public meta import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff.Extension
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
 
 /-!
 # Opt-in transcendentals for configured binary values
@@ -26,17 +21,17 @@ packing. `pow` is `Model.pow`, which is correctly rounded in the cases its docum
 and approximate otherwise.
 
 Two other namespaces hold functions with different result types and guarantees.
-`ExecFloat.Binary.Certified` has certified searches for `exp`, `log`, `pow`, `expMinus1` and
-`logPlus1`. Each refines rational enclosures of the real function within its `budget` and returns
+`ExecFloat.Binary.Certified` has certified searches for `exp`, `log`, `pow`, `expm1` and
+`logp1`. Each refines rational enclosures of the real function within its `budget` and returns
 `Except Certified.Failure Value`. That is a result proved finite and equal to nearest-even
 rounding of the real function, or the reason there is none (an unsupported format, a nonfinite
 input, a domain or range failure, or a search that did not settle). A search can fail on a valid
-input, and it never falls back to the approximation. `Certified.expMinus1` and
-`Certified.logPlus1` form `exp x - 1` and `log (1 + x)` before rounding, so they keep small
+input, and it never falls back to the approximation. `Certified.expm1` and
+`Certified.logp1` form `exp x - 1` and `log (1 + x)` before rounding, so they keep small
 results near zero.
 
 The module also imports `Configured.CorrectlyRounded`, whose `CorrectlyRounded.exp`, `log`,
-`expMinus1`, `logPlus1` and `expMul` always return a value. For an IEEE descriptor and a finite
+`expm1`, `logp1` and `expMul` always return a value. For an IEEE descriptor and a finite
 input in the domain, a finite result is the nearest-even rounding of the real function. A
 non-finite input is outside that statement: `exp (-∞)` is a finite zero. `sin`, `cos`, `sinCos`,
 `sinh`, `cosh` and `tanh` exist only as approximations.
@@ -106,7 +101,8 @@ correctly rounded logarithm.
 /--
 The power `base ^ exponent` by `Model.pow`, with no general error bound.
 
-Zeros, infinities and NaNs get their IEEE 754 special cases. For an IEEE descriptor, a finite
+Zeros, infinities and NaNs get their IEEE 754-2019 §9.2.1 special cases. For an IEEE descriptor, a
+finite
 result for a nonzero base and an integral exponent is correctly rounded, and a positive base with
 any other exponent runs the certified search first. A certified range failure gives positive
 overflow, and other failures fall back to `exp (exponent * log base)`. `Certified.pow` runs only
@@ -304,20 +300,20 @@ Certify `base ^ exponent` for a finite positive base and a finite exponent, sear
 /--
 Certify `exp x - 1` with one final rounding, preserving signed zero, searching within `budget`:
 a finite nearest-even result or the `Certified.Failure` that prevented one.
-`CorrectlyRounded.expMinus1` always returns a value.
+`CorrectlyRounded.expm1` always returns a value.
 -/
-@[inline] def expMinus1 (value : Value) (budget : Certified.Budget := {}) :
+@[inline] def expm1 (value : Value) (budget : Certified.Budget := {}) :
     Except Certified.Failure Value :=
-  (Model.Transcendentals.Certified.expMinus1 (toModel value) budget).map ofModel
+  (Model.Transcendentals.Certified.expm1 (toModel value) budget).map ofModel
 
 /--
 Certify `log (1 + x)` with one final rounding, preserving signed zero, searching within `budget`:
 a finite nearest-even result or the `Certified.Failure` that prevented one.
-`CorrectlyRounded.logPlus1` always returns a value.
+`CorrectlyRounded.logp1` always returns a value.
 -/
-@[inline] def logPlus1 (value : Value) (budget : Certified.Budget := {}) :
+@[inline] def logp1 (value : Value) (budget : Certified.Budget := {}) :
     Except Certified.Failure Value :=
-  (Model.Transcendentals.Certified.logPlus1 (toModel value) budget).map ofModel
+  (Model.Transcendentals.Certified.logp1 (toModel value) budget).map ofModel
 
 /-- Decoding a certified exponential gives the model search's result or failure. -/
 @[simp] theorem map_toModel_exp (value : Value) (budget : Certified.Budget) :
@@ -340,19 +336,19 @@ a finite nearest-even result or the `Certified.Failure` that prevented one.
   cases h : Model.Transcendentals.Certified.pow (toModel base) (toModel exponent) budget <;>
     simp [Certified.pow, h, Except.map]
 
-/-- Decoding a certified `expMinus1` gives the model search's result or failure. -/
-@[simp] theorem map_toModel_expMinus1 (value : Value) (budget : Certified.Budget) :
-    (Certified.expMinus1 value budget).map toModel =
-      Model.Transcendentals.Certified.expMinus1 (toModel value) budget := by
-  cases h : Model.Transcendentals.Certified.expMinus1 (toModel value) budget <;>
-    simp [Certified.expMinus1, h, Except.map]
+/-- Decoding a certified `expm1` gives the model search's result or failure. -/
+@[simp] theorem map_toModel_expm1 (value : Value) (budget : Certified.Budget) :
+    (Certified.expm1 value budget).map toModel =
+      Model.Transcendentals.Certified.expm1 (toModel value) budget := by
+  cases h : Model.Transcendentals.Certified.expm1 (toModel value) budget <;>
+    simp [Certified.expm1, h, Except.map]
 
-/-- Decoding a certified `logPlus1` gives the model search's result or failure. -/
-@[simp] theorem map_toModel_logPlus1 (value : Value) (budget : Certified.Budget) :
-    (Certified.logPlus1 value budget).map toModel =
-      Model.Transcendentals.Certified.logPlus1 (toModel value) budget := by
-  cases h : Model.Transcendentals.Certified.logPlus1 (toModel value) budget <;>
-    simp [Certified.logPlus1, h, Except.map]
+/-- Decoding a certified `logp1` gives the model search's result or failure. -/
+@[simp] theorem map_toModel_logp1 (value : Value) (budget : Certified.Budget) :
+    (Certified.logp1 value budget).map toModel =
+      Model.Transcendentals.Certified.logp1 (toModel value) budget := by
+  cases h : Model.Transcendentals.Certified.logp1 (toModel value) budget <;>
+    simp [Certified.logp1, h, Except.map]
 
 /-- A certified exponential is finite. -/
 theorem isFinite_of_exp_eq_ok {value result : Value} {budget : Certified.Budget}
@@ -399,33 +395,33 @@ theorem toReal_of_pow_eq_ok {base exponent result : Value} {budget : Certified.B
   Model.Transcendentals.Certified.toReal_of_pow_eq_ok
     (by rw [← map_toModel_pow base exponent budget, hresult]; rfl)
 
-/-- A certified `expMinus1` result is finite. -/
-theorem isFinite_of_expMinus1_eq_ok {value result : Value} {budget : Certified.Budget}
-    (hresult : Certified.expMinus1 value budget = Except.ok result) :
+/-- A certified `expm1` result is finite. -/
+theorem isFinite_of_expm1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.expm1 value budget = Except.ok result) :
     isFinite result = true :=
-  Model.Transcendentals.Certified.isFinite_of_expMinus1_eq_ok
-    (by rw [← map_toModel_expMinus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_expm1_eq_ok
+    (by rw [← map_toModel_expm1 value budget, hresult]; rfl)
 
-/-- A certified `expMinus1` result is one nearest-even rounding of `Real.exp x - 1`. -/
-theorem toReal_of_expMinus1_eq_ok {value result : Value} {budget : Certified.Budget}
-    (hresult : Certified.expMinus1 value budget = Except.ok result) :
+/-- A certified `expm1` result is one nearest-even rounding of `Real.exp x - 1`. -/
+theorem toReal_of_expm1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.expm1 value budget = Except.ok result) :
     toReal result = Model.roundAt format (Real.exp (toReal value) - 1) :=
-  Model.Transcendentals.Certified.toReal_of_expMinus1_eq_ok
-    (by rw [← map_toModel_expMinus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_expm1_eq_ok
+    (by rw [← map_toModel_expm1 value budget, hresult]; rfl)
 
-/-- A certified `logPlus1` result is finite. -/
-theorem isFinite_of_logPlus1_eq_ok {value result : Value} {budget : Certified.Budget}
-    (hresult : Certified.logPlus1 value budget = Except.ok result) :
+/-- A certified `logp1` result is finite. -/
+theorem isFinite_of_logp1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.logp1 value budget = Except.ok result) :
     isFinite result = true :=
-  Model.Transcendentals.Certified.isFinite_of_logPlus1_eq_ok
-    (by rw [← map_toModel_logPlus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.isFinite_of_logp1_eq_ok
+    (by rw [← map_toModel_logp1 value budget, hresult]; rfl)
 
-/-- A certified `logPlus1` result is one nearest-even rounding of `Real.log (1 + x)`. -/
-theorem toReal_of_logPlus1_eq_ok {value result : Value} {budget : Certified.Budget}
-    (hresult : Certified.logPlus1 value budget = Except.ok result) :
+/-- A certified `logp1` result is one nearest-even rounding of `Real.log (1 + x)`. -/
+theorem toReal_of_logp1_eq_ok {value result : Value} {budget : Certified.Budget}
+    (hresult : Certified.logp1 value budget = Except.ok result) :
     toReal result = Model.roundAt format (Real.log (1 + toReal value)) :=
-  Model.Transcendentals.Certified.toReal_of_logPlus1_eq_ok
-    (by rw [← map_toModel_logPlus1 value budget, hresult]; rfl)
+  Model.Transcendentals.Certified.toReal_of_logp1_eq_ok
+    (by rw [← map_toModel_logp1 value budget, hresult]; rfl)
 
 end Certified
 

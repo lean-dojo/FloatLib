@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
+public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 public import Mathlib.Analysis.SpecialFunctions.Complex.Arctan
 
 /-!
@@ -26,17 +26,17 @@ namespace FloatLib.Numerics.Enclosure
 theorem cast_atanTaylor (x : ℚ) (n : Nat) :
     (atanTaylor x n : ℝ) =
       ∑ i ∈ Finset.range n, (-1 : ℝ) ^ i * (x : ℝ) ^ (2 * i + 1) / (2 * i + 1) := by
-  simp [atanTaylor]
+  simp [atanTaylor_def]
 
 /-- The exact rational radius agrees with its real geometric expression. -/
 theorem cast_atanRadius (x : ℚ) (n : Nat) :
     (atanRadius x n : ℝ) = |(x : ℝ)| * ((x : ℝ) ^ 2) ^ n / (1 - (x : ℝ) ^ 2) := by
-  simp [atanRadius]
+  simp [atanRadius_def]
 
 /-- The geometric majorant bounds every arctangent series term in absolute value. -/
 theorem norm_atan_term_le (x : ℝ) (n : Nat) :
     ‖(-1 : ℝ) ^ n * x ^ (2 * n + 1) / (2 * n + 1)‖ ≤ |x| * (x ^ 2) ^ n := by
-  have hden : (1 : ℝ) ≤ 2 * n + 1 := by linarith [Nat.cast_nonneg (α := ℝ) n]
+  have hden : (1 : ℝ) ≤ 2 * n + 1 := le_add_of_nonneg_left (by positivity)
   calc
     _ = |x| ^ (2 * n + 1) / (2 * n + 1) := by
       simp only [norm_div, norm_mul, norm_pow, norm_neg, norm_one, one_pow, one_mul,
@@ -69,9 +69,9 @@ theorem contains_piQuarter (degree : Nat) :
     (piQuarter degree).Contains (Real.pi / 4) := by
   have h := RationalInterval.contains_sub
     (RationalInterval.contains_scaleNonnegative
-      (contains_atanSmall (1 / 5) degree (by norm_num)) (factor := 4) (by norm_num))
-    (contains_atanSmall (1 / 239) degree (by norm_num))
-  simpa [piQuarter, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using h
+      (contains_atanSmall (1 / 5) degree (by norm_num)) (factor := 4) (by decide))
+    (contains_atanSmall (1 / 239) degree (by decide +kernel))
+  simpa [piQuarter_def, one_div, Real.four_mul_arctan_inv_5_sub_arctan_inv_239] using h
 
 /-- The transformed argument has magnitude below one for every positive `x`. -/
 theorem abs_atan_unit_argument_lt_one (x : ℚ) (hx : 0 < x) :
@@ -86,7 +86,7 @@ factor of at least nine per degree.
 -/
 theorem abs_atan_unit_argument_le (x : ℚ) (hx : 1 / 2 ≤ x) (hone : x ≤ 1) :
     |(x - 1) / (x + 1)| ≤ 1 / 3 := by
-  rw [abs_of_nonpos (div_nonpos_of_nonpos_of_nonneg (by linarith) (by linarith)),
+  rw [abs_of_nonpos (div_nonpos_of_nonpos_of_nonneg (by linarith) (by positivity)),
     ← neg_div, div_le_iff₀ (by linarith : 0 < x + 1)]
   linarith
 
@@ -95,15 +95,12 @@ theorem atan_unit_identity (x : ℚ) (hx : 0 ≤ x) :
     Real.pi / 4 + Real.arctan (((x - 1) / (x + 1) : ℚ) : ℝ) =
       Real.arctan (x : ℝ) := by
   have hreal : (0 : ℝ) ≤ x := by exact_mod_cast hx
-  have hden : (x : ℝ) + 1 ≠ 0 := by positivity
-  have hlt : (1 : ℝ) * (((x : ℝ) - 1) / ((x : ℝ) + 1)) < 1 := by
-    rw [one_mul, div_lt_iff₀ (by positivity : (0 : ℝ) < (x : ℝ) + 1)]
-    linarith
+  have h := Real.arctan_add (x := (x : ℝ)) (y := -1)
+    (show (x : ℝ) * -1 < 1 by nlinarith)
+  simp only [Real.arctan_neg, Real.arctan_one, mul_neg_one, sub_neg_eq_add,
+    ← sub_eq_add_neg] at h
   push_cast
-  rw [← Real.arctan_one, Real.arctan_add hlt]
-  congr 1
-  field_simp
-  ring
+  simpa only [add_comm] using (eq_add_of_sub_eq h).symm
 
 /--
 Unit reduction retains real containment, including the switch at one half.
@@ -112,7 +109,7 @@ Containment holds for every nonnegative input, though the reduction is only fast
 -/
 theorem contains_atanUnit (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
     (atanUnit x degree).Contains (Real.arctan (x : ℝ)) := by
-  unfold atanUnit
+  rw [atanUnit_def]
   split
   · apply contains_atanSmall
     rw [abs_of_nonneg hx]
@@ -125,14 +122,14 @@ theorem contains_atanUnit (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
 /-- Inversion restores the arctangent of every nonnegative rational input. -/
 theorem contains_atanNonnegative (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
     (atanNonnegative x degree).Contains (Real.arctan (x : ℝ)) := by
-  unfold atanNonnegative
+  rw [atanNonnegative_def]
   split
   · exact contains_atanUnit x degree hx
   · have hpos : 0 < x := by linarith
     have hreal : (0 : ℝ) < x := by exact_mod_cast hpos
     have h := RationalInterval.contains_sub
       (RationalInterval.contains_scaleNonnegative (contains_piQuarter degree)
-        (factor := 2) (by norm_num))
+        (factor := 2) (by decide))
       (contains_atanUnit x⁻¹ degree (inv_nonneg.mpr hx))
     convert h using 1
     push_cast
@@ -142,10 +139,10 @@ theorem contains_atanNonnegative (x : ℚ) (degree : Nat) (hx : 0 ≤ x) :
 /-- Every rational input and every finite degree yield a valid arctangent enclosure. -/
 theorem contains_atan (x : ℚ) (degree : Nat) :
     (atan x degree).Contains (Real.arctan (x : ℝ)) := by
-  unfold atan
+  rw [atan_def]
   split
   · simpa only [Rat.cast_neg, Real.arctan_neg, neg_neg] using
       RationalInterval.contains_neg (contains_atanNonnegative (-x) degree (by linarith))
-  · exact contains_atanNonnegative x degree (by linarith)
+  · exact contains_atanNonnegative x degree (not_lt.mp ‹¬x < 0›)
 
 end FloatLib.Numerics.Enclosure

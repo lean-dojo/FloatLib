@@ -1,15 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Arithmetic.Mixed.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
+public import FloatLib.Floats.Formats.P3109.Arithmetic.Mixed.Runtime
 
 /-!
 # P3109 arithmetic with external binary destinations
@@ -30,7 +28,8 @@ are. A binary `Model` operand of mixed report arithmetic decodes through the bin
 `ExactMap.signedRatToRat` and turns a NaN into the report's one NaN, which is the observation
 `decode` gives (`mixed_decode_eq_decode`).
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7–4.10 and 4.14.
+Reference: P3109 unapproved interim report v4.1 (14 September 2026),
+revision `2d45cf2`, §§4.7–4.10 and 4.14.
 -/
 
 @[expose] public section
@@ -143,47 +142,83 @@ def configuredDestination (format : FloatFormat)
     Destination (ExecFloat (Configured.Family format code plan)) :=
   ⟨fun policy value => ExecFloat.Binary.ofModel (project format ieee policy value)⟩
 
-/-- External bit width from the complete binary descriptor. -/
-@[inline] def bitwidthOf (format : FloatFormat) : Nat := format.bitWidth
+/-- External bit width from the complete binary descriptor.
 
-/-- External precision includes the implicit leading bit. -/
-@[inline] def precisionOf (format : FloatFormat) : Nat := format.fracWidth + 1
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def BitwidthOf (format : FloatFormat) : Nat := format.bitWidth
+
+/-- External precision includes the implicit leading bit.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def PrecisionOf (format : FloatFormat) : Nat := format.fracWidth + 1
 
 /-- The P3109 signedness of an external IEEE descriptor, `.signed`. The descriptor argument is
 ignored, so the answer describes the IEEE descriptors that `project` and `destination` accept and
-is never read from `format`. -/
-@[inline] def signednessOf (_format : FloatFormat) : Signedness := .signed
+is never read from `format`.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def SignednessOf (_format : FloatFormat) : Signedness := .signed
 
 /-- The P3109 domain of an external IEEE descriptor, `.extended`, since IEEE formats have
 infinities. The descriptor argument is ignored: for a finite-only encoding such as `finiteMaxNaN`,
 which has no infinity, the answer is wrong. Use it only for the IEEE descriptors that `project` and
-`destination` accept. -/
-@[inline] def domainOf (_format : FloatFormat) : Domain := .extended
+`destination` accept.
 
-/-- External exponent-field width. -/
-@[inline] def exponentBitwidthOf (format : FloatFormat) : Nat := format.expWidth
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def DomainOf (_format : FloatFormat) : Domain := .extended
 
-/-- External fraction-field width. -/
-@[inline] def trailingSignificandBitwidthOf (format : FloatFormat) : Nat := format.fracWidth
+/-- External exponent-field width.
 
-/-- The external format's own bias, with no P3109 bias substituted. -/
-@[inline] def exponentBiasOf (format : FloatFormat) : Nat := format.exponentBias
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def ExponentBitwidthOf (format : FloatFormat) : Nat := format.expWidth
 
-/-- Largest finite external datum. -/
-@[inline] def maxFiniteOf (format : FloatFormat) : Model format := Model.posMaxFinite format
+/-- External fraction-field width.
 
-/-- Smallest finite external datum. -/
-@[inline] def minFiniteOf (format : FloatFormat) : Model format := Model.negMaxFinite format
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def TrailingSignificandBitwidthOf (format : FloatFormat) : Nat := format.fracWidth
 
-/-- Smallest strictly positive external datum. -/
-@[inline] def minPositiveOf (format : FloatFormat) : Model format := Model.ofNatBits 1
+/-- The external format's own bias, with no P3109 bias substituted.
 
-/-- Largest positive external subnormal. -/
-@[inline] def maxSubnormalOf (format : FloatFormat) : Model format :=
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def ExponentBiasOf (format : FloatFormat) : Nat := format.exponentBias
+
+/-- Largest finite external datum.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def MaxFiniteOf (format : FloatFormat) : Model format := Model.posMaxFinite format
+
+/-- Smallest finite external datum.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def MinFiniteOf (format : FloatFormat) : Model format := Model.negMaxFinite format
+
+/-- Smallest strictly positive external datum.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def MinPositiveOf (format : FloatFormat) : Model format := Model.ofNatBits 1
+
+/-- Largest positive external subnormal.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def MaxSubnormalOf (format : FloatFormat) : Model format :=
   Model.ofNatBits (2 ^ format.fracWidth - 1)
 
-/-- Smallest positive external normal. -/
-@[inline] def minNormalOf (format : FloatFormat) : Model format :=
+/-- Smallest positive external normal.
+
+P3109 interim report v4.1 (14 September 2026), §4.14; unapproved draft.
+-/
+@[inline] def MinNormalOf (format : FloatFormat) : Model format :=
   Model.ofNatBits (2 ^ format.fracWidth)
 
 end FloatLib.Floats.Formats.P3109.Arithmetic.External

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -141,3 +141,10 @@ fractional digits, and the `overflow` options of `add` at the destination width.
       ofCode (Formats.FixedPoint.Bounded.saturatingMul outWidth left.toCode right.toCode)
 
 end FloatLib.Floats.ExecFloat.BoundedFixedPoint
+
+namespace FloatLib.Floats.ExecFloat.BoundedFixedPoint.OverflowPolicy
+
+/-- Reconstruct a `OverflowPolicy` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.ExecFloat.BoundedFixedPoint.OverflowPolicy

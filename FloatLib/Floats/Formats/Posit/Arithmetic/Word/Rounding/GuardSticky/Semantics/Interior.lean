@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Semantics.Candidates
+
 import FloatLib.Numerics.Exact.Dyadic.Order
-import Mathlib.Tactic.NormNum.Pow
 import Mathlib.Tactic.NormNum.Inv
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Correctness of interior guard-and-sticky Posit rounding
@@ -418,7 +419,6 @@ theorem roundInteriorCode_eq_roundPositiveCode_positive
           significand
           exponent := targetExponent } := by
   have hsignificand : significand ≠ 0 := by
-    have hpower := Nat.two_pow_pos leading
     omega
   have hnotUnderflow :=
     not_isLess_minPositive_of_regime format targetExponent regime exponentField significand
@@ -460,7 +460,6 @@ theorem roundInteriorCode_eq_roundPositiveCode_negative
           significand
           exponent := targetExponent } := by
   have hsignificand : significand ≠ 0 := by
-    have hpower := Nat.two_pow_pos leading
     omega
   have hnotUnderflow :=
     not_isLess_minPositive_of_regime format targetExponent regime exponentField significand

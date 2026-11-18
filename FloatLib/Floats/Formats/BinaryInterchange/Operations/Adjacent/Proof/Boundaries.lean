@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proof.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proof.Classification
 
 /-!
 # Boundary behavior of adjacent-value operations
 
-`Adjacent.Proof.Core` shows that an ordinary step of `nextUp` or `nextDown` moves the rank by one.
+`Adjacent.Proof.Rank` shows that an ordinary step of `nextUp` or `nextDown` moves the rank by one.
 This file covers the rest: what the two operations do at NaNs, zeros, infinities and saturating
 finite endpoints. It also turns the rank steps into one-sided rank inequalities and shows that no
 rank lies strictly between a value and its neighbor, which holds at the fixed endpoints too.
@@ -42,19 +42,19 @@ theorem nextDown_of_isNaN {fmt : FloatFormat} (x : Model fmt)
   simp [nextDown, Internal.Value.nextDown, hx]
 
 /-- Positive infinity is the fixed upper endpoint of `nextUp`. -/
-theorem nextUp_of_isInf_of_signBit_eq_false
+theorem nextUp_of_isInfinite_of_signBit_eq_false
     {fmt : FloatFormat} (x : Model fmt)
-    (hinf : isInf x = true) (hsign : signBit x = false) :
+    (hinf : isInfinite x = true) (hsign : signBit x = false) :
     nextUp x = x := by
-  have hnan := isNaN_eq_false_of_isInf_eq_true x hinf
+  have hnan := isNaN_eq_false_of_isInfinite_eq_true x hinf
   simp [nextUp, Internal.Value.nextUp, hnan, hinf, hsign]
 
 /-- Negative infinity is the fixed lower endpoint of `nextDown`. -/
-theorem nextDown_of_isInf_of_signBit_eq_true
+theorem nextDown_of_isInfinite_of_signBit_eq_true
     {fmt : FloatFormat} (x : Model fmt)
-    (hinf : isInf x = true) (hsign : signBit x = true) :
+    (hinf : isInfinite x = true) (hsign : signBit x = true) :
     nextDown x = x := by
-  have hnan := isNaN_eq_false_of_isInf_eq_true x hinf
+  have hnan := isNaN_eq_false_of_isInfinite_eq_true x hinf
   simp [nextDown, Internal.Value.nextDown, hnan, hinf, hsign]
 
 /-- Both signed zeros step upward to the least positive subnormal. -/
@@ -63,7 +63,7 @@ theorem nextUp_of_isZero {fmt : FloatFormat} (x : Model fmt)
     nextUp x = posMinSubnormal fmt := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true x hx
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hfinite
   simp [nextUp, Internal.Value.nextUp, hx, hnan, hinf]
 
 /-- Both signed zeros step downward to the negative subnormal of least magnitude. -/
@@ -72,7 +72,7 @@ theorem nextDown_of_isZero {fmt : FloatFormat} (x : Model fmt)
     nextDown x = negMinSubnormal fmt := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true x hx
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hfinite
   simp [nextDown, Internal.Value.nextDown, hx, hnan, hinf]
 
 /--
@@ -114,7 +114,7 @@ theorem nextDown_negMaxFinite_of_not_supportsInfinity
 theorem nextUp_posInf_of_supportsInfinity
     (fmt : FloatFormat) (hfmt : fmt.supportsInfinity = true) :
     nextUp (posInf fmt) = posInf fmt := by
-  have hinf := isInf_posInf fmt hfmt
+  have hinf := isInfinite_posInf fmt hfmt
   have hnan := isNaN_posInf fmt
   simp [nextUp, Internal.Value.nextUp, hinf, hnan]
 
@@ -122,7 +122,7 @@ theorem nextUp_posInf_of_supportsInfinity
 theorem nextDown_negInf_of_supportsInfinity
     (fmt : FloatFormat) (hfmt : fmt.supportsInfinity = true) :
     nextDown (negInf fmt) = negInf fmt := by
-  have hinf := isInf_negInf fmt hfmt
+  have hinf := isInfinite_negInf fmt hfmt
   have hnan := isNaN_negInf fmt
   simp [nextDown, Internal.Value.nextDown, hinf, hnan]
 
@@ -137,8 +137,8 @@ theorem nextUp_eq_self_or_adjacencyRank_nextUp
     (hnan : isNaN x = false) :
     nextUp x = x ∨ adjacencyRank (nextUp x) = adjacencyRank x + 1 := by
   by_cases hpositiveInfinity :
-      isInf x = true ∧ signBit x = false
-  · exact Or.inl (nextUp_of_isInf_of_signBit_eq_false
+      isInfinite x = true ∧ signBit x = false
+  · exact Or.inl (nextUp_of_isInfinite_of_signBit_eq_false
       x hpositiveInfinity.1 hpositiveInfinity.2)
   · by_cases hupperEndpoint :
         fmt.supportsInfinity = false ∧
@@ -148,7 +148,7 @@ theorem nextUp_eq_self_or_adjacencyRank_nextUp
         nextUp_posMaxFinite_of_not_supportsInfinity
           fmt hupperEndpoint.1]
     · have hinfinity :
-          isInf x = true → signBit x = true := by
+          isInfinite x = true → signBit x = true := by
         intro hinf
         cases hsign : signBit x
         · exact (hpositiveInfinity ⟨hinf, hsign⟩).elim
@@ -201,8 +201,8 @@ theorem nextDown_eq_self_or_adjacencyRank_nextDown
     (hnan : isNaN x = false) :
     nextDown x = x ∨ adjacencyRank (nextDown x) + 1 = adjacencyRank x := by
   by_cases hnegativeInfinity :
-      isInf x = true ∧ signBit x = true
-  · exact Or.inl (nextDown_of_isInf_of_signBit_eq_true
+      isInfinite x = true ∧ signBit x = true
+  · exact Or.inl (nextDown_of_isInfinite_of_signBit_eq_true
       x hnegativeInfinity.1 hnegativeInfinity.2)
   · by_cases hlowerEndpoint :
         fmt.supportsInfinity = false ∧
@@ -212,7 +212,7 @@ theorem nextDown_eq_self_or_adjacencyRank_nextDown
         nextDown_negMaxFinite_of_not_supportsInfinity
           fmt hlowerEndpoint.1]
     · have hinfinity :
-          isInf x = true → signBit x = false := by
+          isInfinite x = true → signBit x = false := by
         intro hinf
         cases hsign : signBit x
         · rfl
@@ -264,7 +264,7 @@ the extended reals. The premises are those of `adjacencyRank_nextUp`.
 theorem toEReal_lt_toEReal_nextUp
     {fmt : FloatFormat} (x : Model fmt)
     (hnan : isNaN x = false)
-    (hinfinity : isInf x = true → signBit x = true)
+    (hinfinity : isInfinite x = true → signBit x = true)
     (hmax : fmt.supportsInfinity = false → x ≠ posMaxFinite fmt) :
     toEReal x < toEReal (nextUp x) := by
   have hnext : isNaN (nextUp x) = false := by rw [isNaN_nextUp, hnan]
@@ -299,7 +299,7 @@ the extended reals. The premises are those of `adjacencyRank_nextDown`.
 theorem toEReal_nextDown_lt_toEReal
     {fmt : FloatFormat} (x : Model fmt)
     (hnan : isNaN x = false)
-    (hinfinity : isInf x = true → signBit x = false)
+    (hinfinity : isInfinite x = true → signBit x = false)
     (hmin : fmt.supportsInfinity = false → x ≠ negMaxFinite fmt) :
     toEReal (nextDown x) < toEReal x := by
   have hnext : isNaN (nextDown x) = false := by rw [isNaN_nextDown, hnan]

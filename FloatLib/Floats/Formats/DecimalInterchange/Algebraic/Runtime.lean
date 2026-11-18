@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Runtime
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Runtime
 
 /-!
 # Decimal algebraic operations with one rounding
@@ -38,7 +38,7 @@ def powerSign (negative : Bool) (exponent : Int) : Bool :=
 /-- Integer power with an exact rational intermediate and one final projection.
 A quiet NaN to power zero gives the rounded value one, and a signaling NaN raises invalid.
 Negative powers of either zero raise divide-by-zero, with the odd-power sign. -/
-def powInt (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
+def pown (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
   | .nan s t p, n =>
       if n = 0 ∧ t = false then project f mode 1 0
       else nanResult f s p t
@@ -55,7 +55,7 @@ def powInt (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
 /-- Reciprocal square root, rounding the root of the exact rational reciprocal.
 Either zero gives the correspondingly signed infinity and divide-by-zero.
 A negative nonzero input raises invalid. Positive infinity gives positive zero. -/
-def rsqrt (f : Format) (mode : RoundingMode) : Datum → Outcome
+def rSqrt (f : Format) (mode : RoundingMode) : Datum → Outcome
   | .nan s t p => nanResult f s p t
   | .infinity s =>
       if s then invalidResult else projectMagnitude f mode false 0 f.minQuantum
@@ -69,7 +69,7 @@ An infinity dominates a quiet NaN. A signaling NaN raises invalid and propagates
 the first NaN's diagnostics, as in the other decimal binary operations. -/
 def hypot (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
   | .nan s t p, y =>
-      if t || y.isSNaN then nanResult f s p true
+      if t || y.isSignaling then nanResult f s p true
       else match y with
         | .infinity _ => { value := .infinity false }
         | _ => nanResult f s p false

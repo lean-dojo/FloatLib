@@ -1,14 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-import FloatLib.Numerics.Bitwise
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized -- shake: keep
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
+
+import FloatLib.Numerics.Bitwise
 
 /-!
 # Correctness of packed field access
@@ -195,9 +196,8 @@ theorem isFinite_ofFields_ieee
     omega
   have hexponentFour := fmt.four_le_two_pow_expWidth
   cases hencoding : fmt.encoding
-  · simp [FloatFormat.maxFiniteExpField,
-      FloatFormat.Encoding.maxFiniteExponent, FloatFormat.expAllOnesNat,
-      hencoding]
+  · simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent, hencoding,
+    FloatFormat.expAllOnesNat, bne_iff_ne, ne_eq]
     omega
   · simp [FloatFormat.maxFiniteExpField, FloatFormat.maxFiniteFracField,
       FloatFormat.Encoding.maxFiniteExponent, FloatFormat.expAllOnesNat,
@@ -240,15 +240,14 @@ theorem isFinite_ofFields_normal_of_le_maxFinite
     simpa using
       Nat.pow_le_pow_right (by decide : 0 < (2 : Nat)) fmt.fracWidth_pos
   cases hencoding : fmt.encoding
-  · simp [hencoding, FloatFormat.maxFiniteExpField,
-      FloatFormat.maxFiniteFracField,
-      FloatFormat.Encoding.maxFiniteExponent, FloatFormat.expAllOnesNat,
-      FloatFormat.fracMaskNat] at hmax ⊢
+  · simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent,
+    hencoding, FloatFormat.maxFiniteFracField, FloatFormat.fracMaskNat,
+    FloatFormat.expAllOnesNat, bne_iff_ne, ne_eq] at hmax ⊢
     omega
-  · simp [hencoding, FloatFormat.maxFiniteExpField,
-      FloatFormat.maxFiniteFracField,
-      FloatFormat.Encoding.maxFiniteExponent, FloatFormat.expAllOnesNat,
-      FloatFormat.fracMaskNat] at hmax ⊢
+  · simp only [FloatFormat.maxFiniteExpField, FloatFormat.Encoding.maxFiniteExponent,
+    hencoding, FloatFormat.maxFiniteFracField, FloatFormat.fracMaskNat,
+    FloatFormat.expAllOnesNat, Bool.not_and, Bool.or_eq_true, Bool.not_eq_eq_eq_not,
+    Bool.not_true, beq_eq_false_iff_ne, ne_eq] at hmax ⊢
     omega
   · simp [hexponentPos]
   · simp
@@ -295,7 +294,7 @@ theorem toDyadic?_ofFields_of_isFinite
       have : expField (ofFields fmt sign exponent fraction) =
           fmt.expAllOnesNat := hExp.trans hexponentAll
       simp [IEEE.isFinite, this] at hfiniteIEEE
-    simp [toDyadic?, hieee, ieeeToDyadic?, IEEE.isNaN, IEEE.isInf,
+    simp [toDyadic?, hieee, ieeeToDyadic?, IEEE.isNaN, IEEE.isInfinite,
       hExp, hFrac, hSign, hnotAllOnes, FloatFormat.ieeeMinSubnormalExponent,
       FloatFormat.ieeeNormalMantissaExpOffset, FloatFormat.minSubnormalExponent,
       FloatFormat.minNormalExponent, hbias, sub_sub]

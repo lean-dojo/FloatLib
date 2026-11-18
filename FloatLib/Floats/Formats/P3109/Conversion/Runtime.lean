@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Core
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Core
 
 /-!
 # Conversion into P3109 formats
@@ -23,6 +23,8 @@ and the `SaturationMode` as their `context`. Every policy produces a P3109 datum
 succeeds for finite, infinite, and exceptional observations alike. If an input infinity or
 exceptional observation changes, `mappedSpecial` reports it, and `saturated` reports endpoint
 clamping.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2–4.7.6 and 4.9.1.
 -/
 
 @[expose] public section
@@ -35,7 +37,9 @@ namespace Conversion
 
 variable {format : Formats.P3109.Format}
 
-/-- Decode a P3109 value in the common exact-rational scalar domain. -/
+/-- Decode a P3109 value in the common exact-rational scalar domain.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.2. -/
 @[inline] def decodeRat (value : ExecFloat.P3109 format) :
     NumericalValue Rat :=
   (ExecFloat.P3109.decode value).map Numerics.Dyadic.toRat
@@ -81,6 +85,8 @@ The comparison is sign-independent and scales by binary position before cross mu
 large exponent ranges do not create an enormous temporary rational. This threshold is the least
 positive datum (the smallest subnormal when the descriptor has subnormals), not the least normal
 datum used by IEEE 754 tininess.
+
+IEEE 754-2019, clause 7.5, specifies the tininess threshold.
 -/
 @[inline] def belowMinPositive
     (format : Formats.P3109.Format) (exact : Rat) : Bool :=
@@ -153,10 +159,12 @@ The report defines no status flags, so these are FloatLib's conversion indicator
       {
         saturated := isFiniteEndpoint format projected
         mappedSpecial := mappedSpecial input projected
-        invalid := exceptional.isSNaN
+        invalid := exceptional.isSignaling
       }
 
-/-- Quantize one complete exact-rational observation according to its P3109 projection policy. -/
+/-- Quantize one complete exact-rational observation according to its P3109 projection policy.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.3–4.7.6. -/
 @[inline] def run
     (policy : Formats.P3109.ProjectionPolicy)
     (input : NumericalValue Rat) :

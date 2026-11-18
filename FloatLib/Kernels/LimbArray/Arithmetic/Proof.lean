@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.FixedWord.Core.Proof.Word
 public import FloatLib.Kernels.LimbArray.Arithmetic.Runtime
 public import FloatLib.Kernels.LimbArray.Core.Proof
-public import FloatLib.Kernels.FixedWord.Core.Proof.Word
 
 /-!
 # Limb arrays: value semantics of the arithmetic kernels
@@ -214,7 +214,6 @@ theorem toNat_addWordAt (v : LimbArray) (index : Nat) (w : UInt32)
     have hpow : radix ^ v.size = radix ^ index * radix ^ (v.size - index) := by
       rw [← pow_add, show index + (v.size - index) = v.size by omega]
     rw [hpow] at hfit
-    have hpos : 0 < radix ^ index := Nat.pow_pos (by decide)
     have : radix ^ index * (segment v index (v.size - index) + w.toNat) <
         radix ^ index * radix ^ (v.size - index) := by
       rw [Nat.mul_add, Nat.mul_comm (radix ^ index) w.toNat]
@@ -279,10 +278,6 @@ theorem toNat_addAt (v : LimbArray) (k : Nat) (w : UInt32)
   · have hzero : w = 0 := UInt32.toNat_inj.mp (by simpa using hw)
     subst hzero
     simp [addAt, addWordAt_zero]
-  have hk : k / 32 + 1 ≤ v.size := by
-    by_contra hcontra
-    exact hw (FixedWord.eq_zero_of_mul_two_pow_lt (shift := k) (width := 32 * v.size)
-      (by rw [← radix_pow]; omega) (by omega))
   unfold addAt
   set shifted : UInt64 := w.toUInt64 <<< UInt64.ofNat (k % 32) with hshifted
   have hshiftedNat : shifted.toNat = w.toNat * 2 ^ (k % 32) :=
@@ -344,7 +339,6 @@ theorem addLoop_spec (a b : LimbArray) (count index : Nat) (carry : UInt32)
   | succ count ih =>
       unfold addLoop
       set sum : UInt64 := (a.limb index).toUInt64 + (b.limb index).toUInt64 + carry.toUInt64
-        with hsum
       set out' := out.setIfInBounds index sum.toUInt32 with hout'
       have ha := uint32_toNat_lt (a.limb index)
       have hb := uint32_toNat_lt (b.limb index)
@@ -445,18 +439,8 @@ theorem subLoop_spec (a b : LimbArray) (count index : Nat) (borrow : UInt32)
         rw [UInt64.le_iff_toNat_le, hsub1, UInt32.toNat_toUInt64]
         omega
       have hborrow'Nat : borrow'.toNat = if difference.toNat < radix then 1 else 0 := by
-        rw [hborrow']
-        by_cases h : difference < 4294967296
-        · have h' : difference.toNat < radix := by
-            rw [UInt64.lt_iff_toNat_lt, h4] at h
-            exact h
-          rw [ite_eq_left h, ite_eq_left h']
-          rfl
-        · have h' : ¬ difference.toNat < radix := by
-            rw [UInt64.lt_iff_toNat_lt, h4] at h
-            exact h
-          rw [ite_eq_right h, ite_eq_right h']
-          rfl
+        simp only [hborrow', UInt64.lt_iff_toNat_lt, h4]
+        split <;> rfl
       have hstep : (a.limb index).toNat + radix * borrow'.toNat =
           difference.toUInt32.toNat + (b.limb index).toNat + borrow.toNat := by
         rw [uint64_low_toNat, hborrow'Nat, hdiffNat]
@@ -552,7 +536,6 @@ theorem mulRow_spec (b : LimbArray) (m : UInt32) (offset count j : Nat) (carry :
       unfold mulRow
       set term : UInt64 :=
         m.toUInt64 * (b.limb j).toUInt64 + (out.getD (offset + j) 0).toUInt64 + carry.toUInt64
-        with hterm
       set out' := out.setIfInBounds (offset + j) term.toUInt32 with hout'
       have hm := uint32_toNat_lt m
       have hb := uint32_toNat_lt (b.limb j)

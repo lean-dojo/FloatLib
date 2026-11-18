@@ -65,27 +65,27 @@
     "headings": {
       "available-kernels": {
         "slug": "performance",
-        "heading": "what-can-the-planner-choose-from"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "changing-the-workload-without-changing-the-mathematics": {
         "slug": "performance",
-        "heading": "how-to-change-the-expected-workload"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "choosing-a-backend": {
         "slug": "performance",
-        "heading": "how-to-steer-the-planner"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "choosing-and-caching-an-implementation": {
         "slug": "performance",
-        "heading": "how-an-ordinary-addition-reaches-its-kernel"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "choosing-the-limb-carrier": {
         "slug": "performance",
-        "heading": "how-to-store-wide-numbers-as-limbs"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "estimating-computation-and-memory-costs": {
         "slug": "performance",
-        "heading": "how-does-the-planner-choose"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "figure-ch09-backend-ladder": {
         "slug": "performance",
@@ -93,39 +93,39 @@
       },
       "following-a-public-arithmetic-call": {
         "slug": "performance",
-        "heading": "how-an-ordinary-addition-reaches-its-kernel"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "how-the-planner-chooses": {
         "slug": "performance",
-        "heading": "how-does-the-planner-choose"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "implementation-reference": {
         "slug": "performance",
-        "heading": "how-to-check-the-planners-work"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "inspecting-the-selected-backend": {
         "slug": "performance",
-        "heading": "how-to-see-which-kernel-runs"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "setting-the-expected-workload": {
         "slug": "performance",
-        "heading": "how-to-change-the-expected-workload"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "using-the-host-fpu": {
         "slug": "performance",
-        "heading": "why-isnt-the-host-fpu-a-candidate"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "what-can-we-choose": {
         "slug": "performance",
-        "heading": "how-to-steer-the-planner"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "which-formats-a-kernel-supports": {
         "slug": "performance",
-        "heading": "which-kernels-can-your-format-use"
+        "heading": "how-the-planner-selects-a-kernel"
       },
       "why-different-widths-use-different-kernels": {
         "slug": "performance",
-        "heading": "what-can-the-planner-choose-from"
+        "heading": "how-the-planner-selects-a-kernel"
       }
     }
   },
@@ -226,6 +226,18 @@
         "slug": "posits-and-the-quire",
         "heading": "how-to-compute-sines-cosines-and-tangents"
       },
+      "figure-ch11-conformance-evidence": {
+        "slug": "external-validation",
+        "heading": "what-did-we-compare-floatlib-against"
+      },
+      "figure-ch11-conformance-widths": {
+        "slug": "external-validation",
+        "heading": "why-did-softposit-disagree-with-floatlib"
+      },
+      "figure-ch11-universal-preflight": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-we-compare-posits-with-universal-and-softposit"
+      },
       "floatspec-and-flocq-style-arithmetic": {
         "slug": "external-validation",
         "heading": "how-floatlib-compares-with-floatspec"
@@ -318,13 +330,17 @@
         "slug": "external-validation",
         "heading": "why-does-a-proved-library-need-testing"
       },
+      "why-are-some-posit-timings-missing": {
+        "slug": "posits-and-the-quire",
+        "heading": "how-we-compare-posits-with-universal-and-softposit"
+      },
       "why-logarithms-near-1-are-difficult": {
         "slug": "external-validation",
         "heading": "why-are-logarithms-near-1-hard"
       },
       "why-some-performance-markers-are-missing": {
-        "slug": "external-validation",
-        "heading": "why-are-some-posit-timings-missing"
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
       }
     }
   },
@@ -354,6 +370,10 @@
       "fixed-point-operators-and-literals": {
         "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
         "heading": "how-to-write-sums-and-decimal-literals"
+      },
+      "how-mx-formats-bound-the-scale-and-the-elements": {
+        "slug": "low-precision-formats-for-machine-learning",
+        "heading": "what-is-a-block-with-a-shared-scale"
       },
       "logarithmic-numbers-multiplication-becomes-addition": {
         "slug": "fixed-point-logarithmic-codebook-and-block-scaled",
@@ -605,27 +625,27 @@
     "headings": {
       "bounded-alignment-in-generic-addition": {
         "slug": "performance",
-        "heading": "how-to-round-by-reading-three-bits"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "capacity-bounds-and-backend-dispatch": {
         "slug": "performance",
-        "heading": "what-are-the-capacity-bounds"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "capacity-bounds-and-compiler-assumptions": {
         "slug": "performance",
-        "heading": "what-are-the-capacity-bounds"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "checking-a-division-result": {
         "slug": "performance",
-        "heading": "how-to-check-a-division-answer-instead-of-trusting-it"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "compiler-replacements-with-csimp": {
-        "slug": "performance",
-        "heading": "how-slow-definitions-get-swapped-for-fast-ones"
+        "slug": "proof-by-computation",
+        "heading": "what-about-compiled-code"
       },
       "division-and-square-root-from-limb-storage": {
         "slug": "performance",
-        "heading": "how-limb-arrays-hold-wider-numbers"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "figure-ch08-limb-arrays": {
         "slug": "performance",
@@ -636,48 +656,48 @@
         "heading": "figure-ch08-restoring-division"
       },
       "finding-the-kernel-implementations": {
-        "slug": "performance",
-        "heading": "how-slow-definitions-get-swapped-for-fast-ones"
+        "slug": "proof-by-computation",
+        "heading": "what-about-compiled-code"
       },
       "guard-bits-and-sticky-bits": {
         "slug": "performance",
-        "heading": "how-to-round-by-reading-three-bits"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "increasing-precision-for-arbitrary-precision-square-root": {
         "slug": "performance",
-        "heading": "how-to-take-a-square-root-two-bits-at-a-time"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "kernels-fixed-word-algorithms-and-limb-arrays": {
         "slug": "performance",
-        "heading": "how-limb-arrays-hold-wider-numbers"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "limb-arrays-32-bit-limbs-updated-in-place": {
         "slug": "performance",
-        "heading": "how-limb-arrays-hold-wider-numbers"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "one-word-two-words-four-words": {
         "slug": "performance",
-        "heading": "how-to-multiply-in-machine-words"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "reading-a-compiler-certificate": {
-        "slug": "performance",
-        "heading": "how-slow-definitions-get-swapped-for-fast-ones"
+        "slug": "proof-by-computation",
+        "heading": "what-about-compiled-code"
       },
       "restoring-division": {
         "slug": "performance",
-        "heading": "how-to-divide-one-bit-at-a-time"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "restoring-square-root": {
         "slug": "performance",
-        "heading": "how-to-take-a-square-root-two-bits-at-a-time"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "reusing-a-kernel-proof-across-formats": {
         "slug": "performance",
-        "heading": "how-to-check-a-division-answer-instead-of-trusting-it"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "what-we-mean-by-a-kernel": {
         "slug": "performance",
-        "heading": "what-is-inside-a-kernel"
+        "heading": "division-rounding-and-limb-arithmetic"
       }
     }
   },
@@ -844,13 +864,29 @@
         "slug": "lean-native-floats",
         "heading": "what-is-proved-about-leans-arithmetic"
       },
+      "binary32": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
+      },
+      "binary64": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
+      },
       "both-implementations-lose-associativity": {
         "slug": "lean-native-floats",
         "heading": "do-lean-and-floatlib-give-the-same-answers"
       },
       "comparing-relative-times": {
         "slug": "performance",
-        "heading": "how-to-read-a-time-ratio"
+        "heading": "public-binary-operations"
+      },
+      "comparing-with-leans-native-floats": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
+      },
+      "computing-in-the-kernel": {
+        "slug": "proof-by-computation",
+        "heading": "computing-in-the-kernel"
       },
       "converting-to-native-floats-changes-nan-payloads": {
         "slug": "lean-native-floats",
@@ -858,15 +894,191 @@
       },
       "correctness-comparisons-without-timings": {
         "slug": "performance",
-        "heading": "which-comparisons-check-answers-but-not-speed"
+        "heading": "independent-benchmark-suites"
+      },
+      "exact-arithmetic-in-the-kernel": {
+        "slug": "proof-by-computation",
+        "heading": "exact-arithmetic-in-the-kernel"
+      },
+      "figure-ch10-external-ratios": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
+      },
+      "figure-ch17-host-vs-software": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
+      },
+      "figure-format-comparison-div-sqrt": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
+      },
+      "figure-format-comparison-low-width": {
+        "slug": "performance",
+        "heading": "figure-public-binary-low-precision"
+      },
+      "figure-format-comparison-main": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
+      },
+      "figure-format-comparison-mul-fma": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
+      },
+      "figure-kernel-all-pairs": {
+        "slug": "proof-by-computation",
+        "heading": "figure-kernel-all-pairs"
+      },
+      "figure-kernel-binary": {
+        "slug": "proof-by-computation",
+        "heading": "figure-kernel-binary"
+      },
+      "figure-kernel-checkers": {
+        "slug": "proof-by-computation",
+        "heading": "figure-kernel-checkers"
+      },
+      "figure-kernel-exact-library": {
+        "slug": "proof-by-computation",
+        "heading": "which-type-should-a-checker-use"
+      },
+      "figure-kernel-exact-native": {
+        "slug": "proof-by-computation",
+        "heading": "which-type-should-a-checker-use"
+      },
+      "figure-kernel-exact-operations": {
+        "slug": "proof-by-computation",
+        "heading": "figure-kernel-exact-operations"
+      },
+      "figure-kernel-extras": {
+        "slug": "proof-by-computation",
+        "heading": "how-much-faster-is-it"
+      },
+      "figure-kernel-families": {
+        "slug": "proof-by-computation",
+        "heading": "how-much-faster-is-it"
+      },
+      "figure-kernel-ieee2019": {
+        "slug": "proof-by-computation",
+        "heading": "how-much-faster-is-it"
+      },
+      "figure-kernel-loops": {
+        "slug": "proof-by-computation",
+        "heading": "figure-kernel-loops"
+      },
+      "figure-kernel-operands": {
+        "slug": "proof-by-computation",
+        "heading": "how-much-faster-is-it"
+      },
+      "figure-kernel-vs-coq": {
+        "slug": "proof-by-computation",
+        "heading": "figure-kernel-vs-coq"
       },
       "formats-rounding-directions-and-status": {
         "slug": "lean-native-floats",
         "heading": "what-does-floatlib-add-to-float-and-float32"
       },
+      "host-arithmetic-and-software": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
+      },
+      "how-an-ordinary-addition-reaches-its-kernel": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-does-floatlib-compare-with-other-proved-libraries": {
+        "slug": "performance",
+        "heading": "comparisons-with-other-libraries"
+      },
+      "how-does-floatlib-compare-with-softfloat-mpfr-and-native-c": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
+      },
+      "how-does-floatlib-pick-the-code-that-runs": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-does-the-planner-choose": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-fast-are-the-calls-you-write-yourself": {
+        "slug": "performance",
+        "heading": "public-binary-operations"
+      },
+      "how-fast-is-floatlib": {
+        "slug": "performance",
+        "heading": "public-binary-operations"
+      },
+      "how-limb-arrays-hold-wider-numbers": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-slow-definitions-get-swapped-for-fast-ones": {
+        "slug": "proof-by-computation",
+        "heading": "what-about-compiled-code"
+      },
+      "how-to-change-the-expected-workload": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-to-check-a-division-answer-instead-of-trusting-it": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-to-check-the-planners-work": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-to-divide-one-bit-at-a-time": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-to-multiply-in-machine-words": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-to-read-a-time-ratio": {
+        "slug": "performance",
+        "heading": "public-binary-operations"
+      },
+      "how-to-reproduce-the-measurements": {
+        "slug": "performance",
+        "heading": "reproducing-the-measurements"
+      },
+      "how-to-round-by-reading-three-bits": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-to-see-which-kernel-runs": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-to-steer-the-planner": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "how-to-store-wide-numbers-as-limbs": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-to-take-a-square-root-two-bits-at-a-time": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "how-we-measured-the-nine-trial-comparison": {
+        "slug": "performance",
+        "heading": "reproducing-the-measurements"
+      },
+      "how-we-ran-the-external-implementations": {
+        "slug": "performance",
+        "heading": "reproducing-the-measurements"
+      },
       "integer-conversions-in-lean-434": {
         "slug": "lean-native-floats",
         "heading": "how-to-convert-integers-to-floats-and-back"
+      },
+      "is-the-timed-code-the-proved-code": {
+        "slug": "performance",
+        "heading": "public-binary-operations"
       },
       "leans-model-and-its-compiled-operations": {
         "slug": "lean-native-floats",
@@ -878,11 +1090,19 @@
       },
       "method-for-the-nine-trial-comparison": {
         "slug": "performance",
-        "heading": "how-we-measured-the-nine-trial-comparison"
+        "heading": "reproducing-the-measurements"
+      },
+      "more-views-of-the-nine-trial-comparison": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
       },
       "mpfr-matching-precision-and-exponent-range": {
         "slug": "performance",
-        "heading": "how-we-ran-the-external-implementations"
+        "heading": "reproducing-the-measurements"
+      },
+      "multiplication-fused-operations-and-wide-arithmetic": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
       },
       "nan-payloads-change-at-the-native-conversion-boundary": {
         "slug": "lean-native-floats",
@@ -896,9 +1116,17 @@
         "slug": "performance",
         "heading": "how-does-floatlib-compare-with-flops"
       },
+      "overview-across-encoded-widths": {
+        "slug": "performance",
+        "heading": "figure-compiled-precision"
+      },
       "p3109-arithmetic-with-flops": {
         "slug": "performance",
         "heading": "how-does-floatlib-compare-with-flops"
+      },
+      "posits": {
+        "slug": "performance",
+        "heading": "host-arithmetic-as-a-reference"
       },
       "proofs-relating-floatlib-to-leans-float-model": {
         "slug": "lean-native-floats",
@@ -906,15 +1134,15 @@
       },
       "public-binary-arithmetic": {
         "slug": "performance",
-        "heading": "how-fast-are-the-calls-you-write-yourself"
+        "heading": "public-binary-operations"
       },
       "reproducing-the-measurements": {
         "slug": "performance",
-        "heading": "how-to-reproduce-the-measurements"
+        "heading": "reproducing-the-measurements"
       },
       "running-the-code-we-proved": {
         "slug": "performance",
-        "heading": "is-the-timed-code-the-proved-code"
+        "heading": "public-binary-operations"
       },
       "scalar-conversions-with-tensorlib": {
         "slug": "performance",
@@ -922,19 +1150,19 @@
       },
       "softfloat-native-c-and-python": {
         "slug": "performance",
-        "heading": "how-we-ran-the-external-implementations"
+        "heading": "reproducing-the-measurements"
       },
       "speed-work-in-october-2026": {
         "slug": "performance",
-        "heading": "what-made-floatlib-faster-in-october-2026"
+        "heading": "division-rounding-and-limb-arithmetic"
       },
       "the-flocq-program-we-timed": {
         "slug": "performance",
-        "heading": "which-flocq-program-did-we-time"
+        "heading": "how-does-floatlib-compare-with-flocq"
       },
       "the-nine-trial-software-comparison": {
         "slug": "performance",
-        "heading": "how-does-floatlib-compare-with-softfloat-mpfr-and-native-c"
+        "heading": "host-arithmetic-as-a-reference"
       },
       "the-proved-conversion-and-arithmetic-bridges": {
         "slug": "lean-native-floats",
@@ -944,21 +1172,69 @@
         "slug": "lean-native-floats",
         "heading": "do-lean-and-floatlib-give-the-same-answers"
       },
+      "timing-results": {
+        "slug": "performance",
+        "heading": "public-binary-operations"
+      },
       "universal-checking-the-posit-inputs-before-timing": {
         "slug": "performance",
-        "heading": "how-we-ran-the-external-implementations"
+        "heading": "reproducing-the-measurements"
+      },
+      "what-about-compiled-code": {
+        "slug": "proof-by-computation",
+        "heading": "what-about-compiled-code"
+      },
+      "what-are-the-capacity-bounds": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "what-can-the-planner-choose-from": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "what-is-inside-a-kernel": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "what-made-floatlib-faster-in-october-2026": {
+        "slug": "performance",
+        "heading": "division-rounding-and-limb-arithmetic"
+      },
+      "what-one-timed-operation-includes": {
+        "slug": "performance",
+        "heading": "reproducing-the-measurements"
+      },
+      "which-comparisons-check-answers-but-not-speed": {
+        "slug": "performance",
+        "heading": "independent-benchmark-suites"
+      },
+      "which-flocq-program-did-we-time": {
+        "slug": "performance",
+        "heading": "how-does-floatlib-compare-with-flocq"
+      },
+      "which-kernels-can-your-format-use": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
+      },
+      "which-libraries-did-we-time": {
+        "slug": "performance",
+        "heading": "comparisons-with-other-libraries"
       },
       "why-a-wider-format-can-be-faster": {
         "slug": "performance",
-        "heading": "why-can-a-wider-format-be-faster"
+        "heading": "public-binary-operations"
       },
-      "timing-results": {
+      "why-can-a-bad-estimate-only-cost-speed": {
         "slug": "performance",
-        "heading": "how-fast-are-the-calls-you-write-yourself"
+        "heading": "how-the-planner-selects-a-kernel"
       },
-      "comparing-with-leans-native-floats": {
+      "why-can-a-wider-format-be-faster": {
         "slug": "performance",
-        "heading": "how-does-floatlib-compare-with-softfloat-mpfr-and-native-c"
+        "heading": "public-binary-operations"
+      },
+      "why-isnt-the-host-fpu-a-candidate": {
+        "slug": "performance",
+        "heading": "how-the-planner-selects-a-kernel"
       }
     }
   },

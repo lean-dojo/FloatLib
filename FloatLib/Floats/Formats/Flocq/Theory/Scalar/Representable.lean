@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -30,7 +30,7 @@ variable [ValidExp fexp] [ValidRnd rnd]
 /-- The smart constructor rounds its input onto the declared format grid. -/
 theorem isRepresentable_ofReal (x : ℝ) :
     IsRepresentable (ofReal (β := β) (fexp := fexp) (rnd := rnd) x) := by
-  exact generic_format_round rnd x
+  exact genericRepresentable_round rnd x
 
 /-- Negation through the smart constructor remains on the declared format grid. -/
 @[simp] theorem isRepresentable_neg (a : NF β fexp rnd) : IsRepresentable (-a) := by

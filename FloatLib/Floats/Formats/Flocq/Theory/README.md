@@ -9,7 +9,7 @@ application modules. Finite-result bridge theorems in
 `Formats/BinaryInterchange/` connect it to executable binary arithmetic, and
 `Flocq/Calculation/` builds brackets and truncation on top of it.
 
-Its main definitions are `bpow`, `genericFormat`, `ulp`, and `round`. You can import individual
+Its main definitions are `bpow`, `GenericRepresentable`, `ulp`, and `round`. You can import individual
 modules to keep dependencies small, or `FloatLib.Floats.Formats.Flocq.Theory` for the full theory.
 
 | Mathematical role | Definitions |

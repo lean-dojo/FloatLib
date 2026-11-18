@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -56,8 +56,9 @@ theorem le_projectMagnitude_up_of_toRat?_eq_some (f : Format) (s : Bool)
     exact hle
   · have hq' := lt_of_not_ge hq
     have hlt := maxFinite_lt_of_roundedPair_overflow f .up s hx hq'
-    cases s <;> simp [projectMagnitude_eq, hq', RoundingMode.overflowToInfinity, Format.maxFinite,
-      Datum.toRat?_eq] at hv
+    cases s <;> simp only [projectMagnitude_eq, hq', ↓reduceIte, RoundingMode.overflowToInfinity,
+      Bool.not_false, Datum.toRat?_eq, reduceCtorEq, Bool.not_true, Bool.false_eq_true,
+      Format.maxFinite, neg_mul, one_mul, Option.some.injEq] at hv
     rw [← hv]
     simpa using hlt.le
 
@@ -75,8 +76,9 @@ theorem projectMagnitude_down_le_of_toRat?_eq_some (f : Format) (s : Bool)
     exact hle
   · have hq' := lt_of_not_ge hq
     have hlt := maxFinite_lt_of_roundedPair_overflow f .down s hx hq'
-    cases s <;> simp [projectMagnitude_eq, hq', RoundingMode.overflowToInfinity, Format.maxFinite,
-      Datum.toRat?_eq] at hv
+    cases s <;> simp only [projectMagnitude_eq, hq', ↓reduceIte, RoundingMode.overflowToInfinity,
+      Bool.false_eq_true, Format.maxFinite, Datum.toRat?_eq, one_mul, Option.some.injEq,
+      reduceCtorEq] at hv
     rw [← hv]
     simpa using hlt.le
 

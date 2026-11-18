@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,9 +9,10 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Predicates
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
 public import FloatLib.Numerics.MixedError.Basic
-public import Mathlib.Algebra.BigOperators.Fin
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Mixed error of binary arithmetic
@@ -386,7 +387,8 @@ theorem mixedError_toReal_foldl_add_step (hfmt : fmt.isIEEE = true)
       ((1 + unitRoundoffAt fmt) ^ (n + 1) * (d + e)) := by
   have hu := (unitRoundoffAt_pos fmt).le
   have he := ey.a_nonneg
-  have hpow : 1 ≤ (1 + unitRoundoffAt fmt) ^ n := one_le_pow₀ (by linarith)
+  have hpow : 1 ≤ (1 + unitRoundoffAt fmt) ^ n :=
+    one_le_pow₀ (le_add_of_nonneg_right (unitRoundoffAt_pos fmt).le)
   have hR : r ≤ (1 + unitRoundoffAt fmt) ^ n * (1 + R) - 1 := by
     nlinarith [ex.r_nonneg, ey.r_nonneg]
   refine (mixedError_toReal_add_of_mul_nonneg hfmt hout ex ey
@@ -526,14 +528,15 @@ theorem mixedError_toReal_foldl_add_absolute_step (hfmt : fmt.isIEEE = true)
       (((1 + unitRoundoffAt fmt) ^ (n + 1) - 1) * (A + |y₀|) +
         (1 + unitRoundoffAt fmt) ^ (n + 1) * (B + (r * |y₀| + e))) := by
   have hu := (unitRoundoffAt_pos fmt).le
-  have hpow : 1 ≤ (1 + unitRoundoffAt fmt) ^ n := one_le_pow₀ (by linarith)
+  have hpow : 1 ≤ (1 + unitRoundoffAt fmt) ^ n :=
+    one_le_pow₀ (le_add_of_nonneg_right (unitRoundoffAt_pos fmt).le)
   have he : 0 ≤ r * |y₀| + e := add_nonneg (mul_nonneg ey.r_nonneg (abs_nonneg _)) ey.a_nonneg
   have hgap : 0 ≤ (1 + unitRoundoffAt fmt) * ((1 + unitRoundoffAt fmt) ^ n - 1) *
       (|y₀| + (r * |y₀| + e)) := by
     have := sub_nonneg.2 hpow
     positivity
   refine ((mixedError_toReal_add hfmt hout ex ey).absolute_of_abs_le
-    ((abs_add_le x₀ y₀).trans (add_le_add hA le_rfl))).mono le_rfl ?_
+    (Numerics.Backward.abs_add_le_add hA le_rfl)).mono le_rfl ?_
   rw [pow_succ]
   nlinarith
 
@@ -560,7 +563,7 @@ private theorem mixedError_toReal_foldl_add_absolute_pow_add (hfmt : fmt.isIEEE 
     have hnext : isFinite (add seed (term i)) = true := hfinite.2 _ (by cases l <;> simp)
     have := ih hterm.2 eterm.2 hfinite.2
       (mixedError_toReal_foldl_add_absolute_step hfmt hnext eseed hA eterm.1)
-      ((abs_add_le _ _).trans (add_le_add hA le_rfl))
+      (Numerics.Backward.abs_add_le_add hA le_rfl)
     simp only [List.foldl_cons, List.map_cons, List.sum_cons, List.length_cons]
     rwa [show n + (l.length + 1) = n + 1 + l.length by omega, ← add_assoc seed₀, ← add_assoc A,
       ← add_assoc B]

@@ -1,0 +1,146 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
+public import FloatLib.Kernels.FixedWord.Core.Runtime
+
+/-!
+# Two-word pair-kernel storage runtime
+
+Here are the structural eligibility predicate and the field helpers, the storage interface that the
+fixed-limb arithmetic kernels share. A value of an eligible format is split into a high and a low
+`UInt64`. Its low word is all fraction, and the high word holds the remaining `fracWidth - 64`
+fraction bits, then the exponent field, then the sign. Every field position is derived from the
+descriptor, so one kernel serves every eligible layout, with 68 to 128 encoded bits and a fraction
+wider than one word. `Core.Proof` proves the correspondence with the width-generic carrier.
+
+Two words matter for speed. When we measured binary128 stored as one 128-bit natural number, about
+95% of each operation went into splitting and joining GMP numbers: a split took 196 ns and a join
+407 ns, against 18 ns for the 113-bit multiply itself.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativePair
+
+/--
+Structural capability required by the two-word kernels.
+
+The conventional IEEE encoding fixes the binary semantics shared with the generic kernels,
+including the default bias. `64 < fracWidth` fills the low word with fraction bits and puts the
+sign, the exponent field, and the upper fraction bits in the high word, so only the fraction spans
+both words. The same bound keeps every four-limb product-rounding shift strictly above one word.
+`bitWidth ≤ 128` bounds the storage to two words.
+-/
+def Eligible (fmt : FloatFormat) : Prop :=
+  fmt.isIEEE = true ∧ 64 < fmt.fracWidth ∧ fmt.bitWidth ≤ 128
+
+/--
+Decide eligibility from the descriptor fields.
+
+Written as an inline `if`, the decision simplifies at closed-format call sites.
+-/
+@[inline] instance (fmt : FloatFormat) : Decidable (Eligible fmt) :=
+  if h : fmt.isIEEE = true ∧ 64 < fmt.fracWidth ∧ fmt.bitWidth ≤ 128 then isTrue h else isFalse h
+
+/-- Number of fraction bits stored in the high word. -/
+@[inline] def fracHighWidth (fmt : FloatFormat) : UInt64 :=
+  UInt64.ofNat (fmt.fracWidth - 64)
+
+/-- Mask selecting the fraction bits stored in the high word. -/
+@[inline] def fracHighMask (fmt : FloatFormat) : UInt64 :=
+  ((1 : UInt64) <<< fracHighWidth fmt) - 1
+
+/-- The all-ones exponent field as a native word. -/
+@[inline] def expAllOnes (fmt : FloatFormat) : UInt64 :=
+  ((1 : UInt64) <<< UInt64.ofNat fmt.expWidth) - 1
+
+/-- The implicit leading significand bit `2^fracWidth`, in high-word coordinates. -/
+@[inline] def implicitBit (fmt : FloatFormat) : UInt64 :=
+  (1 : UInt64) <<< fracHighWidth fmt
+
+/-- The sign bit `2^(expWidth + fracWidth)`, in high-word coordinates. -/
+@[inline] def signMask (fmt : FloatFormat) : UInt64 :=
+  (1 : UInt64) <<< UInt64.ofNat (fmt.expWidth + fmt.fracWidth - 64)
+
+/-- Split a stored value into its high and low native words. -/
+@[inline] def toWords {fmt : FloatFormat} (x : Model fmt) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  FloatLib.Numerics.FixedWord.UInt128.ofNat x.toNatBits
+
+/-- Join two native words into a stored value, keeping the low `bitWidth` bits. -/
+@[inline] def ofWords (fmt : FloatFormat)
+    (words : FloatLib.Numerics.FixedWord.UInt128) : Model fmt :=
+  Model.ofBits ((words.hi.toBitVec ++ words.lo.toBitVec).setWidth fmt.bitWidth)
+
+/-- Extract the sign from the high storage word. -/
+@[inline] def signBit (fmt : FloatFormat) (high : UInt64) : Bool :=
+  (high &&& signMask fmt) != 0
+
+/-- Extract the biased exponent field from the high storage word. -/
+@[inline] def expField (fmt : FloatFormat) (high : UInt64) : UInt64 :=
+  (high >>> fracHighWidth fmt) &&& expAllOnes fmt
+
+/-- Extract the fraction bits held in the high storage word. -/
+@[inline] def fracHigh (fmt : FloatFormat) (high : UInt64) : UInt64 :=
+  high &&& fracHighMask fmt
+
+/-- Add the implicit bit to the two fraction limbs of a normal value. -/
+@[inline] def normalMantissa (fmt : FloatFormat) (high low : UInt64) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  ⟨high ||| implicitBit fmt, low⟩
+
+/-- The two-limb significand `2^fracWidth`, the smallest normal significand. -/
+@[inline] def implicitMantissa (fmt : FloatFormat) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  ⟨implicitBit fmt, 0⟩
+
+/-- The two-limb value `2^(fracWidth + 1)` produced when nearest-even rounding carries out. -/
+@[inline] def carryMantissa (fmt : FloatFormat) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  ⟨implicitBit fmt <<< 1, 0⟩
+
+/-- Whether a rounded two-limb significand carried out to `2^(fracWidth + 1)`. -/
+@[inline] def isCarry (fmt : FloatFormat)
+    (rounded : FloatLib.Numerics.FixedWord.UInt128) : Bool :=
+  rounded.hi == implicitBit fmt <<< 1 && rounded.lo == 0
+
+/-- Replace a carried-out significand by `2^fracWidth`, leaving other significands unchanged. -/
+@[inline] def normalizeCarry (fmt : FloatFormat) (carry : Bool)
+    (rounded : FloatLib.Numerics.FixedWord.UInt128) :
+    FloatLib.Numerics.FixedWord.UInt128 :=
+  if carry then implicitMantissa fmt else rounded
+
+/--
+The two storage words of a finite normal result with the given sign, exponent, and significand.
+
+Packing masks the exponent to the exponent field, and the high fraction mask discards the
+significand's implicit bit. Two-word carriers store these words as they are.
+-/
+@[inline] def packNormalWords (fmt : FloatFormat)
+    (sign : Bool) (exponent : UInt64)
+    (mantissa : FloatLib.Numerics.FixedWord.UInt128) : FloatLib.Numerics.FixedWord.UInt128 :=
+  let high :=
+    (if sign then signMask fmt else 0) |||
+      ((exponent &&& expAllOnes fmt) <<< fracHighWidth fmt) |||
+      (mantissa.hi &&& fracHighMask fmt)
+  { hi := high, lo := mantissa.lo }
+
+/--
+Pack a finite normal result from its native exponent and significand words.
+
+The result is meaningful when the exponent fits the field and the significand is normal, the
+contract that `packNormal_eq_ofFields` in `Core.Proof` states.
+-/
+@[inline] def packNormal (fmt : FloatFormat)
+    (sign : Bool) (exponent : UInt64)
+    (mantissa : FloatLib.Numerics.FixedWord.UInt128) : Model fmt :=
+  ofWords fmt (packNormalWords fmt sign exponent mantissa)
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.NativePair

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -111,5 +111,23 @@ theorem transcode_transcode (source target : Encoding) (f : Format)
     simp
   · rw [transcode, ite_eq_right (Ne.symm h), decode_transcode, ite_eq_right h]
     rfl
+
+/--
+Decoding the decimal encoding of a datum gives the datum back, with its sign, its quantum
+exponent and the metadata of a NaN: IEEE 754-2019 §5.5.2 `decodeDecimal` after `encodeDecimal`.
+-/
+theorem decodeDecimal_of_encodeDecimal_eq_some (f : Format) (datum : Datum)
+    (word : BitVec f.bitWidth) (h : encodeDecimal f datum = some word) :
+    decodeDecimal f word = datum :=
+  Encoding.dpd.decode_of_encode?_eq_some f datum word h
+
+/--
+Decoding the binary encoding of a datum gives the datum back, with its sign, its quantum
+exponent and the metadata of a NaN: IEEE 754-2019 §5.5.2 `decodeBinary` after `encodeBinary`.
+-/
+theorem decodeBinary_of_encodeBinary_eq_some (f : Format) (datum : Datum)
+    (word : BitVec f.bitWidth) (h : encodeBinary f datum = some word) :
+    decodeBinary f word = datum :=
+  Encoding.bid.decode_of_encode?_eq_some f datum word h
 
 end FloatLib.Floats.Formats.DecimalInterchange

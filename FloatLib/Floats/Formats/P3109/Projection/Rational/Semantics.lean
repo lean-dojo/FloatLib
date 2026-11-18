@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Projection.Rational.Selection
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
+public import FloatLib.Floats.Formats.P3109.Projection.Rational.Selection
 public import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
@@ -19,7 +19,7 @@ nothing approximated. The resulting formula is the same for every rounding mode 
 stochastic word. Binary exponent bounds pin down the selected logarithm, so no real-valued
 computation is needed to approximate it.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
+Reference: P3109 unapproved interim report v4.1, 14 September 2026, §4.7.4.
 -/
 
 @[expose] public section
@@ -95,7 +95,8 @@ def codeEven (precision bias : Nat) (quantum : Int) (lower : Nat) : Bool :=
 def roundedInteger (mode : RoundingMode) (negative : Bool) (parity : Nat → Bool)
     (scaled : Rat) : Nat :=
   let lower := ⌊scaled⌋₊
-  if roundAway mode negative (parity lower) (scaled - lower) then lower + 1 else lower
+  if RoundingFormula.roundAway mode negative (parity lower) (scaled - lower) then lower + 1 else
+    lower
 
 /-- Precision rounding at a specified quantum, expressed by mathematical floor and fraction. -/
 def roundAt (mode : RoundingMode) (quantum : Int) (parity : Nat → Bool) (value : Rat) : Rat :=
@@ -169,7 +170,7 @@ theorem fraction_scaledMagnitude (value : Rat) (quantum : Int) :
     value.num.natAbs value.den (-quantum) value.den_ne_zero
   rw [floor_scaledMagnitude, scaledMagnitude_eq,
     div_eq_quotient_add_fraction _ _ (Nat.pos_of_ne_zero hd)]
-  ring
+  exact add_sub_cancel_left _ _
 
 /-- All runtime rounding modes select the report's integer candidate at the given quantum. -/
 theorem select_eq_roundedInteger (mode : RoundingMode) (value : Rat) (quantum : Int)

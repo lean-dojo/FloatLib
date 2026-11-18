@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -136,15 +136,15 @@ private theorem laurent_mirror_cons (a₀ : ℤ) (as : List ℤ) (odd : Bool) (u
     simp only [smul, neg_mul, one_mul, Int.cast_neg, Int.cast_one] at h
     exact h
   cases odd
-  · show laurent (as.reverse ++ (2 * a₀) :: as) as.length z = _
+  · change laurent (as.reverse ++ (2 * a₀) :: as) as.length z = _
     rw [laurent_append hz0, List.length_reverse, sub_self, hrev _ _ rfl, hcons, Bool.cond_false]
     push_cast
-    ring
-  · show laurent ((as.map (- ·)).reverse ++ 0 :: as) as.length z = _
+    ac_rfl
+  · change laurent ((as.map (- ·)).reverse ++ 0 :: as) as.length z = _
     rw [laurent_append hz0, List.length_reverse, List.length_map, sub_self,
       hrev _ _ (by rw [List.length_map]), hcons, hneg, map_neg, Bool.cond_true]
     push_cast
-    ring
+    ac_rfl
 
 private theorem sum_succ (f : ℕ → ℝ) (a₀ : ℤ) (as : List ℤ) :
     ∑ k ∈ range (as.length + 1), ((a₀ :: as).getD k 0 : ℝ) * f k =
@@ -153,7 +153,7 @@ private theorem sum_succ (f : ℕ → ℝ) (a₀ : ℤ) (as : List ℤ) :
   simp
 
 private theorem shift_cast (j : ℕ) : (((j : ℤ) - -1 : ℤ) : ℝ) = (j : ℝ) + 1 := by
-  push_cast; ring
+  simp
 
 /-- Twice a cosine polynomial is the mirrored row centred at lane `n - 1`. -/
 theorem laurent_mirror (a : List ℤ) (u : ℝ) :
@@ -225,7 +225,7 @@ private theorem laurent_shift_unfold {w g k n h : ℕ} (hh : guard w g k h = tru
     laurent (entries w (2 * n - 1) (ofInt w (2 * n - 1) (shift w (n - k) (unfold w k h odd))))
         (n - 1 : ℕ) z =
       laurent (mirror (entries w k h) odd) ((entries w k h).length - 1 : ℕ) z := by
-  obtain ⟨hgw, hlt, hb⟩ := guard_sound hh
+  obtain ⟨_, hlt, hb⟩ := guard_sound hh
   have hw : 1 ≤ w := by omega
   have hfit : ∀ x ∈ List.replicate (n - k) 0 ++ mirror (entries w k h) odd, Fits w x := by
     intro x hx
@@ -271,7 +271,7 @@ theorem trig_sosCheck {w g gt gh na nb n m m' kH A B p q : ℕ} {kT kc : ℤ}
   rw [e, ofReal_re] at h
   have : (0 : ℝ) ≤ kH * ‖laurent (entries w m p) 0 (exp (u * I)) +
       I * laurent (entries w m' q) 0 (exp (u * I))‖ ^ 2 := by positivity
-  linarith
+  exact this.trans h
 
 /-! ### Power series on an interval -/
 
@@ -285,7 +285,7 @@ private theorem laurent_affine (M R : ℤ) (u : ℝ) :
   rw [show [R, 2 * M, R] = mirror [M, R] from rfl]
   rw [h]
   push_cast
-  ring
+  rw [mul_add]; ac_rfl
 
 /-- A power series on an interval from one sum-of-squares check, after the substitution
 `x = (M + R cos u) / D`. The target is the row that Horner's rule `Packed.horner` builds from the
@@ -311,7 +311,7 @@ theorem power_sosCheck {w g gt gh n m m' kH K A p q : ℕ} {M R D kT kc : ℤ}
     rw [show ([0, 2 * D] : List ℤ) = List.replicate 1 0 ++ [2 * D] from rfl, ← shift_eval]
     simp [eval]
   have eb : Int.add R (Int.add (shift w 1 (2 * M)) (shift w 2 R)) = eval (2 ^ w) [R, 2 * M, R] := by
-    simp only [shift, pow2_eq, Nat.mul_eq, Int.mul_def, Int.add_def, Int.ofNat_eq_natCast, eval]
+    simp only [shift, pow2_eq, Nat.mul_eq, Kernel.Z.mul_eq, Int.add_def, Int.ofNat_eq_natCast, eval]
     push_cast
     ring
   have hs : entries w (2 * n - 1) (ofInt w (2 * n - 1) 0) = List.replicate (2 * n - 1) 0 := by
@@ -338,7 +338,7 @@ theorem power_sosCheck {w g gt gh n m m' kH K A p q : ℕ} {M R D kT kc : ℤ}
   rw [e, ofReal_re] at h
   have : (0 : ℝ) ≤ kH * ‖laurent (entries w m p) 0 (exp (u * I)) +
       I * laurent (entries w m' q) 0 (exp (u * I))‖ ^ 2 := by positivity
-  linarith
+  exact this.trans h
 
 /-! ### Derivatives -/
 
@@ -377,7 +377,7 @@ theorem hasDerivAt_cos_ramp {w g n a : Nat} (ha : guard w g n a = true)
   simp only [Option.map_some, Option.getD_some] at e
   rw [e]
   push_cast
-  ring
+  ac_rfl
 
 /-! ### The Hilbert transform -/
 
@@ -415,22 +415,14 @@ theorem chebyshev_cos (a : ℕ → ℝ) (n : ℕ) (u : ℝ) :
 bounds on the circle become bounds on an interval. -/
 theorem forall_Icc_of_cos {lo hi : ℝ} {P : ℝ → Prop}
     (hP : ∀ u, P ((lo + hi) / 2 + (hi - lo) / 2 * Real.cos u)) : ∀ x ∈ Set.Icc lo hi, P x := by
-  intro x ⟨hx1, hx2⟩
-  rcases (hx1.trans hx2).lt_or_eq with hlt | heq
-  -- pull `x` back to the circle: it is the point `u = arccos ((2 x - lo - hi) / (hi - lo))`
-  · have hd : 0 < hi - lo := sub_pos.mpr hlt
-    have t1 : -1 ≤ (2 * x - lo - hi) / (hi - lo) := by
-      rw [le_div_iff₀ hd]; linarith
-    have t2 : (2 * x - lo - hi) / (hi - lo) ≤ 1 := by
-      rw [div_le_iff₀ hd]; linarith
-    have := hP (Real.arccos ((2 * x - lo - hi) / (hi - lo)))
-    have e : (lo + hi) / 2 + (hi - lo) / 2 * ((2 * x - lo - hi) / (hi - lo)) = x := by
-      field_simp; ring
-    rwa [Real.cos_arccos t1 t2, e] at this
-  -- a one-point interval is the value at any `u`
-  · subst heq
-    have e : (lo + lo) / 2 + (lo - lo) / 2 * Real.cos 0 = x := by ring_nf; linarith
-    exact e ▸ hP 0
+  let f := fun u : ℝ => (lo + hi) / 2 + (hi - lo) / 2 * Real.cos u
+  have h0 : f 0 = hi := by dsimp [f]; rw [Real.cos_zero, mul_one]; ring
+  have hpi : f Real.pi = lo := by dsimp [f]; rw [Real.cos_pi, mul_neg_one]; ring
+  have hcont : ContinuousOn f (Set.Icc 0 Real.pi) := by fun_prop
+  intro x hx
+  have hx' : x ∈ Set.Icc (f Real.pi) (f 0) := by rwa [hpi, h0]
+  obtain ⟨u, _, hu⟩ := intermediate_value_Icc' Real.pi_pos.le hcont hx'
+  exact hu ▸ hP u
 
 /-- A property of a cosine polynomial at every `u` holds for the Chebyshev series with the same
 coefficients at every point of `[-1, 1]`. This is the step from the circle to an interval that

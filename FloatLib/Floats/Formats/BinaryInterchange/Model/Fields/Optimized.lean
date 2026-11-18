@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Data.Nat.Bitwise
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
+public import Mathlib.Data.Nat.Bitwise
 
 /-!
 # Optimized field access for binary models

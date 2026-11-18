@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -26,6 +26,7 @@ namespace FloatLib.Numerics
 
 universe u v w
 
+-- The code and the scalar type have a universe each, so the structure lives in their maximum.
 set_option linter.checkUnivs false in
 /-- A representation together with its complete mathematical interpretation. -/
 structure NumericalSystem where
@@ -94,14 +95,16 @@ def Equivalent (S : NumericalSystem) (x y : S.Code) : Prop :=
 def IsFinite (S : NumericalSystem) (code : S.Code) : Prop :=
   ∃ x, S.Represents code x
 
-/-- Change only the mathematical codomain of a numerical system. -/
-def mapScalar (S : NumericalSystem) (f : S.Scalar → β) : NumericalSystem where
+/-- Change only the mathematical codomain of a numerical system.
+Reducibility preserves typeclass inference for the unchanged code type and the new scalar type. -/
+@[reducible] def mapScalar (S : NumericalSystem) (f : S.Scalar → β) : NumericalSystem where
   Code := S.Code
   Scalar := β
   denote code := (S.denote code).map f
 
 /-- A represented scalar remains represented after mapping the system's scalar codomain. -/
-@[simp, grind .] theorem represents_mapScalar (S : NumericalSystem) (f : S.Scalar → β)
+-- grind: no rule; reducing `mapScalar` erases the source system from the conclusion.
+@[simp] theorem represents_mapScalar (S : NumericalSystem) (f : S.Scalar → β)
     (code : S.Code) (x : S.Scalar) (h : S.Represents code x) :
     (S.mapScalar f).Represents code (f x) := by
   change NumericalValue.map f (S.denote code) = .finite (f x)

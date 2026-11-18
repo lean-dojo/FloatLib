@@ -1,0 +1,8 @@
+# The repository's .gitignore keeps only named result files. These are the ones that
+# benchmarks/plots/figures.py and benchmarks/suites/summarize.py write.
+!/FIGURES.md
+!/figures/
+!/suites/
+!/kernel/*.csv
+!/kernel/*.md
+!/.gitignore

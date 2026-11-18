@@ -6,15 +6,13 @@ summary: How to use fixed point, logarithmic numbers, codebooks, affine quantiza
 phases: [exact-and-quantized, numerical-models]
 ---
 
-FloatLib also supports fixed-point, logarithmic, codebook, affine and block-scaled representations. Fixed-point formats use integers at a fixed scale. Logarithmic formats store exponents, codebooks assign values to finite codes, affine formats use a scale and a zero point, and block-scaled formats share a scale across several elements. Each representation has its own exact operations and range conditions.
+A fixed-point program that multiplies $1.25$ by $2.50$ has to choose a scale for the result. With two decimal places the operand coefficients are $125$ and $250$. Their product is $31250$ at a scale of $10^{-4}$, exactly $3.125$. Keeping the original scale would require rounding.
 
-For a fixed-point representation with two decimal places, $1.25$ is stored as the integer $125$ and $2.50$ as $250$. Multiplying the integers gives $31250$. The product has denominator $100\cdot100=10000$, so its value is $3.125$. This computation is exact, but the result requires more than two decimal places. Converting it back to the input scale would require rounding.
-
-FloatLib records the scale in the type. The exact product in this example has a type with four decimal places, and its multiplication theorem identifies the rational value $3.125$.
+FloatLib records that choice in the type of the operation. Fixed-point multiplication can return a result with four decimal places. Logarithmic formats, codebooks and block-scaled formats have different rules for decoding a stored value, so each has its own theorem connecting arithmetic on codes to arithmetic on their values.
 
 ## What is a fixed-point number?
 
-Fixed point is named for its point, which stays put instead of floating. A fixed-point number is an integer with an agreed denominator, the way 125 cents means 125 divided by 100. [[FloatLib.Floats.Formats.FixedPoint.Code]] takes a radix $\beta$, the number base, and a count $d$ of fractional digits, and it stores one integer field, `coefficient : Int`. [[FloatLib.Floats.Formats.FixedPoint.Code.toRat]] divides it by `scale`, which is $\beta^d$. So the value set is
+A fixed-point number is an integer with an agreed denominator. [[FloatLib.Floats.Formats.FixedPoint.Code]] takes a radix $\beta$, the number base, and a count $d$ of fractional digits, and it stores one integer field, `coefficient : Int`. [[FloatLib.Floats.Formats.FixedPoint.Code.toRat]] divides it by `scale`, which is $\beta^d$. So the value set is
 
 $$\left\{ \frac{m}{\beta^d} : m \in \mathbb{Z} \right\},$$
 
@@ -186,6 +184,44 @@ The configured type `ExecFloat.BoundedFixedPoint` leaves the choice to you. An [
 
 Five is 500 hundredths, and 500 wrapped into eight signed bits is $-12$. Ask for five and get minus twelve cents. That's why the default rejects overflow: picking a type alias can't quietly change how overflow is handled. The status from the [bounded-conversion implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/FixedPoint/Bounded/Configured/Conversion/Runtime.lean) tells `overflow`, `saturated` and `wrapped` apart, and `toUnbounded` drops the width, with `toUnbounded_toRat` proving the value unchanged.
 
+## How does this follow Embedded C?
+
+Embedded C (ISO/IEC TR 18037) is the standard for fixed-point types in C: `_Fract` and `_Accum`, with saturating and rounding operations. FloatLib follows the committee draft WG14 N1169 [@wg14N1169], and has one family for it, `FixedPoint.Embedded`, with the layout (signedness, integer and fractional widths), the rounding choice and the overflow policy as parameters. It covers the usual conversions and operators, the `stdfix.h` functions and limits, shifts, constants and the text conversions. Here are the four arithmetic operators on the greatest `short fract` value, $127/128$, and the least positive one, $1/128$, at a layout with 8-bit `short fract`:
+
+```lean
+section EmbeddedC
+
+open FloatLib.Floats.Formats.FixedPoint.Embedded FloatLib.Floats.Formats.FixedPoint.Embedded.Examples
+
+-- the sum and the quotient overflow, the difference is 63/64, the product rounds to 1/128
+example :
+    [(Binary.«+» Layout.example environment shortFract shortFract top unit).map Format.decode,
+      (Binary.«-» Layout.example environment shortFract shortFract top unit).map Format.decode,
+      (Binary.«*» Layout.example environment shortFract shortFract top unit).map Format.decode,
+      (Binary.«/» Layout.example environment shortFract shortFract top unit).map Format.decode] =
+      [none, some (63 / 64), some (1 / 128), none] := by
+  decide +kernel
+
+end EmbeddedC
+```
+
+| Clause of N1169 | Operations | In FloatLib |
+| --- | --- | --- |
+| 4.1.1, 4.1.2 | the types `_Fract`, `_Accum` and `_Sat` | `Embedded.CType`, `Embedded.Layout` |
+| 4.1.3, 4.1.4 | rounding, overflow and saturation of a conversion | `Embedded.Rounding`, `Embedded.Overflow`, `Embedded.convert`, `Embedded.toInteger` |
+| 4.1.5 | constants | `Embedded.Constant.parse` |
+| 4.1.6.1 | `++`, `--`, unary `+`, `-` and `!` | `Embedded.Prefix`, `Postfix`, `Unary` |
+| 4.1.6.2 | `+`, `-`, `*`, `/`, `<<`, `>>`, the comparisons, and `mulifx`, `divifx`, `fxdivi`, `idivfx` | `Embedded.Binary`, `IntegerLeft`, `Compare`, and `mulir`, `divir`, `rdivi`, `idivr` with their siblings |
+| 4.1.6.3 | assignment and compound assignment | `Embedded.Assignment` |
+| 4.1.7 | `absfx`, `roundfx`, `countlsfx`, `bitsfx`, `fxbits` | the same names with their type suffixes, such as `abshr` and `roundhr` |
+| C 7.18a.2, 7.18a.3 | the `stdfix.h` limits | `SFRACT_FBIT`, `SFRACT_MAX` and their siblings |
+| C 7.18a.6.8 | `strtofxfx` | `strtofxhr` and its siblings |
+| 4.1.9 | the fixed-point conversions of `fprintf` and `fscanf` | `Embedded.Formatted.fprintf`, `fscanf` |
+
+Take two fractional bits, so that a signed fractional type has spacing $1/4$ and the range $[-1, 3/4]$. With nearest-even rounding, converting $7/8$ first rounds to $1$, and only then does the result need an overflow decision. Clipping the exact input before rounding would hide that step, and it can change what an unsaturated conversion is allowed to do. So here too rounding comes before overflow, as the document's revision notes require.
+
+Text conversion has a boundary of its own. `1e+` isn't a complete number, but it can become one: append `0` and you get `1e+0`. Formatted input has to tell such a prefix from characters that can't begin a number. Our grammar proof does it for decimal and hexadecimal input of any length: a completing suffix exists exactly when the prefix is already accepted or appending one `0` makes it accepted. What stays outside the model is C itself: whole format strings and streams, the ABI, memory, and locales other than the C locale.
+
 ## What is a logarithmic number?
 
 A logarithmic number system stores an exponent instead of a significand. Nonzero values have the form $\pm\beta^e$, so multiplication adds exponents and combines signs. Addition generally requires a separate approximation. [[FloatLib.Floats.Formats.Logarithmic.Code]] has two constructors: `zero` and `value negative exponent`, with a sign flag and an unbounded integer exponent. The operation `mul` returns zero if either operand is zero; otherwise it combines the signs by exclusive or and adds the exponents,
@@ -265,7 +301,7 @@ Going the other way, from a number to a code, is called quantizing, and for a co
 -- some 0#1
 ```
 
-In the last line zero sits exactly between $-1$ and $+1$, and the lower-word rule picks $-1$, so zero quantizes to minus one. It looks odd, but ties have to go somewhere. On the configured `Codebook` the table is part of the type, so same-width tables never mix, and you call `nearest?` yourself, because a generic conversion would need a policy for reserved words and ties.
+In the last line zero sits exactly between $-1$ and $+1$, and the lower-word rule picks $-1$, so zero quantizes to minus one. On the configured `Codebook` the table is part of the type, so same-width tables never mix, and you call `nearest?` yourself, because a generic conversion would need a policy for reserved words and ties.
 
 ## What is affine quantization?
 
@@ -319,7 +355,7 @@ def offsetGrid : AffineQuantizer where
   qmin := 0
   qmax := 7
   scale_pos := by norm_num
-  codeRange := by norm_num
+  code_range := by norm_num
 
 #eval ([5 / 8, 7 / 8, 2] : List Rat).map offsetGrid.quantize
 -- [5, 7, 7]
@@ -331,42 +367,79 @@ example (x : ℚ) :
 
 ## What is a block-scaled format?
 
-A financial report often says "all figures in thousands" once, at the top. Block-scaled formats do the same with a power of two, giving each block of values its own scale. The values in a block are called lanes. A [[FloatLib.Floats.Formats.Block.SharedScaleCode]] holds one `exponent : Int` and a `Vector Int lanes` of significands, and `decode` gives a `Vector Rat lanes` whose lane $i$ is
+A financial report often says "all figures in thousands" once, at the top. Block-scaled formats do the same: a block of small numbers shares one scale, stored once. That scale moves the whole block's range and adds no precision to its elements.
 
-$$s_i \cdot 2^{e},$$
+FloatLib has one definition for all of them. A [[FloatLib.Floats.Formats.Block.CodedFormat]] names an element codec and a list of scale levels, each with its groups of positions and its scale codec. A [[FloatLib.Floats.Formats.Block.Tensor]] of that format stores one element code per position and one scale code per group, and position $i$ decodes to
 
-so for `NumericalSystem` the decoded scalar is the whole vector. We follow the layout of the Open Compute Project's microscaling (OCP MX) specification [@ocpMx], which the [shared-scale definition](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Block/SharedScale/Core.lean) cites, without committing to an element width or scale-selection policy. [[FloatLib.Floats.Formats.Block.quantizeAt]] takes the exponent as an argument and rounds each lane to the nearest multiple of $2^e$, ties to even, with [[FloatLib.Numerics.roundRatEven]]:
+$$e_i \cdot s_{g(i)},$$
+
+its element times the scale of its group, times the scales of any outer levels. How a scale is chosen isn't part of the format. That is a policy, and the quantizer takes it as an argument.
+
+The simplest instance is [[FloatLib.Floats.Formats.Block.sharedScale]]: unbounded integer elements and one power-of-two scale for the block. With the policy [[FloatLib.Floats.Formats.Block.sharedExponent]], which stores the exponent you supply, each lane is rounded to the nearest multiple of $2^e$, ties to even:
 
 ```lean
 def lanes : Vector Rat 4 := #v[1/3, 5/4, -7/8, 100]
-def block : Block.SharedScaleCode 4 := Block.quantizeAt (-2) lanes
+def block : Block.Tensor (Block.sharedScale (Fin 4)) :=
+  (Block.sharedScale (Fin 4)).quantize (Block.sharedExponent (Fin 4) (-2)) fun lane =>
+    SignedRat.ofRat lanes[lane]
 
-#eval block.significands.toArray
+#eval Array.ofFn block.elements
 -- #[1, 5, -4, 400]
-#eval (Block.decode block).toArray
+#eval Array.ofFn block.value
 -- #[1 / 4, 5 / 4, -1, 100]
-#eval (Block.decode (Block.quantizeAt 3 lanes)).toArray
+#eval Array.ofFn ((Block.sharedScale (Fin 4)).quantize (Block.sharedExponent (Fin 4) 3) fun lane =>
+    SignedRat.ofRat lanes[lane]).value
 -- #[0, 0, 0, 96]
 
-example : Block.QuantizesAt (-2) lanes block :=
-  Block.quantizesAt_quantizeAt (-2) lanes
+example (lane : Fin 4) :
+    block.elements lane = roundRatEven (lanes[lane] / (2 : ℚ) ^ (-2 : ℤ)) :=
+  Block.sharedScale_elements (-2) _ lane
 ```
 
-With exponent $-2$ the step is a quarter: one third rounds to 1, five quarters is exactly 5, minus seven eighths is $-3.5$ quarters and rounds to the even $-4$, and 100 is 400 quarters. Lanes are `Int`, so 400 fits where an eight-bit signed lane wouldn't. With exponent 3 the step is eight, the small lanes round to zero, and 100, $12.5$ eights, rounds to 12 and decodes to 96. It's the report in thousands again, where 300 shows up as 0.
+With exponent $-2$ the step is a quarter: one third rounds to 1, five quarters is exactly 5, minus seven eighths is $-3.5$ quarters and rounds to the even $-4$, and 100 is 400 quarters. With exponent 3 the step is eight, the small lanes round to zero, and 100, which is $12.5$ eights, rounds to 12 and decodes to 96.
 
 ## What is proved about a block?
 
-You supply the exponent, so the [configured block implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Block/Configured/Runtime.lean) can support different calibration methods (ways of picking it), and the [configured block proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Block/Configured/Proof.lean) hold whichever exponent you pick. `QuantizesAt` states the rounding rule for a given exponent, and `quantizesAt_quantizeAt` proves that `quantizeAt` follows it. [[FloatLib.Floats.Formats.Block.quantizeAt_refines]] gives you the same relation through the common quantization interface, and `blockScaled_sharedScale` proves the general `BlockScaled` contract. With the configured type `SharedScale`, you pass the exponent as the conversion context, the setting a conversion follows, and the [block-conversion implementation](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Block/Configured/Conversion/Runtime.lean) gives it no default. Converting an infinity or exceptional value into `SharedScale` fails.
+Every theorem here holds for every element codec, scale codec, level structure and policy. [[FloatLib.Floats.Formats.Block.CodedFormat.value_quantize]] proves that the stored values are those of the value theory, where each element is one rounding of its input in the element format scaled by its total scale ([[FloatLib.Floats.Formats.Block.Format.reconstruct_eq]]). For a positive total scale, the element format supplies two useful bounds.
 
-The shared-scale rows of [Figure 9.1](#/chapter/fixed-point-logarithmic-codebook-and-block-scaled/figure-ch16-spacing) show every lane coarsening together, and for bounded elements the [standard MX quantizer](#/chapter/low-precision-formats-for-machine-learning/choosing-a-scale-for-32-lanes) chooses the scale and proves a nearest-error property at it.
+- An element's error is the element format's error budget, with the absolute part multiplied by the scale ([[FloatLib.Floats.Formats.Block.Format.abs_reconstruct_sub_le]]).
+- An element is flushed to zero when its magnitude is at most the element format's zero threshold times the scale. Under a policy that chooses the scale from the largest magnitude in the block, one large element can therefore make smaller ones round to zero.
 
-## How MX formats bound the scale and the elements
+With the configured type `ExecFloat.Block` you pass the policy as the conversion context, and converting an infinity or another exceptional value into a block fails.
 
-The OCP MX formats of [Small formats for machine learning](#/chapter/low-precision-formats-for-machine-learning) are stricter: they bound both scale and elements. Their scale is E8M0, a byte that is all exponent. In the [scale encoding](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/OCP/MX/E8M0/Core.lean), E8M0 codes 0 through 254 denote $2^{c-127}$ and code 255 is NaN. Elements can be nonfinite too, so the array API has checked decoders: [[FloatLib.Floats.Formats.OCP.MX.E8M0.decodeElement_refines]] and [[FloatLib.Floats.Formats.OCP.MX.E8M0.scaleDyadic_refines]] are `Checked2` contracts, and [[FloatLib.Floats.Formats.OCP.MX.E8M0.decodeBlock?]] extends them to arrays. Because the standard 32-lane API decodes each lane along with its exceptional class, a finite scale can sit next to a NaN element. And a finite power-of-two scale adds no rounding.
+The named formats are instances. OCP MX has a power-of-two scale stored as E8M0, a byte that is all exponent, and its six element profiles (E5M2, E4M3, E3M2, E2M3, E2M1 and INT8) are in [the machine-learning chapter](#/chapter/low-precision-formats-for-machine-learning). Four Over Six and a fixed-point format with power-of-two scales are in the same [catalog](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Block/Catalog.lean).
+
+## What does a second scale add?
+
+NVIDIA's NVFP4 (arXiv:2509.25149) stores four-bit E2M1 elements, one E4M3 scale for every block of 16, and one binary32 scale for the tensor. In the general format that is a second level in the list, with its own groups and its own codec. Its policy maps the largest magnitude of the tensor to $6 \cdot 448$ and the largest magnitude of each block to 6, the largest values of E4M3 and E2M1:
+
+```lean
+def weights : Fin 16 → ℚ := fun i => (#[21/8, -21/16, 21/64, 1/10] : Array ℚ).getD i.val 0
+def stored :=
+  (Block.nvfp4Stored (fun _ : Fin 16 => ()) (fun _ => ())).quantize
+    (Block.nvfp4Policy (fun _ => ()) (fun _ => ())) fun i => SignedRat.ofRat (weights i)
+
+#eval (stored.scales.2.1 ()).toNat
+-- 126
+#eval (List.finRange 4).map fun i : Fin 4 => stored.value ⟨i.val, by omega⟩
+-- [21 / 8, -21 / 16, 7 / 16, 0]
+```
+
+The tensor scale is $2^{-10}$ and the block scale is E4M3's code 126, the value 448, so one element step is $7/16$. That makes the first two values 6 and $-3$ steps, the third three quarters of a step, a tie between a half and one that goes to the even one, and the fourth less than a quarter of a step, which is stored as zero.
+
+That last rule is a theorem: [[FloatLib.Floats.Formats.Block.nvfp4_reconstruct_eq_zero_iff]] reads the flush rule for NVFP4 as a magnitude of at most a quarter of the block scale. Who shares a block, and so who gets flushed, is decided by the block shape. On a $16 \times 16$ tile holding the value 42 among entries of $3/4$, $1 \times 16$ blocks flush the 15 other entries of one row, and one $16 \times 16$ tile flushes all 255. Those two counts are single examples, checked in Lean's kernel. Square tiles have one property the row blocks lack: [[FloatLib.Floats.Formats.Block.nvfp4_reconstruct_transpose]] proves that quantizing the transpose is the transpose of quantizing.
+
+Are these theorems about the real formats or about the stored codes? Both, and that took a proof. [[FloatLib.Floats.Formats.OCP.MX.Standard.Profile.codec_round_eq_real]] proves that the element codec of each OCP MX profile is, on every rational, the real rounding of its format. With it, the stored OCP MX and NVFP4 tensors with their standard selections have the values of the real formats on every tensor of finite binary32 values. Four Over Six and calibrated outer scales aren't covered by those results, though the element bounds hold for every policy.
+
+Import `FloatLib.Floats.Formats.Block.Roundoff` and the `roundoff` commands of [Intervals and roundoff bounds](#/chapter/proving-numerical-bounds) use these budgets for a quantized element, a dot product of quantized tensors, and accumulation in a narrow accumulator that is promoted to a wide one. The [NVFP4 dot-product example](https://github.com/lean-dojo/FloatLib/blob/main/tests/FloatLibTests/Tactic/Roundoff/Block.lean#L252) shows the generated error bound.
+
+### How exact is NVFP4's scale?
+
+NVFP4 isn't a numerical standard. Our reference is NVIDIA's description, Appendix B of arXiv:2509.25149 included, and it leaves one thing open that matters: the working precision of the scale selection. An exact-rational formula and a sequence of binary32 operations can choose different scales or element codes near a boundary. We measured it against torchao 0.18.0: with the same scale floor, the two computations differ in 18 one-level observations and 368 two-level ones. What we prove covers the exact policy and the decoding of the stored codes. The binary32-order model that agrees with torchao on that corpus is test code, and a production quantizer in working precision with a general correctness theorem is still open.
 
 ## What do all these contracts have in common?
 
-Every contract in this chapter uses the common definitions from [How running code and proofs fit together](#/chapter/the-numerical-models), which don't prescribe storage. A [[FloatLib.Numerics.NumericalSystem]] gives the stored type and a decoder to finite, infinite or exceptional values, [[FloatLib.Numerics.NumericalSystem.Represents]] says a stored value decodes to a given finite scalar, and [[FloatLib.Numerics.NumericalSystem.AtFinite]] packages the value with that proof, which compilation erases. The operation specifications differ in when they promise a result:
+Every contract in this chapter uses the common definitions from [Executable arithmetic and its proofs](#/chapter/the-numerical-models), which don't prescribe storage. A [[FloatLib.Numerics.NumericalSystem]] gives the stored type and a decoder to finite, infinite or exceptional values, [[FloatLib.Numerics.NumericalSystem.Represents]] says a stored value decodes to a given finite scalar, and [[FloatLib.Numerics.NumericalSystem.AtFinite]] packages the value with that proof, which compilation erases. The operation specifications differ in when they promise a result:
 
 - [[FloatLib.Numerics.Operation.Finite2]] covers a total operation on finite inputs, such as fixed-point addition and logarithmic multiplication.
 - [[FloatLib.Numerics.Operation.Checked2]] covers an operation that returns an `Option` and succeeds on finite inputs, such as ternary multiplication.
@@ -374,8 +447,8 @@ Every contract in this chapter uses the common definitions from [How running cod
 
 Each specification names its own systems for the operands and the result, so fixed-point multiplication can put its result at scale $p + q$. [Figure 9.1](#/chapter/fixed-point-logarithmic-codebook-and-block-scaled/figure-ch16-spacing) puts every grid from this chapter on one axis, with the logarithmic row a window of powers that carries on toward zero.
 
-![Value grids from -8 to 8 for fixed point with two fractional bits, E2M3, a logarithmic window with exponents -4 to 3, shared scales at exponents -2, 0 and 2, ternary with one reserved code, and bipolar; the logarithmic grid continues towards zero](assets/ch16-spacing.png "Value spacing on a common linear axis. The logarithmic row shows a finite window.")
+![Eight rows of marks on one linear axis from −8 to 8. Fixed point with step 1/4 is an even comb. The marks of the floating-point format E2M3 are dense near zero and thin out toward −7.5 and 7.5. The logarithmic row has zero and the powers of two from 1/16 to 8 with both signs. Three shared-scale rows are even combs with steps 1/4, 1 and 4. The ternary row has −1, 0 and 1, and the bipolar row has −1 and 1](assets/ch16-spacing.png "The values between −8 and 8 that each number system of this chapter can represent, on one linear axis. The logarithmic row draws the exponents −4 to 3 only, and its values go on toward zero. The ternary codebook has a fourth code, which is reserved.")
 
 ## Where to find the proofs
 
-The `numerics` and `numerics_refine` automation runs on rules from our [fixed-point](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/FixedPoint/Automation.lean), [logarithmic](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Logarithmic/Automation.lean) and [codebook](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Codebook/Automation.lean) automation modules, and for the block family you apply the theorems by hand. `#float_info` lists the available operations and guarantees, including fixed-point multiplication's change of scale, and the main results are in the [theorem index](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md). Those results rest on proofs checked by Lean's kernel, its small trusted core. We haven't run independent external comparisons for these families like the ones [How we test FloatLib](#/chapter/external-validation) reports for binary formats and posits.
+The `numerics` and `numerics_refine` automation runs on rules from our [fixed-point](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/FixedPoint/Automation.lean), [logarithmic](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Logarithmic/Automation.lean) and [codebook](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Codebook/Automation.lean) automation modules, and for the block family `roundoff` has the rules above, while exact statements about codes are applied by hand. `#float_info` lists the available operations and guarantees, including fixed-point multiplication's change of scale, and the main results are in the [theorem index](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md). The block formats are compared bit for bit with torchao, microxcaling and PyTorch's FP8 casts, as the [external validation guide](https://github.com/lean-dojo/FloatLib/blob/main/tests/EXTERNAL.md#block-scaled-formats) records. For Embedded C fixed point we compared arithmetic, conversions and text handling with independent rational and grammar references, and checked fixed-point operations against Clang. The [test report](https://github.com/lean-dojo/FloatLib/blob/main/tests/EXTERNAL.md#the-standards-operations-and-the-complex-functions) lists 1,196,256 interface cases.

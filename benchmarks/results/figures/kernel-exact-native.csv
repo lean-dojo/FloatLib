@@ -1,0 +1,7 @@
+statement,kernel_ms,native_decide_ms
+3 ^ (p - 1) % p = 1 for p = 2 ^ 255 - 19,14.2,13.700000000000001
+3 ^ (p - 1) % p = 1 for p = 2 ^ 1279 - 1,29.9,18.1
+"the square root of 2 ^ 2001 + 12345, checked",11.700000000000001,12.9
+"sum of 1 / k ^ 2 for k ≤ 40 below 1.63, on fractions",4.3,3.7
+"exp (7/5) ≤ 4.0553 on the grid, degree 20, 64 bits",9.05,4.88
+packed row product of 256 lanes with its guards and norm,6.370000000000001,

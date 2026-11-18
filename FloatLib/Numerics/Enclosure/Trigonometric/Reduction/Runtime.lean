@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
-public import Mathlib.Data.Rat.Floor
 
 /-!
 # Rational period reduction for sine and cosine

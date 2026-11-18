@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -19,7 +19,7 @@ binary256, and custom exponent/fraction widths.
 
 Complex multiplication uses four scalar multiplications followed by one subtraction and one
 addition. In floating point that order matters, so the semantic theorem in `Complex.Semantics`
-states it.
+states it. `mulFma` is the product with one fused multiply-add per component.
 
 Division uses the larger denominator component to form a ratio, and magnitude scales both components
 before squaring. Both choices avoid squaring large unscaled components, but they guarantee neither
@@ -80,6 +80,17 @@ addition are then rounded once more in the same format.
 -/
 @[inline] def mul {fmt : FloatFormat} (x y : ExecComplex fmt) : ExecComplex fmt :=
   ⟨Internal.mulReal x y, Internal.mulImag x y⟩
+
+/--
+Floating-point complex multiplication with one fused multiply-add per component:
+`re = fma x.re y.re (-(x.im * y.im))` and `im = fma x.re y.im (x.im * y.re)`.
+
+Two component products are rounded, and each fused multiply-add rounds once: four roundings
+where `mul` has six. The negation is exact.
+-/
+@[inline] def mulFma {fmt : FloatFormat} (x y : ExecComplex fmt) : ExecComplex fmt :=
+  ⟨Model.fma x.re y.re (Model.neg (Model.mul x.im y.im)),
+    Model.fma x.re y.im (Model.mul x.im y.re)⟩
 
 /-- Conjugation negates the imaginary component using the format's zero and NaN conventions. -/
 @[inline] def conj {fmt : FloatFormat} (z : ExecComplex fmt) : ExecComplex fmt :=
@@ -155,8 +166,8 @@ does not apply.
     let scale := Internal.magnitudeScale z
     if Model.isZero scale then scale
     else Model.mul scale (Model.sqrt (normSq (Internal.magnitudeRatios z)))
-  else if (Model.isInf z.re || Model.isInf z.im) &&
-      !(Model.isSNaN z.re || Model.isSNaN z.im) then
+  else if (Model.isInfinite z.re || Model.isInfinite z.im) &&
+      !(Model.isSignaling z.re || Model.isSignaling z.im) then
     Model.posInf fmt
   else Model.add (Model.abs z.re) (Model.abs z.im)
 

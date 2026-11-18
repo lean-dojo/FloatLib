@@ -1,14 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: Nicolas Rouquette, FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Analysis.SterbenzFLT
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Subtraction
+public import FloatLib.Floats.Formats.Flocq.Theory.Analysis.SterbenzFLT
 public import Mathlib.Algebra.Order.Algebra
+import Mathlib.Tactic.Bound
 
 /-!
 # Sterbenz exact subtraction
@@ -43,15 +44,15 @@ nothing. The bounds force both reals to be nonnegative and include the zero case
 The same-sign variant below also covers negative operands.
 -/
 theorem roundAt_sub_eq_of_sterbenz (fmt : FloatFormat) {u v : ℝ}
-    (hu : genericFormat Numerics.binaryRadix (fexpOf fmt) u)
-    (hv : genericFormat Numerics.binaryRadix (fexpOf fmt) v)
+    (hu : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) u)
+    (hv : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) v)
     (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
     roundAt fmt (u - v) = u - v := by
   have hprec : (0 : Int) < Int.ofNat (fmt.fracWidth + 1) :=
     Int.natCast_pos.mpr (Nat.succ_pos fmt.fracWidth)
-  have hfmt : genericFormat Numerics.binaryRadix (fexpOf fmt) (u - v) := by
+  have hfmt : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) (u - v) := by
     simpa [fexpOf] using
-      (generic_format_FLT_sterbenz
+      (genericRepresentable_flt_sterbenz
         (β := Numerics.binaryRadix)
         (FloatFormat.minSubnormalExponent fmt)
         (Int.ofNat (fmt.fracWidth + 1))
@@ -70,15 +71,15 @@ theorem isFinite_sub_of_same_sign {fmt : FloatFormat} {x y : Model fmt}
   rcases mul_nonneg_iff.mp hsign with ⟨hx0, hy0⟩ | ⟨hx0, hy0⟩
   · rw [abs_of_nonneg hx0] at hbx
     rw [abs_of_nonneg hy0] at hby
-    constructor <;> linarith
+    constructor <;> bound
   · rw [abs_of_nonpos hx0] at hbx
     rw [abs_of_nonpos hy0] at hby
-    constructor <;> linarith
+    constructor <;> bound
 
 /-- Sterbenz exactness for representable reals of the same sign within a factor of two. -/
 theorem roundAt_sub_eq_of_sterbenz_of_same_sign (fmt : FloatFormat) {u v : ℝ}
-    (hu : genericFormat Numerics.binaryRadix (fexpOf fmt) u)
-    (hv : genericFormat Numerics.binaryRadix (fexpOf fmt) v)
+    (hu : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) u)
+    (hv : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) v)
     (hsign : 0 ≤ u * v)
     (huv : |u| ≤ 2 * |v|) (hvu : |v| ≤ 2 * |u|) :
     roundAt fmt (u - v) = u - v := by
@@ -88,9 +89,9 @@ theorem roundAt_sub_eq_of_sterbenz_of_same_sign (fmt : FloatFormat) {u v : ℝ}
   · rw [abs_of_nonpos hu0, abs_of_nonpos hv0] at huv hvu
     -- Negation preserves representability and transports the negative case to nonnegative values.
     have h := roundAt_sub_eq_of_sterbenz fmt
-      (generic_format_neg u hu) (generic_format_neg v hv) huv hvu
+      (genericRepresentable_neg u hu) (genericRepresentable_neg v hv) huv hvu
     rw [show -u - -v = -(u - v) by ring, roundAt_neg, IEEERoundingMode.negate] at h
-    linarith
+    exact neg_injective h
 
 /--
 Subtraction of finite values of the same sign within a factor of two has the exact real

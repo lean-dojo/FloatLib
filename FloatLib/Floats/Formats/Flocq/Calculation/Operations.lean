@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -127,7 +127,7 @@ def subExact (f g : FloatRep β) : FloatRep β :=
     toReal (mulExact f g) = toReal f * toReal g := by
   unfold mulExact toReal
   rw [Int.cast_mul, bpow.add_exp]
-  ring
+  ac_rfl
 
 end FloatRep
 end FloatLib.Floats.Formats.Flocq

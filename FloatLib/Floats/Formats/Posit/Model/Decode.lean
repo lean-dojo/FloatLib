@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Model.Fields
+public import FloatLib.Tactic.ReplacementProof
+public import FloatLib.Util.Provenance
 
 /-!
 # Exact posit decoding
@@ -157,8 +159,11 @@ other words keep their exact sign, integer significand, and binary scale.
 /--
 The one-pass compiled decoder is extensionally equal to the transparent logical decoder.
 
-This proves equality of the Lean definitions used by `toDyadic?`'s `implemented_by` refinement.
+This proves equality of the Lean definitions used by `toDyadic?`'s `implemented_by` refinement,
+and registers it, so that a compiled backend that decodes posits passes
+`Provenance.requireCompiled`.
 -/
+@[replacement_proof]
 private theorem Internal.toDyadic?_eq
     (value : Model format) :
     Internal.toDyadic? value = value.toDyadic? := by
@@ -184,6 +189,21 @@ private theorem Internal.toDyadic?_eq
           decodeFiniteDyadic_eq_decodeFields_toDyadic value
       simp [Internal.toDyadic?, Model.toDyadic?, decodeExact, hnarCode, hzeroCode,
         hnarFalse, hzeroFalse, hdecode]
+
+/--
+Posit Standard (2022), §§3–4: exact decoding directly from the stored code,
+including the unique zero and NaR, at every standard width.
+
+This exposes the one-pass decoder's proved equation without its private
+implementation name.
+-/
+theorem toDyadic?_eq_code (value : Model format) :
+    value.toDyadic? =
+      let code := value.toNatBits
+      if code == format.signMaskNat then none
+      else if code == 0 then some FloatLib.Numerics.Dyadic.zero
+      else some (decodeFiniteDyadicCode format value.signBit code) :=
+  (Internal.toDyadic?_eq value).symm
 
 /-- Exact decoding recognizes the unique posit zero word. -/
 @[simp] theorem decodeExact_zero (format : Format) :

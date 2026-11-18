@@ -1,11 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Quantization.Block.CodedDot
+public import FloatLib.Numerics.Quantization.Block.Bounds
+public import FloatLib.Numerics.Quantization.Block.Coded
+public import FloatLib.Numerics.Quantization.Block.Dot
+public import FloatLib.Numerics.Quantization.Block.Transpose
 public import FloatLib.Numerics.Quantization.Affine
 public import FloatLib.Numerics.Quantization.Deterministic
 public import FloatLib.Numerics.Quantization.Directed

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -90,10 +90,6 @@ theorem magnitude_signedScaledRatToReal
         (signedScaledRatToReal sign numerator denominator exponent) =
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1 := by
   let value := signedScaledRatToReal sign numerator denominator exponent
-  have hpositive :=
-    scaledRatToReal_pos numerator denominator exponent hnumerator hdenominator
-  have hvalue : value ≠ 0 := by
-    cases sign <;> simp [value, signedScaledRatToReal, hpositive.ne']
   have hbounds :=
     scaledRatToReal_floorLog2_bounds
       numerator denominator exponent hnumerator hdenominator
@@ -132,7 +128,8 @@ theorem scaledMantissa_signedScaledRatToReal
     (exponent : Int) :
     let target := fexpOf fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
-    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
+    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent -
+      target)
     scaledMantissa Numerics.binaryRadix (fexpOf fmt)
         (signedScaledRatToReal sign numerator denominator exponent) =
       if sign then
@@ -182,7 +179,8 @@ theorem nearestEven_scaledRat
     (exponent : Int) (hdenominator : denominator ≠ 0) :
     let target := fexpOf fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
-    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
+    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent -
+      target)
     nearestEven
         (scaledMantissa Numerics.binaryRadix (fexpOf fmt)
           (signedScaledRatToReal sign numerator denominator exponent)) =
@@ -223,7 +221,8 @@ theorem roundAt_scaledRat_eq
     (exponent : Int) (hdenominator : denominator ≠ 0) :
     let target := fexpOf fmt
       (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1)
-    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent - target)
+    let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent -
+      target)
     let rounded := roundQuotientEven scaled.1 scaled.2
     roundAt fmt (signedScaledRatToReal sign numerator denominator exponent) =
       ((if sign then -Int.ofNat rounded else Int.ofNat rounded) : Int) *
@@ -337,7 +336,7 @@ private theorem roundQuotientEven_ne_top_of_bound_at_max
     rw [← bpow_ofNat (fmt.fracWidth + 1), ← bpow_add]
     congr 1
     simp only [Int.ofNat_eq_natCast, Int.natCast_add]
-    ring
+    omega
   have hmono :
       roundAt fmt
           (signedScaledRatToReal false numerator denominator exponent) ≤
@@ -409,8 +408,9 @@ theorem isFinite_roundRatScaled_of_abs_le_posMaxFinite
         toReal (posMaxFinite fmt)) :
     isFinite (roundRatScaled fmt sign numerator denominator exponent) = true := by
   by_cases hnumerator : numerator = 0
-  · cases sign <;> simp [roundRatScaled, hfmt, ieeeRoundRatScaled,
-      hdenominator, hnumerator]
+  · cases sign <;> simp only [roundRatScaled, hfmt, ↓reduceDIte, ieeeRoundRatScaled, beq_iff_eq,
+    hdenominator, ↓reduceIte, hnumerator, BEq.rfl, Bool.false_eq_true, isFinite_posZero,
+    FloatFormat.supportsSignedZero_eq_true_of_isIEEE, isFinite_negZero]
   have hmagnitude :
       scaledRatToReal numerator denominator exponent ≤
         toReal (posMaxFinite fmt) := by

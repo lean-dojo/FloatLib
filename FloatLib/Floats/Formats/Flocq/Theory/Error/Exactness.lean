@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Format.Generic
-public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
 public import FloatLib.Floats.Formats.Flocq.Calculation.Operations
+public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
+public import FloatLib.Floats.Formats.Flocq.Theory.Format.Generic
 
 /-!
 # Exact Representations for Rounded Arithmetic
@@ -40,8 +40,8 @@ theorem round_toReal_exists_same_exponent (rnd : ℝ → ℤ) [ValidRnd rnd]
   let e' := cexp β fexp x
   by_cases he : e' ≤ f.exponent
   · refine ⟨f.mantissa, ?_⟩
-    have hx : genericFormat β fexp x :=
-      generic_format_of_toReal_of_cexp_le f x rfl he
+    have hx : GenericRepresentable β fexp x :=
+      genericRepresentable_of_toReal_of_cexp_le f x rfl he
     simpa [x] using round_preserves_generic rnd x hx
   · exact exists_int_mul_bpow_of_le β (rnd (scaledMantissa β fexp x)) (lt_of_not_ge he).le
 
@@ -57,25 +57,25 @@ theorem toReal_add_exists_min_exponent (f g : FloatRep β) :
 An FLX sum is representable when it fits in `prec` radix digits relative to both operand
 representations. This is the common-grid lemma used by division and square-root residual proofs.
 -/
-theorem generic_format_FLX_add_of_repr_bounds (prec : ℤ) (hprec : 0 < prec)
+theorem genericRepresentable_flx_add_of_repr_bounds (prec : ℤ) (hprec : 0 < prec)
     (f g : FloatRep β) (x y : ℝ)
     (hx : x = toReal f) (hy : y = toReal g)
     (hxf : abs (x + y) < bpow β (prec + f.exponent))
     (hyg : abs (x + y) < bpow β (prec + g.exponent)) :
-    @genericFormat β (flxExp prec) (flxValidExp prec hprec) (x + y) := by
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+    @GenericRepresentable β (flxExp prec) (validExp_flx prec hprec) (x + y) := by
+  let : ValidExp (flxExp prec) := validExp_flx prec hprec
   by_cases hzero : x + y = 0
   · rw [hzero]
-    exact generic_format_zero
+    exact genericRepresentable_zero
   obtain ⟨h, hsum, hexp⟩ := toReal_add_exists_min_exponent f g
   have hrepr : x + y = toReal h := by simpa [hx, hy] using hsum
-  apply generic_format_of_toReal_of_cexp_le h (x + y) hrepr
+  apply genericRepresentable_of_toReal_of_cexp_le h (x + y) hrepr
   have hmagF : magnitude β (x + y) ≤ prec + f.exponent :=
     magnitude_le_of_abs_lt_bpow β (x + y) _ hzero hxf
   have hmagG : magnitude β (x + y) ≤ prec + g.exponent :=
     magnitude_le_of_abs_lt_bpow β (x + y) _ hzero hyg
   rw [hexp]
   simp only [cexp, flxExp]
-  exact le_min (by linarith) (by linarith)
+  exact le_min (by linarith) (by omega)
 
 end FloatLib.Floats.Formats.Flocq

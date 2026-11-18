@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public import FloatLib.Numerics
-public import FloatLib.Kernels
 public import FloatLib.Floats.ExecFloat
 public import FloatLib.Floats.Formats
 public import FloatLib.Floats.Interval
+public import FloatLib.Kernels
+public import FloatLib.Numerics
 
 /-!
 # Executable numerical formats

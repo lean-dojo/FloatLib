@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -256,7 +256,7 @@ def dyadicRoundingStatus (fmt : FloatFormat) (mode : IEEERoundingMode) (exact : 
     let inexact := cmpDyadic exact actual != .eq
     { underflow := dyadicIsTinyAfterRounding fmt mode exact rounded && inexact
       inexact := inexact }
-  else if isInf rounded then
+  else if isInfinite rounded then
     { overflow := true, inexact := true }
   else
     { invalid := true }
@@ -319,7 +319,7 @@ def Internal.Status.dyadicRoundingClassification (fmt : FloatFormat) (mode : IEE
     let status : Numerics.IEEEStatus :=
       if dyadicRoundingOverflows fmt mode exact then
         { overflow := true, inexact := true }
-      else if isInf value then
+      else if isInfinite value then
         { overflow := true, inexact := true }
       else
         { invalid := true }
@@ -375,7 +375,7 @@ the value agrees with the overflow and inexact flags that casts and reductions r
 -/
 def exactInfinityTernary {fmt : FloatFormat} (negative : Bool) (value : Model fmt) :
     Ordering :=
-  if isInf value && signBit value == negative then
+  if isInfinite value && signBit value == negative then
     .eq
   else if negative then
     .gt
@@ -518,7 +518,7 @@ def rationalRoundingStatusScaled (fmt : FloatFormat) (mode : IEEERoundingMode) (
         rationalIsTinyAfterRoundingScaled fmt mode sign numerator denominator exponent rounded &&
           inexact
       inexact := inexact }
-  else if isInf rounded then
+  else if isInfinite rounded then
     { overflow := true, inexact := true }
   else
     { invalid := true }
@@ -599,7 +599,7 @@ def Internal.Status.rationalRoundingClassificationScaled (fmt : FloatFormat)
     let status : Numerics.IEEEStatus :=
       if rationalRoundingOverflowsScaled fmt mode sign numerator denominator exponent then
         { overflow := true, inexact := true }
-      else if isInf value then
+      else if isInfinite value then
         { overflow := true, inexact := true }
       else
         { invalid := true }
@@ -665,8 +665,8 @@ def add {fmt : FloatFormat} (x y : Model fmt)
   | _, _ =>
       let value := Directed.add mode x y
       let hasNaN := isNaN x || isNaN y
-      let generatedInvalid := isInf x && isInf y && Model.signBit x != Model.signBit y
-      let invalid := isSNaN x || isSNaN y || (!hasNaN && generatedInvalid)
+      let generatedInvalid := isInfinite x && isInfinite y && Model.signBit x != Model.signBit y
+      let invalid := isSignaling x || isSignaling y || (!hasNaN && generatedInvalid)
       outcomeWithInvalid value invalid
 
 /--
@@ -697,8 +697,8 @@ def mul {fmt : FloatFormat} (x y : Model fmt)
   | _, _ =>
       let value := Directed.mul mode x y
       let hasNaN := isNaN x || isNaN y
-      let generatedInvalid := (isInf x && isZero y) || (isInf y && isZero x)
-      let invalid := isSNaN x || isSNaN y || (!hasNaN && generatedInvalid)
+      let generatedInvalid := (isInfinite x && isZero y) || (isInfinite y && isZero x)
+      let invalid := isSignaling x || isSignaling y || (!hasNaN && generatedInvalid)
       outcomeWithInvalid value invalid
 
 /--
@@ -735,8 +735,8 @@ def div {fmt : FloatFormat} (x y : Model fmt)
   | _, _ =>
       let value := Directed.div mode x y
       let hasNaN := isNaN x || isNaN y
-      let generatedInvalid := isInf x && isInf y
-      let invalid := isSNaN x || isSNaN y || (!hasNaN && generatedInvalid)
+      let generatedInvalid := isInfinite x && isInfinite y
+      let invalid := isSignaling x || isSignaling y || (!hasNaN && generatedInvalid)
       outcomeWithInvalid value invalid
 
 /--
@@ -765,12 +765,13 @@ def fma {fmt : FloatFormat} (x y z : Model fmt)
   | _, _, _ =>
       let value := Directed.fma mode x y z
       let hasNaN := isNaN x || isNaN y || isNaN z
-      let invalidProduct := (isInf x || isInf y) && (isZero x || isZero y)
-      let productIsInf := (isInf x || isInf y) && !(isZero x || isZero y)
+      let invalidProduct := (isInfinite x || isInfinite y) && (isZero x || isZero y)
+      let productIsInf := (isInfinite x || isInfinite y) && !(isZero x || isZero y)
       let oppositeInfiniteAddend :=
-        productIsInf && isInf z && Model.signBit z != Bool.xor (Model.signBit x) (Model.signBit y)
+        productIsInf && isInfinite z && Model.signBit z != Bool.xor (Model.signBit x)
+          (Model.signBit y)
       let invalid :=
-        isSNaN x || isSNaN y || isSNaN z ||
+        isSignaling x || isSignaling y || isSignaling z ||
           invalidProduct || (!hasNaN && oppositeInfiniteAddend)
       outcomeWithInvalid value invalid
 
@@ -852,12 +853,12 @@ the compiled generic body.
   let value := Directed.sqrt mode x
   if Model.signBit x then
     if isNaN x then
-      outcomeWithInvalid value (isSNaN x)
+      outcomeWithInvalid value (isSignaling x)
     else
       outcomeWithInvalid value (!isZero x)
   else
     match toDyadic? x with
-    | none => outcomeWithInvalid value (isSNaN x)
+    | none => outcomeWithInvalid value (isSignaling x)
     | some exact =>
         if exact.significand == 0 then
           outcomeWithInvalid value false

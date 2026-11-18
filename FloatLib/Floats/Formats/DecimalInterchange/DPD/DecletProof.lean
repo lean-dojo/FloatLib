@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Declet
 public import Mathlib.Data.Nat.Basic
-public import Mathlib.Tactic.SplitIfs
 
 /-!
 # Correctness of Cowlishaw's ten-bit declet table

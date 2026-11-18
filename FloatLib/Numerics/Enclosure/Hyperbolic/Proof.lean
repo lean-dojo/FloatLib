@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Hyperbolic.Runtime
 public import FloatLib.Numerics.Enclosure.Comparison.Proof
 public import FloatLib.Numerics.Enclosure.Elementary.Convergence
 public import FloatLib.Numerics.Enclosure.Elementary.Transcendental
+public import FloatLib.Numerics.Enclosure.Hyperbolic.Runtime
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
@@ -34,7 +34,7 @@ theorem contains_sinh (x : ℚ) (degree : Nat) :
   simpa [sinh, Real.sinh_eq, div_eq_mul_inv, mul_comm] using
     RationalInterval.contains_scaleNonnegative
       (RationalInterval.contains_sub (contains_exp x degree) (contains_exp (-x) degree))
-      (factor := 1 / 2) (by norm_num)
+      (factor := 1 / 2) (by decide +kernel)
 
 /-- The rational hyperbolic cosine interval contains the exact real value. -/
 theorem contains_cosh (x : ℚ) (degree : Nat) :
@@ -42,7 +42,7 @@ theorem contains_cosh (x : ℚ) (degree : Nat) :
   simpa [cosh, Real.cosh_eq, div_eq_mul_inv, mul_comm] using
     RationalInterval.contains_scaleNonnegative
       (RationalInterval.contains_add (contains_exp x degree) (contains_exp (-x) degree))
-      (factor := 1 / 2) (by norm_num)
+      (factor := 1 / 2) (by decide +kernel)
 
 /-- Lower hyperbolic sine endpoints converge to the exact real value. -/
 theorem tendsto_sinh_lo (x : ℚ) :

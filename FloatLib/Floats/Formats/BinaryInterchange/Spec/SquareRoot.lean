@@ -1,12 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.Sqrt.Proof
+
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 
 /-!
@@ -26,7 +27,7 @@ namespace Model.Spec
   match chooseNaN1 x with
   | some nan => nan
   | none =>
-      if isInf x then
+      if isInfinite x then
         if signBit x then invalidResult fmt else nativeOverflow fmt false
       else if isZero x then
         x
@@ -50,7 +51,7 @@ theorem sqrt_eq_model_of_isZero
         (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt) (toModel x)) := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true x hzero
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hfinite
   have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
   have hfields : expField x = 0 ∧ fracField x = 0 := by
     simpa [isZero, hencoding, IEEE.isZero] using hzero
@@ -80,7 +81,7 @@ theorem sqrt_eq_model
   by_cases hzero : isZero x = true
   · exact sqrt_eq_model_of_isZero hfmt x hzero
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hfinite
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hfinite
   have hnonzero : isZero x = false := Bool.eq_false_iff.mpr hzero
   obtain ⟨value, hdecode⟩ := exists_toDyadic?_of_isFinite hfinite
   have hsign : value.negative = false :=

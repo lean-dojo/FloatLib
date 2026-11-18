@@ -1,15 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public meta import FloatLib.Tactic.ReferencePaths
+
 public import FloatLib.Floats.Formats.OCP.MX.E8M0.Core
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactNumericalSystem
-public import FloatLib.Numerics.Operation.Semantics
+public import FloatLib.Numerics.Core.Proof
 public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
+public import FloatLib.Numerics.Operation.Semantics
 
 /-!
 # Numerical semantics of E8M0 scaling
@@ -129,17 +131,29 @@ theorem scaleDyadic_refines :
   simp [scaleDyadic?, hexponent, NumericalSystem.exact, Numerics.Dyadic.mul,
     Numerics.Dyadic.mulFields, Int.add_comm]
 
-/-- Decoding one finite block element under a finite scale succeeds and returns the exact dyadic
-product of the scale and the element's value. -/
-theorem decodeElement_refines (fmt : FloatFormat) :
-    Operation.Checked2 numericalSystem (Model.exactNumericalSystem fmt)
-      (NumericalSystem.exact Numerics.Dyadic)
-      (decodeElement? (fmt := fmt))
-      (fun scale value => .finite (Numerics.Dyadic.mul scale value)) := by
-  intro scale code scaleValue value hscale hvalue
-  unfold decodeElement?
-  rw [Model.toDyadic?_eq_some_of_exactRepresents hvalue]
-  exact scaleDyadic_refines scale value scaleValue value hscale
-    ((NumericalSystem.exact_represents_iff value value).2 rfl)
+end FloatLib.Floats.Formats.OCP.MX.E8M0
+
+/-!
+# Execution certificates for exponent-only scales
+
+OCP MX v1.0, §5.4: the finite E8M0 byte `c` represents `2^(c - 127)`,
+and byte 255 is NaN. These certificates execute the existing byte and
+exponent operations unchanged. Their mathematical contracts are in
+`E8M0.Semantics`; saturation of a supplied exponent is a FloatLib helper,
+not an additional conversion operation prescribed by the document.
+-/
+
+namespace FloatLib.Floats.Formats.OCP.MX.E8M0
+
+open FloatLib.Floats.ExecFloat
+
+reference_paths ofNatBits
+reference_paths toNatBits
+reference_paths isNaN
+reference_paths exponent?
+reference_paths toDyadic?
+reference_paths scaleDyadic?
+reference_paths ofExponent?
+reference_paths ofExponentSaturating
 
 end FloatLib.Floats.Formats.OCP.MX.E8M0

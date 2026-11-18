@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Data.Rat.Cast.Order
+public import FloatLib.Numerics.Kernel.QProof
 
 /-!
 # Executable rational intervals
@@ -17,6 +17,12 @@ Soundness over the reals is proved in `Rational.Proof`.
 
 An interval may be empty, since the carrier records endpoints without enforcing their order. In
 proofs, membership hypotheses supply the ordering.
+
+`around`, `add`, `scaleNonnegative` and `squareNonnegative` are written with the kernel functions
+of `FloatLib.Numerics.Kernel.Q`, because Lean's kernel evaluates them in every elementary
+enclosure, and core's sum of two rationals whose denominators share a factor costs it 0.4 ms. The
+theorems `around_def`, `add_def`, `scaleNonnegative_def` and `squareNonnegative_def` state them in
+ordinary notation.
 -/
 
 @[expose] public section
@@ -43,7 +49,12 @@ nonnegative radius it is the ball of absolute error `radius` around `midpoint` (
 A negative radius gives reversed endpoints, which is an empty interval.
 -/
 def around (midpoint radius : ℚ) : RationalInterval :=
-  ⟨midpoint - radius, midpoint + radius⟩
+  ⟨Kernel.Q.sub midpoint radius, Kernel.Q.add midpoint radius⟩
+
+/-- The endpoints of `around`, in ordinary notation. -/
+theorem around_def (midpoint radius : ℚ) :
+    around midpoint radius = ⟨midpoint - radius, midpoint + radius⟩ := by
+  rw [around, Kernel.Q.sub_eq, Kernel.Q.add_eq]
 
 /-- Negation reverses the endpoints. -/
 def neg (interval : RationalInterval) : RationalInterval :=
@@ -51,7 +62,12 @@ def neg (interval : RationalInterval) : RationalInterval :=
 
 /-- Exact endpoint addition. -/
 def add (left right : RationalInterval) : RationalInterval :=
-  ⟨left.lo + right.lo, left.hi + right.hi⟩
+  ⟨Kernel.Q.add left.lo right.lo, Kernel.Q.add left.hi right.hi⟩
+
+/-- The endpoints of a sum, in ordinary notation. -/
+theorem add_def (left right : RationalInterval) :
+    add left right = ⟨left.lo + right.lo, left.hi + right.hi⟩ := by
+  rw [add, Kernel.Q.add_eq, Kernel.Q.add_eq]
 
 /-- Exact endpoint subtraction. -/
 def sub (left right : RationalInterval) : RationalInterval :=
@@ -64,7 +80,12 @@ enclosed `x` (`contains_scaleNonnegative`). With a negative factor and ordered e
 lower endpoint is the larger one, and `scale` is the version that exchanges them.
 -/
 def scaleNonnegative (interval : RationalInterval) (factor : ℚ) : RationalInterval :=
-  ⟨factor * interval.lo, factor * interval.hi⟩
+  ⟨Kernel.Q.mul factor interval.lo, Kernel.Q.mul factor interval.hi⟩
+
+/-- The endpoints of a scaled interval, in ordinary notation. -/
+theorem scaleNonnegative_def (interval : RationalInterval) (factor : ℚ) :
+    interval.scaleNonnegative factor = ⟨factor * interval.lo, factor * interval.hi⟩ := by
+  rw [scaleNonnegative, Kernel.Q.mul_eq, Kernel.Q.mul_eq]
 
 /-- Exact rational scaling, reversing the endpoints when the factor is negative. -/
 def scale (interval : RationalInterval) (factor : ℚ) : RationalInterval :=
@@ -78,7 +99,13 @@ Clamping the lower endpoint at zero avoids squaring a negative error bound. This
 used in exponential range reduction, where positivity follows from the function being enclosed.
 -/
 def squareNonnegative (interval : RationalInterval) : RationalInterval :=
-  ⟨(max 0 interval.lo) ^ 2, interval.hi ^ 2⟩
+  ⟨Kernel.Q.pow (Kernel.Q.max 0 interval.lo) 2, Kernel.Q.pow interval.hi 2⟩
+
+/-- The endpoints of `squareNonnegative`, in ordinary notation. -/
+theorem squareNonnegative_def (interval : RationalInterval) :
+    interval.squareNonnegative = ⟨(max 0 interval.lo) ^ 2, interval.hi ^ 2⟩ := by
+  unfold squareNonnegative
+  rw [Kernel.Q.pow_eq, Kernel.Q.pow_eq, Kernel.Q.max_eq]
 
 /-- Repeated squaring of a nonnegative enclosure. -/
 def squareRepeat (interval : RationalInterval) : Nat → RationalInterval

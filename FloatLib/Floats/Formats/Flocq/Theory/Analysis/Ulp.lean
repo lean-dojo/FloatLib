@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -24,9 +24,8 @@ formats can depend on smaller exact-arithmetic modules.
 
 namespace FloatLib.Floats.Formats.Flocq
 
-variable {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
+variable {β : Numerics.Radix} {fexp : ℤ → ℤ}
 
-omit [ValidExp fexp] in
 /-- Absence of a negligible exponent means `fexp n < n` at every exponent. -/
 theorem negligibleExp_none_iff_forall_lt :
     negligibleExp fexp = none ↔ ∀ n, fexp n < n := by
@@ -37,6 +36,8 @@ theorem negligibleExp_none_iff_forall_lt :
   · intro h
     rintro ⟨n, hn⟩
     exact (not_le_of_gt (h n)) hn
+
+variable [ValidExp fexp]
 
 /-- ULP is invariant under negation. -/
 @[simp] theorem ulp_neg (x : ℝ) : ulp β fexp (-x) = ulp β fexp x := by
@@ -60,41 +61,41 @@ theorem ulp_bpow (e : ℤ) :
 /-- Exponent functions for which ULP values themselves remain representable. -/
 class ExpNotFlushToZero (fexp : ℤ → ℤ) : Prop where
   /-- The radix power selected as a ULP is representable at its own magnitude. -/
-  ulpExponent : ∀ e, fexp (fexp e + 1) ≤ fexp e
+  ulp_exponent : ∀ e, fexp (fexp e + 1) ≤ fexp e
 
 /-- The zero ULP is representable, including the FLX case where it equals zero. -/
-theorem generic_format_ulp_zero : genericFormat β fexp (ulp β fexp 0) := by
+theorem genericRepresentable_ulp_zero : GenericRepresentable β fexp (ulp β fexp 0) := by
   rw [ulp.zero]
   cases hopt : negligibleExp fexp with
   | none =>
       simp
   | some n =>
       have hn := negligibleExp_spec hopt
-      apply generic_format_bpow
+      apply genericRepresentable_bpow
       exact ((ValidExp.flocq_valid (fexp := fexp) n).2 hn).1
 
 /-- Under the non-flush-to-zero condition, every ULP is representable. -/
-theorem generic_format_ulp [ExpNotFlushToZero fexp] (x : ℝ) :
-    genericFormat β fexp (ulp β fexp x) := by
+theorem genericRepresentable_ulp [ExpNotFlushToZero fexp] (x : ℝ) :
+    GenericRepresentable β fexp (ulp β fexp x) := by
   by_cases hx : x = 0
   · subst x
-    exact generic_format_ulp_zero
+    exact genericRepresentable_ulp_zero
   · rw [ulp.of_ne_zero β fexp x hx]
-    exact generic_format_bpow _
-      (ExpNotFlushToZero.ulpExponent (fexp := fexp) (magnitude β x))
+    exact genericRepresentable_bpow _
+      (ExpNotFlushToZero.ulp_exponent (fexp := fexp) (magnitude β x))
 
 /-- For a nonrepresentable input, directed-up and directed-down rounding differ by one ULP. -/
-theorem round_ceil_eq_floor_add_ulp {x : ℝ} (hx : ¬genericFormat β fexp x) :
+theorem round_ceil_eq_floor_add_ulp {x : ℝ} (hx : ¬GenericRepresentable β fexp x) :
     round (β := β) (fexp := fexp) ceilRound x =
       round (β := β) (fexp := fexp) floorRound x + ulp β fexp x := by
   have hx0 : x ≠ 0 := by
     intro hzero
     subst x
-    exact hx generic_format_zero
+    exact hx genericRepresentable_zero
   have hsnot : scaledMantissa β fexp x ∉ Set.range ((↑·) : ℤ → ℝ) := by
     rintro ⟨n, hn⟩
     apply hx
-    apply generic_format_of_scaled_mantissa_int (n := n)
+    apply genericRepresentable_of_scaledMantissa_int (n := n)
     exact hn.symm
   have hceil : ceilRound (scaledMantissa β fexp x) =
       floorRound (scaledMantissa β fexp x) + 1 := by
@@ -103,14 +104,14 @@ theorem round_ceil_eq_floor_add_ulp {x : ℝ} (hx : ¬genericFormat β fexp x) :
   unfold round toReal
   rw [hceil]
   push_cast
-  ring
+  rw [add_mul]; ac_rfl
 
 /--
 A nonzero representable number is a nonzero integer multiple of the radix power at its canonical
 exponent, so that power is no larger than its absolute value.
 -/
 theorem bpow_cexp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
-    (hx : genericFormat β fexp x) : bpow β (cexp β fexp x) ≤ abs x := by
+    (hx : GenericRepresentable β fexp x) : bpow β (cexp β fexp x) ≤ abs x := by
   obtain ⟨n, hxn⟩ := exists_int_mul_bpow_cexp_of_generic hx
   have hn0 : n ≠ 0 := by
     rintro rfl
@@ -120,7 +121,7 @@ theorem bpow_cexp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
   have hb := bpow.nonneg β (cexp β fexp x)
   calc
     bpow β (cexp β fexp x) =
-        1 * bpow β (cexp β fexp x) := by ring
+        1 * bpow β (cexp β fexp x) := by ac_rfl
     _ ≤ abs (n : ℝ) * bpow β (cexp β fexp x) :=
       mul_le_mul_of_nonneg_right habsn hb
     _ = abs ((n : ℝ) * bpow β (cexp β fexp x)) := by
@@ -129,7 +130,7 @@ theorem bpow_cexp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
 
 /-- One ULP is no larger than the absolute value of a nonzero representable number. -/
 theorem ulp_le_abs_of_generic {x : ℝ} (hx0 : x ≠ 0)
-    (hx : genericFormat β fexp x) : ulp β fexp x ≤ abs x := by
+    (hx : GenericRepresentable β fexp x) : ulp β fexp x ≤ abs x := by
   rw [ulp.of_ne_zero β fexp x hx0]
   exact bpow_cexp_le_abs_of_generic hx0 hx
 

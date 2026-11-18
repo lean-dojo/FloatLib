@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.ExpLog
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
 
 /-!
 # Executable floating-point powers
@@ -18,7 +18,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
 `Model.pow` gives every `FloatFormat` one deterministic power policy. For an IEEE descriptor, a
 finite nonzero base and a finite integral exponent give a correctly rounded result whenever that
 result is finite: its decoded value is the nearest-even rounding of the exact power, as for
-`Model.powInt`. Small exact powers go to `powInt` itself. Larger ones use directed enclosures of
+`Model.pown`. Small exact powers go to `pown` itself. Larger ones use directed enclosures of
 `|x|^n`, built by binary exponentiation at a working precision derived from the format. Repeated
 squaring stops as soon as the enclosure lies beyond the overflow threshold or below half the least
 subnormal, so an exponent is never expanded into an integer when the answer is already an overflow
@@ -222,7 +222,8 @@ finite value.
 
 /-- Working precisions tried in turn: a first guess from the format, then three doublings. -/
 @[inline] def workingPrecisions (fmt : FloatFormat) : List Nat :=
-  let first := 2 * (fmt.fracWidth + 1) + 2 * (Nat.log2 (AlgebraicRounding.exponentSpan fmt) + 1) + 64
+  let first := 2 * (fmt.fracWidth + 1) + 2 * (Nat.log2 (AlgebraicRounding.exponentSpan fmt) + 1)
+    + 64
   [first, 2 * first, 4 * first, 8 * first]
 
 /--
@@ -252,11 +253,11 @@ def attempt (fmt : FloatFormat) (precision : Nat) (negative reciprocal : Bool)
         let high := if reciprocal then lower.toRat⁻¹ else upper.toRat
         if negative then roundEnclosure? fmt (-high) (-low) else roundEnclosure? fmt low high
 
-/-- The integer `(-1)^negative * magnitude * 2^shift`, materialized only for `powInt`. -/
+/-- The integer `(-1)^negative * magnitude * 2^shift`, materialized only for `pown`. -/
 @[inline] def integralValue (negative : Bool) (magnitude shift : Nat) : Int :=
   if negative then -((magnitude <<< shift : Nat) : Int) else ((magnitude <<< shift : Nat) : Int)
 
-/-- Exact results are computed through `powInt` while their exact size is below this bit count. -/
+/-- Exact results are computed through `pown` while their exact size is below this bit count. -/
 def exactBitBudget : Nat := 65536
 
 /--
@@ -275,9 +276,9 @@ Integer power of a finite nonzero base with dyadic representation `b`, for the i
 `(-1)^negativeExponent * magnitude * 2^shift`. For an IEEE descriptor, a finite result is
 correctly rounded.
 
-Small exact results use `powInt`. A base of magnitude one gives a signed one. Otherwise
+Small exact results use `pown`. A base of magnitude one gives a signed one. Otherwise
 directed enclosures are refined through `workingPrecisions`, and if none decides the result, it
-falls back to exact evaluation by `powInt`. `exactBudget` bounds the exact work in the first case.
+falls back to exact evaluation by `pown`. `exactBudget` bounds the exact work in the first case.
 -/
 def integerPowerWith {fmt : FloatFormat} (exactBudget : Nat) (base : Model fmt)
     (b : Numerics.Dyadic) (negativeExponent : Bool) (magnitude shift : Nat) : Model fmt :=
@@ -285,7 +286,7 @@ def integerPowerWith {fmt : FloatFormat} (exactBudget : Nat) (base : Model fmt)
   let negative := b.negative && odd
   if shift ≤ 64 &&
       (magnitude <<< shift) * (Nat.log2 b.significand + 1 + b.exponent.natAbs) ≤ exactBudget then
-    powInt base (integralValue negativeExponent magnitude shift)
+    pown base (integralValue negativeExponent magnitude shift)
   else if b.significand == 1 <<< Nat.log2 b.significand &&
       (Nat.log2 b.significand : Int) + b.exponent == 0 then
     roundAlgebraicRat fmt (if negative then -1 else 1)
@@ -294,7 +295,7 @@ def integerPowerWith {fmt : FloatFormat} (exactBudget : Nat) (base : Model fmt)
     match (workingPrecisions fmt).findSome? fun precision =>
         attempt fmt precision negative negativeExponent endpoint magnitude shift with
     | some result => result
-    | none => powInt base (integralValue negativeExponent magnitude shift)
+    | none => pown base (integralValue negativeExponent magnitude shift)
 
 /--
 Power of a finite base by a finite integral exponent, or `none` when either input is nonfinite
@@ -337,9 +338,9 @@ The special cases, in branch order:
   range failure gives positive overflow, and other failures fall back to `exp (y * log x)`.
 -/
 def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
-  if isZero exponent && !isSNaN base then
+  if isZero exponent && !isSignaling base then
     posOne fmt
-  else if compare base (posOne fmt) = some .eq && !isSNaN exponent then
+  else if compare base (posOne fmt) = some .eq && !isSignaling exponent then
     posOne fmt
   else
     match chooseNaN2 base exponent with
@@ -347,7 +348,7 @@ def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
     | none =>
         if compare exponent (posOne fmt) = some .eq then
           base
-        else if isInf exponent then
+        else if isInfinite exponent then
           match compare (abs base) (posOne fmt) with
           | some .lt =>
               if signBit exponent then nativeOverflow fmt false else zero fmt false
@@ -371,7 +372,7 @@ def pow {fmt : FloatFormat} (base exponent : Model fmt) : Model fmt :=
                   | some .lt => nativeOverflow fmt false
                   | _ => zero fmt false
           | _ =>
-              if isInf base then
+              if isInfinite base then
                 let negative :=
                   signBit base && (Power.classifyInteger? exponent).any (·.odd)
                 match compare exponent (zero fmt false) with

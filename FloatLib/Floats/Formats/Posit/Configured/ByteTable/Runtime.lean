@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Certified
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.TinyTable.Generic.Certified
 public import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Runtime
 
 /-!

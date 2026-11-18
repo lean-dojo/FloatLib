@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,13 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
+
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 
 /-!
 # Exact absolute values and encoded sign operations
 
 For every binary descriptor the sign bit and the quiet-NaN bit sit in different positions. So
-encoded absolute value keeps the signaling status (`isSNaN_abs`) and the fraction field that
+encoded absolute value keeps the signaling status (`isSignaling_abs`) and the fraction field that
 carries a NaN's payload (`fracField_abs`). In a signed-zero format it also clears the sign of every
 value, which gives magnitude ordering its exact-value bridge (`toDyadic?_abs_of_supportsSignedZero`,
 `exactValue_abs_of_supportsSignedZero`).
@@ -49,22 +50,22 @@ private theorem quietBits_toggleSign {fmt : FloatFormat} (x : Model fmt) :
   · simp [Nat.testBit_two_pow_of_ne (Ne.symm hquiet)]
 
 /-- Copying a sign preserves signaling status under every encoding policy. -/
-@[simp] theorem isSNaN_copySign {fmt : FloatFormat} (x y : Model fmt) :
-    isSNaN (copySign x y) = isSNaN x := by
+@[simp] theorem isSignaling_copySign {fmt : FloatFormat} (x y : Model fmt) :
+    isSignaling (copySign x y) = isSignaling x := by
   cases he : fmt.encoding with
   | ieee =>
       have hs : fmt.supportsSignedZero = true := by
         simp [FloatFormat.supportsSignedZero, he]
       by_cases hsign : signBit x = signBit y
       · simp [copySign, hs, hsign]
-      · simp [copySign, hs, hsign, isSNaN, he, IEEE.isSNaN, IEEE.isNaN,
+      · simp [copySign, hs, hsign, isSignaling, he, IEEE.isSignaling, IEEE.isNaN,
           quietBits_toggleSign]
-  | finiteMaxNaN | finiteUnsignedZero | finite => simp [isSNaN, he]
+  | finiteMaxNaN | finiteUnsignedZero | finite => simp [isSignaling, he]
 
 /-- Absolute value preserves signaling status under every encoding policy. -/
-@[simp] theorem isSNaN_abs {fmt : FloatFormat} (x : Model fmt) :
-    isSNaN (abs x) = isSNaN x :=
-  isSNaN_copySign x (posZero fmt)
+@[simp] theorem isSignaling_abs {fmt : FloatFormat} (x : Model fmt) :
+    isSignaling (abs x) = isSignaling x :=
+  isSignaling_copySign x (posZero fmt)
 
 /-- Absolute value preserves the fraction field, which carries a NaN's payload. -/
 @[simp] theorem fracField_abs {fmt : FloatFormat} (x : Model fmt) :
@@ -113,14 +114,14 @@ theorem exactValue_abs_of_supportsSignedZero {fmt : FloatFormat} (x : Model fmt)
           (toDyadic?_abs_of_supportsSignedZero hfmt hd)]
       rfl
   | none =>
-      cases hinf : isInf x
-      · have hnan := isNaN_eq_true_of_toDyadic?_eq_none_of_isInf_eq_false hd hinf
+      cases hinf : isInfinite x
+      · have hnan := isNaN_eq_true_of_toDyadic?_eq_none_of_isInfinite_eq_false hd hinf
         rw [exactValue_eq_nan_of_isNaN hnan,
           exactValue_eq_nan_of_isNaN (by simpa using hnan)]
         rw [signBit_abs_of_supportsSignedZero x hfmt]
-        simp [ExactValue.abs, abs, isSNaN_copySign]
-      · rw [exactValue_eq_infinity_of_isInf hinf,
-          exactValue_eq_infinity_of_isInf (by simpa using hinf)]
+        simp [ExactValue.abs, abs, isSignaling_copySign]
+      · rw [exactValue_eq_infinity_of_isInfinite hinf,
+          exactValue_eq_infinity_of_isInfinite (by simpa using hinf)]
         simp [ExactValue.abs, signBit_abs_of_supportsSignedZero x hfmt]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

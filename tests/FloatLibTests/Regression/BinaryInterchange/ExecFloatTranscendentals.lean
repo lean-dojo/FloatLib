@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals
 public import FloatLibTests.Accounting
 public import FloatLibTests.Fixtures.Transcendentals
 public import FloatLibTests.Regression.BinaryInterchange.Harness
@@ -152,7 +152,7 @@ def nanPayloadFailures (fmt : FloatFormat) : Nat :=
 
 /--
 The NaN matrix in the five catalog formats wide enough for its payloads, and literal binary64
-encodings: a signaling NaN with payload `0x42` raised to either zero, and its `rootN` at degree
+encodings: a signaling NaN with payload `0x42` raised to either zero, and its `rootn` at degree
 zero, keep the payload.
 -/
 def failNaNPayloads : Thunk Nat := ⟨fun _ =>
@@ -162,7 +162,7 @@ def failNaNPayloads : Thunk Nat := ⟨fun _ =>
   countFailures
     [ (Model.pow signaling (Model.posZero _)).toNatBits == 0x7ff8000000000042
     , (Model.pow signaling (Model.negZero _)).toNatBits == 0x7ff8000000000042
-    , (Model.rootN signaling 0).toNatBits == 0x7ff8000000000042
+    , (Model.rootn signaling 0).toNatBits == 0x7ff8000000000042
     ]⟩
 
 /-! ## Proved constants -/
@@ -500,8 +500,8 @@ def certifiedStableFailures (fmt : FloatFormat) : Nat :=
     | .ok result => Harness.sameBits result expected
   countFailures <|
     [positive, Model.neg positive, Model.posZero fmt, Model.negZero fmt].flatMap fun x =>
-      [ acceptedAs (Model.Transcendentals.Certified.expMinus1 x) x
-      , acceptedAs (Model.Transcendentals.Certified.logPlus1 x) x
+      [ acceptedAs (Model.Transcendentals.Certified.expm1 x) x
+      , acceptedAs (Model.Transcendentals.Certified.logp1 x) x
       ]
 
 def failCertifiedStable : Thunk Nat := ⟨fun _ =>
@@ -526,26 +526,26 @@ range screen and its search ends at the exact overflow comparison.
 def failCertifiedStableRejection : Thunk Nat := ⟨fun _ =>
   let one := Model.posOne f32
   let negativeOne := Model.negOne f32
-  let e4m3 := FloatFormat.e4m3fn
+  let e4m3 := FloatFormat.e4m3
   countFailures
-    [ failedWith (Model.Transcendentals.Certified.logPlus1 negativeOne) .domain
-    , failedWith (Model.Transcendentals.Certified.logPlus1 (Model.negInf f32)) .nonfiniteInput
-    , failedWith (Model.Transcendentals.Certified.expMinus1 (Model.canonicalNaN f32))
+    [ failedWith (Model.Transcendentals.Certified.logp1 negativeOne) .domain
+    , failedWith (Model.Transcendentals.Certified.logp1 (Model.negInf f32)) .nonfiniteInput
+    , failedWith (Model.Transcendentals.Certified.expm1 (Model.canonicalNaN f32))
         .nonfiniteInput
-    , failedWith (Model.Transcendentals.Certified.expMinus1 one (budget := { maxAttempts := 0 }))
+    , failedWith (Model.Transcendentals.Certified.expm1 one (budget := { maxAttempts := 0 }))
         .inconclusive
-    , failedWith (Model.Transcendentals.Certified.logPlus1 one (budget := { maxAttempts := 0 }))
+    , failedWith (Model.Transcendentals.Certified.logp1 one (budget := { maxAttempts := 0 }))
         .inconclusive
     , failedWith (Model.Transcendentals.Certified.expRat (FloatFormat.ieee 63 23) 1
         (budget := { maxAttempts := 0 })) .inconclusive
-    , failedWith (Model.Transcendentals.Certified.expMinus1Rat (FloatFormat.ieee 63 23) 1
+    , failedWith (Model.Transcendentals.Certified.expm1Rat (FloatFormat.ieee 63 23) 1
         (budget := { maxAttempts := 0 })) .inconclusive
     , failedWith (Model.Transcendentals.Certified.log negativeOne) .domain
     , failedWith (Model.Transcendentals.Certified.log (Model.posZero f32)) .domain
     , failedWith
         (Model.Transcendentals.Certified.exp (Model.ofNatBits (fmt := f32) 0x42c80000)) .range
     , failedWith
-        (Model.Transcendentals.Certified.expMinus1 (Model.ofNatBits (fmt := f32) 0x42c80000))
+        (Model.Transcendentals.Certified.expm1 (Model.ofNatBits (fmt := f32) 0x42c80000))
         .range
     , failedWith (Model.Transcendentals.Certified.expRat .binary16 (110902 / 10000)) .range
     , failedWith (Model.Transcendentals.Certified.exp (Model.posOne e4m3)) .unsupportedFormat
@@ -645,7 +645,7 @@ open FloatLib.Floats in
 The configured `ExecFloat.Binary.Certified` functions return the certified kernel's encoding or its
 failure: `exp 1` and `log 2` in binary32, `2 ^ 0.5` and `10 ^ 0.5` in binary64, where the plain
 `pow` agrees, and the domain, range, nonfinite-input, and budget failures, where the plain calls
-return the approximation or the IEEE special value instead. `expMinus1` and `logPlus1` keep the
+return the approximation or the IEEE special value instead. `expm1` and `logp1` keep the
 binary32 input `2^-26`.
 -/
 def failConfiguredCertified : Thunk Nat := ⟨fun _ =>
@@ -682,10 +682,10 @@ def failConfiguredCertified : Thunk Nat := ⟨fun _ =>
     , failed (ExecFloat.Binary.Certified.pow (-2 : Binary64) half) .domain
     , ExecFloat.Binary.isNaN (ExecFloat.Binary.pow (-2 : Binary64) half)
     , failed (ExecFloat.Binary.Certified.pow (10 : Binary64) 400.5) .range
-    , ExecFloat.Binary.isInf (ExecFloat.Binary.pow (10 : Binary64) 400.5)
-    , failed (ExecFloat.Binary.Certified.logPlus1 (-1 : Binary32)) .domain
-    , certified32 (ExecFloat.Binary.Certified.expMinus1 tiny) 0x32800000
-    , certified32 (ExecFloat.Binary.Certified.logPlus1 tiny) 0x32800000
+    , ExecFloat.Binary.isInfinite (ExecFloat.Binary.pow (10 : Binary64) 400.5)
+    , failed (ExecFloat.Binary.Certified.logp1 (-1 : Binary32)) .domain
+    , certified32 (ExecFloat.Binary.Certified.expm1 tiny) 0x32800000
+    , certified32 (ExecFloat.Binary.Certified.logp1 tiny) 0x32800000
     ]⟩
 
 /-! ## Correctly rounded functions -/
@@ -699,10 +699,10 @@ def correctlyRoundedSweep : List (Model f32) :=
   (List.range 64).map fun index => Model.ofNatBits (index * 0x03ffffbf + 0x2a)
 
 /--
-On the sweep, `CorrectlyRounded.exp`, `expMinus1`, `log`, and `logPlus1` return the certified
+On the sweep, `CorrectlyRounded.exp`, `expm1`, `log`, and `logp1` return the certified
 result whenever the certified search settles, and an empty budget returns the same encoding. With
 that budget exact comparisons decide every result that is not a special value, except the
-exponentials that `Certified.expRat` and `Certified.expMinus1Rat` settle without a search: a zero
+exponentials that `Certified.expRat` and `Certified.expm1Rat` settle without a search: a zero
 argument and the deep underflow range. The weighted exponential with weight one is the
 exponential.
 -/
@@ -719,12 +719,12 @@ def failCorrectlyRoundedAgreement : Thunk Nat := ⟨fun _ =>
   countFailures <| correctlyRoundedSweep.flatMap fun x =>
     [ agrees (Model.Transcendentals.CorrectlyRounded.exp · ·)
         (Model.Transcendentals.Certified.exp ·) x
-    , agrees (Model.Transcendentals.CorrectlyRounded.expMinus1 · ·)
-        (Model.Transcendentals.Certified.expMinus1 ·) x
+    , agrees (Model.Transcendentals.CorrectlyRounded.expm1 · ·)
+        (Model.Transcendentals.Certified.expm1 ·) x
     , agrees (Model.Transcendentals.CorrectlyRounded.log · ·)
         (Model.Transcendentals.Certified.log ·) x
-    , agrees (Model.Transcendentals.CorrectlyRounded.logPlus1 · ·)
-        (Model.Transcendentals.Certified.logPlus1 ·) x
+    , agrees (Model.Transcendentals.CorrectlyRounded.logp1 · ·)
+        (Model.Transcendentals.Certified.logp1 ·) x
     , Harness.sameBits (Model.Transcendentals.CorrectlyRounded.expMul x (Model.posOne f32))
         (Model.Transcendentals.CorrectlyRounded.exp x)
     ]⟩
@@ -732,9 +732,10 @@ def failCorrectlyRoundedAgreement : Thunk Nat := ⟨fun _ =>
 open Model.Transcendentals.CorrectlyRounded in
 /--
 NaNs are quieted, and infinities, zeros, the logarithm poles, and the domain edges get their
-IEEE 754 results. `exp 100` and `expMinus1 100` overflow to `+∞` in binary32. In `ieee 2 1`,
+IEEE 754-2019 §9.2.1 results. `exp 100` and `expm1 100` overflow to `+∞` in binary32. In `ieee 2
+1`,
 whose finite range ends at `3` and rounds to infinity from `7/2`, `exp (3/2) ≈ 4.48` overflows
-while `expMinus1 (3/2)` is `3`, also with an empty budget.
+while `expm1 (3/2)` is `3`, also with an empty budget.
 -/
 def failCorrectlyRoundedSpecial : Thunk Nat := ⟨fun _ =>
   let one := Model.posOne f32
@@ -748,23 +749,23 @@ def failCorrectlyRoundedSpecial : Thunk Nat := ⟨fun _ =>
   let tiny := FloatFormat.ieee 2 1
   let threeHalves : Model tiny := Model.ofNatBits 3
   countFailures
-    [ Model.isNaN (exp nan) && Model.isNaN (expMinus1 nan) && Model.isNaN (log nan) &&
-        Model.isNaN (logPlus1 nan)
+    [ Model.isNaN (exp nan) && Model.isNaN (expm1 nan) && Model.isNaN (log nan) &&
+        Model.isNaN (logp1 nan)
     , Harness.sameBits (exp posInf) posInf && Harness.sameBits (exp negInf) posZero
     , Harness.sameBits (exp negZero) one && Harness.sameBits (exp hundred) posInf
-    , Harness.sameBits (expMinus1 posInf) posInf
-    , Harness.sameBits (expMinus1 negInf) (Model.negOne f32)
-    , Harness.sameBits (expMinus1 negZero) negZero && Harness.sameBits (expMinus1 posZero) posZero
-    , Harness.sameBits (expMinus1 hundred) posInf
+    , Harness.sameBits (expm1 posInf) posInf
+    , Harness.sameBits (expm1 negInf) (Model.negOne f32)
+    , Harness.sameBits (expm1 negZero) negZero && Harness.sameBits (expm1 posZero) posZero
+    , Harness.sameBits (expm1 hundred) posInf
     , Harness.sameBits (log posZero) negInf && Harness.sameBits (log negZero) negInf
     , Harness.sameBits (log posInf) posInf && Harness.sameBits (log one) posZero
     , Model.isNaN (log (Model.negOne f32)) && Model.isNaN (log negInf)
-    , Harness.sameBits (logPlus1 (Model.negOne f32)) negInf
-    , Model.isNaN (logPlus1 negativeTwo) && Model.isNaN (logPlus1 negInf)
-    , Harness.sameBits (logPlus1 negZero) negZero && Harness.sameBits (logPlus1 posInf) posInf
+    , Harness.sameBits (logp1 (Model.negOne f32)) negInf
+    , Model.isNaN (logp1 negativeTwo) && Model.isNaN (logp1 negInf)
+    , Harness.sameBits (logp1 negZero) negZero && Harness.sameBits (logp1 posInf) posInf
     , (exp threeHalves).toNatBits == 6
-    , (expMinus1 threeHalves).toNatBits == 5
-    , (expMinus1 threeHalves (budget := { maxAttempts := 0 })).toNatBits == 5
+    , (expm1 threeHalves).toNatBits == 5
+    , (expm1 threeHalves (budget := { maxAttempts := 0 })).toNatBits == 5
     ]⟩
 
 open Model.Transcendentals.CorrectlyRounded in
@@ -772,7 +773,8 @@ open Model.Transcendentals.CorrectlyRounded in
 The weighted exponential rounds `exp x * w` once. In binary32, `exp 89 * 0.5` and
 `exp (-100) * 1e30` are finite although `exp 89` overflows and `exp (-100)` is subnormal, a zero
 weight gives the zero of its sign where rounding `exp 89` first gives a NaN, `exp 0 * w` is `w`,
-and the infinite and NaN operands follow IEEE 754 products. In binary64, `exp 710 * 0.5` is
+and the infinite and NaN operands follow IEEE 754 products (C23 draft N3220 Annex F.3, Table F.2).
+In binary64, `exp 710 * 0.5` is
 finite. Expected encodings come from an exact rational evaluation of an 80-digit `exp`.
 -/
 def failWeightedExponential : Thunk Nat := ⟨fun _ =>

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -35,7 +35,7 @@ The checks cover, under all six directions:
   casts of every encoding of those two formats to binary16;
 * named vectors for rounding away from zero, ties away from zero, integral rounding, integer
   conversion, and the sign of exactly cancelling sums, and boundary vectors at the tininess
-  thresholds, an exact subnormal, the overflow midpoint of E4M3FN, and saturation in E2M1.
+  thresholds, an exact subnormal, the overflow midpoint of E4M3, and saturation in E2M1.
 
 Compile-time checks confirm that `(mode := .up)` names the upward direction of every mode type a
 call expects, that `open FloatLib.Rounding` names the type `IEEERoundingMode` and no direction, so
@@ -655,15 +655,15 @@ def namedFailures : Thunk Nat := ⟨fun _ =>
         Model.ofNatBits (fmt := FloatFormat.binary32) 0x40400000
     , Model.roundToIntegral (Model.ofNatBits (fmt := FloatFormat.binary32) 0xc0000001)
         .away == Model.ofNatBits (fmt := FloatFormat.binary32) 0xc0400000
-    , match ExecDType.floatToInt (width := 8) twoAndHalf .nearestAway with
+    , match ExecDType.convertToIntegerExact (width := 8) twoAndHalf .nearestAway with
       | .success value status =>
           FloatLib.Numerics.Representations.FixedInt.toInt value == 3 && status.inexact
       | .failure _ => false
-    , match ExecDType.floatToInt (width := 8) negativeTwoAndHalf .nearestAway with
+    , match ExecDType.convertToIntegerExact (width := 8) negativeTwoAndHalf .nearestAway with
       | .success value status =>
           FloatLib.Numerics.Representations.FixedInt.toInt value == -3 && status.inexact
       | .failure _ => false
-    , match ExecDType.floatToInt (width := 8) twoAndHalf .nearest with
+    , match ExecDType.convertToIntegerExact (width := 8) twoAndHalf .nearest with
       | .success value _ => FloatLib.Numerics.Representations.FixedInt.toInt value == 2
       | .failure _ => false
     ]⟩
@@ -684,14 +684,14 @@ Named boundary vectors around the smallest normal value `N = 2^-6` of `ieee 4 3`
 whose least subnormal is `h = 2^-9`, given as exact binary16 inputs. With an unbounded exponent the
 grid just below `N` has spacing `h/2`, so nearest-away rounding is tiny below `N - h/4` and rounding
 away from zero is tiny up to `N - h/2`, although both deliver `N` on the bounded grid. The vectors
-also cover an exact subnormal, the overflow midpoint of E4M3FN, whose largest significand is even,
+also cover an exact subnormal, the overflow midpoint of E4M3, whose largest significand is even,
 and saturation in the fully finite E2M1.
 -/
 def boundaryFailures : Thunk Nat := ⟨fun _ =>
   let tinyInexact : FloatLib.Numerics.IEEEStatus := { underflow := true, inexact := true }
   let inexact : FloatLib.Numerics.IEEEStatus := { inexact := true }
   let overflowInexact : FloatLib.Numerics.IEEEStatus := { overflow := true, inexact := true }
-  let e4 := FloatFormat.e4m3fn
+  let e4 := FloatFormat.e4m3
   let e4Largest := Model.ofNatBits (fmt := e4) 0x7e
   let e4Sixteen := Model.ofNatBits (fmt := e4) 0x58
   let e4MinSubnormal := Model.ofNatBits (fmt := e4) 0x01
@@ -719,7 +719,7 @@ def boundaryFailures : Thunk Nat := ⟨fun _ =>
       -- The least subnormal `2^-9` (`0x1800`) is exact: no underflow.
     , castDelivers 0x1800 .nearestAway 0x01 {} .eq
     , castDelivers 0x1800 .away 0x01 {} .eq
-      -- E4M3FN: `448 + 16` is the overflow midpoint. Ties away overflow to the NaN pattern, which
+      -- E4M3: `448 + 16` is the overflow midpoint. Ties away overflow to the NaN pattern, which
       -- takes the sign of the exact value. Ties to even keep 448, whose significand 14 is even.
     , delivers (Model.add e4Largest e4Sixteen (mode := .nearestAway) (status := true)) 0x7f
         overflowInexact .gt

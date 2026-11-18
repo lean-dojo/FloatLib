@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch06-three-readings.png: one binary32 word read three ways.
 
-Chapter 06 reads a stored word as bits, as an exact dyadic and as a real number, and names the
+The chapter on executable arithmetic reads a stored word as bits, as an exact dyadic and as a real number, and names the
 function for each step. The figure follows the chapter's own example word `tiny32`, the
 binary32 word nearest to 1e-8, down that chain: a word with three field widths and values,
 its exact dyadic components, and its real value. Short arrow labels name the two operations;
@@ -50,11 +50,11 @@ TOTAL = 1 + EXP_WIDTH + FRAC_WIDTH
 MIN_SUBNORMAL_EXP = 1 - BIAS - FRAC_WIDTH    # FloatFormat.minSubnormalExponent
 ALL_ONES = 2 ** EXP_WIDTH - 1
 
-SIGN_COLOUR = fs.PURPLE
-EXP_COLOUR = fs.ORANGE
-FRAC_COLOUR = fs.SKY
+SIGN_COLOUR = fs.FIELD["sign"]
+EXP_COLOUR = fs.FIELD["exponent"]
+FRAC_COLOUR = fs.FIELD["fraction"]
 FIELDS = [(1, SIGN_COLOUR), (EXP_WIDTH, EXP_COLOUR), (FRAC_WIDTH, FRAC_COLOUR)]
-MONO = "DejaVu Sans Mono"
+MONO = fs.MONO
 
 TINY32 = 0x322BCC77
 ONE32 = 0x3F800000
@@ -97,37 +97,35 @@ def significant_digits(value: Fraction, digits: int) -> str:
 
 def draw(mobile: bool):
     """One finite word; the two arrows interpret it without rounding."""
-    fig = plt.figure(figsize=(3.8, 6.5) if mobile else (9, 3.65))
-    fig.text(0.035, 0.97, "One word, three readings", va="top", fontsize=14, weight="bold")
-    fig.text(0.035, 0.89 if mobile else 0.85,
-             r"binary32 nearest to $10^{-8}$", fontsize=12, color=fs.MUTED)
-    positions = ([(0.035, y, 0.93, 0.205) for y in (0.655, 0.37, 0.085)] if mobile else
-                 [(x, 0.20, 0.285, 0.55) for x in (0.025, 0.3575, 0.69)])
+    fig = plt.figure(figsize=(fs.MOBILE_WIDTH, 5.6) if mobile else (fs.WIDTH, 2.5))
+    positions = ([(0.035, y, 0.93, 0.25) for y in (0.72, 0.375, 0.03)] if mobile else
+                 [(x, 0.17, 0.285, 0.80) for x in (0.025, 0.3575, 0.69)])
     for i, rect in enumerate(positions):
         ax = fig.add_axes(rect)
         ax.set(xlim=(0, 1), ylim=(0, 1))
         ax.axis("off")
-        ax.add_patch(Rectangle((0, 0), 1, 1, facecolor=fs.PAPER_2,
-                               edgecolor=fs.LINE, linewidth=0.8))
-        ax.text(0.06, 0.87, ("1  Stored bits", "2  Exact dyadic", "3  Real value")[i],
-                fontsize=12, weight="bold", va="center")
+        ax.add_patch(Rectangle((0, 0), 1, 1, facecolor="white",
+                               edgecolor=fs.INK, linewidth=fs.LW_AXIS))
+        ax.text(0.06, 0.87, ("stored bits", "exact dyadic", "real value")[i],
+                fontsize=fs.SIZE_TICK, va="center", color=fs.MUTED)
         if i == 0:
-            ax.text(0.06, 0.63, "0x322bcc77", family=MONO, fontsize=14)
+            ax.text(0.06, 0.63, "0x322bcc77", family=MONO, fontsize=fs.SIZE_LABEL)
             x = 0.06
             for width, colour in FIELDS:
                 ax.add_patch(Rectangle((x, 0.41), 0.88 * width / TOTAL, 0.09,
-                                       facecolor=colour, edgecolor="white", linewidth=0.7))
+                                       facecolor=colour, edgecolor=fs.INK,
+                                       linewidth=fs.LW_GRID))
                 x += 0.88 * width / TOTAL
-            ax.text(0.06, 0.24, "sign 0    exponent 100", fontsize=11.5)
-            ax.text(0.06, 0.07, "fraction 2870391", fontsize=11.5)
+            ax.text(0.06, 0.24, "sign 0    exponent 100", fontsize=fs.SIZE_LABEL)
+            ax.text(0.06, 0.07, "fraction 2870391", fontsize=fs.SIZE_LABEL)
         elif i == 1:
-            ax.text(0.06, 0.60, "positive", fontsize=12)
-            ax.text(0.06, 0.36, "significand 11258999", fontsize=11.5)
-            ax.text(0.06, 0.12, "exponent −50", fontsize=11.5)
+            ax.text(0.06, 0.60, "positive", fontsize=fs.SIZE_LABEL)
+            ax.text(0.06, 0.36, "significand 11258999", fontsize=fs.SIZE_LABEL)
+            ax.text(0.06, 0.12, "exponent −50", fontsize=fs.SIZE_LABEL)
         else:
-            ax.text(0.06, 0.60, r"$11258999 \times 2^{-50}$", fontsize=14)
-            ax.text(0.06, 0.34, r"$= 9.99999993922\ldots$", fontsize=12)
-            ax.text(0.06, 0.12, r"$\phantom{=}\times 10^{-9}$", fontsize=12)
+            ax.text(0.06, 0.60, r"$11258999 \times 2^{-50}$", fontsize=fs.SIZE_LABEL)
+            ax.text(0.06, 0.34, r"$= 9.99999993922\ldots$", fontsize=fs.SIZE_LABEL)
+            ax.text(0.06, 0.12, r"$\phantom{=}\times 10^{-9}$", fontsize=fs.SIZE_LABEL)
     arrow_ax = fig.add_axes([0, 0, 1, 1], zorder=0)
     arrow_ax.axis("off")
     for i, label in enumerate(("decode", "interpret")):
@@ -135,16 +133,14 @@ def draw(mobile: bool):
             upper = positions[i][1]
             lower = positions[i + 1][1] + positions[i + 1][3]
             arrow_ax.annotate("", (0.5, lower + 0.005), (0.5, upper - 0.005),
-                              arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.2))
-            arrow_ax.text(0.54, (upper + lower) / 2, label, fontsize=11.5, va="center")
+                              arrowprops=dict(arrowstyle="-|>", color=fs.INK, lw=fs.LW_REF))
+            arrow_ax.text(0.54, (upper + lower) / 2, label, fontsize=fs.SIZE_TICK, va="center")
         else:
             start = positions[i][0] + positions[i][2]
             end = positions[i + 1][0]
-            arrow_ax.annotate("", (end - 0.003, 0.46), (start + 0.003, 0.46),
-                              arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.2))
-            arrow_ax.text((start + end) / 2, 0.11, label, fontsize=11.5, ha="center")
-    fig.text(0.035, 0.015,
-             "Same finite value; neither step rounds.", fontsize=11.5, color=fs.MUTED)
+            arrow_ax.annotate("", (end - 0.003, 0.57), (start + 0.003, 0.57),
+                              arrowprops=dict(arrowstyle="-|>", color=fs.INK, lw=fs.LW_REF))
+            arrow_ax.text((start + end) / 2, 0.04, label, fontsize=fs.SIZE_TICK, ha="center")
     return fig
 
 
@@ -162,7 +158,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch06-three-readings.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 

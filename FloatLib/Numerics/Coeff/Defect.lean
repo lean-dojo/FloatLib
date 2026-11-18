@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Numerics.Coeff.Wiener
 public import Mathlib.Analysis.Analytic.Binomial
-public import Mathlib.Analysis.SpecificLimits.Normed
-public import Mathlib.Topology.Order.IntermediateValue
 
 /-!
 # Inverses and inverse square roots from a defect
@@ -98,35 +96,28 @@ theorem inv_of_defect {f v : A} {δ : ℝ} (h : ‖1 - v * f‖ ≤ δ) (hδ : �
   have hd : ‖d‖ < 1 := h.trans_lt hδ
   set s := ∑' n : ℕ, d ^ n
   have hs : s * (1 - d) = 1 := geom_series_mul_neg d hd
-  have hvf : v * f = 1 - d := by rw [hd_def]; ring
+  have hvf : v * f = 1 - d := by rw [hd_def, sub_sub_cancel]
   have hfs : f * (s * v) = 1 := by
-    calc f * (s * v) = s * (v * f) := by ring
+    calc f * (s * v) = s * (v * f) := by ac_rfl
       _ = 1 := by rw [hvf, hs]
   have hfu : IsUnit f := isUnit_iff_exists_inv.mpr ⟨_, hfs⟩
   refine ⟨hfu, ?_⟩
   -- `f⁻¹ = s v`, so `f⁻¹ - v = (s - 1) v = s d v`, and `‖s‖ ≤ 1 / (1 - δ)` by the geometric series
   have hinv : Ring.inverse f = s * v := by
-    calc Ring.inverse f = Ring.inverse f * (f * (s * v)) := by rw [hfs, mul_one]
-      _ = s * v := by rw [← mul_assoc, Ring.inverse_mul_cancel f hfu, one_mul]
+    simpa only [mul_one] using
+      (Ring.inverse_mul_eq_iff_eq_mul f 1 (s * v) hfu).2 hfs.symm
   have hsd : Ring.inverse f - v = s * d * v := by
-    rw [hinv]
-    linear_combination v * hs
+    have hs' : s - s * d = 1 := by simpa only [mul_sub, mul_one] using hs
+    rw [hinv, ← sub_one_mul, ← hs', sub_sub_cancel]
   have hsn : ‖s‖ ≤ (1 - δ)⁻¹ := by
-    have hsum : Summable fun n : ℕ => ‖d‖ ^ n := summable_geometric_of_lt_one (norm_nonneg _) hd
-    calc ‖s‖ ≤ ∑' n : ℕ, ‖d‖ ^ n :=
-          (norm_tsum_le_tsum_norm (hsum.of_nonneg_of_le (fun _ => norm_nonneg _)
-            fun n => norm_pow_le d n)).trans
-            (Summable.tsum_le_tsum (fun n => norm_pow_le d n)
-              (hsum.of_nonneg_of_le (fun _ => norm_nonneg _) fun n => norm_pow_le d n) hsum)
-      _ = (1 - ‖d‖)⁻¹ := tsum_geometric_of_lt_one (norm_nonneg _) hd
-      _ ≤ (1 - δ)⁻¹ := by
-          have : 0 < 1 - δ := by linarith
-          gcongr
-  have h1 : 0 < 1 - δ := by linarith
+    calc ‖s‖ ≤ (1 - ‖d‖)⁻¹ := by
+          simpa only [norm_one, sub_self, zero_add] using
+            tsum_geometric_le_of_norm_lt_one d hd
+      _ ≤ (1 - δ)⁻¹ := inv_anti₀ (sub_pos.mpr hδ) (sub_le_sub_left h 1)
   rw [hsd]
   calc ‖s * d * v‖ ≤ ‖s‖ * ‖d‖ * ‖v‖ := (norm_mul_le _ _).trans (by gcongr; exact norm_mul_le _ _)
     _ ≤ (1 - δ)⁻¹ * δ * ‖v‖ := by gcongr
-    _ = ‖v‖ * δ / (1 - δ) := by field_simp
+    _ = ‖v‖ * δ / (1 - δ) := by rw [div_eq_mul_inv]; ac_rfl
 
 end Inverse
 
@@ -140,21 +131,19 @@ noncomputable def invSqrtCoeff (n : ℕ) : ℝ := Ring.choose ((n : ℝ) - 1 / 2
 theorem invSqrtCoeff_pos (n : ℕ) : 0 < invSqrtCoeff n := by
   rw [invSqrtCoeff, Ring.choose_eq_smul, smul_eq_mul, ← Polynomial.aeval_eq_smeval,
     ← Polynomial.eval_map_algebraMap, algebraMap_int_eq, descPochhammer_map]
-  have : (n : ℝ) - 1 < n - 1 / 2 := by linarith
+  have : (n : ℝ) - 1 < n - 1 / 2 := sub_lt_sub_left one_half_lt_one _
   have := descPochhammer_pos this
   positivity
 
 /-- The binomial series: `∑ n, invSqrtCoeff n * tⁿ = 1 / √(1 - t)` for `|t| < 1`. -/
 theorem hasSum_invSqrtCoeff {t : ℝ} (ht : |t| < 1) :
     HasSum (fun n => invSqrtCoeff n * t ^ n) (√(1 - t))⁻¹ := by
-  have ht' : ‖t‖₊ < 1 := by
-    rw [← NNReal.coe_lt_coe, coe_nnnorm, Real.norm_eq_abs]
-    simpa using ht
   have h := (Real.one_div_one_sub_rpow_hasFPowerSeriesOnBall_zero (1 / 2)).hasSum (y := t)
-    (by rw [Metric.mem_eball, edist_zero_right, enorm_eq_nnnorm]; exact_mod_cast ht')
+    (by simpa [Metric.mem_eball, edist_zero_right, eNorm_eq_nnNorm] using! ht)
   simp only [FormalMultilinearSeries.ofScalars_apply_eq, smul_eq_mul, zero_add] at h
   convert h using 2 with n
-  · rw [invSqrtCoeff, show (n : ℝ) - 1 / 2 = 1 / 2 + n - 1 by ring]
+  · rw [invSqrtCoeff, add_comm (1 / 2 : ℝ), add_sub_assoc,
+      half_sub 1, sub_eq_add_neg]
   · rw [Real.sqrt_eq_rpow, one_div, one_div]
 
 /-- The square of the binomial series of `(1 - t) ^ (-1/2)` is the geometric series: for every
@@ -164,12 +153,15 @@ theorem sum_antidiagonal_invSqrtCoeff (n : ℕ) :
   have hc : ∀ k : ℕ, invSqrtCoeff k = (-1) ^ k * Ring.choose (-(1 / 2 : ℝ)) k := by
     intro k
     rw [Ring.choose_neg, Units.smul_def, zsmul_eq_mul, Int.cast_negOnePow, invSqrtCoeff]
-    rw [show (1 / 2 : ℝ) + k - 1 = k - 1 / 2 by ring, ← mul_assoc, zpow_natCast, ← mul_pow]
+    rw [show (1 / 2 : ℝ) + k - 1 = k - 1 / 2 by
+      rw [add_comm, add_sub_assoc, half_sub, sub_eq_add_neg],
+      ← mul_assoc, zpow_natCast, ← mul_pow]
     norm_num
   have hv := Ring.add_choose_eq (r := -(1 / 2 : ℝ)) (s := -(1 / 2)) n (Commute.refl _)
   have hm : Ring.choose (-(1 / 2 : ℝ) + -(1 / 2)) n = (-1) ^ n := by
-    rw [show -(1 / 2 : ℝ) + -(1 / 2) = -1 by norm_num, Ring.choose_neg, Units.smul_def,
-      zsmul_eq_mul, Int.cast_negOnePow, show (1 : ℝ) + n - 1 = (n : ℕ) by ring,
+    rw [show -(1 / 2 : ℝ) + -(1 / 2) = -1 by rw [← neg_add, add_halves],
+      Ring.choose_neg, Units.smul_def,
+      zsmul_eq_mul, Int.cast_negOnePow, add_sub_cancel_left,
       Ring.choose_natCast, Nat.choose_self, zpow_natCast]
     simp
   calc ∑ ij ∈ antidiagonal n, invSqrtCoeff ij.1 * invSqrtCoeff ij.2
@@ -177,7 +169,7 @@ theorem sum_antidiagonal_invSqrtCoeff (n : ℕ) :
           (Ring.choose (-(1 / 2 : ℝ)) ij.1 * Ring.choose (-(1 / 2)) ij.2) := by
         refine Finset.sum_congr rfl fun ij hij => ?_
         rw [hc, hc, ← mem_antidiagonal.mp hij, pow_add]
-        ring
+        ac_rfl
     _ = (-1) ^ n * (-1) ^ n := by rw [← Finset.mul_sum, ← hv, hm]
     _ = 1 := by rw [← mul_pow]; norm_num
 
@@ -185,14 +177,13 @@ theorem sum_antidiagonal_invSqrtCoeff (n : ℕ) :
 
 section InvSqrt
 
-variable {A : Type*} [NormedCommRing A] [NormedAlgebra ℝ A] [CompleteSpace A] [NormOneClass A]
+variable {A : Type*} [NormedCommRing A] [NormedAlgebra ℝ A]
 
 /-- `(1 - d) ^ (-1/2)` as the binomial series `∑ n, invSqrtCoeff n • dⁿ`, which converges when
 `‖d‖ < 1`. -/
 noncomputable def invSqrtOneSub (d : A) : A := ∑' n, invSqrtCoeff n • d ^ n
 
-omit [CompleteSpace A] in
-private theorem norm_invSqrtCoeff_smul_le (d : A) (n : ℕ) :
+private theorem norm_invSqrtCoeff_smul_le [NormOneClass A] (d : A) (n : ℕ) :
     ‖invSqrtCoeff n • d ^ n‖ ≤ invSqrtCoeff n * ‖d‖ ^ n := by
   rw [norm_smul, Real.norm_of_nonneg (invSqrtCoeff_pos n).le]
   exact mul_le_mul_of_nonneg_left (norm_pow_le d n) (invSqrtCoeff_pos n).le
@@ -201,11 +192,12 @@ private theorem summable_invSqrtCoeff {t : ℝ} (ht : |t| < 1) :
     Summable fun n => invSqrtCoeff n * t ^ n :=
   (hasSum_invSqrtCoeff ht).summable
 
-omit [CompleteSpace A] in
-private theorem summable_norm_invSqrtOneSub {d : A} (hd : ‖d‖ < 1) :
+private theorem summable_norm_invSqrtOneSub [NormOneClass A] {d : A} (hd : ‖d‖ < 1) :
     Summable fun n => ‖invSqrtCoeff n • d ^ n‖ :=
   (summable_invSqrtCoeff (by rwa [abs_norm])).of_nonneg_of_le (fun _ => norm_nonneg _)
     (norm_invSqrtCoeff_smul_le d)
+
+variable [CompleteSpace A] [NormOneClass A]
 
 private theorem summable_invSqrtOneSub {d : A} (hd : ‖d‖ < 1) :
     Summable fun n => invSqrtCoeff n • d ^ n :=
@@ -238,13 +230,20 @@ theorem invSqrtOneSub_sq_mul {d : A} (hd : ‖d‖ < 1) : invSqrtOneSub d ^ 2 * 
 
 private theorem inv_sqrt_sub_one_le {δ : ℝ} (h0 : 0 ≤ δ) (h1 : δ < 1) :
     (√(1 - δ))⁻¹ - 1 ≤ δ / (2 * (1 - δ)) := by
-  have hy : 0 < √(1 - δ) := Real.sqrt_pos.mpr (by linarith)
-  have hy2 : √(1 - δ) ^ 2 = 1 - δ := Real.sq_sqrt (by linarith)
-  have hy1 : √(1 - δ) ≤ 1 := Real.sqrt_le_one.mpr (by linarith)
+  have hy : 0 < √(1 - δ) := Real.sqrt_pos.mpr (sub_pos.mpr h1)
+  have hy2 : √(1 - δ) ^ 2 = 1 - δ := Real.sq_sqrt (sub_nonneg.mpr h1.le)
+  have hy1 : √(1 - δ) ≤ 1 := Real.sqrt_le_one.mpr (sub_le_self 1 h0)
   generalize √(1 - δ) = y at hy hy2 hy1 ⊢
-  obtain rfl : δ = 1 - y ^ 2 := by linarith
-  rw [inv_eq_one_div, div_sub_one hy.ne', div_le_div_iff₀ hy (by nlinarith)]
-  nlinarith [mul_nonneg hy.le (sq_nonneg (1 - y))]
+  obtain rfl : δ = 1 - y ^ 2 := by rw [hy2, sub_sub_cancel]
+  rw [sub_sub_cancel, inv_eq_one_div, div_sub_one hy.ne',
+    div_le_div_iff₀ hy (mul_pos (by norm_num) (sq_pos_of_pos hy))]
+  calc
+    (1 - y) * (2 * y ^ 2) = ((1 - y) * (y + y)) * y := by
+      simp only [sq, two_mul, mul_add, add_mul, mul_assoc]
+    _ ≤ ((1 - y) * (1 + y)) * y :=
+      mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_left (add_le_add hy1 le_rfl) (sub_nonneg.mpr hy1)) hy.le
+    _ = (1 - y ^ 2) * y := by rw [mul_comm (1 - y), ← sq_sub_sq, one_pow]
 
 /-- The distance of `(1 - d) ^ (-1/2)` from `1` is at most `δ / (2 (1 - δ))` when `‖d‖ ≤ δ < 1`.
 The proof bounds it by `(1 - δ) ^ (-1/2) - 1` first, the same series at `δ`. -/
@@ -283,10 +282,11 @@ theorem invSqrt_of_defect {x g : A} {δ : ℝ} (h : ‖1 - x * g ^ 2‖ ≤ δ) 
   have hsq := invSqrtOneSub_sq_mul (h.trans_lt hδ)
   refine ⟨?_, ?_⟩
   · calc (g * invSqrtOneSub (1 - x * g ^ 2)) ^ 2 * x
-        = invSqrtOneSub (1 - x * g ^ 2) ^ 2 * (1 - (1 - x * g ^ 2)) := by ring
+        = invSqrtOneSub (1 - x * g ^ 2) ^ 2 * (1 - (1 - x * g ^ 2)) := by
+          rw [mul_pow, sub_sub_cancel]
+          ac_rfl
       _ = 1 := hsq
-  · rw [show g * invSqrtOneSub (1 - x * g ^ 2) - g = g * (invSqrtOneSub (1 - x * g ^ 2) - 1) by
-      ring]
+  · rw [← mul_sub_one]
     exact (norm_mul_le _ _).trans (by gcongr; exact norm_invSqrtOneSub_sub_one_le h hδ)
 
 end InvSqrt
@@ -326,7 +326,7 @@ theorem eval_invSqrt_of_defect {x g : Wiener} {δ : ℝ} (hx : ∀ u, (eval u x)
     intro v
     have h1 := (norm_eval_le v (1 - x * g ^ 2)).trans_lt (h.trans_lt hδ)
     rw [hd, norm_real, Real.norm_eq_abs] at h1
-    linarith [abs_lt.mp h1]
+    exact (sub_lt_self_iff 1).mp (abs_lt.mp h1).2
   have hgne : ∀ v, (eval v g).re ≠ 0 := fun v h0 => by
     have := hpos v
     rw [h0] at this
@@ -346,7 +346,7 @@ theorem eval_invSqrt_of_defect {x g : Wiener} {δ : ℝ} (hx : ∀ u, (eval u x)
   rw [map_mul, hs]
   apply Complex.ext
   · simp only [mul_re, ofReal_re, ofReal_im, hg u, mul_zero, sub_zero]
-    field_simp
+    rw [mul_inv_rev, mul_inv_cancel_left₀ hgpos.ne']
   · simp [mul_im, hg u]
 
 /-- The defect of a product of packed rows against the constant `2 ^ K`, by one Kronecker product,

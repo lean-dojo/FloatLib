@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
-public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Exact
+import Mathlib.Tactic.Bound
 
 /-!
 # Decimal grid gaps
@@ -38,7 +38,7 @@ theorem neighbor_finer_lt (f : Format) (d : Nat) (q r : Int)
   have hbound := mul_le_mul_of_nonneg_left hp hnonneg
   rw [he, zpow_add₀ (by norm_num), zpow_one]
   rw [hb] at hmul hbound
-  nlinarith
+  bound
 
 /-- Coarser decimal grids contain only integer points of every finer grid. -/
 theorem neighbor_integer_gap (c d : Nat) (q r : Int) (hqr : q ≤ r)
@@ -62,7 +62,7 @@ theorem neighbor_gap (f : Format) (c d : Nat) (q r : Int)
     · omega
     · have hc' : (f.payloadBound : ℚ) ≤ (c : ℚ) := by exact_mod_cast hc
       have hh := mul_le_mul_of_nonneg_right hc' (zpow_pos (by norm_num : (0 : ℚ) < 10) q).le
-      linarith
+      exact (hlt.trans (hf.trans_le hh)).false.elim
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

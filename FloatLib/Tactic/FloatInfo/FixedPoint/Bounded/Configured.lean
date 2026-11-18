@@ -1,0 +1,130 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public meta import Lean.Elab.Command
+public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Proof
+public import FloatLib.Tactic.FloatInfo.FixedPoint.Bounded
+
+/-!
+# Inspection for configured bounded fixed point
+
+Run `#float_info` on the promoted `ExecFloat.BoundedFixedPoint` wrapper and you see the selected
+coefficient width and radix scale, then the guarantees for the three overflow options with the
+theorems behind them. The theorems about the configured operations you call come first, followed
+by the raw family's theorems about the code that `toCode` reaches.
+
+This meta module is optional, which keeps elaborator support out of ordinary runtime imports.
+-/
+
+public meta section
+
+namespace FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.FloatInfo.Command
+
+open Lean Elab Command Meta
+open FloatLib.Numerics
+open FloatLib.Floats.ExecFloat
+
+elab_rules : command
+  | `(#float_info%$tk $type:term) =>
+      FloatLib.Floats.ExecFloat.FloatInfo.Command.withExecFamilyApplication
+          type ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.Family 3
+          fun typeExpr _family arguments => do
+        let radix := arguments[0]!
+        let fractionalDigitsExpr := arguments[1]!
+        let widthExpr := arguments[2]!
+        let base ←
+          Inspection.readNatProjection "bounded fixed-point radix" ``Radix.base radix
+        let fractionalDigits ←
+          Inspection.readNat
+            "bounded fixed-point fractional-digit count" fractionalDigitsExpr
+        let width ←
+          Inspection.readNat "bounded fixed-point coefficient width" widthExpr
+        let coreProfile :=
+          FloatLib.Floats.Formats.FixedPoint.Bounded.FloatInfo.Command.profile
+            base fractionalDigits width
+        let configuredWrapping : TheoremSurface :=
+          { topic := "configured arithmetic with overflow := .wrap"
+            declarations :=
+              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_add_wrap
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_sub_wrap
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_mul_wrap
+              ]
+            applicability := .verifiedForType
+            scope := "all stored coefficients and destination widths"
+            numericalGuarantee? := some {
+              kinds := [.range]
+              statement :=
+                "Wrapping always returns a represented coefficient and exactly follows centered \
+                  modular reduction." } }
+        let configuredChecked : TheoremSurface :=
+          { topic := "configured arithmetic with overflow := .reject or .saturate"
+            declarations :=
+              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.add_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.sub_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.mul_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.add_eq_none_iff
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.sub_eq_none_iff
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.mul_eq_none_iff
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_add_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_sub_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_of_mul_eq_some
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_add_saturate
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_sub_saturate
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toRat_mul_saturate
+              ]
+            applicability := .verifiedForType
+            scope :=
+              "all destination widths; rejecting exactness holds whenever a value is returned"
+            numericalGuarantee? := some {
+              kinds := [.range, .exactness]
+              statement :=
+                "Rejecting operations succeed when the exact coefficient fits and every returned \
+                  value decodes to the exact rational result; saturating operations decode to the \
+                  exact coefficient clamped to the signed range." } }
+        let configuredCode : TheoremSurface :=
+          { topic := "decoding to the code"
+            declarations :=
+              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toCode_ofCode
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.ofCode_toCode
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.ofNatBits_toNatBits
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toNatBits_ofNatBits_of_lt
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.coefficient_ofCoefficient
+              ]
+            definitions :=
+              [ ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toCode
+              , ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.ofCode ]
+            applicability := .verifiedForType
+            scope :=
+              "every value and every in-range word; `toCode` and `ofCode` are inverse, so the " ++
+              "theorems about the code below apply through `toCode`" }
+        let baseProfile : FormatProfile :=
+          { coreProfile with
+            rounding :=
+              ⟨"numeric conversion",
+                "nearest-even coefficient with an explicit overflow policy"⟩ ::
+                coreProfile.rounding
+            execution :=
+              [ ⟨"carrier", s!"ExecFloat over FixedInt {width}"⟩
+              , ⟨"dispatch", "direct fixed-width kernels selected by the overflow option"⟩
+              , ⟨"backend proof",
+                  "wrapping, checked, and saturating operations each lift a rational decoding "
+                    ++ "theorem from the raw code layer"⟩
+              ]
+            theoremSurfaces := [configuredWrapping, configuredChecked, configuredCode]
+            relatedTheorems :=
+              [ { type := ``FloatLib.Floats.Formats.FixedPoint.Bounded.Code
+                  embedding := ``FloatLib.Floats.ExecFloat.BoundedFixedPoint.toCode
+                  surfaces := coreProfile.theoremSurfaces } ]
+            nonclaims :=
+              [ "ordinary arithmetic notation silently selects an overflow policy"
+              , "division, square root, fused multiply-add, or transcendental functions are "
+                  ++ "provided"
+              , "IEEE exceptional values or flags apply to this integer-backed family" ] }
+        logInfoAt tk <| ← Inspection.renderProfile baseProfile typeExpr .none
+
+end FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.FloatInfo.Command

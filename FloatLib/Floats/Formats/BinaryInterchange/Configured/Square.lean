@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Square

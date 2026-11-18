@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.Proof
 
 import FloatLib.Numerics.Exact.Dyadic.Order
@@ -83,23 +81,23 @@ theorem fma_eq_dyadic (left right addend : Model format) :
 
 /-- Direct arbitrary-width addition refines the reference rational specification. -/
 theorem add_eq_spec (left right : Model format) :
-    add left right = Spec.add left right := by
+    add left right = Spec.addition left right := by
   rw [add_eq_dyadic, DyadicArithmetic.add_eq_spec]
 
 /-- Direct arbitrary-width subtraction refines the reference rational specification. -/
 theorem sub_eq_spec (left right : Model format) :
-    sub left right = Spec.sub left right := by
+    sub left right = Spec.subtraction left right := by
   rw [sub_eq_dyadic, DyadicArithmetic.sub_eq_spec]
 
 /-- Direct arbitrary-width multiplication refines the reference rational specification. -/
 theorem mul_eq_spec (left right : Model format) :
-    mul left right = Spec.mul left right := by
+    mul left right = Spec.multiplication left right := by
   rw [mul_eq_dyadic, DyadicArithmetic.mul_eq_spec]
 
 /-- Direct arbitrary-width division refines the reference rational specification. -/
 theorem div_eq_spec (left right : Model format) :
-    div left right = Spec.div left right := by
-  unfold div divDecoded Spec.div
+    div left right = Spec.division left right := by
+  unfold div divDecoded Spec.division
   rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
   cases left.toDyadic? <;> cases right.toDyadic? <;>
     simp [DirectDyadicQuotient.round_eq_reference]

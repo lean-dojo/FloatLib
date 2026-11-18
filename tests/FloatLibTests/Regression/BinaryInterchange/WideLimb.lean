@@ -1,22 +1,22 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLibTests.Regression.BinaryInterchange.NativeHarness
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Division.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Fma.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Multiplication.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Add.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.FmaWord.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Type
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Add.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.FmaWord.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Mul.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Division.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Fma.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Multiplication.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Type
+public import FloatLibTests.Regression.BinaryInterchange.NativeHarness
 
 /-!
 # Wide-limb regression checks
@@ -111,7 +111,8 @@ def additionPairs (fmt : FloatFormat) (count : Nat) : Array (Model fmt × Model 
   (Array.range count).map fun i =>
     let distance := (distances fmt)[i % (distances fmt).size]!
     let xExponent := clampNormal fmt (randomBits 62 (7 * i + 1) % (allOnes - 2) + 1)
-    let yExponent := clampNormal fmt (if i % 2 = 0 then xExponent + distance else xExponent - distance)
+    let yExponent := clampNormal fmt (if i % 2 = 0 then xExponent + distance
+        else xExponent - distance)
     let xFraction := randomBits f (7 * i + 2)
     let yFraction :=
       match i % 5 with
@@ -375,7 +376,7 @@ def wideExponentChecks : Thunk (List (String × Bool)) := ⟨fun _ =>
   , ("limbAddLeastLargest", limbSame (limbLargest + limbLeast) limbLargest)
   , ("limbSubLeast", limbSame (limbOne - limbLeast) limbOne)
   , ("limbSubLargest", limbSame (limbLeast - limbLargest) (-limbLargest))
-  , ("directedAddUp", ExecFloat.Binary.isInf (ExecFloat.Binary.add wideLargest wideLeast
+  , ("directedAddUp", ExecFloat.Binary.isInfinite (ExecFloat.Binary.add wideLargest wideLeast
       (mode := .up)))
   , ("directedAddDown", ExecFloat.Binary.toNatBits (ExecFloat.Binary.add wideLargest wideLeast
       (mode := .down)) == ExecFloat.Binary.toNatBits wideLargest)

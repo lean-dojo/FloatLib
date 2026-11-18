@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -43,7 +43,7 @@ theorem nearestChoice_eq_floor_or_ceil (chooseUp : ℤ → Bool) (x : ℝ) :
 theorem nearestChoice_bounds (chooseUp : ℤ → Bool) (x : ℝ) :
     ⌊x⌋ ≤ nearestChoice chooseUp x ∧ nearestChoice chooseUp x ≤ ⌊x⌋ + 1 := by
   simp only [nearestChoice]
-  split_ifs <;> constructor <;> linarith
+  split_ifs <;> constructor <;> omega
 
 /-- Choice-based nearest rounding fixes integers. -/
 @[simp] theorem nearestChoice_intCast (chooseUp : ℤ → Bool) (n : ℤ) :

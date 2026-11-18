@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Carrier
+public import FloatLib.Numerics.Executable.Carrier
 public import FloatLib.Floats.Formats.Codebook.Core.Runtime
 
 /-!
@@ -30,6 +30,7 @@ namespace Codebook
 
 /-- Type-level identity retaining a complete lookup denotation. -/
 inductive Family {width : Nat} {α : Type u} (book : Formats.Codebook width α) where
+  /-- The only value: the family names a format in types and carries no data. -/
   | format
 
 instance {width : Nat} {α : Type u} (book : Formats.Codebook width α) :

@@ -42,10 +42,10 @@
   {
     "key": "p3109InterimReport",
     "authors": "IEEE SA P3109 Working Group",
-    "title": "IEEE Working Group P3109 Interim Report on Arithmetic Formats for Machine Learning, version 4.0.3",
-    "venue": "Public repository, revision 34f5964",
+    "title": "IEEE Working Group P3109 Interim Report on Arithmetic Formats for Machine Learning, version 4.1 (unapproved draft, 14 September 2026)",
+    "venue": "Public repository, revision 2d45cf2",
     "year": "2026",
-    "url": "https://github.com/P3109/Public/blob/34f5964d9bb2382b2665d15467fc3517b990b308/IEEE%20P3109%20Interim%20Report.pdf"
+    "url": "https://github.com/P3109/Public/tree/2d45cf2fe0314d32251f5439d9d3ed078f93fbb9"
   },
   {
     "key": "ocpOfp8",
@@ -62,6 +62,14 @@
     "venue": "OCP Specification",
     "year": "2023",
     "url": "https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf"
+  },
+  {
+    "key": "wg14N1169",
+    "authors": "ISO/IEC JTC 1/SC 22/WG 14",
+    "title": "Programming languages, C: Extensions to support embedded processors (committee draft of ISO/IEC TR 18037)",
+    "venue": "WG14 document N1169",
+    "year": "2006",
+    "url": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1169.pdf"
   },
   {
     "key": "onnxFloat8",
@@ -705,5 +713,117 @@
     "venue": "arXiv:2610.09005",
     "year": "2026",
     "url": "https://arxiv.org/abs/2610.09005"
+  },
+  {
+    "key": "laproof2023",
+    "authors": "Ariel E. Kellison, Andrew W. Appel, Mohit Tekriwal, and David Bindel",
+    "title": "LAProof: A Library of Formal Proofs of Accuracy and Correctness for Linear Algebra Programs",
+    "venue": "IEEE 30th Symposium on Computer Arithmetic (ARITH), pp. 36-43",
+    "year": "2023",
+    "url": "https://doi.org/10.1109/ARITH58626.2023.00021"
+  },
+  {
+    "key": "bean2025",
+    "authors": "Ariel E. Kellison, Laura Zielinski, David Bindel, and Justin Hsu",
+    "title": "Bean: A Language for Backward Error Analysis",
+    "venue": "Proceedings of the ACM on Programming Languages 9 (PLDI)",
+    "year": "2025",
+    "url": "https://arxiv.org/abs/2501.14550"
+  },
+  {
+    "key": "eggshel2026",
+    "authors": "Laura Zielinski and Justin Hsu",
+    "title": "Synthesizing Backward Error Bounds, Backward",
+    "venue": "Proceedings of the ACM on Programming Languages 10 (PLDI), Article 225",
+    "year": "2026",
+    "url": "https://arxiv.org/abs/2604.15633"
+  },
+  {
+    "key": "iso9899_2024",
+    "authors": "ISO/IEC JTC 1/SC 22/WG 14",
+    "title": "Programming languages — C, working draft N3220 of ISO/IEC 9899:2024",
+    "venue": "Annex F, ISO/IEC 60559 floating-point arithmetic",
+    "year": "2024",
+    "url": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf"
+  },
+  {
+    "key": "iso18661_4",
+    "authors": "ISO/IEC JTC 1/SC 22/WG 14",
+    "title": "Floating-point extensions for C, Part 4: Supplementary functions, draft N1797 of ISO/IEC TS 18661-4",
+    "venue": "WG 14 document N1797",
+    "year": "2014",
+    "url": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1797.pdf"
+  },
+  {
+    "key": "ieee754_2019_changes",
+    "authors": "IEEE 754 Working Group",
+    "title": "ANSI/IEEE Std 754-2019: background documents and changes from 754-2008",
+    "venue": "Working group web page",
+    "year": "2019",
+    "url": "https://grouper.ieee.org/groups/msc/ANSI_IEEE-Std-754-2019/background/"
+  },
+  {
+    "key": "cowlishawDecarith",
+    "authors": "Mike Cowlishaw",
+    "title": "General Decimal Arithmetic Specification, version 1.70",
+    "venue": "IBM",
+    "year": "2009",
+    "url": "https://speleotrove.com/decimal/decarith.pdf"
+  },
+  {
+    "key": "riedyDemmel2018",
+    "authors": "E. Jason Riedy and James Demmel",
+    "title": "Augmented Arithmetic Operations Proposed for IEEE-754 2018",
+    "venue": "IEEE 25th Symposium on Computer Arithmetic (ARITH)",
+    "year": "2018",
+    "url": "http://www.ecs.umass.edu/arith-2018/pdf/arith25_34.pdf"
+  },
+  {
+    "key": "boldoLauterMuller2021",
+    "authors": "Sylvie Boldo, Christoph Lauter, and Jean-Michel Muller",
+    "title": "Emulating Round-to-Nearest Ties-to-Zero \"Augmented\" Floating-Point Operations Using Round-to-Nearest Ties-to-Even Arithmetic",
+    "venue": "IEEE Transactions on Computers 70(7)",
+    "year": "2021",
+    "url": "https://hal.archives-ouvertes.fr/hal-02137968/document"
+  },
+  {
+    "key": "rump2012",
+    "authors": "Siegfried M. Rump",
+    "title": "Error estimation of floating-point summation and dot product",
+    "venue": "BIT Numerical Mathematics 52(1), 201-220",
+    "year": "2012",
+    "url": "https://doi.org/10.1007/s10543-011-0342-4"
+  },
+  {
+    "key": "jeannerodRump2013",
+    "authors": "Claude-Pierre Jeannerod and Siegfried M. Rump",
+    "title": "Improved Error Bounds for Inner Products in Floating-Point Arithmetic",
+    "venue": "SIAM Journal on Matrix Analysis and Applications 34(2), 338-344",
+    "year": "2013",
+    "url": "https://doi.org/10.1137/120894488"
+  },
+  {
+    "key": "jeannerodRump2018",
+    "authors": "Claude-Pierre Jeannerod and Siegfried M. Rump",
+    "title": "On relative errors of floating-point operations: optimal bounds and applications",
+    "venue": "Mathematics of Computation 87(310), 803-819",
+    "year": "2018",
+    "url": "https://doi.org/10.1090/mcom/3234"
+  },
+  {
+    "key": "maechlerDPQ",
+    "authors": "Martin Maechler",
+    "title": "DPQ: Density, Probability, Quantile ('DPQ') Computations, function expm1x: Accurate exp(x) - 1 - x (for smallish |x|)",
+    "venue": "R package version 0.6-2, CRAN",
+    "year": "2026",
+    "url": "https://rdrr.io/cran/DPQ/man/expm1x.html"
+  },
+  {
+    "key": "gslSpecfunc",
+    "authors": "Mark Galassi and others",
+    "title": "GNU Scientific Library Reference Manual, Special Functions (gsl_sf_exprel_2)",
+    "venue": "GNU Project",
+    "year": "2021",
+    "url": "https://www.gnu.org/software/gsl/doc/html/specfunc.html"
   }
 ]

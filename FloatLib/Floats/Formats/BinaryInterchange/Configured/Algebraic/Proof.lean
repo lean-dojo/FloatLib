@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.HypotProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.RootProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Algebraic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
-public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.RootProof
-public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.HypotProof
 
 /-!
 # Algebraic rounding contracts for configured binary values
@@ -32,9 +32,9 @@ variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : T
 local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 /-- Decoding reciprocal square root recovers the complete model result. -/
-@[simp, grind =] theorem toModel_rsqrt (value : Value) :
-    toModel (rsqrt value) = Model.rsqrt (toModel value) := by
-  simp [rsqrt, toModel, Configured.Family.toModel]
+@[simp, grind =] theorem toModel_rSqrt (value : Value) :
+    toModel (rSqrt value) = Model.rSqrt (toModel value) := by
+  simp [rSqrt, toModel, Configured.Family.toModel]
 
 /-- Decoding the norm recovers the complete model result. -/
 @[simp, grind =] theorem toModel_hypot (left right : Value) :
@@ -42,23 +42,23 @@ local notation "Value" => ExecFloat (Configured.Family format code plan)
   simp [hypot, toModel, Configured.Family.toModel]
 
 /-- Decoding integer power recovers the complete model result. -/
-@[simp, grind =] theorem toModel_powInt (value : Value) (exponent : Int) :
-    toModel (powInt value exponent) = Model.powInt (toModel value) exponent := by
-  simp [powInt, toModel, Configured.Family.toModel]
+@[simp, grind =] theorem toModel_pown (value : Value) (exponent : Int) :
+    toModel (pown value exponent) = Model.pown (toModel value) exponent := by
+  simp [pown, toModel, Configured.Family.toModel]
 
 /-- Decoding integer root recovers the complete model result. -/
-@[simp, grind =] theorem toModel_rootN (value : Value) (degree : Int) :
-    toModel (rootN value degree) = Model.rootN (toModel value) degree := by
-  simp [rootN, toModel, Configured.Family.toModel]
+@[simp, grind =] theorem toModel_rootn (value : Value) (degree : Int) :
+    toModel (rootn value degree) = Model.rootn (toModel value) degree := by
+  simp [rootn, toModel, Configured.Family.toModel]
 
 /-- A finite reciprocal square root rounds the exact real expression once. -/
-theorem toReal_rsqrt_eq_roundAt (value : Value) (hvalue : isFinite value = true)
-    (hresult : isFinite (rsqrt value) = true) (hformat : format.isIEEE = true := by ieee_format) :
-    toReal (rsqrt value) = Model.roundAt format (Real.sqrt (toReal value))⁻¹ := by
-  simpa only [toReal, toModel_rsqrt] using Model.toReal_rsqrt_eq_roundAt
+theorem toReal_rSqrt_eq_roundAt (value : Value) (hvalue : isFinite value = true)
+    (hresult : isFinite (rSqrt value) = true) (hformat : format.isIEEE = true := by ieee_format) :
+    toReal (rSqrt value) = Model.roundAt format (Real.sqrt (toReal value))⁻¹ := by
+  simpa only [toReal, toModel_rSqrt] using Model.toReal_rSqrt_eq_roundAt
     (toModel value) hformat hvalue
-    (show Model.isFinite (Model.rsqrt (toModel value)) = true by
-      simpa only [isFinite, toModel_rsqrt] using hresult)
+    (show Model.isFinite (Model.rSqrt (toModel value)) = true by
+      simpa only [isFinite, toModel_rSqrt] using hresult)
 
 /-- A finite norm rounds the exact sum of squares and square root once. -/
 theorem toReal_hypot_eq_roundAt (left right : Value)
@@ -72,26 +72,26 @@ theorem toReal_hypot_eq_roundAt (left right : Value)
       simpa only [isFinite, toModel_hypot] using hresult)
 
 /-- A finite integer power of a finite base rounds the exact real power once. -/
-theorem toReal_powInt_eq_roundAt (value : Value) (exponent : Int)
-    (hvalue : isFinite value = true) (hresult : isFinite (powInt value exponent) = true)
+theorem toReal_pown_eq_roundAt (value : Value) (exponent : Int)
+    (hvalue : isFinite value = true) (hresult : isFinite (pown value exponent) = true)
     (hformat : format.isIEEE = true := by ieee_format) :
-    toReal (powInt value exponent) = Model.roundAt format (toReal value ^ exponent) := by
-  simpa only [toReal, toModel_powInt] using Model.toReal_powInt_eq_roundAt
+    toReal (pown value exponent) = Model.roundAt format (toReal value ^ exponent) := by
+  simpa only [toReal, toModel_pown] using Model.toReal_pown_eq_roundAt
     (toModel value) exponent hformat hvalue
-    (show Model.isFinite (Model.powInt (toModel value) exponent) = true by
-      simpa only [isFinite, toModel_powInt] using hresult)
+    (show Model.isFinite (Model.pown (toModel value) exponent) = true by
+      simpa only [isFinite, toModel_pown] using hresult)
 
 /-- A finite integer root rounds the chosen signed real branch once. -/
-theorem toReal_rootN_eq_roundAt (value : Value) (degree : Int)
-    (hvalue : isFinite value = true) (hresult : isFinite (rootN value degree) = true)
+theorem toReal_rootn_eq_roundAt (value : Value) (degree : Int)
+    (hvalue : isFinite value = true) (hresult : isFinite (rootn value degree) = true)
     (hformat : format.isIEEE = true := by ieee_format) :
-    toReal (rootN value degree) =
+    toReal (rootn value degree) =
       Model.roundAt format (if signBit value then -(|toReal value| ^ (degree : ℝ)⁻¹)
         else |toReal value| ^ (degree : ℝ)⁻¹) := by
-  have hmodel := Model.toReal_rootN_eq_roundAt
+  have hmodel := Model.toReal_rootn_eq_roundAt
     (toModel value) degree hformat hvalue
-    (show Model.isFinite (Model.rootN (toModel value) degree) = true by
-      simpa only [isFinite, toModel_rootN] using hresult)
+    (show Model.isFinite (Model.rootn (toModel value) degree) = true by
+      simpa only [isFinite, toModel_rootn] using hresult)
   cases hsign : Model.signBit (toModel value) <;> simpa [toReal, signBit, hsign] using hmodel
 
 end FloatLib.Floats.ExecFloat.Binary

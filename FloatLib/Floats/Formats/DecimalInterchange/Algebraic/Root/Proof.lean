@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -80,29 +80,29 @@ theorem rootMagnitude_valid (f : Format) (mode : RoundingMode) (s : Bool)
     · exact preferredCohort_valid f s _ _ _ hv
 
 /-- Degree zero always delivers an invalid result, including quiet and signaling NaNs. -/
-@[simp] theorem Arithmetic.rootN_degree_zero (f : Format) (mode : RoundingMode) (x : Datum) :
-    rootN f mode x 0 = invalidResult := by
-  cases x <;> simp [rootN]
+@[simp] theorem Arithmetic.rootn_degree_zero (f : Format) (mode : RoundingMode) (x : Datum) :
+    rootn f mode x 0 = invalidResult := by
+  cases x <;> simp [rootn]
 
 /-- Every integer-degree root, including NaN, invalid, pole, infinite and overflowed results, is a
 valid datum of the format. -/
-theorem Arithmetic.rootN_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
-    (rootN f mode x n).value.Valid f := by
+theorem Arithmetic.rootn_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
+    (rootn f mode x n).value.Valid f := by
   cases x with
   | nan s t p =>
-    simp only [rootN]
+    simp only [rootn]
     split
     · exact invalidResult_valid f
     · exact nanResult_valid ..
   | infinity s =>
-    simp only [rootN]
+    simp only [rootn]
     repeat first
       | exact invalidResult_valid f
       | exact projectMagnitude_valid f mode _ (by rfl) _
       | trivial
       | split
   | finite s c q =>
-    simp only [rootN]
+    simp only [rootn]
     split
     · exact invalidResult_valid f
     · rename_i hn
@@ -204,7 +204,8 @@ theorem rootMagnitude_value_sub_realRoot (f : Format) (mode : RoundingMode) (s :
   refine ⟨_, rootMagnitude_value f mode s degree x preferred hq, ?_⟩
   rw [← realRoot_scaled hn hx (rootQuantum f degree x)]
   cases s <;> simp only [Bool.false_eq_true, ↓reduceIte, Rat.cast_mul, Rat.cast_natCast,
-    Rat.cast_zpow, Rat.cast_ofNat, Rat.cast_neg, Rat.cast_one] <;> ring
+    Rat.cast_zpow, Rat.cast_ofNat, Rat.cast_neg, Rat.cast_one] <;>
+    (rw [mul_sub, sub_mul]; ac_rfl)
 
 /-- Without overflow, the absolute error of the delivered root is the integer rounding error at the
 scaled radicand times the grid unit, whatever the result's sign. -/

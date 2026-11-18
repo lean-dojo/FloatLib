@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.DyadicOrder
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 
 /-!
@@ -90,10 +91,11 @@ theorem underflow_boundary_gaps (fmt : FloatFormat) :
   change (2 : ℝ) ^ (fmt.minSubnormalExponent - 1) = scale * 2 at hpredecessorScale
   change (2 : ℝ) ^ fmt.minSubnormalExponent = scale * 4 at hnormalScale
   constructor <;>
-    simp [underflowMidpoint, underflowPredecessor, minNormalDyadic,
-      Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
-      hpredecessorScale, hnormalScale, Nat.cast_sub htwo,
-      Nat.cast_sub hfour, scale] <;>
+    simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, underflowMidpoint,
+      Bool.false_eq_true, ↓reduceIte, Int.ofNat_eq_natCast, Nat.cast_sub hfour, Nat.cast_mul,
+      Nat.cast_ofNat, Nat.cast_one, Int.cast_sub, Int.cast_mul, Int.cast_ofNat,
+      Int.cast_natCast, Int.cast_one, underflowPredecessor, Nat.cast_sub htwo,
+      hpredecessorScale, scale, minNormalDyadic, hnormalScale] <;>
     dsimp [FloatLib.Floats.Formats.Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal] <;>
     ring
 

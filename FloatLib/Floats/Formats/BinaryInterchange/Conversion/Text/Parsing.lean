@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -190,7 +190,7 @@ def convertNaNText (fmt : FloatFormat) (input : String) (negative signaling : Bo
       let candidate := match fmt.encoding with
         | .finiteUnsignedZero => defaultValue
         | _ => ofFields fmt negative fmt.expAllOnesNat fraction
-      if isNaN candidate && isSNaN candidate == signaling &&
+      if isNaN candidate && isSignaling candidate == signaling &&
           fracField candidate == fraction then
         .ok { value := candidate, status := {}, ternary := .eq }
       else if payload = 0 then

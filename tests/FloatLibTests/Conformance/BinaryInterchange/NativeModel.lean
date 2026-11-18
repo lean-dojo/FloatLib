@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -90,43 +90,43 @@ theorem int_to_native64_large_negative_tie :
     (ExecFloat.Binary.toModel
       (ExecFloat.Binary.ofFloat ((-(2 ^ 80 + 2 ^ 27) : Int).toFloat) : Binary64)).toNatBits =
       0xc4f0000000000000 := by
-  rw [ExecFloat.Binary.toModel_ofFloat_intToFloat]
+  rw [ExecFloat.Binary.toModel_ofFloat_convertFromInt]
   decide +kernel
 
 /-- Range checking applies after truncation: 127.75 still converts to signed eight-bit 127. -/
 theorem native64_int8_boundary_fraction :
     (⟨(Float.ofBits 0x405ff00000000000).toInt8.toBitVec⟩ : FixedInt 8).toInt = 127 := by
-  rw [ExecFloat.Binary.floatToInt8_eq_floatToIntSaturating]
+  rw [ExecFloat.Binary.convertToIntegerExact8_eq_convertToIntegerExactSaturating]
   decide +kernel
 
 /-- Finite overflow saturates at the positive signed endpoint. -/
 theorem native64_int8_saturates :
     (⟨(Float.ofBits 0x4060000000000000).toInt8.toBitVec⟩ : FixedInt 8).toInt = 127 := by
-  rw [ExecFloat.Binary.floatToInt8_eq_floatToIntSaturating]
+  rw [ExecFloat.Binary.convertToIntegerExact8_eq_convertToIntegerExactSaturating]
   decide +kernel
 
 /-- Negative infinity selects the negative signed endpoint. -/
 theorem native32_int8_negative_infinity :
     (⟨(-Float32.inf).toInt8.toBitVec⟩ : FixedInt 8).toInt = -128 := by
-  rw [ExecFloat.Binary.float32ToInt8_eq_floatToIntSaturating]
+  rw [ExecFloat.Binary.float32ToInt8_eq_convertToIntegerExactSaturating]
   decide +kernel
 
 /-- The native integer policy maps NaN to zero. -/
 theorem native32_int8_nan :
     (⟨Float32.nan.toInt8.toBitVec⟩ : FixedInt 8).toInt = 0 := by
-  rw [ExecFloat.Binary.float32ToInt8_eq_floatToIntSaturating]
+  rw [ExecFloat.Binary.float32ToInt8_eq_convertToIntegerExactSaturating]
   decide +kernel
 
 /-- Checked integer conversion retains a negative signaling NaN's sign, class, and payload. -/
 theorem checked32_int8_nan_metadata :
-    ExecDType.floatToInt (width := 8)
+    ExecDType.convertToIntegerExact (width := 8)
       (Model.ofNatBits 0xff800005 : Model FloatFormat.binary32) .towardZero =
         .failure (.exceptional .source (.nan (some 5) true true)) := by
   decide +kernel
 
 /-- Checked integer failures retain a quiet NaN's diagnostic payload without its quiet bit. -/
 theorem checked32_int8_quiet_nan_metadata :
-    ExecDType.floatToInt (width := 8)
+    ExecDType.convertToIntegerExact (width := 8)
       (Model.ofNatBits 0xffc00005 : Model FloatFormat.binary32) .towardZero =
         .failure (.exceptional .source (.nan (some 5) true false)) := by
   decide +kernel

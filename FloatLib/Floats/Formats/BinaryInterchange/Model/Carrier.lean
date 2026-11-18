@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,10 @@ Authors: FloatLib Team
 module
 
 
-import Mathlib.Data.Nat.Bitwise
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Storage
+
+import Mathlib.Data.Nat.Bitwise
 
 /-!
 # Descriptor-indexed binary-interchange proof model
@@ -141,11 +142,11 @@ theorem signBit_eq_msb {fmt : FloatFormat} (x : Model fmt) :
   IEEE.isNaN x && (x.bits &&& FloatFormat.quietBit fmt) != 0
 
 /-- Whether `x` has an IEEE signaling-NaN bit pattern. -/
-@[inline] def IEEE.isSNaN {fmt : FloatFormat} (x : Model fmt) : Bool :=
+@[inline] def IEEE.isSignaling {fmt : FloatFormat} (x : Model fmt) : Bool :=
   IEEE.isNaN x && (x.bits &&& FloatFormat.quietBit fmt) == 0
 
 /-- Whether `x` has an IEEE infinity bit pattern. -/
-@[inline] def IEEE.isInf {fmt : FloatFormat} (x : Model fmt) : Bool :=
+@[inline] def IEEE.isInfinite {fmt : FloatFormat} (x : Model fmt) : Bool :=
   expField x == FloatFormat.expAllOnesNat fmt && fracField x == 0
 
 /-- Whether `x` has an IEEE signed-zero bit pattern. -/
@@ -180,22 +181,22 @@ quiet NaNs, so every NaN in those formats is classified as quiet.
   | .finite => false
 
 /-- Whether `x` is a signaling NaN. Only the IEEE encoding has signaling NaNs. -/
-@[inline] def isSNaN {fmt : FloatFormat} (x : Model fmt) : Bool :=
+@[inline] def isSignaling {fmt : FloatFormat} (x : Model fmt) : Bool :=
   match fmt.encoding with
-  | .ieee => IEEE.isSNaN x
+  | .ieee => IEEE.isSignaling x
   | .finiteMaxNaN | .finiteUnsignedZero | .finite => false
 
 /-- A value that is not a NaN cannot be a signaling NaN. -/
-theorem isSNaN_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
+theorem isSignaling_eq_false_of_isNaN_eq_false {fmt : FloatFormat}
     (x : Model fmt) (hx : isNaN x = false) :
-    isSNaN x = false := by
+    isSignaling x = false := by
   cases hencoding : fmt.encoding <;>
-    simp_all [isSNaN, isNaN, IEEE.isSNaN]
+    simp_all [isSignaling, isNaN, IEEE.isSignaling]
 
 /-- Whether `x` is an infinity. Only the IEEE encoding contains infinities. -/
-@[inline] def isInf {fmt : FloatFormat} (x : Model fmt) : Bool :=
+@[inline] def isInfinite {fmt : FloatFormat} (x : Model fmt) : Bool :=
   match fmt.encoding with
-  | .ieee => IEEE.isInf x
+  | .ieee => IEEE.isInfinite x
   | .finiteMaxNaN | .finiteUnsignedZero | .finite => false
 
 /-- Whether `x` denotes zero under its complete format. -/
@@ -357,7 +358,7 @@ so their payload is zero.
 
 /-- Diagnostic payload of a binary NaN, excluding its quiet bit. -/
 @[inline] def nanPayload {fmt : FloatFormat} (x : Model fmt) : Nat :=
-  payloadOfNaNField (isSNaN x) (fracField x) fmt.encoding
+  payloadOfNaNField (isSignaling x) (fracField x) fmt.encoding
 
 /--
 A quiet NaN of `fmt` carrying a source NaN's sign and payload, following IEEE 754-2019 §6.2.3.
@@ -382,17 +383,17 @@ encoding keeps only the sign, FNUZ has a single NaN, and a fully finite encoding
 
 /-- Select signaling NaNs before quiet NaNs, breaking ties from left to right. -/
 @[inline] def chooseNaN2 {fmt : FloatFormat} (x y : Model fmt) : Option (Model fmt) :=
-  if isSNaN x then some (quietNaN x)
-  else if isSNaN y then some (quietNaN y)
+  if isSignaling x then some (quietNaN x)
+  else if isSignaling y then some (quietNaN y)
   else if isNaN x then some (quietNaN x)
   else if isNaN y then some (quietNaN y)
   else none
 
 /-- Ternary NaN selection used by fused multiply-add. -/
 @[inline] def chooseNaN3 {fmt : FloatFormat} (x y z : Model fmt) : Option (Model fmt) :=
-  if isSNaN x then some (quietNaN x)
-  else if isSNaN y then some (quietNaN y)
-  else if isSNaN z then some (quietNaN z)
+  if isSignaling x then some (quietNaN x)
+  else if isSignaling y then some (quietNaN y)
+  else if isSignaling z then some (quietNaN z)
   else if isNaN x then some (quietNaN x)
   else if isNaN y then some (quietNaN y)
   else if isNaN z then some (quietNaN z)
@@ -500,9 +501,9 @@ without duplicating selection logic.
   simp [IEEE.isNaN]
 
 /-- Toggling the stored sign bit preserves IEEE infinity classification. -/
-@[simp] theorem IEEE.isInf_toggleSign {fmt : FloatFormat} (x : Model fmt) :
-    IEEE.isInf (toggleSign x) = IEEE.isInf x := by
-  simp [IEEE.isInf]
+@[simp] theorem IEEE.isInfinite_toggleSign {fmt : FloatFormat} (x : Model fmt) :
+    IEEE.isInfinite (toggleSign x) = IEEE.isInfinite x := by
+  simp [IEEE.isInfinite]
 
 /-- Toggling the stored sign bit preserves IEEE zero classification. -/
 @[simp] theorem IEEE.isZero_toggleSign {fmt : FloatFormat} (x : Model fmt) :
@@ -591,9 +592,9 @@ theorem neg_eq_toggleSign_of_isNaN_eq_false_of_isZero_eq_false
   simp [IEEE.isNaN]
 
 /-- Negation preserves IEEE infinity classification. -/
-@[simp] theorem IEEE.isInf_neg {fmt : FloatFormat} (x : Model fmt) :
-    IEEE.isInf (neg x) = IEEE.isInf x := by
-  simp [IEEE.isInf]
+@[simp] theorem IEEE.isInfinite_neg {fmt : FloatFormat} (x : Model fmt) :
+    IEEE.isInfinite (neg x) = IEEE.isInfinite x := by
+  simp [IEEE.isInfinite]
 
 /-- Negation preserves IEEE zero classification. -/
 @[simp] theorem IEEE.isZero_neg {fmt : FloatFormat} (x : Model fmt) :
@@ -673,7 +674,7 @@ subnormal is reserved for NaN, so that step goes straight to the format's unique
 @[inline] def nextUp {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
   if isNaN x then
     quietNaN x
-  else if isInf x && !Model.signBit x then
+  else if isInfinite x && !Model.signBit x then
     x
   else if isZero x then
     posMinSubnormal fmt
@@ -696,7 +697,7 @@ NaN, and the `invalid` signal it owes is reported by `Model.nextDown x (status :
 @[inline] def nextDown {fmt : FloatFormat} (x : Model fmt) : Model fmt :=
   if isNaN x then
     quietNaN x
-  else if isInf x && Model.signBit x then
+  else if isInfinite x && Model.signBit x then
     x
   else if isZero x then
     negMinSubnormal fmt

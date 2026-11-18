@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -23,6 +23,9 @@ use literals, operators, and conversions at that type.
 Four independent sections below build a custom binary layout, a posit width, a decimal fixed-point
 grid, and a P3109 format. `BasicOperations` introduces the interface they share.
 -/
+
+-- These runnable examples intentionally keep their helper values private.
+set_option linter.privateModule false
 
 @[expose] public section
 

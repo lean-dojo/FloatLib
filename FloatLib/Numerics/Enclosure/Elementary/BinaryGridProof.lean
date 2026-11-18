@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -63,11 +63,11 @@ theorem containsReal_scaleRat (precision : Nat) {I : Interval Int} {x : ℝ}
   have hhi := value_scaleRat_bounds precision I.hi factor
   by_cases hfactor : 0 ≤ factor
   · have hreal : (0 : ℝ) ≤ factor := by exact_mod_cast hfactor
-    simp only [scaleRat, hfactor, ↓reduceIte]
+    simp only [scaleRat_def, hfactor, ↓reduceIte]
     exact ⟨hlo.1.trans (mul_le_mul_of_nonneg_left hx.1 hreal),
       (mul_le_mul_of_nonneg_left hx.2 hreal).trans hhi.2⟩
   · have hreal : (factor : ℝ) ≤ 0 := by exact_mod_cast le_of_not_ge hfactor
-    simp only [scaleRat, hfactor, ↓reduceIte]
+    simp only [scaleRat_def, hfactor, ↓reduceIte]
     exact ⟨hhi.1.trans (mul_le_mul_of_nonpos_left hx.2 hreal),
       (mul_le_mul_of_nonpos_left hx.1 hreal).trans hlo.2⟩
 
@@ -75,7 +75,7 @@ theorem containsReal_scaleRat (precision : Nat) {I : Interval Int} {x : ℝ}
 theorem containsReal_divideNat (precision : Nat) {I : Interval Int} {x : ℝ}
     (hx : I.ContainsReal (decode precision) x) (n : Nat) :
     (divideNat I n).ContainsReal (decode precision) (x / n) := by
-  simpa [divideNat, div_eq_mul_inv, mul_comm] using
+  simpa [divideNat_def, div_eq_mul_inv, mul_comm] using
     containsReal_scaleRat precision hx (1 / (n : ℚ))
 
 /-- Midpoint and radius enclosures turn an absolute-error estimate into grid containment. -/
@@ -84,7 +84,7 @@ theorem containsReal_around (precision : Nat) {midpoint radius : Interval Int} {
     (hr : radius.ContainsReal (decode precision) r) (herror : |x - m| ≤ r) :
     (around midpoint radius).ContainsReal (decode precision) x := by
   rw [containsReal_iff] at hm hr ⊢
-  simp only [around, value_sub, value_add]
+  simp only [around_def, value_sub, value_add]
   rcases abs_le.mp herror with ⟨hlower, hupper⟩
   constructor <;> linarith
 
@@ -94,14 +94,14 @@ theorem containsReal_expHorner (precision : Nat) {X : Interval Int} {x : ℚ}
     (expHorner precision X start n).ContainsReal (decode precision)
       (Taylor.horner (Taylor.expStep x) start n 0 : ℝ) := by
   induction n generalizing start with
-  | zero => simp [expHorner, Taylor.horner, Interval.point]
+  | zero => simp [expHorner_zero, Taylor.horner, Interval.point]
   | succ n ih =>
     have hone : (Interval.point (scale precision)).ContainsReal (decode precision) (1 : ℝ) := by
       simp [Interval.point]
     have h := containsReal_add precision hone
       (containsReal_divideNat precision
         (containsReal_mul precision hx (ih (start + 1))) (start + 1))
-    simpa [expHorner, Taylor.horner, Taylor.eval_expStep, div_mul_eq_mul_div] using h
+    simpa [expHorner_succ, Taylor.horner, Taylor.eval_expStep, div_mul_eq_mul_div] using h
 
 namespace LogPolynomial
 
@@ -119,7 +119,7 @@ theorem evenSum_add (q : ℝ) (start a b : Nat) :
   simp only [evenSum, Finset.sum_range_add, Finset.mul_sum]
   congr 1
   apply Finset.sum_congr rfl
-  intro i hi
+  intro i _
   rw [pow_add, ← mul_div_assoc]
   congr 2
   omega
@@ -130,7 +130,7 @@ theorem mul_evenSum_sq (x : ℝ) (start n : Nat) :
       ∑ i ∈ Finset.range n, x ^ (2 * i + 1) / ((2 * (start + i) + 1 : Nat) : ℝ) := by
   rw [evenSum, Finset.mul_sum]
   apply Finset.sum_congr rfl
-  intro i hi
+  intro i _
   rw [← mul_div_assoc, ← pow_mul, pow_add, pow_one, mul_comm x]
 
 end LogPolynomial
@@ -142,12 +142,12 @@ theorem containsReal_logOddHorner (precision : Nat) {X Q : Interval Int} {x : �
     (logOddHorner precision X Q start n).ContainsReal (decode precision)
       (∑ i ∈ Finset.range n, x ^ (2 * i + 1) / ((2 * (start + i) + 1 : Nat) : ℝ)) := by
   induction n generalizing start with
-  | zero => simp [logOddHorner, Interval.point]
+  | zero => simp [logOddHorner_zero, Interval.point]
   | succ n ih =>
     have h := containsReal_add precision (containsReal_divideNat precision hx (2 * start + 1))
       (containsReal_mul precision hq (ih (start + 1)))
     rw [← LogPolynomial.mul_evenSum_sq] at h ⊢
-    rw [logOddHorner, Nat.add_comm n 1, LogPolynomial.evenSum_add]
+    rw [logOddHorner_succ, Nat.add_comm n 1, LogPolynomial.evenSum_add]
     convert h using 1
     simp only [LogPolynomial.evenSum, Finset.sum_range_one, Nat.add_zero]
     ring
@@ -159,7 +159,7 @@ theorem containsReal_expRadius (precision : Nat) {X : Interval Int} {x : ℚ}
   have h := containsReal_scaleRat precision
     (containsReal_pow precision (containsReal_abs precision hx) n)
     (((n + 1 : Nat) : ℚ) / ((n.factorial : ℚ) * n))
-  simpa [expRadius, Enclosure.expRadius, mul_div_assoc, mul_comm] using h
+  simpa [expRadius_def, Enclosure.expRadius_def, mul_div_assoc, mul_comm] using h
 
 /-- For `|x| ≤ 1`, the grid Taylor enclosure `expSmall` contains `exp x`. -/
 theorem containsReal_expSmall (x : ℚ) (degree precision : Nat) (hx : |x| ≤ 1) :
@@ -168,7 +168,7 @@ theorem containsReal_expSmall (x : ℚ) (degree precision : Nat) (hx : |x| ≤ 1
   have hpoly :
       (expHorner precision (enclose precision x) 0 (degree + 1)).ContainsReal (decode precision)
         (Enclosure.expTaylor x (degree + 1) : ℝ) := by
-    simpa [Taylor.horner_expStep, Nat.one_ascFactorial, Enclosure.expTaylor] using
+    simpa [Taylor.horner_expStep, Nat.one_ascFactorial, Enclosure.expTaylor_def] using
       containsReal_expHorner precision hgrid 0 (degree + 1)
   exact containsReal_around precision hpoly (containsReal_expRadius precision hgrid (degree + 1))
     (Enclosure.abs_exp_sub_expTaylor_le x degree hx)
@@ -178,15 +178,16 @@ theorem containsReal_squareRepeat (precision : Nat) {I : Interval Int} {x : ℝ}
     (hx : I.ContainsReal (decode precision) x) (n : Nat) :
     (squareRepeat precision I n).ContainsReal (decode precision) (x ^ (2 ^ n)) := by
   induction n with
-  | zero => simpa [squareRepeat] using hx
+  | zero => simpa [squareRepeat_zero] using hx
   | succ n ih =>
-    simpa only [squareRepeat, pow_succ (2 : Nat) n, pow_mul] using containsReal_square precision ih
+    simpa only [squareRepeat_succ, pow_succ (2 : Nat) n, pow_mul] using containsReal_square
+      precision ih
 
 private theorem abs_div_expScale_add_lt_one (x : ℚ) (extra : Nat) :
     |x / (2 : ℚ) ^ (Enclosure.expScale x + extra)| < 1 := by
   rw [pow_add, ← div_div, abs_div, abs_of_pos (by positivity : (0 : ℚ) < 2 ^ extra)]
   exact (div_lt_one (by positivity)).mpr
-    ((Enclosure.abs_div_expScale_lt_one x).trans_le (one_le_pow₀ (by norm_num)))
+    ((Enclosure.abs_div_expScale_lt_one x).trans_le (one_le_pow₀ (by decide)))
 
 private theorem exp_div_pow_two_pow (x : ℚ) (n : Nat) :
     Real.exp ((x / 2 ^ n : ℚ) : ℝ) ^ (2 ^ n) = Real.exp (x : ℝ) := by
@@ -202,7 +203,7 @@ theorem contains_exp (x : ℚ) (degree precision : Nat) :
   have hsmall := containsReal_expSmall (x / 2 ^ (Enclosure.expScale x + extra)) degree
     (precision + extra) (abs_div_expScale_add_lt_one x extra).le
   have h := containsReal_squareRepeat (precision + extra) hsmall (Enclosure.expScale x + extra)
-  simpa only [exp, contains_toRationalInterval, exp_div_pow_two_pow] using h
+  simpa only [exp_def, contains_toRationalInterval, exp_div_pow_two_pow] using h
 
 namespace LogPolynomial
 
@@ -247,7 +248,7 @@ theorem containsReal_powerTableAux (precision : Nat) {Q : Interval Int} {q : ℝ
         (q ^ i) := by
   induction n generalizing current powers with
   | zero => exact containsReal_push precision hpowers hcurrent
-  | succ n ih =>
+  | succ _ ih =>
     apply ih _ _ (containsReal_push precision hpowers hcurrent)
     simpa only [Array.size_push, pow_succ] using
       containsReal_mul precision hcurrent hq
@@ -318,7 +319,7 @@ theorem containsReal_blockHorner (precision : Nat) {powers : Array (Interval Int
           evenSum q start (blockSize * (blocks + 1)) +
             q ^ (blockSize * (blocks + 1)) * a := by
       rw [Nat.mul_succ, evenSum_add, pow_add]
-      ring
+      rw [mul_add]; ac_rfl
     rw [hvalue] at h
     simpa only [blockHorner, Internal.reverseHorner, Nat.zero_add] using h
 
@@ -376,7 +377,7 @@ theorem containsReal_logOddRadius (precision : Nat) {X Q : Interval Int} {x : �
   have hpower : |(x : ℝ)| ^ (2 * n + 1) = ((x : ℝ) ^ 2) ^ n * |(x : ℝ)| := by
     rw [pow_add, pow_one, pow_mul, sq_abs]
   rw [hpower]
-  simpa [logOddRadius, div_eq_mul_inv, mul_comm] using h
+  simpa [logOddRadius_def, div_eq_mul_inv, mul_comm] using h
 
 /-- The transformed grid series encloses the logarithm of every positive rational. -/
 theorem containsReal_logSeries (x : ℚ) (degree precision : Nat) (hx : 0 < x) :
@@ -399,7 +400,7 @@ theorem containsReal_logSeries (x : ℚ) (degree precision : Nat) (hx : 0 < x) :
   have h := containsReal_add precision hhalf hhalf
   have htwo : (1 / 2 : ℝ) * Real.log (x : ℝ) + 1 / 2 * Real.log (x : ℝ) =
       Real.log (x : ℝ) := by ring
-  simpa only [logSeries, t, htwo] using h
+  simpa only [logSeries_def, t, htwo] using h
 
 /-- The unreduced series encloses the logarithm of every positive rational. -/
 theorem containsReal_logUnreduced {value : ℚ} (hvalue : 0 < value) (precision : Nat) :
@@ -409,20 +410,20 @@ theorem containsReal_logUnreduced {value : ℚ} (hvalue : 0 < value) (precision 
 /-- Binary reduction and the rounded multiple of `log 2` preserve logarithm containment. -/
 theorem containsReal_logLarge (x : ℚ) (degree precision : Nat) (hx : 0 < x) :
     (logLarge x degree precision).ContainsReal (decode precision) (Real.log (x : ℝ)) := by
-  dsimp only [logLarge]
+  rw [logLarge_def]
   split
   · exact containsReal_logSeries x degree precision hx
   · have hfirst := containsReal_logSeries (x / 2 ^ Enclosure.logScale x) degree precision
       (by positivity)
     have hsecond := containsReal_scaleRat precision
-      (containsReal_logSeries 2 degree precision (by norm_num)) (Enclosure.logScale x : ℚ)
+      (containsReal_logSeries 2 degree precision (by decide)) (Enclosure.logScale x : ℚ)
     simpa only [Rat.cast_natCast, Rat.cast_ofNat, Enclosure.log_reduction_identity x hx]
       using containsReal_add precision hfirst hsecond
 
 /-- Binary-grid logarithm evaluation encloses the exact logarithm at every precision. -/
 theorem contains_log (x : ℚ) (degree precision : Nat) (hx : 0 < x) :
     (log x degree precision).Contains (Real.log (x : ℝ)) := by
-  rw [log, contains_toRationalInterval]
+  rw [log_def, contains_toRationalInterval]
   split
   · have h := containsReal_neg precision
       (containsReal_logLarge x⁻¹ degree precision (inv_pos.mpr hx))

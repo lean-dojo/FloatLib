@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -20,6 +20,9 @@ To try any definition, start a scratch file with `import FloatLib`, copy the nam
 definitions you need, and add `#eval` followed by the value's name. The comment after a computed
 example shows what `#eval` prints.
 -/
+
+-- These runnable examples intentionally keep their helper values private.
+set_option linter.privateModule false
 
 @[expose] public section
 

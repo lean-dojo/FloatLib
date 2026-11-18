@@ -1,19 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Core.Runtime
-public import FloatLib.Kernels.FixedWord.Core.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.FixedLimb.Pair.Core.Runtime
+public import FloatLib.Kernels.Selection.Metadata
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Core.Runtime
+public import FloatLib.Numerics.Core.Representation
 public import FloatLib.Numerics.Representations.StaticStorage
 public import Mathlib.Basic.Real.Basic
-public import FloatLib.Numerics.Core.Representation
 
 /-!
 # Static carriers for configured binary formats
@@ -56,12 +54,19 @@ into it for the wide-limb kernels, at the cost of conversions for operations tha
 proof model.
 -/
 inductive StoragePlan (format : FloatFormat) where
+  /-- One byte, for a format of at most 8 bits. -/
   | byte (width_le : format.bitWidth ≤ 8)
+  /-- One 16-bit word, for a format of at most 16 bits. -/
   | word16 (width_le : format.bitWidth ≤ 16)
+  /-- One 32-bit word, for a format of at most 32 bits. -/
   | word32 (width_le : format.bitWidth ≤ 32)
+  /-- One 64-bit word, for a format of at most 64 bits. -/
   | word64 (width_le : format.bitWidth ≤ 64)
+  /-- Two native 64-bit words, for a format of 65 to 128 bits. -/
   | pair (width_gt : 64 < format.bitWidth) (width_le : format.bitWidth ≤ 128)
+  /-- The exact-width proof model, for a format of any width. -/
   | wide
+  /-- A runtime-sized array of 32-bit limbs, for a format wider than 128 bits. -/
   | limbs (width_gt : 128 < format.bitWidth)
 
 namespace StoragePlan

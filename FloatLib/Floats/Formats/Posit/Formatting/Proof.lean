@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Formatting
-public import FloatLib.Numerics.Exact.DecimalText.NotationProof
 public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
+public import FloatLib.Numerics.Exact.DecimalText.NotationProof
 
 /-!
 # Value-preserving Posit decimal conversion
@@ -129,7 +129,7 @@ theorem lt_minPositive_of_le_vanishingExponent (s : Nat) (e : Int)
 /-- Rounding a decimal depends on its magnitude only through the positive rounder. -/
 private theorem roundRat_decimal (negative : Bool) (s : Nat) (e : Int) (hs : s ≠ 0) :
     roundRat format (DecimalText.Decimal.mk negative s e).toRat =
-      if negative then neg (roundPositiveRat format ((s : Rat) * (10 : Rat) ^ e))
+      if negative then negate (roundPositiveRat format ((s : Rat) * (10 : Rat) ^ e))
       else roundPositiveRat format ((s : Rat) * (10 : Rat) ^ e) := by
   have hpos : 0 < (s : Rat) * (10 : Rat) ^ e :=
     mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hs) (zpow_pos (by norm_num) _)

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Interval.InverseTrig
 public import FloatLib.Numerics.Enclosure.Interval.ElementaryProof
+public import FloatLib.Numerics.Enclosure.Interval.InverseTrig
 
 /-!
 # Real containment for interval arcsine and arccosine
@@ -96,7 +96,7 @@ theorem containsReal_asinBounds? {I K : Interval ℚ} {terms precision : Nat}
       · cases hhi : Internal.asinPointBounds? I.hi terms precision with
         | none => simp [hhi] at h
         | some hi =>
-          simp [hhi] at h
+          simp only [hhi, Option.bind_eq_bind, Option.bind_some, Option.some.injEq] at h
           subst K
           have hhiReal := (containsReal_some_iff _ _).1
             (Internal.containsReal_asinPointBounds? hhi)
@@ -120,7 +120,7 @@ theorem containsReal_acosBounds? {I K : Interval ℚ} {terms precision : Nat}
   · cases hsin : asinBounds? I terms precision with
     | none => simp [hsin] at h
     | some J =>
-      simp [hsin] at h
+      simp only [hsin, Option.bind_eq_bind, Option.bind_some, Option.some.injEq] at h
       subst K
       have hJ := (containsReal_some_iff _ _).1 (containsReal_asinBounds? hsin hx)
       have hpi := Enclosure.contains_piQuarter terms

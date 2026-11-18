@@ -1,13 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Datum
-public import Mathlib.Algebra.GroupWithZero.Basic
-public import Mathlib.Tactic.Ring
 
 /-!
 # Cohort identities, including signed zero and decimal rescaling
@@ -66,9 +64,9 @@ theorem toRat?_ofNat (n : Nat) : (OfNat.ofNat n : Datum).toRat? = some (n : ℚ)
   simp [toRat?_eq]
 
 /-- A decimal literal has the rational value of the same literal written in `ℚ`. -/
-theorem toRat?_ofScientific (mantissa : Nat) (exponentSign : Bool) (decimalExponent : Nat) :
-    (OfScientific.ofScientific mantissa exponentSign decimalExponent : Datum).toRat? =
-      some (OfScientific.ofScientific mantissa exponentSign decimalExponent : ℚ) := by
+theorem toRat?_ofScientific (mantissa : Nat) (exponentSign : Bool) (logB : Nat) :
+    (OfScientific.ofScientific mantissa exponentSign logB : Datum).toRat? =
+      some (OfScientific.ofScientific mantissa exponentSign logB : ℚ) := by
   change (Datum.finite false mantissa _).toRat? = _
   rw [Rat.ofScientific_def']
   simp [toRat?_eq]

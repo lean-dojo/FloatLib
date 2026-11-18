@@ -1,12 +1,14 @@
 ---
 number: "05"
 slug: ieee-binary-formats
-title: "IEEE binary formats"
-summary: "How binary16, binary32, binary64, binary128 and widths of your own store a number in bits, and how to read, round, convert, print and prove things about them."
+title: "IEEE 754 binary formats"
+summary: "IEEE 754-2019 binary formats, arithmetic, rounding and exception flags, with a clause-by-clause guide to the implementations and their Lean theorems."
 phases: [ieee-formats, binary-format, binary-arithmetic, status-and-directed, planner-and-configured]
 ---
 
-IEEE 754, the floating-point standard, names its binary formats by width: binary16 takes sixteen bits, and binary32, binary64 and binary128 take 32, 64 and 128. In this chapter we'll take values apart bit by bit, meet NaNs ("not a number"), signed zeros and status flags, move values between widths, and see what FloatLib proves at each step.
+IEEE 754 specifies both the value of an operation and the exceptions it signals. Dividing one by positive zero gives positive infinity and raises the division-by-zero flag. Dividing zero by zero gives a quiet NaN and raises the invalid-operation flag. FloatLib makes both parts of the result available in Lean for binary16, binary32, binary64 and binary128. The [operation table](#/chapter/ieee-binary-formats/where-is-each-operation-of-ieee-754-2019) maps the required operations of clause 5 and the recommended families of clause 9 to their implementations and theorems. [@ieee754_2019]
+
+We checked the binary model against Berkeley TestFloat on 127,741,704 level-1 vectors. All 210 campaigns matched on the five exception flags. Non-NaN results matched bit for bit, and NaNs matched by quiet or signaling class. The campaigns cover arithmetic, comparisons and conversions in the four IEEE widths, plus conversions between binary32 and bfloat16. The [validation chapter](#/chapter/external-validation/how-do-we-test-the-wider-ieee-formats) gives the format and rounding coverage.
 
 ## What is a binary float?
 
@@ -43,7 +45,7 @@ Here's what those constants come to for the [named layouts](https://github.com/l
 
 [Figure 5.1](#/chapter/ieee-binary-formats/figure-ch12-bit-layouts) draws every bit at the same width. Look at binary128: nearly all of its storage goes to the fraction.
 
-![The five layouts of the table drawn to one scale, sign bit, exponent field, and fraction field from left to right, with the width of each field in bits](assets/ch12-bit-layouts.png "Five binary layouts on the same bit scale.")
+![Five horizontal strips on one scale, each split into a sign bit, an exponent field and a fraction field, with the field widths written inside: 5 and 10 bits for binary16, 8 and 7 for bfloat16, 8 and 23 for binary32, 11 and 52 for binary64, and 15 and 112 for binary128. The total, 16, 16, 32, 64 or 128 bits, follows each strip](assets/ch12-bit-layouts.png "The bit layouts of the five named binary formats, drawn to one scale with the most significant bit on the left. The number inside an exponent or fraction field is its width in bits, and every format has one sign bit.")
 
 Every number in the table reads straight off the descriptors, so you can ask Lean for them:
 
@@ -69,7 +71,7 @@ open FloatLib.Floats.Formats.BinaryInterchange
 
 The last pair is binary128's $e_{\max}$ and the exponent of its least subnormal, its smallest positive value, $e_{\min} - w_f = -16382 - 112 = -16494$. [Figure 5.2](#/chapter/ieee-binary-formats/figure-ch12-range-precision) puts range and precision side by side.
 
-![Table of normal exponent intervals and least subnormal values for binary16, bfloat16, binary32, binary64, and binary128, with a separate bar chart of significand precision in bits including the leading bit](assets/ch12-range-precision.png "Exact exponent limits and significand precision for five binary formats.")
+![Two bar charts with one row for each format. Panel (a) draws a bar from the exponent of the least subnormal to the largest normal exponent on a symmetric logarithmic axis: −24 to 15 for binary16, −133 to 127 for bfloat16, −149 to 127 for binary32, −1,074 to 1,023 for binary64 and −16,494 to 16,383 for binary128, with the subnormal part in a second colour. Panel (b) draws the precision: 11, 8, 24, 53 and 113 bits](assets/ch12-range-precision.png "Exponent range and precision of the five named binary formats: (a) the exponents of subnormal and normal values on a symmetric logarithmic axis, (b) the precision p in bits. A normal value is m × 2^e with 1 ≤ m < 2. The numbers at the ends of a bar are the exponent of the least subnormal and the largest normal exponent, and the least normal exponent is one minus the largest. The precision counts the leading bit.")
 
 [[FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.isIEEE]] says a descriptor has the `.ieee` encoding with the conventional bias $2^{w_e-1}-1$. Nearly every real-number theorem below asks for it as a hypothesis `hfmt : fmt.isIEEE = true`, and `by simp` proves it for the named formats. Each theorem also lists the finiteness hypotheses it needs.
 
@@ -174,7 +176,7 @@ Our 24-bit format has bias 63, normal exponents from $-62$ to $63$, and $p = 17$
 
 ## How NaNs and signed zeros behave
 
-Now for the words that aren't ordinary numbers, and for zero, which comes in two signs. The top fraction bit of a NaN is called the quiet bit, because setting it makes the NaN quiet. A quiet NaN flows through arithmetic silently, while a signaling NaN is a tripwire that raises the invalid flag when used as an operand. Seven [classifiers](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Model/Carrier.lean), [[FloatLib.Floats.Formats.BinaryInterchange.Model.isZero]], `isSubnormal`, [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.isInf]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.isNaN]], `isSNaN` and `isQNaN`, test the stored fields, and `classify` sorts a value into the ten IEEE classes. One theorem matches `classify` to the exact value for every binary descriptor, whatever its bias and encoding, and the configured API inherits it through `toModel`.
+Now for the words that aren't ordinary numbers, and for zero, which comes in two signs. The top fraction bit of a NaN is called the quiet bit, because setting it makes the NaN quiet. A quiet NaN flows through arithmetic silently, while a signaling NaN is a tripwire that raises the invalid flag when used as an operand. Seven [classifiers](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Model/Carrier.lean), [[FloatLib.Floats.Formats.BinaryInterchange.Model.isZero]], `isSubnormal`, [[FloatLib.Floats.Formats.BinaryInterchange.Model.isFinite]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.isInfinite]], [[FloatLib.Floats.Formats.BinaryInterchange.Model.isNaN]], `isSignaling` and `isQNaN`, test the stored fields, and `classify` sorts a value into the ten IEEE classes. One theorem matches `classify` to the exact value for every binary descriptor, whatever its bias and encoding, and the configured API inherits it through `toModel`.
 
 A NaN can carry a small message in its fraction bits, called its payload. The standard leaves the choice of surviving payload to the implementation [@ieee754_2019], and ours is deterministic. An invalid operation with no NaN operand, such as $\infty - \infty$, returns `canonicalNaN`, positive with only the quiet bit set. With a NaN operand, `chooseNaN2` takes a signaling operand over a quiet one, then the left over the right, and quiets it, keeping the rest of the payload. Our [independent comparisons](#/chapter/external-validation) check NaN class and signaling behaviour, not this choice of payload.
 
@@ -475,20 +477,82 @@ $$
 
 A zero scale returns zero right away. Otherwise `toReal_magnitude_eq_roundedMagnitude` accounts for seven scalar roundings (two divisions, two squares, the addition, the square root and the final rescaling) under `MagnitudeFinite` conditions on the intermediate ranges and the square-root domain.
 
-There are two limits, though. The finite theorem doesn't give you a correctly rounded hypotenuse, and it doesn't show that every intermediate stays finite. Complex support covers basic arithmetic, conjugation, squared norm and magnitude, and `normSq`, the squared norm, is a rounded sum of squares with no scaling. Complex exponential, logarithm and trigonometric functions aren't implemented, and the scalar transcendental APIs don't supply them.
+How far is the whole operation from the exact one? The arithmetic of `ExecComplex` rounds at every step: a product is four real products and two real sums, each rounded. For the real and imaginary parts taken one at a time there is no good answer. Take the real part, $ac - bd$: when the two products cancel, no bound relative to $|ac - bd|$ holds, only one relative to $|ac|+|bd|$. Measured as a complex number, though, the product is fine. With $u$ the unit roundoff and $\eta$ the underflow error of the format:
+
+| Operation | Bound on the error | Premise |
+| --- | --- | --- |
+| `+`, `-` | $u\,\lVert\text{exact}\rVert$ | none beyond finiteness; no underflow term |
+| `*` | $\sqrt5\,u\,\lVert xy\rVert + 5\eta$ | at least five bits of precision |
+| `ExecComplex.mulFma` | $2u\,\lVert xy\rVert + 5\eta$ | none |
+| `/` (Smith's ratio formula) | $\sqrt2\,\bigl((1+u)^4/(1-u)^3 - 1\bigr)\lVert x/y\rVert$ | no underflow in the six inner roundings (`DivNormal`) |
+| `magnitude` (scaled) | $\bigl((1+u)^4 - 1\bigr)\,\lvert z\rvert + \eta$ | `MagnitudeNormal` |
+
+```lean standalone
+import FloatLib.Floats.Formats.BinaryInterchange.Complex.ErrorBounds
+
+open FloatLib.Floats.Formats.BinaryInterchange
+
+example (x y : ℂ) :
+    ‖ExecComplex.roundedMul FloatFormat.binary32 x y - x * y‖ ≤
+      √5 * Model.unitRoundoffAt FloatFormat.binary32 * ‖x * y‖ +
+        5 * Model.underflowErrorAt FloatFormat.binary32 :=
+  ExecComplex.norm_roundedMul_sub_le _ (by decide) x y
+```
+
+The product bound is that of [Brent, Percival and Zimmermann (2007)](https://doi.org/10.1090/S0025-5718-07-01931-X), with an underflow term they exclude, and the one with fused multiply-adds is the constant that [Jeannerod, Kornerup, Louvet and Muller (2017)](https://doi.org/10.1090/mcom/3123) prove without underflow. For the division and the magnitude we found no published proof in this form, so those two constants are what our proof gives. Our division constant is at most $\sqrt2\,\gamma_7$ with $\gamma_7=7u/(1-7u)$.
+
+Each bound is a theorem for every binary descriptor and all operands under nearest-even rounding. It is stated for the rounded expression, and for the operation of `ExecComplex` on an IEEE descriptor under the finiteness premise of that operation ([[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.norm_roundedDiv_sub_le]], [[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.abs_roundedMagnitude_sub_le]] and their siblings). Why do division and magnitude take the absence of underflow as a premise, where the product has an $\eta$ term? An underflow error $\eta$ in the denominator's product is a relative error $\eta/|c|$, so near the subnormal range no bound of the form $Cu\lVert x/y\rVert + C'\eta$ is true.
+
+With `import FloatLib.Floats.Formats.BinaryInterchange.Complex.Roundoff`, the [`roundoff`](#/chapter/proving-numerical-bounds) commands bound a component of any complex program, since that import tells them which scalar expression computes each component of `+`, `-`, `*`, `mulFma`, `/`, negation, conjugation, `normSq` and `magnitude`. The normwise bounds above are theorems about a complex number and aren't `roundoff` rules.
+
+There are two limits, though. The finite theorem doesn't give you a correctly rounded hypotenuse, and it doesn't show that every intermediate stays finite. `normSq`, the squared norm, is a rounded sum of squares with no scaling.
+
+### How to evaluate a complex elementary function
+
+All of that arithmetic rounds at every step. An elementary function rounds once: each part of the result is the exact part, rounded in the direction you ask for. That is the contract of GNU MPC, and here it is a theorem. `ExecComplex.exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh`, `asin`, `acos`, `atan`, `asinh`, `acosh` and `atanh` are C's `cexp`, `clog`, `csqrt` and the rest of `<complex.h>` (C23 7.3 and Annex G). `expm1` and `log1p` are $e^z-1$ and $\log(1+z)$ without the cancellation at a small $z$, `rsqrt` is $1/\sqrt z$, and `pow` is `cpow`. They aren't part of `import FloatLib`. Each family has a module under `FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary`, with its theorems in the module of the same name plus `Proof`:
+
+```lean standalone
+import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.ValueProof
+
+open FloatLib.Floats.Formats.BinaryInterchange
+
+example {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (z : ExecComplex fmt)
+    (hz : ExecComplex.isFinite z = true) (mode : Model.IEEERoundingMode) :
+    (ExecComplex.exp z mode).re =
+      Model.roundReal fmt mode (Complex.exp (ExecComplex.toComplex z)).re
+        (ExecComplex.expExact z).reZero := by
+  rw [ExecComplex.exp_eq hfmt hz mode, ExecComplex.Exact.round, ExecComplex.expExact_value hz]
+```
+
+Read the statement from the inside out. `Complex.exp (toComplex z)` is Mathlib's exponential of the complex number that `z` stores. `Model.roundReal fmt mode x` is the rounding of the real number `x`: the grid value when that fits, and the overflow result of IEEE 754-2019, clause 7.4, when it doesn't ([[FloatLib.Floats.Formats.BinaryInterchange.Model.roundReal_roundsTo]]). The last argument is the sign of the zero you get when the part is exactly zero. Nothing in the theorem mentions a search budget or a set of hard cases. It holds for every finite `z`, in binary16 as in binary128 or a format of your own, and the definition is the same one for all of them. So $e^{a+ib}$ doesn't overflow through $e^a$ when $e^a\cos b$ fits.
+
+How can a program round a transcendental number correctly for every input? Rounding only asks one kind of question, how the part compares with a rational, and each function answers that exactly. And the answer always comes, because a part is never a rational number unless we know which one. That is number theory: for rational $a$ and $b$, not both zero, $e^a\cos b$ is irrational, by the Lindemann-Weierstrass argument of Mathlib extended to Gaussian rational exponents ([[FloatLib.Numerics.Enclosure.gaussianInt_add_sum_exp_div_ne_zero]]). In practice one enclosure of the part settles nearly every comparison, and the exact comparison runs only for a rational inside it.
+
+Here is what is proved and what is tested, since the two differ:
+
+- **Every finite argument** of the eighteen functions of one argument has a theorem. That includes the poles and the signed zeros: `log` of a zero is $-\infty$ with the angle of that zero ([[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.log_zero]]), `atanh (±1)` and `atan (±i)` are infinite, and `log1p` and `expm1` return a zero unchanged.
+- **The symmetries** hold at every argument, NaNs and infinities included: each function commutes with conjugation, eight are odd and `cosh` and `cos` are even ([[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.exp_conj]] and its siblings), in the four rounding directions that negation fixes, since rounding $-x$ upward is the negation of rounding $x$ downward.
+- **The other values at a NaN or an infinite part** follow the tables of C23 Annex G. Those are tests, row by row, in four formats and six rounding directions, not theorems.
+- **The sign of a zero picks the side of a branch cut**, so `sqrt (-4 + 0 i)` is `2 i` and `sqrt (-4 - 0 i)` is `-2 i`. Off the cut the value is Mathlib's own principal value ([[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.exp_logExact_value]], [[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.sinh_asinhExact_value]]). Mathlib has no complex `arcsin` or `arcosh`, so there the reference is Kahan's principal expressions written with Mathlib's logarithm and square root.
+
+`pow` is different. Whether a part of $z^w$ is a rational number is a question we can't always answer, so `ExecComplex.powChecked` returns the power together with a certificate, and [[FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.pow_eq]] proves a certified power correctly rounded. A power is certified when it is exact for a reason we know, like an integer power of moderate size or $(-4)^{1/4}=1+i$, and whenever an enclosure of each part decides its rounding. Our tests found no part on a rounding boundary outside the exact cases, but there is no proof that none exists: for a complex exponent that is a question of transcendence theory. An uncertified power is still within an enclosure of the exact one, but its last bit isn't proved.
+
+We compared them with GNU MPC on 10,944 results in binary16, bfloat16, binary32 and binary64, in every rounding direction, and found no difference. A call takes 0.23 to 1.08 milliseconds in binary32 and 0.47 to 3.98 in binary64 at ordinary arguments. One corner costs more. Where a function is the identity to first order, such as `sin` or `expm1` far below one, the exact comparison works at about twice the exponent in bits and takes tens of milliseconds at subnormal binary64 arguments.
+
+You can evaluate all of this in Lean's kernel as well as in compiled code: `decide +kernel` proves `exp (1 + i)` in binary32 in under a second, with no trusted compiler in the proof.
 
 ## How to convert to integers and text
 
-What's our binary32 $\pi$ as an 8-bit integer? And $300$? FloatLib has [integer conversions](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/BinaryInterchange/DType) between binary values and fixed-width two's-complement integers (the usual signed machine integers). `ExecDType.floatToInt` rounds a finite value to an integer in the requested direction and succeeds only if it fits the signed width, with inexact set when a fraction was thrown away. An infinity, a NaN or an out-of-range value is a reported failure, never some fixed integer, and the [integer conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/DType/Semantics.lean) and its out-of-range companion pin down both finite cases. Going the other way, `ExecDType.intToFloat` rounds a `FixedInt width` once into the destination, with the five flags under `status := true`, and `intToFloat_nearest_eq_round` proves that a finite nearest-even result is `roundAt` of the integer. The parse and format lines come up in the next section.
+What's our binary32 $\pi$ as an 8-bit integer? And $300$? FloatLib has [integer conversions](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/BinaryInterchange/DType) between binary values and fixed-width two's-complement integers (the usual signed machine integers). `ExecDType.convertToIntegerExact` rounds a finite value to an integer in the requested direction and succeeds only if it fits the signed width, with inexact set when a fraction was thrown away. An infinity, a NaN or an out-of-range value is a reported failure, never some fixed integer, and the [integer conversion theorem](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/DType/Semantics.lean) and its out-of-range companion pin down both finite cases. Going the other way, `ExecDType.convertFromInt` rounds a `FixedInt width` once into the destination, with the five flags under `status := true`, and `convertFromInt_nearest_eq_round` proves that a finite nearest-even result is `roundAt` of the integer. The parse and format lines come up in the next section.
 
 ```lean
 open FloatLib.Numerics.Representations
 
-#eval (ExecDType.floatToInt (width := 8) (ExecFloat.Binary.toModel piWord) (mode := .nearest)).map FixedInt.toInt
+#eval (ExecDType.convertToIntegerExact (width := 8) (ExecFloat.Binary.toModel piWord) (mode := .nearest)).map FixedInt.toInt
 -- .success 3 { inexact := true }
-#eval (ExecDType.floatToInt (width := 8) (ExecFloat.Binary.toModel (300 : Binary32)) (mode := .nearest))
+#eval (ExecDType.convertToIntegerExact (width := 8) (ExecFloat.Binary.toModel (300 : Binary32)) (mode := .nearest))
 -- .failure .outOfRange
-#eval let o := ExecDType.intToFloat FloatFormat.binary16 (FixedInt.ofInt (width := 32) 2049)
+#eval let o := ExecDType.convertFromInt FloatFormat.binary16 (FixedInt.ofInt (width := 32) 2049)
         (status := true)
       ((ExecFloat.Binary.ofModel o.value : Binary16), o.status.inexact)
 -- (2048, true)
@@ -498,10 +562,10 @@ open FloatLib.Numerics.Representations
 -- "nan"
 
 example {width : Nat} (x : FixedInt width)
-    (hfin : Model.isFinite (ExecDType.intToFloat FloatFormat.binary32 x) = true) :
-    Model.toReal (ExecDType.intToFloat FloatFormat.binary32 x) =
+    (hfin : Model.isFinite (ExecDType.convertFromInt FloatFormat.binary32 x) = true) :
+    Model.toReal (ExecDType.convertFromInt FloatFormat.binary32 x) =
       Model.roundAt FloatFormat.binary32 (FixedInt.toInt x : ℝ) :=
-  ExecDType.intToFloat_nearest_eq_round x (by simp) hfin
+  ExecDType.convertFromInt_nearest_eq_round x (by simp) hfin
 ```
 
 Rounding the binary32 $\pi$ gives the 8-bit integer $3$ with inexact set. $300$ doesn't fit in eight signed bits, so it fails with `outOfRange`. And binary16 can't hold $2049$: its eleven significant bits cover every integer only up to $2048$, so nearest-even returns $2048$ and flags inexact.
@@ -563,12 +627,241 @@ abbrev IntegralNarrow := FloatFormat.ieee 2 3
 #eval (Model.roundToIntegral
   (Model.ofNatBits (fmt := IntegralNarrow) 23) (mode := .towardZero)).toNatBits
 -- 20
-#eval Model.isInf (Model.roundToIntegral
+#eval Model.isInfinite (Model.roundToIntegral
   (Model.ofNatBits (fmt := IntegralNarrow) 23) (mode := .nearest))
 -- true
 ```
 
-In the block, word `23` is $3.75$ and word `20` is three. `roundToIntegral` is one of a few operations with their own status and finite-value theorems, with `remainder`, `scale`, `nextUp`, `nextDown` and `binaryExponent`. That last one rounds $\lfloor\log_2|x|\rfloor$ into the source format, where a small format can lose accuracy, while `binaryExponentInt` returns it exactly.
+In the block, word `23` is $3.75$ and word `20` is three. `roundToIntegral` is one of a few operations with their own status and finite-value theorems, with `remainder`, `scale`, `nextUp`, `nextDown` and `logB`. That last one rounds $\lfloor\log_2|x|\rfloor$ into the source format, where a small format can lose accuracy, while `logBInt` returns it exactly.
+
+
+## Where is each operation of IEEE 754-2019?
+
+IEEE 754-2019 gives every operation a name, such as `roundToIntegralTiesToEven`, `compareQuietLess` or `augmentedAddition`, and you can call each operation FloatLib has by that name. For the binary formats look in `Model`, the reference model of this chapter, and in `ExecFloat.Binary`, the values you compute with. For the decimal formats look in `Arithmetic` and `Datum` ([the decimal chapter](#/chapter/decimal-arithmetic)).
+
+Where the standard names every member of a family, as it does for the five rounding directions of `roundToIntegral…` and for the 22 comparisons, FloatLib defines the family once, with the direction or the predicate as an argument, and declares the members from it. So a member is its family at one argument by definition, and every theorem about the family applies to it:
+
+```lean
+example (x y : Model FloatFormat.binary64) :
+    Model.compareQuietLess x y = Model.compareQuiet .less x y ∧
+      Model.roundToIntegralTowardZero x = Model.roundToIntegral x (mode := .towardZero) :=
+  ⟨rfl, rfl⟩
+```
+
+### What do the augmented operations return?
+
+Clause 9.5 recommends augmented arithmetic for binary formats. Where the head is finite, `augmentedAddition` returns the sum rounded to nearest with ties toward zero, together with the exact rounding error. In binary16 the successor of one, plus half a unit in the last place, is such a tie: ordinary addition rounds it to the even neighbour `0x3C02`, and the augmented operation keeps `0x3C01` and hands you the half unit back.
+
+```lean
+def afterOne : Binary16 := ExecFloat.Binary.ofNatBits 0x3C01
+def halfUnit : Binary16 := ExecFloat.Binary.ofNatBits 0x1000
+
+#eval (afterOne + halfUnit).toNatBits
+-- 15362
+#eval (ExecFloat.Binary.augmentedAddition afterOne halfUnit).head.toNatBits
+-- 15361
+#eval (ExecFloat.Binary.augmentedAddition afterOne halfUnit).tail.toNatBits
+-- 4096
+```
+
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_augmentedAddition_add]] proves that in an IEEE descriptor the head and tail add up to the exact sum whenever the head is finite.
+
+### Why isn't an operation in another format a cast afterwards?
+
+In the standard, arithmetic is more general than `x + y` on one type. Its operations are formatOf operations: the operands and destination can have different formats of the same radix, and the exact result is rounded once into the destination. `Model.formatOfAddition`, `formatOfSubtraction`, `formatOfMultiplication`, `formatOfDivision` and `formatOfFusedMultiplyAdd` take the destination as their first argument and return the value with its flags. One rounding is not a cast after the operation. Take $1 + 2^{-24}$, which lies exactly between two binary32 values, and add $2^{-54}$ to it. In binary64 the sum rounds back to $1 + 2^{-24}$, and the cast then rounds that tie to its even neighbour, which is 1. But the exact sum lies above the tie, so one rounding gives the neighbour above 1:
+
+```lean
+def tie : Model FloatFormat.binary64 := Model.ofNatBits 0x3FF0000010000000
+def small : Model FloatFormat.binary64 := Model.ofNatBits 0x3C90000000000000
+
+#eval (Model.cast FloatFormat.binary64 FloatFormat.binary32 (Model.add tie small)).toNatBits
+-- 1065353216
+#eval (Model.formatOfAddition FloatFormat.binary32 tie small).value.toNatBits
+-- 1065353217
+```
+
+[[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_formatOfAddition]] proves that finite operands of any two binary formats give the exact sum rounded once to nearest-even, provided the destination is an IEEE descriptor and the result is finite.
+
+### Which sum does `sum` compute?
+
+For the reductions of clause 9.4, the standard allows different association orders and wider intermediate formats. These choices can change the numerical result [@ieee754_2019]. `Model.sum` is the member of that family that adds without error and rounds once. `Model.sumInOrder acc out values` is the loop most programs run: the values are converted to the accumulator format `acc`, added from left to right with one rounding at each addition, and the result is converted to `out`. `Model.sumAlong acc out schedule` does the same along any association order, and `sumAbs`, `sumSquare` and `dot` have the same two forms. Three binary16 values show the difference. In a binary16 accumulator each $1 + 2^{-11}$ is a tie that rounds back to one, and a binary32 accumulator keeps both small terms:
+
+```lean
+def reductionOne : Model FloatFormat.binary16 := Model.ofNatBits 0x3C00
+def reductionHalf : Model FloatFormat.binary16 := Model.ofNatBits 0x1000
+
+#eval (Model.sumInOrder .binary16 .binary16 [reductionOne, reductionHalf, reductionHalf]).toNatBits
+-- 15360
+#eval (Model.sumInOrder .binary32 .binary16 [reductionOne, reductionHalf, reductionHalf]).toNatBits
+-- 15361
+#eval (Model.sum FloatFormat.binary16 #[reductionOne, reductionHalf, reductionHalf]).toNatBits
+-- 15361
+```
+
+The import `FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.Proof` bounds the error of every member: `Model.abs_toReal_reduceAlong_sub_le` covers every association order, `abs_toReal_reduceAlong_sub_le_depth` bounds it by the depth of the order, which is about $\log_2 n$ for an order that pairs its $n$ terms, and four theorems (`Model.sumInOrder_mixedError` and its siblings) cover the loop for a list of any length, with the source, accumulator and destination formats as parameters. The [`roundoff` command](#/chapter/proving-numerical-bounds) derives these four bounds from the loop definitions.
+
+### Which mathematical functions are correctly rounded?
+
+Clause 9.2 recommends mathematical functions and asks that they be correctly rounded. You get them for every binary format with the import `FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded`: `exp2`, `exp10`, `log2`, `log10` with their `m1` and `p1` forms, the trigonometric functions in radians and in half-turns (`sinPi x` is the sine of π times `x`) with their inverses, the hyperbolic functions with their inverses, `atan2`, `powr` and `compound`. Each returns the value with its flags and takes the rounding direction as an optional argument:
+
+```lean standalone
+import FloatLib
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
+
+open FloatLib.Floats
+
+def half : Binary64 := 0.5
+
+#eval (ExecFloat.Binary.CorrectlyRounded.sinPi half).value
+-- 1
+#eval (ExecFloat.Binary.CorrectlyRounded.exp2 half).value
+-- 1.4142135623730951
+#eval (ExecFloat.Binary.CorrectlyRounded.exp2 half).status.inexact
+-- true
+#eval (ExecFloat.Binary.CorrectlyRounded.atanh (1 : Binary64)).status.divideByZero
+-- true
+#eval (ExecFloat.Binary.CorrectlyRounded.exp2 half .up).value
+-- 1.4142135623730951
+#eval (ExecFloat.Binary.CorrectlyRounded.exp2 half .down).value
+-- 1.414213562373095
+```
+
+What is proved depends on the direction. On an IEEE format, if the operand is finite and in the domain and the nearest-even result is finite, that result is the real function rounded once ([[FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.toReal_apply]]). Toward negative and toward positive infinity the results are proved to enclose the real value ([[FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.apply_encloses]]), so they can serve as interval endpoints. A next step is to prove that each endpoint is the closest representable value on its side. Separately, we checked 30 recommended functions against high-precision `mpmath` evaluations rounded to the target format. All 112,389 cases agreed on the value and flags across the five IEEE rounding directions. The [campaign record](https://github.com/lean-dojo/FloatLib/blob/main/tests/results/differential/ieee2019.csv) gives the cases by function. Speed depends on the direction too. To nearest-even the functions round an enclosure, which takes about a millisecond for a binary64 result. With directed rounding, and for a result on a rounding boundary, they decide by one exact comparison per bit, at 1 to 200 milliseconds for binary64. Both grow quickly with the width of the format.
+
+For the decimal formats these functions are certified functions: `Transcendentals.Certified` returns the correctly rounded datum when an enclosure settles the rounding, and `none` otherwise, with no flags and no other direction. `atan2`, `atan2Pi` and `pow` are missing there.
+
+### Can the kernel check these operations?
+
+Yes, most of them. `float_decide` rewrites the comparisons, the integral roundings, the classification, `abs`, `copySign`, `scale`, `logB` and the minimum and maximum operations to computations on the encodings, so such a check costs a fraction of a millisecond for each operation:
+
+```lean
+example : (ExecFloat.Binary.compareQuietLess (1 : Binary64) 2).value = true ∧
+    ExecFloat.Binary.minimumMagnitude (-1.5 : Binary64) 2.25 = -1.5 ∧
+    ExecFloat.Binary.roundToIntegralTiesToEven (2.5 : Binary64) = 2 := by
+  float_decide
+```
+
+For binary64, `compareQuietLess` takes 124 microseconds with its rule where the operation as written takes 2,034, and `roundToIntegralTiesToEven` 109 where it takes 6,078 ([Figure 5.3](#/chapter/ieee-binary-formats/figure-kernel-ieee2019)). Decimal formats have a kernel form for most of their operations, which take 75 to 858 microseconds for decimal64 where the specification takes 149 to 7,672 ([the decimal chapter](#/chapter/decimal-arithmetic/can-leans-kernel-check-a-decimal-computation) has an example). Four binary groups have no kernel rule yet: the payload setters, the augmented operations, the reductions and the formatOf operations.
+
+![16 small panels of lines, one per family of operations of the standard: kernel time against format width from 8 to 4,096 bits, with a dashed line and band for the operation as written and a solid line and band for the same operation with the kernel rules.](assets/kernel-ieee2019.png "Kernel time of the operations of IEEE 754-2019 on binary formats, by family and format width, as written and with FloatLib's kernel rules. A line is the median over the operations of a family of the time Lean's kernel takes for one evaluation, and the band is their range; where the two lines coincide the family has no kernel rule. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18).")
+
+### Which names differ?
+
+A few. Addition, subtraction, multiplication and division are `+`, `-`, `*` and `/`, and `negate` is the unary minus. `squareRoot` is `sqrt`, `fusedMultiplyAdd` is `fma`, `scaleB` is `scale`, `convertFormat` is `cast`, `isSignMinus` is `signBit`, and `class` is `classify`, since `class` is a keyword of Lean. FloatLib exposes exception flags as data. Callers can handle them in Lean code. Clause 8 also describes alternate exception-handling attributes, which FloatLib does not implement. And the conformance predicates `is754version1985`, `is754version2008` and `is754version2019` answer `false`, because FloatLib is a library of operations with proofs and doesn't claim that an environment built on it conforms to the standard as a whole.
+
+We used the IEEE working group's notes on the 2019 revision [@ieee754_2019_changes], the C binding in Annex F, Table F.2 [@iso9899_2024], and the C extension for reductions [@iso18661_4] to relate the operation names to the standard. The augmented operations follow Riedy and Demmel [@riedyDemmel2018] and Boldo, Lauter and Muller [@boldoLauterMuller2021], and the decimal minimum and maximum follow the rule of the General Decimal Arithmetic Specification for equal operands [@cowlishawDecarith]. The table groups related operations and gives the corresponding declarations and theorems. A missing entry identifies an operation with no implementation for that format family. Timings for the operations we measured are in the [benchmark results](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/results/ieee2019/README.md).
+
+<!-- clause map of IEEE 754-2019 -->
+
+| Clause | Operation | Binary formats | Decimal formats | What is proved |
+| --- | --- | --- | --- | --- |
+| 5.3.1 | `roundToIntegral…` (five directions: `TiesToEven`, `TiesToAway`, `TowardZero`, `TowardPositive`, `TowardNegative`) | `Model.roundToIntegral…`, `ExecFloat.Binary.roundToIntegral…` (generated members of `roundToIntegral`) | `Arithmetic.roundToIntegral…` | binary: `toReal_roundToIntegral`, `exists_int_toReal_roundToIntegral`, `roundToIntegral_overflow_eq_false`; decimal: `roundToIntegral_value`, `roundToIntegral_valid`; kernel rule: binary: the member is unfolded to its family, which had a rule; decimal `KernelPath.roundToIntegral_eq` |
+| 5.3.1 | `roundToIntegralExact` | `Model.roundToIntegralExact`, `ExecFloat.Binary.roundToIntegralExact` (`roundToIntegral` with `status := true`) | `Arithmetic.roundToIntegralExact` | binary: `roundToIntegral_status_of_finite`, `roundToIntegral_inexact_iff`; decimal: `roundToIntegralExact_inexact_iff`, `roundToIntegralExact_error_le_half`; kernel rule: binary: the member is unfolded to its family, which had a rule; decimal `KernelPath.roundToIntegralExact_eq` |
+| 5.3.1 | `nextUp` | `Model.nextUp`, `ExecFloat.Binary.nextUp` | `Arithmetic.nextUp` | binary: `no_value_between_nextUp`, `nextUp_status_eq`; decimal: `nextUp_adjacent`, `nextUp_quantum_minimal`; kernel rule: decimal `KernelPath.nextUp_eq` |
+| 5.3.1 | `nextDown` | `Model.nextDown`, `ExecFloat.Binary.nextDown` | `Arithmetic.nextDown` | binary: `no_value_between_nextDown`, `nextDown_status_eq`; decimal: `nextDown_adjacent`, `nextDown_quantum_minimal`; kernel rule: decimal `KernelPath.nextUp_eq` (`nextDown` is unfolded to `nextUp`) |
+| 5.3.1 | `remainder` | `Model.remainder`, `ExecFloat.Binary.remainder` | `Arithmetic.remainder` | binary: `remainder_exact`, `abs_toReal_remainder_le`; decimal: `remainder_value`, `remainder_error_le_half_divisor` |
+| 5.3.2 | `quantize` | not applicable (decimal only) | `Arithmetic.quantize` | `quantize_same_quantum`, `quantize_error_le_half`, `quantize_inexact_iff`; kernel rule: decimal `KernelPath.quantize_eq` |
+| 5.3.2 | `quantum` | not applicable (decimal only) | `Arithmetic.quantum` | `sameQuantum_quantum`, `toRat?_quantum` |
+| 5.3.3 | `scaleB` | `Model.scale`, `ExecFloat.Binary.scale` | `Arithmetic.scale` | binary: `toReal_scale_eq_roundAt`, `toReal_scale_exact`; decimal: `scale_exact_value`, `scale_inexact_iff`; kernel rule: binary `Configured.liftUnary_scale_eq` (`KernelPath.scale_eq_spec`), decimal `KernelPath.scale_eq` |
+| 5.3.3 | `logB` | `Model.logB`, `Model.logBInt`, `ExecFloat.Binary.logB` | `Arithmetic.logB` | binary: `logBInt_of_finite_nonzero`, `logBInt_bounds`, `logB_status_of_zero`; decimal: `logB_finite`, `logB_bounds`; kernel rule: binary `Configured.liftUnary_logB_eq` (`KernelPath.logB_eq_spec`), decimal `KernelPath.logB_eq` |
+| 5.4.1 | `addition` | `Model.add`, `x + y` on `ExecFloat.Binary` (a Lean operator) | `Arithmetic.add`, kernel path `KernelPath.add` | binary: `toReal_add_eq_roundAt`, `add_invalid`; decimal: `add_error_le_half`, `add_inexact_iff`, `KernelPath.add_eq` |
+| 5.4.1 | `subtraction` | `Model.sub`, `x - y` on `ExecFloat.Binary` (a Lean operator) | `Arithmetic.sub`, kernel path `KernelPath.sub` | binary: `toReal_sub_eq_roundAt`, `add_invalid`; decimal: `sub_error_le_half`, `sub_inexact_iff`, `KernelPath.sub_eq` |
+| 5.4.1 | `multiplication` | `Model.mul`, `x * y` on `ExecFloat.Binary` (a Lean operator) | `Arithmetic.mul`, kernel path `KernelPath.mul` | binary: `toReal_mul_eq_roundAt`, `mul_invalid`; decimal: `mul_error_le_half`, `mul_inexact_iff`, `KernelPath.mul_eq` |
+| 5.4.1 | `division` | `Model.div`, `x / y` on `ExecFloat.Binary` (a Lean operator) | `Arithmetic.div` | binary: `toReal_div_eq_roundAt`, `div_invalid`; decimal: `div_error_le_half`, `div_inexact_iff`; kernel rule: decimal `KernelPath.div_eq` (`projectRatio_eq`) |
+| 5.4.1 | `squareRoot` | `Model.sqrt`, `ExecFloat.sqrt` | `Arithmetic.sqrt` | binary: `toReal_sqrt_eq_roundAt`, `isFinite_sqrt_of_isFinite`; decimal: `sqrt_valid`, `sqrt_quantum_closest`; kernel rule: decimal `KernelPath.sqrt_eq` (`sqrtRatio_eq`) |
+| 5.4.1 | `fusedMultiplyAdd` | `Model.fma`, `ExecFloat.fma` | `Arithmetic.fma` | binary: `toReal_fma_eq_roundAt`; decimal: `fma_error_le_half`, `fma_inexact_iff`; kernel rule: decimal `KernelPath.fma_eq` |
+| 5.4.1 | `convertFromInt` | `ExecDType.convertFromInt` | `Conversion.Integer.convertFromInt` | binary: `value_convertFromInt`, `convertFromInt_nearest_eq_round`; decimal: `convertFromInt_exact`, `convertFromInt_error_le_half`; kernel rule: decimal `KernelPath.convertFromInt_eq` |
+| 5.4.1 | `convertToInteger…` (five directions) | `ExecDType.convertToInteger…` (generated member of `convertToInteger`), `ExecFloat.Binary.convertToInteger…` (member of `toInt?`) | `Conversion.Integer.convertToInteger…` | binary: `convertToInteger_of_convertToIntegerExact_eq_success`, `convertToInteger_of_convertToIntegerExact_eq_failure`; decimal: `convertToInteger_exact`, `convertToInteger_error_le_half`; kernel rule: binary: the member is unfolded to its family, which had a rule; decimal `KernelPath.convertToInteger_eq` |
+| 5.4.1 | `convertToIntegerExact…` (five directions) | `ExecDType.convertToIntegerExact…` (generated member of `convertToIntegerExact`) | `Conversion.Integer.convertToIntegerExact…` | binary: `convertToIntegerExact_of_exactValue_eq_finite_of_inRange`, `toInt_of_convertToIntegerExact_finite`; decimal: `convertToInteger_exact`; kernel rule: decimal `KernelPath.convertToInteger_eq` |
+| 5.4.1 (formatOf) | formatOf-addition, -subtraction, -multiplication, -division, -fusedMultiplyAdd (operands and result in different formats) | `Model.formatOfAddition`, `formatOfSubtraction`, `formatOfMultiplication`, `formatOfDivision`, `formatOfFusedMultiplyAdd` (any three formats, six directions, NaNs, infinities, flags); `ExecFloat.Mixed.add`, `sub`, `mul`, `div`, `fma` (any two families, finite operands only) | `Arithmetic.add`, `sub`, `mul`, `div`, `fma` (a `Datum` carries no format: operands of any formats, one rounding into the format argument) | binary: `toReal_formatOfAddition` and its four siblings (nearest-even, finite operands: one rounding of the exact result), `formatOfAddition_of_toDyadic?_eq_some` and its siblings (every direction); decimal: `add_error_le_half` and its siblings |
+| 5.4.1 (formatOf) | formatOf-squareRoot, formatOf-convertFromInt | `ExecDType.convertFromInt` (any destination); same-format square root only | `Arithmetic.sqrt`, `Conversion.Integer.convertFromInt` (operands of any formats) | see squareRoot and convertFromInt |
+| 5.4.2 | `convertFormat` | `Model.cast` | `Conversion.convertFormat` | binary: `cast_eq_roundAt`, `cast_exact_of_gridExtension`; decimal: `convertFormat_error_le_half`, `convertFormat_exact`; kernel rule: decimal `KernelPath.convertFormat_eq` |
+| 5.4.2 | `convertFromDecimalCharacter` | `Model.parse`, `ExecFloat.Binary.parse` | `Formatting.parse` | binary: `toReal_parse_decimal_nearest`, `parse_format_of_isFinite`; decimal: `parse_error_le_half`, `parse_formatExact` |
+| 5.4.2 | `convertToDecimalCharacter` | `Model.format`, `ExecFloat.Binary.format` | `Formatting.formatExact`, `Formatting.format` | binary: `parse_format_of_isFinite`, `format_status`; decimal: `formatExact_injective`, `parse_formatExact` |
+| 5.4.3 | `convertFromHexCharacter` | `Model.parse` (hexadecimal text) | not applicable (binary only) | `parse_format_hex_of_isFinite` |
+| 5.4.3 | `convertToHexCharacter` | `Model.format` with `.hex` | not applicable (binary only) | `parse_format_hex_of_isFinite` |
+| 5.5.1 | `copy` | `Model.copy`, `ExecFloat.Binary.copy` | `Datum.copy` | definitional (`copy x = x`) |
+| 5.5.1 | `negate` | `Model.neg`, `-x` (a Lean operator) | `Datum.negate` | decimal: `negate_negate`, `negate_valid` |
+| 5.5.1 | `abs` | `Model.abs`, `ExecFloat.Binary.abs` | `Datum.abs` | decimal: `finiteValue_abs`; kernel rule: binary `Configured.liftUnary_abs_eq` (`KernelPath.abs_eq_spec`) |
+| 5.5.1 | `copySign` | `Model.copySign`, `ExecFloat.Binary.copySign` | `Datum.copySign` | decimal: `decode_copySign`; kernel rule: binary `Configured.liftBinary_copySign_eq` (`KernelPath.copySign_eq_spec`) |
+| 5.5.2 | `encodeDecimal` | not applicable (decimal only) | `encodeDecimal` (`Encoding.encode?` at `.dpd`) | `decodeDecimal_of_encodeDecimal_eq_some`, `decode_transcode` |
+| 5.5.2 | `decodeDecimal` | not applicable (decimal only) | `decodeDecimal` (`Encoding.decode` at `.dpd`) | `decodeDecimal_of_encodeDecimal_eq_some`, `decode_transcode` |
+| 5.5.2 | `encodeBinary` | not applicable (decimal only) | `encodeBinary` (`Encoding.encode?` at `.bid`) | `decodeBinary_of_encodeBinary_eq_some`, `decode_transcode` |
+| 5.5.2 | `decodeBinary` | not applicable (decimal only) | `decodeBinary` (`Encoding.decode` at `.bid`) | `decodeBinary_of_encodeBinary_eq_some`, `decode_transcode` |
+| 5.6.1, 5.11 | `compareQuiet…` (twelve predicates: `Equal`, `NotEqual`, `Greater`, `GreaterEqual`, `Less`, `LessEqual`, `Unordered`, `Ordered`, `LessUnordered`, `NotGreater`, `NotLess`, `GreaterUnordered`) | `Model.compareQuiet…`, `ExecFloat.Binary.compareQuiet…` (generated members of `compareQuiet`) | `Datum.compareQuiet…` (generated member of `Datum.compareQuiet`) | binary: `compareQuiet_value_of_toEReal?`, `compareQuiet_invalid_iff`; decimal: `compareQuiet_invalid_iff`, `compareQuiet_value_iff`; kernel rule: binary `Configured.compareQuiet_eq`, decimal `KernelPath.compareQuiet_eq` |
+| 5.6.1, 5.11 | `compareSignaling…` (ten predicates: the twelve without `Unordered` and `Ordered`) | `Model.compareSignaling…`, `ExecFloat.Binary.compareSignaling…` (generated members of `compareSignaling`) | `Datum.compareSignaling…` (generated member of `Datum.compareSignaling`) | binary: `compareSignaling_value_of_toEReal?`, `compareSignaling_invalid_iff`; decimal: `compareSignaling_invalid_iff`, `compareQuiet_value_iff`; kernel rule: binary `Configured.compareSignaling_eq`, decimal `KernelPath.compareSignaling_eq` |
+| 5.7.1 | `is754version…` (`1985`, `2008`, `2019`) | `IEEE754.is754version…` (`false`: no conformance claim) | the same declaration | definitional (`conformsTo`) |
+| 5.7.2 | `class` | `Model.classify`, `ExecFloat.Binary.classify` (`class` is a keyword of Lean) | `Datum.classify` | binary: `classify_eq_match_exactValue`; decimal: `classify_normal_iff`, `classify_zero_iff`; kernel rule: binary `Configured.classify_eq` (`KernelPath.classOf_eq`), decimal `KernelPath.classify_eq` |
+| 5.7.2 | `isSignMinus` | `Model.signBit`, `ExecFloat.Binary.signBit` | `Datum.isSignMinus` | decimal: `isSignMinus_withSign` |
+| 5.7.2 | `isNormal` | `Model.isNormal`, `ExecFloat.Binary.isNormal` | `Datum.isNormal` | decimal: `isNormal_iff`; kernel rule: binary `Configured.isNormal_eq`, decimal `KernelPath.isNormal_eq` |
+| 5.7.2 | `isFinite` | `Model.isFinite`, `ExecFloat.Binary.isFinite` | `Datum.isFinite` | binary: `isFinite_of_isFinite_add` |
+| 5.7.2 | `isZero` | `Model.isZero`, `ExecFloat.Binary.isZero` | `Datum.isZero` | decimal: `isZero_iff` |
+| 5.7.2 | `isSubnormal` | `Model.isSubnormal`, `ExecFloat.Binary.isSubnormal` | `Datum.isSubnormal` | decimal: `isSubnormal_iff`; kernel rule: binary `Configured.isSubnormal_eq`, decimal `KernelPath.isSubnormal_eq` |
+| 5.7.2 | `isInfinite` | `Model.isInfinite`, `ExecFloat.Binary.isInfinite` | `Datum.isInfinite` | binary: `nextUp_of_isInfinite_of_signBit_eq_false` |
+| 5.7.2 | `isNaN` | `Model.isNaN`, `ExecFloat.Binary.isNaN` | `Datum.isNaN` | binary: `compare_eq_none_iff`; decimal: `numericValue?_eq_none_iff` |
+| 5.7.2 | `isSignaling` | `Model.isSignaling`, `ExecFloat.Binary.isSignaling` | `Datum.isSignaling` | binary: `compareQuiet_invalid_iff`; decimal: `withSign_isSignaling`; kernel rule: binary `Configured.isSignaling_eq` |
+| 5.7.2 | `isCanonical` | `Model.isCanonical`, `ExecFloat.Binary.isCanonical` | `Encoding.isCanonical` | decimal: `isCanonical_canonicalize` |
+| 5.7.2 | `radix` | `Model.radix`, `ExecFloat.Binary.radix` | `Datum.radix` | definitional |
+| 5.7.2, 5.10 | `totalOrder` | `Model.totalOrder`, `ExecFloat.Binary.totalOrder` | `Datum.totalOrder` | binary: `totalOrder_total`, `totalOrder_trans`, `totalOrder_antisymm`; decimal: `totalOrder_total`, `totalOrder_antisymm_iff`; kernel rule: decimal `KernelPath.totalOrder_eq` |
+| 5.7.2, 5.10 | `totalOrderMag` | `Model.totalOrderMag`, `ExecFloat.Binary.totalOrderMag` | `Datum.totalOrderMag` | binary: `totalOrderMag_trans`; decimal: `totalOrderMag_total`, `totalOrderMag_antisymm_iff`; kernel rule: binary `Configured.totalOrderMag_eq`, decimal `KernelPath.totalOrder_eq` |
+| 5.7.3 | `sameQuantum` | not applicable (decimal only) | `Datum.sameQuantum` | `sameQuantum_comm`, `sameQuantum_trans`, `quantize_same_quantum` |
+| 5.7.4 | `lowerFlags` | `Numerics.IEEEStatus.lowerFlags` | `Numerics.IEEEStatus.lowerFlags`, `Environment.lowerFlags` | definitional on the record of five flags |
+| 5.7.4 | `raiseFlags` | `Numerics.IEEEStatus.raiseFlags` | `Numerics.IEEEStatus.raiseFlags`, `Environment.raiseFlags` | definitional on the record of five flags |
+| 5.7.4 | `testFlags` | `Numerics.IEEEStatus.testFlags` | `Numerics.IEEEStatus.testFlags`, `Environment.testFlags` | definitional on the record of five flags |
+| 5.7.4 | `testSavedFlags` | `Numerics.IEEEStatus.testSavedFlags` | `Numerics.IEEEStatus.testSavedFlags` | definitional on the record of five flags |
+| 5.7.4 | `restoreFlags` | `Numerics.IEEEStatus.restoreFlags` | `Numerics.IEEEStatus.restoreFlags`, `Environment.restoreFlags` | definitional on the record of five flags |
+| 5.7.4 | `saveAllFlags` | `Numerics.IEEEStatus.saveAllFlags` | `Numerics.IEEEStatus.saveAllFlags`, `Environment.saveAllFlags` | definitional on the record of five flags |
+| 7.2 to 7.6 | invalid, divideByZero, overflow, underflow, inexact (default handling) | `IEEEOutcome` (for operations supporting `status := true`), `Numerics.IEEEStatus` | `Outcome` | binary: `add_invalid`, `div_divideByZero`, `dyadicRoundingStatus_overflow`, `dyadicRoundingStatus_inexact_of_underflow`; decimal: `add_inexact_iff`, `scale_underflow_iff` |
+| 8 | alternate exception handling attributes | none: an operation returns its flags as a value, and a caller handles them in ordinary code (`IEEEOutcome.bind`) | none (`Environment.accept`) | none |
+| 9.2 | `exp` | `ExecFloat.Binary.CorrectlyRounded.exp`, `Model.Transcendentals.CorrectlyRounded.exp`: an enclosure search, then exact comparisons; value only, no flags | `Transcendentals.Certified.exp` (a result when an enclosure settles) | binary: `exp_correctlyRoundedCertificateOn`, `toReal_exp_eq_roundAt` (correctly rounded to nearest-even on every finite input whose result is below the overflow threshold, all IEEE formats); decimal: `toReal_of_exp_eq_some` |
+| 9.2 | `expm1` | `ExecFloat.Binary.CorrectlyRounded.expm1`, `Model.Transcendentals.CorrectlyRounded.expm1`: an enclosure search, then exact comparisons; value only, no flags | `Transcendentals.Certified.expm1` (a result when the certified search settles) | binary: `expm1_correctlyRoundedCertificateOn`, `expm1_eq_of_certified_expm1_eq_ok` |
+| 9.2 | `log` | `ExecFloat.Binary.CorrectlyRounded.log`, `Model.Transcendentals.CorrectlyRounded.log`: an enclosure search, then exact comparisons; value only, no flags | `Transcendentals.Certified.log` (a result when an enclosure settles) | binary: `log_correctlyRoundedCertificateOn`, `log_eq_of_certified_log_eq_ok` (correctly rounded to nearest-even on every positive finite input, all IEEE formats); decimal: `toReal_of_log_eq_some` |
+| 9.2 | `logp1` | `ExecFloat.Binary.CorrectlyRounded.logp1`, `Model.Transcendentals.CorrectlyRounded.logp1`: an enclosure search, then exact comparisons; value only, no flags | `Transcendentals.Certified.logp1` (a result when the certified search settles) | binary: `logp1_correctlyRoundedCertificateOn`, `logp1_eq_of_certified_logp1_eq_ok` |
+| 9.2 | `rSqrt` | `Model.rSqrt`, `ExecFloat.Binary.rSqrt`: one rounding of the exact value to nearest-even | `Arithmetic.rSqrt` (five directions) | binary: `toReal_rSqrt_eq_roundAt`, `rSqrt_of_isZero`; decimal: `rSqrt_error_le_half`; kernel rule: decimal `KernelPath.rSqrt_eq` (`sqrtRatio_eq`) |
+| 9.2 | `hypot` | `Model.hypot`, `ExecFloat.Binary.hypot`: one rounding of the exact value to nearest-even | `Arithmetic.hypot` (five directions) | binary: `toReal_hypot_eq_roundAt`; decimal: `hypot_error_le_half`, `hypot_inexact_iff`; kernel rule: decimal `KernelPath.hypot_eq` (`sqrtRatio_eq`) |
+| 9.2 | `pown` | `Model.pown`, `ExecFloat.Binary.pown`: one rounding of the exact value to nearest-even | `Arithmetic.pown` (five directions) | binary: `toReal_pown_eq_roundAt`, `pown_of_isSignaling`; decimal: `pown_error_le_half`; kernel rule: decimal `KernelPath.pown_eq` (`project_eq`, `projectRatio_eq`) |
+| 9.2 | `rootn` | `Model.rootn`, `ExecFloat.Binary.rootn`: one rounding of the exact value to nearest-even | `Arithmetic.rootn` (five directions) | binary: `toReal_rootn_eq_roundAt`, `rootn_of_isNaN`; decimal: `rootn_error_le_half`, `rootn_inexact_iff` |
+| 9.2 | `pow` | `Model.pow`, `ExecFloat.Binary.Certified.pow` | missing | `toReal_pow_of_eq_intCast` (correctly rounded for a finite base with a finite integral exponent); `Certified.pow` returns the correctly rounded value or a failure |
+| 9.2 | `exp2`, `exp2m1`, `exp10`, `exp10m1`, `log2`, `log10`, `log2p1`, `log10p1`, `sin`, `cos`, `tan`, `sinPi`, `cosPi`, `tanPi`, `asin`, `acos`, `atan`, `asinPi`, `acosPi`, `atanPi`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh` | `CorrectlyRounded.<name>` in `Model.Transcendentals` and `ExecFloat.Binary` (value and flags, every rounding direction; an enclosure to nearest-even, exact comparisons otherwise) | `Transcendentals.Certified.<name>` (a result when an enclosure settles, nearest-even, no flags) | binary: `Function.toReal_apply` (correctly rounded to nearest-even for finite operands in the domain and finite results, all IEEE formats), `Function.apply_encloses` (the results toward negative and toward positive infinity enclose the real value), `Function.inexact_apply_iff` (every direction); that the directed results are the nearest ones, and the three other directions, are tested, not proved. Decimal: `toReal_of_apply_eq_some` (a returned result is correctly rounded, every format) |
+| 9.2 | `atan2` | `CorrectlyRounded.atan2` in `Model.Transcendentals` and `ExecFloat.Binary` (value and flags, every rounding direction; an enclosure to nearest-even, exact comparisons otherwise) | missing | `toReal_atan2` (correctly rounded to nearest-even at finite operands with a nonzero `y`, all IEEE formats), `atan2_encloses` (the results toward negative and toward positive infinity enclose the real value) |
+| 9.2 | `atan2Pi` | `CorrectlyRounded.atan2Pi` in `Model.Transcendentals` and `ExecFloat.Binary` (value and flags, every rounding direction; an enclosure to nearest-even, exact comparisons otherwise) | missing | `toReal_atan2Pi` (correctly rounded to nearest-even at finite operands with a nonzero `y`, all IEEE formats), `atan2Pi_encloses` (the results toward negative and toward positive infinity enclose the real value) |
+| 9.2 | `powr` | `CorrectlyRounded.powr` in `Model.Transcendentals` and `ExecFloat.Binary` (value and flags, every rounding direction; an enclosure to nearest-even, exact comparisons otherwise) | `Transcendentals.Certified.powr` (a result when an enclosure settles) | `toReal_powr` (correctly rounded to nearest-even at finite operands with a positive base, all IEEE formats), `powr_encloses` (the results toward negative and toward positive infinity enclose the real value); decimal: `toReal_of_powr_eq_some` |
+| 9.2 | `compound` | `CorrectlyRounded.compound` in `Model.Transcendentals` and `ExecFloat.Binary` (value and flags, every rounding direction; an enclosure to nearest-even, exact comparisons otherwise) | `Transcendentals.Certified.compound` (a result when an enclosure settles) | `toReal_compound` (correctly rounded to nearest-even at finite operands above -1, all IEEE formats), `compound_encloses` (the results toward negative and toward positive infinity enclose the real value); decimal: `toReal_of_compound_eq_some` |
+| 9.3 | `getBinaryRoundingDirection` | `IEEE754.Modes.getBinaryRoundingDirection` | the same declaration | `getBinaryRoundingDirection_setBinaryRoundingDirection` |
+| 9.3 | `setBinaryRoundingDirection` | `IEEE754.Modes.setBinaryRoundingDirection` | the same declaration | `getBinaryRoundingDirection_setBinaryRoundingDirection`, `getDecimalRoundingDirection_setBinaryRoundingDirection` |
+| 9.3 | `getDecimalRoundingDirection` | `IEEE754.Modes.getDecimalRoundingDirection` | the same declaration | `getDecimalRoundingDirection_setDecimalRoundingDirection` |
+| 9.3 | `setDecimalRoundingDirection` | `IEEE754.Modes.setDecimalRoundingDirection` | the same declaration | `getDecimalRoundingDirection_setDecimalRoundingDirection`, `getBinaryRoundingDirection_setDecimalRoundingDirection` |
+| 9.3 | `saveModes` | `IEEE754.Modes.saveModes` | the same declaration | `restoreModes_saveModes` |
+| 9.3 | `restoreModes` | `IEEE754.Modes.restoreModes` | the same declaration | `restoreModes_saveModes` |
+| 9.3 | `defaultModes` | `IEEE754.Modes.defaultModes` | the same declaration | `getBinaryRoundingDirection_defaultModes`, `getDecimalRoundingDirection_defaultModes` |
+| 9.4 | `sum` | `Model.sum`, `ExecFloat.Binary.sum` | `Arithmetic.sum` | binary: `sum_status_value_toReal_eq_roundAt_of_finite`, `sum_status_eq_zero_of_finite`; decimal: `sum_eq_project` (one rounding of the exact sum, five directions), `sum_error_le_half`, `sum_inexact_iff`, `sum_valid`; kernel rule: decimal `KernelPath.sum_eq` (`sumLoop_eq`, `deliverSum_eq`) |
+| 9.4 | `dot` | `Model.dot`, `ExecFloat.Binary.dot` | `Arithmetic.dot` | binary: `dot_status_value_toReal_eq_roundAt_of_finite`; decimal: `dot_eq_project`; kernel rule: decimal `KernelPath.dot_eq` (`sumLoop_eq`, `deliverSum_eq`) |
+| 9.4 | `sumSquare` | `Model.sumSquare`, `ExecFloat.Binary.sumSquare` | `Arithmetic.sumSquare` | binary: `toReal_sumSquare`, `sumSquare_status_of_decidingInfinity?`, `toModel_sumSquare`; decimal: `sumSquare_eq_project`, `sumSquare_valid`; kernel rule: decimal `KernelPath.sumSquare_eq` (`sumLoop_eq`, `deliverSum_eq`) |
+| 9.4 | `sumAbs` | `Model.sumAbs`, `ExecFloat.Binary.sumAbs` | `Arithmetic.sumAbs` | binary: `toReal_sumAbs`, `sumAbs_status_of_decidingInfinity?`, `toModel_sumAbs`; decimal: `sumAbs_eq_project`, `sumAbs_valid`; kernel rule: decimal `KernelPath.sumAbs_eq` (`sumLoop_eq`, `deliverSum_eq`) |
+| 9.4 | `scaledProd` | `Model.scaledProd`, `ExecFloat.Binary.scaledProd` | missing | `toReal_scaledProd_product` (one rounding of the scaled exact product, of magnitude in [1, 2)), `mixedError_scaledProd` |
+| 9.4 | `scaledProdSum` | `Model.scaledProdSum`, `ExecFloat.Binary.scaledProdSum` | missing | `toReal_scaledProdOfSums_product`, `map_toModel_scaledProdSum` |
+| 9.4 | `scaledProdDiff` | `Model.scaledProdDiff`, `ExecFloat.Binary.scaledProdDiff` | missing | `toReal_scaledProdOfSums_product`, `map_toModel_scaledProdDiff` |
+| 9.4 | sum, from left to right in an accumulator format | `Model.sumInOrder` (`reduceInOrder` at the term of `sum`) | missing | `sumInOrder_mixedError` (generated by `roundoff`: mixed error against the exact real reduction, any length, any source, accumulator and destination descriptors with the accumulator grid containing the source grid), `reduceInOrder_eq_reduceAlong` |
+| 9.4 | sumAbs, from left to right in an accumulator format | `Model.sumAbsInOrder` (`reduceInOrder` at the term of `sumAbs`) | missing | `sumAbsInOrder_mixedError` (generated by `roundoff`: mixed error against the exact real reduction, any length, any source, accumulator and destination descriptors with the accumulator grid containing the source grid), `reduceInOrder_eq_reduceAlong` |
+| 9.4 | sumSquare, from left to right in an accumulator format | `Model.sumSquareInOrder` (`reduceInOrder` at the term of `sumSquare`) | missing | `sumSquareInOrder_mixedError` (generated by `roundoff`: mixed error against the exact real reduction, any length, any source, accumulator and destination descriptors with the accumulator grid containing the source grid), `reduceInOrder_eq_reduceAlong` |
+| 9.4 | dot, from left to right in an accumulator format | `Model.dotInOrder` (`reduceInOrder` at the term of `dot`) | missing | `dotInOrder_mixedError` (generated by `roundoff`: mixed error against the exact real reduction, any length, any source, accumulator and destination descriptors with the accumulator grid containing the source grid), `reduceInOrder_eq_reduceAlong` |
+| 9.4 | sum, sumAbs, sumSquare, dot in any association order and accumulator format | `Model.reduceAlong`, `Model.sumAlong`, `Model.sumAbsAlong`, `Model.sumSquareAlong`, `Model.dotAlong` | missing | `abs_toReal_reduceAlong_sub_le` (every association order, IEEE accumulator and destination, finite evaluation: error at most $((1+u)^n-1)\sum_i \lvert t_i\rvert$ plus the final half-ulp allowance, where $n$ counts the additions) |
+| 9.5 | `augmentedAddition` | `Model.augmentedAddition`, `ExecFloat.Binary.augmentedAddition` | not applicable (binary only) | `toReal_augmentedAddition_head`, `toReal_augmentedAddition_add`, `augmentedAddition_of_isFinite_head_eq_false` |
+| 9.5 | `augmentedSubtraction` | `Model.augmentedSubtraction`, `ExecFloat.Binary.augmentedSubtraction` | not applicable (binary only) | `toReal_augmentedSubtraction_sub` |
+| 9.5 | `augmentedMultiplication` | `Model.augmentedMultiplication`, `ExecFloat.Binary.augmentedMultiplication` | not applicable (binary only) | `toReal_augmentedMultiplication_head`, `toReal_augmentedMultiplication_tail`, `augmentedMultiplication_inexact_iff` |
+| 9.6 | `minimum` | `Model.minimum`, `ExecFloat.Binary.minimum` | `Arithmetic.minimum` (generated member of `extremum`) | binary: `isNaN_minimum_eq_false_of_isNaN_eq_false`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`; kernel rule: binary `Configured.liftBinary_minimum_eq`, `minimum_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `minimumNumber` | `Model.minimumNumber`, `ExecFloat.Binary.minimumNumber` | `Arithmetic.minimumNumber` (generated member of `extremum`) | binary: `isNaN_minimumNumber`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`; kernel rule: binary `Configured.liftBinary_minimumNumber_eq`, `minimumNumber_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `maximum` | `Model.maximum`, `ExecFloat.Binary.maximum` | `Arithmetic.maximum` (generated member of `extremum`) | binary: `isNaN_maximum_eq_false_of_isNaN_eq_false`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`; kernel rule: binary `Configured.liftBinary_maximum_eq`, `maximum_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `maximumNumber` | `Model.maximumNumber`, `ExecFloat.Binary.maximumNumber` | `Arithmetic.maximumNumber` (generated member of `extremum`) | binary: `isNaN_maximumNumber`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`; kernel rule: binary `Configured.liftBinary_maximumNumber_eq`, `maximumNumber_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `minimumMagnitude` | `Model.minimumMagnitude`, `ExecFloat.Binary.minimumMagnitude` | `Arithmetic.minimumMagnitude` (generated member of `extremum`) | binary: `abs_toReal_minimumMagnitude`, `magnitudeExtremum_status`, `toModel_magnitudeExtremum`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`, `numericValue?_abs_selectByMagnitude`; kernel rule: binary `Configured.liftBinary_minimumMagnitude_eq`, `minimumMagnitude_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `minimumMagnitudeNumber` | `Model.minimumMagnitudeNumber`, `ExecFloat.Binary.minimumMagnitudeNumber` | `Arithmetic.minimumMagnitudeNumber` (generated member of `extremum`) | binary: `abs_toReal_minimumMagnitudeNumber`, `magnitudeExtremum_status`, `toModel_magnitudeExtremum`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`, `numericValue?_abs_selectByMagnitude`; kernel rule: binary `Configured.liftBinary_minimumMagnitudeNumber_eq`, `minimumMagnitudeNumber_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `maximumMagnitude` | `Model.maximumMagnitude`, `ExecFloat.Binary.maximumMagnitude` | `Arithmetic.maximumMagnitude` (generated member of `extremum`) | binary: `abs_toReal_maximumMagnitude`, `magnitudeExtremum_status`, `toModel_magnitudeExtremum`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`, `numericValue?_abs_selectByMagnitude`; kernel rule: binary `Configured.liftBinary_maximumMagnitude_eq`, `maximumMagnitude_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.6 | `maximumMagnitudeNumber` | `Model.maximumMagnitudeNumber`, `ExecFloat.Binary.maximumMagnitudeNumber` | `Arithmetic.maximumMagnitudeNumber` (generated member of `extremum`) | binary: `abs_toReal_maximumMagnitudeNumber`, `magnitudeExtremum_status`, `toModel_magnitudeExtremum`; decimal: `extremum_status`, `extremum_value_eq_or`, `numericValue?_selectExtremum`, `numericValue?_abs_selectByMagnitude`; kernel rule: binary `Configured.liftBinary_maximumMagnitudeNumber_eq`, `maximumMagnitudeNumber_outcome_eq` (`KernelPath.extremum_eq_spec`, `extremumNumber_eq_spec`, `magnitudeExtremum_eq_spec`), decimal `KernelPath.extremum_eq` |
+| 9.7 | `getPayload` | `Model.getPayload`, `ExecFloat.Binary.getPayload` | `Datum.getPayload` | binary: `toReal_getPayload`, `getPayload_setPayload`; decimal: `getPayload_setPayload`, `getPayload_of_isNaN_eq_false`; kernel rule: binary `Configured.liftUnary_getPayload_eq` (`KernelPath.getPayload_eq_spec`) |
+| 9.7 | `setPayload` | `Model.setPayload`, `ExecFloat.Binary.setPayload` | `Datum.setPayload` | binary: `isNaN_setPayload`, `setPayload_getPayload`, `signBit_setPayload`; decimal: `setPayload_getPayload`, `setPayload_valid`, `isNaN_setPayload` |
+| 9.7 | `setPayloadSignaling` | `Model.setPayloadSignaling`, `ExecFloat.Binary.setPayloadSignaling` | `Datum.setPayloadSignaling` | binary: `isSignaling_setPayloadSignaling`, `getPayload_setPayloadSignaling`; decimal: `setPayloadSignaling_getPayload` |
+
+<!-- end of the clause map -->
 
 ## What the theorems give you
 

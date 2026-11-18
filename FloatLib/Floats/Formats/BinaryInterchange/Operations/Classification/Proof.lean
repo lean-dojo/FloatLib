@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -39,7 +39,7 @@ theorem classify_of_toDyadic {x : Model fmt} {d : Numerics.Dyadic}
       else
         if d.negative then .negativeNormal else .positiveNormal := by
   have hn := isNaN_eq_false_of_toDyadic?_some hx
-  have hi := isInf_eq_false_of_toDyadic?_some hx
+  have hi := isInfinite_eq_false_of_toDyadic?_some hx
   have hs := sign_eq_signBit_of_toDyadic?_some hx
   have hz := isZero_iff_toRat_eq_zero hx
   have hsub := isSubnormal_iff_abs_toRat hx
@@ -65,15 +65,15 @@ theorem classify_eq_match_exactValue (x : Model fmt) :
   | some d =>
       simpa only [exactValue, hd] using classify_of_toDyadic hd
   | none =>
-      cases hi : isInf x
+      cases hi : isInfinite x
       · have hn : isNaN x = true := by
           apply Bool.eq_true_of_not_eq_false
           intro hnan
           obtain ⟨d, hdecode⟩ := exists_toDyadic?_of_isFinite
-            (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hi)
+            (isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnan hi)
           simp [hd] at hdecode
         simp [classify, exactValue, hd, hi, hn]
-      · have hn := isNaN_eq_false_of_isInf_eq_true x hi
+      · have hn := isNaN_eq_false_of_isInfinite_eq_true x hi
         simp [classify, exactValue, hd, hi, hn]
 
 /-- Equal complete exact values have equal classes, without any IEEE-policy restriction. -/

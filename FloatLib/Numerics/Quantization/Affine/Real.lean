@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Numerics.Quantization.Affine
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Rat.Cast.Order
+
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Ring.RingNF
 
@@ -45,7 +46,7 @@ structure RealAffineQuantizer where
   /-- The grid spacing is strictly positive. -/
   scale_pos : 0 < scale
   /-- The storage interval is nonempty. -/
-  codeRange : qmin ≤ qmax
+  code_range : qmin ≤ qmax
 
 namespace RealAffineQuantizer
 
@@ -72,7 +73,7 @@ noncomputable def roundedValue (q : RealAffineQuantizer) (rnd : ℝ → ℤ) (x 
 /-- Saturation always produces a code in the declared interval. -/
 theorem clampCode_mem (q : RealAffineQuantizer) (code : ℤ) :
     q.qmin ≤ q.clampCode code ∧ q.clampCode code ≤ q.qmax :=
-  ⟨Saturating.lower_le_clamp _ _ _, Saturating.clamp_le_upper q.codeRange⟩
+  ⟨Saturating.lower_le_clamp _ _ _, Saturating.clamp_le_upper q.code_range⟩
 
 /-- Saturation fixes every code already in the storage interval. -/
 @[simp] theorem clampCode_eq_self (q : RealAffineQuantizer) {code : ℤ}
@@ -122,8 +123,7 @@ theorem dequantize_rawCode_error_le (q : RealAffineQuantizer) (rnd : ℝ → ℤ
   have hrewrite : q.dequantize (q.rawCode rnd x) - x =
       q.scale * ((rnd (x / q.scale) : ℝ) - x / q.scale) := by
     simp only [dequantize, rawCode, Int.cast_sub, Int.cast_add]
-    field_simp
-    ring
+    rw [add_sub_cancel_right, mul_sub, mul_div_cancel₀ _ hscale]
   rw [hrewrite, abs_mul, abs_of_pos q.scale_pos]
   exact mul_le_mul_of_nonneg_left hround q.scale_pos.le
 
@@ -154,7 +154,7 @@ noncomputable def toReal (q : AffineQuantizer) : RealAffineQuantizer where
   qmin := q.qmin
   qmax := q.qmax
   scale_pos := Rat.cast_pos_of_pos q.scale_pos
-  codeRange := q.codeRange
+  code_range := q.code_range
 
 /-- Reconstruction commutes with the exact rational-to-real embedding. -/
 @[simp] theorem toReal_dequantize (q : AffineQuantizer) (code : ℤ) :

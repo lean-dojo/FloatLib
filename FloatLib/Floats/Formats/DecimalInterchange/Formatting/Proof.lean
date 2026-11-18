@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Formatting.Runtime
-public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Cohort
-public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Saturation
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
+public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Saturation
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
 public import FloatLib.Numerics.Exact.DecimalText.Proof
 
@@ -83,19 +82,28 @@ theorem convert_of_valid (f : Format) (mode : RoundingMode) (value : Datum)
       simp only [characters, readCharacters, parseCharacters_characters]
   | infinity negative =>
       cases negative <;>
-        simp [characters, Numerics.SpecialText.infinityCharacters,
-          readCharacters, parseCharacters, splitSign,
-          Numerics.RadixText.parseMagnitude, Numerics.RadixText.scanDigits, digitValue?,
-          parseSpecial, FloatLib.Numerics.SpecialText.parseSpecial,
-          FloatLib.Numerics.SpecialText.consumeKeyword, Char.toLower] <;> decide
+        simp only [readCharacters, parseCharacters, Numerics.RadixText.parseMagnitude, splitSign,
+          characters, Numerics.SpecialText.infinityCharacters, Bool.false_eq_true, ↓reduceIte,
+          String.reduceToList, List.nil_append, ↓Char.isValue, List.cons.injEq, Char.reduceEq,
+          false_and, imp_self, implies_true, Numerics.RadixText.scanDigits, digitValue?,
+          Char.reduceLE, and_false, Option.bind_eq_bind, Option.bind_none, parseSpecial,
+          Numerics.SpecialText.parseSpecial, Numerics.SpecialText.consumeKeyword, Char.toLower,
+          Char.reduceVal, ge_iff_le, UInt32.reduceLE, and_self, ↓reduceDIte, UInt32.reduceSub,
+          UInt32.reduceAdd, Option.ite_none_right_eq_some, Option.some.injEq, reduceCtorEq,
+          ite_eq_left_iff, imp_false, Decidable.not_not, false_or, ite_self,
+            List.cons_append] <;> decide
   | nan negative signaling payload =>
       cases negative <;> cases signaling <;>
-        simp [characters, Numerics.SpecialText.nanCharacters,
-          readCharacters, parseCharacters, splitSign,
-          Numerics.RadixText.parseMagnitude, Numerics.RadixText.scanDigits, digitValue?,
-          parseSpecial, FloatLib.Numerics.SpecialText.parseSpecial,
-          FloatLib.Numerics.SpecialText.consumeKeyword, Char.toLower,
-          FloatLib.Numerics.SpecialText.parsePayload] <;>
+        simp only [readCharacters, parseCharacters, Numerics.RadixText.parseMagnitude,
+          splitSign, characters, Numerics.SpecialText.nanCharacters, Bool.false_eq_true,
+          ↓reduceIte, String.reduceToList, List.nil_append, ↓Char.isValue, List.cons_append,
+          List.cons.injEq, Char.reduceEq, false_and, imp_self, implies_true,
+          Numerics.RadixText.scanDigits, digitValue?, Char.reduceLE, and_false,
+          Option.bind_eq_bind, Option.bind_none, parseSpecial,
+          Numerics.SpecialText.parseSpecial, Numerics.SpecialText.consumeKeyword,
+          Char.toLower, Char.reduceVal, ge_iff_le, UInt32.reduceLE, and_self, ↓reduceDIte,
+          UInt32.reduceSub, UInt32.reduceAdd, ite_self, reduceCtorEq, or_self,
+          Numerics.SpecialText.parsePayload, ne_eq] <;>
         simp [show (⟨110, by decide⟩ : Char) = 'n' from rfl]
 
 /-- Exact output and unbounded parsing are inverses, including all NaNs and signed zeros. -/

@@ -1,17 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
+public import FloatLib.Kernels.Execution.Instances -- shake: keep
+public import FloatLib.Floats.Formats.Posit.Comparison
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 public import FloatLib.Floats.Formats.Posit.Formatting
-public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
-public import FloatLib.Floats.ExecFloat.Comparison
-public import FloatLib.Floats.Formats.Posit.Comparison
 
 /-!
 # Rational construction, comparison, display, and literal instances for configured posits
@@ -43,6 +41,13 @@ literals round the same way, and no value passes through a host float.
 @[inline] def ofRat (value : Rat) :
     FloatLib.Floats.ExecFloat (Configured.Family format code plan) :=
   ofModel (Model.roundRat format value)
+
+/-- Posit Standard (2022), §5.2: whole-word two's complement, fixing zero and NaR. -/
+@[inline] def negate
+    (value : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
+    FloatLib.Floats.ExecFloat (Configured.Family format code plan) :=
+  FloatLib.Floats.ExecFloat.ModelCodec.liftUnary
+    (Model := Model format) (plan := plan) Model.negate value
 
 /-- Configured posits print their mathematical value rather than their packed carrier. -/
 instance :
@@ -82,8 +87,7 @@ instance {format : Format} {plan : Configured.StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
     Neg (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) where
   neg value :=
-    FloatLib.Floats.ExecFloat.ModelCodec.liftUnary
-      (Model := Model format) (plan := plan) Model.neg value
+    ExecFloat.Posit.negate value
 
 end Formats.Posit
 end FloatLib.Floats

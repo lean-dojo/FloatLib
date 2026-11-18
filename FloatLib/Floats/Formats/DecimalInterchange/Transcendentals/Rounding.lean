@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,8 +36,9 @@ open FloatLib.Numerics
 def fexpOf (f : Format) : ℤ → ℤ :=
   Flocq.fltExp f.minQuantum f.precision
 
+/-- The exponent function of a decimal descriptor is a valid exponent function. -/
 instance (f : Format) : Flocq.ValidExp (fexpOf f) :=
-  Flocq.fltValidExp f.minQuantum f.precision (by exact_mod_cast f.precision_pos)
+  Flocq.validExp_flt f.minQuantum f.precision (by exact_mod_cast f.precision_pos)
 
 /-- Nearest-even real rounding at the descriptor's decimal precision and least quantum. -/
 noncomputable abbrev roundAt (f : Format) (x : ℝ) : ℝ :=
@@ -45,7 +46,7 @@ noncomputable abbrev roundAt (f : Format) (x : ℝ) : ℝ :=
 
 /-- The real decimal rounding specification fixes zero. -/
 theorem roundAt_zero (f : Format) : roundAt f 0 = 0 :=
-  Flocq.round_preserves_generic Flocq.nearestEven 0 Flocq.generic_format_zero
+  Flocq.round_preserves_generic Flocq.nearestEven 0 Flocq.genericRepresentable_zero
 
 /-- Decimal nearest-even rounding is monotone across canonical-exponent boundaries. -/
 theorem roundAt_mono (f : Format) {x y : ℝ} (hxy : x ≤ y) :
@@ -108,7 +109,11 @@ theorem roundMagnitude_eq_roundQuotientEven (s : Bool) (x : ℚ) :
       roundQuotientEven x.num.toNat x.den := by
   simp only [RoundingMode.roundMagnitude, roundQuotientEven, decide_eq_true_eq,
     beq_iff_eq]
-  split_ifs <;> simp_all <;> omega
+  split_ifs <;>
+    simp_all only [Nat.add_eq_left, one_ne_zero, true_or, not_lt,
+    zero_ne_one, and_false, or_self, false_or, lt_self_iff_false, not_false_eq_true, not_or,
+    not_and, Nat.mod_two_not_eq_one, not_true_eq_false, imp_false, Nat.mod_two_not_eq_zero,
+    Nat.left_eq_add] <;> omega
 
 private theorem roundRatEven_of_nonneg {x : ℚ} (hx : 0 ≤ x) (s : Bool) :
     roundRatEven x = (RoundingMode.nearest.roundMagnitude s x : ℤ) := by
@@ -207,7 +212,7 @@ theorem roundAt_error_le_half_ulp (f : Format) (x : ℝ) :
 
 /-- The real specification selects a nearest value on the decimal gradual-underflow grid. -/
 theorem roundAt_nearest (f : Format) (x : ℝ) :
-    Flocq.RoundNearestPoint (Flocq.genericFormat decimalRadix (fexpOf f)) x
+    Flocq.RoundNearestPoint (Flocq.GenericRepresentable decimalRadix (fexpOf f)) x
       (roundAt f x) :=
   Flocq.round_nearestEven_point x
 

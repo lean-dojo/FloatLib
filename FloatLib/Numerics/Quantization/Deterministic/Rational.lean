@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Numerics.Quantization.Deterministic.Quotient
 public import Mathlib.Algebra.Order.Field.Rat
 public import Mathlib.Data.Rat.Lemmas
+
 import Mathlib.Data.Rat.Floor
 
 /-!
@@ -27,7 +28,8 @@ one rounding primitive with a stable contract.
 
 namespace FloatLib.Numerics
 
-/-- Round an exact rational to the nearest integer, breaking halfway cases toward the even result. -/
+/-- Round an exact rational to the nearest integer, breaking halfway cases toward the even
+result. -/
 @[inline] def roundRatEven (x : Rat) : Int :=
   let magnitude := Int.ofNat (roundQuotientEven x.num.natAbs x.den)
   if x.num < 0 then -magnitude else magnitude
@@ -50,7 +52,7 @@ private theorem floor_error_eq (numerator denominator : Nat) (hdenominator : den
     ((numerator / denominator : Nat) : ℚ) -
         ((numerator / denominator : Nat) +
           (numerator % denominator : Nat) / denominator) =
-      -((numerator % denominator : Nat) / denominator) by ring]
+      -((numerator % denominator : Nat) / denominator) by simp]
   rw [abs_neg, abs_of_nonneg (div_nonneg (by positivity) hdenominatorRatPos.le)]
 
 /-- The incremented quotient exceeds the exact quotient by one minus the remainder fraction. -/
@@ -71,8 +73,8 @@ private theorem ceil_error_eq (numerator denominator : Nat) (hdenominator : deno
     (((numerator / denominator : Nat) : ℚ) + 1) -
         (((numerator / denominator : Nat) : ℚ) +
           (numerator % denominator : Nat) / denominator) =
-      1 - (numerator % denominator : Nat) / denominator by ring]
-  rw [abs_of_nonneg (by linarith)]
+      1 - (numerator % denominator : Nat) / denominator by simp]
+  rw [abs_of_nonneg (by positivity)]
 
 private theorem floor_error_le_half (numerator denominator : Nat)
     (hdenominator : denominator ≠ 0)
@@ -254,7 +256,7 @@ theorem roundRatEven_half_step (n : Int) :
   let r := roundRatEven ((n : Rat) + (1 : Rat) / 2)
   have hb := abs_le.mp (roundRatEven_error_le_half ((n : Rat) + (1 : Rat) / 2))
   have hlo : n ≤ r := by
-    have hh : (n : Rat) ≤ (r : Rat) := by dsimp [r]; linarith
+    have hh : (n : Rat) ≤ (r : Rat) := by dsimp [r]; simp_all
     exact_mod_cast hh
   have hhi : r ≤ n + 1 := by
     have hh : (r : Rat) ≤ ((n + 1 : Int) : Rat) := by dsimp [r]; push_cast; linarith
@@ -299,8 +301,6 @@ theorem roundRatEven_eq_floor_ceil (x : Rat) :
         linarith
       · rename_i hfar
         have hx : x = (x.floor : Rat) + (1 : Rat) / 2 := by
-          have hnear' := le_of_not_gt hnear
-          have hfar' := le_of_not_gt hfar
           linarith
         conv_lhs => rw [hx]
         rw [roundRatEven_half_step, hstep]

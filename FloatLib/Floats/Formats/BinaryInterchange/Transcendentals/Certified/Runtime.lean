@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,12 +8,10 @@ module
 
 public import FloatLib.Floats.Certified
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
-public import FloatLib.Numerics.Enclosure.Constants.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Enclosure.Runtime
-public import FloatLib.Numerics.Exact.Elementary.Runtime
-public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridRuntime
 public import FloatLib.Numerics.Enclosure.Elementary.LogTable.Runtime
 public import FloatLib.Numerics.Enclosure.Refinement
+public import FloatLib.Numerics.Exact.Elementary.Runtime
 
 /-!
 # Certified binary exponential, logarithm, and power by enclosure refinement
@@ -142,7 +140,7 @@ This retains small results that would be lost by rounding the exponential to one
 The same comparison shortcut as `expRat` handles very negative arguments without constructing
 their exponential. Unsupported descriptors, overflow, and an exhausted budget are failures.
 -/
-@[inline] def expMinus1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
+@[inline] def expm1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if argument = 0 then
@@ -169,7 +167,7 @@ Certify `log (1 + argument)`, forming the exact sum before enclosing the logarit
 In particular, a small nonzero argument is not lost by rounding `1 + argument` to one.
 Arguments at or below `-1` are a domain failure, and the other failures are those of `logRat`.
 -/
-@[inline] def logPlus1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
+@[inline] def logp1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   logRat fmt (1 + argument) budget
 
@@ -237,11 +235,11 @@ def expReduced (reduced : Nat → Interval Int) (extraBits : Nat) (degree precis
 def logTwoUpper : ℚ := 6931471808 / 10000000000
 
 /--
-Round `(scaled * 2 ^ binaryExponent) ^ exponent` for a positive rational `scaled` if the
+Round `(scaled * 2 ^ logB) ^ exponent` for a positive rational `scaled` if the
 enclosure budget certifies a finite result. Here
-`t = exponent * log (scaled * 2 ^ binaryExponent)`.
+`t = exponent * log (scaled * 2 ^ logB)`.
 
-* An overflow evident from `exponent * binaryExponent` alone fails as `range` before any
+* An overflow evident from `exponent * logB` alone fails as `range` before any
   logarithm.
 * An enclosure of `t` on the first grid settles a result below half the least subnormal as `+0`,
   by rounding `[0, 1]` times `2 ^ (minSubnormalExponent - 1)` without forming that power.
@@ -256,13 +254,13 @@ from the grid. Unsupported descriptors, nonpositive `scaled`, overflow, and an e
 are failures. A result within a rounding step of the overflow threshold also ends the search as
 `inconclusive`.
 -/
-def powRatScaled (fmt : FloatFormat) (scaled : ℚ) (binaryExponent : ℤ) (exponent : ℚ)
+def powRatScaled (fmt : FloatFormat) (scaled : ℚ) (logB : ℤ) (exponent : ℚ)
     (budget : Budget := {}) : Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if scaled ≤ 0 then .error .domain
   else if exponent = 0 then accept (Enclosure.round? fmt (RationalInterval.point 1)) .inconclusive
   else
-    let product := exponent * binaryExponent
+    let product := exponent * logB
     -- For `scaled` in `[1/2, 2)`, `|log₂ scaled| ≤ 1`, so `t / log 2 ≥ product - |exponent|`.
     if 1 / 2 ≤ scaled ∧ scaled < 2 ∧
         ((fmt.maxNormalExponent + 1 : ℤ) : ℚ) + |exponent| ≤ product then .error .range
@@ -397,23 +395,23 @@ def pow {fmt : FloatFormat} (base exponent : Model fmt) (budget : Budget := {}) 
     | _, _ => .error .nonfiniteInput
 
 /-- Certify `exp x - 1` with one final rounding, preserving either IEEE signed zero. -/
-@[inline] def expMinus1 {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
+@[inline] def expm1 {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if isZero input then .ok input
   else
     match toRat? input with
     | none => .error .nonfiniteInput
-    | some argument => expMinus1Rat fmt argument budget
+    | some argument => expm1Rat fmt argument budget
 
 /-- Certify `log (1 + x)` with one final rounding, preserving either IEEE signed zero. -/
-@[inline] def logPlus1 {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
+@[inline] def logp1 {fmt : FloatFormat} (input : Model fmt) (budget : Budget := {}) :
     Except Failure (Model fmt) :=
   if !fmt.isIEEE then .error .unsupportedFormat
   else if isZero input then .ok input
   else
     match toRat? input with
     | none => .error .nonfiniteInput
-    | some argument => logPlus1Rat fmt argument budget
+    | some argument => logp1Rat fmt argument budget
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.Certified

@@ -50,7 +50,7 @@ the formatOf operations, so a non-finite operand, or a divisor of zero, gives a 
 an infinity or a NaN.
 Binary destinations use `Numerics.SignedRat` (a rational with an IEEE sign bit), so a cast can
 keep a negative zero when the destination encoding has one. Posits and fixed point use `Rat`,
-and the [`ExactMap` embeddings](ExactMap.lean) connect the source and destination domains.
+and the [`ExactMap` embeddings](../../Numerics/Executable/ExactMap.lean) connect the source and destination domains.
 
 `fma` gets its own operation because rounding `x * y + z` once can give a different answer from
 rounding the product and then the sum. For longer finite calculations, build an exact expression
@@ -83,13 +83,13 @@ enclosure search settles (`Model.Power.pow_spec_of_certified`). Certified `sqrt`
 on the default import.
 
 Plain `exp`, `log`, and `pow` have no general error bound. The certified searches
-`ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1`, and `logPlus1` return `.ok` only once
+`ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expm1`, and `logp1` return `.ok` only once
 they have certified a finite rounded result. Otherwise you get a `Certified.Failure` that says why
 they couldn't, and a search can fail on a valid input.
 
 If you'd rather always get a value, the named import
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded` has total
-`ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1`, and `expMul`, which
+`ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expm1`, `logp1`, and `expMul`, which
 rounds `exp x * w` once. When the enclosure search doesn't settle, exact comparisons decide the
 rounding, so their correctness theorems need no premise on the budget. For an IEEE format and a
 finite input in the domain, the result is correctly rounded when the exact result is below the

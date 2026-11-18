@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Backend.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Plan.Proof
-public import FloatLib.Floats.ExecFloat.Core.Capability
+public import FloatLib.Tactic.ByteCapability
+public import FloatLib.Tactic.ByteTableCapability
+public import FloatLib.Tactic.TablePlanCapability
 
 /-!
 # Static-byte capability construction
@@ -104,106 +104,12 @@ end TablePlan
 
 namespace Internal
 
-/-- Construct a static-byte addition capability with certified profile selection. -/
-@[always_inline, instance_reducible] def addCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .add)
-    (run :
-      FloatLib.Floats.ExecFloat F →
-        FloatLib.Floats.ExecFloat F →
-          FloatLib.Floats.ExecFloat F)
-    (run_eq_spec :
-      ∀ left right, run left right = Spec.add left right) :
-    FloatLib.Floats.ExecFloat.Add F :=
-  Capability.ofCandidates .add Spec.add
-    (binaryTable name .add Spec.add run run_eq_spec)
-    (executeBinary name .add selection Spec.add run)
-    (by
-      funext left right
-      exact executeBinary_eq_spec
-        name .add selection Spec.add run run_eq_spec left right)
-
-/-- Construct a static-byte subtraction capability with certified profile selection. -/
-@[always_inline, instance_reducible] def subCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .sub)
-    (run :
-      FloatLib.Floats.ExecFloat F →
-        FloatLib.Floats.ExecFloat F →
-          FloatLib.Floats.ExecFloat F)
-    (run_eq_spec :
-      ∀ left right, run left right = Spec.sub left right) :
-    FloatLib.Floats.ExecFloat.Sub F :=
-  Capability.ofCandidates .sub Spec.sub
-    (binaryTable name .sub Spec.sub run run_eq_spec)
-    (executeBinary name .sub selection Spec.sub run)
-    (by
-      funext left right
-      exact executeBinary_eq_spec
-        name .sub selection Spec.sub run run_eq_spec left right)
-
-/-- Construct a static-byte multiplication capability with certified profile selection. -/
-@[always_inline, instance_reducible] def mulCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .mul)
-    (run :
-      FloatLib.Floats.ExecFloat F →
-        FloatLib.Floats.ExecFloat F →
-          FloatLib.Floats.ExecFloat F)
-    (run_eq_spec :
-      ∀ left right, run left right = Spec.mul left right) :
-    FloatLib.Floats.ExecFloat.Mul F :=
-  Capability.ofCandidates .mul Spec.mul
-    (binaryTable name .mul Spec.mul run run_eq_spec)
-    (executeBinary name .mul selection Spec.mul run)
-    (by
-      funext left right
-      exact executeBinary_eq_spec
-        name .mul selection Spec.mul run run_eq_spec left right)
-
-/-- Construct a static-byte division capability with certified profile selection. -/
-@[always_inline, instance_reducible] def divCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .div)
-    (run :
-      FloatLib.Floats.ExecFloat F →
-        FloatLib.Floats.ExecFloat F →
-          FloatLib.Floats.ExecFloat F)
-    (run_eq_spec :
-      ∀ left right, run left right = Spec.div left right) :
-    FloatLib.Floats.ExecFloat.Div F :=
-  Capability.ofCandidates .div Spec.div
-    (binaryTable name .div Spec.div run run_eq_spec)
-    (executeBinary name .div selection Spec.div run)
-    (by
-      funext left right
-      exact executeBinary_eq_spec
-        name .div selection Spec.div run run_eq_spec left right)
-
-/-- Construct a static-byte square-root capability with certified profile selection. -/
-@[always_inline, instance_reducible] def sqrtCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .sqrt)
-    (run : FloatLib.Floats.ExecFloat F → FloatLib.Floats.ExecFloat F)
-    (run_eq_spec : ∀ value, run value = Spec.sqrt value) :
-    FloatLib.Floats.ExecFloat.Sqrt F :=
-  Capability.ofCandidates .sqrt Spec.sqrt
-    (unaryTable name .sqrt Spec.sqrt run run_eq_spec)
-    (executeUnary name .sqrt selection Spec.sqrt run)
-    (by
-      funext value
-      exact executeUnary_eq_spec
-        name .sqrt selection Spec.sqrt run run_eq_spec value)
+byte_capability Add add binaryTable executeBinary executeBinary_eq_spec (left right) "addition"
+byte_capability Sub sub binaryTable executeBinary executeBinary_eq_spec (left right) "subtraction"
+byte_capability Mul mul binaryTable executeBinary executeBinary_eq_spec (left right)
+  "multiplication"
+byte_capability Div div binaryTable executeBinary executeBinary_eq_spec (left right) "division"
+byte_capability Sqrt sqrt unaryTable executeUnary executeUnary_eq_spec (value) "square-root"
 
 /-- Construct a static-byte FMA capability from named table and exact kernels. -/
 @[always_inline, instance_reducible] def fmaCapability
@@ -256,115 +162,16 @@ namespace Internal
       (exactEstimate .fma) Spec.fma run run_eq_spec)
     run rfl
 
-/--
-Construct an addition capability from a certified byte table.
-
-The executable table lookup and its refinement proof are derived from the same certificate, so a
-format package cannot accidentally pair a kernel with the wrong theorem.
--/
-@[always_inline, instance_reducible] def addTableCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .add)
-    (width_le_eight : (Family.format (F := F)).bitWidth ≤ 8)
-    (table : FloatLib.Floats.ExecFloat.Backend.TinyTable.CertifiedBinary
-      (encoding (Family.format (F := F)) width_le_eight)
-      FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.add) :
-    FloatLib.Floats.ExecFloat.Add F :=
-  addCapability name selection
-    (Backend.Table.binary (F := F)
-      (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.add)
-      width_le_eight table)
-    (fun left right => by
-      simpa only [Spec.add] using
-        (Backend.Table.binary_eq_spec (F := F)
-          (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.add)
-          width_le_eight table left right))
-
-/-- Construct a subtraction capability from a certified byte table. -/
-@[always_inline, instance_reducible] def subTableCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .sub)
-    (width_le_eight : (Family.format (F := F)).bitWidth ≤ 8)
-    (table : FloatLib.Floats.ExecFloat.Backend.TinyTable.CertifiedBinary
-      (encoding (Family.format (F := F)) width_le_eight)
-      FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sub) :
-    FloatLib.Floats.ExecFloat.Sub F :=
-  subCapability name selection
-    (Backend.Table.binary (F := F)
-      (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sub)
-      width_le_eight table)
-    (fun left right => by
-      simpa only [Spec.sub] using
-        (Backend.Table.binary_eq_spec (F := F)
-          (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sub)
-          width_le_eight table left right))
-
-/-- Construct a multiplication capability from a certified byte table. -/
-@[always_inline, instance_reducible] def mulTableCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .mul)
-    (width_le_eight : (Family.format (F := F)).bitWidth ≤ 8)
-    (table : FloatLib.Floats.ExecFloat.Backend.TinyTable.CertifiedBinary
-      (encoding (Family.format (F := F)) width_le_eight)
-      FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.mul) :
-    FloatLib.Floats.ExecFloat.Mul F :=
-  mulCapability name selection
-    (Backend.Table.binary (F := F)
-      (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.mul)
-      width_le_eight table)
-    (fun left right => by
-      simpa only [Spec.mul] using
-        (Backend.Table.binary_eq_spec (F := F)
-          (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.mul)
-          width_le_eight table left right))
-
-/-- Construct a division capability from a certified byte table. -/
-@[always_inline, instance_reducible] def divTableCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .div)
-    (width_le_eight : (Family.format (F := F)).bitWidth ≤ 8)
-    (table : FloatLib.Floats.ExecFloat.Backend.TinyTable.CertifiedBinary
-      (encoding (Family.format (F := F)) width_le_eight)
-      FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.div) :
-    FloatLib.Floats.ExecFloat.Div F :=
-  divCapability name selection
-    (Backend.Table.binary (F := F)
-      (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.div)
-      width_le_eight table)
-    (fun left right => by
-      simpa only [Spec.div] using
-        (Backend.Table.binary_eq_spec (F := F)
-          (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.div)
-          width_le_eight table left right))
-
-/-- Construct a square-root capability from a certified byte table. -/
-@[always_inline, instance_reducible] def sqrtTableCapability
-    {F : Type u} [Family F]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor F]
-    (name : String)
-    (selection : BuiltinSelection (Family.format (F := F)) name .sqrt)
-    (width_le_eight : (Family.format (F := F)).bitWidth ≤ 8)
-    (table : FloatLib.Floats.ExecFloat.Backend.TinyTable.CertifiedUnary
-      (encoding (Family.format (F := F)) width_le_eight)
-      FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt) :
-    FloatLib.Floats.ExecFloat.Sqrt F :=
-  sqrtCapability name selection
-    (Backend.Table.unary (F := F)
-      (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt)
-      width_le_eight table)
-    (fun value => by
-      simpa only [Spec.sqrt] using
-        (Backend.Table.unary_eq_spec (F := F)
-          (modelSpec := FloatLib.Floats.Formats.BinaryInterchange.Model.Spec.sqrt)
-          width_le_eight table value))
+byte_table_capability Add add CertifiedBinary Backend.Table.binary
+  Backend.Table.binary_eq_spec (left right) "an addition"
+byte_table_capability Sub sub CertifiedBinary Backend.Table.binary
+  Backend.Table.binary_eq_spec (left right) "a subtraction"
+byte_table_capability Mul mul CertifiedBinary Backend.Table.binary
+  Backend.Table.binary_eq_spec (left right) "a multiplication"
+byte_table_capability Div div CertifiedBinary Backend.Table.binary
+  Backend.Table.binary_eq_spec (left right) "a division"
+byte_table_capability Sqrt sqrt CertifiedUnary Backend.Table.unary
+  Backend.Table.unary_eq_spec (value) "a square-root"
 
 end Internal
 
@@ -432,63 +239,16 @@ Construct a policy-selected FMA capability from a certified table and a proved e
 /-!
 The planned instances outrank the direct-family instances in `StaticByte.Backend.Construction` on
 purpose. So a static-byte family without a `TablePlan` keeps its ordinary family kernels, and with
-a `TablePlan` the planning profile chooses between a table and the exact baseline.
+a `TablePlan` the planning profile chooses between a table and the exact baseline. Each instance
+is a `Capability.Static`: a candidate tagged `@[compiler_optimize]` for the family's reference
+operation is considered next to that choice.
 -/
 
-/--
-Addition for a static-byte family with a `TablePlan`: the planning profile chooses between the
-plan's certified addition table and the exact baseline.
--/
-@[always_inline, instance_reducible] instance (priority := 200) tablePlanAddCapability
-    (F : Type u) [Family F] [plan : TablePlan F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    FloatLib.Floats.ExecFloat.Add F :=
-  Internal.addTableCapability plan.addName plan.addSelection
-    (Family.width_le_eight (F := F)) plan.addTable
-
-/--
-Subtraction for a static-byte family with a `TablePlan`: the planning profile chooses between the
-plan's certified subtraction table and the exact baseline.
--/
-@[always_inline, instance_reducible] instance (priority := 200) tablePlanSubCapability
-    (F : Type u) [Family F] [plan : TablePlan F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    FloatLib.Floats.ExecFloat.Sub F :=
-  Internal.subTableCapability plan.subName plan.subSelection
-    (Family.width_le_eight (F := F)) plan.subTable
-
-/--
-Multiplication for a static-byte family with a `TablePlan`: the planning profile chooses between the
-plan's certified multiplication table and the exact baseline.
--/
-@[always_inline, instance_reducible] instance (priority := 200) tablePlanMulCapability
-    (F : Type u) [Family F] [plan : TablePlan F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    FloatLib.Floats.ExecFloat.Mul F :=
-  Internal.mulTableCapability plan.mulName plan.mulSelection
-    (Family.width_le_eight (F := F)) plan.mulTable
-
-/--
-Division for a static-byte family with a `TablePlan`: the planning profile chooses between the
-plan's certified division table and the exact baseline.
--/
-@[always_inline, instance_reducible] instance (priority := 200) tablePlanDivCapability
-    (F : Type u) [Family F] [plan : TablePlan F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    FloatLib.Floats.ExecFloat.Div F :=
-  Internal.divTableCapability plan.divName plan.divSelection
-    (Family.width_le_eight (F := F)) plan.divTable
-
-/--
-Square root for a static-byte family with a `TablePlan`: the planning profile chooses between the
-plan's certified square root table and the exact baseline.
--/
-@[always_inline, instance_reducible] instance (priority := 200) tablePlanSqrtCapability
-    (F : Type u) [Family F] [plan : TablePlan F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    FloatLib.Floats.ExecFloat.Sqrt F :=
-  Internal.sqrtTableCapability plan.sqrtName plan.sqrtSelection
-    (Family.width_le_eight (F := F)) plan.sqrtTable
+table_plan_capability Add add "addition"
+table_plan_capability Sub sub "subtraction"
+table_plan_capability Mul mul "multiplication"
+table_plan_capability Div div "division"
+table_plan_capability Sqrt sqrt "square root"
 
 end Plans
 

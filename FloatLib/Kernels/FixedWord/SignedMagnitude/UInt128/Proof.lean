@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,6 @@ module
 public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.Product.Proof
 public import FloatLib.Kernels.FixedWord.SignedMagnitude.Runtime
-public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 
 /-!
@@ -66,15 +65,10 @@ private theorem canonicalScaledInt_signedCoefficient_eq_of_ne_zero
         significand := magnitude
         exponent
       } := by
-  cases negative with
-  | false =>
-      simp [canonicalScaledInt, signedCoefficient, Dyadic.ofScaledInt,
-        hnonzero]
-  | true =>
-      have hpositive : 0 < magnitude :=
-        Nat.pos_of_ne_zero hnonzero
-      simp [canonicalScaledInt, signedCoefficient, Dyadic.ofScaledInt,
-        hnonzero, hpositive]
+  have hcoefficient : signedCoefficient negative magnitude ≠ 0 :=
+    (Dyadic.signedSignificand_eq_zero ⟨negative, magnitude, exponent⟩).not.mpr hnonzero
+  simp only [canonicalScaledInt, beq_iff_eq, hcoefficient, ite_false]
+  exact Dyadic.ofScaledInt_signedSignificand ⟨negative, magnitude, exponent⟩ hnonzero
 
 /--
 A nonzero two-limb signed magnitude has the direct dyadic fields expected by downstream
@@ -116,11 +110,15 @@ private theorem addFields_sameExponent_eq_canonicalScaledInt
     simp [Dyadic.addFields, canonicalScaledInt, signedCoefficient,
       Dyadic.ofScaledInt, hleft, hright, ne_of_gt hpositive,
       Int.not_lt.mpr hpositive.le]
-  · simp [Dyadic.addFields, canonicalScaledInt, signedCoefficient,
-      Dyadic.ofScaledInt, hleft, hright]
+  · simp only [Dyadic.addFields, beq_iff_eq, hleft, ↓reduceIte, hright, Std.le_refl,
+    Bool.false_eq_true, Int.ofNat_eq_natCast, sub_self, Int.toNat_zero, Nat.shiftLeft_eq',
+    Nat.shiftLeft_zero, Bool.and_true, add_neg_lt_iff_lt_add, zero_add, Nat.cast_lt,
+    canonicalScaledInt, signedCoefficient, Dyadic.ofScaledInt]
     split <;> rfl
-  · simp [Dyadic.addFields, canonicalScaledInt, signedCoefficient,
-      Dyadic.ofScaledInt, hleft, hright]
+  · simp only [Dyadic.addFields, beq_iff_eq, hleft, ↓reduceIte, hright, Std.le_refl,
+    Int.ofNat_eq_natCast, Bool.false_eq_true, sub_self, Int.toNat_zero, Nat.shiftLeft_eq',
+    Nat.shiftLeft_zero, Bool.and_false, neg_add_lt_iff_lt_add, add_zero, Nat.cast_lt,
+    canonicalScaledInt, signedCoefficient, Dyadic.ofScaledInt]
     split <;> rfl
   · have hnegative :
         -(leftMagnitude : Int) + -(rightMagnitude : Int) < 0 := by
@@ -156,8 +154,9 @@ private theorem addSignedMagnitudes128_signedCoefficient_of_opposite
             rightMagnitude.toNat - leftMagnitude.toNat :=
         UInt128.sub_toNat rightMagnitude leftMagnitude hnatLess.le
       cases negative <;>
-        simp [addSignedMagnitudes128, signedCoefficient,
-          hequal, hless, hsub] <;>
+        simp only [signedCoefficient, addSignedMagnitudes128, Bool.not_false, beq_true,
+          Bool.false_eq_true, ↓reduceIte, beq_iff_eq, hequal, hless, hsub,
+          Int.ofNat_eq_natCast, Bool.not_true, beq_false] <;>
         omega
     · have hnotLess : ¬leftMagnitude.toNat < rightMagnitude.toNat := by
         intro h
@@ -173,8 +172,9 @@ private theorem addSignedMagnitudes128_signedCoefficient_of_opposite
             leftMagnitude.toNat - rightMagnitude.toNat :=
         UInt128.sub_toNat leftMagnitude rightMagnitude hnatLess.le
       cases negative <;>
-        simp [addSignedMagnitudes128, signedCoefficient,
-          hequal, hless, hsub] <;>
+        simp only [signedCoefficient, addSignedMagnitudes128, Bool.not_false, beq_true,
+          Bool.false_eq_true, ↓reduceIte, beq_iff_eq, hequal, hless, hsub,
+          Int.ofNat_eq_natCast, Bool.not_true, beq_false] <;>
         omega
 
 /--

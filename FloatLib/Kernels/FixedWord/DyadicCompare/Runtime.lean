@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -35,12 +35,12 @@ Whether shifting a nonnegative word significand left by `shift` preserves its ex
 For a nonzero word, `log2 + shift < 64` is the capacity condition that the native left shift needs.
 The proposition is decidable from machine-word data, and its proof is erased after compilation.
 -/
-@[inline] def shiftFits (significand : UInt64) (shift : Nat) : Prop :=
+@[inline] def ShiftFits (significand : UInt64) (shift : Nat) : Prop :=
   significand = 0 ∨ (log2Word significand).toNat + shift < 64
 
 instance (significand : UInt64) (shift : Nat) :
-    Decidable (shiftFits significand shift) := by
-  unfold shiftFits
+    Decidable (ShiftFits significand shift) := by
+  unfold ShiftFits
   infer_instance
 
 /--
@@ -49,12 +49,12 @@ Whether shifting a two-limb significand left by `shift` preserves its exact valu
 For a nonzero significand, `log2 + shift < 128` ensures that the shifted value fits in two limbs.
 The proof argument is erased after compilation.
 -/
-@[inline] def shiftFits128 (significand : UInt128) (shift : Nat) : Prop :=
+@[inline] def ShiftFits128 (significand : UInt128) (shift : Nat) : Prop :=
   significand = ⟨0, 0⟩ ∨ UInt128.log2 significand + shift < 128
 
 instance (significand : UInt128) (shift : Nat) :
-    Decidable (shiftFits128 significand shift) := by
-  unfold shiftFits128
+    Decidable (ShiftFits128 significand shift) := by
+  unfold ShiftFits128
   infer_instance
 
 /--
@@ -72,7 +72,7 @@ aligned values use the exact `Nat` implementation, and exponent arithmetic uses 
   else if leftExponent ≤ rightExponent then
     let shift := Int.toNat (rightExponent - leftExponent)
     if _hshift : shift < 64 then
-      if _hfit : shiftFits rightSignificand shift then
+      if _hfit : ShiftFits rightSignificand shift then
         Ord.compare leftSignificand
           (rightSignificand <<< UInt64.ofNat shift)
       else
@@ -86,7 +86,7 @@ aligned values use the exact `Nat` implementation, and exponent arithmetic uses 
   else
     let shift := Int.toNat (leftExponent - rightExponent)
     if _hshift : shift < 64 then
-      if _hfit : shiftFits leftSignificand shift then
+      if _hfit : ShiftFits leftSignificand shift then
         Ord.compare
           (leftSignificand <<< UInt64.ofNat shift)
           rightSignificand

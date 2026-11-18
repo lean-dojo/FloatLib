@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,9 +9,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedP
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.ExponentClamp
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Representation
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 public import FloatLib.Numerics.Exact.DecimalText.NotationProof
 public import FloatLib.Numerics.Exact.HexText.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 
 /-! # Exact binary character round trips
 

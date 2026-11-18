@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
+
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
 
 /-!
@@ -27,7 +28,7 @@ variable {format : Format}
 
 /-- Restore the complete word from its sign and unsigned magnitude. -/
 theorem ofNatBits_magnitudeBits (value : Model format) :
-    (if value.signBit then neg (ofNatBits value.magnitudeBits)
+    (if value.signBit then negate (ofNatBits value.magnitudeBits)
       else ofNatBits value.magnitudeBits) = value := by
   cases hsign : value.signBit with
   | false => simp [magnitudeBits, hsign]
@@ -36,7 +37,7 @@ theorem ofNatBits_magnitudeBits (value : Model format) :
       have hsignCode : format.signMaskNat ≤ value.toNatBits := by
         simpa [signBit_eq_decide] using hsign
       have hpositive : 0 < value.toNatBits := lt_of_lt_of_le format.signMaskNat_pos hsignCode
-      simp only [hsign, ite_true, magnitudeBits, neg]
+      simp only [hsign, ite_true, magnitudeBits, negate]
       rw [toNatBits_ofNatBits_of_lt _ (by omega),
         Nat.sub_sub_self hcode.le, ofNatBits_toNatBits]
 
@@ -77,6 +78,43 @@ theorem toRat?_eq_signed_magnitude (value : Model format) (hnar : value ≠ nar 
     simp only [toRat?, decodeExact, hn, hz, Bool.false_eq_true, ite_false,
       ExactValue.toRat?]
     rw [decodeFields_toRat_eq_signed_magnitude value hnar hzero]
+
+/-- Restoring the sign of a finite magnitude preserves its exact rational meaning. -/
+theorem toRat?_signed_code (format : Format) (code : Nat)
+    (hcode : code < format.signMaskNat) (negative : Bool) :
+    (if negative then negate (ofNatBits (format := format) code) else ofNatBits code).toRat? =
+      some (if negative then -nonnegativeRatAt format code
+        else nonnegativeRatAt format code) := by
+  have hne (word : Nat) (hw : word < format.modulus)
+      (hn : word ≠ format.signMaskNat) :
+      ofNatBits (format := format) word ≠ nar format := by
+    intro h
+    have he := congrArg toNatBits h
+    rw [toNatBits_ofNatBits_of_lt _ hw, nar_toNatBits] at he
+    exact hn he
+  cases negative
+  · simp only [Bool.false_eq_true, ite_false]
+    rw [toRat?_eq_signed_magnitude _
+      (hne code (hcode.trans format.signMaskNat_lt_modulus) (Nat.ne_of_lt hcode)),
+      signBit_ofNatBits_eq_false format code hcode,
+      magnitudeBits_ofNatBits_of_lt_signMask format code hcode]
+    rfl
+  · simp only [ite_true]
+    by_cases hz : code = 0
+    · subst code
+      change (negate (zero format)).toRat? = some (-nonnegativeRatAt format 0)
+      simp
+    have hm := format.modulus_eq_two_mul_signMaskNat
+    have hw : format.modulus - code < format.modulus := by omega
+    have hs : (ofNatBits (format := format) (format.modulus - code)).signBit = true := by
+      rw [signBit_ofNatBits_eq_decide format _ hw]
+      exact decide_eq_true (by omega)
+    have hmag : (ofNatBits (format := format) (format.modulus - code)).magnitudeBits =
+        code := by
+      rw [magnitudeBits, hs, ite_eq_left rfl, toNatBits_ofNatBits_of_lt _ hw]
+      omega
+    rw [negate, toNatBits_ofNatBits_of_lt _ (hcode.trans format.signMaskNat_lt_modulus),
+      toRat?_eq_signed_magnitude _ (hne _ hw (by omega)), hs, ite_eq_left rfl, hmag]
 
 /-- Standard posit rounding is a left inverse of exact rational decoding at every width. -/
 theorem roundRat_toRat? (value : Model format) (exact : Rat)

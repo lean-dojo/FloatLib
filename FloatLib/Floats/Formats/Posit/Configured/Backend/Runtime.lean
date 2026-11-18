@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,15 +9,12 @@ Authors: FloatLib Team
 -- definitions in the imported `Proof` modules.
 module
 
-public import FloatLib.Floats.ExecFloat.Carrier
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Runtime
+public import FloatLib.Numerics.Executable.ModelCodec
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Add.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Fma.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Mul.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Sqrt.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Sub.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Arithmetic.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Product.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Quotient.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.SquareRoot.Proof

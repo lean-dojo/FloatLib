@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,14 +7,15 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Core.Proof.Word
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Data.Rat.Cast.Order
+
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Verified two-word values and exact wide multiplication
@@ -48,7 +49,6 @@ theorem lo_toNat_eq_toNat_of_lt_two_pow
     value.lo.toNat = value.toNat := by
   have hhigh : value.hi.toNat = 0 := by
     unfold UInt128.toNat at hvalue
-    have hpower : 0 < 2 ^ 64 := Nat.two_pow_pos 64
     omega
   unfold UInt128.toNat
   rw [hhigh]
@@ -85,6 +85,10 @@ theorem toNat_injective : Function.Injective UInt128.toNat := by
   cases y
   simp only [UInt128.mk.injEq] at hlow hhigh ⊢
   exact ⟨UInt64.toNat_inj.mp hhigh, UInt64.toNat_inj.mp hlow⟩
+
+/-- A word other than zero has a nonzero value. -/
+theorem toNat_ne_zero_of_ne {value : UInt128} (h : value ≠ ⟨0, 0⟩) : value.toNat ≠ 0 :=
+  fun hzero => h (toNat_injective (by rw [hzero]; unfold UInt128.toNat; rfl))
 
 end UInt128
 
@@ -144,7 +148,7 @@ private theorem shiftLeft32_toNat (value : UInt64)
     value.toNat * 2 ^ 32
   norm_num
   rw [Nat.shiftLeft_eq, Nat.mod_eq_of_lt]
-  nlinarith
+  omega
 
 /-- `mul64` computes the full mathematical product of its operands. -/
 @[simp, grind =] theorem mul64_toNat (x y : UInt64) :

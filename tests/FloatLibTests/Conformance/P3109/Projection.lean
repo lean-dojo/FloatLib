@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Conversion.Proof
-public meta import FloatLib.Floats.ExecFloat.Conversion.Core
+public meta import FloatLib.Numerics.Executable.Conversion.Core
 public meta import FloatLib.Floats.Formats.P3109.Conversion.Instances
 public meta import FloatLib.Floats.Formats.P3109.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.P3109.Projection.Runtime
 public meta import Mathlib.Algebra.GroupWithZero.Nat
+public import FloatLib.Floats.Formats.P3109.Conversion.Proof
 
 /-!
 # P3109 projection regression matrix

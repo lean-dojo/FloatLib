@@ -1,22 +1,26 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
+
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 
 /-!
 # Correctness of binary format casts
 
-A finite cast decodes the source exactly and applies one nearest-even rounding step in the
-destination format. The real-valued rounding bridge assumes a conventional IEEE destination and
-a finite result, and it does not assign a real value to an infinity or NaN. An IEEE destination
-keeps NaNs and infinities, so a finite result forces a finite source.
+A finite cast decodes a finite source exactly and applies nearest-even rounding on the
+destination grid. Fully finite encodings then clip to their signed finite endpoints; every
+other encoding preserves the grid result when the delivered result is finite. This policy
+theorem covers arbitrary widths and biases. The IEEE refinement and exact grid-extension
+statements follow from it. An IEEE destination keeps NaNs and infinities, so its finite result
+also forces a finite source.
 
 ## References
 
@@ -54,7 +58,7 @@ theorem Internal.Status.cast_eq
   · simp [outcomeWithInvalid]
   · split
     · by_cases hvalue :
-          isInf (Internal.Directed.cast src dst x mode) = true <;>
+          isInfinite (Internal.Directed.cast src dst x mode) = true <;>
         simp [hvalue]
     · rfl
 
@@ -63,14 +67,15 @@ theorem Internal.Status.cast_eq
     (hx : isFinite x = true) :
     cast fmt fmt x = x := by
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hx
   simp [cast, Internal.Nearest.cast, hnan, hinf]
 
 /-! ## NaN propagation -/
 
 /-- Setting the quiet bit of a word leaves its sign bit unchanged. -/
 theorem signBit_or_quietBit {fmt : FloatFormat} (b : FloatFormat.ExecWord fmt) :
-    signBit (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) = signBit (ofBits (fmt := fmt) b) := by
+    signBit (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) = signBit (ofBits (fmt := fmt)
+      b) := by
   have hfw := fmt.fracWidth_pos
   rw [signBit_eq_msb, signBit_eq_msb]
   unfold ofBits FloatFormat.quietBit FloatFormat.ofWordNat FloatFormat.quietBitNat
@@ -110,7 +115,8 @@ theorem and_quietBit_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
     ((x.bits &&& FloatFormat.quietBit fmt) == 0) = !(fracField x).testBit (fmt.fracWidth - 1) := by
   have hfw := fmt.fracWidth_pos
   have hlt : fmt.fracWidth - 1 < fmt.bitWidth := by unfold FloatFormat.bitWidth; omega
-  have hq : (2 : Nat) ^ (fmt.fracWidth - 1) < 2 ^ fmt.bitWidth := Nat.pow_lt_pow_right (by omega) hlt
+  have hq : (2 : Nat) ^ (fmt.fracWidth - 1) < 2 ^ fmt.bitWidth := Nat.pow_lt_pow_right (by omega)
+    hlt
   have key : (x.bits &&& FloatFormat.quietBit fmt).toNat =
       if (fracField x).testBit (fmt.fracWidth - 1) then 2 ^ (fmt.fracWidth - 1) else 0 := by
     unfold fracField FloatFormat.quietBit FloatFormat.fracMask FloatFormat.ofWordNat
@@ -129,7 +135,8 @@ theorem and_quietBit_eq_zero_iff {fmt : FloatFormat} (x : Model fmt) :
     simp [this]
   · simp only [ht, ite_true] at key
     have hne : x.bits &&& FloatFormat.quietBit fmt ≠ 0 := by
-      intro h; rw [h] at key; have := Nat.two_pow_pos (fmt.fracWidth - 1); simp at key; omega
+      intro h; rw [h] at key; have := Nat.two_pow_pos (fmt.fracWidth - 1);
+        simp only [BitVec.ofNat_eq_ofNat, BitVec.toNat_ofNat, Nat.zero_mod] at key; omega
     simpa using hne
 
 /--
@@ -142,7 +149,7 @@ theorem propagatedNaN_eq_quietNaN {fmt : FloatFormat} (x : Model fmt) (hnan : is
     propagatedNaN fmt (signBit x) (nanPayload x) = quietNaN x := by
   have hfw := fmt.fracWidth_pos
   unfold isNaN at hnan
-  unfold propagatedNaN quietNaN nanPayload isSNaN
+  unfold propagatedNaN quietNaN nanPayload isSignaling
   cases henc : fmt.encoding with
   | finite => simp [henc] at hnan
   | finiteUnsignedZero =>
@@ -165,16 +172,15 @@ theorem propagatedNaN_eq_quietNaN {fmt : FloatFormat} (x : Model fmt) (hnan : is
         rw [hqdef, ← Nat.pow_succ']; congr 1; omega
       have hflt : f < 2 * q := hqq ▸ fracField_lt_pow2 x
       have hqpos : 0 < q := Nat.two_pow_pos _
-      have hbits : quietNaN x = ofBits (x.bits ||| FloatFormat.quietBit fmt) := by
-        simp [quietNaN, henc, hnan]
       -- the quieted word as fields
       have hq : ofBits (fmt := fmt) (x.bits ||| FloatFormat.quietBit fmt) =
           ofFields fmt (signBit x) (FloatFormat.expAllOnesNat fmt) (f ||| q) := by
-        rw [← ofFields_signBit_expField_fracField (ofBits (fmt := fmt) (x.bits ||| FloatFormat.quietBit fmt)),
+        rw [← ofFields_signBit_expField_fracField (ofBits (fmt := fmt) (x.bits |||
+          FloatFormat.quietBit fmt)),
           signBit_or_quietBit, expField_or_quietBit, fracField_or_quietBit]
         change ofFields fmt (signBit x) (expField x) (fracField x ||| _) = _
         rw [he]
-      rw [hq, IEEE.isSNaN, hnan, Bool.true_and, and_quietBit_eq_zero_iff, ← hfdef]
+      rw [hq, IEEE.isSignaling, hnan, Bool.true_and, and_quietBit_eq_zero_iff, ← hfdef]
       congr 1
       have hdiv : f = q * (f / q) + f % q := (Nat.div_add_mod f q).symm
       have hmod : f % q < q := Nat.mod_lt _ hqpos
@@ -185,7 +191,6 @@ theorem propagatedNaN_eq_quietNaN {fmt : FloatFormat} (x : Model fmt) (hnan : is
         simp only [hdq, Nat.mul_zero, Nat.mul_one, Nat.zero_add] at hdiv
       · -- f < q: signaling
         have hfq : f < q := by omega
-        have hf : f % q = f := Nat.mod_eq_of_lt hfq
         have hor : q + f = f ||| q := by
           have := Nat.two_pow_add_eq_or_of_lt (a := 1) (i := fmt.fracWidth - 1) hfq
           rw [Nat.mul_one, ← hqdef] at this
@@ -200,39 +205,13 @@ theorem propagatedNaN_eq_quietNaN {fmt : FloatFormat} (x : Model fmt) (hnan : is
           · rw [show fmt.fracWidth - 1 + 1 = fmt.fracWidth by omega, hqq]; omega
         simp only [htb, hdq, payloadOfNaNField, hlog, ← hqdef]
         have hr : f - q < q := by omega
-        simp [hr]
+        simp only [decide_true, Bool.not_true, Bool.false_eq_true, ↓reduceIte, hr]
         have h1 := Nat.two_pow_add_eq_or_of_lt (a := 1) (i := fmt.fracWidth - 1) hmod
         rw [← hqdef, Nat.mul_one] at h1
         have hfeq : f = q ||| f % q := by omega
         have : (f ||| q) = f := by
-          conv_lhs => rw [hfeq]
-          rw [Nat.or_comm (q) (f % q), Nat.or_assoc, Nat.or_self, Nat.or_comm]
-          exact hfeq.symm
+          rw [hfeq, Nat.or_comm (q ||| f % q) q, ← Nat.or_assoc, Nat.or_self]
         omega
-
-/-- A propagated NaN is a NaN in every destination that has a NaN encoding. -/
-theorem isNaN_propagatedNaN (fmt : FloatFormat) (negative : Bool) (payload : Nat)
-    (h : fmt.encoding ≠ .finite) :
-    isNaN (propagatedNaN fmt negative payload) = true := by
-  have hexp : FloatFormat.expAllOnesNat fmt % 2 ^ fmt.expWidth = FloatFormat.expAllOnesNat fmt :=
-    Nat.mod_eq_of_lt (by unfold FloatFormat.expAllOnesNat; have := Nat.one_le_two_pow (n := fmt.expWidth); omega)
-  have hfw := fmt.fracWidth_pos
-  unfold propagatedNaN isNaN
-  cases henc : fmt.encoding with
-  | finite => exact absurd henc h
-  | finiteUnsignedZero => simp [negZero, ofBits]
-  | finiteMaxNaN =>
-      have hm : FloatFormat.fracMaskNat fmt % 2 ^ fmt.fracWidth = FloatFormat.fracMaskNat fmt :=
-        Nat.mod_eq_of_lt (by unfold FloatFormat.fracMaskNat; have := Nat.one_le_two_pow (n := fmt.fracWidth); omega)
-      simp [hexp, hm]
-  | ieee =>
-      have hq : 2 ^ fmt.fracWidth = 2 * 2 ^ (fmt.fracWidth - 1) := by
-        rw [← Nat.pow_succ']; congr 1; omega
-      have hpos := Nat.one_le_two_pow (n := fmt.fracWidth - 1)
-      have hlt : 2 ^ (fmt.fracWidth - 1) + (if payload < 2 ^ (fmt.fracWidth - 1) then payload else 0)
-          < 2 ^ fmt.fracWidth := by split <;> omega
-      simp only [IEEE.isNaN, expField_ofFields, fracField_ofFields, hexp, Nat.mod_eq_of_lt hlt]
-      simp
 
 /--
 On a NaN source, `cast` in any rounding direction is `propagatedNaN` on the source sign and IEEE
@@ -261,11 +240,11 @@ theorem isFinite_of_isFinite_cast {src dst : FloatFormat} (hdst : dst.isIEEE = t
     have hresult := isNaN_propagatedNaN dst (signBit x) (nanPayload x)
       (by simp [FloatFormat.encoding_eq_ieee_of_isIEEE dst hdst])
     simp [isFinite_eq_false_of_isNaN hresult] at h
-  by_cases hinf : isInf x = true
+  by_cases hinf : isInfinite x = true
   · have hcast : cast src dst x mode = nativeOverflow dst (signBit x) := by
       cases mode <;> simp [cast, Internal.Directed.cast, Internal.Nearest.cast, hnan, hinf]
     simp [hcast, isFinite_nativeOverflow hdst] at h
-  exact isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x
+  exact isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x
     (Bool.eq_false_of_not_eq_true hnan) (Bool.eq_false_of_not_eq_true hinf)
 
 /--
@@ -479,9 +458,11 @@ theorem toReal_widenExact {src dst : FloatFormat} (x : Model src)
           simpa [widenExact, shift] using hyfin)
   by_cases hexponent : expField x = 0
   · by_cases hfraction : fracField x = 0
-    · simp [hexponent, hfraction, Nat.shiftLeft_eq] at hxdecode hydecode
+    · simp only [hexponent, ↓reduceIte, hfraction, Nat.shiftLeft_eq', Nat.shiftLeft_eq, zero_mul]
+      at hxdecode hydecode
       rw [toReal_eq, hydecode, toReal_eq, hxdecode]
-    · simp [hexponent, hfraction, Nat.shiftLeft_eq] at hxdecode hydecode
+    · simp only [hexponent, ↓reduceIte, hfraction, Nat.shiftLeft_eq', Nat.shiftLeft_eq, mul_eq_zero,
+      Nat.pow_eq_zero, OfNat.ofNat_ne_zero, ne_eq, false_and, or_self] at hxdecode hydecode
       rw [toReal_eq, hydecode, toReal_eq, hxdecode]
       simp only [Numerics.Dyadic.toReal, Numerics.Dyadic.cast_signedSignificand]
       have hmantissa :
@@ -568,9 +549,9 @@ theorem fexpOf_le_of_gridExtension {src dst : FloatFormat}
 theorem genericFormat_of_gridExtension {src dst : FloatFormat} {r : ℝ}
     (hfrac : src.fracWidth ≤ dst.fracWidth)
     (hmin : dst.minSubnormalExponent ≤ src.minSubnormalExponent)
-    (hr : FloatLib.Floats.Formats.Flocq.genericFormat FloatLib.Numerics.binaryRadix
+    (hr : FloatLib.Floats.Formats.Flocq.GenericRepresentable FloatLib.Numerics.binaryRadix
       (fexpOf src) r) :
-    FloatLib.Floats.Formats.Flocq.genericFormat FloatLib.Numerics.binaryRadix
+    FloatLib.Floats.Formats.Flocq.GenericRepresentable FloatLib.Numerics.binaryRadix
       (fexpOf dst) r := by
   exact FloatLib.Floats.Formats.Flocq.generic_inclusion
     (fexpOf_le_of_gridExtension hfrac hmin) hr
@@ -579,9 +560,9 @@ theorem genericFormat_of_gridExtension {src dst : FloatFormat} {r : ℝ}
 theorem genericFormat_of_compatibleWidening {src dst : FloatFormat}
     (hbias : src.exponentBias = dst.exponentBias)
     (hfrac : src.fracWidth ≤ dst.fracWidth) {r : ℝ}
-    (hr : FloatLib.Floats.Formats.Flocq.genericFormat FloatLib.Numerics.binaryRadix
+    (hr : FloatLib.Floats.Formats.Flocq.GenericRepresentable FloatLib.Numerics.binaryRadix
       (fexpOf src) r) :
-    FloatLib.Floats.Formats.Flocq.genericFormat FloatLib.Numerics.binaryRadix
+    FloatLib.Floats.Formats.Flocq.GenericRepresentable FloatLib.Numerics.binaryRadix
       (fexpOf dst) r := by
   apply genericFormat_of_gridExtension hfrac ?_ hr
   simp only [FloatFormat.minSubnormalExponent, FloatFormat.minNormalExponent,
@@ -600,7 +581,7 @@ theorem cast_eq_widenExact_of_compatibleWidening {src dst : FloatFormat} (x : Mo
     (hx : isFinite x = true) (mode : IEEERoundingMode := .nearest) :
     cast src dst x mode = widenExact x hexp hbias hencoding hfrac := by
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hx
   have hcast : Internal.Nearest.cast src dst x = widenExact x hexp hbias hencoding hfrac := by
     by_cases hformat : src = dst
     · subst dst
@@ -626,51 +607,48 @@ theorem cast_exact_of_compatibleWidening {src dst : FloatFormat} (x : Model src)
   rw [cast_eq_widenExact_of_compatibleWidening x hexp hbias hencoding hfrac hx,
     toReal_widenExact x hexp hbias hencoding hfrac hx]
 
-/-- A cast that takes the exact decode-and-round path performs one nearest-even rounding. -/
-private theorem toReal_cast_eq_roundAt_of_eq_roundDyadic {src dst : FloatFormat}
-    (hdst : dst.isIEEE = true) (x : Model src) {d : Numerics.Dyadic}
-    (hd : toDyadic? x = some d) (hcast : cast src dst x = roundDyadic dst d)
-    (hxy : isFinite (cast src dst x) = true) :
-    toReal (cast src dst x) = roundAt dst (toReal x) := by
-  rw [hcast] at hxy ⊢
-  rw [toReal_roundDyadic_eq_roundAt dst hdst d hxy]
-  congr 1
-  rw [toReal_eq, hd]
-
-/-- Between conventional IEEE formats, a finite cast refines one nearest-even rounding step. -/
-private theorem cast_eq_roundAt_of_isIEEE {src dst : FloatFormat}
-    (hsrc : src.isIEEE = true) (hdst : dst.isIEEE = true) (x : Model src)
-    (hx : isFinite x = true) (hxy : isFinite (cast src dst x) = true) :
-    toReal (cast src dst x) = roundAt dst (toReal x) := by
-  have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
-  obtain ⟨hsrcEncoding, hsrcBias⟩ :=
-    (FloatFormat.isIEEE_eq_true_iff src).mp hsrc
-  obtain ⟨hdstEncoding, hdstBias⟩ :=
-    (FloatFormat.isIEEE_eq_true_iff dst).mp hdst
-  by_cases hformat : src = dst
-  · subst dst
-    simpa [cast, Internal.Nearest.cast, hnan, hinf] using (roundAt_toReal_eq x hx).symm
-  · by_cases hexpWidth : src.expWidth = dst.expWidth
-    · by_cases hfracWidth : src.fracWidth ≤ dst.fracWidth
-      · have hbias : src.exponentBias = dst.exponentBias := by
-          rw [hsrcBias, hdstBias]
-          simp [FloatFormat.bias, hexpWidth]
-        have hencoding : src.encoding = dst.encoding :=
-          hsrcEncoding.trans hdstEncoding.symm
-        rw [cast_exact_of_compatibleWidening x hexpWidth hbias hencoding hfracWidth hx]
-        exact (FloatLib.Floats.Formats.Flocq.round_preserves_generic
-          FloatLib.Floats.Formats.Flocq.nearestEven (toReal x)
-          (genericFormat_of_compatibleWidening hbias hfracWidth
-            (toReal_genericFormat_of_isFinite x hx))).symm
-      · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
-        have hcast : cast src dst x = roundDyadic dst d := by
-          simp [cast, Internal.Nearest.cast, hnan, hinf, hformat, hexpWidth, hfracWidth, hd]
-        exact toReal_cast_eq_roundAt_of_eq_roundDyadic hdst x hd hcast hxy
-    · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
-      have hcast : cast src dst x = roundDyadic dst d := by
-          simp [cast, Internal.Nearest.cast, hnan, hinf, hformat, hexpWidth, hd]
-      exact toReal_cast_eq_roundAt_of_eq_roundDyadic hdst x hd hcast hxy
+/-- Every finite cast follows real nearest-even rounding and the destination's saturation policy. -/
+theorem cast_policy {src dst : FloatFormat} (x : Model src)
+    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true) :
+    toReal (cast src dst x) =
+      if dst.encoding = .finite then clampAt dst (roundAt dst (toReal x))
+      else roundAt dst (toReal x) := by
+  by_cases hw : src.expWidth = dst.expWidth ∧ src.exponentBias = dst.exponentBias ∧
+      src.encoding = dst.encoding ∧ src.fracWidth ≤ dst.fracWidth
+  · rcases hw with ⟨he, hb, hc, hf⟩
+    have hv := cast_exact_of_compatibleWidening x he hb hc hf hx
+    have hround : roundAt dst (toReal x) = toReal x :=
+      Flocq.round_preserves_generic Flocq.nearestEven _ <|
+        genericFormat_of_compatibleWidening hb hf (toReal_genericFormat_of_isFinite x hx)
+    have hbound := abs_toReal_le_posMaxFinite_of_isFinite _ hout
+    rw [hv] at hbound
+    rw [hv, hround, clampAt_eq_self dst hbound]
+    simp
+  · have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
+    have hinf := isInfinite_eq_false_of_isFinite_eq_true x hx
+    have hne : src ≠ dst := by
+      intro h
+      subst dst
+      exact hw ⟨rfl, rfl, rfl, le_rfl⟩
+    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
+    have hc : cast src dst x = roundDyadic dst d := by
+      simp only [cast, Internal.Nearest.cast, hnan, hinf, Bool.false_eq_true, dite_false, hne]
+      split
+      · next he =>
+        split
+        · next hb =>
+          split
+          · next henc =>
+            split
+            · next hf => exact (hw ⟨he, hb, henc, hf⟩).elim
+            · simp [finiteDyadic, hd]
+          · simp [finiteDyadic, hd]
+        · simp [finiteDyadic, hd]
+      · simp [finiteDyadic, hd]
+    rw [hc] at hout ⊢
+    rw [toReal_roundDyadic_policy dst d hout]
+    have hv : d.toReal = toReal x := by rw [toReal_eq, hd]
+    rw [hv]
 
 /--
 Casting any binary descriptor to an IEEE destination performs one nearest-even real rounding,
@@ -681,33 +659,23 @@ theorem cast_eq_roundAt {src dst : FloatFormat}
     (hdst : dst.isIEEE = true) (x : Model src)
     (hxy : isFinite (cast src dst x) = true) :
     toReal (cast src dst x) = roundAt dst (toReal x) := by
-  have hx := isFinite_of_isFinite_cast hdst hxy
-  by_cases hsrc : src.isIEEE = true
-  · exact cast_eq_roundAt_of_isIEEE hsrc hdst x hx hxy
-  · have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-    have hinf := isInf_eq_false_of_isFinite_eq_true x hx
-    have hformat : src ≠ dst := by
-      intro heq
-      subst dst
-      exact hsrc hdst
-    obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
-    -- A compatible widening into an IEEE descriptor would make the source IEEE as well.
-    -- Every remaining finite source takes the exact decode-and-round path.
-    have hcast : cast src dst x = roundDyadic dst d := by
-      simp only [cast, Internal.Nearest.cast, hnan, hinf, Bool.false_eq_true, dite_false, hformat]
-      split
-      · next he =>
-        split
-        · next hb =>
-          split
-          · next hc =>
-            have hsame : src.isIEEE = dst.isIEEE := by
-              simp [FloatFormat.isIEEE, FloatFormat.bias, he, hb, hc]
-            exact (hsrc (hsame.trans hdst)).elim
-          · simp [finiteDyadic, hd]
-        · simp [finiteDyadic, hd]
-      · simp [finiteDyadic, hd]
-    exact toReal_cast_eq_roundAt_of_eq_roundDyadic hdst x hd hcast hxy
+  simpa [((FloatFormat.isIEEE_eq_true_iff dst).mp hdst).1] using
+    cast_policy x (isFinite_of_isFinite_cast hdst hxy) hxy
+
+/-- Grid inclusion gives exact casting for every encoding, with clipping excluded where needed. -/
+theorem cast_exact_of_gridExtension_policy {src dst : FloatFormat} (x : Model src)
+    (hfrac : src.fracWidth ≤ dst.fracWidth)
+    (hmin : dst.minSubnormalExponent ≤ src.minSubnormalExponent)
+    (hx : isFinite x = true) (hout : isFinite (cast src dst x) = true)
+    (hrange : dst.encoding = .finite → |toReal x| ≤ toReal (posMaxFinite dst)) :
+    toReal (cast src dst x) = toReal x := by
+  have hr : roundAt dst (toReal x) = toReal x :=
+    Flocq.round_preserves_generic Flocq.nearestEven _
+      (genericFormat_of_gridExtension hfrac hmin (toReal_genericFormat_of_isFinite x hx))
+  rw [cast_policy x hx hout, hr]
+  split
+  · next h => exact clampAt_eq_self dst (hrange h)
+  · rfl
 
 /--
 Casting into an IEEE destination with a finer dyadic grid preserves the real value of every source
@@ -722,11 +690,9 @@ theorem cast_exact_of_gridExtension {src dst : FloatFormat} (x : Model src)
     (hmin : dst.minSubnormalExponent ≤ src.minSubnormalExponent)
     (hxy : isFinite (cast src dst x) = true) :
     toReal (cast src dst x) = toReal x := by
-  have hx := isFinite_of_isFinite_cast hdst hxy
-  rw [cast_eq_roundAt hdst x hxy]
-  exact FloatLib.Floats.Formats.Flocq.round_preserves_generic
-    FloatLib.Floats.Formats.Flocq.nearestEven (toReal x)
-    (genericFormat_of_gridExtension hfrac hmin (toReal_genericFormat_of_isFinite x hx))
+  exact cast_exact_of_gridExtension_policy x hfrac hmin
+    (isFinite_of_isFinite_cast hdst hxy) hxy
+    (by simp [((FloatFormat.isIEEE_eq_true_iff dst).mp hdst).1])
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

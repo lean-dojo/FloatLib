@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -30,12 +30,12 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Convert unsigned bits to posit, reserving the MSB-only input word for NaR. -/
+/-- Posit Standard (2022), §6.4: convert unsigned bits, reserving the MSB-only input for NaR. -/
 @[inline] def ofUnsigned {width : Nat} (value : BitVec width)
     (hwidth : 0 < width := by decide) : Value :=
   ofModel (Model.ofUnsigned format value hwidth)
 
-/-- Convert posit to unsigned bits, with nearest-even rounding before the range check. -/
+/-- Posit Standard (2022), §6.4: round to the nearest even unsigned integer, then check range. -/
 @[inline] def toUnsigned (width : Nat) (value : Value)
     (hwidth : 0 < width := by decide) : BitVec width :=
   Model.toUnsigned width (toModel value) hwidth

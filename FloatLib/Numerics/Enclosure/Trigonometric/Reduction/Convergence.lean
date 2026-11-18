@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Proof
 public import FloatLib.Numerics.Enclosure.Trigonometric.Convergence
+public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Proof
+
 import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
@@ -29,8 +30,9 @@ open scoped Topology
 /-- Clamping the approximate quarter period preserves its limit. -/
 theorem tendsto_trigQuarter :
     Tendsto (fun n : Nat => (trigQuarter n : ℝ)) atTop (𝓝 (Real.pi / 4)) := by
-  have hlo : (1 / 2 : ℝ) ≤ Real.pi / 4 := by linarith [Real.pi_gt_three]
-  have hhi : Real.pi / 4 ≤ 1 := by linarith [Real.pi_lt_four]
+  have hlo : (1 / 2 : ℝ) ≤ Real.pi / 4 :=
+    (le_div_iff₀ (by norm_num)).2 (by norm_num; exact Real.two_le_pi)
+  have hhi : Real.pi / 4 ≤ 1 := (div_le_one (by norm_num)).2 Real.pi_le_four
   have h := (tendsto_const_nhds (x := (1 / 2 : ℝ))).max
     ((tendsto_const_nhds (x := (1 : ℝ))).min tendsto_piQuarter_lo)
   rw [min_eq_right hhi, max_eq_right hlo] at h

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Data.Rat.Cast.Order
-public import Init.Data.Dyadic.Basic
 
 /-!
 # Exact dyadic values
@@ -57,6 +56,9 @@ namespace Dyadic
   cases right
   simp_all
 
+/-- Exact dyadics are equal exactly when all three stored scalar fields are equal. -/
+add_decl_doc FloatLib.Numerics.Dyadic.ext_iff
+
 /-- Exact zero with the conventional nonnegative canonical fields. -/
 @[inline] def zero : Dyadic :=
   { negative := false, significand := 0, exponent := 0 }
@@ -91,6 +93,18 @@ Fixed-point accumulators use this conversion before rounding, without rational n
     value.signedSignificand.natAbs = value.significand := by
   cases hnegative : value.negative <;>
     simp [signedSignificand, hnegative]
+
+/-- The signed significand vanishes exactly when its stored magnitude does. -/
+@[simp] theorem signedSignificand_eq_zero (value : Dyadic) :
+    value.signedSignificand = 0 ↔ value.significand = 0 := by
+  rw [← Int.natAbs_eq_zero, natAbs_signedSignificand]
+
+/-- A nonzero dyadic is recovered from its signed significand and stored exponent. -/
+theorem ofScaledInt_signedSignificand (value : Dyadic) (h : value.significand ≠ 0) :
+    ofScaledInt value.signedSignificand value.exponent = value := by
+  rcases value with ⟨negative, magnitude, exponent⟩
+  cases negative <;>
+    simp [ofScaledInt, signedSignificand, Nat.pos_of_ne_zero h]
 
 /-- Exact rational denotation of a dyadic value. -/
 @[inline] def toRat (value : Dyadic) : Rat :=

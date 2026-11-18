@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Runtime
 public import FloatLib.Kernels.IntegerRoot.Proof
-public import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+
 import Mathlib.Tactic.Positivity.Finset
 
 /-!
@@ -187,7 +187,7 @@ theorem rootRound_error_lt_one (mode : RoundingMode) (s : Bool)
     rcases mode.rootRound_eq_floor_or_succ s degree x with h | h
     · rw [h, abs_of_nonpos (sub_nonpos.mpr hlo)]
       linarith
-    · rw [h, Nat.cast_add, Nat.cast_one, abs_of_nonneg (by linarith)]
+    · rw [h, Nat.cast_add, Nat.cast_one, abs_of_nonneg (by positivity)]
       linarith
 
 /-- An integer adjacent to the root and on the root's side of the midpoint, as decided by the exact
@@ -212,7 +212,7 @@ private theorem abs_sub_realRoot_le_half {degree : Nat} (hn : degree ≠ 0) {x :
       apply (le_realRoot_iff hn (by exact_mod_cast hx) (by positivity)).mpr
       rw [← hcast]
       exact Rat.cast_le.mpr ((mul_le_mul_iff_right₀ h2).mp h)
-    rw [Nat.cast_add, Nat.cast_one, abs_of_nonneg (by linarith)]
+    rw [Nat.cast_add, Nat.cast_one, abs_of_nonneg (by positivity)]
     linarith
   · rw [two_mul_add_one_pow] at h
     have hmid : realRoot degree (x : ℝ) ≤ (rootFloor degree x : ℝ) + 1 / 2 := by
@@ -231,7 +231,7 @@ theorem rootRound_error_le_half (mode : RoundingMode) (s : Bool)
   rcases hm with rfl | rfl <;>
     simp only [RoundingMode.rootRound, RoundingMode.rootIncrement, decide_eq_true_eq] <;>
     split <;> rename_i h
-  · exact Or.inl ⟨rfl, by rcases h with h | h; exact h.le; exact h.1.le⟩
+  · exact Or.inl ⟨rfl, h.elim (fun h => h.le) (fun h => h.1.le)⟩
   · exact Or.inr ⟨rfl, le_of_not_gt fun ht => h (Or.inl ht)⟩
   · exact Or.inl ⟨rfl, h⟩
   · exact Or.inr ⟨rfl, le_of_not_ge h⟩

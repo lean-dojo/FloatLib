@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -145,8 +145,6 @@ theorem ordinaryCoefficient_neg
     OrdinaryCoefficient format (-value) := by
   rw [OrdinaryCoefficient, FixedInt.minValue_eq (width_pos format),
     FixedInt.maxValue_eq] at hvalue ⊢
-  have hpower : (0 : Int) < 2 ^ (width format - 1) :=
-    Int.pow_pos (by decide)
   omega
 
 /--

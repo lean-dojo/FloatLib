@@ -33,13 +33,7 @@ import zipfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
-from matplotlib.ticker import FuncFormatter, NullLocator  # noqa: E402
 
-sys.path.insert(0, str(fs.REPO / "benchmarks" / "plots"))
-from format_comparison import (  # noqa: E402
-    OPERATION_LABEL, compact_operation_layout, save_operation_svg,
-    stagger_width_labels, write_operation_series,
-)
 
 RESULTS = fs.REPO / "benchmarks/results/public-binary"
 OPERATIONS = ("add", "sub", "mul", "div", "sqrt", "fma")
@@ -226,71 +220,55 @@ def load(results):
 
 
 def plot(metadata, summary, out, *, low_precision=False):
+    """Six panels, one per operation, and the same panels again as single views for phones."""
     fs.setup()
-    fig, axes = fs.figure(6.7, nrows=2, ncols=3, sharex=True, sharey=True)
-    fig.subplots_adjust(left=0.09, right=0.99, top=0.79, bottom=0.19,
-                        hspace=0.26, wspace=0.10)
+    fig, axes = fs.figure(5.7, nrows=2, ncols=3, sharex=True, sharey=True)
+    fig.subplots_adjust(left=0.10, right=0.99, top=0.94, bottom=0.26 if low_precision else 0.23,
+                        hspace=0.28, wspace=0.10)
     formats = sorted(
         (f for f in metadata["formats"] if (f["width"] < 32) == low_precision),
         key=lambda f: (f["width"], f["e"], f["f"]),
     )
     positions = list(range(len(formats))) if low_precision else [f["width"] for f in formats]
     cells = {(c["format"], c["operation"]): c for c in summary["cells"]}
-    styles = (
-        (ARMS[0], "FloatLib", fs.BLUE, "o", "-"),
-        (ARMS[1], "MPFR", fs.ORANGE, "^", "-."),
-    )
+    arms = ((ARMS[0], "FloatLib"), (ARMS[1], "MPFR"))
+    xlabel = "format" if low_precision else "encoded width (bits)"
+    ylabel = "time per operation (ns)"
+
     def draw_panel(ax, operation):
-        for arm_index, (arm, label, color, marker, line) in enumerate(styles):
+        for arm_index, (arm, name) in enumerate(arms):
             values = [cells[(f["name"], operation)]["ns_per_operation"][arm] for f in formats]
             centers = [v["median"] for v in values]
             x = ([p + (arm_index - 0.5) * 0.22 for p in positions]
                  if low_precision else positions)
+            style = fs.series(name, markersize=4.5)
+            if low_precision:
+                style["linestyle"] = "none"
             ax.errorbar(x, centers,
                         yerr=[[v["median"] - v["minimum"] for v in values],
                               [v["maximum"] - v["median"] for v in values]],
-                        label=label, color=color, marker=marker,
-                        linestyle="none" if low_precision else line,
-                        capsize=2, elinewidth=0.8, markersize=4, linewidth=1.4)
-        ax.set_title(operation, loc="left")
+                        capsize=2, elinewidth=fs.LW_AXIS, **style)
         ax.set_yscale("log")
         if low_precision:
             labels = [
-                f["name"] if f["name"] in ("binary16", "bfloat16")
-                else f"{f['width']}-bit\nE{f['e']}M{f['f']}"
+                f["name"] if f["name"] in ("binary16", "bfloat16") else f"E{f['e']}M{f['f']}"
                 for f in formats
             ]
-            ax.set_xticks(positions, labels=labels, rotation=35, ha="right")
+            ax.set_xticks(positions, labels=labels, rotation=45, ha="right",
+                          rotation_mode="anchor")
         else:
             ax.set_xscale("log", base=2)
-            ax.set_xticks(positions, labels=[str(w) for w in positions], rotation=45)
-        ax.tick_params(axis="x", labelsize=8)
-        ax.xaxis.set_minor_locator(NullLocator())
-        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
-        ax.grid(False, axis="x")
+            ax.set_xticks(positions, labels=[f"{w:,}" for w in positions], rotation=45)
+        ax.tick_params(axis="x", labelsize=fs.SIZE_SMALL)
+        ax.minorticks_off()
 
-    for ax, operation in zip(axes.flat, OPERATIONS):
+    for index, (ax, operation) in enumerate(zip(axes.flat, OPERATIONS)):
         draw_panel(ax, operation)
-    title = ("Public binary arithmetic below 32 bits" if low_precision
-             else "Public binary arithmetic on ordinary inputs")
-    fig.suptitle(title, y=0.985, fontsize=12)
+        fs.panel_title(ax, index, fs.OPERATION_LABEL[operation])
     handles, labels = axes[0, 0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.52, 0.945),
-               ncols=2, handlelength=2.2)
-    fig.text(0.53, 0.855,
-             f"Medians and observed min/max of {summary['trials']} trials; lower is faster.",
-             ha="center", fontsize=9, color=fs.MUTED)
-    fig.text(0.015, 0.50, "Time per operation (ns, log scale)", rotation=90,
-             va="center", fontsize=10)
-    xlabel = ("IEEE-style layouts; precision and exponent bounds match within each pair"
-              if low_precision else
-              "Encoded width (bits); precision and exponent bounds match within each width")
-    fig.text(0.54, 0.075, xlabel, ha="center", fontsize=9)
-    cpu = metadata["protocol"]["cpu"].split(";")[0]
-    sharing = ("exclusive cpusets" if all(e["exclusive_cpuset"] for e in metadata["environment"])
-               else "shared, nonexclusive cores")
-    fig.text(0.54, 0.022, f"{cpu} · paired on a pinned CPU · {sharing}",
-             ha="center", fontsize=8.5, color=fs.MUTED)
+    fs.legend(fig, handles, labels, loc="lower center", bbox_to_anchor=(0.54, 0.0), ncols=2)
+    fig.supylabel(ylabel, x=0.012, fontsize=fs.SIZE_LABEL)
+    fig.supxlabel(xlabel, x=0.54, y=0.075, fontsize=fs.SIZE_LABEL)
     limits = {op: (ax.get_xlim(), ax.get_ylim()) for op, ax in zip(OPERATIONS, axes.flat)}
     target = fs.save(fig, LOW_OUT_NAME if low_precision else OUT_NAME, out=out)
 
@@ -300,47 +278,30 @@ def plot(metadata, summary, out, *, low_precision=False):
         draw_panel(ax, operation)
         ax.set_xlim(limits[operation][0])
         ax.set_ylim(limits[operation][1])
-        ax.set_ylabel("Time per operation (ns, log scale)")
-        if low_precision:
-            ax.set_xlabel("IEEE-style layouts")
-        else:
-            ax.set_xlabel("Encoded width (bits, log₂ scale)")
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        if not low_precision:
             for text in ax.get_xticklabels():
                 text.set_rotation(0)
-            stagger_width_labels(ax)
+            fs.stagger_labels(ax)
         handles, labels = ax.get_legend_handles_labels()
-        context = ("Public binary calls below 32 bits\nOrdinary inputs" if low_precision
-                   else "Public binary calls on ordinary inputs")
-        notes = (
-            f"Medians of {summary['trials']} trials; bars show observed min/max, not confidence intervals.",
-            "Paired precision and exponent bounds. Lower time is faster.",
-            f"{cpu.replace('(R)', '').replace(' CPU', '')}. "
-            f"Paired on a pinned CPU; {sharing}.",
-        )
-        compact_operation_layout(
-            single, ax, title=OPERATION_LABEL[operation], context=context,
-            handles=handles, labels=labels, notes=notes,
-            bold_labels={"FloatLib"},
-        )
-        fs.check_no_dashes(single)
-        save_operation_svg(single, target, operation)
-        horizontal = (
-            "separate IEEE-style format categories below 32 bits"
-            if low_precision else "encoded width on a logarithmic axis"
-        )
+        fs.compact_view(single, ax, title=fs.OPERATION_LABEL[operation], handles=handles,
+                        labels=labels)
+        fs.save_view(single, target, operation)
+        horizontal = ("six formats below 32 bits" if low_precision
+                      else "encoded width on a logarithmic axis")
+        name = fs.OPERATION_LABEL[operation]
         descriptions[operation] = (
-            f"{OPERATION_LABEL[operation]}: FloatLib and MPFR public-call time in "
-            f"nanoseconds per operation on a logarithmic vertical axis, against {horizontal}. "
-            f"Medians and observed min/max of {summary['trials']} trials on ordinary inputs, "
-            "with precision and exponent bounds matched within each pair."
+            f"{name[0].upper()}{name[1:]}: FloatLib and MPFR time per operation in nanoseconds "
+            f"on a logarithmic vertical axis, against {horizontal}. Markers are medians and "
+            "whiskers run from the fastest to the slowest trial."
         )
-    write_operation_series(
+    fs.write_views(
         target, descriptions,
-        overview_alt="Six public binary operations: FloatLib and MPFR time in nanoseconds "
-        f"per operation, {'by separate layouts below 32 bits' if low_precision else 'against encoded width'}. "
-        f"Medians and observed min/max of {summary['trials']} trials on ordinary inputs, "
-        "with paired precision and exponent bounds. "
-        + ("Logarithmic vertical axes." if low_precision else "Logarithmic axes."),
+        overview_alt="Six panels, one per operation: FloatLib and MPFR time per operation in "
+        f"nanoseconds, {'for six formats below 32 bits' if low_precision else 'against encoded width'}, "
+        "with whiskers from the fastest to the slowest trial. "
+        + ("The vertical axes are logarithmic." if low_precision else "Both axes are logarithmic."),
     )
     return target
 

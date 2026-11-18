@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 
 /-!
@@ -39,17 +38,18 @@ theorem toEReal_neg_of_isNaN_eq_false
     {fmt : FloatFormat} (x : Model fmt) (hnan : isNaN x = false) :
     toEReal (neg x) = -toEReal x := by
   rw [toEReal_eq_ite (neg x), toEReal_eq_ite x]
-  rw [isNaN_neg, hnan, isInf_neg]
+  rw [isNaN_neg, hnan, isInfinite_neg]
   simp only [Bool.false_eq_true, ite_false]
-  cases hinf : isInf x
+  cases hinf : isInfinite x
   · have hfinite :
         isFinite x = true :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hinf
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnan hinf
     rw [toReal_neg x hfinite]
     simp
-  · have hzero := isZero_eq_false_of_isInf_eq_true x hinf
+  · have hzero := isZero_eq_false_of_isInfinite_eq_true x hinf
     rw [signBit_neg]
-    simp [hnan, hzero]
+    simp only [↓reduceIte, hnan, hzero, Bool.or_self, Bool.false_eq_true, ite_self,
+      Bool.not_eq_eq_eq_not, Bool.not_true]
     cases hsign : signBit x <;> simp
 
 end

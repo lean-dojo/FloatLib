@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -111,9 +111,7 @@ theorem nearestChoice_tieAway_eq_awayRound_of_fract_eq_half {x : ℝ}
     simp [nearestChoice, hx]
   rw [htie]
   by_cases hf : 0 ≤ ⌊x⌋
-  · have hx0 : 0 ≤ x := by
-      have : (0 : ℝ) ≤ ⌊x⌋ := by exact_mod_cast hf
-      linarith
+  · have hx0 : 0 ≤ x := Int.floor_nonneg.mp hf
     rw [awayRound_eq_ceil hx0]
     simp [nearestAwayChoice, hf, ceilRound, hceil]
   · have hneg : x < 0 := by
@@ -134,12 +132,12 @@ theorem negRound_nearestChoice (chooseUp : ℤ → Bool) :
   · have hceil : ⌈x⌉ = ⌊x⌋ + 1 := (Int.ceil_eq_floor_add_one_iff_notMem x).2 hint
     have hfloorNeg : ⌊-x⌋ = -⌊x⌋ - 1 := by
       rw [Int.floor_neg, hceil]
-      ring
+      omega
     have hfract : Int.fract x ≠ 0 := by
       intro hzero
       apply hint
       refine ⟨⌊x⌋, ?_⟩
-      show ((⌊x⌋ : ℤ) : ℝ) = x
+      change ((⌊x⌋ : ℤ) : ℝ) = x
       linarith [Int.floor_add_fract x]
     have hfractNeg : Int.fract (-x) = 1 - Int.fract x := Int.fract_neg hfract
     simp only [negRound, nearestChoice, hfloorNeg, hfractNeg]
@@ -155,7 +153,9 @@ theorem negRound_nearestChoice_tieAway :
   congr 1
   funext f
   simp only [nearestAwayChoice]
-  by_cases hf : 0 ≤ f <;> simp [hf] <;> omega
+  by_cases hf : 0 ≤ f <;>
+    simp only [Int.sub_nonneg, hf, decide_true, Bool.not_eq_eq_eq_not, Bool.not_true,
+    decide_eq_false_iff_not, not_le, decide_false, Bool.not_false, decide_eq_true_eq] <;> omega
 
 /-- A certified unit bracket determines the floor. -/
 theorem inbetweenInt_floor {m : ℤ} {x : ℝ} {location : Location}
@@ -194,7 +194,9 @@ theorem inbetweenInt_nearestChoice (chooseUp : ℤ → Bool)
       -- The midpoint location compares the fractional part `x - m` with one half.
       have hfract : cmp (Int.fract x) (2⁻¹ : ℝ) = order := by
         rw [← hmid, Int.fract, hfloor, ← cmp_add_right (x - m) 2⁻¹ (m : ℝ)]
-        congr 1 <;> push_cast <;> ring
+        congr 1 <;> push_cast
+        · exact sub_add_cancel x ↑m
+        · rw [← add_assoc, add_div, add_div, add_halves, one_div, add_comm]
       cases order with
       | lt =>
           have hlt : Int.fract x < (2⁻¹ : ℝ) := (cmp_eq_lt_iff _ _).1 hfract
@@ -202,8 +204,8 @@ theorem inbetweenInt_nearestChoice (chooseUp : ℤ → Bool)
             roundNearestLocation]
       | eq =>
           have heq : Int.fract x = (2⁻¹ : ℝ) := (cmp_eq_eq_iff _ _).1 hfract
-          simp [nearestChoice, hfloor, heq, conditionalIncrement,
-            roundNearestLocation]
+          simp only [nearestChoice, heq, one_div, lt_self_iff_false, ↓reduceIte,
+            hfloor, conditionalIncrement, roundNearestLocation]
           rfl
       | gt =>
           have hgt : Int.fract x > (2⁻¹ : ℝ) := (cmp_eq_gt_iff _ _).1 hfract
@@ -233,7 +235,7 @@ private theorem inbetweenInt_sign {m : ℤ} {x : ℝ} {location : Location}
   have hbounds := inbetweenInt_bounds hl
   refine ⟨fun hm => ?_, fun hm => le_trans (by exact_mod_cast not_lt.mp hm) hbounds.1⟩
   have : (m : ℝ) + 1 ≤ 0 := by exact_mod_cast (show m + 1 ≤ 0 by omega)
-  linarith [hbounds.2]
+  exact hbounds.2.trans_le this
 
 /--
 A certified unit bracket computes toward-zero rounding: floor when the lower integer is
@@ -306,7 +308,7 @@ theorem TruncationState.mantissa_nonneg_of_brackets
     norm_num only [Int.cast_add, Int.cast_one] at this
     exact pos_of_mul_pos_left this hstep.le
   have hsuccPosZ : (0 : ℤ) < state.mantissa + 1 := by exact_mod_cast hsuccPos
-  linarith
+  omega
 
 /--
 For a positive input and a bracket with sufficient precision, the lower mantissa's digit count
@@ -406,7 +408,7 @@ theorem intPower_one_lt (β : Numerics.Radix) {shift : ℤ} (hshift : 0 < shift)
       simp only [Int.toNat_natCast, pow_succ]
       have hbase : 2 ≤ β.base := β.base_valid
       have hpow : 0 < β.base ^ n := pow_pos (Nat.zero_lt_of_lt hbase) n
-      exact Int.ofNat_lt.mpr (show 1 < β.base ^ n * β.base by nlinarith)
+      exact Int.ofNat_lt.mpr (one_lt_mul hpow hbase)
 
 /-- The truncated remainder is a valid cell index in the discarded radix block. -/
 theorem truncateAux_remainder_bounds (β : Numerics.Radix)
@@ -438,7 +440,6 @@ theorem truncateAux_brackets (β : Numerics.Radix) (state : TruncationState)
   let step := bpow β state.exponent
   let start := (quotient : ℝ) * bpow β (state.exponent + shift)
   have hpowerOne : 1 < power := intPower_one_lt β hshift
-  have hpowerPos : 0 < power := lt_trans Int.zero_lt_one hpowerOne
   have hpowerReal : (power : ℝ) = bpow β shift := by
     exact intPower_cast_eq_bpow β hshift.le
   have hrem := truncateAux_remainder_bounds β state hshift
@@ -454,7 +455,7 @@ theorem truncateAux_brackets (β : Numerics.Radix) (state : TruncationState)
     unfold start step toReal
     rw [bpow.add_exp, ← hpowerReal]
     rw [hdecomp', Int.cast_add, Int.cast_mul]
-    ring
+    rw [add_mul]; ac_rfl
   have hupper :
       start + ((remainder + 1 : ℤ) : ℝ) * step =
         toReal (β := β) {
@@ -482,7 +483,7 @@ theorem truncateAux_brackets (β : Numerics.Radix) (state : TruncationState)
     unfold start step toReal
     rw [bpow.add_exp, ← hpowerReal]
     rw [Int.cast_add, Int.cast_one]
-    ring
+    rw [add_mul]; ac_rfl
   have hlCell : Inbetween
       (start + (remainder : ℝ) * step)
       (start + ((remainder + 1 : ℤ) : ℝ) * step)
@@ -551,7 +552,7 @@ theorem truncate_brackets_and_exponent
   · by_cases hshift : 0 < truncationShift β fexp state
     · rw [truncate, ite_eq_left hshift]
       simp only [truncateAux, truncationShift]
-      linarith
+      omega
     · rw [truncate, ite_eq_right hshift]
       simp only [truncationShift] at hshift
       have hle : state.exponent ≤ cexp β fexp x := by
@@ -560,7 +561,7 @@ theorem truncate_brackets_and_exponent
         · rw [hcanonical]
           exact h
       rw [hcanonical] at hle ⊢
-      linarith
+      omega
 
 /-- Nearest-even result selected from a format-truncated bracket. -/
 def roundTruncatedNearestEven

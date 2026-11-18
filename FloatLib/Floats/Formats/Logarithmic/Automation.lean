@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Logarithmic.Exact.Proof
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
+public import FloatLib.Tactic.Numerics -- shake: keep
 
 /-!
 # Logarithmic-system rules for numerical automation

@@ -1,11 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Runtime
+
 import Mathlib.Tactic.Positivity.Finset
 
 /-!
@@ -27,9 +28,9 @@ theorem finer_grid_value (c : Nat) (q r : Int) (hr : r ≤ q) :
     ((c * 10 ^ (q - r).toNat : Nat) : ℚ) * (10 : ℚ) ^ r =
       (c : ℚ) * (10 : ℚ) ^ q := by
   have he : r + ((q - r).toNat : Int) = q := by omega
-  conv_rhs => rw [← he, zpow_add₀ (by norm_num), zpow_natCast]
+  conv_rhs => rw [← he, zpow_add₀ (by decide), zpow_natCast]
   push_cast
-  ring
+  ac_rfl
 
 end FloatLib.Floats.Formats.DecimalInterchange.Arithmetic
 
@@ -77,7 +78,7 @@ theorem roundMagnitude_eq (mode : RoundingMode) (s : Bool) (x : ℚ) :
     have hf : ⌊x⌋₊ = 0 := Nat.floor_of_nonpos (lt_of_not_ge hx).le
     have hlt : ¬(1 < 2 * x) := by linarith
     have heq : ¬(2 * x = 1) := by linarith
-    have hle : ¬(1 ≤ 2 * x) := by linarith
+    have hle : ¬(1 ≤ 2 * x) := fun h => heq (le_antisymm (le_of_not_gt hlt) h)
     have hpos : ¬(0 < x) := not_lt.mpr (lt_of_not_ge hx).le
     have hd : x.den ≠ 0 := x.den_nz
     cases mode <;> simp [roundMagnitude, increment, hn, hf, hlt, heq, hle, hpos, hd]
@@ -116,7 +117,7 @@ theorem roundMagnitude_error_lt_one (mode : RoundingMode) (s : Bool)
   rcases mode.roundMagnitude_eq_floor_or_succ s x with h | h
   · rw [h, abs_of_nonpos (sub_nonpos.mpr hlo)]
     linarith
-  · rw [h, Nat.cast_add, Nat.cast_one, abs_of_pos (by linarith)]
+  · rw [h, Nat.cast_add, Nat.cast_one, abs_of_pos (sub_pos.mpr hhi)]
     linarith
 
 /-- Both nearest modes have an error of at most half an integer grid unit. -/
@@ -130,7 +131,7 @@ theorem roundMagnitude_error_le_half (mode : RoundingMode)
   · simp only [roundMagnitude_eq, increment, decide_eq_true_eq]
     split
     · rename_i h
-      rw [Nat.cast_add, Nat.cast_one, abs_of_pos (by linarith)]
+      rw [Nat.cast_add, Nat.cast_one, abs_of_pos (sub_pos.mpr hhi)]
       rcases h with h | h <;> linarith
     · rename_i h
       have hh : 2 * (x - (⌊x⌋₊ : ℚ)) ≤ 1 := le_of_not_gt fun hh => h (Or.inl hh)
@@ -138,7 +139,7 @@ theorem roundMagnitude_error_le_half (mode : RoundingMode)
       linarith
   · simp only [roundMagnitude_eq, increment, decide_eq_true_eq]
     split
-    · rw [Nat.cast_add, Nat.cast_one, abs_of_pos (by linarith)]
+    · rw [Nat.cast_add, Nat.cast_one, abs_of_pos (sub_pos.mpr hhi)]
       linarith
     · rw [abs_of_nonpos (sub_nonpos.mpr hlo)]
       linarith
@@ -151,16 +152,15 @@ theorem roundMagnitude_towardZero_le (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
 /-- Positive upward rounding is an upper enclosure. -/
 theorem le_roundMagnitude_up (x : ℚ) :
     x ≤ ((up.roundMagnitude false x : Nat) : ℚ) := by
-  rcases lt_or_ge x 0 with hx | hx
+  rcases lt_or_ge x 0 with hx | _
   · exact hx.le.trans (Nat.cast_nonneg _)
-  have hlo := Nat.floor_le hx
   have hhi := Nat.lt_floor_add_one x
   simp only [roundMagnitude_eq, increment, Bool.not_false, Bool.true_and]
   split
   · push_cast
-    linarith
+    exact hhi.le
   · simp only [decide_eq_true_eq, not_lt] at *
-    linarith
+    simp_all
 
 /-- Upward rounding is an upper enclosure for either sign. -/
 theorem le_roundSigned_up (s : Bool) {x : ℚ} (hx : 0 ≤ x) :
@@ -190,7 +190,7 @@ sign. -/
 theorem le_roundAt_up (s : Bool) {x : ℚ} (hx : 0 ≤ x) (q : Int) :
     (if s then -x else x) ≤
       (if s then -1 else 1) * (up.roundAt s x q : ℚ) * (10 : ℚ) ^ q := by
-  have hu : 0 < (10 : ℚ) ^ q := zpow_pos (by norm_num) _
+  have hu : 0 < (10 : ℚ) ^ q := zpow_pos (by decide) _
   have hs := mul_le_mul_of_nonneg_right
     (le_roundSigned_up s (div_nonneg hx hu.le)) hu.le
   rwa [signed_div_mul s x hu.ne', roundSigned_mul] at hs
@@ -200,7 +200,7 @@ sign. -/
 theorem roundAt_down_le (s : Bool) {x : ℚ} (hx : 0 ≤ x) (q : Int) :
     (if s then -1 else 1) * (down.roundAt s x q : ℚ) * (10 : ℚ) ^ q ≤
       (if s then -x else x) := by
-  have hu : 0 < (10 : ℚ) ^ q := zpow_pos (by norm_num) _
+  have hu : 0 < (10 : ℚ) ^ q := zpow_pos (by decide) _
   have hs := mul_le_mul_of_nonneg_right
     (roundSigned_down_le s (div_nonneg hx hu.le)) hu.le
   rwa [signed_div_mul s x hu.ne', roundSigned_mul] at hs
@@ -213,7 +213,7 @@ private theorem roundMagnitude_midpoint (mode : RoundingMode) (s : Bool) (n : Na
   have hf : ⌊(n : ℚ) + 1 / 2⌋₊ = n := by
     apply (Nat.floor_eq_iff (by positivity)).mpr
     constructor <;> linarith
-  have hr : (n : ℚ) + 1 / 2 - n = 1 / 2 := by ring
+  have hr : (n : ℚ) + 1 / 2 - n = 1 / 2 := add_sub_cancel_left _ _
   simp only [roundMagnitude_eq, hf, hr]
 
 /-- At an exact midpoint, nearest-even chooses the even adjacent coefficient. -/
@@ -250,7 +250,7 @@ theorem roundMagnitude_scaled_error_le_half (mode : RoundingMode)
 theorem roundAt_error_lt_one (mode : RoundingMode) (s : Bool)
     {x : ℚ} (hx : 0 ≤ x) (q : Int) :
     |(mode.roundAt s x q : ℚ) * (10 : ℚ) ^ q - x| < (10 : ℚ) ^ q := by
-  have hu : 0 < (10 : ℚ) ^ q := zpow_pos (by norm_num) q
+  have hu : 0 < (10 : ℚ) ^ q := zpow_pos (by decide) q
   rw [roundAt, abs_natCast_mul_sub _ hu]
   exact (mul_lt_mul_of_pos_right (mode.roundMagnitude_error_lt_one s (div_nonneg hx hu.le))
     hu).trans_eq (one_mul _)
@@ -260,7 +260,7 @@ theorem roundAt_error_le_half (mode : RoundingMode)
     (hm : mode = .nearest ∨ mode = .nearestAway) (s : Bool)
     {x : ℚ} (hx : 0 ≤ x) (q : Int) :
     |(mode.roundAt s x q : ℚ) * (10 : ℚ) ^ q - x| ≤ (10 : ℚ) ^ q / 2 :=
-  mode.roundMagnitude_scaled_error_le_half hm s hx (zpow_pos (by norm_num) q)
+  mode.roundMagnitude_scaled_error_le_half hm s hx (zpow_pos (by decide) q)
 
 /-- A finite decimal remains exact on every finer decimal grid. -/
 theorem roundAt_exact (mode : RoundingMode) (s : Bool) (c : Nat) {q r : Int} (h : r ≤ q) :
@@ -268,7 +268,7 @@ theorem roundAt_exact (mode : RoundingMode) (s : Bool) (c : Nat) {q r : Int} (h 
   have hv : (c : ℚ) * (10 : ℚ) ^ q / (10 : ℚ) ^ r =
       ((c * 10 ^ (q - r).toNat : Nat) : ℚ) := by
     rw [← Arithmetic.finer_grid_value c q r h, mul_div_assoc,
-      div_self (zpow_pos (by norm_num) r).ne', mul_one]
+      div_self (zpow_pos (by decide) r).ne', mul_one]
   simp only [roundAt, hv, roundMagnitude_natCast]
 
 /-- Exact grid refinement preserves value in all five modes. -/

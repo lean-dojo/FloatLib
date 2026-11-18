@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -26,29 +26,29 @@ open FloatLib.Floats.Formats.BinaryInterchange
 
 namespace FloatLibTests.Oracle.Reductions
 
-private inductive Operation where
+inductive Operation where
   | sum
   | dot
 
-private structure ExactCase where
+structure ExactCase where
   name : String
   operation : Operation
   left : Array FloatLib.Numerics.Dyadic
   right : Array FloatLib.Numerics.Dyadic := #[]
 
-private def Operation.label : Operation → String
+def Operation.label : Operation → String
   | .sum => "sum"
   | .dot => "dot"
 
-private def dyadicDescription (value : FloatLib.Numerics.Dyadic) : String :=
+def dyadicDescription (value : FloatLib.Numerics.Dyadic) : String :=
   s!"(negative={value.negative}, significand={value.significand}, exponent={value.exponent})"
 
-private def dyadic
+def dyadic
     (negative : Bool) (significand : Nat) (exponent : Int) :
     FloatLib.Numerics.Dyadic :=
   { negative, significand, exponent }
 
-private def sourceFormat (destination : FloatFormat) : FloatFormat :=
+def sourceFormat (destination : FloatFormat) : FloatFormat :=
   FloatFormat.ieee (destination.expWidth + 1) (destination.fracWidth + 3)
     (by
       have := destination.expWidth_ge_two
@@ -57,13 +57,13 @@ private def sourceFormat (destination : FloatFormat) : FloatFormat :=
       have := destination.fracWidth_pos
       omega)
 
-private def maxFiniteDyadic (format : FloatFormat) : FloatLib.Numerics.Dyadic :=
+def maxFiniteDyadic (format : FloatFormat) : FloatLib.Numerics.Dyadic :=
   dyadic false
     (2 ^ (format.fracWidth + 1) - 1)
     (Int.ofNat (FloatFormat.Encoding.maxFiniteExponent .ieee format.expWidth) -
       Int.ofNat format.exponentBias - Int.ofNat format.fracWidth)
 
-private def deterministicTerms
+def deterministicTerms
     (format : FloatFormat) (salt : Nat) :
     Array FloatLib.Numerics.Dyadic :=
   (List.range 16).toArray.map fun index =>
@@ -72,7 +72,7 @@ private def deterministicTerms
       (2 ^ format.fracWidth + fraction)
       (-Int.ofNat format.fracWidth + Int.ofNat (index % 5) - 2)
 
-private def cases (format : FloatFormat) : Array ExactCase :=
+def cases (format : FloatFormat) : Array ExactCase :=
   let one := dyadic false 1 0
   let negativeOne := dyadic true 1 0
   let two := dyadic false 1 1
@@ -254,7 +254,7 @@ private def cases (format : FloatFormat) : Array ExactCase :=
     }
   ]
 
-private def decodeFinite {format : FloatFormat}
+def decodeFinite {format : FloatFormat}
     (value : Model format) : IO FloatLib.Numerics.Dyadic :=
   match Model.toDyadic? value with
   | some exact => pure exact
@@ -262,7 +262,7 @@ private def decodeFinite {format : FloatFormat}
       throw <| IO.userError
         s!"internal reduction-vector input is exceptional: bits={value.toNatBits}"
 
-private def encodeExact (destination : FloatFormat)
+def encodeExact (destination : FloatFormat)
     (values : Array FloatLib.Numerics.Dyadic) :
     IO (Array (Model (sourceFormat destination)) ×
       Array FloatLib.Numerics.Dyadic) := do
@@ -279,9 +279,9 @@ private def encodeExact (destination : FloatFormat)
           s!"intended={dyadicDescription intended}, actual={dyadicDescription actual}"
   pure (encoded, decoded)
 
-private def resultFields {format : FloatFormat}
+def resultFields {format : FloatFormat}
     (value : Model format) : IO (Array String) := do
-  if Model.isInf value then
+  if Model.isInfinite value then
     pure #["infinity", toString (Model.signBit value).toNat, "0", "0",
       toString value.toNatBits]
   else
@@ -289,11 +289,11 @@ private def resultFields {format : FloatFormat}
     pure #["finite", toString exact.negative.toNat, toString exact.significand,
       toString exact.exponent, toString value.toNatBits]
 
-private def inputFields (values : Array FloatLib.Numerics.Dyadic) : Array String :=
+def inputFields (values : Array FloatLib.Numerics.Dyadic) : Array String :=
   values.flatMap fun value =>
     #[toString value.negative.toNat, toString value.significand, toString value.exponent]
 
-private def emitCase (destination : FloatFormat)
+def emitCase (destination : FloatFormat)
     (test : ExactCase) (mode : Model.IEEERoundingMode) (modeLabel : String) :
     IO Unit := do
   let (left, leftExact) ← encodeExact destination test.left
@@ -328,7 +328,7 @@ private def emitCase (destination : FloatFormat)
     ] ++ valueFields ++ statusFields ++ inputFields leftExact ++ inputFields rightExact
   IO.println <| String.intercalate "\t" fields.toList
 
-private def emitFormat (format : FloatFormat) : IO Unit := do
+def emitFormat (format : FloatFormat) : IO Unit := do
   for test in cases format do
     for mode in Model.IEEERoundingMode.all do
       emitCase format test mode mode.name

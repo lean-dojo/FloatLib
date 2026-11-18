@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Boundary.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Runtime
-public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 
 /-!
 # Two-limb posit arithmetic runtime

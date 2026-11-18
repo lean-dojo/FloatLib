@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Elementary.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
-public import Mathlib.Analysis.Complex.Exponential
 public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 
 /-!
@@ -31,13 +30,13 @@ open RationalInterval
 theorem cast_expTaylor (x : ℚ) (n : Nat) :
     (expTaylor x n : ℝ) =
       ∑ i ∈ Finset.range n, (x : ℝ) ^ i / (i.factorial : ℝ) := by
-  simp [expTaylor]
+  simp [expTaylor_def]
 
 /-- The rational error radius is the real Taylor remainder estimate. -/
 theorem cast_expRadius (x : ℚ) (n : Nat) :
     (expRadius x n : ℝ) =
       |(x : ℝ)| ^ n * ((n + 1 : Nat) : ℝ) / ((n.factorial : ℝ) * n) := by
-  simp [expRadius]
+  simp [expRadius_def]
 
 /-- The executable exponential polynomial satisfies its computed absolute-error bound. -/
 theorem abs_exp_sub_expTaylor_le (x : ℚ) (degree : Nat) (hx : |x| ≤ 1) :
@@ -90,20 +89,20 @@ theorem contains_exp (x : ℚ) (degree : Nat) :
     (abs_div_expScale_lt_one x).le
   have hresult := contains_squareRepeat hsmall (Real.exp_pos _).le (expScale x)
   have hrestore := exp_reduced_pow x
-  simpa only [exp, hrestore] using hresult
+  simpa only [exp_def, hrestore] using hresult
 
 /-- The rational logarithm polynomial denotes the real Taylor sum. -/
 theorem cast_logOneSubTaylor (x : ℚ) (n : Nat) :
     (logOneSubTaylor x n : ℝ) =
       ∑ i ∈ Finset.range n, (x : ℝ) ^ (i + 1) / ((i + 1 : Nat) : ℝ) := by
-  simp [logOneSubTaylor]
+  simp [logOneSubTaylor_def]
 
 /-- The executable logarithm polynomial satisfies its computed absolute-error bound. -/
 theorem abs_log_add_logOneSubTaylor_le (x : ℚ) (degree : Nat) (hx : |x| < 1) :
     |Real.log (1 - (x : ℝ)) + (logOneSubTaylor x degree : ℝ)| ≤
       (logOneSubRadius x degree : ℝ) := by
   have hreal : |(x : ℝ)| < 1 := by exact_mod_cast hx
-  simpa [cast_logOneSubTaylor, logOneSubRadius, add_comm] using
+  simpa [cast_logOneSubTaylor, logOneSubRadius_def, add_comm] using
     Real.abs_log_sub_add_sum_range_le hreal degree
 
 /-- Taylor truncation encloses `log (1 - x)` when `|x| < 1`. -/
@@ -115,7 +114,7 @@ theorem contains_logOneSub (x : ℚ) (degree : Nat) (hx : |x| < 1) :
 /-- The logarithm change of variable maps a positive input into `(-1, 1)`. -/
 theorem abs_log_argument_lt_one (x : ℚ) (hx : 0 < x) :
     |(x - 1) / (x + 1)| < 1 := by
-  have hden : 0 < x + 1 := by linarith
+  have hden : 0 < x + 1 := by positivity
   rw [abs_lt]
   constructor
   · apply (lt_div_iff₀ hden).mpr
@@ -129,7 +128,6 @@ theorem log_argument_identity (x : ℚ) (hx : 0 < x) :
       Real.log (1 - (((x - 1) / (x + 1) : ℚ) : ℝ)) = Real.log (x : ℝ) := by
   let t : ℚ := (x - 1) / (x + 1)
   have ht : |t| < 1 := abs_log_argument_lt_one x hx
-  have hreal : 0 < (x : ℝ) := by exact_mod_cast hx
   have htReal : |(t : ℝ)| < 1 := by exact_mod_cast ht
   have hplus : 0 < 1 + (t : ℝ) := by linarith [(abs_lt.mp htReal).1]
   have hminus : 0 < 1 - (t : ℝ) := by linarith [(abs_lt.mp htReal).2]
@@ -149,20 +147,22 @@ theorem contains_logSeries (x : ℚ) (degree : Nat) (hx : 0 < x) :
   have hfirst := contains_logOneSub (-t) degree (by simpa using ht)
   have hsecond := contains_logOneSub t degree ht
   have hresult := contains_sub hfirst hsecond
-  simpa only [logSeries, t, Rat.cast_neg, sub_neg_eq_add, log_argument_identity x hx] using hresult
+  simpa only [logSeries_def, t, Rat.cast_neg, sub_neg_eq_add, log_argument_identity x hx] using
+    hresult
 
 /-- Removing the computed power of two puts an argument at least one into `[1, 2)`. -/
 theorem div_logScale_bounds (x : ℚ) (hx : 1 ≤ x) :
     1 ≤ x / 2 ^ logScale x ∧ x / 2 ^ logScale x < 2 := by
+  rw [logScale_def]
   have hfloor : (Nat.floor x) ≠ 0 := Nat.ne_of_gt (Nat.floor_pos.mpr hx)
-  have hpower : (2 : ℚ) ^ logScale x ≤ x := by
+  have hpower : (2 : ℚ) ^ (Nat.floor x).log2 ≤ x := by
     calc
       _ ≤ (Nat.floor x : ℚ) := by exact_mod_cast Nat.log2_self_le hfloor
-      _ ≤ x := Nat.floor_le (by linarith)
-  have hnext : x < (2 : ℚ) ^ (logScale x + 1) := by
+      _ ≤ x := Nat.floor_le (by positivity)
+  have hnext : x < (2 : ℚ) ^ ((Nat.floor x).log2 + 1) := by
     calc
       x < (Nat.floor x : ℚ) + 1 := Nat.lt_floor_add_one x
-      _ ≤ (2 : ℚ) ^ (logScale x + 1) := by
+      _ ≤ (2 : ℚ) ^ ((Nat.floor x).log2 + 1) := by
         exact_mod_cast Nat.succ_le_of_lt (Nat.lt_log2_self (n := Nat.floor x))
   constructor
   · exact (one_le_div (by positivity)).mpr hpower
@@ -176,7 +176,7 @@ theorem log_reduced_argument_bounds (x : ℚ) (hx : 1 ≤ x) :
       (reduced - 1) / (reduced + 1) < 1 / 3 := by
   dsimp only
   obtain ⟨hlower, hupper⟩ := div_logScale_bounds x hx
-  have hden : 0 < x / 2 ^ logScale x + 1 := by linarith
+  have hden : 0 < x / 2 ^ logScale x + 1 := by positivity
   constructor
   · exact div_nonneg (by linarith) hden.le
   · apply (div_lt_iff₀ hden).mpr
@@ -189,22 +189,22 @@ theorem log_reduction_identity (x : ℚ) (hx : 0 < x) :
   have hreal : 0 < (x : ℝ) := by exact_mod_cast hx
   push_cast
   rw [Real.log_div hreal.ne' (by positivity), Real.log_pow]
-  ring
+  exact sub_add_cancel (Real.log ↑x) (↑(logScale x) * Real.log 2)
 
 /-- Binary argument reduction and reconstruction preserve logarithm containment. -/
 theorem contains_logLarge (x : ℚ) (degree : Nat) (hx : 0 < x) :
     (logLarge x degree).Contains (Real.log (x : ℝ)) := by
   have hfirst := contains_logSeries (x / 2 ^ logScale x) degree (by positivity)
   have hsecond := contains_scaleNonnegative
-    (contains_logSeries 2 degree (by norm_num))
+    (contains_logSeries 2 degree (by decide))
     (factor := (logScale x : ℚ)) (by positivity)
-  simpa only [logLarge, Rat.cast_natCast, Rat.cast_ofNat, log_reduction_identity x hx] using
+  simpa only [logLarge_def, Rat.cast_natCast, Rat.cast_ofNat, log_reduction_identity x hx] using
     contains_add hfirst hsecond
 
 /-- The reduced rational algorithm encloses the exact logarithm of every positive argument. -/
 theorem contains_log (x : ℚ) (degree : Nat) (hx : 0 < x) :
     (log x degree).Contains (Real.log (x : ℝ)) := by
-  unfold log
+  rw [log_def]
   split
   · have h := contains_neg (contains_logLarge x⁻¹ degree (inv_pos.mpr hx))
     simpa only [Rat.cast_inv, Real.log_inv, neg_neg] using h

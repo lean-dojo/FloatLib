@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -42,10 +42,10 @@ the distinctions that `ℝ` necessarily forgets.
   match toDyadic? x with
   | some value => .finite value
   | none =>
-      if isInf x then
+      if isInfinite x then
         .infinity (signBit x)
       else
-        .nan (signBit x) (isSNaN x) (fracField x)
+        .nan (signBit x) (isSignaling x) (fracField x)
 
 /-- A successful dyadic decoding determines the exact finite value. -/
 @[simp] theorem exactValue_eq_finite_of_toDyadic?_eq_some

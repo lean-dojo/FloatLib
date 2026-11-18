@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Quantization.Spec
+public import Mathlib.Algebra.Order.Group.MinMax
 public import Mathlib.Order.Interval.Set.ProjIcc
 
 /-!
@@ -50,6 +51,25 @@ theorem clamp_le_upper {α : Type} [LinearOrder α]
     {lower upper value : α} (hendpoints : lower ≤ upper) :
     clamp lower upper value ≤ upper := by
   exact max_le hendpoints (min_le_left _ _)
+
+/-- Saturation cannot increase the distance between two values. -/
+theorem abs_clamp_sub_clamp_le {α : Type} [AddCommGroup α] [LinearOrder α]
+    [IsOrderedAddMonoid α] (lower upper x y : α) :
+    |clamp lower upper x - clamp lower upper y| ≤ |x - y| := by
+  have hmax := abs_max_sub_max_le_max lower (min upper x) lower (min upper y)
+  have hmin := abs_min_sub_min_le_max upper x upper y
+  simp only [sub_self, abs_zero,
+    max_eq_right (abs_nonneg (min upper x - min upper y))] at hmax
+  simp only [sub_self, abs_zero, max_eq_right (abs_nonneg (x - y))] at hmin
+  exact hmax.trans hmin
+
+/-- A rounded-and-saturated value has the original error plus the source's clipping error. -/
+theorem abs_clamp_sub_le {α : Type} [AddCommGroup α] [LinearOrder α]
+    [IsOrderedAddMonoid α] (lower upper rounded exact : α) :
+    |clamp lower upper rounded - exact| ≤
+      |rounded - exact| + |clamp lower upper exact - exact| :=
+  (abs_sub_le (clamp lower upper rounded) (clamp lower upper exact) exact).trans
+    (add_le_add (abs_clamp_sub_clamp_le lower upper rounded exact) le_rfl)
 
 /--
 Require exact representation of `clamp lower upper input`.

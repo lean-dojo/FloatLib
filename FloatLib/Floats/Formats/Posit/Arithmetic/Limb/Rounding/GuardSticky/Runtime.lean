@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Runtime
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 
 /-!

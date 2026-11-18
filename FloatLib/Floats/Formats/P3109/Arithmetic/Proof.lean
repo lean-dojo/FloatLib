@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Exact.ExtendedRat.Algebra
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Proof
-public import Mathlib.Basic.Real.Basic
 
 /-!
 # Mathematical semantics of P3109 rational arithmetic
@@ -17,97 +17,13 @@ On finite values, P3109 arithmetic is exact rational arithmetic, and embedding t
 the reals preserves the complete expression. The algebraic results here describe arithmetic
 before any rounding. Then the decoding theorems connect each public executable operation to one
 report projection of that exact result.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.3 and 4.10.3–4.10.7.
 -/
 
 @[expose] public section
 
 open FloatLib.Numerics
-
-namespace FloatLib.Floats.Formats.P3109.Arithmetic
-
-/-- Exact closed addition is commutative, including exceptional operands. -/
-theorem add_comm (left right : NumericalValue Rat) :
-    add left right = add right left := by
-  cases left <;> cases right <;> simp [add, _root_.add_comm]
-  rename_i left right
-  cases left <;> cases right <;> rfl
-
-/-- Exact closed multiplication is commutative, including zero times infinity. -/
-theorem mul_comm (left right : NumericalValue Rat) :
-    mul left right = mul right left := by
-  cases left <;> cases right <;> simp [mul, _root_.mul_comm]
-  rename_i left right
-  cases left <;> cases right <;> rfl
-
-/-- Exact closed addition is associative, and opposite infinities stay indeterminate. -/
-theorem add_assoc (left middle right : NumericalValue Rat) :
-    add (add left middle) right = add left (add middle right) := by
-  cases left <;> cases middle <;> cases right <;>
-    (repeat' cases_type Bool) <;> simp [add, nan, _root_.add_assoc]
-
-/-- Subtracting a finite datum from itself gives the unique exact zero. -/
-@[simp] theorem sub_self (value : Rat) :
-    sub (.finite value) (.finite value) = .finite 0 := by
-  simp [sub, add, neg]
-
-/-- Zero denominators are NaN, even for infinite numerators. -/
-@[simp] theorem div_zero (value : NumericalValue Rat) :
-    div value (.finite 0) = nan := by
-  cases value <;> simp [div]
-
-/-- Every finite numerator divided by either infinity gives the unique zero. -/
-@[simp] theorem div_infinity (value : Rat) (negative : Bool) :
-    div (.finite value) (.infinity negative) = .finite 0 :=
-  rfl
-
-/-- Finite nonzero division cancels before any destination rounding. -/
-theorem div_mul_cancel (left right : Rat) (hright : right ≠ 0) :
-    mul (div (.finite left) (.finite right)) (.finite right) = .finite left := by
-  simp [div, mul, hright]
-
-/-- Finite fused multiply-add retains the whole rational expression. -/
-@[simp] theorem fma_finite (left right addend : Rat) :
-    fma (.finite left) (.finite right) (.finite addend) =
-      .finite (left * right + addend) :=
-  rfl
-
-/-- Fused add-add is independent of the grouping of the exact additions. -/
-theorem faa_eq_add_add (left middle right : NumericalValue Rat) :
-    faa left middle right = add left (add middle right) :=
-  add_assoc left middle right
-
-/-- Rational addition embeds as addition in the reals. -/
-theorem add_finite_real (left right : Rat) :
-    (add (.finite left) (.finite right)).map (fun value : Rat => (value : Real)) =
-      .finite ((left : Real) + (right : Real)) := by
-  simp [add, NumericalValue.map]
-
-/-- Rational subtraction embeds as subtraction in the reals. -/
-theorem sub_finite_real (left right : Rat) :
-    (sub (.finite left) (.finite right)).map (fun value : Rat => (value : Real)) =
-      .finite ((left : Real) - (right : Real)) := by
-  simp [sub, add, neg, NumericalValue.map, sub_eq_add_neg]
-
-/-- Rational multiplication embeds as multiplication in the reals. -/
-theorem mul_finite_real (left right : Rat) :
-    (mul (.finite left) (.finite right)).map (fun value : Rat => (value : Real)) =
-      .finite ((left : Real) * (right : Real)) := by
-  simp [mul, NumericalValue.map]
-
-/-- Nonzero rational division embeds as division in the reals. -/
-theorem div_finite_real (left right : Rat) (hright : right ≠ 0) :
-    (div (.finite left) (.finite right)).map (fun value : Rat => (value : Real)) =
-      .finite ((left : Real) / (right : Real)) := by
-  simp [div, NumericalValue.map, hright]
-
-/-- FMA computes the real expression with no rounded intermediate product. -/
-theorem fma_finite_real (left right addend : Rat) :
-    (fma (.finite left) (.finite right) (.finite addend)).map
-        (fun value : Rat => (value : Real)) =
-      .finite ((left : Real) * (right : Real) + (addend : Real)) := by
-  simp [NumericalValue.map]
-
-end FloatLib.Floats.Formats.P3109.Arithmetic
 
 namespace FloatLib.Floats.ExecFloat.P3109
 
@@ -151,9 +67,9 @@ theorem decode_fma_finite {format : Format}
     (saturation : SaturationMode) (x y z : Rat)
     (hleft : left.toClosedRat = .finite x) (hright : right.toClosedRat = .finite y)
     (haddend : addend.toClosedRat = .finite z) :
-    Format.SameDatum (decode (fma left right addend target mode saturation))
+    Format.SameDatum (decode (FMA left right addend target mode saturation))
       (target.projectRatValue { rounding := mode, saturation } (.finite (x * y + z))) := by
-  simpa [fma, hleft, hright, haddend] using
-    decode_ternary Arithmetic.fma left right addend target mode saturation
+  simpa [FMA, hleft, hright, haddend] using
+    decode_ternary Arithmetic.FMA left right addend target mode saturation
 
 end FloatLib.Floats.ExecFloat.P3109

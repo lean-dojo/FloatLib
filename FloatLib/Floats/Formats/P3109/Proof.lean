@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -68,7 +68,7 @@ theorem exponentBits_pos (format : Format) :
   cases hs : format.signedness with
   | signed =>
       have hprecision := format.precision_lt_bitWidth_of_signed hs
-      simp [exponentBits, hs]
+      simp only [exponentBits, hs, tsub_pos_iff_lt, gt_iff_lt]
       omega
   | unsigned =>
       simp [exponentBits, hs]
@@ -145,7 +145,7 @@ theorem nanBits_pos (format : Format) :
       simpa [nanBits, hs] using format.signBoundary_pos
   | unsigned =>
       have hmodulus := format.two_lt_modulus
-      simp [nanBits, hs]
+      simp only [nanBits, hs, tsub_pos_iff_lt, gt_iff_lt]
       omega
 
 /-- `positiveInfinityBits` is nonzero for every descriptor. -/
@@ -154,18 +154,18 @@ theorem positiveInfinityBits_pos (format : Format) :
   cases hs : format.signedness with
   | signed =>
       have hboundary := format.one_lt_signBoundary
-      simp [positiveInfinityBits, hs]
+      simp only [positiveInfinityBits, hs, tsub_pos_iff_lt, gt_iff_lt]
       omega
   | unsigned =>
       have hmodulus := format.two_lt_modulus
-      simp [positiveInfinityBits, hs]
+      simp only [positiveInfinityBits, hs, tsub_pos_iff_lt, gt_iff_lt]
       omega
 
 /-- `negativeInfinityBits` is nonzero for every descriptor. -/
 theorem negativeInfinityBits_pos (format : Format) :
     0 < format.negativeInfinityBits := by
   have hmodulus := format.two_lt_modulus
-  simp [negativeInfinityBits]
+  simp only [negativeInfinityBits, tsub_pos_iff_lt, gt_iff_lt]
   omega
 
 /-- P3109's NaN code fits in the declared code space. -/
@@ -177,7 +177,7 @@ theorem nanBits_lt_modulus (format : Format) :
   | unsigned =>
       have hmodulus : 0 < format.modulus := by
         exact Nat.two_pow_pos format.bitWidth
-      simp [nanBits, hs]
+      simp only [nanBits, hs, tsub_lt_self_iff, zero_lt_one, and_true, gt_iff_lt]
       omega
 
 /-- `positiveInfinityBits` fits in the declared code space for every descriptor. -/
@@ -186,11 +186,11 @@ theorem positiveInfinityBits_lt_modulus (format : Format) :
   cases hs : format.signedness with
   | signed =>
       have hboundary := format.signBoundary_lt_modulus
-      simp [positiveInfinityBits, hs]
+      simp only [positiveInfinityBits, hs, gt_iff_lt]
       omega
   | unsigned =>
       have hmodulus := format.two_lt_modulus
-      simp [positiveInfinityBits, hs]
+      simp only [positiveInfinityBits, hs, tsub_lt_self_iff, Nat.ofNat_pos, and_true, gt_iff_lt]
       omega
 
 /-- `negativeInfinityBits` fits in the declared code space for every descriptor. -/
@@ -364,9 +364,6 @@ theorem decodePositiveFinite_toRat_add_mul
       (trailing + biasedExponent * 2 ^ format.trailingBits) % 2 ^ format.trailingBits =
         trailing := by
     rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt htrailing]
-  have hne : trailing + biasedExponent * 2 ^ format.trailingBits ≠ 0 := by
-    have := Nat.mul_pos (Nat.pos_of_ne_zero hbiased) hunit
-    omega
   rw [format.decodePositiveFinite_of_biasedExponent_ne_zero _
     (by rw [hdiv]; exact hbiased), Dyadic.toRat_mk_false, hdiv, hmod]
   rfl
@@ -415,15 +412,15 @@ theorem significand_eq_zero_iff_of_decode_eq_finite (format : Format)
     value.significand = 0 ↔ code.toNat = 0 := by
   unfold decode decodeNat at hdecode
   cases hs : format.signedness <;> cases hd : format.domain <;> simp only [hs, hd] at hdecode <;>
-    split_ifs at hdecode <;> cases hdecode <;> simp [Numerics.Dyadic.neg] <;> omega
+    split_ifs at hdecode <;> cases hdecode <;>
+      simp only [Numerics.Dyadic.neg, decodePositiveFinite_negative, Bool.not_false,
+      decodePositiveFinite_significand_eq_zero_iff] <;> omega
 
 /-- Extended P3109 formats decode the P3109-specified positive-infinity code. -/
 theorem decode_positiveInfinityBits
     (format : Format) (extended : format.domain = .extended) :
     format.decode (BitVec.ofNat format.bitWidth format.positiveInfinityBits) =
       .infinity false := by
-  have hboundary := format.one_lt_signBoundary
-  have hmodulus := format.two_lt_modulus
   rw [format.decode_ofNat_of_lt_modulus format.positiveInfinityBits_lt_modulus]
   cases hs : format.signedness with
   | signed =>
@@ -454,7 +451,7 @@ private theorem eq_of_decodeNat_eq_finite (format : Format) {bits : Nat} {exact 
         (format.decodePositiveFinite (bits - format.signBoundary)).neg
       else format.decodePositiveFinite bits := by
   unfold decodeNat at h
-  split at h <;> rename_i hs hd <;> simp only [hs, true_and, reduceCtorEq, false_and,
+  split at h <;> rename_i hs _ <;> simp only [hs, true_and, reduceCtorEq, false_and,
     ite_false] <;> split_ifs at h <;> simp_all
 
 end Format
@@ -557,7 +554,8 @@ theorem decode_of_ofFiniteFields?_eq_some
       decode value = .finite
         (if negative then
           (format.decodePositiveFinite (biasedExponent * 2 ^ format.trailingBits + trailing)).neg
-        else format.decodePositiveFinite (biasedExponent * 2 ^ format.trailingBits + trailing)) := by
+        else format.decodePositiveFinite (biasedExponent * 2 ^ format.trailingBits +
+          trailing)) := by
   unfold ofFiniteFields? at success
   split at success
   · contradiction
@@ -572,7 +570,8 @@ theorem decode_of_ofFiniteFields?_eq_some
   · contradiction
   rename_i hfields
   refine ⟨hfields.1, hfields.2, ?_⟩
-  generalize hmagnitude : biasedExponent * 2 ^ format.trailingBits + trailing = magnitude at success ⊢
+  generalize hmagnitude :
+    biasedExponent * 2 ^ format.trailingBits + trailing = magnitude at success ⊢
   have hlt : magnitude < 2 ^ format.exponentBits * 2 ^ format.trailingBits :=
     calc magnitude = biasedExponent * 2 ^ format.trailingBits + trailing := hmagnitude.symm
       _ < biasedExponent * 2 ^ format.trailingBits + 2 ^ format.trailingBits :=

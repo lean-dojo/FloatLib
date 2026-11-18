@@ -97,7 +97,7 @@ def onnx_values(name: str) -> list[ExactValue]:
 
     data_types = {
         "e2m1": TensorProto.FLOAT4E2M1,
-        "e4m3fn": TensorProto.FLOAT8E4M3FN,
+        "e4m3": TensorProto.FLOAT8E4M3FN,
         "e4m3fnuz": TensorProto.FLOAT8E4M3FNUZ,
         "e5m2": TensorProto.FLOAT8E5M2,
         "e5m2fnuz": TensorProto.FLOAT8E5M2FNUZ,
@@ -122,7 +122,7 @@ def onnx_values(name: str) -> list[ExactValue]:
 def compare_onnx(emitter: Path) -> tuple[int, int, int]:
     formats = {
         name: onnx_values(name)
-        for name in ("e2m1", "e4m3fn", "e4m3fnuz", "e5m2", "e5m2fnuz", "e8m0")
+        for name in ("e2m1", "e4m3", "e4m3fnuz", "e5m2", "e5m2fnuz", "e8m0")
     }
     cases = 0
     mismatches = 0

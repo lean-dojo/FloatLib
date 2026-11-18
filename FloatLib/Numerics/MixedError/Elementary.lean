@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,12 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.MixedError.Basic
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+
+import FloatLib.Numerics.ErrorBound.Algebra
+import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 
 /-!
 # Mixed error of exponentials and logarithms
@@ -39,6 +42,14 @@ satisfies it with the unit roundoff and the underflow allowance of its format.
 
 namespace FloatLib.Numerics
 
+/-- `exp x - 1 - x` is nonnegative. -/
+theorem exp_sub_one_sub_nonneg (x : ℝ) : 0 ≤ Real.exp x - 1 - x :=
+  sub_nonneg.mpr (le_sub_iff_add_le.mpr (Real.add_one_le_exp x))
+
+/-- `exp x - 1 - x` is positive away from zero. -/
+theorem exp_sub_one_sub_pos {x : ℝ} (hx : x ≠ 0) : 0 < Real.exp x - 1 - x :=
+  sub_pos.mpr (lt_sub_iff_add_lt.mpr (Real.add_one_lt_exp hx))
+
 /--
 The exponential turns the distance between its arguments into a relative error:
 `|exp x - exp x₀| ≤ (exp |x - x₀| - 1) * exp x₀`.
@@ -50,8 +61,8 @@ theorem abs_exp_sub_exp_le (x x₀ : ℝ) :
   rw [hexp, ← mul_sub_one, abs_mul, abs_of_pos (Real.exp_pos x₀), mul_comm]
   gcongr
   rcases le_total 0 (x - x₀) with h | h
-  · rw [abs_of_nonneg h, abs_of_nonneg (by linarith [Real.add_one_le_exp (x - x₀)])]
-  · rw [abs_of_nonpos h, abs_of_nonpos (by linarith [Real.exp_le_one_iff.2 h])]
+  · rw [abs_of_nonneg h, abs_of_nonneg (sub_nonneg.mpr (Real.one_le_exp_iff.mpr h))]
+  · rw [abs_of_nonpos h, abs_of_nonpos (sub_nonpos.mpr (Real.exp_le_one_iff.mpr h))]
     linarith [Real.add_one_le_exp (x - x₀), Real.add_one_le_exp (-(x - x₀))]
 
 /-- The logarithm is `1 / m`-Lipschitz on `[m, ∞)` for `m > 0`. -/
@@ -63,11 +74,11 @@ theorem abs_log_sub_log_le {x y m : ℝ} (hm : 0 < m) (hx : m ≤ x) (hy : m ≤
   constructor
   · calc Real.log x - Real.log y = Real.log (x / y) := (Real.log_div hx0.ne' hy0.ne').symm
       _ ≤ x / y - 1 := Real.log_le_sub_one_of_pos (div_pos hx0 hy0)
-      _ = (x - y) / y := by field_simp
+      _ = (x - y) / y := div_sub_one hy0.ne'
       _ ≤ |x - y| / m := div_le_div₀ (abs_nonneg _) (le_abs_self _) hm hy
   · calc Real.log y - Real.log x = Real.log (y / x) := (Real.log_div hy0.ne' hx0.ne').symm
       _ ≤ y / x - 1 := Real.log_le_sub_one_of_pos (div_pos hy0 hx0)
-      _ = (y - x) / x := by field_simp
+      _ = (y - x) / x := div_sub_one hx0.ne'
       _ ≤ |x - y| / m := div_le_div₀ (abs_nonneg _) (abs_sub_comm x y ▸ le_abs_self _) hm hx
 
 /-- `|exp t - 1| ≤ exp |t| - 1`. -/
@@ -81,14 +92,22 @@ theorem abs_log_div_le {x x₀ ρ : ℝ} (hx₀ : x₀ ≠ 0) (hρ : ρ < 1) (h 
   have hq : |x / x₀ - 1| ≤ ρ := by
     rw [← div_le_iff₀ (abs_pos.mpr hx₀), ← abs_div, sub_div, div_self hx₀] at h
     exact h
-  obtain ⟨lower, upper⟩ := abs_le.1 hq
-  have hpos : 0 < x / x₀ := by linarith
+  have hρ0 : 0 ≤ ρ := (abs_nonneg _).trans hq
+  obtain ⟨upper, lower⟩ := abs_sub_le_iff.1 hq
+  have hlo : 1 - ρ ≤ x / x₀ := sub_le_comm.mp lower
+  have hhi : x / x₀ ≤ 1 + ρ := sub_le_iff_le_add'.mp upper
+  have hm : 0 < 1 - ρ := sub_pos.mpr hρ
+  have hp : 0 < 1 + ρ := add_pos_of_pos_of_nonneg zero_lt_one hρ0
+  have hpos : 0 < x / x₀ := hm.trans_le hlo
   refine ⟨hpos, abs_le.2 ⟨?_, ?_⟩⟩
-  · rw [neg_neg]; exact Real.log_le_log (by linarith) (by linarith)
-  · calc Real.log (x / x₀) ≤ Real.log (1 + ρ) := Real.log_le_log hpos (by linarith)
+  · rw [neg_neg]
+    exact Real.log_le_log hm hlo
+  · calc Real.log (x / x₀) ≤ Real.log (1 + ρ) := Real.log_le_log hpos hhi
       _ ≤ -Real.log (1 - ρ) := by
-        rw [le_neg_iff_add_nonpos_right, ← Real.log_mul (by linarith) (by linarith)]
-        exact Real.log_nonpos (by nlinarith) (by nlinarith)
+        rw [le_neg_iff_add_nonpos_right, ← Real.log_mul hp.ne' hm.ne']
+        apply Real.log_nonpos (mul_pos hp hm).le
+        rw [← sq_sub_sq, one_pow]
+        exact sub_le_self _ (sq_nonneg _)
 
 namespace MixedError
 
@@ -100,10 +119,8 @@ The exponential of an argument with error `(r, a)` has the pure relative error
 -/
 theorem exp (h : MixedError x x₀ r a) :
     MixedError (Real.exp x) (Real.exp x₀) (Real.exp (r * |x₀| + a) - 1) 0 := by
-  have hr := h.r_nonneg
-  have ha := h.a_nonneg
-  refine ⟨by linarith [Real.add_one_le_exp (r * |x₀| + a), (by positivity : 0 ≤ r * |x₀| + a)],
-    le_rfl, ?_⟩
+  refine ⟨sub_nonneg.mpr (Real.one_le_exp_iff.mpr
+    (add_nonneg (mul_nonneg h.r_nonneg (abs_nonneg _)) h.a_nonneg)), le_rfl, ?_⟩
   rw [add_zero, abs_of_pos (Real.exp_pos x₀)]
   exact (abs_exp_sub_exp_le x x₀).trans (by gcongr; exact h.bound)
 
@@ -113,18 +130,10 @@ error `-log (1 - r)`.
 -/
 theorem log (h : MixedError x x₀ r 0) (hx₀ : 0 < x₀) (hr : r < 1) :
     MixedError (Real.log x) (Real.log x₀) 0 (-Real.log (1 - r)) := by
-  have hr0 := h.r_nonneg
-  have hb := abs_le.1 (by simpa [abs_of_pos hx₀] using h.bound : |x - x₀| ≤ r * x₀)
-  have hx : 0 < x := by nlinarith [mul_pos (sub_pos.2 hr) hx₀]
-  refine of_abs_sub_le ?_
-  rw [← Real.log_div hx.ne' hx₀.ne', abs_le, neg_neg]
-  constructor
-  · exact Real.log_le_log (by linarith) (by rw [le_div_iff₀ hx₀]; linarith)
-  · calc Real.log (x / x₀) ≤ Real.log (1 + r) :=
-          Real.log_le_log (div_pos hx hx₀) (by rw [div_le_iff₀ hx₀]; linarith)
-      _ ≤ -Real.log (1 - r) := by
-        rw [le_neg_iff_add_nonpos_right, ← Real.log_mul (by linarith) (by linarith)]
-        exact Real.log_nonpos (by nlinarith) (by nlinarith)
+  obtain ⟨_, hlog⟩ := abs_log_div_le hx₀.ne' hr (by simpa using h.bound)
+  have hx := h.pos_of_pos hr hx₀
+  apply of_abs_sub_le
+  rwa [Real.log_div hx.ne' hx₀.ne'] at hlog
 
 /--
 A function on `[0, ∞)` that vanishes at zero, is monotone with slope at most one, and satisfies
@@ -168,18 +177,20 @@ theorem log_one_add (h : MixedError x x₀ r a) (hx₀ : 0 ≤ x₀) (hx : 0 ≤
   · intro c t hc hc1 ht
     have := strictConcaveOn_log_Ioi.concaveOn.2 (Set.mem_Ioi.2 one_pos)
       (Set.mem_Ioi.2 (by linarith : (0 : ℝ) < 1 + t)) (by linarith : 0 ≤ 1 - c) hc
-      (by ring : 1 - c + c = 1)
+      (sub_add_cancel 1 c)
     simp only [smul_eq_mul, Real.log_one, mul_zero, zero_add, mul_one] at this
     calc c * Real.log (1 + t) ≤ Real.log (1 - c + c * (1 + t)) := this
       _ = Real.log (1 + c * t) := by ring_nf
   · intro s t hs hst
-    exact Real.log_le_log (by linarith) (by linarith)
+    exact Real.log_le_log (add_pos_of_pos_of_nonneg zero_lt_one hs)
+      (add_le_add le_rfl hst)
   · intro s t hs hst
-    rw [← Real.log_div (by linarith) (by linarith)]
+    rw [← Real.log_div (by linarith) (by positivity)]
     calc Real.log ((1 + t) / (1 + s)) ≤ (1 + t) / (1 + s) - 1 :=
-          Real.log_le_sub_one_of_pos (div_pos (by linarith) (by linarith))
-      _ = (t - s) / (1 + s) := by field_simp; ring
-      _ ≤ t - s := div_le_self (by linarith) (by linarith)
+          Real.log_le_sub_one_of_pos (div_pos (by linarith) (by positivity))
+      _ = (t - s) / (1 + s) := by
+        rw [div_sub_one (by positivity), add_sub_add_left_eq_sub]
+      _ ≤ t - s := div_le_self (sub_nonneg.mpr hst) (le_add_of_nonneg_right hs)
 
 /--
 Where `1 + x` and `1 + x₀` are at least `m > 0`, `log (1 + x)` turns the error of an argument of
@@ -200,21 +211,55 @@ theorem exp_sub_one (h : MixedError x x₀ r a) (hx₀ : x₀ ≤ 0) (hx : x ≤
     simpa only [neg_neg, neg_sub] using this.neg
   refine of_concave (f := fun t => 1 - Real.exp (-t)) (by simp) ?_ ?_ ?_ h.neg
     (neg_nonneg.2 hx₀) (neg_nonneg.2 hx)
-  · intro c t hc hc1 ht
+  · intro c t hc hc1 _
     have := convexOn_exp.2 (Set.mem_univ 0) (Set.mem_univ (-t)) (by linarith : 0 ≤ 1 - c) hc
-      (by ring : 1 - c + c = 1)
+      (sub_add_cancel 1 c)
     simp only [smul_eq_mul, mul_zero, zero_add, Real.exp_zero, mul_one, mul_neg] at this
     linarith
-  · intro s t hs hst
-    linarith [Real.exp_le_exp.2 (neg_le_neg hst)]
+  · intro s t _ hst
+    exact sub_le_sub_left (Real.exp_le_exp.2 (neg_le_neg hst)) 1
   · intro s t hs hst
     -- `exp (-s) - exp (-t) = exp (-s) * (1 - exp (-(t - s)))`, with both factors in `[0, 1]`.
     have hsplit : Real.exp (-t) = Real.exp (-s) * Real.exp (-(t - s)) := by
       rw [← Real.exp_add]
-      ring_nf
-    have hs1 : Real.exp (-s) ≤ 1 := Real.exp_le_one_iff.2 (by linarith)
-    have hd1 : Real.exp (-(t - s)) ≤ 1 := Real.exp_le_one_iff.2 (by linarith)
-    nlinarith [Real.add_one_le_exp (-(t - s)), mul_nonneg (sub_nonneg.2 hs1) (sub_nonneg.2 hd1)]
+      congr 1
+      abel
+    have hs1 : Real.exp (-s) ≤ 1 := Real.exp_le_one_iff.2 (neg_nonpos.mpr hs)
+    have hd1 : Real.exp (-(t - s)) ≤ 1 :=
+      Real.exp_le_one_iff.2 (neg_nonpos.mpr (sub_nonneg.mpr hst))
+    calc
+      _ = Real.exp (-s) * (1 - Real.exp (-(t - s))) := by
+        rw [sub_sub_sub_cancel_left, hsplit, mul_sub, mul_one]
+      _ ≤ 1 - Real.exp (-(t - s)) :=
+        mul_le_of_le_one_left (sub_nonneg.mpr hd1) hs1
+      _ ≤ t - s := sub_le_comm.mpr (Real.one_sub_le_exp_neg _)
+
+/-- `exp x - 1 - x` moves with its argument by at most `(exp (|x₀| + e) - 1) * e`, where
+`e = r * |x₀| + a` is the error of the argument: its derivative `exp t - 1` is at most
+`exp |t| - 1` in magnitude. For a small argument this is about `|x₀| * e`, so the relative error
+of the value, which is about `x₀ ^ 2 / 2`, is about twice that of the argument. -/
+theorem exp_sub_one_sub (h : MixedError x x₀ r a) :
+    MixedError (Real.exp x - 1 - x) (Real.exp x₀ - 1 - x₀) 0
+      ((Real.exp (|x₀| + (r * |x₀| + a)) - 1) * (r * |x₀| + a)) := by
+  have he : 0 ≤ r * |x₀| + a := add_nonneg (mul_nonneg h.r_nonneg (abs_nonneg _)) h.a_nonneg
+  have hderiv : ∀ t, HasDerivAt (fun t => Real.exp t - 1 - t) (Real.exp t - 1) t := fun t =>
+    ((Real.hasDerivAt_exp t).sub_const 1).sub (hasDerivAt_id t)
+  have hslope : ∀ t ∈ Set.uIcc x₀ x, ‖deriv (fun t => Real.exp t - 1 - t) t‖ ≤
+      Real.exp (|x₀| + (r * |x₀| + a)) - 1 := by
+    intro t ht
+    rw [(hderiv t).deriv, Real.norm_eq_abs]
+    have hnear : |t| ≤ |x₀| + (r * |x₀| + a) :=
+      (sub_le_iff_le_add'.mp (abs_sub_abs_le_abs_sub t x₀)).trans
+        (add_le_add_right ((Set.abs_sub_left_of_mem_uIcc ht).trans h.bound) _)
+    exact (abs_exp_sub_one_le_exp_abs_sub_one t).trans
+      (sub_le_sub_right (Real.exp_le_exp.mpr hnear) 1)
+  have hmean : |Real.exp x - 1 - x - (Real.exp x₀ - 1 - x₀)| ≤
+      (Real.exp (|x₀| + (r * |x₀| + a)) - 1) * |x - x₀| :=
+    Convex.norm_image_sub_le_of_norm_deriv_le
+      (fun t _ => (hderiv t).differentiableAt) hslope (convex_uIcc x₀ x) Set.left_mem_uIcc
+      Set.right_mem_uIcc
+  exact of_abs_sub_le (hmean.trans (mul_le_mul_of_nonneg_left h.bound
+    (sub_nonneg.mpr (Real.one_le_exp (add_nonneg (abs_nonneg _) he)))))
 
 /-- On `|x₀| ≤ c`, the product `|x₀| * exp x₀` is at most `(1 + c) * |exp x₀ - 1|`. -/
 private theorem abs_mul_exp_le (hc : |x₀| ≤ c) :
@@ -222,11 +267,11 @@ private theorem abs_mul_exp_le (hc : |x₀| ≤ c) :
   have hc0 : 0 ≤ c := (abs_nonneg _).trans hc
   have hexp := Real.exp_pos x₀
   rcases le_total 0 x₀ with hx₀ | hx₀
-  · have hone : 0 ≤ Real.exp x₀ - 1 := by linarith [Real.add_one_le_exp x₀]
+  · have hone := sub_nonneg.mpr (Real.one_le_exp_iff.mpr hx₀)
     rw [abs_of_nonneg hx₀] at hc ⊢
     rw [abs_of_nonneg hone]
     nlinarith [Real.add_one_le_exp x₀]
-  · have hone : Real.exp x₀ - 1 ≤ 0 := by linarith [Real.exp_le_one_iff.2 hx₀]
+  · have hone := sub_nonpos.mpr (Real.exp_le_one_iff.mpr hx₀)
     have hinv : Real.exp x₀ * Real.exp (-x₀) = 1 := by
       rw [← Real.exp_add, add_neg_cancel, Real.exp_zero]
     rw [abs_of_nonpos hx₀, abs_of_nonpos hone]
@@ -244,9 +289,10 @@ theorem exp_sub_one_of_abs_le (h : MixedError x x₀ r a) (hc : |x₀| ≤ c) :
   have hc0 : 0 ≤ c := (abs_nonneg _).trans hc
   have hE : r * |x₀| + a ≤ r * c + a := by gcongr
   have hgrowth : Real.exp (r * |x₀| + a) - 1 ≤ (r * |x₀| + a) * Real.exp (r * |x₀| + a) := by
-    have hinv : Real.exp (-(r * |x₀| + a)) * Real.exp (r * |x₀| + a) = 1 := by
-      rw [← Real.exp_add, neg_add_cancel, Real.exp_zero]
-    nlinarith [Real.add_one_le_exp (-(r * |x₀| + a)), Real.exp_pos (r * |x₀| + a)]
+    have h := mul_le_mul_of_nonneg_right
+      (Real.one_sub_le_exp_neg (r * |x₀| + a)) (Real.exp_nonneg (r * |x₀| + a))
+    rw [sub_mul, one_mul, ← Real.exp_add, neg_add_cancel, Real.exp_zero] at h
+    exact sub_le_comm.mp h
   refine ⟨by positivity, by positivity, ?_⟩
   rw [sub_sub_sub_cancel_right]
   calc |Real.exp x - Real.exp x₀|
@@ -255,7 +301,9 @@ theorem exp_sub_one_of_abs_le (h : MixedError x x₀ r a) (hc : |x₀| ≤ c) :
     _ ≤ (r * |x₀| + a) * Real.exp (r * c + a) * Real.exp x₀ := by
       gcongr ?_ * _
       exact hgrowth.trans (by gcongr)
-    _ = Real.exp (r * c + a) * (r * (|x₀| * Real.exp x₀) + a * Real.exp x₀) := by ring
+    _ = Real.exp (r * c + a) * (r * (|x₀| * Real.exp x₀) + a * Real.exp x₀) := by
+      rw [add_mul, add_mul, mul_add]
+      ac_rfl
     _ ≤ Real.exp (r * c + a) * (r * ((1 + c) * |Real.exp x₀ - 1|) + a * Real.exp c) := by
       gcongr Real.exp (r * c + a) * (r * ?_ + a * ?_)
       · exact abs_mul_exp_le hc
@@ -264,7 +312,7 @@ theorem exp_sub_one_of_abs_le (h : MixedError x x₀ r a) (hc : |x₀| ≤ c) :
         Real.exp (c + r * c + a) * a := by
       rw [show Real.exp (c + r * c + a) = Real.exp c * Real.exp (r * c + a) by
         rw [← Real.exp_add, add_assoc]]
-      ring
+      rw [mul_add]; ac_rfl
 
 /-! ### Composition with an implementation contract -/
 
@@ -274,7 +322,7 @@ relative error `(1 + u) * exp (r * |x₀| + a) - 1` and absolute error `η` at t
 -/
 theorem trans_exp (hf : MixedError y (Real.exp x) u η) (h : MixedError x x₀ r a) :
     MixedError y (Real.exp x₀) ((1 + u) * Real.exp (r * |x₀| + a) - 1) η :=
-  (hf.trans h.exp).mono (le_of_eq (by ring)) (le_of_eq (by ring))
+  (hf.trans h.exp).mono (le_of_eq (by ring)) (le_of_eq (by simp))
 
 /--
 A logarithm whose result `y` has mixed error `(u, η)` at a computed argument with pure relative
@@ -284,7 +332,7 @@ error `r < 1` from a positive exact argument has relative error `u` and absolute
 theorem trans_log (hf : MixedError y (Real.log x) u η) (h : MixedError x x₀ r 0)
     (hx₀ : 0 < x₀) (hr : r < 1) :
     MixedError y (Real.log x₀) u ((1 + u) * -Real.log (1 - r) + η) := by
-  simpa only [mul_zero, zero_add] using hf.trans (h.log hx₀ hr)
+  exact hf.trans_of_abs_sub_le (by simpa only [zero_mul, zero_add] using (h.log hx₀ hr).bound)
 
 /--
 A `log (1 + x)` implementation with mixed error `(u, η)` at a computed argument with error
@@ -314,7 +362,8 @@ absolute error `(1 + u) * ((r * |x₀| + a) / m) + η` at the exact argument.
 theorem trans_log_one_add_of_le (hf : MixedError y (Real.log (1 + x)) u η)
     (h : MixedError x x₀ r a) (hm : 0 < m) (hx : m ≤ 1 + x) (hx₀ : m ≤ 1 + x₀) :
     MixedError y (Real.log (1 + x₀)) u ((1 + u) * ((r * |x₀| + a) / m) + η) := by
-  simpa only [mul_zero, zero_add] using hf.trans (h.log_one_add_of_le hm hx hx₀)
+  exact hf.trans_of_abs_sub_le (by
+    simpa only [zero_mul, zero_add] using (h.log_one_add_of_le hm hx hx₀).bound)
 
 /--
 An `exp x - 1` implementation with mixed error `(u, η)`, at a computed argument with error `(r, a)`
@@ -335,32 +384,23 @@ theorem rpow {b b₀ s e : ℝ} (h : MixedError x x₀ r a) (hb : MixedError b b
     (hsmall : r + a / x₀ < 1) :
     MixedError (x ^ b) (x₀ ^ b₀) (Real.exp (((1 + s) * |b₀| + e) * -Real.log (1 - (r + a / x₀)) +
       (s * |b₀| + e) * |Real.log x₀|) - 1) 0 := by
-  have hr := h.r_nonneg
-  have ha := h.a_nonneg
-  have hs := hb.r_nonneg
-  have he := hb.a_nonneg
-  have hdistance : |x - x₀| ≤ (r + a / x₀) * |x₀| := by
-    rw [abs_of_pos hx₀, add_mul, div_mul_cancel₀ _ hx₀.ne']
-    simpa [abs_of_pos hx₀] using h.bound
-  obtain ⟨hq, hlog⟩ := abs_log_div_le hx₀.ne' hsmall hdistance
-  have hx : 0 < x := by simpa [div_mul_cancel₀ _ hx₀.ne'] using mul_pos hq hx₀
-  have hexponent : |b| ≤ (1 + s) * |b₀| + e := by
-    linarith [abs_sub_abs_le_abs_sub b b₀, hb.bound]
+  have hrelative := h.relative_of_le_abs hx₀ (le_abs_self _)
+  obtain ⟨_, hlog⟩ := abs_log_div_le hx₀.ne' hsmall
+    (by simpa only [add_zero] using hrelative.bound)
+  have hx := hrelative.pos_of_pos hsmall hx₀
+  have hexponent := hb.abs_le
   have hpower : x ^ b = x₀ ^ b₀ *
       Real.exp (b * Real.log (x / x₀) + (b - b₀) * Real.log x₀) := by
     rw [Real.rpow_def_of_pos hx, Real.rpow_def_of_pos hx₀, ← Real.exp_add,
       Real.log_div hx.ne' hx₀.ne']
     ring_nf
   have hpos := Real.rpow_pos_of_pos hx₀ b₀
-  have hlog₀ : 0 ≤ -Real.log (1 - (r + a / x₀)) := (abs_nonneg _).trans hlog
   have hexp : |b * Real.log (x / x₀) + (b - b₀) * Real.log x₀| ≤
-      ((1 + s) * |b₀| + e) * -Real.log (1 - (r + a / x₀)) + (s * |b₀| + e) * |Real.log x₀| := by
-    calc _ ≤ |b| * |Real.log (x / x₀)| + |b - b₀| * |Real.log x₀| := by
-          rw [← abs_mul, ← abs_mul]; exact abs_add_le _ _
-      _ ≤ _ := by gcongr; exact hb.bound
+      ((1 + s) * |b₀| + e) * -Real.log (1 - (r + a / x₀)) + (s * |b₀| + e) * |Real.log x₀| :=
+    Backward.abs_add_le_add (Backward.abs_mul_le_mul hexponent hlog)
+      (Backward.abs_mul_le_mul hb.bound le_rfl)
   refine ⟨?_, le_rfl, ?_⟩
-  · linarith [Real.add_one_le_exp (((1 + s) * |b₀| + e) * -Real.log (1 - (r + a / x₀)) +
-      (s * |b₀| + e) * |Real.log x₀|), (abs_nonneg _).trans hexp]
+  · exact sub_nonneg.mpr (Real.one_le_exp_iff.mpr ((abs_nonneg _).trans hexp))
   · rw [add_zero, abs_of_pos hpos, hpower, ← mul_sub_one, abs_mul, abs_of_pos hpos, mul_comm]
     gcongr
     exact (abs_exp_sub_one_le_exp_abs_sub_one _).trans (by gcongr)
@@ -374,27 +414,24 @@ theorem rpow_const {b b₀ : ℝ} (h : MixedError x x₀ r a) (hb : MixedError b
     (hx₀ : x₀ ≠ 0) (hsmall : r + a / |x₀| < 1) :
     MixedError (x ^ b) (x₀ ^ b₀) (Real.exp (|b₀| * -Real.log (1 - (r + a / |x₀|))) - 1) 0 := by
   obtain rfl : b = b₀ := mixedError_zero_zero_iff.mp hb
-  have hr := h.r_nonneg
-  have ha := h.a_nonneg
-  have habs := abs_pos.mpr hx₀
-  have hdistance : |x - x₀| ≤ (r + a / |x₀|) * |x₀| := by
-    rw [add_mul, div_mul_cancel₀ _ habs.ne']; exact h.bound
-  obtain ⟨hq, hlog⟩ := abs_log_div_le hx₀ hsmall hdistance
+  have hrelative := h.relative_of_le_abs (abs_pos.mpr hx₀) le_rfl
+  obtain ⟨_, hlog⟩ := abs_log_div_le hx₀ hsmall
+    (by simpa only [add_zero] using hrelative.bound)
   have hpower : x ^ b = x₀ ^ b * Real.exp (b * Real.log (x / x₀)) := by
-    have hx : x = x₀ * (x / x₀) := by field_simp
     rcases lt_or_gt_of_ne hx₀ with hneg | hpos'
-    · have hxneg : x < 0 := by nlinarith
+    · have hxneg := hrelative.lt_zero_of_lt_zero hsmall hneg
       rw [Real.rpow_def_of_neg hxneg, Real.rpow_def_of_neg hneg, mul_right_comm, ← Real.exp_add,
         Real.log_div hxneg.ne hneg.ne]
-      congr 2; ring
-    · have hxpos : 0 < x := by nlinarith
+      congr 2
+      rw [mul_comm b, ← add_mul, add_sub_cancel]
+    · have hxpos := hrelative.pos_of_pos hsmall hpos'
       rw [Real.rpow_def_of_pos hxpos, Real.rpow_def_of_pos hpos', ← Real.exp_add,
         Real.log_div hxpos.ne' hpos'.ne']
-      congr 1; ring
+      congr 1
+      rw [mul_comm b, ← add_mul, add_sub_cancel]
   have hlog₀ : 0 ≤ -Real.log (1 - (r + a / |x₀|)) := (abs_nonneg _).trans hlog
   refine ⟨?_, le_rfl, ?_⟩
-  · linarith [Real.add_one_le_exp (|b| * -Real.log (1 - (r + a / |x₀|))),
-      mul_nonneg (abs_nonneg b) hlog₀]
+  · exact sub_nonneg.mpr (Real.one_le_exp_iff.mpr (mul_nonneg (abs_nonneg b) hlog₀))
   · rw [add_zero, hpower, ← mul_sub_one, abs_mul, mul_comm]
     gcongr
     refine (abs_exp_sub_one_le_exp_abs_sub_one _).trans ?_
@@ -402,5 +439,12 @@ theorem rpow_const {b b₀ : ℝ} (h : MixedError x x₀ r a) (hb : MixedError b
     gcongr
 
 end MixedError
+
+/-- `exp x - 1 - x` at a value within `A` of its reference `R` is within
+`(exp (|R| + A) - 1) * A` of its value at `R`: it moves by its derivative, and not by the
+changes of its three terms. -/
+theorem Backward.deviation_exp_sub_one_sub {x R A : ℝ} (hx : |x - R| ≤ A) :
+    |Real.exp x - 1 - x - (Real.exp R - 1 - R)| ≤ (Real.exp (|R| + A) - 1) * A := by
+  simpa using (MixedError.exp_sub_one_sub (MixedError.of_abs_sub_le hx)).bound
 
 end FloatLib.Numerics

@@ -1,0 +1,227 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Full.Subtraction.Proof
+
+/-!
+# Verified equal-exponent binary64 addition
+
+When two binary64 operands are normal and have the same sign and the same exponent, their addition
+never leaves `UInt64`, and their exact 54-bit significand sum is rounded once to nearest even and
+packed. Unequal exponents, opposite signs, subnormals, and overflow boundaries go to the generic
+finite kernel, and the outer operation dispatcher handles exceptional values.
+
+For subtraction, the dispatcher composes this adder with the signed Sterbenz backend. Same-sign
+nearby operands use exact native subtraction, opposite-sign operands reuse native addition, and
+every declined case falls back to the generic kernel.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64
+
+open FloatLib.Numerics.FixedWord
+
+private theorem packRoundedSum_eq_round
+    (sign : Bool) (exponent left right : UInt64)
+    (hexponent : 0 < exponent.toNat ∧ exponent.toNat < 2046)
+    (hleft :
+      2 ^ 52 ≤ left.toNat ∧ left.toNat < 2 ^ 53)
+    (hright :
+      2 ^ 52 ≤ right.toNat ∧ right.toNat < 2 ^ 53) :
+    let rounded := FloatLib.Numerics.FixedWord.roundShiftRightEven (left + right) 1
+    ofUInt64
+        (packFieldsWord sign (exponent + 1)
+          (rounded - 0x0010000000000000)) =
+      FiniteProductRound.round FloatFormat.binary64 sign
+        (left.toNat + right.toNat) (exponent.toNat + 1073) := by
+  dsimp only
+  have hsumUpper : left.toNat + right.toNat < 2 ^ 54 := by
+    norm_num at hleft hright ⊢
+    omega
+  have hsumFit : left.toNat + right.toNat < 2 ^ 64 :=
+    lt_trans hsumUpper (by norm_num)
+  have hsum :
+      (left + right).toNat = left.toNat + right.toNat :=
+    uint64_add_toNat_of_lt left right hsumFit
+  have hrounded :
+      (FloatLib.Numerics.FixedWord.roundShiftRightEven (left + right) 1).toNat =
+        Numerics.roundShiftRightEven (left.toNat + right.toNat) 1 := by
+    rw [FloatLib.Numerics.FixedWord.roundShiftRightEven_toNat, hsum]
+  have hroundedBounds :=
+    roundShiftRightEven_add_normalized_bounds 52
+      left.toNat right.toNat hleft hright
+  rw [← hrounded] at hroundedBounds
+  have hbaseLe :
+      (0x0010000000000000 : UInt64) ≤
+        FloatLib.Numerics.FixedWord.roundShiftRightEven (left + right) 1 := by
+    apply UInt64.le_iff_toNat_le.mpr
+    exact hroundedBounds.1
+  have hexponentWord :
+      exponent + 1 = UInt64.ofNat (exponent.toNat + 1) := by
+    simp
+  have hfractionWord :
+      FloatLib.Numerics.FixedWord.roundShiftRightEven (left + right) 1 -
+          0x0010000000000000 =
+        UInt64.ofNat
+          (Numerics.roundShiftRightEven (left.toNat + right.toNat) 1 - 2 ^ 52) := by
+    apply UInt64.toNat_inj.mp
+    rw [UInt64.toNat_sub_of_le _ _ hbaseLe, hrounded]
+    norm_num
+    exact (Nat.mod_eq_of_lt (by omega)).symm
+  rw [hexponentWord, hfractionWord, packFieldsWord_eq_ofNat]
+  symm
+  have hround :=
+    FiniteProductRound.round_normalized_sum
+      FloatFormat.binary64 sign exponent.toNat left.toNat right.toNat
+      hexponent.2 hleft hright
+  rw [show FloatFormat.binary64.bias +
+      FloatFormat.binary64.fracWidth - 2 = 1073 by decide] at hround
+  rw [show FloatFormat.binary64.fracWidth = 52 by decide] at hround
+  simpa [pow2_eq_two_pow] using hround
+
+/--
+Every accepted native equal-exponent addition agrees with the finite binary64 path
+`addFiniteComponents?`.
+
+Rejected values fall back to `addFiniteComponents?`, so this theorem is the trust boundary for the
+native specialization.
+-/
+theorem addNormalSameExponent_refines (x y result : Value)
+    (hfast : addNormalSameExponent? x y = some result) :
+    addFiniteComponents? x y = some result := by
+  unfold addNormalSameExponent? at hfast
+  dsimp only at hfast
+  set xBits := toUInt64 x with hxBits
+  set yBits := toUInt64 y with hyBits
+  set xExponent := expField xBits
+  set yExponent := expField yBits
+  set xSign := signBit xBits
+  set ySign := signBit yBits
+  set xFraction := fracField xBits
+  set yFraction := fracField yBits
+  set xMantissa := finiteMantissa xExponent xFraction
+  set yMantissa := finiteMantissa yExponent yFraction
+  set rounded :=
+    FloatLib.Numerics.FixedWord.roundShiftRightEven (xMantissa + yMantissa) 1
+  have hsign : xSign = ySign := by
+    by_contra hne
+    simp [hne] at hfast
+  have hxExponentZero : xExponent ≠ 0 := by
+    intro hzero
+    simp [hsign, hzero] at hfast
+  have hxExponentExceptional : xExponent ≠ 0x7ff := by
+    intro hexceptional
+    simp [hsign, hexceptional] at hfast
+  have hyExponentEq : yExponent = xExponent := by
+    by_contra hne
+    simp [hsign, hxExponentZero, hxExponentExceptional, hne] at hfast
+  have hoverflow : ¬0x7ff ≤ xExponent + 1 := by
+    intro hover
+    simp [hsign, hxExponentZero, hxExponentExceptional, hyExponentEq,
+      hover] at hfast
+  have hresult :
+      ofUInt64
+          (packFieldsWord xSign (xExponent + 1)
+            (rounded - 0x0010000000000000)) =
+        result := by
+    simpa [hsign, hxExponentZero, hxExponentExceptional, hyExponentEq,
+      hoverflow, xMantissa, yMantissa, xFraction, yFraction, rounded] using
+        hfast
+  have hyExponentZero : yExponent ≠ 0 := by
+    rw [hyExponentEq]
+    exact hxExponentZero
+  have hyExponentExceptional : yExponent ≠ 0x7ff := by
+    rw [hyExponentEq]
+    exact hxExponentExceptional
+  obtain ⟨hxNormalBounds, hxBounds⟩ :
+      (0 < xExponent.toNat ∧ xExponent.toNat < 2047) ∧
+        (2 ^ 52 ≤ xMantissa.toNat ∧ xMantissa.toNat < 2 ^ 53) :=
+    normalOperand_bounds x hxExponentZero hxExponentExceptional
+  have hyBounds : 2 ^ 52 ≤ yMantissa.toNat ∧ yMantissa.toNat < 2 ^ 53 :=
+    (normalOperand_bounds y hyExponentZero hyExponentExceptional).2
+  have hxExponentAdd :
+      (xExponent + 1).toNat = xExponent.toNat + 1 := by
+    apply uint64_add_toNat_of_lt
+    have hxLt : xExponent.toNat < 2 ^ 11 := by
+      simpa [xExponent, xBits, hxBits] using expField_lt x
+    change xExponent.toNat + 1 < 2 ^ 64
+    norm_num at hxLt
+    omega
+  have hnotOverflowNat : ¬2047 ≤ xExponent.toNat + 1 := by
+    intro h
+    apply hoverflow
+    apply UInt64.le_iff_toNat_le.mpr
+    rw [hxExponentAdd]
+    simpa using h
+  have hxExponentBounds :
+      0 < xExponent.toNat ∧ xExponent.toNat < 2046 := by
+    exact ⟨hxNormalBounds.1, by omega⟩
+  have hpack :=
+    packRoundedSum_eq_round xSign xExponent xMantissa yMantissa
+      hxExponentBounds hxBounds hyBounds
+  have hroundScale :
+      FiniteKernel.scale xExponent.toNat +
+          FiniteKernel.finiteScaleOffset FloatFormat.binary64 =
+        xExponent.toNat + 1073 := by
+    have hscale :
+        FiniteKernel.scale xExponent.toNat = xExponent.toNat - 1 := by
+      simp [FiniteKernel.scale, Nat.ne_of_gt hxExponentBounds.1]
+    rw [hscale, show
+      FiniteKernel.finiteScaleOffset FloatFormat.binary64 = 1074 by rfl]
+    omega
+  have hcomponents :
+      FiniteKernel.addComponents FloatFormat.binary64
+          { sign := xSign
+            exponent := xExponent.toNat
+            mantissa := xMantissa.toNat }
+          { sign := xSign
+            exponent := xExponent.toNat
+            mantissa := yMantissa.toNat } =
+        result := by
+    rw [FiniteKernel.addComponents_sameSign_sameExponent
+      FloatFormat.binary64 (by decide) xSign
+      xMantissa.toNat yMantissa.toNat xExponent.toNat]
+    rw [hroundScale]
+    calc
+      FiniteProductRound.round FloatFormat.binary64 xSign
+            (xMantissa.toNat + yMantissa.toNat)
+            (xExponent.toNat + 1073) =
+          ofUInt64
+            (packFieldsWord xSign (xExponent + 1)
+              (rounded - 0x0010000000000000)) := by
+        simpa [rounded] using hpack.symm
+      _ = result := hresult
+  unfold addFiniteComponents?
+  rw [decode_of_finiteExponent x hxExponentExceptional,
+    decode_of_finiteExponent y hyExponentExceptional]
+  simp only [Option.some.injEq]
+  simpa [xBits, yBits, xExponent, yExponent, xSign, ySign,
+    xFraction, yFraction, xMantissa, yMantissa, hxBits, hyBits,
+    hsign, hyExponentEq, FiniteKernel.Internal.addComponents_eq] using hcomponents
+
+/-- Native `addFinite?` is bit-for-bit equal to the exact finite implementation. -/
+theorem addFinite_eq_addFiniteComponents (x y : Value) :
+    addFinite? x y = addFiniteComponents? x y := by
+  unfold addFinite?
+  cases hfast : addNormalSameExponent? x y with
+  | none => rfl
+  | some result =>
+      rw [addNormalSameExponent_refines x y result hfast]
+
+/-- Native `subFinite?` is bit-for-bit equal to exact finite subtraction. -/
+theorem subFinite_eq_addFiniteComponents_negate (x y : Value) :
+    subFinite? x y = addFiniteComponents? x (negate y) := by
+  unfold subFinite?
+  cases hfast : subSignedSterbenz? x y with
+  | some result =>
+      exact (subSignedSterbenz_refines x y result hfast).symm
+  | none =>
+      exact addFinite_eq_addFiniteComponents x (negate y)
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64

@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Runtime
+public import FloatLib.Floats.Formats.Posit.Rounding.Proof
+
 import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
@@ -232,10 +233,6 @@ theorem minPositive_exponent_le_scale_of_not_special
             format.payloadBits := by
         rw [Model.trailingBits_eq] at hfraction
         omega
-      have hfieldsInt :
-          (value.regimeRunLength : Int) + 1 + value.fractionBits ≤
-            format.payloadBits := by
-        exact_mod_cast hfields
       simp only [Model.scale, Model.regimeValue, hbit,
         Bool.false_eq_true, ite_false, hstep, Int.ofNat_eq_natCast]
       omega
@@ -243,14 +240,6 @@ theorem minPositive_exponent_le_scale_of_not_special
       have hfields :
           value.regimeRunLength + value.fractionBits ≤ format.payloadBits :=
         Model.regimeRunLength_add_fractionBits_le_payload value
-      have hrunPositiveInt : (0 : Int) < value.regimeRunLength := by
-        exact_mod_cast hrunPositive
-      have hfieldsInt :
-          (value.regimeRunLength : Int) + value.fractionBits ≤
-            format.payloadBits := by
-        exact_mod_cast hfields
-      have hpayloadPosInt : (0 : Int) < format.payloadBits := by
-        exact_mod_cast hpayloadPos
       simp only [Model.scale, Model.regimeValue, hbit, ite_true,
         hstep, Int.ofNat_eq_natCast]
       omega
@@ -295,8 +284,6 @@ theorem chooseNearestCode_eq
       have hless : target.toRat < threshold.toRat :=
         (FloatLib.Numerics.Dyadic.compare_eq_lt_iff target threshold).mp
           hcomparison
-      have hnotGreater : ¬threshold.toRat < target.toRat :=
-        not_lt_of_ge hless.le
       simp [hless]
   | eq =>
       have hnotLess : ¬target.toRat < threshold.toRat := by
@@ -485,7 +472,7 @@ theorem ofNatBits_restoreSignCode
     Model.ofNatBits (format := format)
         (restoreSignCode format negative positiveCode) =
       if negative then
-        Model.neg (Model.ofNatBits (format := format) positiveCode)
+        Model.negate (Model.ofNatBits (format := format) positiveCode)
       else
         Model.ofNatBits (format := format) positiveCode := by
   unfold restoreSignCode
@@ -494,9 +481,9 @@ theorem ofNatBits_restoreSignCode
     · rename_i hzero
       have hcode : positiveCode = 0 := beq_iff_eq.mp hzero
       subst positiveCode
-      change Model.zero format = Model.neg (Model.zero format)
+      change Model.zero format = Model.negate (Model.zero format)
       rw [Model.neg_zero]
-    · unfold Model.neg
+    · unfold Model.negate
       rw [Model.toNatBits_ofNatBits_of_lt]
       exact lt_trans hpositive format.signMaskNat_lt_modulus
   · rfl

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -140,7 +140,7 @@ A positive representable value is an integer number of ULPs, and its ULP is the 
 exponent strictly below its magnitude.
 -/
 private theorem exists_int_mul_ulp_of_pos {x : ℝ} (hx : 0 < x)
-    (hfmt : genericFormat β fexp x) :
+    (hfmt : GenericRepresentable β fexp x) :
     ∃ n : ℤ, x = (n : ℝ) * bpow β (fexp (magnitude β x)) ∧
       ulp β fexp x = bpow β (fexp (magnitude β x)) ∧
       fexp (magnitude β x) < magnitude β x := by
@@ -169,7 +169,7 @@ private theorem two_mul_bpow_sub_one_le (e : ℤ) : 2 * bpow β (e - 1) ≤ bpow
 
 /-- A positive representable value's successor does not exceed its magnitude boundary. -/
 theorem succ_le_magnitude_bpow_of_pos {x : ℝ} (hx : 0 < x)
-    (hfmt : genericFormat β fexp x) :
+    (hfmt : GenericRepresentable β fexp x) :
     succ (β := β) (fexp := fexp) x ≤ bpow β (magnitude β x) := by
   let ex := magnitude β x
   let e := fexp ex
@@ -188,24 +188,24 @@ theorem succ_le_magnitude_bpow_of_pos {x : ℝ} (hx : 0 < x)
 
 /-- The successor of a positive representable value is representable. -/
 private theorem generic_format_succ_of_pos {x : ℝ} (hx : 0 < x)
-    (hfmt : genericFormat β fexp x) :
-    genericFormat β fexp (succ (β := β) (fexp := fexp) x) := by
+    (hfmt : GenericRepresentable β fexp x) :
+    GenericRepresentable β fexp (succ (β := β) (fexp := fexp) x) := by
   let ex := magnitude β x
   let e := fexp ex
   obtain ⟨n, hxn, hulp, hlarge⟩ :
       ∃ n : ℤ, x = (n : ℝ) * bpow β e ∧ ulp β fexp x = bpow β e ∧ e < ex :=
     exists_int_mul_ulp_of_pos hx hfmt
   let y := succ (β := β) (fexp := fexp) x
-  change genericFormat β fexp y
+  change GenericRepresentable β fexp y
   have hy : y = ((n + 1 : ℤ) : ℝ) * bpow β e := by
     dsimp [y]
     rw [succ_eq_of_nonneg hx.le, hulp, hxn]
     push_cast
-    ring
+    rw [add_mul]; ac_rfl
   have hyUpper : y ≤ bpow β ex := succ_le_magnitude_bpow_of_pos hx hfmt
   rcases hyUpper.eq_or_lt with heq | hlt
   · rw [heq]
-    exact generic_format_bpow ex
+    exact genericRepresentable_bpow ex
       (((ValidExp.flocq_valid (fexp := fexp) ex).1 hlarge))
   · have hxy : x ≤ y := by
       simpa [y] using le_succ (β := β) (fexp := fexp) x
@@ -213,16 +213,16 @@ private theorem generic_format_succ_of_pos {x : ℝ} (hx : 0 < x)
       have hxLower : bpow β (ex - 1) ≤ x := by
         simpa [ex, abs_of_pos hx] using (magnitude_spec β x hx.ne').1
       exact hxLower.trans hxy
-    exact generic_format_of_mul_bpow_of_mem_bin (n + 1) hy hyLower hlt
+    exact genericRepresentable_of_mul_bpow_of_mem_bin (n + 1) hy hyLower hlt
 
 /--
 Subtracting one ULP from a positive representable value that is not a radix boundary remains
 representable in the same magnitude bin.
 -/
 private theorem generic_format_sub_ulp_of_pos {x : ℝ} (hx : 0 < x)
-    (hfmt : genericFormat β fexp x)
+    (hfmt : GenericRepresentable β fexp x)
     (hboundary : x ≠ bpow β (magnitude β x - 1)) :
-    genericFormat β fexp (x - ulp β fexp x) := by
+    GenericRepresentable β fexp (x - ulp β fexp x) := by
   let ex := magnitude β x
   let e := fexp ex
   obtain ⟨n, hxn, hulp, hlarge⟩ :
@@ -235,12 +235,12 @@ private theorem generic_format_sub_ulp_of_pos {x : ℝ} (hx : 0 < x)
       simpa [ex, abs_of_pos hx] using (magnitude_spec β x hx0).1
     exact lt_of_le_of_ne hle (Ne.symm (by simpa [ex] using hboundary))
   let y := x - ulp β fexp x
-  change genericFormat β fexp y
+  change GenericRepresentable β fexp y
   have hy : y = ((n - 1 : ℤ) : ℝ) * bpow β e := by
     dsimp [y]
     rw [hulp, hxn]
     push_cast
-    ring
+    rw [sub_mul]; ac_rfl
   have hyLower : bpow β (ex - 1) ≤ y := by
     have hgap := int_mul_add_le_of_lt (bpow.pos β e)
       (show (N : ℝ) * bpow β e < (n : ℝ) * bpow β e by rw [← hN, ← hxn]; exact hxLower)
@@ -251,48 +251,48 @@ private theorem generic_format_sub_ulp_of_pos {x : ℝ} (hx : 0 < x)
       dsimp [y]
       exact sub_lt_self x (ulp.pos_of_ne_zero β fexp x hx0)
     exact hyltx.trans (by simpa [ex, abs_of_pos hx] using (magnitude_spec β x hx0).2)
-  exact generic_format_of_mul_bpow_of_mem_bin (n - 1) hy hyLower hyUpper
+  exact genericRepresentable_of_mul_bpow_of_mem_bin (n - 1) hy hyLower hyUpper
 
 /--
 Subtracting one ULP from a representable value that is not a positive radix boundary remains
 representable. Positive values stay in their magnitude bin. For zero and negative values the
 difference is the negated successor of `-x`.
 -/
-theorem generic_format_sub_ulp {x : ℝ} (hfmt : genericFormat β fexp x)
+theorem genericRepresentable_sub_ulp {x : ℝ} (hfmt : GenericRepresentable β fexp x)
     (hboundary : x ≠ bpow β (magnitude β x - 1)) :
-    genericFormat β fexp (x - ulp β fexp x) := by
+    GenericRepresentable β fexp (x - ulp β fexp x) := by
   rcases lt_trichotomy x 0 with hx | hx | hx
   · have hneg : x - ulp β fexp x = -succ (β := β) (fexp := fexp) (-x) := by
       rw [succ_eq_of_nonneg (neg_nonneg.mpr hx.le), ulp_neg]
       ring
     rw [hneg]
-    exact generic_format_neg _
-      (generic_format_succ_of_pos (neg_pos.mpr hx) (generic_format_neg x hfmt))
+    exact genericRepresentable_neg _
+      (generic_format_succ_of_pos (neg_pos.mpr hx) (genericRepresentable_neg x hfmt))
   · subst x
-    simpa using generic_format_neg _ (generic_format_ulp_zero (β := β) (fexp := fexp))
+    simpa using genericRepresentable_neg _ (genericRepresentable_ulp_zero (β := β) (fexp := fexp))
   · exact generic_format_sub_ulp_of_pos hx hfmt hboundary
 
 /-- Subtracting the preceding-bin spacing from a representable radix power is representable. -/
-theorem generic_format_bpow_sub_prev_spacing (k : ℤ)
-    (hfmt : genericFormat β fexp (bpow β k)) :
-    genericFormat β fexp (bpow β k - bpow β (fexp k)) := by
+theorem genericRepresentable_bpow_sub_prev_spacing (k : ℤ)
+    (hfmt : GenericRepresentable β fexp (bpow β k)) :
+    GenericRepresentable β fexp (bpow β k - bpow β (fexp k)) := by
   let ef := fexp k
   have hef : ef ≤ k := by
     simpa [ef] using fexp_le_of_generic_bpow (β := β) (fexp := fexp) k hfmt
   rcases hef.eq_or_lt with heq | hlt
-  · have hy0 : bpow β k - bpow β ef = 0 := by rw [heq]; ring
+  · have hy0 : bpow β k - bpow β ef = 0 := by simp [heq]
     rw [hy0]
-    exact generic_format_zero
+    exact genericRepresentable_zero
   · let d := k - ef
-    have hd1 : 1 ≤ d := by simp [d]; linarith
-    have hdsub : 0 ≤ d - 1 := by linarith
+    have hd1 : 1 ≤ d := by omega
+    have hdsub : 0 ≤ d - 1 := Int.sub_nonneg_of_le hd1
     have hpowOne : (1 : ℝ) ≤ bpow β (d - 1) := by
       change (1 : ℝ) ≤ β.toReal ^ (d - 1)
       exact one_le_zpow₀ (le_of_lt (Numerics.Radix.gt_one β)) hdsub
     have hgap : bpow β (d - 1) ≤ bpow β d - 1 := by
       linarith [two_mul_bpow_sub_one_le (β := β) d]
     let y := bpow β k - bpow β ef
-    change genericFormat β fexp y
+    change GenericRepresentable β fexp y
     have hyUpper : y < bpow β k := by
       dsimp [y]
       exact sub_lt_self _ (bpow.pos β ef)
@@ -304,7 +304,7 @@ theorem generic_format_bpow_sub_prev_spacing (k : ℤ)
           rw [← bpow.add_exp]
           congr 1
           dsimp [d]
-          ring
+          omega
         _ ≤ (bpow β d - 1) * bpow β ef :=
           mul_le_mul_of_nonneg_right hgap hb
         _ = y := by
@@ -317,49 +317,49 @@ theorem generic_format_bpow_sub_prev_spacing (k : ℤ)
       dsimp [y]
       rw [hN]
       push_cast
-      ring
-    exact generic_format_of_mul_bpow_of_mem_bin (N - 1) hy hyLower hyUpper
+      rw [sub_mul]; ac_rfl
+    exact genericRepresentable_of_mul_bpow_of_mem_bin (N - 1) hy hyLower hyUpper
 
 /-- The predecessor formula yields a representable value for every representable input. -/
-theorem generic_format_predPos {x : ℝ} (hfmt : genericFormat β fexp x) :
-    genericFormat β fexp (predPos (β := β) (fexp := fexp) x) := by
+theorem genericRepresentable_predPos {x : ℝ} (hfmt : GenericRepresentable β fexp x) :
+    GenericRepresentable β fexp (predPos (β := β) (fexp := fexp) x) := by
   unfold predPos
   split_ifs with hboundary
   · let k := magnitude β x - 1
-    have hpowFmt : genericFormat β fexp (bpow β k) := by
+    have hpowFmt : GenericRepresentable β fexp (bpow β k) := by
       rw [← hboundary]
       exact hfmt
     rw [hboundary]
-    simpa [k] using generic_format_bpow_sub_prev_spacing
+    simpa [k] using genericRepresentable_bpow_sub_prev_spacing
       (β := β) (fexp := fexp) k hpowFmt
-  · exact generic_format_sub_ulp hfmt hboundary
+  · exact genericRepresentable_sub_ulp hfmt hboundary
 
 /-- The successor of every representable value is representable. -/
-theorem generic_format_succ {x : ℝ} (hfmt : genericFormat β fexp x) :
-    genericFormat β fexp (succ (β := β) (fexp := fexp) x) := by
+theorem genericRepresentable_succ {x : ℝ} (hfmt : GenericRepresentable β fexp x) :
+    GenericRepresentable β fexp (succ (β := β) (fexp := fexp) x) := by
   rcases lt_trichotomy x 0 with hx | hx | hx
-  · have hnegfmt : genericFormat β fexp (-x) := generic_format_neg x hfmt
-    have hpred := generic_format_predPos (β := β) (fexp := fexp) hnegfmt
+  · have hnegfmt : GenericRepresentable β fexp (-x) := genericRepresentable_neg x hfmt
+    have hpred := genericRepresentable_predPos (β := β) (fexp := fexp) hnegfmt
     have hsucc : succ (β := β) (fexp := fexp) x =
         -predPos (β := β) (fexp := fexp) (-x) := by
       simp [succ, not_le.mpr hx]
     rw [hsucc]
-    exact generic_format_neg _ hpred
+    exact genericRepresentable_neg _ hpred
   · subst x
     rw [succ_zero]
-    exact generic_format_ulp_zero
+    exact genericRepresentable_ulp_zero
   · exact generic_format_succ_of_pos hx hfmt
 
 /-- The predecessor of every representable value is representable. -/
-theorem generic_format_pred {x : ℝ} (hfmt : genericFormat β fexp x) :
-    genericFormat β fexp (pred (β := β) (fexp := fexp) x) := by
+theorem genericRepresentable_pred {x : ℝ} (hfmt : GenericRepresentable β fexp x) :
+    GenericRepresentable β fexp (pred (β := β) (fexp := fexp) x) := by
   rw [pred]
-  apply generic_format_neg
-  exact generic_format_succ (generic_format_neg x hfmt)
+  apply genericRepresentable_neg
+  exact genericRepresentable_succ (genericRepresentable_neg x hfmt)
 
 /-- No representable value lies strictly between a positive grid point and its successor. -/
 private theorem succ_le_of_lt_pos {x y : ℝ} (hx : 0 < x)
-    (hxfmt : genericFormat β fexp x) (hyfmt : genericFormat β fexp y)
+    (hxfmt : GenericRepresentable β fexp x) (hyfmt : GenericRepresentable β fexp y)
     (hxy : x < y) : succ (β := β) (fexp := fexp) x ≤ y := by
   have hy : 0 < y := hx.trans hxy
   let ex := magnitude β x
@@ -370,7 +370,7 @@ private theorem succ_le_of_lt_pos {x y : ℝ} (hx : 0 < x)
     have hpowers : bpow β (ex - 1) < bpow β ey := by
       exact hxLower.trans (by simpa [abs_of_pos hx, abs_of_pos hy] using hxy.le) |>.trans_lt hyUpper
     have : ex - 1 < ey := (bpow_lt_bpow_iff β _ _).mp hpowers
-    linarith
+    omega
   rcases hmag.eq_or_lt with heq | hlt
   · let e := fexp ex
     have hcexpX : cexp β fexp x = e := by simp [cexp, ex, e]
@@ -389,13 +389,13 @@ private theorem succ_le_of_lt_pos {x y : ℝ} (hx : 0 < x)
   · have hsuccBound := succ_le_magnitude_bpow_of_pos
       (β := β) (fexp := fexp) hx hxfmt
     have hboundary : bpow β ex ≤ bpow β (ey - 1) :=
-      (bpow_le_bpow_iff β _ _).2 (by linarith)
+      (bpow_le_bpow_iff β _ _).2 (by omega)
     have hyLower : bpow β (ey - 1) ≤ y := by
       simpa [ey, abs_of_pos hy] using (magnitude_spec β y hy.ne').1
     exact hsuccBound.trans (hboundary.trans hyLower)
 
 /-- The zero ULP is no larger than any positive representable value. -/
-private theorem ulp_zero_le_of_pos {y : ℝ} (hy : 0 < y) (hyfmt : genericFormat β fexp y) :
+private theorem ulp_zero_le_of_pos {y : ℝ} (hy : 0 < y) (hyfmt : GenericRepresentable β fexp y) :
     ulp β fexp 0 ≤ y := by
   rw [ulp.zero]
   cases hopt : negligibleExp fexp with
@@ -412,11 +412,11 @@ private theorem ulp_zero_le_of_pos {y : ℝ} (hy : 0 < y) (hyfmt : genericFormat
         exact hle.trans (by simpa [abs_of_pos hy] using bpow_magnitude_sub_one_le β y hy.ne')
 
 /-- The predecessor formula of a positive representable value is nonnegative. -/
-private theorem predPos_nonneg {a : ℝ} (ha : 0 < a) (hfmt : genericFormat β fexp a) :
+private theorem predPos_nonneg {a : ℝ} (ha : 0 < a) (hfmt : GenericRepresentable β fexp a) :
     0 ≤ predPos (β := β) (fexp := fexp) a := by
   unfold predPos
   split_ifs with hboundary
-  · have hpow : genericFormat β fexp (bpow β (magnitude β a - 1)) := by
+  · have hpow : GenericRepresentable β fexp (bpow β (magnitude β a - 1)) := by
       rw [← hboundary]
       exact hfmt
     have hle := fexp_le_of_generic_bpow (β := β) (fexp := fexp) _ hpow
@@ -430,7 +430,7 @@ private theorem predPos_nonneg {a : ℝ} (ha : 0 < a) (hfmt : genericFormat β f
 
 /-- A positive representable value below a representable `a` is at most `predPos a`. -/
 private theorem le_predPos_of_lt {a b : ℝ} (hb : 0 < b) (hba : b < a)
-    (hafmt : genericFormat β fexp a) (hbfmt : genericFormat β fexp b) :
+    (hafmt : GenericRepresentable β fexp a) (hbfmt : GenericRepresentable β fexp b) :
     b ≤ predPos (β := β) (fexp := fexp) a := by
   have ha : 0 < a := hb.trans hba
   have hmag : magnitude β b ≤ magnitude β a := magnitude_mono_pos β hb hba.le
@@ -441,7 +441,7 @@ private theorem le_predPos_of_lt {a b : ℝ} (hb : 0 < b) (hba : b < a)
   unfold predPos
   split_ifs with hboundary
   · set e := magnitude β a - 1 with he
-    have hpow : genericFormat β fexp (bpow β e) := by
+    have hpow : GenericRepresentable β fexp (bpow β e) := by
       rw [← hboundary]
       exact hafmt
     have hfe : fexp e ≤ e := fexp_le_of_generic_bpow (β := β) (fexp := fexp) e hpow
@@ -503,18 +503,18 @@ No representable value lies strictly between a representable value and its succe
 Flocq's `succ_le_lt`: below zero the successor is the negated predecessor of `-x`.
 -/
 theorem succ_le_of_lt {x y : ℝ}
-    (hxfmt : genericFormat β fexp x) (hyfmt : genericFormat β fexp y)
+    (hxfmt : GenericRepresentable β fexp x) (hyfmt : GenericRepresentable β fexp y)
     (hxy : x < y) : succ (β := β) (fexp := fexp) x ≤ y := by
   rcases lt_trichotomy x 0 with hx | rfl | hx
   · have hsucc : succ (β := β) (fexp := fexp) x =
         -predPos (β := β) (fexp := fexp) (-x) := by
       simp [succ, not_le.mpr hx]
-    have hafmt := generic_format_neg x hxfmt
+    have hafmt := genericRepresentable_neg x hxfmt
     rw [hsucc, neg_le]
     rcases le_or_gt 0 y with hy | hy
     · exact (neg_nonpos.mpr hy).trans (predPos_nonneg (neg_pos.mpr hx) hafmt)
     · exact le_predPos_of_lt (neg_pos.mpr hy) (neg_lt_neg hxy) hafmt
-        (generic_format_neg y hyfmt)
+        (genericRepresentable_neg y hyfmt)
   · rw [succ_zero]
     exact ulp_zero_le_of_pos hxy hyfmt
   · exact succ_le_of_lt_pos hx hxfmt hyfmt hxy

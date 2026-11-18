@@ -45,6 +45,27 @@ rounding and exceptional values included, and the
 a kernel to execution. If your change is a speedup, include measurements of the public
 calls it affects (the [benchmark guide](benchmarks/README.md) has the commands).
 
+### Linters
+
+We build FloatLib with every linter that Lean, Batteries and Mathlib offer a library, and a
+change is ready when none of them has anything to say. That is Mathlib's standard set and,
+beyond it: a docstring on every definition, constructor and structure field, no name that
+nothing refers to (also inside tactic proofs), no redundant `private` or `public`, no `omit`
+(declare a `variable` where the theorems that need it begin), no `admit`, no file over 1,500
+lines, and Lean's extra linters. The list is `linterOptions` in [lakefile.lean](lakefile.lean).
+The tests use the same list without the four linters a test module cannot meet, as
+[tests/lakefile.lean](tests/lakefile.lean) explains. To check your change, run
+
+```bash
+bash tests/checks/linters.sh
+```
+
+It builds the library and the tests and fails on any warning, then runs `lake lint`, which
+applies the Batteries environment linters to every module and checks that every theorem has a
+docstring. `bash tests/verify.sh` runs it too. If a linter is wrong about a declaration, switch
+it off for that declaration only (`set_option linter.… false in`, `@[nolint …]`) and say why in
+a comment on the line above.
+
 ## Sending a change
 
 Keep the change focused. Tell us the problem, what you changed, and which checks you ran, and

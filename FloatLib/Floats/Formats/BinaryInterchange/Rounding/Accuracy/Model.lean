@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Magnitude
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 
 /-!
 # Real meaning of Lean accuracy certificates
@@ -29,10 +29,10 @@ open FloatLib.Floats.Formats.Flocq
 section
 
 /--
-`accuracyRepresents mantissa accuracy value` states that `mantissa` is the integer truncation of
+`AccuracyRepresents mantissa accuracy value` states that `mantissa` is the integer truncation of
 the nonnegative real `value` and that `accuracy` locates the discarded part relative to one half.
 -/
-def accuracyRepresents (mantissa : Nat) (accuracy : Accuracy) (value : Real) : Prop :=
+def AccuracyRepresents (mantissa : Nat) (accuracy : Accuracy) (value : Real) : Prop :=
   match accuracy with
   | .exact => value = mantissa
   | .inexact .lt =>
@@ -45,18 +45,18 @@ def accuracyRepresents (mantissa : Nat) (accuracy : Accuracy) (value : Real) : P
 /-- Every represented value lies in the unit interval beginning at its truncated mantissa. -/
 theorem accuracyRepresents_bounds
     {mantissa : Nat} {accuracy : Accuracy} {value : Real}
-    (h : accuracyRepresents mantissa accuracy value) :
+    (h : AccuracyRepresents mantissa accuracy value) :
     (mantissa : Real) ≤ value ∧ value < mantissa + 1 := by
   cases accuracy with
   | exact =>
-      simp only [accuracyRepresents] at h
+      simp only [AccuracyRepresents] at h
       constructor
       · rw [h]
       · rw [h]
         norm_num
   | inexact ordering =>
       cases ordering <;>
-        simp only [accuracyRepresents] at h
+        simp only [AccuracyRepresents] at h
       · exact ⟨h.1.le, h.2.trans (by norm_num)⟩
       · constructor
         · rw [h]
@@ -69,7 +69,7 @@ theorem accuracyRepresents_bounds
 theorem pos_of_accuracyRepresents
     {mantissa : Nat} {accuracy : Accuracy} {value : Real}
     (hmantissa : mantissa ≠ 0)
-    (h : accuracyRepresents mantissa accuracy value) :
+    (h : AccuracyRepresents mantissa accuracy value) :
     0 < value := by
   have hmantissaPos : (0 : Real) < mantissa := by
     exact_mod_cast Nat.pos_of_ne_zero hmantissa
@@ -82,7 +82,7 @@ its accuracy certificate.
 theorem magnitude_of_accuracyRepresents
     {mantissa : Nat} {accuracy : Accuracy} {value : Real}
     (hmantissa : mantissa ≠ 0)
-    (h : accuracyRepresents mantissa accuracy value) :
+    (h : AccuracyRepresents mantissa accuracy value) :
     magnitude Numerics.binaryRadix value = Int.ofNat mantissa.log2 + 1 := by
   have hbounds := accuracyRepresents_bounds h
   have hvaluePos : 0 < value := pos_of_accuracyRepresents hmantissa h
@@ -112,21 +112,16 @@ theorem magnitude_of_accuracyRepresents
     rw [hpower]
     exact hbounds.2.trans_le hupperReal
 
-private theorem nat_eq_twice_div_add_mod_two (mantissa : Nat) :
-    mantissa = 2 * (mantissa / 2) + mantissa % 2 := by
-  omega
-
 /--
 One model right shift preserves the accuracy certificate after dividing the represented real by
 two.
 -/
 theorem accuracyRepresents_shiftRightOne
     (em : ExtendedMantissa) (value : Real)
-    (h : accuracyRepresents em.mantissa em.accuracy value) :
-    accuracyRepresents (ExtendedMantissa.shiftRightOne em).mantissa
+    (h : AccuracyRepresents em.mantissa em.accuracy value) :
+    AccuracyRepresents (ExtendedMantissa.shiftRightOne em).mantissa
       (ExtendedMantissa.shiftRightOne em).accuracy (value / 2) := by
   rcases em with ⟨mantissa, roundBit, stickyBit⟩
-  have hdecomp := nat_eq_twice_div_add_mod_two mantissa
   rcases Nat.mod_two_eq_zero_or_one mantissa with hmod | hmod
   · have hmantissa : (mantissa : Real) = 2 * (mantissa / 2 : Nat) := by
       exact_mod_cast (by omega : mantissa = 2 * (mantissa / 2))
@@ -136,17 +131,17 @@ theorem accuracyRepresents_shiftRightOne
       simp [ExtendedMantissa.shiftRightOne, hmod]
     rw [hshift]
     cases roundBit <;> cases stickyBit
-    · change accuracyRepresents (mantissa / 2) .exact (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) .exact (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       nlinarith [hmantissa]
-    · change accuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       constructor <;> nlinarith [hmantissa]
-    · change accuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       constructor <;> nlinarith [hmantissa]
-    · change accuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       constructor <;> nlinarith [hmantissa]
   · have hmantissa : (mantissa : Real) = 2 * (mantissa / 2 : Nat) + 1 := by
       exact_mod_cast (by omega : mantissa = 2 * (mantissa / 2) + 1)
@@ -156,24 +151,24 @@ theorem accuracyRepresents_shiftRightOne
       simp [ExtendedMantissa.shiftRightOne, hmod]
     rw [hshift]
     cases roundBit <;> cases stickyBit
-    · change accuracyRepresents (mantissa / 2) (.inexact .eq) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .eq) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       nlinarith [hmantissa]
-    · change accuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       constructor <;> nlinarith [hmantissa]
-    · change accuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       constructor <;> nlinarith [hmantissa]
-    · change accuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
-      simp only [ExtendedMantissa.accuracy, accuracyRepresents] at h ⊢
+    · change AccuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
+      simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
       constructor <;> nlinarith [hmantissa]
 
 /-- Repeated model right shifts preserve the certificate at the correspondingly divided scale. -/
 theorem accuracyRepresents_shift
     (em : ExtendedMantissa) (value : Real) (shift : Nat)
-    (h : accuracyRepresents em.mantissa em.accuracy value) :
-    accuracyRepresents (em >>> shift).mantissa (em >>> shift).accuracy
+    (h : AccuracyRepresents em.mantissa em.accuracy value) :
+    AccuracyRepresents (em >>> shift).mantissa (em >>> shift).accuracy
       (value / (2 : Real) ^ shift) := by
   induction shift generalizing em value with
   | zero =>
@@ -188,7 +183,7 @@ theorem accuracyRepresents_shift
 
 private theorem floor_eq_nat_of_accuracyRepresents
     {mantissa : Nat} {accuracy : Accuracy} {value : Real}
-    (h : accuracyRepresents mantissa accuracy value) :
+    (h : AccuracyRepresents mantissa accuracy value) :
     ⌊value⌋ = Int.ofNat mantissa := by
   apply Int.floor_eq_iff.mpr
   have hb := accuracyRepresents_bounds h
@@ -199,20 +194,20 @@ private theorem floor_eq_nat_of_accuracyRepresents
 /-- A valid accuracy certificate makes Lean's and the real model's nearest-even choices equal. -/
 theorem roundToNearestEven_eq_nearestEven
     (mantissa : Nat) (accuracy : Accuracy) (value : Real)
-    (h : accuracyRepresents mantissa accuracy value) :
+    (h : AccuracyRepresents mantissa accuracy value) :
     Int.ofNat (accuracy.roundToNearestEven mantissa) =
       nearestEven value := by
   have hfloor := floor_eq_nat_of_accuracyRepresents h
   cases accuracy with
   | exact =>
-      simp only [accuracyRepresents] at h
+      simp only [AccuracyRepresents] at h
       rw [Accuracy.roundToNearestEven, h]
       simpa using (ValidRnd.id
         (rnd := nearestEven) (Int.ofNat mantissa)).symm
   | inexact ordering =>
       cases ordering with
       | lt =>
-          simp only [accuracyRepresents] at h
+          simp only [AccuracyRepresents] at h
           have hcast : ((Int.ofNat mantissa : Int) : Real) = mantissa := by
             norm_num
           have hfrac : value - (⌊value⌋ : Int) < 1 / 2 := by
@@ -221,18 +216,18 @@ theorem roundToNearestEven_eq_nearestEven
           rw [nearestEven_eq_floor_of_frac_lt_half value hfrac, hfloor]
           rfl
       | eq =>
-          simp only [accuracyRepresents] at h
+          simp only [AccuracyRepresents] at h
           have hcast : ((Int.ofNat mantissa : Int) : Real) = mantissa := by
             norm_num
           have hfrac : value - (⌊value⌋ : Int) = 1 / 2 := by
             rw [hfloor, hcast, h]
-            ring
+            exact add_sub_cancel_left _ _
           by_cases heven : Even (Int.ofNat mantissa)
           · rw [nearestEven_eq_floor_of_frac_half_even value
               (by simpa using hfrac) (by simpa [hfloor] using heven)]
             rw [hfloor]
             have hmod : mantissa % 2 = 0 := by
-              exact Nat.even_iff.mp (Int.even_coe_nat mantissa |>.mp heven)
+              exact Nat.even_iff.mp (Int.even_natCast mantissa |>.mp heven)
             simp [Accuracy.roundToNearestEven, hmod]
           · rw [nearestEven_eq_ceil_of_frac_half_odd value
               (by simpa using hfrac) (by simpa [hfloor] using heven)]
@@ -240,10 +235,10 @@ theorem roundToNearestEven_eq_nearestEven
             have hmod : mantissa % 2 = 1 := by
               apply Nat.not_even_iff.mp
               intro hevenNat
-              exact heven (Int.even_coe_nat mantissa |>.mpr hevenNat)
+              exact heven (Int.even_natCast mantissa |>.mpr hevenNat)
             simp [Accuracy.roundToNearestEven, hmod]
       | gt =>
-          simp only [accuracyRepresents] at h
+          simp only [AccuracyRepresents] at h
           have hcast : ((Int.ofNat mantissa : Int) : Real) = mantissa := by
             norm_num
           have hfrac : value - (⌊value⌋ : Int) > 1 / 2 := by
@@ -258,14 +253,14 @@ nearest-even rounding of the represented real at the shifted scale.
 -/
 theorem roundedMantissa_eq_nearestEven
     (mantissa : Nat) (accuracy : Accuracy) (value : Real) (shift : Nat)
-    (h : accuracyRepresents mantissa accuracy value) :
+    (h : AccuracyRepresents mantissa accuracy value) :
     Int.ofNat
         (ExtendedMantissa.ofMantissaAndAccuracy mantissa accuracy >>>
           shift).roundedMantissa =
       nearestEven (value / (2 : Real) ^ shift) := by
   let em := ExtendedMantissa.ofMantissaAndAccuracy mantissa accuracy
   have hinitial :
-      accuracyRepresents em.mantissa em.accuracy value := by
+      AccuracyRepresents em.mantissa em.accuracy value := by
     cases accuracy with
     | exact =>
         simpa [em, ExtendedMantissa.ofMantissaAndAccuracy,

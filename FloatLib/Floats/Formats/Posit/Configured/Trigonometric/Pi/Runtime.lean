@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Trigonometric.Pi.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
+public import FloatLib.Floats.Formats.Posit.Trigonometric.Pi.Runtime
 
 /-!
 # Configured posit pi-scaled trigonometric operations
@@ -31,27 +31,33 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Correctly rounded sine of pi times the input. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded sine of pi times the input. -/
 @[inline] def sinPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sinPi value
 
-/-- Correctly rounded cosine of pi times the input. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded cosine of pi times the input. -/
 @[inline] def cosPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.cosPi value
 
-/-- Correctly rounded tangent of pi times the input. Half-integers produce NaR. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded tangent of pi times the input. Half-integers produce NaR. -/
 @[inline] def tanPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.tanPi value
 
-/-- Correctly rounded inverse sine divided by pi. Inputs outside `[-1, 1]` produce NaR. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded inverse sine divided by pi. Inputs outside `[-1, 1]` produce NaR. -/
 @[inline] def arcSinPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcSinPi value
 
-/-- Correctly rounded inverse cosine divided by pi. Inputs outside `[-1, 1]` produce NaR. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded inverse cosine divided by pi. Inputs outside `[-1, 1]` produce NaR. -/
 @[inline] def arcCosPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcCosPi value
 
-/-- Correctly rounded principal inverse tangent divided by pi. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded principal inverse tangent divided by pi. -/
 @[inline] def arcTanPi (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.arcTanPi value
 

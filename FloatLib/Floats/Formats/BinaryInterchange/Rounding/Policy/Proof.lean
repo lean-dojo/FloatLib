@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -93,7 +93,8 @@ theorem roundDyadic_nearest_eq_execFloat (fmt : FloatFormat) (entropy : Nat)
     ieeeRoundingMode? mode.toRoundingMode = some mode := by
   cases mode <;> rfl
 
-/-- A native-overflow, gradual-underflow policy built from an IEEE direction names that direction. -/
+/-- A native-overflow, gradual-underflow policy built from an IEEE direction names that
+direction. -/
 @[simp] theorem policyIEEERoundingMode?_toRoundingMode (mode : IEEERoundingMode) :
     policyIEEERoundingMode?
         { rounding := mode.toRoundingMode, overflow := .native, underflow := .gradual } =

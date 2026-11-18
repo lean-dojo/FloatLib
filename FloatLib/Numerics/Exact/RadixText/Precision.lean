@@ -1,13 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import Mathlib.Data.Rat.Floor
-public import Mathlib.Data.PNat.Basic
 public import Mathlib.Data.Nat.Log
+public import Mathlib.Data.Rat.Floor
 
 /-!
 # Significant-digit rounding on an arbitrary radix grid

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Trigonometric.Pi.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Pi.Runtime
+public import FloatLib.Floats.Formats.Posit.Trigonometric.Pi.Proof
 
 /-!
 # Correct rounding of configured posit pi-scaled trigonometric operations

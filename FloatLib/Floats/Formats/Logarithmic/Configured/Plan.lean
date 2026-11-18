@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
+public import FloatLib.Tactic.CompilerOptimize
 
 /-!
 # Execution planning for exact logarithmic multiplication
@@ -32,7 +32,10 @@ def mulEstimate : Backend.Candidate where
   storage := .custom
   steadyCost := 3
 
-/-- The direct logarithmic kernel is its executable specification. -/
+/--
+The direct logarithmic kernel is its executable specification, and the family's baseline.
+-/
+@[compiler_optimize baseline]
 def mulCertified :
     Backend.Certified (Logarithmic.mul (radix := radix)) :=
   Backend.Certified.reference mulEstimate Logarithmic.mul

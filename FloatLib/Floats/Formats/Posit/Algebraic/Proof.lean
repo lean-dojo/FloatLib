@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -70,7 +70,7 @@ theorem hypot_eq_roundPositive (left right : Model format) {a b : Rat}
 /-- The norm of the zero pair is zero. -/
 @[simp] theorem hypot_zero_zero : hypot (zero format) (zero format) = zero format := by
   simp only [hypot, toRat?_zero]
-  simp [roundSqrtRat, roundSqrtCode]
+  simp only [roundSqrtRat, roundSqrtCode, mul_zero, add_zero, Std.le_refl, ↓reduceIte]
   rfl
 
 /-- Hypotenuse does not depend on the order of its inputs. -/

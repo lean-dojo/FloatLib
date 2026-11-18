@@ -1,0 +1,4 @@
+theorem,statement,coq_kernel_conversion_seconds,coq_vm_seconds,coq,flocq,lean,date
+sumTenth,"1,000 binary32 additions of 0.1",0.381,0.058,8.20.1,4.2.2,4.35.0,2026-11-15
+sum64,"sum of 1,000 binary64 values",4.56,0.327,8.20.1,4.2.2,4.35.0,2026-11-15
+dot64,"dot product of 1,000 binary64 pairs",9.35,0.73,8.20.1,4.2.2,4.35.0,2026-11-15

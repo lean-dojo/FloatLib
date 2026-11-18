@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,13 +36,13 @@ private theorem exists_pos_le_abs_sub_intCast {y : ℝ} (hy : Irrational y) :
   refine ⟨min (Int.fract y) (1 - Int.fract y), ?_, ?_⟩
   · have hpos : 0 < Int.fract y := Int.fract_pos.mpr (hy.ne_int _)
     have hlt := Int.fract_lt_one y
-    exact lt_min hpos (by linarith)
+    exact lt_min hpos (by exact sub_pos.mpr hlt)
   · intro n
     rw [← Int.self_sub_floor]
     rcases le_or_gt n ⌊y⌋ with hn | hn
     · have hcast : (n : ℝ) ≤ ⌊y⌋ := by exact_mod_cast hn
       calc min (y - ⌊y⌋) (1 - (y - ⌊y⌋)) ≤ y - ⌊y⌋ := min_le_left _ _
-        _ ≤ y - n := by linarith
+        _ ≤ y - n := by exact sub_le_sub_left hcast y
         _ ≤ |y - n| := le_abs_self _
     · have hcast : (⌊y⌋ : ℝ) + 1 ≤ n := by exact_mod_cast hn
       calc min (y - ⌊y⌋) (1 - (y - ⌊y⌋)) ≤ 1 - (y - ⌊y⌋) := min_le_right _ _

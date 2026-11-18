@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -166,15 +166,16 @@ theorem unpack_pack_finite_normal
         (BitVec.ofNat spec.mantissaBitsWithoutImplicit mantissa).isLt]
     simp only [BitVec.toNat_ofNat]
     rw [hmantissaMod]
-    simp [Nat.shiftLeft_eq]
+    simp only [pow_one, Nat.mod_succ, Nat.shiftLeft_eq, one_mul]
     omega
   have hexponentDecode :
       (Int.ofNat (BitVec.ofNat spec.exponentBits biased).toNat -
           ((spec.exponentBias : Int) + spec.mantissaBitsWithoutImplicit)) = exponent := by
     rw [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbiasedLt]
-    change (biased : Int) - ((spec.exponentBias : Int) + spec.mantissaBitsWithoutImplicit) = exponent
+    change (biased : Int) - ((spec.exponentBias : Int) + spec.mantissaBitsWithoutImplicit) =
+      exponent
     rw [hbiasedInt]
-    ring
+    omega
   have hsign : Sign.ofBitVec sign.toBitVec = sign := by
     cases sign <;> rfl
   unfold Float.Model.UnpackedFloat.pack
@@ -291,7 +292,9 @@ theorem unpack_pack_finite_subnormal
     unpackSign_packComponents]
   have hsign : Sign.ofBitVec sign.toBitVec = sign := by
     cases sign <;> rfl
-  simp [hzeroExponentNeAllOnes, hmantissaVecNeRaw, hmantissaDecodeRaw, hsign]
+  simp only [hzeroExponentNeAllOnes, ↓reduceIte, hmantissaVecNeRaw, ↓reduceDIte, hsign,
+    hmantissaDecodeRaw, BitVec.toNat_ofNat, Nat.zero_mod, CharP.cast_eq_zero, zero_sub,
+    neg_add_rev, finite.injEq, true_and]
   change -(fmt.fracWidth : Int) + -(fmt.bias : Int) + 1 =
     FloatFormat.ieeeMinSubnormalExponent fmt
   simp only [FloatFormat.ieeeMinSubnormalExponent, Int.ofNat_eq_natCast]

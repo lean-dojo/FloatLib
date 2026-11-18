@@ -1,0 +1,98 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public meta import Lean.Elab.Command
+public import FloatLib.Kernels.Execution.Proof
+public import FloatLib.Floats.Formats.FixedPoint.Configured.Proof
+public import FloatLib.Tactic.FloatInfo.FixedPoint.Exact
+
+/-!
+# Inspection for configured exact fixed point
+
+`#float_info` for `ExecFloat.FixedPoint` lives in this optional meta module. You can import the
+executable configured type without it, and so without editor elaborators or the public proof
+module.
+-/
+
+public meta section
+
+namespace FloatLib.Floats.Formats.FixedPoint.Configured.FloatInfo.Command
+
+open Lean Elab Command Meta
+open FloatLib.Numerics
+open FloatLib.Floats.ExecFloat
+
+elab_rules : command
+  | `(#float_info%$tk $type:term) =>
+      FloatLib.Floats.ExecFloat.FloatInfo.Command.withExecFamilyApplication
+          type ``FloatLib.Floats.ExecFloat.FixedPoint.Family 2
+          fun typeExpr family arguments => do
+        let radix := arguments[0]!
+        let fractionalDigitsExpr := arguments[1]!
+        let base ←
+          Inspection.readNatProjection "fixed-point radix" ``Radix.base radix
+        let fractionalDigits ←
+          Inspection.readNat "fixed-point fractional-digit count" fractionalDigitsExpr
+        let coreProfile :=
+          FloatLib.Floats.Formats.FixedPoint.FloatInfo.Command.profile base fractionalDigits
+        let ownSurfaces : List TheoremSurface :=
+          refinementEquations (← Inspection.installedOperations family) ++
+          [ { topic := "exact rational arithmetic"
+              declarations :=
+                [ ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_add
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_sub
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_neg
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.toRat_mul
+                ]
+              applicability := .verifiedForType
+              scope := "all values; multiplication returns the sum of the operand scales"
+              numericalGuarantee? := some {
+                kinds := [.exactness]
+                statement :=
+                  "Addition, subtraction, negation, and scale-composing multiplication have zero \
+                    rational error." } }
+          , { topic := "decoding to the code"
+              declarations :=
+                [ ``FloatLib.Floats.ExecFloat.FixedPoint.toCode_ofCode
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.ofCode_toCode
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.coefficient_ofCoefficient
+                ]
+              definitions :=
+                [ ``FloatLib.Floats.ExecFloat.FixedPoint.toCode
+                , ``FloatLib.Floats.ExecFloat.FixedPoint.ofCode ]
+              applicability := .verifiedForType
+              scope :=
+                "every value; `toCode` and `ofCode` are inverse, so the theorems about the code " ++
+                "below apply through `toCode`" } ]
+        let baseProfile : FormatProfile :=
+          { coreProfile with
+            rounding :=
+              ⟨"numeric literals", "exact rational input rounded once to nearest, ties to even"⟩ ::
+                coreProfile.rounding
+            execution :=
+              [ ⟨"carrier", "ExecFloat over an unbounded Int coefficient"⟩
+              , ⟨"dispatch", "direct certified integer addition and subtraction"⟩
+              ]
+            specializedOperations :=
+              [ ⟨"mul",
+                  "exact heterogeneous multiplication returning the statically composed output \
+                    scale"⟩
+              ]
+            theoremSurfaces := ownSurfaces
+            relatedTheorems :=
+              [ { type := ``FloatLib.Floats.Formats.FixedPoint.Code
+                  embedding := ``FloatLib.Floats.ExecFloat.FixedPoint.toCode
+                  surfaces := coreProfile.theoremSurfaces } ]
+            nonclaims :=
+              [ "homogeneous multiplication silently rounds back to the input scale"
+              , "division, square root, fused multiply-add, or transcendental functions are \
+                provided"
+              , "a fixed-width overflow policy is implied" ] }
+        logInfoAt tk <| ← Inspection.renderExecProfile baseProfile typeExpr family
+
+end FloatLib.Floats.Formats.FixedPoint.Configured.FloatInfo.Command

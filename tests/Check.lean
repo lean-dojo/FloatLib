@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -15,9 +15,11 @@ import FloatLibTests.Conformance.Formats.MXStandard
 import FloatLibTests.Conformance.P3109.Block
 import FloatLibTests.Conformance.Posit.Quire
 import FloatLibTests.Regression.ArbParser
+import FloatLibTests.Regression.BinaryInterchange.ComplexElementary
 import FloatLibTests.Regression.BinaryInterchange.ExecFloatInstances
 import FloatLibTests.Regression.BinaryInterchange.ExecFloatTranscendentals
 import FloatLibTests.Regression.BinaryInterchange.Model
+import FloatLibTests.Regression.BinaryInterchange.NativeHalf
 import FloatLibTests.Regression.BinaryInterchange.NativeBinary64
 import FloatLibTests.Regression.BinaryInterchange.NativeProduct
 import FloatLibTests.Regression.BinaryInterchange.PolicyRounding
@@ -38,7 +40,8 @@ meta import FloatLibTests
 # Native regression checks
 
 `lake -d tests test` builds the conformance proofs and runs the model, kernel, transcendental,
-rational-power, host-FPU, and tutorial checks. Select a suite with `lake -d tests exe check SUITE`.
+rational-power, host-FPU, complex-function, and tutorial checks. Select a suite with
+`lake -d tests exe check SUITE`. The `complex` suite checks the special values of C23 Annex G.
 The `powers` suite prints the time of each group. The `reduction` suite, which `all` leaves out,
 reduces sine and cosine arguments that need the `2^20`- and `2^21`-bit levels of `2 / pi` and
 prints its time. The `arb` suite also requires python-flint.
@@ -55,7 +58,7 @@ open FloatLibTests.Fixtures.NativeIEEE
 open FloatLibTests.Regression.BinaryInterchange
 open FloatLibTests.Regression.BinaryInterchange.ExecFloatTranscendentals
 
-private def core : IO UInt32 :=
+def core : IO UInt32 :=
   runSectionedReport #[
     Model.report.get,
     Text.report.get,
@@ -74,7 +77,7 @@ private def core : IO UInt32 :=
     Conformance.P3109.Block.report.get
   ]
 
-private def kernels : IO UInt32 :=
+def kernels : IO UInt32 :=
   let quireFailures := Conformance.Posit.Quire.totalFailures.get
   runSectionedReport #[
     { title := "native and fixed-limb kernels"
@@ -110,17 +113,17 @@ private def kernels : IO UInt32 :=
       failures := quireFailures }
   ]
 
-private def canonicalBinary32Bits (bits : UInt32) : UInt32 :=
+def canonicalBinary32Bits (bits : UInt32) : UInt32 :=
   FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32.toUInt32 <|
     FloatLib.Floats.Formats.BinaryInterchange.Model.canonicalizeModel
       (FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary32.ofUInt32 bits)
 
-private def canonicalBinary64Bits (bits : UInt64) : UInt64 :=
+def canonicalBinary64Bits (bits : UInt64) : UInt64 :=
   FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64.toUInt64 <|
     FloatLib.Floats.Formats.BinaryInterchange.Model.canonicalizeModel
       (FloatLib.Floats.Formats.BinaryInterchange.Model.NativeBinary64.ofUInt64 bits)
 
-@[noinline] private def binary32RoundTripMatches (bits : UInt32) : Bool :=
+@[noinline] def binary32RoundTripMatches (bits : UInt32) : Bool :=
   let imported : FloatLib.Floats.Binary32 :=
     FloatLib.Floats.ExecFloat.Binary.ofFloat32 (Float32.ofBits bits)
   let exported := FloatLib.Floats.ExecFloat.Binary.toFloat32
@@ -128,7 +131,7 @@ private def canonicalBinary64Bits (bits : UInt64) : UInt64 :=
   let expected := canonicalBinary32Bits bits
   FloatLib.Floats.ExecFloat.Binary.toBits32 imported == expected && exported.toBits == expected
 
-@[noinline] private def binary64RoundTripMatches (bits : UInt64) : Bool :=
+@[noinline] def binary64RoundTripMatches (bits : UInt64) : Bool :=
   let imported : FloatLib.Floats.Binary64 :=
     FloatLib.Floats.ExecFloat.Binary.ofFloat (Float.ofBits bits)
   let exported := FloatLib.Floats.ExecFloat.Binary.toFloat
@@ -136,13 +139,16 @@ private def canonicalBinary64Bits (bits : UInt64) : UInt64 :=
   let expected := canonicalBinary64Bits bits
   FloatLib.Floats.ExecFloat.Binary.toBits64 imported == expected && exported.toBits == expected
 
-private def binary32InteropFailures : Thunk Nat := ⟨fun _ =>
+def binary32InteropFailures : Thunk Nat := ⟨fun _ =>
   countWhereFailures (interopInputs binary32Cases) binary32RoundTripMatches⟩
 
-private def binary64InteropFailures : Thunk Nat := ⟨fun _ =>
+def nativeHalfFailures : Thunk Nat := ⟨fun _ =>
+  FloatLibTests.Regression.BinaryInterchange.NativeHalf.totalFailures⟩
+
+def binary64InteropFailures : Thunk Nat := ⟨fun _ =>
   countWhereFailures (interopInputs binary64Cases) binary64RoundTripMatches⟩
 
-private def native : IO UInt32 :=
+def native : IO UInt32 :=
   runSectionedReport #[
     { title := "native arithmetic"
       body := Conformance.BinaryInterchange.NativeExecution.report.get
@@ -150,16 +156,17 @@ private def native : IO UInt32 :=
         Conformance.BinaryInterchange.NativeExecution.totalFailures.get },
     ReportSection.ofRows "native bit interop"
       #[ ("binary32 round trips", binary32InteropFailures.get)
-       , ("binary64 round trips", binary64InteropFailures.get) ]
+       , ("binary64 round trips", binary64InteropFailures.get)
+       , ("binary16 and bfloat16 carriers", nativeHalfFailures.get) ]
   ]
 
-private def runCheck (name : String) (compute : Thunk Nat) : IO Nat := do
+def runCheck (name : String) (compute : Thunk Nat) : IO Nat := do
   IO.println s!"running {name}"
   let failures := compute.get
   IO.println s!"{name}: {failures}"
   pure failures
 
-private def transcendentals : IO UInt32 := do
+def transcendentals : IO UInt32 := do
   let fixtureFailures ← runCheck "mpfrFixtures" failMpfrFixtures
   let specialFailures ← runCheck "specialValueMatrix" failSpecialValueMatrix
   let nanFailures ← runCheck "nanPayloads" failNaNPayloads
@@ -189,7 +196,7 @@ private def transcendentals : IO UInt32 := do
   IO.println s!"TOTAL: {total}"
   pure <| exitCode total
 
-private def reduction : IO UInt32 := do
+def reduction : IO UInt32 := do
   let start ← IO.monoMsNow
   let failures ← runCheck "slowTrigReduction" failSlowTrigReduction
   let stop ← IO.monoMsNow
@@ -197,7 +204,7 @@ private def reduction : IO UInt32 := do
   IO.println s!"TOTAL: {failures}"
   pure <| exitCode failures
 
-private def powers : IO UInt32 := do
+def powers : IO UInt32 := do
   let mut total := 0
   for (name, compute) in FloatLibTests.Regression.RationalPower.checks do
     let start ← IO.monoMsNow
@@ -208,7 +215,7 @@ private def powers : IO UInt32 := do
   IO.println s!"TOTAL: {total}"
   pure <| exitCode total
 
-private def arb : IO UInt32 := do
+def arb : IO UInt32 := do
   let parserFailures := FloatLibTests.Regression.ArbParser.totalFailures.get
   IO.println s!"arbParser: {parserFailures}"
   let runtimeFailures ←
@@ -223,7 +230,7 @@ One shard of the opt-in exhaustive fused multiply-add campaign of
 `Regression.BinaryInterchange.RoundingDirections`. The shards split the 256 first operands, so at
 most 256 shards keep every shard nonempty.
 -/
-private def fmaExhaustive (shardIndex shardCount : String) : IO UInt32 := do
+def fmaExhaustive (shardIndex shardCount : String) : IO UInt32 := do
   match shardIndex.toNat?, shardCount.toNat? with
   | some index, some count =>
       if count == 0 || count > 256 || index ≥ count then
@@ -237,19 +244,26 @@ private def fmaExhaustive (shardIndex shardCount : String) : IO UInt32 := do
       IO.eprintln "fma-exhaustive: SHARD_INDEX and SHARD_COUNT must be natural numbers"
       return 2
 
-private def exampleCheck : IO UInt32 := do
+def complex : IO UInt32 :=
+  runSectionedReport #[
+    ComplexElementary.annexG.get,
+    ComplexElementary.cuts.get,
+    ComplexElementary.unspecified.get
+  ]
+
+def exampleCheck : IO UInt32 := do
   FloatLib.Examples.FormatComparison.showComparison
   return 0
 
-private def allChecks : IO UInt32 := do
+def allChecks : IO UInt32 := do
   let mut status := 0
-  for run in [core, transcendentals, powers, kernels, native, exampleCheck] do
+  for run in [core, transcendentals, powers, kernels, native, complex, exampleCheck] do
     if (← run) != 0 then
       status := 1
   return status
 
-private def usage : String :=
-  "usage: check [all|core|kernels|transcendentals|reduction|powers|native|example|arb]\n" ++
+def usage : String :=
+  "usage: check [all|core|kernels|transcendentals|reduction|powers|native|complex|example|arb]\n" ++
     "       check fma-exhaustive SHARD_INDEX SHARD_COUNT"
 
 end FloatLibTests.Check
@@ -265,6 +279,7 @@ public def main (args : List String) : IO UInt32 := do
   | ["reduction"] => reduction
   | ["powers"] => powers
   | ["native"] => native
+  | ["complex"] => complex
   | ["example"] => exampleCheck
   | ["arb"] => arb
   | ["fma-exhaustive", shardIndex, shardCount] => fmaExhaustive shardIndex shardCount

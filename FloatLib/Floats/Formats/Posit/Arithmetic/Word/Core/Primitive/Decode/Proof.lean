@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -48,16 +48,6 @@ theorem nonnegativeDyadicAt_eq_decodeFields
   have hpayload : format.payloadBits ≤ 64 := by
     unfold CandidateEligible at heligible
     unfold Format.payloadBits
-    omega
-  have hrun :
-      countLeadingRun code format.payloadBits
-          (bitAt code (format.payloadBits - 1)) =
-        value.regimeRunLength := by
-    unfold Model.regimeRunLength Model.regimeBit
-    rw [hmagnitude, ← bitAt_eq_testBit,
-      countLeadingRun_eq_model]
-  have htrailing : value.trailingBits ≤ format.payloadBits := by
-    unfold Model.trailingBits
     omega
   have hfractionBits : value.fractionBits < 64 := by
     have hrun := Model.regimeRunLength_pos value

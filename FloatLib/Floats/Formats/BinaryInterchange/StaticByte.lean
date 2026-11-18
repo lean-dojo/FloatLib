@@ -8,12 +8,12 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Backend.Construction
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Backend.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Backend.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Construction
-public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Conversion.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Conversion.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Conversion.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Construction
+public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Plan.Construction
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Plan.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Plan.Runtime

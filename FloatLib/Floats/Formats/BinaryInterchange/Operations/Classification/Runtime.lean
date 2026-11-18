@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -31,8 +31,8 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 /-- Classify without quieting NaNs or raising exceptions, using the complete descriptor. -/
 @[inline] def classify {fmt : FloatFormat} (x : Model fmt) : Numerics.IEEEClass :=
   if isNaN x then
-    if isSNaN x then .signalingNaN else .quietNaN
-  else if isInf x then
+    if isSignaling x then .signalingNaN else .quietNaN
+  else if isInfinite x then
     if signBit x then .negativeInfinity else .positiveInfinity
   else if isZero x then
     if signBit x then .negativeZero else .positiveZero
@@ -43,5 +43,17 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
 /-- Every exact-width word of an implicit-leading-bit binary layout is canonical. -/
 @[inline] def isCanonical {fmt : FloatFormat} (_ : Model fmt) : Bool := true
+
+/--
+IEEE 754-2019 §5.7.2 `radix` (C23 `FLT_RADIX`, N3220 Table F.2): the radix of the format of the
+operand, two for every binary format. No flag is raised, also for a signaling NaN.
+-/
+@[inline] def radix {fmt : FloatFormat} (_ : Model fmt) : Nat := 2
+
+/--
+IEEE 754-2019 §5.5.1 `copy`: the operand unchanged, with its sign bit and, for a NaN, its
+signaling state and payload. No flag is raised, also for a signaling NaN.
+-/
+@[inline] def copy {fmt : FloatFormat} (x : Model fmt) : Model fmt := x
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

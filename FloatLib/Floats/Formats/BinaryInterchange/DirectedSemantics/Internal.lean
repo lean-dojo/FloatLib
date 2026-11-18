@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Dyadic.Core.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Dyadic.Core.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Dyadic.Packing
 
@@ -100,7 +99,7 @@ theorem normalizationCarry_value
   rw [← bpow_add, ← bpow_add]
   congr 1
   simp only [Int.ofNat_eq_natCast, Int.natCast_add]
-  ring
+  omega
 
 end Directed.Internal
 end Model

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,10 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Comparison.Cache
-public import FloatLib.Numerics.Enclosure.Comparison.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
+public import FloatLib.Numerics.Order.Search.Proof
 public import Mathlib.NumberTheory.Real.Irrational
-public import Mathlib.Topology.Order.Basic
 
 /-!
 # Correctness and termination of enclosure comparison
@@ -34,7 +33,7 @@ theorem compare_eq_real (intervals : Nat → RationalInterval) (boundary : ℚ)
     compare intervals boundary terminates = cmp x (boundary : ℝ) := by
   have hcontains := contains (Nat.find terminates)
   have hseparates := Nat.find_spec terminates
-  dsimp only [compare]
+  simp only [compare, findWithPrefix_eq_find]
   split
   · rename_i hlt
     have hreal : x < (boundary : ℝ) :=

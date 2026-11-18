@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Core.Declaration
-public import FloatLib.Floats.ExecFloat.Core.Operations
+public import FloatLib.Kernels.Execution.Operations
+public import FloatLib.Tactic.FloatFormat
 
 /-!
 # Custom byte format used by planner checks
@@ -45,7 +45,7 @@ The candidate portfolio deliberately exposes a cold-versus-warm crossover and an
 resident-memory choice. Every candidate executes the same proved function, and only its
 engineering estimate differs.
 -/
-instance [FloatLib.Floats.ExecFloat.Backend.PolicyFor TestByte] :
+instance {planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor TestByte} :
     FloatLib.Floats.ExecFloat.Add TestByte where
   spec := addSpec
   candidates := {

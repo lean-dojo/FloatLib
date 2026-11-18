@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,14 @@ Authors: FloatLib Team
 module
 
 import FloatLibTests.Conformance
+import FloatLibTests.Numerics.Stochastic
+import FloatLibTests.Numerics.StochasticBinary
+import FloatLibTests.Tactic.Roundoff.Stochastic
+import FloatLibTests.Numerics.StochasticSequential
 import FloatLibTests.Regression.BinaryInterchange.ExecFloatInstances
 import FloatLibTests.Regression.BinaryInterchange.ExecFloatTranscendentals
 import FloatLibTests.Regression.BinaryInterchange.Model
+import FloatLibTests.Regression.BinaryInterchange.NativeHalf
 import FloatLibTests.Regression.BinaryInterchange.NativeProduct
 import FloatLibTests.Regression.BinaryInterchange.PolicyRounding
 import FloatLibTests.Regression.BinaryInterchange.SmallWord

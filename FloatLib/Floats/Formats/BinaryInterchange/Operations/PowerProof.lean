@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Power
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.PowerProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Power
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
 
 /-!
@@ -26,11 +26,11 @@ finite positive base with a non-integral exponent goes to the certified enclosur
 `Transcendentals.Certified.pow` instead. Whenever that search succeeds, `pow` returns its result,
 which is the nearest-even rounding of the real power (`pow_spec_of_certified`).
 
-Three routes make up the executable kernel. Small exact problems call `powInt`, which rounds the
+Three routes make up the executable kernel. Small exact problems call `pown`, which rounds the
 exact rational power once. A base of magnitude one gives a signed one. Every other case brackets
 the exact power between two dyadic endpoints (`powBounds`, `squareScreen`) and accepts the
 rounding only when both endpoints round to the same finite value (`roundEnclosure?`), with
-`powInt` as the fallback when no working precision decides. Endpoint lemmas show that the
+`pown` as the fallback when no working precision decides. Endpoint lemmas show that the
 brackets are sound, `toReal_of_attempt` turns an accepted bracket into correct rounding, and
 `toReal_integerPowerWith` puts the three routes together.
 -/
@@ -73,7 +73,6 @@ theorem le_toRat_truncUp (precision : Nat) (x : Endpoint) :
     x.toRat ≤ (truncUp precision x).toRat := by
   simp only [truncUp, toRat]
   set s := excess precision x
-  have hpow : (0 : Rat) < 2 ^ x.exponent := by positivity
   split
   · rename_i h
     have h' : x.mantissa >>> s <<< s = x.mantissa := by simpa using h
@@ -448,10 +447,10 @@ theorem toReal_integerPowerWith {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   have hbase : isFinite base = true := isFinite_eq_true_of_toDyadic?_some hb
   have hreal : toReal base = b.toReal := by rw [toReal_eq, hb]
   have hexact :
-      isFinite (powInt base (integralValue negativeExponent magnitude shift)) = true →
-      toReal (powInt base (integralValue negativeExponent magnitude shift)) =
+      isFinite (pown base (integralValue negativeExponent magnitude shift)) = true →
+      toReal (pown base (integralValue negativeExponent magnitude shift)) =
         roundAt fmt (toReal base ^ integralValue negativeExponent magnitude shift) :=
-    toReal_powInt_eq_roundAt base _ hfmt hbase
+    toReal_pown_eq_roundAt base _ hfmt hbase
   unfold integerPowerWith at hfinite ⊢
   dsimp only at hfinite ⊢
   split
@@ -535,18 +534,18 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   obtain ⟨b, hb⟩ := exists_toDyadic?_of_isFinite hbase
   obtain ⟨y, hy⟩ := exists_toDyadic?_of_isFinite hexp
   have hzeroFinite := isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt false)
-  have hbaseQuiet : isSNaN base = false :=
-    isSNaN_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
+  have hbaseQuiet : isSignaling base = false :=
+    isSignaling_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
   unfold pow at hfinite ⊢
   by_cases hz : isZero exponent = true
-  · have hcond : (isZero exponent && !isSNaN base) = true := by simp [hz, hbaseQuiet]
+  · have hcond : (isZero exponent && !isSignaling base) = true := by simp [hz, hbaseQuiet]
     rw [ite_eq_left hcond]
     have : (n : ℝ) = 0 := by rw [← hn]; exact toReal_eq_zero_of_isZero exponent hz
     have hn0 : n = 0 := by exact_mod_cast this
     simp [hn0]
-  have hcond : ¬ (isZero exponent && !isSNaN base) = true := by simp [hz]
+  have hcond : ¬ (isZero exponent && !isSignaling base) = true := by simp [hz]
   rw [ite_eq_right hcond] at hfinite ⊢
-  by_cases hunit : (compare base (posOne fmt) = some .eq && !isSNaN exponent) = true
+  by_cases hunit : (compare base (posOne fmt) = some .eq && !isSignaling exponent) = true
   · rw [ite_eq_left hunit]
     simp only [Bool.and_eq_true] at hunit
     simp [toReal_eq_one_of_compare_posOne_eq hbase (of_decide_eq_true hunit.1)]
@@ -561,9 +560,9 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     have hn1 : n = 1 := by exact_mod_cast this
     rw [hn1, zpow_one, roundAt_toReal_eq base hbase]
   rw [ite_eq_right hexp1] at hfinite ⊢
-  have hinf : isInf exponent = false := isInf_eq_false_of_isFinite_eq_true exponent hexp
+  have hinf : isInfinite exponent = false := isInfinite_eq_false_of_isFinite_eq_true exponent hexp
   rw [ite_eq_right (by simp [hinf])] at hfinite ⊢
-  have hbinf : isInf base = false := isInf_eq_false_of_isFinite_eq_true base hbase
+  have hbinf : isInfinite base = false := isInfinite_eq_false_of_isFinite_eq_true base hbase
   -- The exponent's unsigned value is the natural number `n.natAbs`.
   have hyreal : y.toReal = n := by rw [← hn, toReal_eq, hy]
   have habs : (y.significand : ℝ) * (2 : ℝ) ^ y.exponent = (n.natAbs : ℝ) := by
@@ -594,7 +593,7 @@ theorem toReal_pow_of_eq_intCast {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     have hn0 : n ≠ 0 := fun h => hz <| (isZero_eq_true_iff_toReal_eq_zero exponent hexp).2
       (by rw [hn, h, Int.cast_zero])
     rw [hcompareZero.1 hc, zero_zpow n hn0, roundAt_zero]
-    split <;> (try split) <;>
+    split <;> split <;>
       simp_all [isFinite_nativeOverflow hfmt, -nativeOverflow_eq_signedInf_of_isIEEE,
         -zero_eq_signedZero_of_isIEEE]
   all_goals
@@ -685,8 +684,6 @@ theorem pow_spec_of_certified {fmt : FloatFormat} {base exponent : Model fmt}
     | error _ => simp [h, Except.isOk, Except.toBool] at hsettled
     | ok result => exact ⟨result, rfl⟩
   obtain ⟨hbase, hpositive, hexp⟩ := operands_of_certified_pow_eq_ok hresult
-  have hbaseQuiet : isSNaN base = false :=
-    isSNaN_eq_false_of_isNaN_eq_false base (isNaN_eq_false_of_isFinite_eq_true base hbase)
   have hexpZero : isZero exponent = false := by
     cases hzero : isZero exponent
     · rfl
@@ -702,7 +699,7 @@ theorem pow_spec_of_certified {fmt : FloatFormat} {base exponent : Model fmt}
       linarith
   unfold pow
   rw [ite_eq_right (by simp [hexpZero])]
-  by_cases hunit : (compare base (posOne fmt) = some .eq && !isSNaN exponent) = true
+  by_cases hunit : (compare base (posOne fmt) = some .eq && !isSignaling exponent) = true
   · rw [ite_eq_left hunit]
     simp only [Bool.and_eq_true] at hunit
     simp [toReal_eq_one_of_compare_posOne_eq hbase (of_decide_eq_true hunit.1)]
@@ -711,12 +708,12 @@ theorem pow_spec_of_certified {fmt : FloatFormat} {base exponent : Model fmt}
   have hexpOne : compare exponent (posOne fmt) ≠ some .eq := fun h =>
     hnonintegral 1 (by simpa using toReal_eq_one_of_compare_posOne_eq hexp h)
   rw [ite_eq_right hexpOne,
-    ite_eq_right (by simp [isInf_eq_false_of_isFinite_eq_true exponent hexp])]
+    ite_eq_right (by simp [isInfinite_eq_false_of_isFinite_eq_true exponent hexp])]
   have hbaseZero := compare_zero_ne_eq_of_toReal_ne_zero hbase hpositive.ne'
   split
   · rename_i hc
     exact absurd hc hbaseZero
-  · rw [ite_eq_right (by simp [isInf_eq_false_of_isFinite_eq_true base hbase]),
+  · rw [ite_eq_right (by simp [isInfinite_eq_false_of_isFinite_eq_true base hbase]),
       integerPower?_eq_none_of_ne_intCast hnonintegral]
     dsimp only
     rw [hsign, ite_eq_right Bool.false_ne_true, hresult]

@@ -1,11 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.Execution.Certificate
+public import FloatLib.Kernels.Selection.Portfolio
+public import FloatLib.Kernels.Selection.Report
 public import FloatLib.Kernels.FixedWord
 public import FloatLib.Kernels.LimbArray.Shift.Proof
 

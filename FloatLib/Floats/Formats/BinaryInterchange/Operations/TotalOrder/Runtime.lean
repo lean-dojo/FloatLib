@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
-public import Mathlib.Order.Prod.Lex.Basic
 public import FloatLib.Numerics.Exact.Dyadic.Comparison.Runtime
+public import Mathlib.Order.Prod.Lex.Basic
 
 /-!
 # IEEE binary total ordering

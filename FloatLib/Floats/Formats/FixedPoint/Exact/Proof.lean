@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -54,7 +54,7 @@ namespace Code
 @[simp] theorem toRat_add {radix : Radix} {fractionalDigits : Nat}
     (left right : Code radix fractionalDigits) :
     toRat (add left right) = toRat left + toRat right := by
-  simp [toRat, add]
+  simp only [toRat, add, Int.cast_add]
   ring
 
 /-- Decoding exact fixed-point negation gives rational negation. -/
@@ -74,7 +74,7 @@ namespace Code
 @[simp] theorem toRat_mul {radix : Radix} {p q : Nat}
     (left : Code radix p) (right : Code radix q) :
     toRat (mul left right) = toRat left * toRat right := by
-  simp [toRat, mul, FixedPoint.scale, pow_add]
+  simp only [toRat, mul, Int.cast_mul, scale, pow_add, Nat.cast_mul, Nat.cast_pow]
   ring
 
 end Code

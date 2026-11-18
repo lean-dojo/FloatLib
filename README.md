@@ -13,9 +13,12 @@ and low precision formats for machine learning. Shared integer kernels and numer
 interfaces support custom formats and rounding rules. The specifications include signed
 zeros, infinities, NaNs and exception flags.
 
-Our [guide](site/content/chapters) works through calculations, proofs and the algorithms behind
-them, and its [first chapter](site/content/chapters/01-using-the-library.md) is the place to
-start.
+You can prove a concrete floating-point result by running the calculation in Lean's kernel.
+Try the [binary32 example below](#a-calculation-and-a-proof), or read
+[Speeding up computation in Lean's kernel](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation)
+for proofs about arithmetic, rounding flags and whole tables of encodings. If you're new to
+FloatLib, the [first chapter](https://lean-dojo.github.io/FloatLib/#/chapter/using-the-library)
+covers installation and your first calculation.
 
 ## Installation
 
@@ -38,99 +41,161 @@ require floatlib from git
 
 Then run `lake update`, `lake exe cache get` and `lake build`. For the toolchain and your
 first file, see the
-[project setup instructions](site/content/chapters/01-using-the-library.md#how-to-set-up-a-project).
+[project setup instructions](https://lean-dojo.github.io/FloatLib/#/chapter/using-the-library/how-to-set-up-a-project).
 
 ## A calculation and a proof
 
-The following example evaluates binary32 addition and proves that the executable operation
-returns the specification's result. Save it as `Main.lean` in the
-repository and run `lake env lean Main.lean`:
+Like Lean's `native_decide`, the `float_decide` tactic proves a closed goal by computation.
+It rewrites floating-point operations using proved equations and runs `decide +kernel`, so
+Lean's kernel checks the arithmetic itself.
 
 ```lean
 import FloatLib
 
 open FloatLib.Floats
 
-#float_info Binary32
-
-def x : Binary32 := 1.5
-def y : Binary32 := 2.25
-
-#eval x + y
-
-example : x + y = ExecFloat.Spec.add x y :=
-  ExecFloat.Proof.add_eq_spec x y
+#eval (1.5 : Binary32) + 2.25  -- 3.75
+example : (1.5 : Binary32) + 2.25 = 3.75 := by float_decide
 ```
 
-The sum is `3.75`. The operands and result are exactly representable in binary32, so this
-addition requires no rounding. The theorem `add_eq_spec` applies to any operands and states
-equality of the complete result word, including exceptional values and signed zeros. It can
-be used to rewrite executable operations inside a larger proof. The command `#float_info`
-reports the representation, selected backends and available theorems.
-
-A bound on rounding error takes more than the result bits. It needs assumptions about the
-format, finiteness and range, and we work through those in the
-[guide](site/content/chapters/01-using-the-library.md) together with directed rounding,
-exception flags, intervals and accumulation. Or take one of the [examples](FloatLib/Examples)
-and adapt it to your own calculation.
+On a 1,000-term binary64 dot product, Lean's kernel checked the loop in 159 ms, compared
+with 730 ms for Flocq under Rocq's `vm_compute`. On a separate integer square-root proof,
+FloatLib's exact arithmetic took 11.7 ms with `decide +kernel` and 12.9 ms with
+`native_decide`. See the [floating-point timings](benchmarks/results/kernel/README.md#three-theorems-about-loops-of-1000-steps)
+and [exact arithmetic timings](benchmarks/results/exact/native.md).
 
 ## What you can work with
 
+- **Proof by computation.** `float_decide` proves closed, decidable statements by rewriting
+  supported operations to equivalent computations on their encodings. For example, the kernel
+  can check a binary addition together with its rounding flags. `lane_decide` proves equalities
+  of supported natural-number expressions over all pairs of small finite indices. It evaluates
+  each side once with all input pairs packed together. The
+  [guide](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation) gives examples
+  and lists the operations with kernel rules for each format.
+- **Backend registration.** Tag a proved equation with `@[kernel_optimize]` to make it available
+  to `float_decide`, or tag a certified implementation with `@[compiler_optimize]` to make it
+  available to the compiled planner. Both require a complete proof using only Lean's three
+  standard axioms. `#kernel_rules` and `#compiler_backends` list the available implementations.
+- **Exact arithmetic in the kernel.** `Numerics.Kernel` provides integers, rationals, dyadics
+  and real and complex enclosures for checking numerical certificates. Its arithmetic operations
+  have proofs relating them to ordinary arithmetic. The packed-row operations can check a dot
+  product or a polynomial product by multiplying two natural numbers.
+
+- **Native 16-bit carriers.** `Floats.Native.Half` and `BFloat16` store binary16 and bfloat16
+  words. Their conversions are proved: narrowing from any format, widening to binary32 and NaN
+  normalization agree with the reference cast. Their arithmetic is the host's binary32
+  arithmetic rounded once more; it is tested against the software models, not proved.
 - **IEEE binary and decimal.** Binary arithmetic handles subnormals, signed zeros, infinities,
   NaNs, rounding modes and status flags. Decimal32, decimal64 and decimal128 come in both the
-  BID and DPD encodings, with arithmetic, conversions and rounding proofs.
+  BID and DPD encodings, with arithmetic, conversions and rounding proofs. You can call an
+  operation by the name IEEE 754-2019 gives it, such as `roundToIntegralTiesToEven`,
+  `compareQuietLess` or `augmentedAddition`, and
+  [a table in the guide](https://lean-dojo.github.io/FloatLib/#/chapter/ieee-binary-formats/where-is-each-operation-of-ieee-754-2019)
+  maps the required operations of clause 5 and the recommended families of clause 9 to
+  their binary and decimal implementations. It lists the available theorems and identifies
+  gaps by format. The augmented operations, the minimum and maximum by magnitude, the NaN payload
+  operations and the reductions `sumAbs`, `sumSquare` and the scaled products are there, and so
+  are the formatOf operations, where the operands and the result may have three different
+  formats and the exact result is rounded once.
 - **Posits and quires.** Pick a total width with `ExecFloat.Posit (bits := n)`. Its quire,
   `ExecFloat.Posit.Quire (bits := n)`, is an exact accumulator: it adds up products with no
   rounding as long as they fit its capacity, and rounds once at the end. We follow the 2022
-  posit standard.
-- **Small and custom formats.** FP8, FP6, FP4, OCP MX blocks, fixed point, logarithmic and
-  codebook representations all share the same numerical interfaces. P3109 gets
-  [its own chapter](site/content/chapters/07-low-precision-formats-for-machine-learning.md#what-is-ieee-p3109), which explains the working group's
-  format rules and the report our implementation follows.
+  posit standard, and the operations carry its names.
+- **Small and custom formats.** FP8, FP6, FP4, fixed point, logarithmic and codebook
+  representations all share the same numerical interfaces. Block-scaled formats are one
+  definition with OCP MX, NVFP4 and Four Over Six as instances, for any element format, scale
+  format, block shape and scale-selection rule, and the executable OCP MX and NVFP4 quantizers
+  are proved to compute the real formats the theorems are about. OCP's two FP8 formats are
+  `E4M3` and `E5M2`, as OFP8 spells them, with saturating and non-saturating conversion. An MX
+  dot product can keep its intermediates exact or run in a finite accumulator you name, and the
+  second comes with an error bound. Fixed point follows Embedded C (ISO/IEC TR 18037), as one
+  family over layout, rounding and overflow policy. P3109 gets
+  [its own chapter](https://lean-dojo.github.io/FloatLib/#/chapter/low-precision-formats-for-machine-learning/what-is-ieee-p3109),
+  which explains the working group's format rules and the report our implementation follows.
 - **Classical rounding results.** Correct rounding, half-ulp error bounds and Sterbenz's
   exact-subtraction lemma tie the real-valued theory to the arithmetic that runs.
   Mixed-precision bounds cover casts, products and accumulator updates, under their stated
   finiteness assumptions.
-- **The `roundoff` tactic.** With the `Automation.Roundoff` import, the tactic proves error
-  bounds for configured computations, loops over lists, arrays, vectors and matrices included.
-  `MixedError` propagates relative and absolute error bounds through binary operations,
-  casts and sums. The `roundoff theorem` and `roundoff mixed theorem` commands generate a
-  theorem and its proof, with the required range conditions as hypotheses.
-  See the
-  [roundoff guide](site/content/chapters/11-proving-numerical-bounds.md#how-to-get-an-error-bound-for-floating-point-code).
+- **The `roundoff` tactic.** With the `Tactic.Roundoff` import, the tactic proves error bounds
+  for configured computations, loops over lists, arrays, vectors and matrices included.
+  `MixedError` propagates relative and absolute error bounds through binary operations, casts
+  and sums. The `roundoff theorem` and `roundoff mixed theorem` commands generate a theorem and
+  its proof, with the required range conditions as hypotheses.
+  `roundoff (backward := true) theorem` generates a backward-error theorem instead: the computed
+  value is within an absolute underflow allowance of the exact computation on inputs
+  `x * (1 + δ)`, with a bound on each `δ` and the allowance read off the code. The equality is
+  exact where no operation can underflow. `roundoff closed theorem` generates the forward bound
+  in closed form. The commands read a `match` alternative by alternative, and they read a
+  program on Lean's own `Float` and `Float32` as the same program on `Binary64` and `Binary32`.
+  A subtraction that your hypotheses make exact (Sterbenz) is charged nothing. `#roundoff_check`
+  runs a generated theorem at inputs and warns you when its bound is too large to fix the sign
+  of the result. See the
+  [roundoff guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code).
+- **Stochastic rounding.** We prove the law of one stochastic rounding once: the mean is the
+  input and the variance is at most a quarter of the squared spacing. The executable rounder,
+  which compares `entropy % denominator` with a remainder, is proved to follow that law when the
+  denominator divides the entropy range. `roundoff stochastic theorem` then generates the mean,
+  second moment, tail bound and confidence radius of a sum, a dot product or an affine map that
+  draws fresh entropy at every rounding. See
+  [the guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/fresh-stochastic-rounding).
 - **Intervals and affine quantization.** One interval API takes binary, decimal, posit and
   custom endpoints, each with a stated outward-rounding contract. The
-  [`interval` tactic](site/content/chapters/11-proving-numerical-bounds.md) proves real
-  inequalities, elementary functions included, by certified evaluation and subdivision. Affine
-  quantization has a real-valued specification with a rounding rule you supply, plus a proof
-  connecting nearest-even quantization to the executable rational implementation.
-- **Bounds from coefficients.** The same `interval` tactic proves bounds over a whole domain from
-  coefficients: trigonometric polynomials with cosine and sine terms on the circle, power
-  polynomials on intervals with rational endpoints, Chebyshev series after affine rescaling,
-  and norms of polynomials on the unit circle of `ℂ`, with
-  rational coefficients or the exact values of float data. Lean's kernel checks sum-of-squares
-  certificates using packed integer rows. Wiener algebra defect theorems also bound the errors
-  of approximations to inverse and inverse square root functions. See
-  [the coefficient guide](site/content/chapters/11-proving-numerical-bounds.md#how-to-bound-a-polynomial-on-the-whole-circle).
+  [`interval` tactic](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds) proves real
+  inequalities, elementary functions included, by certified evaluation and subdivision. It also
+  proves that a set of constraints has no point: the goal `False` from hypotheses,
+  `¬ ∃ x, P x`, or any combination by `∧`, `∨`, `¬` and `→` of comparisons. A compiled search
+  writes a tree of boxes and the kernel checks it in one evaluation, and quadratic forms decide
+  the points where a margin is zero, such as the equilibrium of a Lyapunov function. On the 169
+  goals of four projects' test suites it closes 161. Affine quantization has a real-valued
+  specification with a rounding rule you supply, plus a proof connecting nearest-even
+  quantization to the executable rational implementation. See the
+  [guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/how-to-prove-that-constraints-have-no-common-point).
+- **Bounds from coefficients.** The same `interval` tactic proves bounds over a whole domain
+  from coefficients: trigonometric polynomials with cosine and sine terms on the circle, power
+  polynomials on intervals with rational endpoints, Chebyshev series after affine rescaling, and
+  norms of polynomials on the unit circle of `ℂ`, with rational coefficients or the exact values
+  of float data. Lean's kernel checks sum-of-squares certificates using packed integer rows.
+  Wiener algebra defect theorems also bound the errors of approximations to inverse and inverse
+  square root functions. See
+  [the coefficient guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/how-to-bound-a-polynomial-on-the-whole-circle).
 - **Repeatedly rounded sums.** A reduction tree fixes the order of the additions, and its error
-  bounds account for rounding at every node, absolute-error terms near underflow included. For
-  a sum that rounds only once, use the exact accumulators.
+  bounds account for rounding at every node, absolute-error terms near underflow included. The
+  bound grows with the depth of the tree, `((1 + u) ^ depth - 1)` times the sum of the
+  magnitudes, so pairing `n` terms pays for `⌈log₂ n⌉` roundings where the plain loop pays for
+  `n - 1`. For a sum that rounds only once, use the exact accumulators. IEEE 754-2019 lets a
+  reduction associate in any order and accumulate in any wider format, so `sumInOrder` and
+  `sumAlong` take the accumulator format and the order as arguments, with an error bound for
+  every order. For a left-to-right, nearest-even sum of `n` terms in an IEEE format, starting
+  at zero and ending with a finite result, the error is at most `(n - 1) u` times the sum of
+  their magnitudes (Rump). For a dot product the factor is `n u` on the sum of the absolute
+  exact products, provided each exact product is zero or in the normal range (Jeannerod and Rump).
 - **Elementary functions and complex numbers.** Posit elementary functions are proved to return
   the correctly rounded real result. For IEEE binary formats, `ExecFloat.Binary.Certified.exp`,
-  `log`, `pow`, `expMinus1` and `logPlus1` return a correctly rounded finite result when
-  rational enclosure refinement succeeds, and tell you why when it doesn't. Import
+  `log`, `pow`, `expm1` and `logp1` return a correctly rounded finite result when rational
+  enclosure refinement succeeds, and tell you why when it doesn't. Import
   `Configured.CorrectlyRounded` and you get total `ExecFloat.Binary.CorrectlyRounded.exp`,
-  `log`, `expMinus1`, `logPlus1` and `expMul`, correctly rounded on IEEE formats with no
-  premise on the search budget. `Configured.Transcendentals` brings deterministic
-  approximations for a wider set of binary functions. We haven't proved general error bounds
-  for those approximation kernels, but they match MPFR on every case of the elementary-function
-  test tiers. Sine and cosine can return an invalid result if they run out of
-  argument-reduction budget. For IEEE-style descriptors, that import's `pow` of a positive base
-  is correctly rounded whenever its enclosure search settles, and its `pi` is correctly
-  rounded. `ExecComplex` gives you arithmetic on pairs of binary components, with theorems that
-  track the scalar rounding. You can see them in use in the
+  `log`, `expm1`, `logp1` and `expMul`, correctly rounded on IEEE formats with no premise on the
+  search budget, plus the other functions that IEEE 754-2019 recommends (`exp2`, `log10`,
+  `sinPi`, `atan2`, `powr`, `compound` and the rest). For finite inputs in the theorem's
+  domain, each finite nearest-even result equals the real function rounded once. The upward
+  and downward results enclose the real value. `Configured.Transcendentals` brings deterministic approximations for a
+  wider set of binary functions. We haven't proved general error bounds for those approximation
+  kernels, but they match MPFR on every case of the elementary-function test tiers. Sine and
+  cosine can return an invalid result if they run out of argument-reduction budget. For
+  IEEE-style descriptors, that import's `pow` of a positive base is correctly rounded whenever
+  its enclosure search settles, and its `pi` is correctly rounded. `ExecComplex` gives you
+  arithmetic on pairs of binary components, with theorems that track the scalar rounding and
+  bounds for the whole operation: the product is within `√5 u |xy|` of the exact one (Brent,
+  Percival and Zimmermann), within `2u |xy|` with fused multiply-adds, both up to an underflow
+  term, and the ratio division within `√2 γ₇ |x/y|` when no intermediate underflows. Under
+  `Complex.Elementary`, the complex `exp`, `log`, `sqrt`, `rsqrt`, `expm1`, `log1p`, the six
+  trigonometric and hyperbolic functions and their inverses are correctly rounded in every
+  rounding direction at every finite argument, with the special values of C23 Annex G. For a finite nonzero
+  base and a finite exponent in an IEEE format, `pow_eq` proves correct rounding when
+  `powCertified` returns `true`. Use `powChecked` to get the value and that flag together. You can see them in use in the
   [examples](FloatLib/Examples/Transcendentals.lean) and the
-  [complex section](site/content/chapters/05-ieee-binary-formats.md#how-to-work-with-complex-numbers).
+  [complex section](https://lean-dojo.github.io/FloatLib/#/chapter/ieee-binary-formats/how-to-work-with-complex-numbers).
 
 Our [theorem index](FloatLib/Floats/THEOREMS.md) collects the major theorems. Like other
 formalization projects, we keep a [formalization.yaml](formalization.yaml) that lists the
@@ -141,38 +206,46 @@ the proofs and optimize the arithmetic backends.
 ## Speed and independent checks
 
 We've put a lot of work into making the proved arithmetic fast, because we want MPFR's speed
-without giving up the connection between the arithmetic and its proofs. In October, for
-example, we found that binary128 spent nearly all of each operation splitting and joining GMP
-numbers, so we moved it onto two machine words with kernels of its own. The
-[planner](site/content/chapters/12-performance.md) picks among lookup tables, word
+without giving up the connection between the arithmetic and its proofs. Binary128, for example,
+is stored in two machine words and has kernels of its own, so an operation doesn't split and
+join GMP numbers. The
+[planner](https://lean-dojo.github.io/FloatLib/#/chapter/performance) picks among lookup tables, word
 kernels and wider limb algorithms, and every certified choice has to prove that it agrees with
 the same specification. You can set the backend policy yourself, too. There's also a host-FPU
 path, but it's unchecked and you have to call it by name.
 
+For a single operation, rewriting brought kernel checking time down to 84 to 164 microseconds
+on normal binary64 operands. At 4,096 bits, all six operations took at most 295 microseconds
+on the measured inputs. The [chapter on kernel computation](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation)
+gives the timings by operation and compares proof checkers.
+
 On ordinary binary64 calls, FloatLib's proved addition, subtraction and multiplication beat
 MPFR at the same precision, multiplication by about 2.4 times. Our
-[benchmarks](site/content/chapters/12-performance.md) compare scalar operations from 2 to 4,096
+[benchmarks](https://lean-dojo.github.io/FloatLib/#/chapter/performance) compare scalar operations from 2 to 4,096
 bits, so you can see where the kernels win and where MPFR is faster. Lean checks the proofs
 before execution and erases them during compilation, so the compiled arithmetic does not
-check proofs at runtime. To replay the compiled FloatLib declarations through Lean's kernel
-with `leanchecker`, run the opt-in command
+check proofs at runtime. To give every compiled declaration of FloatLib to Lean's kernel once
+more, module by module, run the opt-in command
 `FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh`.
 
 A proof only shows that the code matches the specification we wrote, so we test the
-specifications too, against other people's implementations. Our saved runs matched Berkeley
-TestFloat on **more than 102 million cases** for the IEEE formats and operations we tested, and
-other comparisons cover MPFR, decimal arithmetic, small-format tables and posits. Our
+specifications too, against other people's implementations. All **127,741,704** Berkeley
+TestFloat level-1 vectors in our 210 campaigns matched on values and exception flags under
+the reference's NaN comparison rules. The campaigns cover binary16, binary32, binary64 and
+binary128, plus conversions involving bfloat16. Separate comparisons cover MPFR, decimal
+arithmetic, small-format tables and posits. Our
 comparisons with MPFX found four bugs in that library, which we've reported upstream. SoftPosit
 disagrees with us on a small set of boundary cases, and
-[the analysis](site/content/chapters/14-external-validation.md#why-did-softposit-disagree-with-floatlib) works
+[the analysis](https://lean-dojo.github.io/FloatLib/#/chapter/external-validation/why-did-softposit-disagree-with-floatlib) works
 through the calculations behind each side.
 
 You can reproduce the external comparisons with the [testing guide](tests/README.md), or
 measure your own machine with the [benchmark guide](benchmarks/docs/Comparison.md).
+[TRUST.md](TRUST.md) lists everything a claim about FloatLib rests on besides Lean's kernel.
 
 ## Source files
 
-To follow an operation down into its implementation and proof, start from the three main parts
+To follow an operation down into its implementation and proof, start from the four main parts
 of the library:
 
 | Directory | What belongs here |
@@ -180,6 +253,7 @@ of the library:
 | [`FloatLib/Numerics`](FloatLib/Numerics) | Representation-independent meaning, exact arithmetic, contracts, enclosures, packed rows for kernel certificates, and coefficient bounds |
 | [`FloatLib/Kernels`](FloatLib/Kernels) | Shared word and limb algorithms with refinement proofs |
 | [`FloatLib/Floats`](FloatLib/Floats) | Concrete formats, real-valued rounding theory, executable operations, and their proofs |
+| [`FloatLib/Tactic`](FloatLib/Tactic) | Tactics, commands and attributes: `roundoff`, `interval`, `float_decide`, the backend tags, `#float_info` |
 
 Tests and benchmarks live in their own Lake workspaces, so importing the library never pulls
 them in. The [website](site/) holds the guide, checked Lean examples, references, and

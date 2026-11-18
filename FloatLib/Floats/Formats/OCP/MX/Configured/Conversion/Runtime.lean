@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Core
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Core
 
 /-!
-# Runtime conversion sources for configured OCP MX values
+# Runtime conversion source for configured E8M0 values
 
-You can convert from an E8M0 scale or a complete MX block, because both have exact observations.
-Converting into them is another matter. Building a block means choosing a scale, an element
-rounding, a length, and a policy for exceptional values, so no destination quantizer is installed.
+You can convert from an E8M0 scale, because it has an exact observation. No destination quantizer
+is installed for a bare scale: a scale is selected for a block of elements, by the scale level of a
+block format (`E8M0.codec` with `Block.CodedFormat.quantize`).
 -/
 
 @[expose] public section
@@ -36,19 +36,6 @@ instance exactDecoder :
     Formats.OCP.MX.E8M0.numericalSystem.denote value.toCode
 
 end E8M0.Conversion
-
-namespace Block.Conversion
-
-variable {format : FloatFormat}
-
-/-- Decode a complete configured MX block to exact scaled dyadics or an exceptional observation. -/
-instance exactDecoder :
-    FloatLib.Floats.ExecFloat.ExactDecoder
-      (ExecFloat.OCP.MX.Block format) (Array Numerics.Dyadic) where
-  decode value :=
-    (Formats.OCP.MX.blockSystem format).denote value.toCode
-
-end Block.Conversion
 
 end ExecFloat.OCP.MX
 end FloatLib.Floats

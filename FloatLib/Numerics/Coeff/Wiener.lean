@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,8 +9,6 @@ module
 public import FloatLib.Numerics.Coeff.Laurent
 public import Mathlib.Analysis.Normed.Group.FunctionSeries
 public import Mathlib.Analysis.Normed.Lp.lpSpace
-public import Mathlib.Analysis.Normed.Ring.InfiniteSum
-public import Mathlib.Analysis.SpecialFunctions.Exp
 
 /-!
 # The Wiener algebra
@@ -96,6 +94,7 @@ noncomputable instance : NormedAddCommGroup Wiener :=
 noncomputable instance : NormedSpace ℂ Wiener :=
   inferInstanceAs (NormedSpace ℂ (lp (fun _ : ℤ => ℂ) 1))
 
+/-- The Wiener algebra is complete, as `ℓ¹(ℤ)` is. -/
 instance : CompleteSpace Wiener := inferInstanceAs (CompleteSpace (lp (fun _ : ℤ => ℂ) 1))
 
 instance : CoeFun Wiener fun _ => ℤ → ℂ := ⟨fun (f : lp (fun _ : ℤ => ℂ) 1) => ⇑f⟩
@@ -103,6 +102,9 @@ instance : CoeFun Wiener fun _ => ℤ → ℂ := ⟨fun (f : lp (fun _ : ℤ => 
 /-- Two elements with the same coefficients are equal. -/
 @[ext] theorem ext {f g : Wiener} (h : ∀ n, f n = g n) : f = g :=
   lp.ext (funext h)
+
+/-- Two elements are equal exactly when they have the same coefficients. -/
+add_decl_doc FloatLib.Numerics.Coeff.Wiener.ext_iff
 
 /-- The coefficients of a sum. -/
 @[simp] theorem add_apply (f g : Wiener) (n : ℤ) : (f + g) n = f n + g n := rfl
@@ -155,8 +157,7 @@ private theorem tsum_conv {R : Type*} [NormedRing R] [CompleteSpace R] {f g : �
     ∑' n, ∑' k, f k * g (n - k) = (∑' k, f k) * ∑' m, g m := by
   have hs : Summable fun p : ℤ × ℤ => f p.2 * g (p.1 - p.2) :=
     .of_norm_bounded (summable_conv_norm hf hg) fun _ => norm_mul_le _ _
-  rw [tsum_mul_tsum_of_summable_norm hf hg, ← hs.tsum_prod' fun n => hs.prod_factor n,
-    ← convEquiv.tsum_eq]
+  rw [tsum_mul_tsum_of_summable_norm hf hg, ← hs.tsum_prod, ← convEquiv.tsum_eq]
   simp [convEquiv]
 
 private theorem summable_mul_shift (f g : Wiener) (n : ℤ) :
@@ -191,7 +192,7 @@ theorem single_apply (n : ℤ) (c : ℂ) (m : ℤ) : single n c m = if m = n the
 
 /-- The norm of `single n c` is `‖c‖`. -/
 @[simp] theorem norm_single (n : ℤ) (c : ℂ) : ‖single n c‖ = ‖c‖ :=
-  lp.norm_single (E := fun _ : ℤ => ℂ) (by norm_num) n c
+  lp.norm_single (E := fun _ : ℤ => ℂ) (zero_lt_one' ENNReal) n c
 
 noncomputable instance : One Wiener := ⟨single 0 1⟩
 
@@ -224,22 +225,15 @@ private theorem mul_assoc' (f g h : Wiener) : f * g * h = f * (g * h) := by
     rw [← tsum_mul_left, ← (Equiv.subRight k).tsum_eq]
     refine tsum_congr fun j => ?_
     simp only [Equiv.subRight_apply, sub_sub_sub_cancel_right]
-    ring
+    ac_rfl
   simp only [e1, e2]
   have hb : Summable fun p : ℤ × ℤ => ‖f p.2 * g (p.1 - p.2) * h (n - p.1)‖ := by
     refine .of_nonneg_of_le (fun _ => norm_nonneg _) (fun p => ?_)
       ((summable_conv_norm (summable_norm f) (summable_norm g)).mul_right ‖h‖)
-    calc ‖f p.2 * g (p.1 - p.2) * h (n - p.1)‖ ≤ ‖f p.2‖ * ‖g (p.1 - p.2)‖ * ‖h (n - p.1)‖ :=
-          (norm_mul_le _ _).trans (by gcongr; exact norm_mul_le _ _)
-      _ ≤ ‖f p.2‖ * ‖g (p.1 - p.2)‖ * ‖h‖ := by gcongr; exact norm_apply_le h _
-  have hs := Summable.of_norm hb
-  refine (hs.tsum_comm' (fun j => hs.prod_factor j) fun k => ?_).symm
-  refine Summable.of_norm <| .of_nonneg_of_le (fun _ => norm_nonneg _) (fun j => ?_)
-    ((((summable_norm g).comp_injective (Equiv.subRight k).injective).mul_left ‖f k‖).mul_right
-      ‖h‖)
-  calc ‖f k * g (j - k) * h (n - j)‖ ≤ ‖f k‖ * ‖g (j - k)‖ * ‖h (n - j)‖ :=
-        (norm_mul_le _ _).trans (by gcongr; exact norm_mul_le _ _)
-    _ ≤ ‖f k‖ * ‖g (j - k)‖ * ‖h‖ := by gcongr; exact norm_apply_le h _
+    rw [norm_mul, norm_mul]
+    exact mul_le_mul_of_nonneg_left (norm_apply_le h _)
+      (mul_nonneg (norm_nonneg _) (norm_nonneg _))
+  exact (Summable.of_norm hb).tsum_comm.symm
 
 noncomputable instance : CommRing Wiener :=
   { (inferInstance : AddCommGroup Wiener) with
@@ -265,6 +259,7 @@ noncomputable instance : NormedCommRing Wiener :=
   { (inferInstance : NormedAddCommGroup Wiener), (inferInstance : CommRing Wiener) with
     norm_mul_le := fun f g => by exact norm_mul_le' f g }
 
+/-- The unit of the Wiener algebra has norm one. -/
 instance : NormOneClass Wiener := ⟨by rw [one_def, norm_single, norm_one]⟩
 
 noncomputable instance : Algebra ℂ Wiener :=
@@ -287,7 +282,7 @@ theorem single_mul_single (n m : ℤ) (c d : ℂ) :
 /-! ### Values on the circle -/
 
 private theorem norm_exp_int (n : ℤ) (u : ℝ) : ‖exp (n * u * I)‖ = 1 := by
-  have : (n : ℂ) * u * I = ((n * u : ℝ) : ℂ) * I := by push_cast; ring
+  have : (n : ℂ) * u * I = ((n * u : ℝ) : ℂ) * I := by push_cast; rfl
   rw [this, norm_exp_ofReal_mul_I]
 
 private theorem exp_int_add (a b : ℤ) (u : ℝ) :
@@ -312,7 +307,7 @@ noncomputable def eval (u : ℝ) : Wiener →ₐ[ℂ] ℂ where
       rw [mul_apply, ← tsum_mul_right]
       refine tsum_congr fun k => ?_
       rw [show n = k + (n - k) by ring, exp_int_add, add_sub_cancel_left]
-      ring
+      ac_rfl
     simp only [h]
     exact tsum_conv (summable_eval f u) (summable_eval g u)
   map_zero' := by simp
@@ -372,7 +367,7 @@ theorem ofRow_conv (xs ys : List ℤ) (c d : ℤ) :
   have hs : single (-(c + d)) 1 = single (-c) 1 * single (-d) 1 := by
     rw [single_mul_single, mul_one, neg_add]
   rw [ofRow, ofRow, ofRow, ofCoeffList_conv, map_mul, hs]
-  ring
+  ac_rfl
 
 /-- A lanewise difference of rows is the difference in the algebra. -/
 theorem ofRow_sub (xs ys : List ℤ) (c : ℤ) :

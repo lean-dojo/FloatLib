@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -15,7 +15,7 @@ import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 # Certified binary exponential and logarithm on encoded inputs
 
 Reads one encoded binary16, bfloat16, binary32, or binary64 word per line, calls
-`ExecFloat.Binary.Certified.exp`, `log`, `expMinus1`, or `logPlus1` with the default budget, and
+`ExecFloat.Binary.Certified.exp`, `log`, `expm1`, or `logp1` with the default budget, and
 prints the encoded result (or `none` for a failure) and then the elapsed
 nanoseconds. The `range` mode evaluates a block of consecutive binary32 encodings and writes the
 results as binary words.
@@ -29,8 +29,8 @@ namespace FloatLibBenchmarks.Public.CertifiedExpLog
 structure Functions (T : Type) where
   exp : T → Option T
   log : T → Option T
-  expMinus1 : T → Option T
-  logPlus1 : T → Option T
+  expm1 : T → Option T
+  logp1 : T → Option T
   ofBits : Nat → T
   toBits : T → Nat
 
@@ -38,8 +38,8 @@ structure Functions (T : Type) where
 macro "functions%" : term =>
   `({ exp := fun x => (ExecFloat.Binary.Certified.exp x).toOption,
       log := fun x => (ExecFloat.Binary.Certified.log x).toOption,
-      expMinus1 := fun x => (ExecFloat.Binary.Certified.expMinus1 x).toOption,
-      logPlus1 := fun x => (ExecFloat.Binary.Certified.logPlus1 x).toOption,
+      expm1 := fun x => (ExecFloat.Binary.Certified.expm1 x).toOption,
+      logp1 := fun x => (ExecFloat.Binary.Certified.logp1 x).toOption,
       ofBits := ExecFloat.Binary.ofNatBits, toBits := ExecFloat.Binary.toNatBits })
 
 def single : Functions Binary32 := functions%
@@ -51,8 +51,8 @@ def brain : Functions BFloat16 := functions%
 def Functions.pick {T : Type} (F : Functions T) : String → Option (T → Option T)
   | "exp" => some F.exp
   | "log" => some F.log
-  | "expm1" => some F.expMinus1
-  | "log1p" => some F.logPlus1
+  | "expm1" => some F.expm1
+  | "log1p" => some F.logp1
   | _ => none
 
 def readWords (path : System.FilePath) : IO (Array Nat) := do

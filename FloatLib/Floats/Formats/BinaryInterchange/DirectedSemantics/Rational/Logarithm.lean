@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -94,9 +94,10 @@ theorem bpow_log2_sub_log2_sub_one
       (2 : Real) ^ numeratorLog / (2 : Real) ^ denominatorLog.succ := by
   change (2 : ℝ) ^ (Int.ofNat numeratorLog - Int.ofNat denominatorLog - 1) =
     (2 : ℝ) ^ numeratorLog / (2 : ℝ) ^ denominatorLog.succ
-  rw [zpow_sub₀ (by norm_num), zpow_sub₀ (by norm_num)]
-  simp [pow_succ, div_eq_mul_inv]
-  ring
+  rw [zpow_sub₀ (two_ne_zero), zpow_sub₀ (two_ne_zero)]
+  simp only [Int.ofNat_eq_natCast, zpow_natCast, div_eq_mul_inv, zpow_ofNat, pow_succ, pow_zero,
+    one_mul, Nat.succ_eq_add_one, mul_inv_rev]
+  ac_rfl
 
 /-- Closed form for the upper coarse exponent candidate. -/
 theorem bpow_log2_sub_log2_add_one
@@ -110,7 +111,7 @@ theorem bpow_log2_sub_log2_add_one
   rw [hexponent]
   change (2 : ℝ) ^ (Int.ofNat numeratorLog.succ - Int.ofNat denominatorLog) =
     (2 : ℝ) ^ numeratorLog.succ / (2 : ℝ) ^ denominatorLog
-  rw [zpow_sub₀ (by norm_num)]
+  rw [zpow_sub₀ (two_ne_zero)]
   rw [Int.ofNat_eq_natCast, Int.ofNat_eq_natCast, zpow_natCast, zpow_natCast]
 
 /--
@@ -233,60 +234,35 @@ theorem floorLog2_bounds
         ratio < bpow (initialExponent + 1) := by
     simpa [ratio, initialExponent] using
       log2_sub_log2_bounds numerator denominator hnumerator hdenominator
-  have hlower : bpow lowerExponent ≤ ratio := by
-    by_cases hlt : Numerics.RationalBinary.lessThanPowerOfTwo numerator denominator initialExponent = true
-    · have hexponent : lowerExponent = initialExponent - 1 := by
-        simp [lowerExponent, hlt]
-      simpa [hexponent] using hinitial.1
-    · have hltFalse :
-          Numerics.RationalBinary.lessThanPowerOfTwo numerator denominator initialExponent = false := by
-        simpa using hlt
-      have hexponent : lowerExponent = initialExponent := by
-        simp [lowerExponent, hltFalse]
-      have hnotLt :
-          ¬ratio < bpow initialExponent := by
-        intro hratio
-        exact hlt <|
-          (lessThanPowerOfTwo_eq_true_iff numerator denominator initialExponent hdenominator).2
-            (by simpa [ratio] using hratio)
-      simpa [hexponent] using le_of_not_gt hnotLt
-  have hupper : ratio < bpow (lowerExponent + 1) := by
-    by_cases hlt : Numerics.RationalBinary.lessThanPowerOfTwo numerator denominator initialExponent = true
-    · have hexponent : lowerExponent = initialExponent - 1 := by
-        simp [lowerExponent, hlt]
-      have hratio :
-          ratio < bpow initialExponent :=
+  have hbounds : bpow lowerExponent ≤ ratio ∧ ratio < bpow (lowerExponent + 1) := by
+    by_cases hlt : Numerics.RationalBinary.lessThanPowerOfTwo numerator denominator
+      initialExponent = true
+    · have hratio : ratio < bpow initialExponent :=
         (lessThanPowerOfTwo_eq_true_iff
           numerator denominator initialExponent hdenominator).1 hlt
-      simpa [hexponent] using hratio
-    · have hexponent : lowerExponent = initialExponent := by
-        simp [lowerExponent, hlt]
-      simpa [hexponent] using hinitial.2
+      simpa [lowerExponent, hlt] using And.intro hinitial.1 hratio
+    · have hratio : bpow initialExponent ≤ ratio :=
+        le_of_not_gt fun h => hlt <|
+          (lessThanPowerOfTwo_eq_true_iff
+            numerator denominator initialExponent hdenominator).2 h
+      simpa [lowerExponent, hlt] using And.intro hratio hinitial.2
   have hfinalFalse :
-      Numerics.RationalBinary.atLeastPowerOfTwo numerator denominator (lowerExponent + 1) = false := by
-    by_contra hnotFalse
-    have htrue :
-        Numerics.RationalBinary.atLeastPowerOfTwo numerator denominator (lowerExponent + 1) = true := by
-      exact Bool.eq_true_of_not_eq_false hnotFalse
-    have hratio :
-        bpow (lowerExponent + 1) ≤ ratio :=
+      Numerics.RationalBinary.atLeastPowerOfTwo numerator denominator (lowerExponent + 1) =
+        false := by
+    apply Bool.eq_false_iff.mpr
+    intro htrue
+    exact (not_le_of_gt hbounds.2) <|
       (atLeastPowerOfTwo_eq_true_iff
         numerator denominator (lowerExponent + 1) hdenominator).1 htrue
-    exact (not_lt_of_ge hratio) hupper
   have hfloor :
       Numerics.RationalBinary.floorLog2 numerator denominator = lowerExponent := by
-    simp only [Numerics.RationalBinary.floorLog2]
-    rw [show
-      (Int.ofNat (Nat.log2 numerator) - Int.ofNat (Nat.log2 denominator)) =
-        initialExponent by rfl]
-    rw [show
-      (if Numerics.RationalBinary.lessThanPowerOfTwo numerator denominator initialExponent then
-          initialExponent - 1
-        else initialExponent) = lowerExponent by rfl]
+    change (if Numerics.RationalBinary.atLeastPowerOfTwo
+      numerator denominator (lowerExponent + 1) then lowerExponent + 1 else lowerExponent) = _
     simp [hfinalFalse]
-  simpa [hfloor, ratio] using And.intro hlower hupper
+  simpa [hfloor, ratio] using hbounds
 
-/-- The shift-based rational logarithm agrees with Mathlib's integer logarithm on positive inputs. -/
+/-- The shift-based rational logarithm agrees with Mathlib's integer logarithm on positive
+inputs. -/
 theorem floorLog2_eq_int_log (numerator denominator : Nat)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
     Numerics.RationalBinary.floorLog2 numerator denominator =
@@ -356,20 +332,17 @@ theorem scaledRatToReal_floorLog2_bounds
       _ = bpow (Numerics.RationalBinary.floorLog2 numerator denominator + exponent + 1) := by
         rw [← bpow_add]
         congr 1
-        ring
+        ac_rfl
 
 /-- Exact binary scaling adds its exponent to the rational floor logarithm. -/
 theorem floorLog2_scaleByPowerOfTwo
     (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0) :
-    Numerics.RationalBinary.floorLog2 (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent).1
+    Numerics.RationalBinary.floorLog2 (Numerics.RationalBinary.scaleByPowerOfTwo numerator
+      denominator exponent).1
         (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent).2 =
       Numerics.RationalBinary.floorLog2 numerator denominator + exponent := by
   let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator exponent
-  have hscaledNumerator : scaled.1 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_fst_ne_zero numerator denominator exponent hnumerator
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator exponent hdenominator
   obtain ⟨hlower, hupper⟩ :=
     scaledRatToReal_floorLog2_bounds numerator denominator exponent hnumerator hdenominator
   rw [← scaleByPowerOfTwo_real] at hlower hupper

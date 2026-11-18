@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -111,14 +111,14 @@ Use `toRat?` when only the rational value of a finite number matters.
   Model.isQNaN (toModel value)
 
 /-- Whether the value is a signaling NaN under its configured encoding policy. -/
-@[inline] def isSNaN
+@[inline] def isSignaling
     (value : Value) : Bool :=
-  Model.isSNaN (toModel value)
+  Model.isSignaling (toModel value)
 
 /-- Whether the value is an infinity. Finite encodings always return `false`. -/
-@[inline] def isInf
+@[inline] def isInfinite
     (value : Value) : Bool :=
-  Model.isInf (toModel value)
+  Model.isInfinite (toModel value)
 
 /-- Whether the value denotes a finite number under its configured encoding policy. -/
 @[inline] def isFinite
@@ -212,7 +212,7 @@ infinity and a NaN the format's invalid result.
     Value :=
   let x := toModel value
   if Model.isNaN x then ofModel (Model.invalidResult format)
-  else if Model.isInf x then ofModel (Model.posInf format)
+  else if Model.isInfinite x then ofModel (Model.posInf format)
   else
     let field := max (Model.expField x) 1
     ofModel <|

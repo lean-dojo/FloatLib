@@ -3,7 +3,7 @@
 We call TensorLib's unmodified `TensorLib/Float.lean` functions at revision
 [`85e61c9`](https://github.com/leanprover/TensorLib/tree/85e61c9eb3211c736ded72b37254e2d608bbdbeb),
 and the FloatLib adapter calls `Model.cast`. Both sides convert between binary32 and FP16,
-BF16, E4M3FN, or E5M2, with nearest-even rounding and no saturation.
+BF16, E4M3, or E5M2, with nearest-even rounding and no saturation.
 
 Run from the FloatLib checkout, choosing local paths outside the repository:
 
@@ -41,7 +41,7 @@ exactly. All **2,423** differing words come from NaN inputs, and both results ar
 of them. FloatLib keeps the input NaN's sign and the part of its payload that fits, as its casts
 do in general, while TensorLib returns a canonical NaN. The FP16 word `0x7c01`, a NaN with
 payload 1, widens to `0x7fc00001` in FloatLib and `0x7fc00000` in TensorLib. Negative finite
-overflow to E4M3FN gives `0xff` in both. We also check that building the Float32 inputs
+overflow to E4M3 gives `0xff` in both. We also check that building the Float32 inputs
 changes only NaN encodings, which Lean's canonical native-float representation requires.
 Exception flags and NaN signaling behavior aren't part of this experiment.
 
@@ -66,8 +66,8 @@ pairs. The timed loop covers lookup, conversion, encoded output, index, and chec
 while construction, process startup, and file output stay outside it.
 
 On the Intel Xeon Platinum 8275CL, TensorLib's medians are 4.0 to 12.5 times faster than
-FloatLib's general descriptor cast on these fixtures. For the saved run we measured FloatLib
-2.0.0 (commit `8c88715`) on 2026-10-31. FloatLib uses Lean 4.35.0 with Clang 23.1.0, and TensorLib
+FloatLib's general descriptor cast on these fixtures. For the recorded run we measured FloatLib
+at commit `8c88715` on 2026-10-31. FloatLib uses Lean 4.35.0 with Clang 23.1.0, and TensorLib
 uses Lean 4.33.0 with Clang 22.1.4. What's being compared here is the scalar
 cast interface. Tensor throughput and FloatLib's arithmetic backend kernels don't enter into
 it.

@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.AddDyadic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
-public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
+
 import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
@@ -303,7 +302,8 @@ theorem roundDyadicMagnitudeUp_shiftRightJam (fmt : FloatFormat) (sign : Bool)
     rw [hshift]
   · simp only [hsub, ite_false]
 
-/-- A sticky quotient that keeps `fracWidth + 2` bits is a grid tie exactly when the magnitude is. -/
+/-- A sticky quotient that keeps `fracWidth + 2` bits is a grid tie exactly when the magnitude
+is. -/
 theorem dyadicIsGridTie_shiftRightJam (fmt : FloatFormat) (sign : Bool) (magnitude : Nat)
     (exponent : Int) (discard : Nat) (hleading : discard + fmt.fracWidth + 2 ≤ magnitude.log2) :
     dyadicIsGridTie fmt

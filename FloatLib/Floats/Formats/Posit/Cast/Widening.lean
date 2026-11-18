@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
+import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Layout
 
 /-!
 # Exact widening of posit words
@@ -80,7 +81,8 @@ theorem nonnegativeRatAt_widen (source target : Format) (hwidth : source.bits �
     format_eq_of_bits_eq (show source.bits + (target.bits - source.bits) = target.bits by omega)
   simpa only [hf] using nonnegativeRatAt_add_width source (target.bits - source.bits) hcode
 
-/-- Zero-bit extension preserves exact decoding for every word, including negative values and NaR. -/
+/-- Zero-bit extension preserves exact decoding for every word, including negative values and
+NaR. -/
 theorem toRat?_widen {source : Format} (target : Format) (hw : source.bits ≤ target.bits)
     (value : Model source) :
     (ofNatBits (format := target)
@@ -124,5 +126,17 @@ theorem roundRat_widen {source : Format} (target : Format) (hw : source.bits ≤
       ofNatBits (value.toNatBits * 2 ^ (target.bits - source.bits)) := by
   apply roundRat_toRat?
   rw [toRat?_widen target hw value, hq]
+
+/-- The standard one word has exact value one, even with a tapered-away exponent field. -/
+theorem nonnegativeRatAt_oneCodeNat (format : Format) :
+    nonnegativeRatAt format format.oneCodeNat = 1 := by
+  have hw := nonnegativeRatAt_widen { bits := 2 } format
+    format.bits_ge_two (code := 1) (by decide)
+  dsimp only at hw
+  have he : format.oneCodeNat = 1 * 2 ^ (format.bits - 2) := by
+    simp [Format.oneCodeNat, Format.payloadBits, Nat.sub_sub]
+  rw [he, hw]
+  simpa [Format.signMaskNat, Format.signIndex, Format.payloadBits] using
+    GuardStickyRounding.nonnegativeRatAt_maxPositive { bits := 2 }
 
 end FloatLib.Floats.Formats.Posit.Model

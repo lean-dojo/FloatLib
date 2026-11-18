@@ -1,15 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
-public import FloatLib.Kernels.FixedWord.SignedMagnitude.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Runtime
+public import FloatLib.Kernels.FixedWord.SignedMagnitude.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 
 /-!
@@ -84,7 +82,7 @@ exact wider-intermediate branch.
   else if leftExponent ≤ rightExponent then
     let shift := Int.toNat (rightExponent - leftExponent)
     if _hshift : shift < 128 then
-      if _hfit : FixedWord.DyadicCompare.shiftFits128 rightSignificand shift then
+      if _hfit : FixedWord.DyadicCompare.ShiftFits128 rightSignificand shift then
         roundAlignedFieldsWord format heligible
           leftNegative leftSignificand
           rightNegative (FixedWord.UInt128.shiftLeft rightSignificand shift)
@@ -100,7 +98,7 @@ exact wider-intermediate branch.
   else
     let shift := Int.toNat (leftExponent - rightExponent)
     if _hshift : shift < 128 then
-      if _hfit : FixedWord.DyadicCompare.shiftFits128 leftSignificand shift then
+      if _hfit : FixedWord.DyadicCompare.ShiftFits128 leftSignificand shift then
         roundAlignedFieldsWord format heligible
           leftNegative (FixedWord.UInt128.shiftLeft leftSignificand shift)
           rightNegative rightSignificand

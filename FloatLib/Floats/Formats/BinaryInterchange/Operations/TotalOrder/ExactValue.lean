@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Runtime
+
 import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
@@ -46,7 +47,6 @@ theorem totalOrderKey_injective : Function.Injective totalOrderKey := by
       | finite b =>
           have hvalue : a.toRat = b.toRat := congrArg (fun k => (ofLex (ofLex k).2).1) h
           have hsign : a.negative = b.negative := by
-            have ht := congrArg (fun k => (ofLex (ofLex (ofLex k).2).2).1) h
             cases ha : a.negative <;> cases hb : b.negative <;>
               simp_all [totalOrderKey, finiteTotalOrderKey]
           have hexponent : a.exponent = b.exponent := by

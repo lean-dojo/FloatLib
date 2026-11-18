@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -28,7 +28,6 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
       ∀ (t : Bool) (d : Nat) (r : Int), (Datum.finite t d r).Valid f →
         Datum.finiteValue s c q < Datum.finiteValue t d r →
         v ≤ Datum.finiteValue t d r := by
-  have hpq : 0 < (10 : ℚ) ^ q := zpow_pos (by norm_num) _
   by_cases hc : c = 0
   · have hv : v = (10 : ℚ) ^ f.minQuantum := by
       simpa [nextUp, hc, Datum.toRat?_eq] using hout.symm
@@ -47,7 +46,6 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
       neighbor_normalize f s c q hx hc
     have hpb : 0 < (10 : ℚ) ^ b := zpow_pos (by norm_num) _
     have han : (0 : ℚ) ≤ a := Nat.cast_nonneg _
-    have hapos' : (0 : ℚ) < a := by exact_mod_cast hapos
     simp only [nextUp, ite_eq_right hc, hp] at hout
     cases s
     · simp only [Bool.false_eq_true, ↓reduceIte] at hout
@@ -70,7 +68,7 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
         · simp only [↓reduceIte, neg_mul, one_mul] at hlt
           nlinarith [mul_nonneg han hpb.le]
     · simp only [↓reduceIte] at hout
-      obtain ⟨d, r, hv, hdvalid, hdfull, hstep⟩ :=
+      obtain ⟨d, r, hv, _, hdfull, hstep⟩ :=
         neighborBelow_spec f a b ha hapos hbmin hbmax hfull
       have hv' : v = -((d : ℚ) * (10 : ℚ) ^ r) := by
         simpa [hv, Datum.negate, Datum.toRat?_eq] using hout.symm

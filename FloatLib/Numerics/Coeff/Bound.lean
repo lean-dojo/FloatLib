@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -266,7 +266,7 @@ theorem norm_sos {w g gt gh na nb n m m' d kH A B p q : ℕ} {kT kc : ℤ} {a b 
       series (fun k => z ^ k) b) = (d : ℂ) * (series (fun k => z ^ k) a +
         I * series (fun k => z ^ k) b) by ring, norm_mul, Complex.norm_natCast, mul_pow] at h
   push_cast
-  linarith
+  exact h
 
 /-- Power series on an interval. The row `A` holds the coefficients `a` at the denominator `d`,
 and `M / D` and `R / D` are the midpoint and the radius of `[lo, hi]`; one check on the row that

@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Runtime
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.P3109.Conversion.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 
 /-!
 # Mixed-format P3109 arithmetic
@@ -23,7 +23,8 @@ descriptor. External destinations live in `Arithmetic.External`, so importing th
 installs no alternative IEEE arithmetic or conversion instances. The operation always evaluates
 the whole closed expression before projecting, fused add-add and scaled arithmetic included.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.5, 4.8–4.10 and 5.8.
+Reference: P3109 unapproved interim report v4.1 (14 September 2026),
+revision `2d45cf2`, §§4.5, 4.8–4.10 and 5.8.
 -/
 
 @[expose] public section
@@ -44,7 +45,10 @@ structure Destination (Result : Type) where
 
 namespace Destination
 
-/-- A P3109 result format with its complete report projection policy. -/
+/-- A P3109 result format with its complete report projection policy.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.9.1, 4.10 and 5.8.
+-/
 def p3109 (format : Format) : Destination (ExecFloat.P3109 format) :=
   ⟨fun policy value => ExecFloat.P3109.projectRat value policy.rounding policy.saturation⟩
 
@@ -67,8 +71,9 @@ variable [ExactDecoder Third ThirdExact] [ExactMap ThirdExact Rat]
 /--
 Conversion from an independently typed source through one destination projection, rounding in
 `mode` (nearest-even by default) before `saturation` (none by default) applies.
+P3109 interim report v4.1 (14 September 2026), §4.9.1; unapproved draft.
 -/
-@[inline] def convert (destination : Destination Result) (value : Source)
+@[inline] def Convert (destination : Destination Result) (value : Source)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
   destination.project { rounding := mode, saturation } (decode value)
 
@@ -94,42 +99,63 @@ Conversion from an independently typed source through one destination projection
   destination.project { rounding := mode, saturation }
     (operation (decode left) (decode right) (decode third))
 
-/-- Mixed reciprocal, with zero mapped to NaN before projection. -/
-@[inline] def recip (destination : Destination Result) (value : Source)
-    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  unary destination Arithmetic.recip value mode saturation
+/-- Mixed reciprocal, with zero mapped to NaN before projection.
 
-/-- Mixed addition, retaining closed-domain infinities and NaN. -/
-@[inline] def add (destination : Destination Result) (left : Left) (right : Right)
+P3109 interim report v4.1 (14 September 2026), §4.10.8; unapproved draft.
+-/
+@[inline] def Recip (destination : Destination Result) (value : Source)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  binary destination Arithmetic.add left right mode saturation
+  unary destination Arithmetic.Recip value mode saturation
 
-/-- Mixed subtraction with no intermediate rounding. -/
-@[inline] def sub (destination : Destination Result) (left : Left) (right : Right)
+/-- Mixed addition, retaining closed-domain infinities and NaN.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.3; unapproved draft.
+-/
+@[inline] def Add (destination : Destination Result) (left : Left) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  binary destination Arithmetic.sub left right mode saturation
+  binary destination Arithmetic.Add left right mode saturation
 
-/-- Mixed multiplication with no intermediate rounding. -/
-@[inline] def mul (destination : Destination Result) (left : Left) (right : Right)
+/-- Mixed subtraction with no intermediate rounding.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.3; unapproved draft.
+-/
+@[inline] def Subtract (destination : Destination Result) (left : Left) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  binary destination Arithmetic.mul left right mode saturation
+  binary destination Arithmetic.Subtract left right mode saturation
 
-/-- Mixed division with the report's zero-denominator rule. -/
-@[inline] def div (destination : Destination Result) (left : Left) (right : Right)
+/-- Mixed multiplication with no intermediate rounding.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.4; unapproved draft.
+-/
+@[inline] def Multiply (destination : Destination Result) (left : Left) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  binary destination Arithmetic.div left right mode saturation
+  binary destination Arithmetic.Multiply left right mode saturation
 
-/-- Mixed fused multiply-add, including an independently typed accumulator. -/
-@[inline] def fma (destination : Destination Result) (left : Left) (right : Right)
+/-- Mixed division with the report's zero-denominator rule.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.5; unapproved draft.
+-/
+@[inline] def Divide (destination : Destination Result) (left : Left) (right : Right)
+    (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
+  binary destination Arithmetic.Divide left right mode saturation
+
+/-- Mixed fused multiply-add, including an independently typed accumulator.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.6; unapproved draft.
+-/
+@[inline] def FMA (destination : Destination Result) (left : Left) (right : Right)
     (addend : Third) (mode : RoundingMode := .nearest)
     (saturation : SaturationMode := .none) : Result :=
-  ternary destination Arithmetic.fma left right addend mode saturation
+  ternary destination Arithmetic.FMA left right addend mode saturation
 
-/-- Mixed fused add-add, with neither addition rounded before the result projection. -/
-@[inline] def faa (destination : Destination Result) (left : Left) (middle : Right)
+/-- Mixed fused add-add, with neither addition rounded before the result projection.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.7; unapproved draft.
+-/
+@[inline] def FAA (destination : Destination Result) (left : Left) (middle : Right)
     (right : Third) (mode : RoundingMode := .nearest)
     (saturation : SaturationMode := .none) : Result :=
-  ternary destination Arithmetic.faa left middle right mode saturation
+  ternary destination Arithmetic.FAA left middle right mode saturation
 
 variable {LeftScale LeftScaleExact RightScale RightScaleExact : Type}
 variable [ExactDecoder LeftScale LeftScaleExact] [ExactMap LeftScaleExact Rat]
@@ -151,26 +177,28 @@ multiplication and every other operation with canonical results.
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
   destination.project { rounding := mode, saturation }
-    (operation (Arithmetic.mul (decode leftScale) (decode left))
-      (Arithmetic.mul (decode rightScale) (decode right)))
+    (operation (Arithmetic.Multiply (decode leftScale) (decode left))
+      (Arithmetic.Multiply (decode rightScale) (decode right)))
 
-/-- Add two operands scaled without rounding, and project once. -/
-@[inline] def scaledAdd (destination : Destination Result)
+/-- P3109 interim report v4.1 (unapproved), §5.8: add exact scaled operands, then project once. -/
+@[inline] def ScaledAdd (destination : Destination Result)
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  scaledBinary destination Arithmetic.add leftScale left rightScale right mode saturation
+  scaledBinary destination Arithmetic.Add leftScale left rightScale right mode saturation
 
-/-- Subtract two operands scaled without rounding, and project once. -/
-@[inline] def scaledSub (destination : Destination Result)
+/-- P3109 interim report v4.1 (unapproved), §5.8: subtract exact scaled operands, then project
+    once. -/
+@[inline] def ScaledSubtract (destination : Destination Result)
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  scaledBinary destination Arithmetic.sub leftScale left rightScale right mode saturation
+  scaledBinary destination Arithmetic.Subtract leftScale left rightScale right mode saturation
 
-/-- Multiply two operands scaled without rounding, and project once. -/
-@[inline] def scaledMul (destination : Destination Result)
+/-- P3109 interim report v4.1 (unapproved), §5.8: multiply exact scaled operands, then project
+    once. -/
+@[inline] def ScaledMultiply (destination : Destination Result)
     (leftScale : LeftScale) (left : Left) (rightScale : RightScale) (right : Right)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) : Result :=
-  scaledBinary destination Arithmetic.mul leftScale left rightScale right mode saturation
+  scaledBinary destination Arithmetic.Multiply leftScale left rightScale right mode saturation
 
 end Mixed
 end FloatLib.Floats.Formats.P3109.Arithmetic

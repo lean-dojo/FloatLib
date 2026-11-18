@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 
 /-!
 # Correctness of IEEE binary division
@@ -44,7 +43,8 @@ private theorem div_eq_of_isFinite
   have hdyMant : dy.significand ≠ 0 :=
     significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hdy hy0
   refine ⟨dx, dy, hdx, hdy, hdyMant, fun hdxMant => ?_, fun hdxMant => ?_⟩
-  · simp [Proof.div_eq_spec, Spec.div, hdx, hdy, hdyMant, hdxMant]
+  · simp only [Proof.div_eq_spec, Spec.div, hdx, hdy, beq_iff_eq, hdyMant, ↓reduceIte, hdxMant,
+    BEq.rfl, bne_iff_ne, ne_eq, ite_not]
     rw [zero_eq_signedZero_of_isIEEE fmt hfmt]
     cases dx.negative <;> cases dy.negative <;> rfl
   · simp [Proof.div_eq_spec, Spec.div, hdx, hdy, hdyMant, hdxMant]
@@ -54,9 +54,9 @@ Under a conventional IEEE descriptor a finite special-operand quotient comes fro
 and an infinite divisor: a NaN operand gives a NaN, an infinite dividend an infinity or the
 invalid-operation NaN, and two non-NaN, non-infinite operands the invalid-operation NaN.
 -/
-private theorem isFinite_left_and_isInf_right_of_isFinite_divSpecial {fmt : FloatFormat}
+private theorem isFinite_left_and_isInfinite_right_of_isFinite_divSpecial {fmt : FloatFormat}
     (hfmt : fmt.isIEEE = true) {x y : Model fmt} (h : isFinite (Spec.divSpecial x y) = true) :
-    isFinite x = true ∧ isInf y = true := by
+    isFinite x = true ∧ isInfinite y = true := by
   have hinvalid := isFinite_invalidResult hfmt
   unfold Spec.divSpecial at h
   split at h
@@ -67,7 +67,7 @@ private theorem isFinite_left_and_isInf_right_of_isFinite_divSpecial {fmt : Floa
     split_ifs at h with hx hy hy'
     · simp [hinvalid] at h
     · simp [isFinite_nativeOverflow hfmt] at h
-    · exact ⟨isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan.1
+    · exact ⟨isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnan.1
         (Bool.eq_false_iff.mpr hx), hy'⟩
     · simp [hinvalid] at h
 
@@ -80,8 +80,8 @@ theorem isFinite_left_of_isFinite_div {fmt : FloatFormat} (hfmt : fmt.isIEEE = t
     isFinite x = true := by
   rw [Proof.div_eq_spec, Spec.div] at h
   split at h
-  · next dx dy hdx hdy => exact isFinite_eq_true_of_toDyadic?_some hdx
-  · exact (isFinite_left_and_isInf_right_of_isFinite_divSpecial hfmt h).1
+  · next dx dy hdx _ => exact isFinite_eq_true_of_toDyadic?_some hdx
+  · exact (isFinite_left_and_isInfinite_right_of_isFinite_divSpecial hfmt h).1
 
 /--
 Under a conventional IEEE descriptor a finite quotient has a nonzero divisor: dividing by zero
@@ -108,8 +108,8 @@ theorem isZero_eq_false_of_isFinite_div {fmt : FloatFormat} (hfmt : fmt.isIEEE =
       rw [hdx] at h
       split at h
       · next heq _ => simp at heq
-      have hyInf := (isFinite_left_and_isInf_right_of_isFinite_divSpecial hfmt h).2
-      rw [isInf_eq_false_of_isFinite_eq_true y hy] at hyInf
+      have hyInf := (isFinite_left_and_isInfinite_right_of_isFinite_divSpecial hfmt h).2
+      rw [isInfinite_eq_false_of_isFinite_eq_true y hy] at hyInf
       contradiction
 
 /--
@@ -154,7 +154,7 @@ theorem toReal_div_eq_roundAt {fmt : FloatFormat} (x y : Model fmt)
     toReal (div x y) = roundAt fmt (toReal x / toReal y) := by
   have hx := isFinite_left_of_isFinite_div hfmt hfin
   have hy0 := isZero_eq_false_of_isFinite_div hfmt hfin
-  obtain ⟨dx, dy, hdx, hdy, hdyMant, hzeroDiv, hdivNonzero⟩ :=
+  obtain ⟨dx, dy, hdx, hdy, _, hzeroDiv, hdivNonzero⟩ :=
     div_eq_of_isFinite x y hfmt hx hy hy0
   by_cases hdxMant : dx.significand = 0
   · have hxReal : toReal x = 0 := by

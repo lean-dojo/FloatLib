@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+public meta import FloatLib.Tactic.IEEENames
 
 /-!
 # Standard operations beyond basic arithmetic
@@ -44,7 +44,8 @@ The result is an unbounded `Int`, and converting it back to a floating-point for
 step. Large negative exponents are handled by right shifts, so this operation does
 not construct a power of two merely to discard fractional bits. Nearest-away rounding and rounding
 away from zero apply `Numerics.roundShiftRight` to the magnitude. They select the integers of IEEE
-754-2019 roundToIntegralTiesToAway and of MPFR's `mpfr_rint` under `MPFR_RNDA`.
+754-2019 roundToIntegralTiesToAway (C23 draft N3220 Annex F.3, Table F.2) and of MPFR's
+`mpfr_rint` under `MPFR_RNDA`.
 -/
 def roundDyadicToInt (mode : IEEERoundingMode) (value : Numerics.Dyadic) : Int :=
   if value.significand == 0 then
@@ -236,7 +237,7 @@ with `inexact` raised and the ternary value `.eq`.
           -- The overflow indicator of `dyadicRoundingStatus` (`dyadicRoundingStatus_overflow`),
           -- read without decoding the delivery or testing inexactness and tininess.
           dyadicRoundingOverflows fmt mode (Numerics.Dyadic.ofScaledInt coefficient 0) ||
-            (!isFinite rounded && isInf rounded)
+            (!isFinite rounded && isInfinite rounded)
       { value := rounded
         status := { overflow, inexact := !dyadicIsIntegral exact }
         ternary := dyadicTernary exact rounded }
@@ -244,7 +245,8 @@ with `inexact` raised and the ternary value `.eq`.
   | .nan _ signaling _ => outcomeWithInvalid (quietNaN value) signaling
 
 /--
-Multiply a value by `2^n`, round once, and report exception flags (IEEE 754 `scaleB`), the kernel
+Multiply a value by `2^n`, round once, and report exception flags (IEEE 754 (C23 draft N3220 Annex
+F.3, Table F.2) `scaleB`), the kernel
 of `Model.scale value n (mode := mode) (status := true)`.
 
 Scaling changes the exact dyadic exponent without constructing `2^n`, and the shared rounder
@@ -302,7 +304,8 @@ value compares the delivered value with the input.
   | false => Internal.Value.roundToIntegral value mode
 
 /--
-Multiply by `2^n` and round once in `mode` (nearest-even by default), IEEE 754 `scaleB`. With
+Multiply by `2^n` and round once in `mode` (nearest-even by default), IEEE 754 (C23 draft N3220
+Annex F.3, Table F.2) `scaleB`. With
 `status := true` the result is the `IEEEOutcome` carrying the exception flags and the ternary
 value.
 -/
@@ -329,9 +332,9 @@ def logBBound (fmt : FloatFormat) : Int :=
 
 /--
 Exceptional integer outside the finite exponent range and the IEEE `logB` bound
-(`abs_binaryExponentInt_lt_binaryExponentSentinel`, `binaryExponentSentinel_outside_logBBound`).
+(`abs_logBInt_lt_logBSentinel`, `logBSentinel_outside_logBBound`).
 -/
-def binaryExponentSentinel (fmt : FloatFormat) : Int :=
+def logBSentinel (fmt : FloatFormat) : Int :=
   2 * max (max |fmt.minSubnormalExponent| |fmt.maxNormalExponent|) |logBBound fmt| + 1
 
 /--
@@ -342,24 +345,24 @@ the negative exceptional sentinel, and infinity and either kind of NaN return th
 All exceptional integer results signal `invalid`, as required for an integer `logBFormat`.
 No rounding of the exponent occurs, including for low-precision source descriptors.
 -/
-def binaryExponentInt {fmt : FloatFormat} (value : Model fmt) : IntegerExponentOutcome :=
+def logBInt {fmt : FloatFormat} (value : Model fmt) : IntegerExponentOutcome :=
   match exactValue value with
   | .finite exact =>
       if exact.significand == 0 then
-        { value := -binaryExponentSentinel fmt, status := { invalid := true } }
+        { value := -logBSentinel fmt, status := { invalid := true } }
       else
         { value := Int.ofNat exact.significand.log2 + exact.exponent }
   | .infinity _ | .nan _ _ _ =>
-      { value := binaryExponentSentinel fmt, status := { invalid := true } }
+      { value := logBSentinel fmt, status := { invalid := true } }
 
 namespace Internal.Status
 
 /--
 Return the leading binary exponent rounded into the same format, with exception flags, the kernel
-of `Model.binaryExponent value (status := true)`.
+of `Model.logB value (status := true)`.
 
 This convenience operation uses nearest-even. It agrees with floating-result IEEE `logB`
-only when the source format can represent the exponent, and `binaryExponentInt` provides the
+only when the source format can represent the exponent, and `logBInt` provides the
 exact integer-result operation for every descriptor.
 
 For a nonzero finite dyadic `±m * 2^e` with `m > 0`, the exact result is `floor(log₂ m) + e`.
@@ -380,7 +383,7 @@ is delivered as `12` with `.lt`. The exact infinities of zero and infinite input
 `exactInfinityTernary`, which is `.eq` for IEEE encodings and records the saturated or NaN
 replacement elsewhere.
 -/
-@[specialize fmt] def binaryExponent {fmt : FloatFormat} (value : Model fmt) :
+@[specialize fmt] def logB {fmt : FloatFormat} (value : Model fmt) :
     IEEEOutcome fmt :=
   match exactValue value with
   | .finite exact =>
@@ -407,26 +410,26 @@ replacement elsewhere.
 end Internal.Status
 
 /--
-The value of `Status.binaryExponent`, the kernel of `Model.binaryExponent value`, with the status
+The value of `Status.logB`, the kernel of `Model.logB value`, with the status
 body inlined as in `Internal.Value.roundToIntegral`.
 -/
-@[specialize fmt] def Internal.Value.binaryExponent {fmt : FloatFormat} (value : Model fmt) :
+@[specialize fmt] def Internal.Value.logB {fmt : FloatFormat} (value : Model fmt) :
     Model fmt :=
-  (inline (Internal.Status.binaryExponent value)).value
+  (inline (Internal.Status.logB value)).value
 
 /--
 Leading binary exponent rounded into the source format, always to nearest-even.
-`binaryExponentInt` is the exact integer version. With `status := true` the result is the
+`logBInt` is the exact integer version. With `status := true` the result is the
 `IEEEOutcome` carrying the exception flags and the ternary value.
 -/
-@[macro_inline] def binaryExponent {fmt : FloatFormat} (value : Model fmt)
+@[macro_inline] def logB {fmt : FloatFormat} (value : Model fmt)
     (status : Bool := false) :
     match status with
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => Internal.Status.binaryExponent value
-  | false => Internal.Value.binaryExponent value
+  | true => Internal.Status.logB value
+  | false => Internal.Value.logB value
 
 /-!
 ## Status of the quiet operations
@@ -447,7 +450,7 @@ clear otherwise.
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => outcomeWithInvalid (Internal.Value.nextUp x) (isSNaN x)
+  | true => outcomeWithInvalid (Internal.Value.nextUp x) (isSignaling x)
   | false => Internal.Value.nextUp x
 
 /--
@@ -460,7 +463,7 @@ clear otherwise.
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => outcomeWithInvalid (Internal.Value.nextDown x) (isSNaN x)
+  | true => outcomeWithInvalid (Internal.Value.nextDown x) (isSignaling x)
   | false => Internal.Value.nextDown x
 
 /--
@@ -474,7 +477,7 @@ result.
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => outcomeWithInvalid (Internal.Value.minimumNumber x y) (isSNaN x || isSNaN y)
+  | true => outcomeWithInvalid (Internal.Value.minimumNumber x y) (isSignaling x || isSignaling y)
   | false => Internal.Value.minimumNumber x y
 
 /--
@@ -488,8 +491,22 @@ result.
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => outcomeWithInvalid (Internal.Value.maximumNumber x y) (isSNaN x || isSNaN y)
+  | true => outcomeWithInvalid (Internal.Value.maximumNumber x y) (isSignaling x || isSignaling y)
   | false => Internal.Value.maximumNumber x y
+
+/-! ## Integral rounding by the names of the standard -/
+
+ieee_by_direction "IEEE 754-2019 §5.3.1" roundToIntegral {fmt : FloatFormat}
+    (value : Model fmt) : Model fmt := fun mode => roundToIntegral value (mode := mode)
+
+/--
+IEEE 754-2019 §5.3.1 `roundToIntegralExact`: `roundToIntegral` in the direction `mode`, the
+rounding-direction attribute (nearest-even by default), with its flags: `inexact` is raised
+when the result differs from the operand.
+-/
+@[inline] def roundToIntegralExact {fmt : FloatFormat} (value : Model fmt)
+    (mode : IEEERoundingMode := .nearest) : IEEEOutcome fmt :=
+  roundToIntegral value mode (status := true)
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

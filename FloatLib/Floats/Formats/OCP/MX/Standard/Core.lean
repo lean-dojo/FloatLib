@@ -1,32 +1,28 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.OCP.MX.E8M0.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+public import FloatLib.Floats.Formats.OCP.MX.E8M0.Core
 public import FloatLib.Numerics.Core.Representation
 public import FloatLib.Numerics.Exact.SignedRat
-public import Init.Data.Vector.OfFn
 
 /-!
-# Concrete OCP MX block representations
+# Element formats of OCP MX 1.0
 
 `Profile` lists the six concrete element encodings in Table 1 of the OCP *Microscaling Formats
-(MX) Specification*, version 1.0, September 2023. A `Block` holds 32 elements and one E8M0 scale.
-For raw interchange there's also the arbitrary-length `MX.BlockCode`, which is a different API.
+(MX) Specification*, version 1.0, September 2023, and `Element.decode` gives the exact value of an
+element word before any block scale is applied. The block format of each profile, with its E8M0
+scale and its scale rule, is `Standard.format`, an instance of the general block-scaled format
+`Block.CodedFormat`.
 
 INT8 is two's complement with six fractional bits (§5.3.4), so code `0x40` is `1` and code `0x80`
 is `-2`. We use the permitted asymmetric range, which includes `0x80`, and never reinterpret the
-bytes as sign-magnitude integers. Neither the standard nor this structure says where the scale and
-element words sit in memory.
-
-Decoding follows §5.1. A NaN scale poisons every lane, and otherwise element infinities and NaNs
-survive unchanged. When a finite product goes beyond binary32's range, we keep the exact rational
-product, which is one of the implementation choices that section leaves open.
+bytes as sign-magnitude integers. This is the fixed-point format S2F6.
 
 Reference:
 <https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf>.
@@ -41,7 +37,18 @@ open FloatLib.Floats.Formats.BinaryInterchange
 
 /-- The six concrete element encodings specified by OCP MX 1.0, Table 1. -/
 inductive Profile where
-  | e5m2 | e4m3 | e3m2 | e2m3 | e2m1 | int8
+  /-- MXFP8 with E5M2 elements. -/
+  | e5m2
+  /-- MXFP8 with E4M3 elements. -/
+  | e4m3
+  /-- MXFP6 with E3M2 elements. -/
+  | e3m2
+  /-- MXFP6 with E2M3 elements. -/
+  | e2m3
+  /-- MXFP4, with E2M1 elements. -/
+  | e2m1
+  /-- MXINT8, with two's-complement 8-bit integer elements. -/
+  | int8
   deriving DecidableEq, Repr
 
 namespace Profile
@@ -56,7 +63,7 @@ def width : Profile → Nat
 encoding. -/
 def floatFormat? : Profile → Option FloatFormat
   | .e5m2 => some .e5m2
-  | .e4m3 => some .e4m3fn
+  | .e4m3 => some .e4m3
   | .e3m2 => some .e3m2
   | .e2m3 => some .e2m3
   | .e2m1 => some .e2m1
@@ -82,13 +89,13 @@ def decodeFloat {fmt : FloatFormat} (word : Model fmt) : NumericalValue SignedRa
   match Model.toDyadic? word with
   | some value => .finite (SignedRat.ofDyadic value)
   | none =>
-      if Model.isInf word then .infinity (Model.signBit word) else .exceptional .nan
+      if Model.isInfinite word then .infinity (Model.signBit word) else .exceptional .nan
 
 /-- Exact scalar observation before applying the block scale. -/
 def decode {profile : Profile} (word : Element profile) : NumericalValue SignedRat :=
   match profile with
   | .e5m2 => decodeFloat (Model.ofNatBits (fmt := .e5m2) word.toNat)
-  | .e4m3 => decodeFloat (Model.ofNatBits (fmt := .e4m3fn) word.toNat)
+  | .e4m3 => decodeFloat (Model.ofNatBits (fmt := .e4m3) word.toNat)
   | .e3m2 => decodeFloat (Model.ofNatBits (fmt := .e3m2) word.toNat)
   | .e2m3 => decodeFloat (Model.ofNatBits (fmt := .e2m3) word.toNat)
   | .e2m1 => decodeFloat (Model.ofNatBits (fmt := .e2m1) word.toNat)
@@ -104,52 +111,11 @@ def negative {profile : Profile} (word : Element profile) : Bool :=
 
 end Element
 
-/-- OCP MX 1.0 concrete blocks have one scale and exactly 32 elements of one profile. -/
-structure Block (profile : Profile) where
-  /-- Shared eight-bit E8M0 scale. Every byte, NaN included, is an admissible encoding. -/
-  scale : E8M0
-  /-- Element count and storage width are part of the type. -/
-  values : Vector (Element profile) 32
-  deriving DecidableEq, Repr
-
-/-- Exact multiplication by a positive binary scale, preserving a finite zero's sign. -/
-def scaleFinite (exponent : Int) (value : SignedRat) : SignedRat :=
-  value * SignedRat.ofRat ((2 : Rat) ^ exponent)
-
-namespace Block
-
-/-- Accept an array when it has the standard lane count of 32, and return `none` otherwise. -/
-def ofArray? {profile : Profile} (scale : E8M0) (values : Array (Element profile)) :
-    Option (Block profile) :=
-  if h : values.size = 32 then some ⟨scale, ⟨values, h⟩⟩ else none
-
-/-- Decode one lane according to the shared-scale and per-element rules of §5.1. -/
-def decodeLane {profile : Profile} (block : Block profile) (lane : Fin 32) :
-    NumericalValue SignedRat :=
-  match block.scale.exponent? with
-  | none => .exceptional .nan
-  | some exponent => (Element.decode block.values[lane.val]).map (scaleFinite exponent)
-
-/-- Complete lane-wise observation, in which exceptional elements leave their finite neighbors
-intact. -/
-def decode {profile : Profile} (block : Block profile) :
-    Vector (NumericalValue SignedRat) 32 :=
-  Vector.ofFn (decodeLane block)
-
-/--
-Whole-block finite observation for generic conversion. A block with any non-finite lane is
-reported as NaN here, while `decode` retains each lane's individual classification and sign.
--/
-def decodeFinite {profile : Profile} (block : Block profile) :
-    NumericalValue (Vector SignedRat 32) :=
-  match block.decode.mapM NumericalValue.finite? with
-  | some values => .finite values
-  | none => .exceptional .nan
-
-/-- Canonical block NaN. Element bits are immaterial when the shared scale is NaN. -/
-def nan (profile : Profile) : Block profile :=
-  ⟨E8M0.ofNatBits 255, Vector.replicate 32 0⟩
-
-end Block
-
 end FloatLib.Floats.Formats.OCP.MX.Standard
+
+namespace FloatLib.Floats.Formats.OCP.MX.Standard.Profile
+
+/-- Reconstruct a `Profile` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.OCP.MX.Standard.Profile

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,6 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.Formatting.Precision
 public import FloatLib.Floats.Formats.DecimalInterchange.Formatting.Proof
 public import FloatLib.Numerics.Exact.DecimalText.PrecisionProof
-public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 
 /-!
 # Guarantees for significant-digit output
@@ -133,7 +132,8 @@ theorem significantDecimal_exact (mode : RoundingMode) (value : Decimal) (digits
       RoundingMode.roundAt_exact_value mode value.negative value.significand hq]
     cases hs : value.negative <;> simp [Decimal.toRat, hs]
 
-/-- The descriptor precision suffices for every valid datum, with no restriction on exponent bias. -/
+/-- The descriptor precision suffices for every valid datum, with no restriction on exponent
+bias. -/
 theorem significantDecimal_exact_of_valid (f : Format) (mode : RoundingMode)
     (value : Decimal) (digits : ℕ+)
     (hvalid : (Datum.finite value.negative value.significand value.exponent).Valid f)

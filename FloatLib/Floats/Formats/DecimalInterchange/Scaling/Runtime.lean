@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -15,7 +15,7 @@ round once. Its preferred exponent is the input quantum plus the scale, so scali
 prefers `12e2`. The integer argument is unbounded, without the coefficient restriction of the
 older General Decimal Arithmetic `scaleb` operation.
 
-`decimalExponent` implements `logB` with an integer result format. For zero, infinity and NaN,
+`logB` implements `logB` with an integer result format. For zero, infinity and NaN,
 §5.3.3 asks for a value outside the range `±2 × (emax + p - 1)`, where `emax` is the largest
 exponent of a finite value in scientific form. We use `2 × (emax + p - 1) + 1` as the sentinel,
 enlarged if needed so that it also exceeds twice the absolute bound on every finite exponent, and
@@ -29,7 +29,8 @@ no alternate exception handling.
 namespace FloatLib.Floats.Formats.DecimalInterchange
 namespace Arithmetic
 
-/-- Multiply by `10^n` and round once (IEEE 754 `scaleB`), using the input quantum plus `n`
+/-- Multiply by `10^n` and round once (IEEE 754 (C23 draft N3220 Annex F.3, Table F.2) `scaleB`),
+using the input quantum plus `n`
 as the preferred quantum. -/
 def scale (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) : Outcome :=
   match x with
@@ -53,16 +54,16 @@ def logBBound (f : Format) : Int :=
 
 /-- Exceptional integer exponent. It lies outside `±2 × (emax + p - 1)` as §5.3.3 requires, and
 beyond twice either absolute finite exponent bound. -/
-def decimalExponentSentinel (f : Format) : Int :=
+def logBSentinel (f : Format) : Int :=
   2 * max (max |f.minQuantum| |f.maxQuantum + (f.precision : Int) - 1|) |logBBound f| + 1
 
-/-- Leading decimal exponent as an integer (IEEE 754 `logB`).
+/-- Leading decimal exponent as an integer (IEEE 754 (C23 draft N3220 Annex F.3, Table F.2) `logB`).
 Zero uses the negative sentinel, and infinity and either kind of NaN use the positive one. -/
-def decimalExponent (f : Format) : Datum → DecimalExponentOutcome
-  | .finite _ 0 _ => { value := -decimalExponentSentinel f, status := { invalid := true } }
+def logB (f : Format) : Datum → DecimalExponentOutcome
+  | .finite _ 0 _ => { value := -logBSentinel f, status := { invalid := true } }
   | .finite _ (c + 1) q => { value := q + (Nat.log 10 (c + 1) : Int) }
   | .infinity _ | .nan _ _ _ =>
-      { value := decimalExponentSentinel f, status := { invalid := true } }
+      { value := logBSentinel f, status := { invalid := true } }
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

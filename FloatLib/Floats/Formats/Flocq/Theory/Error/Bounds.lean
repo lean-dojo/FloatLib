@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
+
 import Mathlib.Algebra.Order.Algebra
+import Mathlib.Tactic.Abel
 
 /-!
 # Floating-Point Error Bounds
@@ -77,7 +79,7 @@ theorem exists_delta_of_relativeError_le {x r B : ℝ} (hx : x ≠ 0)
   · rw [abs_div]
     exact h
   · field_simp [hx]
-    ring
+    abel
 
 /--
 Relative error factorisation for rounding, with a ULP-based bound.

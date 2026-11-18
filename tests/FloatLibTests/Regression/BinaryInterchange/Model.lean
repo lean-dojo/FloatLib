@@ -1,18 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Matmul
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Accumulation
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.DType.Cast
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Accumulation
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Matmul
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status
 public import FloatLibTests.Accounting
@@ -91,7 +91,7 @@ def failBf16Classifiers : Thunk Nat := ⟨fun _ =>
     let y := Model.cast bf16 f32 x
     let g := Model.cast f32 bf16 y
     (Model.isNaN x == Model.isNaN g) &&
-    (Model.isInf x == Model.isInf g) &&
+    (Model.isInfinite x == Model.isInfinite g) &&
     (Model.isZero x == Model.isZero g) &&
     (Model.isFinite x == Model.isFinite g)⟩
 
@@ -115,7 +115,7 @@ def failF16Classifiers : Thunk Nat := ⟨fun _ =>
     let y := Model.cast f16 f32 x
     let g := Model.cast f32 f16 y
     (Model.isNaN x == Model.isNaN g) &&
-    (Model.isInf x == Model.isInf g) &&
+    (Model.isInfinite x == Model.isInfinite g) &&
     (Model.isZero x == Model.isZero g) &&
     (Model.isFinite x == Model.isFinite g)⟩
 
@@ -148,7 +148,7 @@ def failSmallFormatSqrt : Thunk Nat := ⟨fun _ =>
 
 def dyadicLowerEncloses {fmt : FloatFormat} (exact : Numerics.Dyadic)
     (rounded : Model fmt) : Bool :=
-  if Model.isInf rounded then
+  if Model.isInfinite rounded then
     Model.signBit rounded
   else
     match Model.toDyadic? rounded with
@@ -157,7 +157,7 @@ def dyadicLowerEncloses {fmt : FloatFormat} (exact : Numerics.Dyadic)
 
 def dyadicUpperEncloses {fmt : FloatFormat} (exact : Numerics.Dyadic)
     (rounded : Model fmt) : Bool :=
-  if Model.isInf rounded then
+  if Model.isInfinite rounded then
     !Model.signBit rounded
   else
     match Model.toDyadic? rounded with
@@ -166,7 +166,7 @@ def dyadicUpperEncloses {fmt : FloatFormat} (exact : Numerics.Dyadic)
 
 def rationalLowerEnclosesScaled {fmt : FloatFormat} (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) (rounded : Model fmt) : Bool :=
-  if Model.isInf rounded then
+  if Model.isInfinite rounded then
     Model.signBit rounded
   else
     match Model.toDyadic? rounded with
@@ -178,7 +178,7 @@ def rationalLowerEnclosesScaled {fmt : FloatFormat} (sign : Bool)
 
 def rationalUpperEnclosesScaled {fmt : FloatFormat} (sign : Bool)
     (numerator denominator : Nat) (exponent : Int) (rounded : Model fmt) : Bool :=
-  if Model.isInf rounded then
+  if Model.isInfinite rounded then
     !Model.signBit rounded
   else
     match Model.toDyadic? rounded with
@@ -471,13 +471,13 @@ def failStandardOperations : Thunk Nat := ⟨fun _ =>
         three false false false false false .eq
     , outcomeIs (Model.scale one 3 .nearest (status := true))
         eight false false false false false .eq
-    , outcomeIs (Model.binaryExponent eight (status := true))
+    , outcomeIs (Model.logB eight (status := true))
         three false false false false false .eq
-    , outcomeIs (Model.binaryExponent half (status := true))
+    , outcomeIs (Model.logB half (status := true))
         negativeOne false false false false false .eq
-    , outcomeIs (Model.binaryExponent zero (status := true))
+    , outcomeIs (Model.logB zero (status := true))
         (Model.negInf fmt) false true false false false .eq
-    , outcomeIs (Model.binaryExponent (Model.posInf fmt) (status := true))
+    , outcomeIs (Model.logB (Model.posInf fmt) (status := true))
         (Model.posInf fmt) false false false false false .eq
     , sameBits (Model.copySign seven negativeOne) negativeSeven
     , sameBits (Model.abs negativeSeven) seven
@@ -540,7 +540,7 @@ def failTernaryValues : Thunk Nat := ⟨fun _ =>
   let thirdBelow : Model fmt := Model.ofNatBits 0x3eaaaaaa
   let rootTwoBelow : Model fmt := Model.ofNatBits 0x3fb504f3
   let rootTwoAbove : Model fmt := Model.ofNatBits 0x3fb504f4
-  let e4 := FloatFormat.e4m3fn
+  let e4 := FloatFormat.e4m3
   let fnuz := FloatFormat.e4m3fnuz
   let e2 := FloatFormat.e2m3
   let lowPrecision := FloatFormat.ieee 5 1
@@ -576,7 +576,7 @@ def failTernaryValues : Thunk Nat := ⟨fun _ =>
         overflowInexact .lt
     , check (Model.mul negativeMaximum two (mode := .towardZero) (status := true)) negativeMaximum
         overflowInexact .gt
-      -- E4M3FN overflows to its NaN word, which takes the sign of the exact value.
+      -- E4M3 overflows to its NaN word, which takes the sign of the exact value.
     , check (Model.cast fmt e4 (integer 500) .nearest (status := true)) (Model.ofNatBits 0x7f)
         overflowInexact .gt
     , check (Model.cast fmt e4 (integer 500) .towardZero (status := true)) (Model.ofNatBits 0x7e)
@@ -634,16 +634,16 @@ def failTernaryValues : Thunk Nat := ⟨fun _ =>
         (false, false, false, false, false) .eq
       -- `logB(2^13)` in `ieee 5 1` rounds the exponent 13 to 12.
     , check
-        (Model.binaryExponent
+        (Model.logB
           (Model.roundDyadic lowPrecision { negative := false, significand := 1, exponent := 13 })
             (status := true))
         (Model.roundDyadic lowPrecision (Numerics.Dyadic.ofScaledInt 12 0)) inexact .lt
       -- `logB(0)` is `-∞`. Formats without infinity deliver a NaN or saturate, above it.
-    , check (Model.binaryExponent (Model.posZero fmt) (status := true)) (Model.negInf fmt)
+    , check (Model.logB (Model.posZero fmt) (status := true)) (Model.negInf fmt)
         (false, true, false, false, false) .eq
-    , check (Model.binaryExponent (Model.posZero e4) (status := true)) (Model.ofNatBits 0xff)
+    , check (Model.logB (Model.posZero e4) (status := true)) (Model.ofNatBits 0xff)
         (false, true, false, false, false) .gt
-    , check (Model.binaryExponent (Model.posZero e2) (status := true)) (Model.ofNatBits 0x3f)
+    , check (Model.logB (Model.posZero e2) (status := true)) (Model.ofNatBits 0x3f)
         (false, true, false, false, false) .gt
       -- FNUZ has one zero: exact zero is `.eq`, and the zero a negative value rounds to lies
       -- above it.
@@ -679,7 +679,7 @@ def failTernaryValues : Thunk Nat := ⟨fun _ =>
         (Model.ofNatBits 31) overflowInexact .eq
       -- Integer conversion compares with the integer.
     , check
-        (ExecDType.intToFloat .binary16
+        (ExecDType.convertFromInt .binary16
           (FloatLib.Numerics.Representations.FixedInt.ofInt (width := 32) 2049) .nearest
           (status := true))
         (Model.roundDyadic .binary16 (Numerics.Dyadic.ofScaledInt 2048 0)) inexact .lt
@@ -698,15 +698,15 @@ def algebraicFormatFailures (fmt : FloatFormat) : Nat :=
   let tiny := Model.posMinSubnormal fmt
   let large := Model.roundDyadic fmt ⟨false, 1, fmt.maxNormalExponent / 2 + 1⟩
   countFailures
-    [ sameBits (Model.rsqrt (integer 4)) half
+    [ sameBits (Model.rSqrt (integer 4)) half
     , sameBits (Model.hypot (integer 3) (integer 4)) (integer 5)
     , sameBits (Model.hypot tiny (Model.posZero fmt)) tiny
     , sameBits (Model.hypot large (Model.posZero fmt)) large
-    , sameBits (Model.powInt (integer (-2)) 3) (integer (-8))
-    , sameBits (Model.powInt (integer 2) (-3)) eighth
-    , sameBits (Model.rootN (integer (-8)) 3) (integer (-2))
-    , sameBits (Model.rootN (integer (-8)) (-3)) (Model.neg half)
-    , sameBits (Model.rootN tiny 1) tiny
+    , sameBits (Model.pown (integer (-2)) 3) (integer (-8))
+    , sameBits (Model.pown (integer 2) (-3)) eighth
+    , sameBits (Model.rootn (integer (-8)) 3) (integer (-2))
+    , sameBits (Model.rootn (integer (-8)) (-3)) (Model.neg half)
+    , sameBits (Model.rootn tiny 1) tiny
     ]
 
 /-- Signed-zero and exceptional-value rules are independent of the finite arithmetic path. -/
@@ -719,27 +719,27 @@ def failAlgebraicOperations : Thunk Nat := ⟨fun _ =>
   let quietNaN := Model.canonicalNaN fmt
   let signalingNaN := Model.ofFields fmt false (FloatFormat.expAllOnesNat fmt) 1
   let specials := countFailures
-    [ sameBits (Model.rsqrt positiveZero) positiveInfinity
-    , sameBits (Model.rsqrt negativeZero) negativeInfinity
-    , sameBits (Model.rsqrt positiveInfinity) positiveZero
-    , Model.isNaN (Model.rsqrt (Model.negOne fmt))
+    [ sameBits (Model.rSqrt positiveZero) positiveInfinity
+    , sameBits (Model.rSqrt negativeZero) negativeInfinity
+    , sameBits (Model.rSqrt positiveInfinity) positiveZero
+    , Model.isNaN (Model.rSqrt (Model.negOne fmt))
     , sameBits (Model.hypot positiveInfinity quietNaN) positiveInfinity
     , sameBits (Model.hypot quietNaN negativeInfinity) positiveInfinity
     , sameBits (Model.hypot positiveInfinity signalingNaN) (Model.quietNaN signalingNaN)
     , sameBits (Model.hypot negativeZero negativeZero) positiveZero
-    , sameBits (Model.powInt quietNaN 0) (Model.posOne fmt)
-    , sameBits (Model.powInt signalingNaN 0) (Model.quietNaN signalingNaN)
-    , sameBits (Model.powInt negativeZero (-3)) negativeInfinity
-    , sameBits (Model.powInt negativeZero 3) negativeZero
-    , sameBits (Model.rootN negativeZero 2) positiveZero
-    , sameBits (Model.rootN negativeZero 3) negativeZero
-    , sameBits (Model.rootN negativeZero (-2)) positiveInfinity
-    , sameBits (Model.rootN negativeZero (-3)) negativeInfinity
-    , Model.isNaN (Model.rootN (Model.negOne fmt) 2)
-    , Model.isNaN (Model.rootN (Model.posOne fmt) 0)
+    , sameBits (Model.pown quietNaN 0) (Model.posOne fmt)
+    , sameBits (Model.pown signalingNaN 0) (Model.quietNaN signalingNaN)
+    , sameBits (Model.pown negativeZero (-3)) negativeInfinity
+    , sameBits (Model.pown negativeZero 3) negativeZero
+    , sameBits (Model.rootn negativeZero 2) positiveZero
+    , sameBits (Model.rootn negativeZero 3) negativeZero
+    , sameBits (Model.rootn negativeZero (-2)) positiveInfinity
+    , sameBits (Model.rootn negativeZero (-3)) negativeInfinity
+    , Model.isNaN (Model.rootn (Model.negOne fmt) 2)
+    , Model.isNaN (Model.rootn (Model.posOne fmt) 0)
     ]
   specials + ([FloatFormat.binary16, .binary32, .binary64, .binary128,
-    FloatFormat.custom 5 7 12 .ieee, .e4m3fn, .e4m3fnuz].map
+    FloatFormat.custom 5 7 12 .ieee, .e4m3, .e4m3fnuz].map
       algebraicFormatFailures).sum⟩
 
 /-! ## correctly rounded reductions -/
@@ -748,7 +748,7 @@ def failAlgebraicOperations : Thunk Nat := ⟨fun _ =>
 def failCorrectlyRoundedReductions : Thunk Nat := ⟨fun _ =>
   let fmt := FloatFormat.binary32
   let half := FloatFormat.binary16
-  let finiteWithNaN := FloatFormat.e4m3fn
+  let finiteWithNaN := FloatFormat.e4m3
   let one := Model.posOne fmt
   let large : Model fmt := Model.ofNatBits 0x4b800000
   let negativeLarge : Model fmt := Model.ofNatBits 0xcb800000
@@ -906,7 +906,7 @@ def failFormatPolicies : Thunk Nat := ⟨fun _ =>
   let fnuzNaN := Model.invalidResult fnuz
   let fnuzMax := Model.posMaxFinite fnuz
   let fnuzNegMax := Model.negMaxFinite fnuz
-  let fn := FloatFormat.e4m3fn
+  let fn := FloatFormat.e4m3
   let fnZero := Model.zero fn false
   let finite := FloatFormat.e2m1
   let finiteZero := Model.zero finite false
@@ -950,7 +950,7 @@ def failFormatPolicies : Thunk Nat := ⟨fun _ =>
     , (Model.sqrt (Model.negOne finite)).toNatBits == 0x00
     , Model.nextUp finiteMax == finiteMax
     , Model.nextDown finiteNegMax == finiteNegMax
-    , Model.isInf
+    , Model.isInfinite
         (Model.div (Model.posOne ieee) (Model.zero ieee false))
     , Model.isNaN
         (Model.div (Model.zero ieee false) (Model.zero ieee false))

@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Init.Data.UInt.Log2
+public import Mathlib.Init -- Standard source linters.
 
 /-!
 # Limb arrays: representation and field access

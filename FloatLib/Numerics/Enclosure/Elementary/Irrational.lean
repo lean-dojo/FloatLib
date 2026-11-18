@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Elementary.Transcendental
-public import Mathlib.NumberTheory.Real.Irrational
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
+public import Mathlib.NumberTheory.Real.Irrational
 
 /-!
 # Irrationality of exponentials at nonzero rational arguments

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
-public import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Runtime
 public import FloatLib.Numerics.Reduction
 
 /-!
@@ -85,7 +83,7 @@ structure State (destination : FloatFormat) where
 def State.captureNaN {destination source : FloatFormat}
     (state : State destination) (value : Model source) :
     State destination :=
-  if isSNaN value then
+  if isSignaling value then
     match state.signalingNaN with
     | some _ => state
     | none =>
@@ -129,11 +127,11 @@ def State.pushValue {destination source : FloatFormat}
     State destination :=
   if hnan : isNaN value = true then
     state.captureNaN value
-  else if hinf : isInf value = true then
+  else if hinf : isInfinite value = true then
     state.pushInfinity (signBit value)
   else
     let hfinite :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false value
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false value
         (Bool.eq_false_of_not_eq_true hnan)
         (Bool.eq_false_of_not_eq_true hinf)
     state.pushExact (finiteDyadic value hfinite)
@@ -148,18 +146,18 @@ def State.pushProduct
   let state := state.captureNaN right
   if hnan : (isNaN left || isNaN right) = true then
     state
-  else if ((isInf left && isZero right) || (isInf right && isZero left)) = true then
+  else if ((isInfinite left && isZero right) || (isInfinite right && isZero left)) = true then
     { state with generatedInvalid := true }
-  else if hinf : (isInf left || isInf right) = true then
+  else if hinf : (isInfinite left || isInfinite right) = true then
     state.pushInfinity (Bool.xor (signBit left) (signBit right))
   else
     have hnanFields := Bool.or_eq_false_iff.mp (Bool.eq_false_of_not_eq_true hnan)
     have hinfFields := Bool.or_eq_false_iff.mp (Bool.eq_false_of_not_eq_true hinf)
     let hleftFinite :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false left
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false left
         hnanFields.1 hinfFields.1
     let hrightFinite :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false right
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false right
         hnanFields.2 hinfFields.2
     state.pushExact <|
       Numerics.Dyadic.mul
@@ -222,7 +220,7 @@ def State.finish {destination : FloatFormat}
           else if state.negativeInfinity || state.positiveInfinity then
             let value := nativeOverflow destination state.negativeInfinity
             { value
-              status := if isInf value then .clear
+              status := if isInfinite value then .clear
                 else { overflow := true, inexact := true }
               ternary := exactInfinityTernary state.negativeInfinity value }
           else if state.exact.significand == 0 then

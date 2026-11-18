@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.Selection.Metadata
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Definition
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 
 /-!
 # Cost estimates for binary descriptor execution

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,6 +36,10 @@ private def hasModulePrefix (moduleName modulePrefix : String) : Bool :=
 private def classifyModule (moduleName : String) : Except String Classification :=
   if hasModulePrefix moduleName "FloatLibTests" then
     classified "validation-only" "internal"
+  else if hasModulePrefix moduleName "FloatLib.Floats.ExecFloat.Backends.Kernel" ||
+      hasModulePrefix moduleName "FloatLib.Floats.ExecFloat.Backends.Tag" then
+    -- `float_decide`, `#kernel_eval` and the two backend tags are what a user writes.
+    classified "exec-float" "experimental"
   else if hasModulePrefix moduleName "FloatLib.Floats.ExecFloat.Backends" then
     classified "internal-backend" "internal"
   else if hasModulePrefix moduleName
@@ -56,6 +60,11 @@ private def classifyModule (moduleName : String) : Except String Classification 
     classified "exec-float" "experimental"
   else if hasModulePrefix moduleName "FloatLib.Floats.ExecFloat" then
     classified "exec-float" "stable"
+  else if hasModulePrefix moduleName
+      "FloatLib.Floats.Formats.BinaryInterchange.Configured.KernelPath" ||
+      hasModulePrefix moduleName
+        "FloatLib.Floats.Formats.BinaryInterchange.StaticByte.KernelPath" then
+    classified "configured-binary" "experimental"
   else if hasModulePrefix moduleName
       "FloatLib.Floats.Formats.BinaryInterchange.Configured" ||
       hasModulePrefix moduleName
@@ -90,8 +99,189 @@ private def classifyModule (moduleName : String) : Except String Classification 
   else if moduleName == "FloatLib" || moduleName == "FloatLib.Floats" ||
       moduleName == "FloatLib.Floats.Certified" then
     classified "exec-float" "stable"
+  else if hasModulePrefix moduleName "FloatLib.Tactic" ||
+      hasModulePrefix moduleName "FloatLib.Util" then
+    -- Tactics, commands and their helpers, as the automation modules they came from were.
+    classified "core-numerics" "experimental"
   else
     .error s!"unclassified FloatLib module: {moduleName}"
+
+-- Moving a declaration changes its file, not its audience or compatibility promise.
+-- Keep these reviewed module classifications explicit, including opt-in commands.
+private def classifyMovedModule : String → Option (String × String)
+  | "FloatLib.Tactic.DirectionRule"
+  | "FloatLib.Tactic.OutcomeRule"
+    => some ("configured-binary", "experimental")
+  | "FloatLib.Tactic.FloatInfo.IEEE754.Native"
+  | "FloatLib.Tactic.NativeCapability"
+  | "FloatLib.Tactic.NativeCarrier"
+    => some ("configured-binary", "stable")
+  | "FloatLib.Tactic.Interval"
+  | "FloatLib.Tactic.Interval.Aggregates"
+  | "FloatLib.Tactic.Interval.Bounds"
+  | "FloatLib.Tactic.Interval.Coeff"
+  | "FloatLib.Tactic.Interval.Constraints"
+  | "FloatLib.Tactic.Interval.Constraints.Derive"
+  | "FloatLib.Tactic.Interval.Constraints.Forms"
+  | "FloatLib.Tactic.Interval.Constraints.Reify"
+  | "FloatLib.Tactic.Interval.Constraints.Search"
+  | "FloatLib.Tactic.Interval.Constraints.Slopes"
+  | "FloatLib.Tactic.Interval.Diagnostics"
+  | "FloatLib.Tactic.Interval.Functions"
+  | "FloatLib.Tactic.Interval.Registry"
+  | "FloatLib.Tactic.Interval.Reify"
+  | "FloatLib.Tactic.Interval.Series"
+  | "FloatLib.Tactic.Numerics"
+  | "FloatLib.Tactic.Numerics.Attribute"
+  | "FloatLib.Util.Polynomial"
+    => some ("core-numerics", "experimental")
+  | "FloatLib.Tactic.CompiledAs"
+  | "FloatLib.Tactic.Cover"
+  | "FloatLib.Tactic.FloatFormat"
+  | "FloatLib.Tactic.LaneCall"
+  | "FloatLib.Tactic.LaneDecide"
+  | "FloatLib.Tactic.LaneTable"
+  | "FloatLib.Tactic.PackedRow"
+  | "FloatLib.Tactic.ReplacementProof"
+  | "FloatLib.Util.Packed"
+  | "FloatLib.Util.Provenance"
+    => some ("core-numerics", "stable")
+  | "FloatLib.Tactic.BinaryInterchangeSpec"
+  | "FloatLib.Tactic.ComplexRule"
+  | "FloatLib.Tactic.DescriptorBackends"
+  | "FloatLib.Tactic.FloatFormat.Attribute"
+  | "FloatLib.Tactic.FloatInfo.BinaryInterchange.Command"
+  | "FloatLib.Tactic.FloatInfo.BinaryInterchange.Complex"
+  | "FloatLib.Tactic.FloatInfo.BinaryInterchange.Interval"
+  | "FloatLib.Tactic.FloatInfo.BinaryInterchange.Profile"
+  | "FloatLib.Tactic.IeeeFormat"
+  | "FloatLib.Tactic.InlineShort"
+  | "FloatLib.Tactic.InlineStages"
+  | "FloatLib.Tactic.InlineStatus"
+  | "FloatLib.Tactic.KernelOperation"
+  | "FloatLib.Tactic.KernelTables"
+  | "FloatLib.Tactic.Roundoff"
+  | "FloatLib.Tactic.Roundoff.Analyze"
+  | "FloatLib.Tactic.Roundoff.Apply"
+  | "FloatLib.Tactic.Roundoff.Backward"
+  | "FloatLib.Tactic.Roundoff.Backward.Analyze"
+  | "FloatLib.Tactic.Roundoff.Backward.Tree"
+  | "FloatLib.Tactic.Roundoff.Basic"
+  | "FloatLib.Tactic.Roundoff.Discharge"
+  | "FloatLib.Tactic.Roundoff.Extension"
+  | "FloatLib.Tactic.Roundoff.Index"
+  | "FloatLib.Tactic.Roundoff.Loop"
+  | "FloatLib.Tactic.Roundoff.Normalize"
+  | "FloatLib.Tactic.Roundoff.Prove"
+  | "FloatLib.Tactic.Roundoff.Relation"
+  | "FloatLib.Tactic.Roundoff.Rules"
+  | "FloatLib.Tactic.Roundoff.Sign"
+  | "FloatLib.Tactic.Roundoff.Stochastic"
+  | "FloatLib.Tactic.Roundoff.Tactic"
+  | "FloatLib.Tactic.Roundoff.Tuple"
+  | "FloatLib.Tactic.SpecializeDirections"
+  | "FloatLib.Tactic.SpecializeSums"
+  | "FloatLib.Tactic.StatusOperation"
+    => some ("descriptor-model-binary", "experimental")
+  | "FloatLib.Kernels.Selection.Portfolio"
+  | "FloatLib.Tactic.CompilerBackends"
+  | "FloatLib.Tactic.CompilerOptimize"
+  | "FloatLib.Tactic.DirectForm"
+  | "FloatLib.Tactic.ExecFloatSpec"
+  | "FloatLib.Tactic.FloatDecide"
+  | "FloatLib.Tactic.FormRule"
+  | "FloatLib.Tactic.KernelCost"
+  | "FloatLib.Tactic.KernelEval"
+  | "FloatLib.Tactic.KernelInline"
+  | "FloatLib.Tactic.KernelOptimize"
+  | "FloatLib.Tactic.KernelProj"
+  | "FloatLib.Tactic.KernelRefl"
+  | "FloatLib.Tactic.KernelRules"
+  | "FloatLib.Tactic.KernelTwin"
+  | "FloatLib.Util.Declaration"
+  | "FloatLib.Util.KernelReduction"
+    => some ("exec-float", "experimental")
+  | "FloatLib.Kernels.Execution.Capability"
+  | "FloatLib.Kernels.Execution.Certificate"
+  | "FloatLib.Kernels.Execution.Dispatch"
+  | "FloatLib.Kernels.Execution.Instances"
+  | "FloatLib.Kernels.Execution.Operations"
+  | "FloatLib.Kernels.Execution.Proof"
+  | "FloatLib.Kernels.Execution.Spec"
+  | "FloatLib.Numerics.Executable.Carrier"
+  | "FloatLib.Numerics.Executable.Comparison"
+  | "FloatLib.Numerics.Executable.Conversion.Core"
+  | "FloatLib.Numerics.Executable.Conversion.Proof"
+  | "FloatLib.Numerics.Executable.Conversion.Runtime"
+  | "FloatLib.Numerics.Executable.ExactMap"
+  | "FloatLib.Numerics.Executable.Packed"
+  | "FloatLib.Tactic.DeclareCapability"
+  | "FloatLib.Tactic.FloatInfo"
+  | "FloatLib.Tactic.FloatInfo.Command"
+  | "FloatLib.Tactic.FloatInfo.Inspection"
+  | "FloatLib.Tactic.FloatInfo.Profile"
+  | "FloatLib.Tactic.FloatInfo.Render"
+  | "FloatLib.Tactic.PackedValues"
+  | "FloatLib.Tactic.PortfolioCapability"
+    => some ("exec-float", "stable")
+  | "FloatLib.Kernels.Selection.Certified"
+  | "FloatLib.Kernels.Selection.Metadata"
+  | "FloatLib.Kernels.Selection.Policy"
+  | "FloatLib.Kernels.Selection.Report"
+  | "FloatLib.Kernels.Selection.Scoring"
+  | "FloatLib.Tactic.AutomaticCapability"
+  | "FloatLib.Tactic.ByteCapability"
+  | "FloatLib.Tactic.ByteTableCapability"
+  | "FloatLib.Tactic.CandidateSet"
+  | "FloatLib.Tactic.FamilyCapability"
+  | "FloatLib.Tactic.FirstOrder"
+  | "FloatLib.Tactic.FixedFormat"
+  | "FloatLib.Tactic.LimbCapability"
+  | "FloatLib.Tactic.PlanCapability"
+  | "FloatLib.Tactic.PlannedCapability"
+  | "FloatLib.Tactic.TablePlanCapability"
+    => some ("internal-backend", "internal")
+  | "FloatLib.Tactic.FloatInfo.P3109"
+    => some ("p3109", "experimental")
+  | "FloatLib.Tactic.FloatInfo.Posit"
+    => some ("posit", "experimental")
+  | "FloatLib.Tactic.FloatInfo.Posit.Quire"
+    => some ("quire", "experimental")
+  | "FloatLib.Kernels.Block.Maximum"
+  | "FloatLib.Numerics.Quantization.Block.Bounds"
+  | "FloatLib.Numerics.Quantization.Block.Coded"
+  | "FloatLib.Numerics.Quantization.Block.Dot"
+  | "FloatLib.Numerics.Quantization.Block.Format"
+  | "FloatLib.Numerics.Quantization.Block.Policy"
+  | "FloatLib.Numerics.Quantization.Block.Transpose"
+  | "FloatLib.Numerics.Quantization.Rounding"
+  | "FloatLib.Tactic.FloatInfo.Block"
+  | "FloatLib.Tactic.FloatInfo.Codebook"
+  | "FloatLib.Tactic.FloatInfo.FixedPoint.Bounded"
+  | "FloatLib.Tactic.FloatInfo.FixedPoint.Exact"
+  | "FloatLib.Tactic.FloatInfo.Logarithmic.Exact"
+  | "FloatLib.Tactic.FloatInfo.OCP.MX.E8M0"
+  | "FloatLib.Tactic.NearestFlat"
+  | "FloatLib.Tactic.ScanLoop"
+    => some ("specialized-formats", "experimental")
+  | "FloatLib.Tactic.FloatInfo.Codebook.Configured"
+  | "FloatLib.Tactic.FloatInfo.FixedPoint.Bounded.Configured"
+  | "FloatLib.Tactic.FloatInfo.FixedPoint.Configured"
+  | "FloatLib.Tactic.FloatInfo.Logarithmic.Configured"
+  | "FloatLib.Tactic.FloatInfo.OCP.MX.Configured"
+    => some ("specialized-formats", "stable")
+  | _ => none
+
+private def classifyDeclaration (moduleName declarationName : String) :
+    Except String Classification :=
+  if moduleName == "FloatLib.Util.KernelReduction" &&
+      hasModulePrefix declarationName "FloatLib.Numerics.Packed" then
+    -- The packed-data readers share this utility with backend evaluation helpers.
+    classified "core-numerics" "stable"
+  else
+    match classifyMovedModule moduleName with
+    | some (group, stability) => classified group stability
+    | none => classifyModule moduleName
 
 private def constantKindName : Lean.ConstantKind → String
   | .defn => "definition"
@@ -122,7 +312,7 @@ run_cmd do
           failures := failures.push s!"cannot identify declaring module for {name}"
       | some moduleIdx =>
           let moduleName := env.header.moduleNames[moduleIdx.toNat]!.toString
-          match classifyModule moduleName with
+          match classifyDeclaration moduleName name.toString with
           | .error message =>
               failures := failures.push message
           | .ok classification =>

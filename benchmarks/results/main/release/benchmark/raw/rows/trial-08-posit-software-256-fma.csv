@@ -1,2 +1,0 @@
-implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
-ExecFloat,posit,posit256,256,fma,proved-software,posit direct exact-dyadic fused accumulation,result-dependent-fixture-chain,32336,189687841,7829395943120619044,2775841788101610990,0,0,0

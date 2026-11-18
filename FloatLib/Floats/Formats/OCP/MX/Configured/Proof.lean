@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,11 +9,9 @@ module
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Runtime
 
 /-!
-# Representation theorems for configured OCP MX values
+# Representation theorems for configured E8M0 values
 
-Wrap an E8M0 byte or a joint MX block code in its configured type, unwrap it again, and you get
-the complete original back. These theorems prove that round trip and describe what the block
-constructors store.
+Wrap an E8M0 byte in its configured type, unwrap it again, and you get the complete original back.
 -/
 
 @[expose] public section
@@ -52,41 +50,4 @@ namespace E8M0
 
 end E8M0
 
-namespace Block
-
-variable {format : FloatFormat}
-
-/-- Unwrapping a freshly wrapped MX block returns the original code. -/
-@[simp, grind =] theorem toCode_ofCode (code : Formats.OCP.MX.BlockCode format) :
-    toCode (ofCode code) = code :=
-  rfl
-
-/-- Rewrapping the code of an MX block returns the original value. -/
-@[simp, grind =] theorem ofCode_toCode
-    (value : ExecFloat.OCP.MX.Block format) :
-    ofCode (toCode value) = value :=
-  ExecFloat.ofRaw_raw value
-
-/-- `ofComponents` preserves the supplied shared scale. -/
-@[simp, grind =] theorem scale_ofComponents
-    (scaleValue : ExecFloat.OCP.MX.E8M0) (elementValues : Array (Model format)) :
-    scale (ofComponents scaleValue elementValues) = scaleValue := by
-  exact E8M0.ofCode_toCode scaleValue
-
-/-- `ofComponents` preserves the supplied binary element words. -/
-@[simp, grind =] theorem values_ofComponents
-    (scaleValue : ExecFloat.OCP.MX.E8M0) (elementValues : Array (Model format)) :
-    values (ofComponents scaleValue elementValues) = elementValues :=
-  rfl
-
-/-- Building from nominal elements stores their proof-model values, element by element. -/
-@[simp, grind =] theorem values_ofElements
-    {F : Type u} [StaticByte.Family F]
-    (scaleValue : ExecFloat.OCP.MX.E8M0)
-    (elementValues : Array (FloatLib.Floats.ExecFloat F)) :
-    values (ofElements scaleValue elementValues) =
-      elementValues.map fun value => StaticByte.toModel (F := F) value :=
-  rfl
-
-end Block
 end FloatLib.Floats.ExecFloat.OCP.MX

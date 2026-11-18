@@ -27,7 +27,7 @@ REVISION = "85e61c9eb3211c736ded72b37254e2d608bbdbeb"
 FORMATS = {
     "binary16": (5, 10, 15, False),
     "bfloat16": (8, 7, 127, False),
-    "e4m3fn": (4, 3, 7, True),
+    "e4m3": (4, 3, 7, True),
     "e5m2": (5, 2, 15, False),
 }
 F32 = (8, 23, 127, False)
@@ -79,7 +79,7 @@ def encode_expected(code, fmt, levels):
     upper = bisect_left(levels, x)
     if upper == len(levels):
         threshold = levels[-1] + (levels[-1] - levels[-2]) / 2
-        # E4M3FN's maximum finite code is even, so a tie remains finite.
+        # E4M3's maximum finite code is even, so a tie remains finite.
         overflow = x > threshold if fmt[3] else x >= threshold
         return (None if fmt[3] else sign | infinity) if overflow else sign | (len(levels) - 1)
     if upper == 0 or levels[upper] == x:

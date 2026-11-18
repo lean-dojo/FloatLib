@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw the mechanisms of five incidents from chapter 03, in chronological order.
+"""Draw the mechanisms of five incidents from the chapter on floating-point representations, in chronological order.
 
 The full dates and quantitative detail remain in that chapter and its cited primary sources:
 * Vancouver: January 1982 to 25 November 1983; three-decimal truncation on each update.
@@ -29,50 +29,47 @@ from pathlib import Path
 import figstyle as fs
 
 OUT_NAME = "ch03-incident-timeline.png"
-# name, year/span, mechanism, consequence, colour
+# name, year/span, mechanism, consequence
 INCIDENTS = [
-    ("Vancouver index", "1982/83", "Repeated truncation", "Downward index bias", fs.BLUE),
-    ("Patriot", "1991", "Unequal clock conversions", "Timing error grows with uptime", fs.BLUE),
-    ("Sleipner A", "1991", "Coarse mesh (model error)", "Shear stress underestimated", fs.INK),
-    ("Pentium FDIV", "1994", "Missing lookup-table entries", "Wrong quotients", fs.GREEN),
-    ("Ariane 5", "1996", "Float → Int16 outside range", "Inertial unit shuts down", fs.ORANGE),
+    ("Vancouver index", "1982/83", "repeated truncation", "downward index bias"),
+    ("Patriot", "1991", "unequal clock conversions", "timing error grows with uptime"),
+    ("Sleipner A", "1991", "coarse mesh (model error)", "shear stress underestimated"),
+    ("Pentium FDIV", "1994", "missing lookup-table entries", "wrong quotients"),
+    ("Ariane 5", "1996", "Float → Int16 outside range", "inertial unit shuts down"),
 ]
 
 
 def build_figure(mobile: bool = False):
     fs.setup()
-    width, height = (3.8, 8.5) if mobile else (9.0, 5.8)
+    width, height = (fs.MOBILE_WIDTH, 7.8) if mobile else (fs.WIDTH, 5.2)
     fig = fs.plt.figure(figsize=(width, height))
     ax = fs.diagram_axes(fig, (0, width), (0, height))
-    ax.text(0.18, height - 0.18,
-            "Five failures,\nfive mechanisms" if mobile else "Five failures, five mechanisms",
-            fontsize=14 if mobile else 16, weight="bold", va="top")
     if mobile:
-        for index, (name, year, mechanism, consequence, colour) in enumerate(INCIDENTS):
+        for index, (name, year, mechanism, consequence) in enumerate(INCIDENTS):
             y = 7.26 - index * 1.42
-            ax.text(0.23, y, f"{name} · {year}", fontsize=12.5, weight="bold", va="center")
-            ax.text(0.23, y - 0.38, mechanism, fontsize=11.5, va="center")
-            fs.arrow(ax, (0.34, y - 0.56), (0.34, y - 0.90), color=colour)
-            ax.text(0.56, y - 0.85, consequence, fontsize=11.5, va="center")
+            ax.text(0.23, y, f"{name} · {year}", fontsize=fs.SIZE_LABEL, va="center")
+            ax.text(0.23, y - 0.38, mechanism, fontsize=fs.SIZE_LABEL, va="center")
+            fs.arrow(ax, (0.34, y - 0.56), (0.34, y - 0.90))
+            ax.text(0.56, y - 0.85, consequence, fontsize=fs.SIZE_LABEL, va="center")
             if index < len(INCIDENTS) - 1:
                 ax.plot([0.23, 3.57], [y - 1.15, y - 1.15], color=fs.LINE, lw=0.7)
     else:
-        for x, label in ((0.25, "Incident"), (2.65, "Mechanism"), (6.25, "Consequence")):
-            ax.text(x, 4.82, label, fontsize=11.5, color=fs.MUTED, va="center")
-        mechanisms = ["Truncate every\nindex update", "Mix clock-conversion\nprecisions",
-                      "Coarse mesh\n(model error)", "Missing division-\ntable entries",
+        for x, label in ((0.25, "incident"), (2.65, "mechanism"), (6.25, "consequence")):
+            ax.text(x, 4.82, label, fontsize=fs.SIZE_TICK, color=fs.MUTED, va="center")
+        mechanisms = ["truncation at every\nindex update", "mixed clock-conversion\nprecisions",
+                      "coarse mesh\n(model error)", "missing division-\ntable entries",
                       "Float → Int16\noutside range"]
-        consequences = ["Persistent\ndownward bias", "Uptime-dependent\ntiming error",
-                        "Shear stress\nunderestimated", "Wrong quotients\nfor some inputs",
-                        "Inertial unit\nshuts down"]
-        for index, ((name, year, _, _, colour), mechanism, consequence) in enumerate(
+        consequences = ["persistent\ndownward bias", "uptime-dependent\ntiming error",
+                        "shear stress\nunderestimated", "wrong quotients\nfor some inputs",
+                        "inertial unit\nshuts down"]
+        for index, ((name, year, _, _), mechanism, consequence) in enumerate(
                 zip(INCIDENTS, mechanisms, consequences)):
             y = 4.17 - index * 0.86
-            ax.text(0.25, y + 0.12, name, fontsize=12.5, weight="bold", va="center")
-            ax.text(0.25, y - 0.18, year, fontsize=11.5, color=fs.MUTED, va="center")
-            ax.text(2.65, y, mechanism, fontsize=12, va="center", linespacing=1.3)
-            fs.arrow(ax, (5.58, y), (6.05, y), color=colour)
-            ax.text(6.25, y, consequence, fontsize=12, va="center", linespacing=1.3)
+            ax.text(0.25, y + 0.12, name, fontsize=fs.SIZE_LABEL, va="center")
+            ax.text(0.25, y - 0.18, year, fontsize=fs.SIZE_TICK, color=fs.MUTED, va="center")
+            ax.text(2.65, y, mechanism, fontsize=fs.SIZE_LABEL, va="center", linespacing=1.3)
+            fs.arrow(ax, (5.58, y), (6.05, y))
+            ax.text(6.25, y, consequence, fontsize=fs.SIZE_LABEL, va="center", linespacing=1.3)
             if index < len(INCIDENTS) - 1:
                 ax.plot([0.25, 8.75], [y - 0.43, y - 0.43], color=fs.LINE, lw=0.7)
     return fig
@@ -84,7 +81,7 @@ def main() -> None:
     args = parser.parse_args()
     target = args.out or fs.ASSETS / OUT_NAME
     for mobile in (False, True):
-        path = target.with_name(f"{target.stem}-mobile{target.suffix}") if mobile else target
+        path = fs.mobile_path(target) if mobile else target
         print(f"wrote {fs.save(build_figure(mobile), OUT_NAME, path)}")
 
 

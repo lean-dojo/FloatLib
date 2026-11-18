@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -62,17 +62,17 @@ theorem toNumericalValue_eq_exactValue_toNumericalValue
   cases hdecode : toDyadic? x with
   | some value =>
       have hnan := isNaN_eq_false_of_toDyadic?_some hdecode
-      have hinf := isInf_eq_false_of_toDyadic?_some hdecode
+      have hinf := isInfinite_eq_false_of_toDyadic?_some hdecode
       simp [toNumericalValue, exactValue, ExactValue.toNumericalValue, toReal_eq,
         hdecode, hnan, hinf]
   | none =>
-      cases hinf : isInf x with
+      cases hinf : isInfinite x with
       | true =>
-          have hnan := isNaN_eq_false_of_isInf_eq_true x hinf
+          have hnan := isNaN_eq_false_of_isInfinite_eq_true x hinf
           simp [toNumericalValue, exactValue, ExactValue.toNumericalValue,
             hdecode, hnan, hinf]
       | false =>
-          have hnan := isNaN_eq_true_of_toDyadic?_eq_none_of_isInf_eq_false hdecode hinf
+          have hnan := isNaN_eq_true_of_toDyadic?_eq_none_of_isInfinite_eq_false hdecode hinf
           simp [toNumericalValue, exactValue, ExactValue.toNumericalValue, nanPayload,
             hdecode, hnan, hinf]
 

@@ -1,15 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Runtime
 
 /-!
 # Refinement of two-limb posit rounding
@@ -92,7 +90,8 @@ theorem roundPositiveCode_eq_direct
       · rw [ite_eq_right hunderflow]
         have hresult :=
           GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct
-            GuardSticky.candidateCarrierLawful format nativeSignificand target.exponent
+            GuardSticky.lawfulCandidateCarrier_candidateCarrier format nativeSignificand
+              target.exponent
             (GuardSticky.payloadBits_lt_of_eligible format heligible) hnativeNonzero
         rw [hnative, htarget] at hresult
         exact hresult

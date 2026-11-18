@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -28,6 +28,7 @@ namespace FloatLib.Numerics
 
 universe u v w x
 
+-- The code and the scalar type have a universe each, so the class lives in their maximum.
 set_option linter.checkUnivs false in
 /-- Runtime storage and finite scalar domain associated with the format identity `F`. -/
 class EncodedFormat (F : Type u) where

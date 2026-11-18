@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Properties
+
 import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 
 /-!
@@ -54,7 +55,8 @@ noncomputable def roundUp (x : ℝ) : ℝ :=
 /--
 Correctness of directed rounding down: `roundDown x` is an enclosure **lower bound**.
 
-This is the format-generic analogue of the IEEE-754 fact that rounding toward $-\infty$ never exceeds
+This is the format-generic analogue of the IEEE-754 fact that rounding toward $-\infty$ never
+exceeds
 the exact real value.
 -/
 theorem roundDown_le (x : ℝ) : roundDown (β := β) (fexp := fexp) x ≤ x :=
@@ -63,7 +65,8 @@ theorem roundDown_le (x : ℝ) : roundDown (β := β) (fexp := fexp) x ≤ x :=
 /--
 Correctness of directed rounding up: `roundUp x` is an enclosure **upper bound**.
 
-This is the format-generic analogue of the IEEE-754 fact that rounding toward $+\infty$ is never below
+This is the format-generic analogue of the IEEE-754 fact that rounding toward $+\infty$ is never
+below
 the exact real value.
 -/
 theorem le_roundUp (x : ℝ) : x ≤ roundUp (β := β) (fexp := fexp) x :=
@@ -71,13 +74,13 @@ theorem le_roundUp (x : ℝ) : x ≤ roundUp (β := β) (fexp := fexp) x :=
 
 /-- `roundDown x` lies on the $(\beta,\mathtt{fexp})$ grid. -/
 theorem genericFormat_roundDown (x : ℝ) :
-    genericFormat β fexp (roundDown (β := β) (fexp := fexp) x) :=
-  generic_format_round floorRound x
+    GenericRepresentable β fexp (roundDown (β := β) (fexp := fexp) x) :=
+  genericRepresentable_round floorRound x
 
 /-- `roundUp x` lies on the $(\beta,\mathtt{fexp})$ grid. -/
 theorem genericFormat_roundUp (x : ℝ) :
-    genericFormat β fexp (roundUp (β := β) (fexp := fexp) x) :=
-  generic_format_round ceilRound x
+    GenericRepresentable β fexp (roundUp (β := β) (fexp := fexp) x) :=
+  genericRepresentable_round ceilRound x
 
 /--
 A pair of real maps bracketing every real number from below and above.

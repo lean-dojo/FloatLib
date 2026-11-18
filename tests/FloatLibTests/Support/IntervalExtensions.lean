@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Automation.Interval
+public import FloatLib.Tactic.Interval
 
 /-!
 # User-defined interval enclosures
@@ -71,7 +71,7 @@ def cancelEnclosure : Extension :=
 @[interval_extension]
 theorem cancel_sound : cancelEnclosure.Sound cancel := by
   apply Extension.unary_sound
-  intro config I J x h hx
+  intro _ I J x h hx
   exact containsReal_sub? Internal.rationalOutwardRounding h hx hx
 
 /-- A four-argument function exercises calls beyond the built-in operation arities. -/

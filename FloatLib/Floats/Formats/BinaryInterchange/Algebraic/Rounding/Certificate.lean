@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Accuracy.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Proof
+public import FloatLib.Numerics.Order.Bisection.Proof
 
 /-!
 # Exact certificates from bounded comparisons
@@ -17,6 +17,10 @@ Two bounded searches turn exact comparisons into a rounding certificate. The exp
 keeps a bracket between powers of two, and the significand search keeps one between consecutive
 integers. Exact comparison at the integer and its half-integer then supplies the accuracy
 certificate that the rounding proof consumes.
+
+`powerBounds_compare` shows that reading a comparison with a power of two off `powerBounds` gives
+the comparator's own answer when the comparator is exact, and `round_eq` restates `round` with the
+two direct comparisons at the ends of the exponent range, which is the form the proofs use.
 -/
 
 @[expose] public section
@@ -32,47 +36,80 @@ open FloatLib.Floats.Formats.Flocq
   simp [powerOfTwo, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,
     bpow, Numerics.binaryRadix, Numerics.Radix.toReal]
 
-/--
-A sufficiently deep bounded search ends at adjacent candidates enclosing the target.
-Only exact comparison and an initial bracket are needed. The proof follows both search branches.
--/
-theorem bisect_bracket (accept : Nat → Bool) (valueAt : Nat → ℝ) (target : ℝ)
-    (haccept : ∀ index, accept index = true ↔ valueAt index ≤ target)
-    (fuel lower upper : Nat) (horder : lower < upper)
-    (hspan : upper - lower ≤ 2 ^ fuel)
-    (hlower : valueAt lower ≤ target) (hupper : target < valueAt upper) :
-    valueAt (bisect accept fuel lower upper) ≤ target ∧
-      target < valueAt (bisect accept fuel lower upper + 1) := by
-  induction fuel generalizing lower upper with
-  | zero =>
-    have hupperEq : upper = lower + 1 := by
-      simp only [pow_zero] at hspan
-      omega
-    simpa [bisect, Posit.Model.lowerCodeByBisection, hupperEq] using And.intro hlower hupper
+/-- An exponent that `firstRung` returns was accepted. -/
+theorem firstRung_hit (hit : Nat → Bool) (limit fuel step : Nat) {rung : Nat}
+    (h : firstRung hit limit fuel step = some rung) : hit rung = true := by
+  induction fuel generalizing step with
+  | zero => simp [firstRung] at h
   | succ fuel ih =>
-    rw [bisect, Posit.Model.lowerCodeByBisection]
-    split
-    · rename_i hnontrivial
-      let middle := (lower + upper) / 2
-      have hlo : lower < middle := by dsimp [middle]; omega
-      have hhi : middle < upper := by dsimp [middle]; omega
-      have hleft : middle - lower ≤ 2 ^ fuel := by
-        dsimp [middle]
-        rw [pow_succ] at hspan
-        omega
-      have hright : upper - middle ≤ 2 ^ fuel := by
-        dsimp [middle]
-        rw [pow_succ] at hspan
-        omega
-      dsimp only
-      split
-      · rename_i hmid
-        exact ih middle upper hhi hright ((haccept middle).mp hmid) hupper
-      · rename_i hmid
-        exact ih lower middle hlo hleft hlower
-          (lt_of_not_ge (fun h => hmid ((haccept middle).mpr h)))
-    · have hupperEq : upper = lower + 1 := by omega
-      simpa [hupperEq] using And.intro hlower hupper
+    rw [firstRung] at h
+    split_ifs at h with hlimit hhit
+    · cases h
+      exact hhit
+    · exact ih _ h
+
+/-- The comparator answered `.lt` at the upper bound of `powerBounds`, whatever the comparator. -/
+theorem powerBounds_above (fmt : FloatFormat) (compare : Rat → Ordering) {rung : Int}
+    (h : (powerBounds fmt compare).above = some rung) : compare (powerOfTwo rung) = .lt := by
+  simp only [powerBounds] at h
+  split_ifs at h with hunit
+  · cases h
+    exact hunit
+  · obtain ⟨step, hstep, rfl⟩ := Option.map_eq_some_iff.mp h
+    simpa using firstRung_hit _ _ _ _ hstep
+
+/-- The comparator answered `.gt` at the lower bound of `powerBounds`, whatever the comparator. -/
+theorem powerBounds_below (fmt : FloatFormat) (compare : Rat → Ordering) {rung : Int}
+    (h : (powerBounds fmt compare).below = some rung) : compare (powerOfTwo rung) = .gt := by
+  simp only [powerBounds] at h
+  split_ifs at h with hunit
+  · cases h
+    exact hunit
+  · obtain ⟨step, hstep, rfl⟩ := Option.map_eq_some_iff.mp h
+    simpa using firstRung_hit _ _ _ _ hstep
+
+/--
+For an exact comparator of a real target, the comparison through `powerBounds` is the comparison
+with the power of two itself, at every exponent.
+-/
+theorem powerBounds_compare (fmt : FloatFormat) {compare : Rat → Ordering} {target : ℝ}
+    (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
+    (exponent : Int) :
+    (powerBounds fmt compare).compare compare exponent = compare (powerOfTwo exponent) := by
+  unfold PowerBounds.compare
+  split_ifs with habove hbelow
+  · cases hrung : (powerBounds fmt compare).above with
+    | none => simp [hrung] at habove
+    | some rung =>
+      have hle : rung ≤ exponent := by simpa [hrung] using habove
+      have hlt : target < bpow Numerics.binaryRadix rung :=
+        (cmp_eq_lt_iff _ _).mp
+          (by simpa only [hcompare, cast_powerOfTwo] using powerBounds_above fmt compare hrung)
+      rw [hcompare, cast_powerOfTwo]
+      exact ((cmp_eq_lt_iff _ _).mpr (hlt.trans_le ((bpow_le_bpow_iff _ _ _).mpr hle))).symm
+  · cases hrung : (powerBounds fmt compare).below with
+    | none => simp [hrung] at hbelow
+    | some rung =>
+      have hle : exponent ≤ rung := by simpa [hrung] using hbelow
+      have hgt : bpow Numerics.binaryRadix rung < target :=
+        (cmp_eq_gt_iff _ _).mp
+          (by simpa only [hcompare, cast_powerOfTwo] using powerBounds_below fmt compare hrung)
+      rw [hcompare, cast_powerOfTwo]
+      exact ((cmp_eq_gt_iff _ _).mpr (((bpow_le_bpow_iff _ _ _).mpr hle).trans_lt hgt)).symm
+  · rfl
+
+/--
+For an exact comparator of a real target, `round` is the rounding that compares with
+`2 ^ lowerExponent` and `2 ^ upperExponent` directly: zero at or below the first, the overflow
+value at or above the second, and the rounded certificate between them.
+-/
+theorem round_eq (fmt : FloatFormat) (sign : Bool) {compare : Rat → Ordering} {target : ℝ}
+    (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ)) :
+    round fmt sign compare =
+      if compare (powerOfTwo (lowerExponent fmt)) ≠ .gt then zero fmt sign
+      else if compare (powerOfTwo (upperExponent fmt)) ≠ .lt then nativeOverflow fmt sign
+      else roundCertificate fmt sign (certificate fmt compare) := by
+  simp only [round, powerBounds_compare fmt hcompare]
 
 /-- The exponent search starts strictly below its exclusive upper bound. -/
 theorem lowerExponent_lt_upperExponent (fmt : FloatFormat) :
@@ -124,13 +161,14 @@ theorem binade_bounds (fmt : FloatFormat) (compare : Rat → Ordering) (target :
       rw [Nat.log2_eq_log_two]
       exact (Nat.lt_pow_succ_log_self (by decide : 1 < (2 : Nat))
         (exponentSpan fmt)).le)
-  have h := bisect_bracket
-    (fun index => decide (compare (powerOfTwo (lowerExponent fmt + index)) ≠ .lt))
+  have h := Numerics.bisect_bracket
+    (fun index => decide
+      ((powerBounds fmt compare).compare compare (lowerExponent fmt + index) ≠ .lt))
     (fun index => bpow Numerics.binaryRadix (lowerExponent fmt + index)) target
     (by
       intro index
-      simp only [decide_eq_true_eq, hcompare, cast_powerOfTwo, ne_eq, cmp_eq_lt_iff,
-        not_lt])
+      simp only [decide_eq_true_eq, powerBounds_compare fmt hcompare, hcompare, cast_powerOfTwo,
+        ne_eq, cmp_eq_lt_iff, not_lt])
     ((exponentSpan fmt).log2 + 1) 0 (exponentSpan fmt)
     (exponentSpan_pos fmt) (by simpa using hspan)
     (by simpa using hlower)
@@ -153,7 +191,7 @@ theorem scaled_compare (compare : Rat → Ordering) (target : ℝ) (exponent : I
 theorem accuracyAt_represents (compare : Rat → Ordering) (target : ℝ) (mantissa : Nat)
     (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
     (hfloor : (mantissa : ℝ) ≤ target ∧ target < mantissa + 1) :
-    accuracyRepresents mantissa (accuracyAt compare mantissa) target := by
+    AccuracyRepresents mantissa (accuracyAt compare mantissa) target := by
   unfold accuracyAt
   split
   · rename_i hexact
@@ -183,7 +221,7 @@ theorem truncatedMantissa_bounds (fmt : FloatFormat) (compare : Rat → Ordering
         target / bpow Numerics.binaryRadix exponent ∧
       target / bpow Numerics.binaryRadix exponent <
         (truncatedMantissa fmt compare exponent : ℝ) + 1 := by
-  have h := bisect_bracket
+  have h := Numerics.bisect_bracket
     (fun candidate => decide (compare ((candidate : Rat) * powerOfTwo exponent) ≠ .lt))
     (fun candidate => (candidate : ℝ)) (target / bpow Numerics.binaryRadix exponent)
     (by
@@ -237,7 +275,7 @@ theorem certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (hupper : target < bpow Numerics.binaryRadix (upperExponent fmt)) :
     let c := certificate fmt compare
     c.mantissa ≠ 0 ∧
-      accuracyRepresents c.mantissa c.accuracy
+      AccuracyRepresents c.mantissa c.accuracy
         (target / bpow Numerics.binaryRadix c.exponent) ∧
       c.exponent ≤ (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent c.mantissa c.exponent) := by
@@ -251,7 +289,7 @@ theorem certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     change (c.mantissa : ℝ) ≤ v ∧ v < (c.mantissa : ℝ) + 1 at hfloor
     simp only [hm, Nat.cast_zero, zero_add] at hfloor
     exact (not_lt_of_ge hvlo) hfloor.2
-  have ha : accuracyRepresents c.mantissa c.accuracy v := by
+  have ha : AccuracyRepresents c.mantissa c.accuracy v := by
     exact accuracyAt_represents
       (fun candidate => compare (candidate * powerOfTwo c.exponent)) v c.mantissa
       (scaled_compare compare target c.exponent hcompare) hfloor
@@ -286,7 +324,7 @@ theorem roundCertificate_certificate_spec (fmt : FloatFormat) (hfmt : fmt.isIEEE
     roundCertificate fmt sign c =
         ofModel fmt (roundWithAccuracy (FloatFormat.toModel fmt) (modelSign sign)
           c.mantissa c.exponent c.accuracy) ∧
-      accuracyRepresents c.mantissa c.accuracy
+      AccuracyRepresents c.mantissa c.accuracy
         (target / bpow Numerics.binaryRadix c.exponent) ∧
       c.exponent ≤ (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent c.mantissa c.exponent) := by

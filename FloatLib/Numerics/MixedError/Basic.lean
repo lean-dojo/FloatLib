@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,8 @@ Authors: FloatLib Team
 module
 
 public import Mathlib.Analysis.Real.Sqrt
+
+import FloatLib.Numerics.ErrorBound.Algebra
 import Mathlib.Tactic.Positivity.Finset
 
 /-!
@@ -74,25 +76,24 @@ structure MixedError (x x₀ r a : ℝ) : Prop where
 
 /-- `|√x - √y| * (√x + √y) ≤ |x - y|` for all reals, where `√` is zero below zero. -/
 theorem abs_sqrt_sub_sqrt_mul_le (x y : ℝ) : |√x - √y| * (√x + √y) ≤ |x - y| := by
-  rcases le_total 0 x with hx | hx <;> rcases le_total 0 y with hy | hy
-  · refine le_of_eq ?_
-    rw [← abs_of_nonneg (by positivity : 0 ≤ √x + √y), ← abs_mul,
-      show (√x - √y) * (√x + √y) = √x * √x - √y * √y by ring, Real.mul_self_sqrt hx,
-      Real.mul_self_sqrt hy]
-  · rw [Real.sqrt_eq_zero_of_nonpos hy, sub_zero, add_zero, abs_of_nonneg (Real.sqrt_nonneg x),
-      Real.mul_self_sqrt hx, abs_of_nonneg (by linarith)]
-    linarith
-  · rw [Real.sqrt_eq_zero_of_nonpos hx, zero_sub, zero_add, abs_neg,
-      abs_of_nonneg (Real.sqrt_nonneg y), Real.mul_self_sqrt hy, abs_of_nonpos (by linarith)]
-    linarith
-  · rw [Real.sqrt_eq_zero_of_nonpos hx, Real.sqrt_eq_zero_of_nonpos hy]
-    simp
+  calc
+    |√x - √y| * (√x + √y) = |√x ^ 2 - √y ^ 2| := by
+      rw [sq_sub_sq, abs_mul, abs_of_nonneg (by positivity : 0 ≤ √x + √y), mul_comm]
+    _ = |max x 0 - max y 0| := by rw [Real.sq_sqrt', Real.sq_sqrt']
+    _ ≤ |x - y| := abs_max_sub_max_le_abs x y 0
+
+/-- Total square root is Hölder continuous with exponent one half, including negative inputs. -/
+theorem abs_sqrt_sub_sqrt_le_sqrt (x y : ℝ) : |√x - √y| ≤ √|x - y| := by
+  rw [Real.le_sqrt (abs_nonneg _) (abs_nonneg _), sq]
+  exact (mul_le_mul_of_nonneg_left
+    (by simpa only [abs_of_nonneg (Real.sqrt_nonneg _)] using abs_sub (√x) (√y))
+    (abs_nonneg _)).trans (abs_sqrt_sub_sqrt_mul_le x y)
 
 /-- `|√x - √y| ≤ |x - y| / (√x + √y)` for all reals. Both sides vanish when `√x + √y = 0`. -/
 theorem abs_sqrt_sub_sqrt_le_div_add (x y : ℝ) : |√x - √y| ≤ |x - y| / (√x + √y) := by
   rcases (add_nonneg (Real.sqrt_nonneg x) (Real.sqrt_nonneg y)).eq_or_lt with hzero | hpos
-  · have hx : √x = 0 := by linarith [Real.sqrt_nonneg x, Real.sqrt_nonneg y]
-    have hy : √y = 0 := by linarith [Real.sqrt_nonneg x, Real.sqrt_nonneg y]
+  · obtain ⟨hx, hy⟩ :=
+      (add_eq_zero_iff_of_nonneg (Real.sqrt_nonneg x) (Real.sqrt_nonneg y)).mp hzero.symm
     simp [hx, hy]
   · rw [le_div_iff₀ hpos]
     exact abs_sqrt_sub_sqrt_mul_le x y
@@ -133,9 +134,9 @@ theorem of_standardModel (h : ∃ δ η : ℝ, x = x₀ * (1 + δ) + η ∧ |δ|
     MixedError x x₀ r a := by
   obtain ⟨δ, η, rfl, hδ, hη⟩ := h
   refine ⟨(abs_nonneg δ).trans hδ, (abs_nonneg η).trans hη, ?_⟩
-  calc |x₀ * (1 + δ) + η - x₀| = |x₀ * δ + η| := by ring_nf
-    _ ≤ |x₀| * |δ| + |η| := by rw [← abs_mul]; exact abs_add_le _ _
-    _ ≤ r * |x₀| + a := by rw [mul_comm]; gcongr
+  rw [show x₀ * (1 + δ) + η - x₀ = x₀ * δ + η by ring]
+  simpa only [mul_comm] using
+    Backward.abs_add_le_add (Backward.abs_mul_le_mul (le_refl |x₀|) hδ) hη
 
 /-- A bound `|x₀| ≤ c` turns the mixed bound into the absolute bound `r * c + a`. -/
 theorem abs_sub_le_of_abs_le (h : MixedError x x₀ r a) (hc : |x₀| ≤ c) :
@@ -155,20 +156,21 @@ theorem relative_of_le_abs (h : MixedError x x₀ r a) (hm : 0 < m) (hc : m ≤ 
   have : a ≤ a / m * |x₀| := by
     rw [div_mul_eq_mul_div, le_div_iff₀ hm]
     gcongr
-  linarith
+  rw [add_mul]
+  exact add_le_add le_rfl this
 
 /-- The approximation is at most `(1 + r) * |x₀| + a` in magnitude. -/
 protected theorem abs_le (h : MixedError x x₀ r a) : |x| ≤ (1 + r) * |x₀| + a := by
-  have := abs_sub_abs_le_abs_sub x x₀
-  linarith [h.bound]
+  simpa only [add_mul, one_mul, add_comm, add_left_comm, add_assoc] using
+    sub_le_iff_le_add.mp ((abs_sub_abs_le_abs_sub x x₀).trans h.bound)
 
 /-- The approximation is at least the lower end `x₀ - (r * |x₀| + a)` of its enclosure. -/
-theorem lower_le (h : MixedError x x₀ r a) : x₀ - (r * |x₀| + a) ≤ x := by
-  linarith [neg_abs_le (x - x₀), h.bound]
+theorem lower_le (h : MixedError x x₀ r a) : x₀ - (r * |x₀| + a) ≤ x :=
+  sub_le_comm.mp (abs_sub_le_iff.mp h.bound).2
 
 /-- The approximation is at most the upper end `x₀ + (r * |x₀| + a)` of its enclosure. -/
-theorem le_upper (h : MixedError x x₀ r a) : x ≤ x₀ + (r * |x₀| + a) := by
-  linarith [le_abs_self (x - x₀), h.bound]
+theorem le_upper (h : MixedError x x₀ r a) : x ≤ x₀ + (r * |x₀| + a) :=
+  sub_le_iff_le_add'.mp (abs_sub_le_iff.mp h.bound).1
 
 /-- The lower end of the enclosure is at most the exact value. -/
 theorem lower_le_center (h : MixedError x x₀ r a) : x₀ - (r * |x₀| + a) ≤ x₀ :=
@@ -178,40 +180,64 @@ theorem lower_le_center (h : MixedError x x₀ r a) : x₀ - (r * |x₀| + a) �
 theorem center_le_upper (h : MixedError x x₀ r a) : x₀ ≤ x₀ + (r * |x₀| + a) :=
   le_add_of_nonneg_right (add_nonneg (mul_nonneg h.r_nonneg (abs_nonneg _)) h.a_nonneg)
 
+/-- The error in terms of the computed value: `(1 - r) * |x - x₀| ≤ r * |x| + a`. With `r < 1`
+this bounds the error by quantities that a program can evaluate. -/
+theorem abs_sub_le_computed (h : MixedError x x₀ r a) : (1 - r) * |x - x₀| ≤ r * |x| + a := by
+  have h₀ : |x₀| ≤ |x| + |x - x₀| := by
+    rw [abs_sub_comm]
+    exact sub_le_iff_le_add'.mp (abs_sub_abs_le_abs_sub x₀ x)
+  have hbound := h.bound.trans (add_le_add_left (mul_le_mul_of_nonneg_left h₀ h.r_nonneg) a)
+  rw [one_sub_mul, sub_le_iff_le_add]
+  exact hbound.trans_eq (by rw [mul_add, add_right_comm])
+
+/-- The enclosure centered at the computed value: for `r < 1` the exact value is within
+`(r * |x| + a) / (1 - r)` of the approximation. -/
+theorem mem_Icc_computed (h : MixedError x x₀ r a) (hr : r < 1) :
+    x₀ ∈ Set.Icc (x - (r * |x| + a) / (1 - r)) (x + (r * |x| + a) / (1 - r)) := by
+  have hbound : |x - x₀| ≤ (r * |x| + a) / (1 - r) :=
+    (le_div_iff₀ (sub_pos.mpr hr)).mpr (by rw [mul_comm]; exact h.abs_sub_le_computed)
+  obtain ⟨hupper, hlower⟩ := abs_sub_le_iff.mp hbound
+  exact ⟨sub_le_comm.mp hupper, sub_le_iff_le_add'.mp hlower⟩
+
 /-- The approximation is at least `(1 - r) * |x₀| - a` in magnitude. -/
 protected theorem le_abs (h : MixedError x x₀ r a) : (1 - r) * |x₀| - a ≤ |x| := by
-  have := abs_sub_abs_le_abs_sub x₀ x
-  rw [abs_sub_comm] at this
-  linarith [h.bound]
+  have hbound : |x₀| - |x| ≤ r * |x₀| + a :=
+    (abs_sub_abs_le_abs_sub x₀ x).trans (by simpa only [abs_sub_comm] using h.bound)
+  simpa only [sub_mul, one_mul, sub_add_eq_sub_sub] using sub_le_comm.mp hbound
 
 /-- An error smaller than the exact magnitude leaves the approximation nonzero. -/
 theorem ne_zero (h : MixedError x x₀ r a) (hlt : r * |x₀| + a < |x₀|) : x ≠ 0 := by
   rintro rfl
   have := h.bound
   rw [zero_sub, abs_neg] at this
-  linarith
+  exact hlt.not_ge this
 
 /-- An error smaller than a positive exact value leaves the approximation positive. -/
-theorem pos (h : MixedError x x₀ r a) (hlt : r * |x₀| + a < x₀) : 0 < x := by
-  linarith [neg_abs_le (x - x₀), h.bound]
+theorem pos (h : MixedError x x₀ r a) (hlt : r * |x₀| + a < x₀) : 0 < x :=
+  (sub_pos.mpr hlt).trans_le h.lower_le
 
 /--
 An error smaller than the magnitude of a negative exact value leaves the approximation negative.
 -/
 theorem lt_zero (h : MixedError x x₀ r a) (hlt : r * |x₀| + a < -x₀) : x < 0 := by
-  linarith [le_abs_self (x - x₀), h.bound]
+  calc
+    x ≤ x₀ + (r * |x₀| + a) := h.le_upper
+    _ < x₀ + -x₀ := add_lt_add_of_le_of_lt le_rfl hlt
+    _ = 0 := add_neg_cancel x₀
 
 /-- A pure relative error below one keeps a positive exact value positive. -/
 theorem pos_of_pos (h : MixedError x x₀ r 0) (hr : r < 1) (hx₀ : 0 < x₀) : 0 < x :=
-  h.pos (by rw [abs_of_pos hx₀, add_zero]; nlinarith)
+  h.pos (by rw [abs_of_pos hx₀, add_zero]; exact mul_lt_of_lt_one_left hx₀ hr)
 
 /-- A pure relative error below one keeps a negative exact value negative. -/
 theorem lt_zero_of_lt_zero (h : MixedError x x₀ r 0) (hr : r < 1) (hx₀ : x₀ < 0) : x < 0 :=
-  h.lt_zero (by rw [abs_of_neg hx₀, add_zero]; nlinarith)
+  h.lt_zero (by
+    rw [abs_of_neg hx₀, add_zero]
+    exact mul_lt_of_lt_one_left (neg_pos.mpr hx₀) hr)
 
 /-- A pure relative error below one keeps a nonzero exact value nonzero. -/
 theorem ne_zero_of_ne_zero (h : MixedError x x₀ r 0) (hr : r < 1) (hx₀ : x₀ ≠ 0) : x ≠ 0 :=
-  h.ne_zero (by rw [add_zero]; nlinarith [abs_pos.mpr hx₀])
+  h.ne_zero (by rw [add_zero]; exact mul_lt_of_lt_one_left (abs_pos.mpr hx₀) hr)
 
 /-! ### Composition -/
 
@@ -229,8 +255,8 @@ protected theorem trans (h : MixedError x y r a) (h' : MixedError y z r' a') :
   have hr' := h'.r_nonneg
   have ha' := h'.a_nonneg
   refine ⟨by positivity, by positivity, ?_⟩
-  calc |x - z| ≤ |x - y| + |y - z| := abs_sub_le x y z
-    _ ≤ r * |y| + a + (r' * |z| + a') := add_le_add h.bound h'.bound
+  calc |x - z| ≤ r * |y| + a + (r' * |z| + a') := by
+        simpa only [add_comm] using compose_error h.bound h'.bound
     _ ≤ r * ((1 + r') * |z| + a') + a + (r' * |z| + a') := by gcongr; exact h'.abs_le
     _ = ((1 + r) * r' + r) * |z| + ((1 + r) * a' + a) := by ring
 
@@ -260,20 +286,18 @@ Scaling by an exact constant `c` keeps the relative error and multiplies the abs
 theorem const_mul (h : MixedError x x₀ r a) (c : ℝ) :
     MixedError (c * x) (c * x₀) r (|c| * a) := by
   refine ⟨h.r_nonneg, mul_nonneg (abs_nonneg c) h.a_nonneg, ?_⟩
-  rw [← mul_sub, abs_mul, abs_mul]
-  calc |c| * |x - x₀| ≤ |c| * (r * |x₀| + a) := by gcongr; exact h.bound
-    _ = r * (|c| * |x₀|) + |c| * a := by ring
+  rw [← mul_sub, abs_mul c x₀]
+  calc |c * (x - x₀)| ≤ |c| * (r * |x₀| + a) :=
+        Backward.abs_mul_le_mul le_rfl h.bound
+    _ = r * (|c| * |x₀|) + |c| * a := by rw [mul_add, mul_left_comm]
 
 /--
 A sum has the pure absolute bound `rx * |x₀| + ax + (ry * |y₀| + ay)`, the sum of the error bounds
 of its terms.
 -/
 theorem add (hx : MixedError x x₀ rx ax) (hy : MixedError y y₀ ry ay) :
-    MixedError (x + y) (x₀ + y₀) 0 (rx * |x₀| + ax + (ry * |y₀| + ay)) := by
-  refine of_abs_sub_le ?_
-  calc |x + y - (x₀ + y₀)| = |(x - x₀) + (y - y₀)| := by ring_nf
-    _ ≤ |x - x₀| + |y - y₀| := abs_add_le _ _
-    _ ≤ rx * |x₀| + ax + (ry * |y₀| + ay) := add_le_add hx.bound hy.bound
+    MixedError (x + y) (x₀ + y₀) 0 (rx * |x₀| + ax + (ry * |y₀| + ay)) :=
+  of_abs_sub_le (Backward.add hx.bound hy.bound)
 
 /--
 A sum of two exact values of the same sign has relative error `max rx ry` and absolute error
@@ -285,13 +309,12 @@ theorem add_of_mul_nonneg (hx : MixedError x x₀ rx ax) (hy : MixedError y y₀
   refine ⟨le_max_of_le_left hx.r_nonneg, add_nonneg hx.a_nonneg hy.a_nonneg, ?_⟩
   have habs : |x₀ + y₀| = |x₀| + |y₀| :=
     (abs_add_eq_add_abs_iff x₀ y₀).2 (mul_nonneg_iff.1 hsign)
-  calc |x + y - (x₀ + y₀)| = |(x - x₀) + (y - y₀)| := by ring_nf
-    _ ≤ |x - x₀| + |y - y₀| := abs_add_le _ _
-    _ ≤ rx * |x₀| + ax + (ry * |y₀| + ay) := add_le_add hx.bound hy.bound
+  calc |x + y - (x₀ + y₀)| ≤ rx * |x₀| + ax + (ry * |y₀| + ay) :=
+        Backward.add hx.bound hy.bound
     _ ≤ max rx ry * |x₀| + ax + (max rx ry * |y₀| + ay) := by
       gcongr
       exacts [le_max_left _ _, le_max_right _ _]
-    _ = max rx ry * |x₀ + y₀| + (ax + ay) := by rw [habs]; ring
+    _ = max rx ry * |x₀ + y₀| + (ax + ay) := by rw [habs, mul_add]; ac_rfl
 
 /--
 A sum of two exact values of the same sign has relative error
@@ -308,15 +331,16 @@ theorem add_of_mul_nonneg_weighted (hx : MixedError x x₀ rx ax) (hy : MixedErr
     (abs_add_eq_add_abs_iff x₀ y₀).2 (mul_nonneg_iff.1 hsign)
   have hweighted : (rx * |x₀| + ry * |y₀|) / |x₀ + y₀| * |x₀ + y₀| = rx * |x₀| + ry * |y₀| := by
     rcases eq_or_ne |x₀ + y₀| 0 with hzero | hzero
-    · have hx₀ : |x₀| = 0 := by linarith [abs_nonneg x₀, abs_nonneg y₀]
-      have hy₀ : |y₀| = 0 := by linarith [abs_nonneg x₀, abs_nonneg y₀]
+    · obtain ⟨hx₀, hy₀⟩ :=
+        (add_eq_zero_iff_of_nonneg (abs_nonneg x₀) (abs_nonneg y₀)).mp (hsum ▸ hzero)
       simp [hx₀, hy₀]
     · exact div_mul_cancel₀ _ hzero
   refine ⟨by positivity, add_nonneg hx.a_nonneg hy.a_nonneg, ?_⟩
-  calc |x + y - (x₀ + y₀)| = |(x - x₀) + (y - y₀)| := by ring_nf
-    _ ≤ |x - x₀| + |y - y₀| := abs_add_le _ _
-    _ ≤ rx * |x₀| + ax + (ry * |y₀| + ay) := add_le_add hx.bound hy.bound
-    _ = (rx * |x₀| + ry * |y₀|) / |x₀ + y₀| * |x₀ + y₀| + (ax + ay) := by rw [hweighted]; ring
+  calc |x + y - (x₀ + y₀)| ≤ rx * |x₀| + ax + (ry * |y₀| + ay) :=
+        Backward.add hx.bound hy.bound
+    _ = (rx * |x₀| + ry * |y₀|) / |x₀ + y₀| * |x₀ + y₀| + (ax + ay) := by
+      rw [hweighted]
+      exact add_add_add_comm (rx * |x₀|) ax (ry * |y₀|) ay
 
 /--
 A difference has the pure absolute bound `rx * |x₀| + ax + (ry * |y₀| + ay)`, the sum of the error
@@ -360,21 +384,9 @@ theorem mul (hx : MixedError x x₀ rx ax) (hy : MixedError y y₀ ry ay) :
   have hax := hx.a_nonneg
   have hry := hy.r_nonneg
   have hay := hy.a_nonneg
-  refine ⟨by positivity, by positivity, ?_⟩
-  have hsplit : x * y - x₀ * y₀ = (x - x₀) * y₀ + x₀ * (y - y₀) + (x - x₀) * (y - y₀) := by
-    ring
-  calc |x * y - x₀ * y₀|
-      ≤ |x - x₀| * |y₀| + |x₀| * |y - y₀| + |x - x₀| * |y - y₀| := by
-        rw [hsplit, ← abs_mul, ← abs_mul, ← abs_mul]
-        exact (abs_add_le _ _).trans (add_le_add_left (abs_add_le _ _) _)
-    _ ≤ (rx * |x₀| + ax) * |y₀| + |x₀| * (ry * |y₀| + ay) +
-        (rx * |x₀| + ax) * (ry * |y₀| + ay) := by
-      gcongr
-      exacts [hx.bound, hy.bound, hx.bound, hy.bound]
-    _ = (rx + ry + rx * ry) * |x₀ * y₀| +
-        ((1 + ry) * ax * |y₀| + (1 + rx) * ay * |x₀| + ax * ay) := by
-      rw [abs_mul]
-      ring
+  refine ⟨by positivity, by positivity, (Backward.deviation_mul hx.bound hy.bound).trans_eq ?_⟩
+  rw [abs_mul]
+  ring
 
 /--
 The reciprocal of a value with pure relative error `r < 1` has relative error `r / (1 - r)`. At
@@ -383,13 +395,12 @@ The reciprocal of a value with pure relative error `r < 1` has relative error `r
 theorem inv (h : MixedError x x₀ r 0) (hr : r < 1) :
     MixedError x⁻¹ x₀⁻¹ (r / (1 - r)) 0 := by
   have hr0 := h.r_nonneg
-  have h1r : 0 < 1 - r := by linarith
   refine of_abs_sub_le_mul (by positivity) ?_
   rcases eq_or_ne x₀ 0 with rfl | hx₀
   · have : x = 0 := by simpa using h.bound
     simp [this]
   have hlow : (1 - r) * |x₀| ≤ |x| := by simpa using h.le_abs
-  have hx : 0 < |x| := lt_of_lt_of_le (by positivity) hlow
+  have hx : 0 < |x| := abs_pos.mpr (h.ne_zero_of_ne_zero hr hx₀)
   rw [inv_sub_inv (abs_pos.1 hx) hx₀, abs_div, abs_mul, abs_inv, div_le_iff₀ (by positivity)]
   calc |x₀ - x| ≤ r * |x₀| := by simpa [abs_sub_comm] using h.bound
     _ = r / (1 - r) * |x₀|⁻¹ * ((1 - r) * |x₀| * |x₀|) := by
@@ -408,28 +419,24 @@ theorem div (hx : MixedError x x₀ rx ax) (hy : MixedError y y₀ ry 0) (hry : 
   have hrx := hx.r_nonneg
   have hax := hx.a_nonneg
   have hry0 := hy.r_nonneg
-  have h1r : 0 < 1 - ry := by linarith
   refine ⟨by positivity, by positivity, ?_⟩
   rcases eq_or_ne y₀ 0 with rfl | hy₀
   · have : y = 0 := by simpa using hy.bound
     simp [this]
   have hlow : (1 - ry) * |y₀| ≤ |y| := by simpa using hy.le_abs
-  have hden : 0 < (1 - ry) * |y₀| := by positivity
   have hinv : |y⁻¹ - y₀⁻¹| ≤ ry / (1 - ry) * |y₀|⁻¹ := by
     simpa [abs_inv] using (hy.inv hry).bound
-  calc |x / y - x₀ / y₀| = |(x - x₀) * y⁻¹ + x₀ * (y⁻¹ - y₀⁻¹)| := by
-        rw [div_eq_mul_inv, div_eq_mul_inv]
-        ring_nf
-    _ ≤ |x - x₀| * |y|⁻¹ + |x₀| * |y⁻¹ - y₀⁻¹| := by
-      rw [← abs_inv, ← abs_mul, ← abs_mul]
-      exact abs_add_le _ _
+  calc
+    |x / y - x₀ / y₀| ≤ (rx * |x₀| + ax) * |y|⁻¹ +
+        |x₀| * (ry / (1 - ry) * |y₀|⁻¹) := by
+      simpa only [div_eq_mul_inv, abs_inv, mul_comm] using
+        Backward.deviation_mul_mixed hx.bound hinv
     _ ≤ (rx * |x₀| + ax) * ((1 - ry) * |y₀|)⁻¹ + |x₀| * (ry / (1 - ry) * |y₀|⁻¹) := by
       gcongr
-      exact hx.bound
     _ = (rx + ry) / (1 - ry) * |x₀ / y₀| + ax / ((1 - ry) * |y₀|) := by
       rw [abs_div]
       field_simp
-      ring
+      rw [mul_add]; ac_rfl
 
 /--
 A quotient by a value with mixed error `(ry, ay)` whose exact magnitude is at least `m > 0` has the
@@ -440,22 +447,6 @@ theorem div_of_le_abs (hx : MixedError x x₀ rx ax) (hy : MixedError y y₀ ry 
     MixedError (x / y) (x₀ / y₀) ((rx + (ry + ay / m)) / (1 - (ry + ay / m)))
       (ax / ((1 - (ry + ay / m)) * |y₀|)) :=
   hx.div (hy.relative_of_le_abs hm hle) hr
-
-/-- The square-root error bound `|√x - √x₀| ≤ √|x - x₀|` for a nonnegative `x₀`. -/
-private theorem abs_sqrt_sub_sqrt_le_sqrt (x : ℝ) (hx₀ : 0 ≤ x₀) :
-    |√x - √x₀| ≤ √|x - x₀| := by
-  rw [Real.le_sqrt (abs_nonneg _) (abs_nonneg _), sq_abs]
-  rcases le_total 0 x with hx | hx
-  · have hs := Real.sq_sqrt hx
-    have ht := Real.sq_sqrt hx₀
-    rcases le_total x₀ x with hle | hle
-    · rw [abs_of_nonneg (sub_nonneg.2 hle)]
-      nlinarith [mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hle) (Real.sqrt_nonneg x₀)]
-    · rw [abs_of_nonpos (sub_nonpos.2 hle)]
-      nlinarith [mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hle) (Real.sqrt_nonneg x)]
-  · rw [Real.sqrt_eq_zero_of_nonpos hx, abs_of_nonpos (by linarith), zero_sub, neg_sq,
-      Real.sq_sqrt hx₀]
-    linarith
 
 /-- The square-root error bound `|√x - √x₀| ≤ |x - x₀| / √x₀` for a positive `x₀`. -/
 private theorem abs_sqrt_sub_sqrt_le_div (x : ℝ) (hx₀ : 0 < x₀) :
@@ -480,7 +471,7 @@ theorem sqrt (h : MixedError x x₀ r a) (hx₀ : 0 ≤ x₀) :
   · -- Near zero, `√(r * x₀ + a) ≤ r * √x₀ + √a` because `√x₀ ≤ √a`.
     have hsle : √x₀ * √x₀ ≤ √x₀ * √a :=
       mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hxa) (Real.sqrt_nonneg x₀)
-    calc |√x - √x₀| ≤ √|x - x₀| := abs_sqrt_sub_sqrt_le_sqrt x hx₀
+    calc |√x - √x₀| ≤ √|x - x₀| := abs_sqrt_sub_sqrt_le_sqrt x x₀
       _ ≤ √(r * x₀ + a) := Real.sqrt_le_sqrt hb
       _ ≤ r * √x₀ + √a := by
         rw [Real.sqrt_le_left (by positivity)]
@@ -531,8 +522,8 @@ theorem sqrt_of_pos (h : MixedError x x₀ r a) (hx₀ : 0 < x₀) :
   refine ⟨by positivity, le_min (Real.sqrt_nonneg a) (by positivity), ?_⟩
   have hb : |x - x₀| ≤ r * x₀ + a := by simpa [abs_of_pos hx₀] using h.bound
   have hlower : (1 - r) * x₀ - a ≤ x := by
-    have := (abs_le.mp hb).1
-    linarith
+    rw [sub_mul, one_mul, sub_sub]
+    exact sub_le_of_abs_sub_le_left hb
   have hDle : D ≤ √x + √x₀ := by
     rw [hD, add_comm (√x)]
     exact add_le_add le_rfl (Real.sqrt_le_sqrt hlower)
@@ -550,17 +541,21 @@ theorem sqrt_of_pos (h : MixedError x x₀ r a) (hx₀ : 0 < x₀) :
     rw [min_eq_left hlarge.le]
     -- `√a < a / D` forces `x₀ < a`, so the second root vanishes and `D = √x₀`.
     have hDa : D ≤ √a := by
-      rw [lt_div_iff₀ hDpos] at hlarge
       have hapos : 0 < a := by
         rcases ha.eq_or_lt with ha0 | hapos
         · subst ha0; simp at hlarge
         · exact hapos
       have hsa : 0 < √a := Real.sqrt_pos.2 hapos
-      nlinarith [Real.mul_self_sqrt ha]
+      have hprod : D * √a < a := by
+        simpa only [mul_comm] using (lt_div_iff₀ hDpos).mp hlarge
+      calc
+        D ≤ a / √a := ((lt_div_iff₀ hsa).mpr hprod).le
+        _ = √a := Real.div_sqrt
     have hxa : x₀ ≤ a := by
       have : √x₀ ≤ √a := le_trans (le_add_of_nonneg_right (Real.sqrt_nonneg _)) hDa
       exact (Real.sqrt_le_sqrt_iff ha).mp this
-    have hneg : (1 - r) * x₀ - a ≤ 0 := by nlinarith
+    have hneg : (1 - r) * x₀ - a ≤ 0 :=
+      sub_nonpos.mpr ((mul_le_of_le_one_left hx₀.le (sub_le_self 1 hr)).trans hxa)
     have hDeq : D = √x₀ := by rw [hD, Real.sqrt_eq_zero_of_nonpos hneg, add_zero]
     have hold := (h.sqrt hx₀.le).bound
     rw [abs_of_nonneg (Real.sqrt_nonneg x₀)] at hold
@@ -583,7 +578,6 @@ theorem max_of_nonneg (hx : MixedError x x₀ rx ax) (hy : MixedError y y₀ ry 
     (hx₀ : 0 ≤ x₀) (hy₀ : 0 ≤ y₀) :
     MixedError (max x y) (max x₀ y₀) (max rx ry) (max ax ay) := by
   have hrx := hx.r_nonneg
-  have hry := hy.r_nonneg
   refine ⟨le_max_of_le_left hrx, le_max_of_le_left hx.a_nonneg, ?_⟩
   rw [abs_of_nonneg (le_max_of_le_left hx₀)]
   refine (abs_max_sub_max_le_max x y x₀ y₀).trans (max_le ?_ ?_)

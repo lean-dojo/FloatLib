@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Enclosure.Comparison.Proof
 public import FloatLib.Numerics.Enclosure.Trigonometric.Pi.Convergence
 public import FloatLib.Numerics.Exact.Trigonometric.PiValues.TangentClassify
-public import FloatLib.Numerics.Enclosure.Comparison.Proof
-public import FloatLib.Numerics.Enclosure.Rational.AffineConvergence
 
 /-!
 # Terminating comparisons at rational multiples of pi

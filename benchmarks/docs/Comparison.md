@@ -4,22 +4,9 @@ We compare FloatLib with other arithmetic libraries to see where our kernels do 
 where an optimization would help. Our plots cover six scalar operations at storage widths
 from 2 to 4,096 bits, and every command here runs from the repository root.
 
-## Recreate the saved tables and figures
+## Recorded comparisons
 
-```bash
-benchmarks/scripts/verify-main-result.sh
-```
-
-That script checks the saved measurements and regenerates their tables and figures from the
-recorded trials. You need Git, Python 3, and Matplotlib, but nothing gets compiled and no
-operation is timed again. For the files behind the
-[performance chapter](../../site/content/chapters/12-performance.md), see the
-[results README](../results/main/README.md). The saved
-run departs from the publication profile in two ways: it leaves out Flocq, and one cell has
-four trials just under the 50 ms floor.
-`release/provenance/publication-exceptions.json` declares both, and
-`verify_release_matrix.py --exceptions` accepts the declared departures and nothing more.
-Without that option, the verifier applies the full publication profile.
+Two comparisons have their measurements in the repository.
 
 The matched Flocq comparison has its own data and figure:
 
@@ -44,16 +31,14 @@ alternate their order AB, BA, AB, and so on, and each loop cycles through 16 pre
 after 512 warmup iterations, with every measured interval aiming at 40 ms. From the metadata
 you also get the Lean, Mathlib, and MPFR versions, the CPU and the affinity of every row, the SHA-256
 of the measurements and of the fixture archive `site/content/assets/public-binary-fixtures.zip`,
-and, under `measured`, the date, the measured commit (`8c88715`, release 2.0.0), and how this
-run differs from the earlier three-trial campaign. For the 84 ordinary finite-input cases,
+and, under `measured`, the date and the measured commit (`8c88715`). For the 84 ordinary
+finite-input cases,
 every complete input and output encoding matched an integer oracle and MPFR, and every warmup
 and timed checksum was recomputed independently.
 
 These numbers belong to the source and environment recorded with them. Rebuilding the figures
 lets you check how the plotted numbers were calculated, but measuring a change to the
-implementation needs a new run. If your Matplotlib version differs from ours, the verifier
-compares the tables exactly and only checks that the figures can be generated, since image
-files can differ between plotting versions.
+implementation needs a new run.
 
 ## Measure the current code
 
@@ -114,7 +99,7 @@ This profile measures all six operations at the 11 widths that all three adapter
 from 6 to 4,096 bits. It keeps the trial, duration, and agreement checks of the full
 comparison but doesn't build the other providers.
 It measures the chain at every width and leaves out the complete-block square-root workload
-behind nine entries in the [saved Flocq figure](../results/flocq-matched/README.md).
+behind nine entries in the [matched Flocq figure](../results/flocq-matched/README.md).
 
 Pinning reduces the noise from moving between CPUs, but a quiet machine matters as well,
 because shared caches, memory bandwidth, frequency changes, and other processes can all
@@ -243,8 +228,7 @@ Wide square-root checks are expensive, so each campaign computes Flocq's 256-ste
 prefix once per format and operation and reuses it, outside timing, across calibration and
 trials. Its cache starts empty and is tied to the compiled executable's SHA-256.
 
-For Flocq the website uses the [matched results](../results/flocq-matched/README.md), and the
-[main archive](../results/main/README.md) has no Flocq rows. If you supply your own
+For Flocq the website uses the [matched results](../results/flocq-matched/README.md). If you supply your own
 executable, its hash is recorded alongside its results, so keep its build instructions and
 dependency versions too.
 

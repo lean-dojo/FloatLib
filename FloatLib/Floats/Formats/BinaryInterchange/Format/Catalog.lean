@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -173,14 +173,14 @@ layouts are available by constructing a `FloatFormat`.
 
 /-! ### Low-precision and finite-only formats -/
 
-/-- OCP/ONNX E5M2: bias 15 with IEEE-style infinities and NaNs. -/
+/-- OCP OFP8 revision 1.0, §5.1: E5M2, bias 15, with infinities and NaNs. -/
 @[inline] def e5m2 : FloatFormat := .ieee 5 2
 
 /-- Compact semantic TensorFloat-32 layout with eight exponent and ten fraction bits. -/
 @[inline] def tf32 : FloatFormat := .ieee 8 10
 
-/-- OCP/ONNX E4M3FN: bias 7, no infinity, maximum fraction at maximum exponent is NaN. -/
-@[inline] def e4m3fn : FloatFormat := .finiteMaxNaN 4 3
+/-- OCP OFP8 revision 1.0, §5.1: E4M3, bias 7, no infinity, maximal magnitude word is NaN. -/
+@[inline] def e4m3 : FloatFormat := .finiteMaxNaN 4 3
 
 /-- ONNX E4M3FNUZ: bias 8, one zero, and the negative-zero word as the sole NaN. -/
 @[inline] def e4m3fnuz : FloatFormat := .finiteUnsignedZero 4 3
@@ -188,13 +188,22 @@ layouts are available by constructing a `FloatFormat`.
 /-- ONNX E5M2FNUZ: bias 16, one zero, and the negative-zero word as the sole NaN. -/
 @[inline] def e5m2fnuz : FloatFormat := .finiteUnsignedZero 5 2
 
-/-- OCP MX FP4 E2M1: bias 1 with every stored word finite. -/
+/-- OCP MX FP4 E2M1: bias 1 with every stored word finite.
+
+Reference: OCP Microscaling Formats (MX) Specification v1.0, §5.3.3.
+-/
 @[inline] def e2m1 : FloatFormat := .finite 2 1
 
-/-- OCP MX FP6 E2M3 element format with every stored word finite. -/
+/-- OCP MX FP6 E2M3 element format with every stored word finite.
+
+Reference: OCP Microscaling Formats (MX) Specification v1.0, §5.3.2.
+-/
 @[inline] def e2m3 : FloatFormat := .finite 2 3
 
-/-- OCP MX FP6 E3M2 element format with every stored word finite. -/
+/-- OCP MX FP6 E3M2 element format with every stored word finite.
+
+Reference: OCP Microscaling Formats (MX) Specification v1.0, §5.3.2.
+-/
 @[inline] def e3m2 : FloatFormat := .finite 3 2
 
 end FloatLib.Floats.Formats.BinaryInterchange.FloatFormat

@@ -1,0 +1,1633 @@
+source_file,index,default_precision,tool,status,numeric_bound,bound_kind,elapsed_seconds,comparison_contract,tool_version,tool_revision
+apron.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,0,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,0,binary32,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,0,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,0,binary64,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,1,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,1,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,1,binary32,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,1,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,1,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,1,binary64,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,2,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,2,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,2,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,2,binary32,sollya,loaded_no_bound,,,0.05106081100166193,unmatched,8.0,
+apron.fpcore,2,binary32,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,2,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,2,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,2,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05123491000267677,unmatched,8.0,
+apron.fpcore,2,binary64,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,3,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,3,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,3,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,3,binary32,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,3,binary32,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,3,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,3,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,3,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,3,binary64,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,3,binary64,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,4,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,4,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,4,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,4,binary32,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,4,binary32,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,4,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,4,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,4,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,4,binary64,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,4,binary64,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,5,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,5,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,5,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,5,binary32,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,5,binary32,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+apron.fpcore,5,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+apron.fpcore,5,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+apron.fpcore,5,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+apron.fpcore,5,binary64,sollya,export_refusal,,,,unmatched,8.0,
+apron.fpcore,5,binary64,smtlib,export_refusal,,,,unmatched,,
+apron.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,0,binary32,fptaylor,bounded,2293606621875051/147573952589676412928,absolute_error,0.051253099998575635,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,0,binary32,gappa,bounded,231283890598702579/9444732965739290427392,absolute_error,0.05120582399831619,unmatched,1.8.3,
+daisy.fpcore,0,binary32,daisy,bounded,3094107579407349/2500000000000000000,absolute_error_displayed_decimal,3.0177969239994127,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05112001199813676,unmatched,8.0,
+daisy.fpcore,0,binary32,smtlib,exported,,,,unmatched,,
+daisy.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,0,binary64,fptaylor,bounded,2268691025281535/79228162514264337593543950336,absolute_error,0.05121081399920513,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,0,binary64,gappa,bounded,930111365023449761/20282409603651670423947251286016,absolute_error,0.051197747998230625,unmatched,1.8.3,
+daisy.fpcore,0,binary64,daisy,bounded,2305289770426567/1000000000000000000000000000,absolute_error_displayed_decimal,2.8161488500009,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,0,binary64,sollya,loaded_no_bound,,,0.05111651400147821,unmatched,8.0,
+daisy.fpcore,0,binary64,smtlib,exported,,,,unmatched,,
+daisy.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,1,binary32,fptaylor,no_bound,,,0.051123874000040814,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,1,binary32,daisy,bounded,22308692069857163/1000000000000000000,absolute_error_displayed_decimal,3.1749548799998593,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05113989399978891,unmatched,8.0,
+daisy.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,1,binary64,fptaylor,no_bound,,,0.05118553600186715,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,1,binary64,daisy,bounded,519410789107069/12500000000000000000000000,absolute_error_displayed_decimal,2.9715416350009036,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,1,binary64,sollya,loaded_no_bound,,,0.05102553599863313,unmatched,8.0,
+daisy.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,2,binary32,fptaylor,no_bound,,,0.05108707199906348,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,2,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,2,binary32,daisy,bounded,1293006204013327/100000000000000000000,absolute_error_displayed_decimal,2.7695496390006156,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,2,binary32,sollya,loaded_no_bound,,,0.05105009299950325,unmatched,8.0,
+daisy.fpcore,2,binary32,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,2,binary64,fptaylor,no_bound,,,0.05100336200121092,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,2,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,2,binary64,daisy,bounded,2408411568522537/100000000000000000000000000000,absolute_error_displayed_decimal,2.867585942000005,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05096961899835151,unmatched,8.0,
+daisy.fpcore,2,binary64,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,3,binary32,fptaylor,no_bound,,,0.05129236600259901,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,3,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,3,binary32,daisy,bounded,1293006204013327/100000000000000000000,absolute_error_displayed_decimal,2.766269009000098,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,3,binary32,sollya,loaded_no_bound,,,0.05099018599867122,unmatched,8.0,
+daisy.fpcore,3,binary32,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,3,binary64,fptaylor,no_bound,,,0.051093424001010135,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,3,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,3,binary64,daisy,bounded,2408411568522537/100000000000000000000000000000,absolute_error_displayed_decimal,2.7691292659983446,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,3,binary64,sollya,loaded_no_bound,,,0.051226109000708675,unmatched,8.0,
+daisy.fpcore,3,binary64,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,4,binary32,fptaylor,no_bound,,,0.05120676400110824,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,4,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,4,binary32,daisy,tool_refusal,,,3.9228072840014647,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,4,binary32,sollya,loaded_no_bound,,,0.05142998399969656,unmatched,8.0,
+daisy.fpcore,4,binary32,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,4,binary64,fptaylor,no_bound,,,0.0511640240001725,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,4,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+daisy.fpcore,4,binary64,daisy,tool_refusal,,,1.9118176980009594,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,4,binary64,sollya,loaded_no_bound,,,0.05101525699865306,unmatched,8.0,
+daisy.fpcore,4,binary64,smtlib,export_refusal,,,,unmatched,,
+daisy.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,5,binary32,fptaylor,bounded,7740561859543041/9223372036854775808,absolute_error,7.1911142930002825,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,5,binary32,gappa,bounded,493/262144,absolute_error,0.3541908469996997,compatible_stored_inputs,1.8.3,
+daisy.fpcore,5,binary32,daisy,bounded,18806458037943237/10000000000000000000,absolute_error_displayed_decimal,2.8657799329994305,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,5,binary32,sollya,loaded_no_bound,,,0.0510077619983349,unmatched,8.0,
+daisy.fpcore,5,binary32,smtlib,exported,,,,unmatched,,
+daisy.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,5,binary64,fptaylor,bounded,7740561859543041/4951760157141521099596496896,absolute_error,7.28794914899845,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,5,binary64,gappa,bounded,493/140737488355328,absolute_error,0.3538643179999781,compatible_stored_inputs,1.8.3,
+daisy.fpcore,5,binary64,daisy,bounded,1751487843648647/500000000000000000000000000,absolute_error_displayed_decimal,2.918578742999671,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,5,binary64,sollya,loaded_no_bound,,,0.051055388001259416,unmatched,8.0,
+daisy.fpcore,5,binary64,smtlib,exported,,,,unmatched,,
+daisy.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,6,binary32,fptaylor,bounded,7740561859543041/9223372036854775808,absolute_error,15.28962740499992,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,6,binary32,gappa,bounded,493/262144,absolute_error,0.40378359199894476,compatible_stored_inputs,1.8.3,
+daisy.fpcore,6,binary32,daisy,bounded,18806458037943237/10000000000000000000,absolute_error_displayed_decimal,2.919947668000532,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,6,binary32,sollya,loaded_no_bound,,,0.05094879299940658,unmatched,8.0,
+daisy.fpcore,6,binary32,smtlib,exported,,,,unmatched,,
+daisy.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+daisy.fpcore,6,binary64,fptaylor,bounded,7740561859543041/4951760157141521099596496896,absolute_error,15.59452570600115,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+daisy.fpcore,6,binary64,gappa,bounded,493/140737488355328,absolute_error,0.40373113399982685,compatible_stored_inputs,1.8.3,
+daisy.fpcore,6,binary64,daisy,bounded,1751487843648647/500000000000000000000000000,absolute_error_displayed_decimal,2.969118768000044,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+daisy.fpcore,6,binary64,sollya,loaded_no_bound,,,0.05098119000103907,unmatched,8.0,
+daisy.fpcore,6,binary64,smtlib,exported,,,,unmatched,,
+daisy.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,0,binary32,fptaylor,bounded,8893107397166449/37778931862957161709568,absolute_error,7.143934847998025,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,0,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05102704700038885,unmatched,8.0,
+fptaylor-extra.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,0,binary64,fptaylor,bounded,8893107397166449/37778931862957161709568,absolute_error,7.098218991999602,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,0,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,0,binary64,sollya,loaded_no_bound,,,0.050963722002052236,unmatched,8.0,
+fptaylor-extra.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,1,binary32,fptaylor,bounded,4572039951848101/79228162514264337593543950336,absolute_error,1.8630637340029352,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,1,binary32,gappa,bounded,706640001692344081/5070602400912917605986812821504,absolute_error,0.5551248720003059,unmatched,1.8.3,
+fptaylor-extra.fpcore,1,binary32,daisy,bounded,145014222852069/1250000000000000000000000000,absolute_error_displayed_decimal,3.173691403000703,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05126313800064963,unmatched,8.0,
+fptaylor-extra.fpcore,1,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,1,binary64,fptaylor,bounded,4572039951848101/79228162514264337593543950336,absolute_error,1.3092690109988325,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,1,binary64,gappa,bounded,706640001692344081/5070602400912917605986812821504,absolute_error,0.504376452001452,unmatched,1.8.3,
+fptaylor-extra.fpcore,1,binary64,daisy,bounded,145014222852069/1250000000000000000000000000,absolute_error_displayed_decimal,3.1217339340000763,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,1,binary64,sollya,loaded_no_bound,,,0.05094040599942673,unmatched,8.0,
+fptaylor-extra.fpcore,1,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,2,binary32,fptaylor,bounded,7270293432067609/4951760157141521099596496896,absolute_error,0.6046062840032391,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,2,binary32,gappa,bounded,437426461556196271/158456325028528675187087900672,absolute_error,1.865745393999532,unmatched,1.8.3,
+fptaylor-extra.fpcore,2,binary32,daisy,bounded,469393088110337/200000000000000000000000000,absolute_error_displayed_decimal,3.1694771709990164,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,2,binary32,sollya,loaded_no_bound,,,0.05104347599990433,unmatched,8.0,
+fptaylor-extra.fpcore,2,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,2,binary64,fptaylor,bounded,7270293432067609/4951760157141521099596496896,absolute_error,0.6044686210007058,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,2,binary64,gappa,bounded,437426461556196271/158456325028528675187087900672,absolute_error,1.8170717890025117,unmatched,1.8.3,
+fptaylor-extra.fpcore,2,binary64,daisy,bounded,469393088110337/200000000000000000000000000,absolute_error_displayed_decimal,3.169226792997506,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05106344900195836,unmatched,8.0,
+fptaylor-extra.fpcore,2,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,3,binary32,fptaylor,bounded,4763060309133193/40564819207303340847894502572032,absolute_error,0.05101128000023891,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,3,binary32,gappa,bounded,214664079417056583/1298074214633706907132624082305024,absolute_error,0.10182983800041256,unmatched,1.8.3,
+fptaylor-extra.fpcore,3,binary32,daisy,tool_refusal,,,2.114290179000818,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,3,binary32,sollya,loaded_no_bound,,,0.05110307300128625,unmatched,8.0,
+fptaylor-extra.fpcore,3,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,3,binary64,fptaylor,bounded,4763060309133193/40564819207303340847894502572032,absolute_error,0.05109939100293559,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,3,binary64,gappa,bounded,214664079417056583/1298074214633706907132624082305024,absolute_error,0.051486774002114544,unmatched,1.8.3,
+fptaylor-extra.fpcore,3,binary64,daisy,tool_refusal,,,2.1140284149987565,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,3,binary64,sollya,loaded_no_bound,,,0.05107410599885043,unmatched,8.0,
+fptaylor-extra.fpcore,3,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,4,binary32,fptaylor,bounded,1804298581180417/158456325028528675187087900672,absolute_error,0.051051894999545766,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,4,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,4,binary32,daisy,bounded,194619744333101/500000000000000000000000000,absolute_error_displayed_decimal,3.020189140999719,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,4,binary32,sollya,loaded_no_bound,,,0.051038772999163484,unmatched,8.0,
+fptaylor-extra.fpcore,4,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,4,binary64,fptaylor,bounded,1804298581180417/158456325028528675187087900672,absolute_error,0.05117305500243674,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,4,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,4,binary64,daisy,bounded,194619744333101/500000000000000000000000000,absolute_error_displayed_decimal,3.0199067639987334,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,4,binary64,sollya,loaded_no_bound,,,0.05148458699841285,unmatched,8.0,
+fptaylor-extra.fpcore,4,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,5,binary32,fptaylor,bounded,1804298581180417/295147905179352825856,absolute_error,0.0510503189980227,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,5,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,5,binary32,daisy,bounded,10448628528615519/50000000000000000000,absolute_error_displayed_decimal,2.872221644000092,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,5,binary32,sollya,loaded_no_bound,,,0.051343659000849584,unmatched,8.0,
+fptaylor-extra.fpcore,5,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,5,binary64,fptaylor,bounded,1804298581180417/295147905179352825856,absolute_error,0.05115970400220249,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,5,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,5,binary64,daisy,bounded,10448628528615519/50000000000000000000,absolute_error_displayed_decimal,2.9759226189999026,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,5,binary64,sollya,loaded_no_bound,,,0.051334158997633494,unmatched,8.0,
+fptaylor-extra.fpcore,5,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,6,binary32,fptaylor,bounded,1/2251799813685248,absolute_error,0.05112462100078119,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,6,binary32,gappa,bounded,1/2251799813685248,absolute_error,0.051164381999114994,unmatched,1.8.3,
+fptaylor-extra.fpcore,6,binary32,daisy,bounded,2220446049250313/2500000000000000000000000000000,absolute_error_displayed_decimal,2.820272009001201,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,6,binary32,sollya,loaded_no_bound,,,0.05149165900002117,unmatched,8.0,
+fptaylor-extra.fpcore,6,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,6,binary64,fptaylor,bounded,1/2251799813685248,absolute_error,0.0515351140020357,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,6,binary64,gappa,bounded,1/2251799813685248,absolute_error,0.05123863499829895,unmatched,1.8.3,
+fptaylor-extra.fpcore,6,binary64,daisy,bounded,2220446049250313/2500000000000000000000000000000,absolute_error_displayed_decimal,2.921542206997401,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,6,binary64,sollya,loaded_no_bound,,,0.05104243900132133,unmatched,8.0,
+fptaylor-extra.fpcore,6,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,7,binary32,fptaylor,bounded,8800781169805551/633825300114114700748351602688,absolute_error,0.05116418000034173,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,7,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,7,binary32,daisy,bounded,27406391569315617/10000000000000000000000000000,absolute_error_displayed_decimal,2.8705116620003537,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,7,binary32,sollya,loaded_no_bound,,,0.05117562200030079,unmatched,8.0,
+fptaylor-extra.fpcore,7,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,7,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,7,binary64,fptaylor,bounded,8800781169805551/633825300114114700748351602688,absolute_error,0.05122590500104707,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,7,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,7,binary64,daisy,bounded,27406391569315617/10000000000000000000000000000,absolute_error_displayed_decimal,2.8183631179999793,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,7,binary64,sollya,loaded_no_bound,,,0.05117168700235197,unmatched,8.0,
+fptaylor-extra.fpcore,7,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,7,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,8,binary32,fptaylor,bounded,1418492015387785/18889465931478580854784,absolute_error,0.05106645100022433,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,8,binary32,gappa,bounded,835868159559446529/4835703278458516698824704,absolute_error,0.051546272999985376,unmatched,1.8.3,
+fptaylor-extra.fpcore,8,binary32,daisy,bounded,10430822499081613/10000000000000000000000,absolute_error_displayed_decimal,2.718791989998863,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,8,binary32,sollya,loaded_no_bound,,,0.05124105900176801,unmatched,8.0,
+fptaylor-extra.fpcore,8,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,8,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,8,binary64,fptaylor,bounded,1418492015387785/18889465931478580854784,absolute_error,0.051462998999340925,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,8,binary64,gappa,bounded,835868159559446529/4835703278458516698824704,absolute_error,0.05118924299677019,unmatched,1.8.3,
+fptaylor-extra.fpcore,8,binary64,daisy,bounded,10430822499081613/10000000000000000000000,absolute_error_displayed_decimal,2.9215612309999415,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,8,binary64,sollya,loaded_no_bound,,,0.05128627600061009,unmatched,8.0,
+fptaylor-extra.fpcore,8,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,8,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,9,binary32,fptaylor,bounded,2268691025281535/79228162514264337593543950336,absolute_error,0.05159780100075295,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,9,binary32,gappa,bounded,930111365023449761/20282409603651670423947251286016,absolute_error,0.05114750799839385,unmatched,1.8.3,
+fptaylor-extra.fpcore,9,binary32,daisy,bounded,2305289770426567/1000000000000000000000000000,absolute_error_displayed_decimal,3.075444182002684,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,9,binary32,sollya,loaded_no_bound,,,0.051073755999823334,unmatched,8.0,
+fptaylor-extra.fpcore,9,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,9,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,9,binary64,fptaylor,bounded,2268691025281535/79228162514264337593543950336,absolute_error,0.05146904800130869,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,9,binary64,gappa,bounded,930111365023449761/20282409603651670423947251286016,absolute_error,0.05159209300109069,unmatched,1.8.3,
+fptaylor-extra.fpcore,9,binary64,daisy,bounded,2305289770426567/1000000000000000000000000000,absolute_error_displayed_decimal,2.773078648999217,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,9,binary64,sollya,loaded_no_bound,,,0.0514354339975398,unmatched,8.0,
+fptaylor-extra.fpcore,9,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,9,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,10,binary32,fptaylor,bounded,2293606621875051/147573952589676412928,absolute_error,0.05124412199802464,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,10,binary32,gappa,bounded,231283890598702579/9444732965739290427392,absolute_error,0.05150444500031881,unmatched,1.8.3,
+fptaylor-extra.fpcore,10,binary32,daisy,bounded,3094107579407349/2500000000000000000,absolute_error_displayed_decimal,2.8259578489996784,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,10,binary32,sollya,loaded_no_bound,,,0.05120413799886592,unmatched,8.0,
+fptaylor-extra.fpcore,10,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,10,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,10,binary64,fptaylor,bounded,2293606621875051/147573952589676412928,absolute_error,0.05134662500131526,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,10,binary64,gappa,bounded,231283890598702579/9444732965739290427392,absolute_error,0.05161451499952818,unmatched,1.8.3,
+fptaylor-extra.fpcore,10,binary64,daisy,bounded,3094107579407349/2500000000000000000,absolute_error_displayed_decimal,2.922397739999724,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,10,binary64,sollya,loaded_no_bound,,,0.05134544600150548,unmatched,8.0,
+fptaylor-extra.fpcore,10,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,10,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,11,binary32,fptaylor,bounded,5326717871190591/5070602400912917605986812821504,absolute_error,0.0511128540019854,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,11,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,11,binary32,daisy,bounded,33304033073481607/10000000000000000000000000000,absolute_error_displayed_decimal,2.8753570480002963,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,11,binary32,sollya,loaded_no_bound,,,0.05131394099953468,unmatched,8.0,
+fptaylor-extra.fpcore,11,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,11,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,11,binary64,fptaylor,bounded,5326717871190591/5070602400912917605986812821504,absolute_error,0.05131632999837166,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,11,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,11,binary64,daisy,bounded,33304033073481607/10000000000000000000000000000,absolute_error_displayed_decimal,2.9710195650004607,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,11,binary64,sollya,loaded_no_bound,,,0.05118497399962507,unmatched,8.0,
+fptaylor-extra.fpcore,11,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,11,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,12,binary32,fptaylor,bounded,5/2251799813685248,absolute_error,0.8601602929993533,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,12,binary32,gappa,bounded,33/9007199254740992,absolute_error,0.15243581800314132,compatible_stored_inputs,1.8.3,
+fptaylor-extra.fpcore,12,binary32,daisy,bounded,7993605777301127/2000000000000000000000000000000,absolute_error_displayed_decimal,2.9713868369981355,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,12,binary32,sollya,loaded_no_bound,,,0.051162670002668165,unmatched,8.0,
+fptaylor-extra.fpcore,12,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,12,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,12,binary64,fptaylor,bounded,5/2251799813685248,absolute_error,0.8574110079971433,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,12,binary64,gappa,bounded,33/9007199254740992,absolute_error,0.15166450499964412,compatible_stored_inputs,1.8.3,
+fptaylor-extra.fpcore,12,binary64,daisy,bounded,7993605777301127/2000000000000000000000000000000,absolute_error_displayed_decimal,2.9197651110007428,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,12,binary64,sollya,loaded_no_bound,,,0.051074552997306455,unmatched,8.0,
+fptaylor-extra.fpcore,12,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,12,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,13,binary32,fptaylor,bounded,6761954618988023/40564819207303340847894502572032,absolute_error,0.051381195000431035,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,13,binary32,gappa,bounded,2249548013871563/2251799813685248,absolute_error,0.051090903998556314,unmatched,1.8.3,
+fptaylor-extra.fpcore,13,binary32,daisy,bounded,11362993745936219/100000000000000000000000000,absolute_error_displayed_decimal,2.876323409996985,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,13,binary32,sollya,loaded_no_bound,,,0.051042623999819625,unmatched,8.0,
+fptaylor-extra.fpcore,13,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,13,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,13,binary64,fptaylor,bounded,6761954618988023/40564819207303340847894502572032,absolute_error,0.05143324399978155,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,13,binary64,gappa,bounded,2249548013871563/2251799813685248,absolute_error,0.05155196100167814,unmatched,1.8.3,
+fptaylor-extra.fpcore,13,binary64,daisy,bounded,11362993745936219/100000000000000000000000000,absolute_error_displayed_decimal,2.923116966001544,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,13,binary64,sollya,loaded_no_bound,,,0.051121131000400055,unmatched,8.0,
+fptaylor-extra.fpcore,13,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,13,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,14,binary32,fptaylor,bounded,3693992117900861/9903520314283042199192993792,absolute_error,0.05112362399813719,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,14,binary32,gappa,bounded,670515318653842013/2475880078570760549798248448,absolute_error,0.10143968400006997,unmatched,1.8.3,
+fptaylor-extra.fpcore,14,binary32,daisy,bounded,12453159177946447/5000000000000000000000000,absolute_error_displayed_decimal,3.125160589999723,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,14,binary32,sollya,loaded_no_bound,,,0.051433022003038786,unmatched,8.0,
+fptaylor-extra.fpcore,14,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,14,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,14,binary64,fptaylor,bounded,3693992117900861/9903520314283042199192993792,absolute_error,0.05122274599852972,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,14,binary64,gappa,bounded,670515318653842013/2475880078570760549798248448,absolute_error,0.10146119199998793,unmatched,1.8.3,
+fptaylor-extra.fpcore,14,binary64,daisy,bounded,12453159177946447/5000000000000000000000000,absolute_error_displayed_decimal,3.327856633997726,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,14,binary64,sollya,loaded_no_bound,,,0.05147242600287427,unmatched,8.0,
+fptaylor-extra.fpcore,14,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,14,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,15,binary32,fptaylor,bounded,584200188178765/1180591620717411303424,absolute_error,0.05102881700076978,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,15,binary32,gappa,bounded,350806377788872405/37778931862957161709568,absolute_error,0.0513939800002845,unmatched,1.8.3,
+fptaylor-extra.fpcore,15,binary32,daisy,tool_refusal,,,3.0233443990000524,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,15,binary32,sollya,loaded_no_bound,,,0.05147733999910997,unmatched,8.0,
+fptaylor-extra.fpcore,15,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,15,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,15,binary64,fptaylor,bounded,584200188178765/1180591620717411303424,absolute_error,0.05150771799890208,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,15,binary64,gappa,bounded,350806377788872405/37778931862957161709568,absolute_error,0.05124304000128177,unmatched,1.8.3,
+fptaylor-extra.fpcore,15,binary64,daisy,tool_refusal,,,2.929115131999424,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,15,binary64,sollya,loaded_no_bound,,,0.0516332400002284,unmatched,8.0,
+fptaylor-extra.fpcore,15,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,15,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,16,binary32,fptaylor,no_bound,,,0.05149175699989428,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,16,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,16,binary32,daisy,bounded,6794929618081369/1000000000000000000000,absolute_error_displayed_decimal,3.127826310999808,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,16,binary32,sollya,loaded_no_bound,,,0.05109917699883226,unmatched,8.0,
+fptaylor-extra.fpcore,16,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,16,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,16,binary64,fptaylor,no_bound,,,0.05151423499773955,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,16,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-extra.fpcore,16,binary64,daisy,bounded,6794929618081369/1000000000000000000000,absolute_error_displayed_decimal,2.9219531060007284,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,16,binary64,sollya,loaded_no_bound,,,0.051050076999672456,unmatched,8.0,
+fptaylor-extra.fpcore,16,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-extra.fpcore,16,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,17,binary32,fptaylor,bounded,5840605766746113/9903520314283042199192993792,absolute_error,0.051071026999125024,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,17,binary32,gappa,bounded,563/562949953421312,absolute_error,0.10129537299872027,compatible_stored_inputs,1.8.3,
+fptaylor-extra.fpcore,17,binary32,daisy,bounded,23252511027749283/10000000000000000000000000000,absolute_error_displayed_decimal,2.873036166998645,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,17,binary32,sollya,loaded_no_bound,,,0.05114567200143938,unmatched,8.0,
+fptaylor-extra.fpcore,17,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,17,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-extra.fpcore,17,binary64,fptaylor,bounded,5840605766746113/9903520314283042199192993792,absolute_error,0.051094750000629574,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-extra.fpcore,17,binary64,gappa,bounded,563/562949953421312,absolute_error,0.10135399099817732,compatible_stored_inputs,1.8.3,
+fptaylor-extra.fpcore,17,binary64,daisy,bounded,23252511027749283/10000000000000000000000000000,absolute_error_displayed_decimal,2.8695774150000943,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-extra.fpcore,17,binary64,sollya,loaded_no_bound,,,0.05120021300172084,unmatched,8.0,
+fptaylor-extra.fpcore,17,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-extra.fpcore,17,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,0,binary32,fptaylor,bounded,5326717871190591/5070602400912917605986812821504,absolute_error,0.051345399999263464,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,0,binary32,daisy,bounded,33304033073481607/10000000000000000000000000000,absolute_error_displayed_decimal,2.7726453069990384,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05098219900173717,unmatched,8.0,
+fptaylor-real2float.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,0,binary64,fptaylor,bounded,5326717871190591/5070602400912917605986812821504,absolute_error,0.05126559800191899,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,0,binary64,daisy,bounded,33304033073481607/10000000000000000000000000000,absolute_error_displayed_decimal,2.9737824379990343,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,0,binary64,sollya,loaded_no_bound,,,0.051321917002496775,unmatched,8.0,
+fptaylor-real2float.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,1,binary32,fptaylor,no_bound,,,0.05144137299794238,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,1,binary32,daisy,bounded,1199040866595141/100000000000000000000000000000,absolute_error_displayed_decimal,3.126560018998134,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,1,binary32,sollya,loaded_no_bound,,,0.051291838000906864,unmatched,8.0,
+fptaylor-real2float.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,1,binary64,fptaylor,no_bound,,,0.05149156699917512,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,1,binary64,daisy,bounded,1199040866595141/100000000000000000000000000000,absolute_error_displayed_decimal,2.8722987809996994,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,1,binary64,sollya,loaded_no_bound,,,0.0514005939985509,unmatched,8.0,
+fptaylor-real2float.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,2,binary32,fptaylor,no_bound,,,0.05103988199698506,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,2,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,2,binary32,daisy,bounded,11548454956025657/100000000000000000000000000000,absolute_error_displayed_decimal,3.626890020997962,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,2,binary32,sollya,loaded_no_bound,,,0.0511029929984943,unmatched,8.0,
+fptaylor-real2float.fpcore,2,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,2,binary64,fptaylor,no_bound,,,0.05143138199855457,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,2,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,2,binary64,daisy,bounded,11548454956025657/100000000000000000000000000000,absolute_error_displayed_decimal,3.4797639070020523,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,2,binary64,sollya,loaded_no_bound,,,0.0509799559986277,unmatched,8.0,
+fptaylor-real2float.fpcore,2,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,3,binary32,fptaylor,timeout,,,20.0013253099969,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,3,binary32,gappa,bounded,211/562949953421312,absolute_error,0.7059054839992314,unmatched,1.8.3,
+fptaylor-real2float.fpcore,3,binary32,daisy,bounded,44941828036826337/100000000000000000000000000000,absolute_error_displayed_decimal,3.783353528000589,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,3,binary32,sollya,loaded_no_bound,,,0.05161193799722241,unmatched,8.0,
+fptaylor-real2float.fpcore,3,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,3,binary64,fptaylor,timeout,,,20.043539510996197,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,3,binary64,gappa,bounded,211/562949953421312,absolute_error,0.7564869740017457,unmatched,1.8.3,
+fptaylor-real2float.fpcore,3,binary64,daisy,bounded,44941828036826337/100000000000000000000000000000,absolute_error_displayed_decimal,3.324198055001034,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,3,binary64,sollya,loaded_no_bound,,,0.051180861999455374,unmatched,8.0,
+fptaylor-real2float.fpcore,3,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,4,binary32,fptaylor,bounded,1/2251799813685248,absolute_error,0.05108741000003647,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,4,binary32,gappa,bounded,1/1125899906842624,absolute_error,0.05113662099756766,unmatched,1.8.3,
+fptaylor-real2float.fpcore,4,binary32,daisy,bounded,2220446049250313/2000000000000000000000000000000,absolute_error_displayed_decimal,3.325071504994412,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,4,binary32,sollya,loaded_no_bound,,,0.0511725159958587,unmatched,8.0,
+fptaylor-real2float.fpcore,4,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,4,binary64,fptaylor,bounded,1/2251799813685248,absolute_error,0.05113035199610749,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,4,binary64,gappa,bounded,1/1125899906842624,absolute_error,0.05123501600610325,unmatched,1.8.3,
+fptaylor-real2float.fpcore,4,binary64,daisy,bounded,2220446049250313/2000000000000000000000000000000,absolute_error_displayed_decimal,3.225188384996727,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,4,binary64,sollya,loaded_no_bound,,,0.05112061199906748,unmatched,8.0,
+fptaylor-real2float.fpcore,4,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,5,binary32,fptaylor,bounded,7318349394477057/633825300114114700748351602688,absolute_error,0.05115296000440139,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,5,binary32,gappa,bounded,71/4503599627370496,absolute_error,0.05125040299753891,unmatched,1.8.3,
+fptaylor-real2float.fpcore,5,binary32,daisy,bounded,15765166949677223/1000000000000000000000000000000,absolute_error_displayed_decimal,3.073319123002875,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,5,binary32,sollya,loaded_no_bound,,,0.05119400499825133,unmatched,8.0,
+fptaylor-real2float.fpcore,5,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,5,binary64,fptaylor,bounded,7318349394477057/633825300114114700748351602688,absolute_error,0.05158175800170284,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,5,binary64,gappa,bounded,71/4503599627370496,absolute_error,0.05161239200242562,unmatched,1.8.3,
+fptaylor-real2float.fpcore,5,binary64,daisy,bounded,15765166949677223/1000000000000000000000000000000,absolute_error_displayed_decimal,3.176892654002586,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,5,binary64,sollya,loaded_no_bound,,,0.05114812900137622,unmatched,8.0,
+fptaylor-real2float.fpcore,5,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,6,binary32,fptaylor,bounded,7143056350016717/2535301200456458802993406410752,absolute_error,3.728303985000821,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,6,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,6,binary32,daisy,bounded,815237267802299/1250000000000000000000000,absolute_error_displayed_decimal,3.5250397799973143,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,6,binary32,sollya,loaded_no_bound,,,0.05116439400444506,unmatched,8.0,
+fptaylor-real2float.fpcore,6,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,6,binary64,fptaylor,bounded,7143056350016717/2535301200456458802993406410752,absolute_error,3.4221543410021695,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,6,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,6,binary64,daisy,bounded,815237267802299/1250000000000000000000000,absolute_error_displayed_decimal,3.4754097390032257,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,6,binary64,sollya,loaded_no_bound,,,0.051408950006589293,unmatched,8.0,
+fptaylor-real2float.fpcore,6,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,7,binary32,fptaylor,timeout,,,20.015576299003442,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,7,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,7,binary32,daisy,bounded,417225823347203/625000000000000000000000,absolute_error_displayed_decimal,3.9849859430032666,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,7,binary32,sollya,loaded_no_bound,,,0.05113357499794802,unmatched,8.0,
+fptaylor-real2float.fpcore,7,binary32,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,7,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,7,binary64,fptaylor,timeout,,,20.02387197200005,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,7,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+fptaylor-real2float.fpcore,7,binary64,daisy,bounded,417225823347203/625000000000000000000000,absolute_error_displayed_decimal,4.190002351999283,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,7,binary64,sollya,loaded_no_bound,,,0.0510923250039923,unmatched,8.0,
+fptaylor-real2float.fpcore,7,binary64,smtlib,export_refusal,,,,unmatched,,
+fptaylor-real2float.fpcore,7,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,8,binary32,fptaylor,bounded,4637268630348761/79228162514264337593543950336,absolute_error,2.41855498500081,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,8,binary32,gappa,bounded,78069899540467549/633825300114114700748351602688,absolute_error,0.40488913399894955,unmatched,1.8.3,
+fptaylor-real2float.fpcore,8,binary32,daisy,bounded,10440537323574973/100000000000000000000000000000,absolute_error_displayed_decimal,2.9740972020008485,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,8,binary32,sollya,loaded_no_bound,,,0.05129146500257775,unmatched,8.0,
+fptaylor-real2float.fpcore,8,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,8,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,8,binary64,fptaylor,bounded,4637268630348761/79228162514264337593543950336,absolute_error,2.4211082519977936,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,8,binary64,gappa,bounded,78069899540467549/633825300114114700748351602688,absolute_error,0.45486020099633606,unmatched,1.8.3,
+fptaylor-real2float.fpcore,8,binary64,daisy,bounded,10440537323574973/100000000000000000000000000000,absolute_error_displayed_decimal,3.2233885710011236,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,8,binary64,sollya,loaded_no_bound,,,0.05113665600219974,unmatched,8.0,
+fptaylor-real2float.fpcore,8,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,8,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,9,binary32,fptaylor,bounded,1940111563113367/9903520314283042199192993792,absolute_error,0.5547679209994385,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,9,binary32,gappa,bounded,42636590982232645/79228162514264337593543950336,absolute_error,0.9566625469960854,unmatched,1.8.3,
+fptaylor-real2float.fpcore,9,binary32,daisy,bounded,2403121257543717/5000000000000000000000000000,absolute_error_displayed_decimal,3.0762274250009796,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,9,binary32,sollya,loaded_no_bound,,,0.05126733899669489,unmatched,8.0,
+fptaylor-real2float.fpcore,9,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,9,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,9,binary64,fptaylor,bounded,1940111563113367/9903520314283042199192993792,absolute_error,0.5547177089974866,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,9,binary64,gappa,bounded,42636590982232645/79228162514264337593543950336,absolute_error,0.9063547549958457,unmatched,1.8.3,
+fptaylor-real2float.fpcore,9,binary64,daisy,bounded,2403121257543717/5000000000000000000000000000,absolute_error_displayed_decimal,3.2762717609948595,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,9,binary64,sollya,loaded_no_bound,,,0.05107076800049981,unmatched,8.0,
+fptaylor-real2float.fpcore,9,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,9,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,10,binary32,fptaylor,bounded,3638937086217689/2475880078570760549798248448,absolute_error,0.6049831720010843,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,10,binary32,gappa,bounded,228116666095542421/79228162514264337593543950336,absolute_error,2.0699002870023833,unmatched,1.8.3,
+fptaylor-real2float.fpcore,10,binary32,daisy,bounded,6162099275286437/2500000000000000000000000000,absolute_error_displayed_decimal,2.9709815320020425,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,10,binary32,sollya,loaded_no_bound,,,0.05112984099832829,unmatched,8.0,
+fptaylor-real2float.fpcore,10,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,10,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-real2float.fpcore,10,binary64,fptaylor,bounded,3638937086217689/2475880078570760549798248448,absolute_error,0.6051331440030481,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-real2float.fpcore,10,binary64,gappa,bounded,228116666095542421/79228162514264337593543950336,absolute_error,2.167009542004962,unmatched,1.8.3,
+fptaylor-real2float.fpcore,10,binary64,daisy,bounded,6162099275286437/2500000000000000000000000000,absolute_error_displayed_decimal,3.1261913199996343,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-real2float.fpcore,10,binary64,sollya,loaded_no_bound,,,0.05109326000092551,unmatched,8.0,
+fptaylor-real2float.fpcore,10,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-real2float.fpcore,10,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,0,binary32,fptaylor,bounded,2478229310141225/2361183241434822606848,absolute_error,6.541650291001133,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,0,binary32,gappa,bounded,2095055/2097152,absolute_error,0.05139349799719639,unmatched,1.8.3,
+fptaylor-tests.fpcore,0,binary32,daisy,bounded,30506026914340057/500000000000000000,absolute_error_displayed_decimal,2.771992734000378,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05166223499691114,unmatched,8.0,
+fptaylor-tests.fpcore,0,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,0,binary64,fptaylor,bounded,6761954618988023/40564819207303340847894502572032,absolute_error,0.05138516199804144,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,0,binary64,gappa,bounded,2249548013871563/2251799813685248,absolute_error,0.051056194002740085,unmatched,1.8.3,
+fptaylor-tests.fpcore,0,binary64,daisy,bounded,11362993745936219/100000000000000000000000000,absolute_error_displayed_decimal,2.870748622000974,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,0,binary64,sollya,loaded_no_bound,,,0.05142324999906123,unmatched,8.0,
+fptaylor-tests.fpcore,0,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,1,binary32,fptaylor,bounded,3693992117900861/9903520314283042199192993792,absolute_error,0.05104945100174518,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,1,binary32,gappa,bounded,670515318653842013/2475880078570760549798248448,absolute_error,0.050965816000825725,unmatched,1.8.3,
+fptaylor-tests.fpcore,1,binary32,daisy,bounded,12453159177946447/5000000000000000000000000,absolute_error_displayed_decimal,2.8679941640002653,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05091912600619253,unmatched,8.0,
+fptaylor-tests.fpcore,1,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,1,binary64,fptaylor,bounded,3693992117900861/9903520314283042199192993792,absolute_error,0.051143169999704696,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,1,binary64,gappa,bounded,670515318653842013/2475880078570760549798248448,absolute_error,0.10188472799927695,unmatched,1.8.3,
+fptaylor-tests.fpcore,1,binary64,daisy,bounded,12453159177946447/5000000000000000000000000,absolute_error_displayed_decimal,2.8164853990019765,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,1,binary64,sollya,loaded_no_bound,,,0.05101037200074643,unmatched,8.0,
+fptaylor-tests.fpcore,1,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,2,binary32,fptaylor,bounded,5/4194304,absolute_error,0.8555582460030564,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,2,binary32,gappa,bounded,33/16777216,absolute_error,0.15152149399364134,unmatched,1.8.3,
+fptaylor-tests.fpcore,2,binary32,daisy,bounded,9/4194304,absolute_error_displayed_decimal,2.715098278997175,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,2,binary32,sollya,loaded_no_bound,,,0.05102749999787193,unmatched,8.0,
+fptaylor-tests.fpcore,2,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,2,binary64,fptaylor,bounded,5/4194304,absolute_error,0.8557404949970078,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,2,binary64,gappa,bounded,33/16777216,absolute_error,0.15154474500013748,unmatched,1.8.3,
+fptaylor-tests.fpcore,2,binary64,daisy,bounded,9/4194304,absolute_error_displayed_decimal,2.815435634001915,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05098074200213887,unmatched,8.0,
+fptaylor-tests.fpcore,2,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,3,binary32,fptaylor,bounded,27/4503599627370496,absolute_error,8.242595812000218,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,3,binary32,gappa,bounded,25/4503599627370496,absolute_error,0.25221331600187114,unmatched,1.8.3,
+fptaylor-tests.fpcore,3,binary32,daisy,bounded,7993605777301127/1000000000000000000000000000000,absolute_error_displayed_decimal,2.966110875000595,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,3,binary32,sollya,loaded_no_bound,,,0.051062739999906626,unmatched,8.0,
+fptaylor-tests.fpcore,3,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,3,binary64,fptaylor,bounded,27/4503599627370496,absolute_error,7.7889155889934045,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,3,binary64,gappa,bounded,25/4503599627370496,absolute_error,0.20166353199601872,unmatched,1.8.3,
+fptaylor-tests.fpcore,3,binary64,daisy,bounded,7993605777301127/1000000000000000000000000000000,absolute_error_displayed_decimal,2.814319944001909,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,3,binary64,sollya,loaded_no_bound,,,0.051076149000437,unmatched,8.0,
+fptaylor-tests.fpcore,3,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,4,binary32,fptaylor,bounded,1758911061543075/5070602400912917605986812821504,absolute_error,0.05114646400033962,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,4,binary32,gappa,bounded,782479964348226553/72057594037927936,absolute_error,0.05111644299904583,unmatched,1.8.3,
+fptaylor-tests.fpcore,4,binary32,daisy,bounded,475175454539571/10000000000000000000000000000,absolute_error_displayed_decimal,3.024841849997756,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,4,binary32,sollya,loaded_no_bound,,,0.05111893000139389,unmatched,8.0,
+fptaylor-tests.fpcore,4,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,4,binary64,fptaylor,bounded,1758911061543075/5070602400912917605986812821504,absolute_error,0.051150393002899364,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,4,binary64,gappa,bounded,782479964348226553/72057594037927936,absolute_error,0.051200657995650545,unmatched,1.8.3,
+fptaylor-tests.fpcore,4,binary64,daisy,bounded,475175454539571/10000000000000000000000000000,absolute_error_displayed_decimal,3.072148588995333,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,4,binary64,sollya,loaded_no_bound,,,0.05109251999965636,unmatched,8.0,
+fptaylor-tests.fpcore,4,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,5,binary32,fptaylor,timeout,,,20.037191411000094,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,5,binary32,gappa,bounded,1077235666078662593/9444732965739290427392,absolute_error,0.4537369829995441,unmatched,1.8.3,
+fptaylor-tests.fpcore,5,binary32,daisy,bounded,4996288752858477/2500000000000000,absolute_error_displayed_decimal,3.525594776001526,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,5,binary32,sollya,loaded_no_bound,,,0.05117544799577445,unmatched,8.0,
+fptaylor-tests.fpcore,5,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,5,binary64,fptaylor,timeout,,,20.035343457006093,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,5,binary64,gappa,bounded,1077235666078662593/9444732965739290427392,absolute_error,0.5037381909933174,unmatched,1.8.3,
+fptaylor-tests.fpcore,5,binary64,daisy,bounded,4996288752858477/2500000000000000,absolute_error_displayed_decimal,3.3233638099991367,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,5,binary64,sollya,loaded_no_bound,,,0.05111596600181656,unmatched,8.0,
+fptaylor-tests.fpcore,5,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,6,binary32,fptaylor,bounded,5331682817212019/2417851639229258349412352,absolute_error,0.05118376100290334,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,6,binary32,gappa,bounded,838866354459549327/604462909807314587353088,absolute_error,0.051127997001458425,unmatched,1.8.3,
+fptaylor-tests.fpcore,6,binary32,daisy,bounded,1942872683591187/500000000000000000000,absolute_error_displayed_decimal,3.073990420001792,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,6,binary32,sollya,loaded_no_bound,,,0.05113975700078299,unmatched,8.0,
+fptaylor-tests.fpcore,6,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,6,binary64,fptaylor,bounded,5331682817212019/2417851639229258349412352,absolute_error,0.051151981999282725,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,6,binary64,gappa,bounded,838866354459549327/604462909807314587353088,absolute_error,0.05171248900296632,unmatched,1.8.3,
+fptaylor-tests.fpcore,6,binary64,daisy,bounded,1942872683591187/500000000000000000000,absolute_error_displayed_decimal,3.174013615003787,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,6,binary64,sollya,loaded_no_bound,,,0.051127275997714605,unmatched,8.0,
+fptaylor-tests.fpcore,6,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,7,binary32,fptaylor,bounded,3377677202698621/40564819207303340847894502572032,absolute_error,0.05111832699913066,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,7,binary32,gappa,bounded,1152912857760413923/10384593717069655257060992658440192,absolute_error,0.051039193000178784,unmatched,1.8.3,
+fptaylor-tests.fpcore,7,binary32,daisy,bounded,693883839317233/5000000000000000000000000000000,absolute_error_displayed_decimal,3.125876010999491,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,7,binary32,sollya,loaded_no_bound,,,0.051087003004795406,unmatched,8.0,
+fptaylor-tests.fpcore,7,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,7,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,7,binary64,fptaylor,bounded,3377677202698621/40564819207303340847894502572032,absolute_error,0.05143133999808924,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,7,binary64,gappa,bounded,1152912857760413923/10384593717069655257060992658440192,absolute_error,0.05112557399843354,unmatched,1.8.3,
+fptaylor-tests.fpcore,7,binary64,daisy,bounded,693883839317233/5000000000000000000000000000000,absolute_error_displayed_decimal,2.8712385569961043,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,7,binary64,sollya,loaded_no_bound,,,0.05122567099897424,unmatched,8.0,
+fptaylor-tests.fpcore,7,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,7,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,8,binary32,fptaylor,bounded,1/2097152,absolute_error,0.5041581909972592,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,8,binary32,gappa,bounded,21/33554432,absolute_error,0.051044195999566,unmatched,1.8.3,
+fptaylor-tests.fpcore,8,binary32,daisy,bounded,3/4194304,absolute_error_displayed_decimal,2.7681778559999657,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,8,binary32,sollya,loaded_no_bound,,,0.0510242800010019,unmatched,8.0,
+fptaylor-tests.fpcore,8,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,8,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,8,binary64,fptaylor,bounded,1/2097152,absolute_error,0.5033342239985359,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,8,binary64,gappa,bounded,21/33554432,absolute_error,0.05102290600189008,unmatched,1.8.3,
+fptaylor-tests.fpcore,8,binary64,daisy,bounded,3/4194304,absolute_error_displayed_decimal,2.7662646019962267,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,8,binary64,sollya,loaded_no_bound,,,0.05098843800078612,unmatched,8.0,
+fptaylor-tests.fpcore,8,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,8,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,9,binary32,fptaylor,bounded,7/16777216,absolute_error,0.5049112249980681,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,9,binary32,gappa,bounded,19/33554432,absolute_error,0.05099690299539361,unmatched,1.8.3,
+fptaylor-tests.fpcore,9,binary32,daisy,bounded,3/4194304,absolute_error_displayed_decimal,2.820358932003728,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,9,binary32,sollya,loaded_no_bound,,,0.051273710996611044,unmatched,8.0,
+fptaylor-tests.fpcore,9,binary32,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,9,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+fptaylor-tests.fpcore,9,binary64,fptaylor,bounded,7/16777216,absolute_error,0.5044844170042779,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+fptaylor-tests.fpcore,9,binary64,gappa,bounded,19/33554432,absolute_error,0.051030212998739444,unmatched,1.8.3,
+fptaylor-tests.fpcore,9,binary64,daisy,bounded,3/4194304,absolute_error_displayed_decimal,2.919410365000658,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+fptaylor-tests.fpcore,9,binary64,sollya,loaded_no_bound,,,0.05103564700402785,unmatched,8.0,
+fptaylor-tests.fpcore,9,binary64,smtlib,exported,,,,unmatched,,
+fptaylor-tests.fpcore,9,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+graphics.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+graphics.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+graphics.fpcore,0,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+graphics.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05102345399791375,unmatched,8.0,
+graphics.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+graphics.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+graphics.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+graphics.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+graphics.fpcore,0,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+graphics.fpcore,0,binary64,sollya,loaded_no_bound,,,0.05098834799719043,unmatched,8.0,
+graphics.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+graphics.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,0,binary32,gappa,tool_refusal,,,0.05103431500174338,unmatched,1.8.3,
+hamming-ch3.fpcore,0,binary32,daisy,no_bound,,,2.766424344998086,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05096771199896466,unmatched,8.0,
+hamming-ch3.fpcore,0,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,0,binary64,gappa,tool_refusal,,,0.050984162000531796,unmatched,1.8.3,
+hamming-ch3.fpcore,0,binary64,daisy,no_bound,,,2.6138465869953507,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,0,binary64,sollya,loaded_no_bound,,,0.05121613899973454,unmatched,8.0,
+hamming-ch3.fpcore,0,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,1,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,1,binary32,daisy,no_bound,,,3.4211676019986044,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05099068499839632,unmatched,8.0,
+hamming-ch3.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,1,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,1,binary64,daisy,no_bound,,,2.7706367860009777,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,1,binary64,sollya,loaded_no_bound,,,0.05098659300711006,unmatched,8.0,
+hamming-ch3.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,2,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,2,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,2,binary32,daisy,no_bound,,,2.918546887995035,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,2,binary32,sollya,loaded_no_bound,,,0.05104666399711277,unmatched,8.0,
+hamming-ch3.fpcore,2,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,2,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,2,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,2,binary64,daisy,no_bound,,,2.8693798610038357,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05114266699820291,unmatched,8.0,
+hamming-ch3.fpcore,2,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,3,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,3,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,3,binary32,daisy,no_bound,,,2.7682121959951473,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,3,binary32,sollya,loaded_no_bound,,,0.051175266002246644,unmatched,8.0,
+hamming-ch3.fpcore,3,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,3,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,3,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,3,binary64,daisy,no_bound,,,3.1211875080043683,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,3,binary64,sollya,loaded_no_bound,,,0.051719851995585486,unmatched,8.0,
+hamming-ch3.fpcore,3,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,4,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,4,binary32,gappa,tool_refusal,,,0.051006567002332304,unmatched,1.8.3,
+hamming-ch3.fpcore,4,binary32,daisy,no_bound,,,3.7236729139985982,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,4,binary32,sollya,loaded_no_bound,,,0.05116428700421238,unmatched,8.0,
+hamming-ch3.fpcore,4,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,4,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,4,binary64,gappa,tool_refusal,,,0.051018022997595835,unmatched,1.8.3,
+hamming-ch3.fpcore,4,binary64,daisy,no_bound,,,3.0722466349980095,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,4,binary64,sollya,loaded_no_bound,,,0.05104029799986165,unmatched,8.0,
+hamming-ch3.fpcore,4,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,5,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,5,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,5,binary32,daisy,no_bound,,,3.0195283619978,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,5,binary32,sollya,loaded_no_bound,,,0.05108477199974004,unmatched,8.0,
+hamming-ch3.fpcore,5,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,5,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,5,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,5,binary64,daisy,no_bound,,,3.324479084003542,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,5,binary64,sollya,loaded_no_bound,,,0.05137192199617857,unmatched,8.0,
+hamming-ch3.fpcore,5,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,6,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,6,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,6,binary32,daisy,no_bound,,,2.870213538000826,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,6,binary32,sollya,loaded_no_bound,,,0.05136021500220522,unmatched,8.0,
+hamming-ch3.fpcore,6,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,6,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,6,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,6,binary64,daisy,no_bound,,,2.975806200003717,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,6,binary64,sollya,loaded_no_bound,,,0.050939635999384336,unmatched,8.0,
+hamming-ch3.fpcore,6,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,7,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,7,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,7,binary32,daisy,no_bound,,,2.8191141309944214,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,7,binary32,sollya,loaded_no_bound,,,0.05110304700065171,unmatched,8.0,
+hamming-ch3.fpcore,7,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,7,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,7,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,7,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,7,binary64,daisy,no_bound,,,2.92235685599735,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,7,binary64,sollya,loaded_no_bound,,,0.051060004996543285,unmatched,8.0,
+hamming-ch3.fpcore,7,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,7,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,8,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,8,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,8,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,8,binary32,sollya,loaded_no_bound,,,0.05097791000298457,unmatched,8.0,
+hamming-ch3.fpcore,8,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,8,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,8,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,8,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,8,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,8,binary64,sollya,loaded_no_bound,,,0.051377219999267254,unmatched,8.0,
+hamming-ch3.fpcore,8,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,8,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,9,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,9,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,9,binary32,daisy,no_bound,,,2.97208351399604,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,9,binary32,sollya,loaded_no_bound,,,0.051452984000206925,unmatched,8.0,
+hamming-ch3.fpcore,9,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,9,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,9,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,9,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,9,binary64,daisy,no_bound,,,3.27385289400263,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,9,binary64,sollya,loaded_no_bound,,,0.05107758899976034,unmatched,8.0,
+hamming-ch3.fpcore,9,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,9,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,10,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,10,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,10,binary32,daisy,no_bound,,,3.073763983004028,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,10,binary32,sollya,loaded_no_bound,,,0.051010283998039085,unmatched,8.0,
+hamming-ch3.fpcore,10,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,10,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,10,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,10,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,10,binary64,daisy,no_bound,,,2.9729244019981707,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,10,binary64,sollya,loaded_no_bound,,,0.05104702099924907,unmatched,8.0,
+hamming-ch3.fpcore,10,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,10,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,11,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,11,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,11,binary32,daisy,no_bound,,,2.81784557300125,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,11,binary32,sollya,loaded_no_bound,,,0.051285359004396014,unmatched,8.0,
+hamming-ch3.fpcore,11,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,11,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,11,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,11,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,11,binary64,daisy,no_bound,,,2.817665615999431,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,11,binary64,sollya,loaded_no_bound,,,0.05110519700247096,unmatched,8.0,
+hamming-ch3.fpcore,11,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,11,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,12,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,12,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,12,binary32,daisy,no_bound,,,2.7682015230020625,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,12,binary32,sollya,loaded_no_bound,,,0.051069251996523235,unmatched,8.0,
+hamming-ch3.fpcore,12,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,12,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,12,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,12,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,12,binary64,daisy,no_bound,,,2.7167287880001822,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,12,binary64,sollya,loaded_no_bound,,,0.0509979749986087,unmatched,8.0,
+hamming-ch3.fpcore,12,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,12,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,13,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,13,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,13,binary32,daisy,no_bound,,,2.6670176190018537,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,13,binary32,sollya,loaded_no_bound,,,0.05128852600319078,unmatched,8.0,
+hamming-ch3.fpcore,13,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,13,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,13,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,13,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,13,binary64,daisy,no_bound,,,2.6674092700050096,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,13,binary64,sollya,loaded_no_bound,,,0.0511160270034452,unmatched,8.0,
+hamming-ch3.fpcore,13,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,13,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,14,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,14,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,14,binary32,daisy,no_bound,,,2.668347367005481,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,14,binary32,sollya,loaded_no_bound,,,0.051057373006187845,unmatched,8.0,
+hamming-ch3.fpcore,14,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,14,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,14,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,14,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,14,binary64,daisy,no_bound,,,2.7174142639996717,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,14,binary64,sollya,loaded_no_bound,,,0.051474927000526804,unmatched,8.0,
+hamming-ch3.fpcore,14,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,14,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,15,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,15,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,15,binary32,daisy,no_bound,,,2.77079460999812,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,15,binary32,sollya,loaded_no_bound,,,0.0510643700035871,unmatched,8.0,
+hamming-ch3.fpcore,15,binary32,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,15,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,15,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,15,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,15,binary64,daisy,no_bound,,,2.6670225389971165,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,15,binary64,sollya,loaded_no_bound,,,0.051062824997643474,unmatched,8.0,
+hamming-ch3.fpcore,15,binary64,smtlib,exported,,,,unmatched,,
+hamming-ch3.fpcore,15,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,16,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,16,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,16,binary32,daisy,no_bound,,,2.8686484470017604,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,16,binary32,sollya,loaded_no_bound,,,0.0510221900040051,unmatched,8.0,
+hamming-ch3.fpcore,16,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,16,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,16,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,16,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,16,binary64,daisy,no_bound,,,2.6672445539952605,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,16,binary64,sollya,loaded_no_bound,,,0.05102723999880254,unmatched,8.0,
+hamming-ch3.fpcore,16,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,16,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,17,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,17,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,17,binary32,daisy,no_bound,,,2.7658091410048655,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,17,binary32,sollya,loaded_no_bound,,,0.05107784800202353,unmatched,8.0,
+hamming-ch3.fpcore,17,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,17,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,17,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,17,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,17,binary64,daisy,no_bound,,,2.7664675710038864,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,17,binary64,sollya,loaded_no_bound,,,0.05106043400155613,unmatched,8.0,
+hamming-ch3.fpcore,17,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,17,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,18,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,18,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,18,binary32,daisy,no_bound,,,2.77357238100376,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,18,binary32,sollya,loaded_no_bound,,,0.05136417399626225,unmatched,8.0,
+hamming-ch3.fpcore,18,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,18,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,18,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,18,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,18,binary64,daisy,no_bound,,,2.8216277930041542,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,18,binary64,sollya,loaded_no_bound,,,0.0510618069965858,unmatched,8.0,
+hamming-ch3.fpcore,18,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,18,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,19,binary32,fptaylor,no_bound,,,0.05101379699772224,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,19,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,19,binary32,daisy,tool_refusal,,,2.8693117709990474,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,19,binary32,sollya,loaded_no_bound,,,0.05102743099996587,unmatched,8.0,
+hamming-ch3.fpcore,19,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,19,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,19,binary64,fptaylor,no_bound,,,0.05100424100237433,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,19,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,19,binary64,daisy,tool_refusal,,,2.8180689299988444,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,19,binary64,sollya,loaded_no_bound,,,0.05101268999715103,unmatched,8.0,
+hamming-ch3.fpcore,19,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,19,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,20,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,20,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,20,binary32,daisy,no_bound,,,2.6679875499976333,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,20,binary32,sollya,loaded_no_bound,,,0.050993957003811374,unmatched,8.0,
+hamming-ch3.fpcore,20,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,20,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,20,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,20,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,20,binary64,daisy,no_bound,,,2.717530990994419,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,20,binary64,sollya,loaded_no_bound,,,0.05107511299866019,unmatched,8.0,
+hamming-ch3.fpcore,20,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,20,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,21,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,21,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,21,binary32,daisy,no_bound,,,2.868128092995903,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,21,binary32,sollya,loaded_no_bound,,,0.050942697998834774,unmatched,8.0,
+hamming-ch3.fpcore,21,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,21,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,21,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,21,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,21,binary64,daisy,no_bound,,,2.7160923949995777,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,21,binary64,sollya,loaded_no_bound,,,0.051057785996817984,unmatched,8.0,
+hamming-ch3.fpcore,21,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,21,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,22,binary32,fptaylor,no_bound,,,0.05101923400070518,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,22,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,22,binary32,daisy,tool_refusal,,,2.7180962579950574,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,22,binary32,sollya,loaded_no_bound,,,0.05122457599645713,unmatched,8.0,
+hamming-ch3.fpcore,22,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,22,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,22,binary64,fptaylor,no_bound,,,0.051058937002380844,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,22,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,22,binary64,daisy,tool_refusal,,,2.6667197209972073,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,22,binary64,sollya,loaded_no_bound,,,0.050956438994035125,unmatched,8.0,
+hamming-ch3.fpcore,22,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,22,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,23,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,23,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,23,binary32,daisy,no_bound,,,2.8194316860026447,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,23,binary32,sollya,loaded_no_bound,,,0.051027073997829575,unmatched,8.0,
+hamming-ch3.fpcore,23,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,23,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,23,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,23,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,23,binary64,daisy,no_bound,,,2.616798959003063,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,23,binary64,sollya,loaded_no_bound,,,0.05099148899898864,unmatched,8.0,
+hamming-ch3.fpcore,23,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,23,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,24,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,24,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,24,binary32,daisy,no_bound,,,2.664899872004753,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,24,binary32,sollya,loaded_no_bound,,,0.0512481040059356,unmatched,8.0,
+hamming-ch3.fpcore,24,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,24,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,24,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,24,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,24,binary64,daisy,no_bound,,,2.61736205300258,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,24,binary64,sollya,loaded_no_bound,,,0.051034020994848106,unmatched,8.0,
+hamming-ch3.fpcore,24,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,24,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,25,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,25,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,25,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,25,binary32,sollya,loaded_no_bound,,,0.05105150499730371,unmatched,8.0,
+hamming-ch3.fpcore,25,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,25,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,25,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,25,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,25,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,25,binary64,sollya,loaded_no_bound,,,0.05106539499684004,unmatched,8.0,
+hamming-ch3.fpcore,25,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,25,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,26,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,26,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,26,binary32,daisy,no_bound,,,2.617035654002393,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,26,binary32,sollya,loaded_no_bound,,,0.051251266995677724,unmatched,8.0,
+hamming-ch3.fpcore,26,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,26,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,26,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,26,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,26,binary64,daisy,no_bound,,,2.716982944002666,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,26,binary64,sollya,loaded_no_bound,,,0.05124673400132451,unmatched,8.0,
+hamming-ch3.fpcore,26,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,26,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,27,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,27,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,27,binary32,daisy,no_bound,,,2.563970055001846,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,27,binary32,sollya,loaded_no_bound,,,0.05120404800254619,unmatched,8.0,
+hamming-ch3.fpcore,27,binary32,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,27,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+hamming-ch3.fpcore,27,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+hamming-ch3.fpcore,27,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+hamming-ch3.fpcore,27,binary64,daisy,no_bound,,,2.769571976001316,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+hamming-ch3.fpcore,27,binary64,sollya,loaded_no_bound,,,0.05124520500248764,unmatched,8.0,
+hamming-ch3.fpcore,27,binary64,smtlib,export_refusal,,,,unmatched,,
+hamming-ch3.fpcore,27,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+herbie.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+herbie.fpcore,0,binary32,gappa,tool_refusal,,,0.05118777100142324,unmatched,1.8.3,
+herbie.fpcore,0,binary32,daisy,no_bound,,,2.9727320750025683,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+herbie.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05117233499913709,unmatched,8.0,
+herbie.fpcore,0,binary32,smtlib,exported,,,,unmatched,,
+herbie.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+herbie.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+herbie.fpcore,0,binary64,gappa,tool_refusal,,,0.05117253899516072,unmatched,1.8.3,
+herbie.fpcore,0,binary64,daisy,no_bound,,,2.615168343996629,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+herbie.fpcore,0,binary64,sollya,loaded_no_bound,,,0.05126838500291342,unmatched,8.0,
+herbie.fpcore,0,binary64,smtlib,exported,,,,unmatched,,
+herbie.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+herbie.fpcore,1,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+herbie.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+herbie.fpcore,1,binary32,daisy,no_bound,,,2.6156964719993994,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+herbie.fpcore,1,binary32,sollya,loaded_no_bound,,,0.051004874003410805,unmatched,8.0,
+herbie.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+herbie.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+herbie.fpcore,1,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+herbie.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+herbie.fpcore,1,binary64,daisy,no_bound,,,2.714757294001174,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+herbie.fpcore,1,binary64,sollya,loaded_no_bound,,,0.0511028510009055,unmatched,8.0,
+herbie.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+herbie.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+herbie.fpcore,2,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+herbie.fpcore,2,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+herbie.fpcore,2,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+herbie.fpcore,2,binary32,sollya,loaded_no_bound,,,0.051073565999104176,unmatched,8.0,
+herbie.fpcore,2,binary32,smtlib,export_refusal,,,,unmatched,,
+herbie.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+herbie.fpcore,2,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+herbie.fpcore,2,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+herbie.fpcore,2,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+herbie.fpcore,2,binary64,sollya,loaded_no_bound,,,0.051083350997942034,unmatched,8.0,
+herbie.fpcore,2,binary64,smtlib,export_refusal,,,,unmatched,,
+herbie.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+precimonious.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+precimonious.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+precimonious.fpcore,0,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+precimonious.fpcore,0,binary32,sollya,loaded_no_bound,,,0.051032328003202565,unmatched,8.0,
+precimonious.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+precimonious.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+precimonious.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+precimonious.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+precimonious.fpcore,0,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+precimonious.fpcore,0,binary64,sollya,loaded_no_bound,,,0.0510275639971951,unmatched,8.0,
+precimonious.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+precimonious.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+precimonious.fpcore,1,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+precimonious.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+precimonious.fpcore,1,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+precimonious.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05104972700064536,unmatched,8.0,
+precimonious.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+precimonious.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+precimonious.fpcore,1,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+precimonious.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+precimonious.fpcore,1,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+precimonious.fpcore,1,binary64,sollya,loaded_no_bound,,,0.05101342999842018,unmatched,8.0,
+precimonious.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+precimonious.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,0,binary32,fptaylor,bounded,3924959266076441/39614081257132168796771975168,absolute_error,0.6050336800035439,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,0,binary32,gappa,bounded,512770462566631779/2535301200456458802993406410752,absolute_error,0.05127864300447982,unmatched,1.8.3,
+rosa.fpcore,0,binary32,daisy,tool_refusal,,,1.962184525997145,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05112453999754507,unmatched,8.0,
+rosa.fpcore,0,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,0,binary64,fptaylor,bounded,3924959266076441/39614081257132168796771975168,absolute_error,0.6039648220030358,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,0,binary64,gappa,bounded,512770462566631779/2535301200456458802993406410752,absolute_error,0.05104905400366988,unmatched,1.8.3,
+rosa.fpcore,0,binary64,daisy,tool_refusal,,,1.962789391996921,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,0,binary64,sollya,loaded_no_bound,,,0.05096749200311024,unmatched,8.0,
+rosa.fpcore,0,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,1,binary32,fptaylor,bounded,3640584388838405/19807040628566084398385987584,absolute_error,0.6543889300010051,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,1,binary32,gappa,bounded,992645563685902775/2535301200456458802993406410752,absolute_error,0.10117547900154022,unmatched,1.8.3,
+rosa.fpcore,1,binary32,daisy,bounded,10471093297316197/10000000000000000000000000000,absolute_error_displayed_decimal,2.968491533996712,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,1,binary32,sollya,loaded_no_bound,,,0.0515070800029207,unmatched,8.0,
+rosa.fpcore,1,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,1,binary64,fptaylor,bounded,3640584388838405/19807040628566084398385987584,absolute_error,0.6546684069980984,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,1,binary64,gappa,bounded,992645563685902775/2535301200456458802993406410752,absolute_error,0.10150079800223466,unmatched,1.8.3,
+rosa.fpcore,1,binary64,daisy,bounded,10471093297316197/10000000000000000000000000000,absolute_error_displayed_decimal,2.9188355980004417,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,1,binary64,sollya,loaded_no_bound,,,0.05103221999888774,unmatched,8.0,
+rosa.fpcore,1,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,2,binary32,fptaylor,bounded,4515469378393195/79228162514264337593543950336,absolute_error,0.6039713909995044,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,2,binary32,gappa,bounded,1091697923647611929/10141204801825835211973625643008,absolute_error,0.05111466600646963,unmatched,1.8.3,
+rosa.fpcore,2,binary32,daisy,bounded,841463860931513/5000000000000000000000000000,absolute_error_displayed_decimal,2.9697270940014278,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,2,binary32,sollya,loaded_no_bound,,,0.05109511500631925,unmatched,8.0,
+rosa.fpcore,2,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,2,binary64,fptaylor,bounded,4515469378393195/79228162514264337593543950336,absolute_error,0.6558086740042199,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,2,binary64,gappa,bounded,1091697923647611929/10141204801825835211973625643008,absolute_error,0.10127373100112891,unmatched,1.8.3,
+rosa.fpcore,2,binary64,daisy,bounded,841463860931513/5000000000000000000000000000,absolute_error_displayed_decimal,2.975707591001992,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05142951699963305,unmatched,8.0,
+rosa.fpcore,2,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,3,binary32,fptaylor,bounded,8444249301319681/39614081257132168796771975168,absolute_error,0.5050766479980666,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,3,binary32,gappa,bounded,83/281474976710656,absolute_error,0.101189995999448,compatible_stored_inputs,1.8.3,
+rosa.fpcore,3,binary32,daisy,bounded,5759281940243/19531250000000000000000000,absolute_error_displayed_decimal,2.8191289719979977,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,3,binary32,sollya,loaded_no_bound,,,0.05099782899924321,unmatched,8.0,
+rosa.fpcore,3,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,3,binary64,fptaylor,bounded,8444249301319681/39614081257132168796771975168,absolute_error,0.5038290169977699,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,3,binary64,gappa,bounded,83/281474976710656,absolute_error,0.10136164199502673,compatible_stored_inputs,1.8.3,
+rosa.fpcore,3,binary64,daisy,bounded,5759281940243/19531250000000000000000000,absolute_error_displayed_decimal,2.8181075119937304,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,3,binary64,sollya,loaded_no_bound,,,0.05097724899678724,unmatched,8.0,
+rosa.fpcore,3,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,4,binary32,fptaylor,bounded,7030277347999745/309485009821345068724781056,absolute_error,0.5037262039986672,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,4,binary32,gappa,bounded,40607/1125899906842624,absolute_error,0.15151449899713043,compatible_stored_inputs,1.8.3,
+rosa.fpcore,4,binary32,daisy,bounded,7213252217752597/200000000000000000000000000,absolute_error_displayed_decimal,2.7684856970008695,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,4,binary32,sollya,loaded_no_bound,,,0.05105950799770653,unmatched,8.0,
+rosa.fpcore,4,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,4,binary64,fptaylor,bounded,7030277347999745/309485009821345068724781056,absolute_error,0.5036224009963917,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,4,binary64,gappa,bounded,40607/1125899906842624,absolute_error,0.15164020699739922,compatible_stored_inputs,1.8.3,
+rosa.fpcore,4,binary64,daisy,bounded,7213252217752597/200000000000000000000000000,absolute_error_displayed_decimal,2.914700864996121,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,4,binary64,sollya,loaded_no_bound,,,0.051143917997251265,unmatched,8.0,
+rosa.fpcore,4,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,5,binary32,fptaylor,bounded,1348864343641663/154742504910672534362390528,absolute_error,0.5031543110017083,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,5,binary32,gappa,bounded,283041093585469481/34359738368,absolute_error,0.6034843529996579,unmatched,1.8.3,
+rosa.fpcore,5,binary32,daisy,tool_refusal,,,2.9677480030004517,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,5,binary32,sollya,loaded_no_bound,,,0.05123230899334885,unmatched,8.0,
+rosa.fpcore,5,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,5,binary64,fptaylor,bounded,1348864343641663/154742504910672534362390528,absolute_error,0.5034934989962494,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,5,binary64,gappa,bounded,283041093585469481/34359738368,absolute_error,0.6539543690014398,unmatched,1.8.3,
+rosa.fpcore,5,binary64,daisy,tool_refusal,,,2.7641978430037852,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,5,binary64,sollya,loaded_no_bound,,,0.05102744900068501,unmatched,8.0,
+rosa.fpcore,5,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,6,binary32,fptaylor,bounded,1962845010700085/158456325028528675187087900672,absolute_error,0.5033213060014532,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,6,binary32,gappa,bounded,425776201174865289/5070602400912917605986812821504,absolute_error,0.20189387199934572,unmatched,1.8.3,
+rosa.fpcore,6,binary32,daisy,bounded,8648499855918151/100000000000000000000000000000,absolute_error_displayed_decimal,2.8659426379963406,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,6,binary32,sollya,loaded_no_bound,,,0.05100680800387636,unmatched,8.0,
+rosa.fpcore,6,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,6,binary64,fptaylor,bounded,1962845010700085/158456325028528675187087900672,absolute_error,0.6041619400057243,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,6,binary64,gappa,bounded,425776201174865289/5070602400912917605986812821504,absolute_error,0.20175248700252268,unmatched,1.8.3,
+rosa.fpcore,6,binary64,daisy,bounded,8648499855918151/100000000000000000000000000000,absolute_error_displayed_decimal,2.966463898999791,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,6,binary64,sollya,loaded_no_bound,,,0.0510213189991191,unmatched,8.0,
+rosa.fpcore,6,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,7,binary32,fptaylor,bounded,7916551844736279/633825300114114700748351602688,absolute_error,0.5033591640021768,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,7,binary32,gappa,bounded,650046857819427571/5070602400912917605986812821504,absolute_error,0.10116820399707649,unmatched,1.8.3,
+rosa.fpcore,7,binary32,daisy,bounded,6534473009309813/50000000000000000000000000000,absolute_error_displayed_decimal,2.8679480080027133,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,7,binary32,sollya,loaded_no_bound,,,0.05125209499965422,unmatched,8.0,
+rosa.fpcore,7,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,7,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,7,binary64,fptaylor,bounded,7916551844736279/633825300114114700748351602688,absolute_error,0.5543530319991987,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,7,binary64,gappa,bounded,650046857819427571/5070602400912917605986812821504,absolute_error,0.10141279100207612,unmatched,1.8.3,
+rosa.fpcore,7,binary64,daisy,bounded,6534473009309813/50000000000000000000000000000,absolute_error_displayed_decimal,2.8681761260013445,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,7,binary64,sollya,loaded_no_bound,,,0.050988283997867256,unmatched,8.0,
+rosa.fpcore,7,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,7,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,8,binary32,fptaylor,bounded,8784435515625523/1267650600228229401496703205376,absolute_error,0.5539364160067635,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,8,binary32,gappa,bounded,717034309632315359/18014398509481984,absolute_error,0.20191082100063795,unmatched,1.8.3,
+rosa.fpcore,8,binary32,daisy,bounded,3115422018392979/50000000000000000000000000000,absolute_error_displayed_decimal,3.0719549850036856,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,8,binary32,sollya,loaded_no_bound,,,0.05133717200078536,unmatched,8.0,
+rosa.fpcore,8,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,8,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,8,binary64,fptaylor,bounded,8784435515625523/1267650600228229401496703205376,absolute_error,0.5544867480057292,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,8,binary64,gappa,bounded,717034309632315359/18014398509481984,absolute_error,0.20208262599771842,unmatched,1.8.3,
+rosa.fpcore,8,binary64,daisy,bounded,3115422018392979/50000000000000000000000000000,absolute_error_displayed_decimal,3.677445539004111,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,8,binary64,sollya,loaded_no_bound,,,0.051394059002632275,unmatched,8.0,
+rosa.fpcore,8,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,8,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,9,binary32,fptaylor,bounded,7244138170654545/40564819207303340847894502572032,absolute_error,0.0514681870045024,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,9,binary32,gappa,bounded,271443903541034735/649037107316853453566312041152512,absolute_error,0.051552547003666405,unmatched,1.8.3,
+rosa.fpcore,9,binary32,daisy,bounded,3718955188047529/10000000000000000000000000000000,absolute_error_displayed_decimal,3.7802064679999603,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,9,binary32,sollya,loaded_no_bound,,,0.05136199799744645,unmatched,8.0,
+rosa.fpcore,9,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,9,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,9,binary64,fptaylor,bounded,7244138170654545/40564819207303340847894502572032,absolute_error,0.051073851995170116,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,9,binary64,gappa,bounded,271443903541034735/649037107316853453566312041152512,absolute_error,0.05138769800396403,unmatched,1.8.3,
+rosa.fpcore,9,binary64,daisy,bounded,3718955188047529/10000000000000000000000000000000,absolute_error_displayed_decimal,2.971390049002366,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,9,binary64,sollya,loaded_no_bound,,,0.051315561002411414,unmatched,8.0,
+rosa.fpcore,9,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,9,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,10,binary32,fptaylor,bounded,8154032263526045/81129638414606681695789005144064,absolute_error,0.051332417999219615,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,10,binary32,gappa,bounded,1057181308534829009/5192296858534827628530496329220096,absolute_error,0.051411359003395773,unmatched,1.8.3,
+rosa.fpcore,10,binary32,daisy,bounded,17488154636295659/100000000000000000000000000000000,absolute_error_displayed_decimal,3.1204054820045712,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,10,binary32,sollya,loaded_no_bound,,,0.05127354399883188,unmatched,8.0,
+rosa.fpcore,10,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,10,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,10,binary64,fptaylor,bounded,8154032263526045/81129638414606681695789005144064,absolute_error,0.051068526998278685,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,10,binary64,gappa,bounded,1057181308534829009/5192296858534827628530496329220096,absolute_error,0.051038978999713436,unmatched,1.8.3,
+rosa.fpcore,10,binary64,daisy,bounded,17488154636295659/100000000000000000000000000000000,absolute_error_displayed_decimal,3.019847174997267,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,10,binary64,sollya,loaded_no_bound,,,0.051062639999145176,unmatched,8.0,
+rosa.fpcore,10,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,10,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,11,binary32,fptaylor,bounded,6001637558402713/1208925819614629174706176,absolute_error,0.05106106499442831,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,11,binary32,gappa,bounded,1010235383344119207/38685626227668133590597632,absolute_error,0.15146463899873197,unmatched,1.8.3,
+rosa.fpcore,11,binary32,daisy,tool_refusal,,,2.1660417020029854,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,11,binary32,sollya,loaded_no_bound,,,0.05109306499798549,unmatched,8.0,
+rosa.fpcore,11,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,11,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,11,binary64,fptaylor,bounded,6001637558402713/1208925819614629174706176,absolute_error,0.05109602699667448,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,11,binary64,gappa,bounded,1010235383344119207/38685626227668133590597632,absolute_error,0.15390564799599815,unmatched,1.8.3,
+rosa.fpcore,11,binary64,daisy,tool_refusal,,,2.015060126002936,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,11,binary64,sollya,loaded_no_bound,,,0.05148819299938623,unmatched,8.0,
+rosa.fpcore,11,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,11,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,12,binary32,fptaylor,bounded,2219527277395175/5070602400912917605986812821504,absolute_error,0.05112259299494326,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,12,binary32,gappa,bounded,842022936790084275/576460752303423488,absolute_error,0.15171689900307683,unmatched,1.8.3,
+rosa.fpcore,12,binary32,daisy,bounded,2259345921524367/2000000000000000000000000000000,absolute_error_displayed_decimal,2.973424618001445,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,12,binary32,sollya,loaded_no_bound,,,0.05107494199910434,unmatched,8.0,
+rosa.fpcore,12,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,12,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,12,binary64,fptaylor,bounded,2219527277395175/5070602400912917605986812821504,absolute_error,0.051286789996083826,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,12,binary64,gappa,bounded,842022936790084275/576460752303423488,absolute_error,0.15174175600259332,unmatched,1.8.3,
+rosa.fpcore,12,binary64,daisy,bounded,2259345921524367/2000000000000000000000000000000,absolute_error_displayed_decimal,2.971550255002512,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,12,binary64,sollya,loaded_no_bound,,,0.051057509997917805,unmatched,8.0,
+rosa.fpcore,12,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,12,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,13,binary32,fptaylor,bounded,4925812092436481/18889465931478580854784,absolute_error,0.05106013100157725,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,13,binary32,gappa,bounded,329/1073741824,absolute_error,0.20210838099592365,unmatched,1.8.3,
+rosa.fpcore,13,binary32,daisy,bounded,3064051295464943/10000000000000000000000,absolute_error_displayed_decimal,3.0723535620054463,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,13,binary32,sollya,loaded_no_bound,,,0.05128608800441725,unmatched,8.0,
+rosa.fpcore,13,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,13,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,13,binary64,fptaylor,bounded,4925812092436481/10141204801825835211973625643008,absolute_error,0.051443570002447814,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,13,binary64,gappa,bounded,329/576460752303423488,absolute_error,0.20282929899985902,unmatched,1.8.3,
+rosa.fpcore,13,binary64,daisy,bounded,1141448047192739/2000000000000000000000000000000,absolute_error_displayed_decimal,3.223708063000231,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,13,binary64,sollya,loaded_no_bound,,,0.051064184997812845,unmatched,8.0,
+rosa.fpcore,13,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,13,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,14,binary32,fptaylor,bounded,4772492890083349/10141204801825835211973625643008,absolute_error,0.051063965998764616,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,14,binary32,gappa,bounded,576734745050681845/649037107316853453566312041152512,absolute_error,0.05105564200493973,unmatched,1.8.3,
+rosa.fpcore,14,binary32,daisy,bounded,1813841414068743/1250000000000000000000000000000,absolute_error_displayed_decimal,3.02103266800259,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,14,binary32,sollya,loaded_no_bound,,,0.05104182000650326,unmatched,8.0,
+rosa.fpcore,14,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,14,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,14,binary64,fptaylor,bounded,4772492890083349/10141204801825835211973625643008,absolute_error,0.05108420900069177,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,14,binary64,gappa,bounded,576734745050681845/649037107316853453566312041152512,absolute_error,0.05106739600159926,unmatched,1.8.3,
+rosa.fpcore,14,binary64,daisy,bounded,1813841414068743/1250000000000000000000000000000,absolute_error_displayed_decimal,3.0216924929991364,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,14,binary64,sollya,loaded_no_bound,,,0.05103174500254681,unmatched,8.0,
+rosa.fpcore,14,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,14,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,15,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,15,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,15,binary32,daisy,no_bound,,,2.824402058002306,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,15,binary32,sollya,loaded_no_bound,,,0.051376317998801824,unmatched,8.0,
+rosa.fpcore,15,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,15,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,15,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,15,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,15,binary64,daisy,no_bound,,,2.873735007997311,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,15,binary64,sollya,loaded_no_bound,,,0.051040143000136595,unmatched,8.0,
+rosa.fpcore,15,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,15,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,16,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,16,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,16,binary32,daisy,bounded,6286428515522857/5000000000000000000000,absolute_error_displayed_decimal,3.626331782004854,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,16,binary32,sollya,loaded_no_bound,,,0.05117871699621901,unmatched,8.0,
+rosa.fpcore,16,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,16,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,16,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,16,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,16,binary64,daisy,bounded,2927345865710863/1250000000000000000000000000000,absolute_error_displayed_decimal,3.6762745849991916,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,16,binary64,sollya,loaded_no_bound,,,0.05152761800127337,unmatched,8.0,
+rosa.fpcore,16,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,16,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,17,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,17,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,17,binary32,daisy,bounded,57220268250947/80000000000000000000,absolute_error_displayed_decimal,2.923689055001887,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,17,binary32,sollya,loaded_no_bound,,,0.05150640899955761,unmatched,8.0,
+rosa.fpcore,17,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,17,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,17,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,17,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,17,binary64,daisy,bounded,333065797172849/250000000000000000000000000000,absolute_error_displayed_decimal,2.9702048170001945,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,17,binary64,sollya,loaded_no_bound,,,0.05107687900454039,unmatched,8.0,
+rosa.fpcore,17,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,17,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,18,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,18,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,18,binary32,daisy,bounded,3576159486176819/5000000000000000000000,absolute_error_displayed_decimal,2.970298781998281,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,18,binary32,sollya,loaded_no_bound,,,0.051099215997965075,unmatched,8.0,
+rosa.fpcore,18,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,18,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,18,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,18,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,18,binary64,daisy,tool_refusal,,,1.9646119349999935,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,18,binary64,sollya,loaded_no_bound,,,0.05110946299828356,unmatched,8.0,
+rosa.fpcore,18,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,18,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,19,binary32,fptaylor,bounded,1937011750559221/147573952589676412928,absolute_error,0.05108053499861853,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,19,binary32,gappa,bounded,605049822226935953/18889465931478580854784,absolute_error,0.15152763500373112,unmatched,1.8.3,
+rosa.fpcore,19,binary32,daisy,bounded,3409689859080171/100000000000000000000,absolute_error_displayed_decimal,3.0200662489951355,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,19,binary32,sollya,loaded_no_bound,,,0.05108302299777279,unmatched,8.0,
+rosa.fpcore,19,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,19,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,19,binary64,fptaylor,bounded,7748029460100373/316912650057057350374175801344,absolute_error,0.05108981100056553,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,19,binary64,gappa,bounded,75631256727489541/1267650600228229401496703205376,absolute_error,0.1517275750011322,unmatched,1.8.3,
+rosa.fpcore,19,binary64,daisy,bounded,6351040493183363/100000000000000000000000000000,absolute_error_displayed_decimal,3.072286348993657,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,19,binary64,sollya,loaded_no_bound,,,0.05107957200380042,unmatched,8.0,
+rosa.fpcore,19,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,19,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,20,binary32,fptaylor,no_bound,,,0.051134075001755264,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,20,binary32,gappa,tool_refusal,,,0.10146419200464152,unmatched,1.8.3,
+rosa.fpcore,20,binary32,daisy,tool_refusal,,,3.0728543200020795,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,20,binary32,sollya,loaded_no_bound,,,0.0511237210012041,unmatched,8.0,
+rosa.fpcore,20,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,20,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,20,binary64,fptaylor,no_bound,,,0.05121198500273749,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,20,binary64,gappa,tool_refusal,,,0.10194925399991916,unmatched,1.8.3,
+rosa.fpcore,20,binary64,daisy,tool_refusal,,,2.921724241001357,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,20,binary64,sollya,loaded_no_bound,,,0.051293327000166755,unmatched,8.0,
+rosa.fpcore,20,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,20,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,21,binary32,fptaylor,no_bound,,,0.05107783199491678,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,21,binary32,gappa,tool_refusal,,,0.10143637800501892,unmatched,1.8.3,
+rosa.fpcore,21,binary32,daisy,tool_refusal,,,3.074445767000725,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,21,binary32,sollya,loaded_no_bound,,,0.05139428000256885,unmatched,8.0,
+rosa.fpcore,21,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,21,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,21,binary64,fptaylor,no_bound,,,0.051765579999482725,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,21,binary64,gappa,tool_refusal,,,0.10178043600171804,unmatched,1.8.3,
+rosa.fpcore,21,binary64,daisy,tool_refusal,,,2.8720779079958447,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,21,binary64,sollya,loaded_no_bound,,,0.05105757999990601,unmatched,8.0,
+rosa.fpcore,21,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,21,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,22,binary32,fptaylor,no_bound,,,0.051016221004829276,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,22,binary32,gappa,tool_refusal,,,0.10138327900494915,unmatched,1.8.3,
+rosa.fpcore,22,binary32,daisy,tool_refusal,,,3.475780398999632,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,22,binary32,sollya,loaded_no_bound,,,0.05148355300480034,unmatched,8.0,
+rosa.fpcore,22,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,22,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,22,binary64,fptaylor,no_bound,,,0.05154881199996453,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,22,binary64,gappa,tool_refusal,,,0.10194144299748586,unmatched,1.8.3,
+rosa.fpcore,22,binary64,daisy,tool_refusal,,,2.8253561809979146,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,22,binary64,sollya,loaded_no_bound,,,0.051370102002692875,unmatched,8.0,
+rosa.fpcore,22,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,22,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,23,binary32,fptaylor,no_bound,,,0.05152742000063881,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,23,binary32,gappa,tool_refusal,,,0.1524251830051071,unmatched,1.8.3,
+rosa.fpcore,23,binary32,daisy,tool_refusal,,,3.126562808000017,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,23,binary32,sollya,loaded_no_bound,,,0.05107903199677821,unmatched,8.0,
+rosa.fpcore,23,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,23,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,23,binary64,fptaylor,no_bound,,,0.051369416003581136,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,23,binary64,gappa,tool_refusal,,,0.1013031249967753,unmatched,1.8.3,
+rosa.fpcore,23,binary64,daisy,tool_refusal,,,2.871046184998704,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,23,binary64,sollya,loaded_no_bound,,,0.05128402000264032,unmatched,8.0,
+rosa.fpcore,23,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,23,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,24,binary32,fptaylor,no_bound,,,0.05108076200122014,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,24,binary32,gappa,tool_refusal,,,0.10132483999768738,unmatched,1.8.3,
+rosa.fpcore,24,binary32,daisy,tool_refusal,,,3.0230284839999513,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,24,binary32,sollya,loaded_no_bound,,,0.05133756100258324,unmatched,8.0,
+rosa.fpcore,24,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,24,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,24,binary64,fptaylor,no_bound,,,0.0510477659991011,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,24,binary64,gappa,tool_refusal,,,0.10131990700028837,unmatched,1.8.3,
+rosa.fpcore,24,binary64,daisy,tool_refusal,,,2.8204496410035063,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,24,binary64,sollya,loaded_no_bound,,,0.05106524800066836,unmatched,8.0,
+rosa.fpcore,24,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,24,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,25,binary32,fptaylor,no_bound,,,0.051053844996204134,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,25,binary32,gappa,tool_refusal,,,0.10146851900208276,unmatched,1.8.3,
+rosa.fpcore,25,binary32,daisy,tool_refusal,,,3.1251570849999553,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,25,binary32,sollya,loaded_no_bound,,,0.05105684799491428,unmatched,8.0,
+rosa.fpcore,25,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,25,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,25,binary64,fptaylor,no_bound,,,0.05118479100201512,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,25,binary64,gappa,tool_refusal,,,0.10138781699788524,unmatched,1.8.3,
+rosa.fpcore,25,binary64,daisy,tool_refusal,,,2.8248948429973098,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,25,binary64,sollya,loaded_no_bound,,,0.051449548998789396,unmatched,8.0,
+rosa.fpcore,25,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,25,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,26,binary32,fptaylor,no_bound,,,0.0510476369963726,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,26,binary32,gappa,tool_refusal,,,0.10146460300165927,unmatched,1.8.3,
+rosa.fpcore,26,binary32,daisy,tool_refusal,,,2.922318573000666,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,26,binary32,sollya,loaded_no_bound,,,0.05112268100492656,unmatched,8.0,
+rosa.fpcore,26,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,26,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,26,binary64,fptaylor,no_bound,,,0.05112656900018919,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,26,binary64,gappa,tool_refusal,,,0.10151250199851347,unmatched,1.8.3,
+rosa.fpcore,26,binary64,daisy,tool_refusal,,,3.123013254997204,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,26,binary64,sollya,loaded_no_bound,,,0.05105361100140726,unmatched,8.0,
+rosa.fpcore,26,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,26,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,27,binary32,fptaylor,no_bound,,,0.05120358500425937,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,27,binary32,gappa,tool_refusal,,,0.10201113299990539,unmatched,1.8.3,
+rosa.fpcore,27,binary32,daisy,tool_refusal,,,3.529196671996033,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,27,binary32,sollya,loaded_no_bound,,,0.051431482002954,unmatched,8.0,
+rosa.fpcore,27,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,27,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,27,binary64,fptaylor,no_bound,,,0.05120831100066425,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,27,binary64,gappa,tool_refusal,,,0.1017418949995772,unmatched,1.8.3,
+rosa.fpcore,27,binary64,daisy,tool_refusal,,,1.9665928040049039,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,27,binary64,sollya,loaded_no_bound,,,0.05134461999841733,unmatched,8.0,
+rosa.fpcore,27,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,27,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,28,binary32,fptaylor,no_bound,,,0.051561765001679305,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,28,binary32,gappa,tool_refusal,,,0.101952261000406,unmatched,1.8.3,
+rosa.fpcore,28,binary32,daisy,tool_refusal,,,3.890288980997866,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,28,binary32,sollya,loaded_no_bound,,,0.05158319600013783,unmatched,8.0,
+rosa.fpcore,28,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,28,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,28,binary64,fptaylor,no_bound,,,0.051564946996222716,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,28,binary64,gappa,tool_refusal,,,0.10205422699800692,unmatched,1.8.3,
+rosa.fpcore,28,binary64,daisy,tool_refusal,,,3.130520790000446,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,28,binary64,sollya,loaded_no_bound,,,0.051293621996592265,unmatched,8.0,
+rosa.fpcore,28,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,28,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,29,binary32,fptaylor,no_bound,,,0.05141754099895479,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,29,binary32,gappa,tool_refusal,,,0.10170937499788124,unmatched,1.8.3,
+rosa.fpcore,29,binary32,daisy,tool_refusal,,,3.329298540993477,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,29,binary32,sollya,loaded_no_bound,,,0.05155966700112913,unmatched,8.0,
+rosa.fpcore,29,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,29,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,29,binary64,fptaylor,no_bound,,,0.05153795100341085,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,29,binary64,gappa,tool_refusal,,,0.10217112099780934,unmatched,1.8.3,
+rosa.fpcore,29,binary64,daisy,tool_refusal,,,2.1184061280000606,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,29,binary64,sollya,loaded_no_bound,,,0.051440139999613166,unmatched,8.0,
+rosa.fpcore,29,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,29,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,30,binary32,fptaylor,no_bound,,,0.05139472900191322,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,30,binary32,gappa,tool_refusal,,,0.10177623200434027,unmatched,1.8.3,
+rosa.fpcore,30,binary32,daisy,tool_refusal,,,3.177158165999572,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,30,binary32,sollya,loaded_no_bound,,,0.05183943299925886,unmatched,8.0,
+rosa.fpcore,30,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,30,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,30,binary64,fptaylor,no_bound,,,0.05141296600049827,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,30,binary64,gappa,tool_refusal,,,0.15211000300041633,unmatched,1.8.3,
+rosa.fpcore,30,binary64,daisy,tool_refusal,,,3.4292163110003457,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,30,binary64,sollya,loaded_no_bound,,,0.05144362599821761,unmatched,8.0,
+rosa.fpcore,30,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,30,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,31,binary32,fptaylor,no_bound,,,0.05137210399698233,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,31,binary32,gappa,tool_refusal,,,0.10186316699400777,unmatched,1.8.3,
+rosa.fpcore,31,binary32,daisy,tool_refusal,,,3.932489387996611,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,31,binary32,sollya,loaded_no_bound,,,0.0513580569968326,unmatched,8.0,
+rosa.fpcore,31,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,31,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,31,binary64,fptaylor,no_bound,,,0.05129606800619513,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,31,binary64,gappa,tool_refusal,,,0.10165704500104766,unmatched,1.8.3,
+rosa.fpcore,31,binary64,daisy,tool_refusal,,,2.924653328002023,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,31,binary64,sollya,loaded_no_bound,,,0.0513770520046819,unmatched,8.0,
+rosa.fpcore,31,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,31,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,32,binary32,fptaylor,bounded,3377699720527873/151115727451828646838272,absolute_error,0.05111051199492067,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,32,binary32,gappa,bounded,11184811/67108864,absolute_error,0.051047323999227956,unmatched,1.8.3,
+rosa.fpcore,32,binary32,daisy,bounded,5712112027822517/100000000000000000000000,absolute_error_displayed_decimal,2.769895589000953,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,32,binary32,sollya,loaded_no_bound,,,0.05106391399749555,unmatched,8.0,
+rosa.fpcore,32,binary32,smtlib,exported,,,,unmatched,,
+rosa.fpcore,32,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,32,binary64,fptaylor,bounded,3377699720527873/81129638414606681695789005144064,absolute_error,0.05109074200299801,compatible_stored_inputs,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,32,binary64,gappa,bounded,768614336404564651/4611686018427387904,absolute_error,0.05102757699933136,unmatched,1.8.3,
+rosa.fpcore,32,binary64,daisy,bounded,10639637319324417/100000000000000000000000000000000,absolute_error_displayed_decimal,2.7706126880002557,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,32,binary64,sollya,loaded_no_bound,,,0.05111318199487869,unmatched,8.0,
+rosa.fpcore,32,binary64,smtlib,exported,,,,unmatched,,
+rosa.fpcore,32,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,33,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,33,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,33,binary32,daisy,tool_refusal,,,2.871427940997819,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,33,binary32,sollya,loaded_no_bound,,,0.05107267000130378,unmatched,8.0,
+rosa.fpcore,33,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,33,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,33,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,33,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,33,binary64,daisy,tool_refusal,,,2.8709578509951825,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,33,binary64,sollya,loaded_no_bound,,,0.05110830700141378,unmatched,8.0,
+rosa.fpcore,33,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,33,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,34,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,34,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,34,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,34,binary32,sollya,loaded_no_bound,,,0.05108000800100854,unmatched,8.0,
+rosa.fpcore,34,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,34,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,34,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,34,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,34,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,34,binary64,sollya,loaded_no_bound,,,0.05150113499985309,unmatched,8.0,
+rosa.fpcore,34,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,34,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,35,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,35,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,35,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,35,binary32,sollya,loaded_no_bound,,,0.05108198599918978,unmatched,8.0,
+rosa.fpcore,35,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,35,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,35,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,35,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,35,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,35,binary64,sollya,loaded_no_bound,,,0.051348214998142794,unmatched,8.0,
+rosa.fpcore,35,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,35,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,36,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,36,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,36,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,36,binary32,sollya,loaded_no_bound,,,0.05118257900176104,unmatched,8.0,
+rosa.fpcore,36,binary32,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,36,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rosa.fpcore,36,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rosa.fpcore,36,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rosa.fpcore,36,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rosa.fpcore,36,binary64,sollya,loaded_no_bound,,,0.05112771299900487,unmatched,8.0,
+rosa.fpcore,36,binary64,smtlib,export_refusal,,,,unmatched,,
+rosa.fpcore,36,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rump.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rump.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+rump.fpcore,0,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rump.fpcore,0,binary32,sollya,loaded_no_bound,,,0.051150458995834924,unmatched,8.0,
+rump.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+rump.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rump.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rump.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+rump.fpcore,0,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rump.fpcore,0,binary64,sollya,loaded_no_bound,,,0.051395524002145976,unmatched,8.0,
+rump.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+rump.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rump.fpcore,1,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rump.fpcore,1,binary32,gappa,tool_refusal,,,0.35400592000223696,unmatched,1.8.3,
+rump.fpcore,1,binary32,daisy,no_bound,,,3.580349436997494,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rump.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05112430000008317,unmatched,8.0,
+rump.fpcore,1,binary32,smtlib,exported,,,,unmatched,,
+rump.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rump.fpcore,1,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rump.fpcore,1,binary64,gappa,tool_refusal,,,0.3538655189986457,unmatched,1.8.3,
+rump.fpcore,1,binary64,daisy,no_bound,,,3.0269821630063234,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rump.fpcore,1,binary64,sollya,loaded_no_bound,,,0.051523836998967454,unmatched,8.0,
+rump.fpcore,1,binary64,smtlib,exported,,,,unmatched,,
+rump.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rump.fpcore,2,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rump.fpcore,2,binary32,gappa,tool_refusal,,,0.3037777389981784,unmatched,1.8.3,
+rump.fpcore,2,binary32,daisy,no_bound,,,3.329209579002054,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rump.fpcore,2,binary32,sollya,loaded_no_bound,,,0.051531022996641695,unmatched,8.0,
+rump.fpcore,2,binary32,smtlib,exported,,,,unmatched,,
+rump.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+rump.fpcore,2,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+rump.fpcore,2,binary64,gappa,tool_refusal,,,0.3035414990008576,unmatched,1.8.3,
+rump.fpcore,2,binary64,daisy,no_bound,,,3.428567735994875,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+rump.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05135724200226832,unmatched,8.0,
+rump.fpcore,2,binary64,smtlib,exported,,,,unmatched,,
+rump.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,0,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,0,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,0,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,0,binary32,sollya,loaded_no_bound,,,0.05105646500305738,unmatched,8.0,
+salsa.fpcore,0,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,0,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,0,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,0,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,0,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,0,binary64,sollya,loaded_no_bound,,,0.050987811002414674,unmatched,8.0,
+salsa.fpcore,0,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,0,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,1,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,1,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,1,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,1,binary32,sollya,loaded_no_bound,,,0.05111450199910905,unmatched,8.0,
+salsa.fpcore,1,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,1,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,1,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,1,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,1,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,1,binary64,sollya,loaded_no_bound,,,0.0515538129984634,unmatched,8.0,
+salsa.fpcore,1,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,1,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,2,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,2,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,2,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,2,binary32,sollya,loaded_no_bound,,,0.051194751998991705,unmatched,8.0,
+salsa.fpcore,2,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,2,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,2,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,2,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,2,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,2,binary64,sollya,loaded_no_bound,,,0.05143351299921051,unmatched,8.0,
+salsa.fpcore,2,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,2,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,3,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,3,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,3,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,3,binary32,sollya,loaded_no_bound,,,0.05146936800156254,unmatched,8.0,
+salsa.fpcore,3,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,3,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,3,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,3,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,3,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,3,binary64,sollya,loaded_no_bound,,,0.05126760600251146,unmatched,8.0,
+salsa.fpcore,3,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,3,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,4,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,4,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,4,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,4,binary32,sollya,loaded_no_bound,,,0.05111760200088611,unmatched,8.0,
+salsa.fpcore,4,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,4,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,4,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,4,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,4,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,4,binary64,sollya,loaded_no_bound,,,0.05105857199669117,unmatched,8.0,
+salsa.fpcore,4,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,4,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,5,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,5,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,5,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,5,binary32,sollya,loaded_no_bound,,,0.051444306001940276,unmatched,8.0,
+salsa.fpcore,5,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,5,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,5,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,5,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,5,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,5,binary64,sollya,loaded_no_bound,,,0.051056946998869535,unmatched,8.0,
+salsa.fpcore,5,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,5,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,6,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,6,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,6,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,6,binary32,sollya,loaded_no_bound,,,0.051146300000254996,unmatched,8.0,
+salsa.fpcore,6,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,6,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,6,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,6,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,6,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,6,binary64,sollya,loaded_no_bound,,,0.05111356000270462,unmatched,8.0,
+salsa.fpcore,6,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,6,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,7,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,7,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,7,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,7,binary32,sollya,loaded_no_bound,,,0.0511930319989915,unmatched,8.0,
+salsa.fpcore,7,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,7,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,7,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,7,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,7,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,7,binary64,sollya,loaded_no_bound,,,0.0512008559962851,unmatched,8.0,
+salsa.fpcore,7,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,7,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,8,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,8,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,8,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,8,binary32,sollya,loaded_no_bound,,,0.05149967100442154,unmatched,8.0,
+salsa.fpcore,8,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,8,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,8,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,8,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,8,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,8,binary64,sollya,loaded_no_bound,,,0.05142848499963293,unmatched,8.0,
+salsa.fpcore,8,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,8,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,9,binary32,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,9,binary32,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,9,binary32,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,9,binary32,sollya,loaded_no_bound,,,0.05151468000258319,unmatched,8.0,
+salsa.fpcore,9,binary32,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,9,binary32,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd
+salsa.fpcore,9,binary64,fptaylor,export_refusal,,,,unmatched,0.9.4+dev; fptaylor-simple-interval2 target,46e0d2ff37fa84e513048d3445be8c030831b11f
+salsa.fpcore,9,binary64,gappa,export_refusal,,,,unmatched,1.8.3,
+salsa.fpcore,9,binary64,daisy,export_refusal,,,,unmatched,0.1,6a6f47abdd231d3009444e9e1b8ce9febc28c27e
+salsa.fpcore,9,binary64,sollya,loaded_no_bound,,,0.051440028997603804,unmatched,8.0,
+salsa.fpcore,9,binary64,smtlib,export_refusal,,,,unmatched,,
+salsa.fpcore,9,binary64,satire,tool_unavailable,,,,unmatched,,d021397b7d804d9089ca1c8af1d05693bb962ecd

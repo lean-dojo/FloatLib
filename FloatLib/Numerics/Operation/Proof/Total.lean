@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Operation.Semantics
 public import FloatLib.Numerics.Core.Proof
+public import FloatLib.Numerics.Operation.Semantics
 
 /-!
 # Proof-indexed total operations
@@ -51,7 +51,7 @@ theorem denote_eq {A B : NumericalSystem} {run : A.Code → B.Code}
     {spec : NumericalValue A.Scalar → NumericalValue B.Scalar}
     (hrefines : Total1 A B run spec) {value : NumericalValue A.Scalar}
     (code : A.At value) : B.At (spec value) :=
-  ⟨run code.1, by rw [hrefines code.1, code.2]⟩
+  ⟨run code.1, by rw [hrefines code.1, NumericalSystem.At.denote code]⟩
 
 end Total1
 
@@ -80,7 +80,8 @@ theorem denote_eq {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
     {leftValue : NumericalValue A.Scalar} {rightValue : NumericalValue B.Scalar}
     (left : A.At leftValue) (right : B.At rightValue) :
     C.At (spec leftValue rightValue) :=
-  ⟨run left.1 right.1, by rw [hrefines left.1 right.1, left.2, right.2]⟩
+  ⟨run left.1 right.1, by
+    rw [hrefines left.1 right.1, NumericalSystem.At.denote left, NumericalSystem.At.denote right]⟩
 
 end Total2
 
@@ -121,7 +122,8 @@ theorem denote_eq {A B C D : NumericalSystem}
     (first : A.At firstValue) (second : B.At secondValue) (third : C.At thirdValue) :
     D.At (spec firstValue secondValue thirdValue) :=
   ⟨run first.1 second.1 third.1, by
-    rw [hrefines first.1 second.1 third.1, first.2, second.2, third.2]⟩
+    rw [hrefines first.1 second.1 third.1, NumericalSystem.At.denote first,
+      NumericalSystem.At.denote second, NumericalSystem.At.denote third]⟩
 
 end Total3
 

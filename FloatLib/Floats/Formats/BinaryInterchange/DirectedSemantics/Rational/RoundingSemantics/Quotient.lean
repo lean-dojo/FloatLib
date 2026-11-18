@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.NearestEven
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Downward
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Upward
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 
 /-!
 # Quotient and exponent semantics
@@ -168,7 +167,7 @@ theorem neg_normalMantissaExpOffset_eq_minSubnormalExponent_sub_one
   unfold FloatFormat.normalMantissaExpOffset FloatFormat.minSubnormalExponent
     FloatFormat.minNormalExponent
   simp only [Int.ofNat_eq_natCast, Int.natCast_add]
-  ring
+  omega
 
 /-- Values below the normal range use the descriptor's minimum-subnormal grid. -/
 theorem fexpOf_total_eq_minSubnormal
@@ -188,7 +187,6 @@ theorem fexpOf_total_eq_normal
   simp only [fexpOf, fltExp, FloatFormat.minSubnormalExponent,
     Int.ofNat_eq_natCast]
   omega
-
 
 end
 

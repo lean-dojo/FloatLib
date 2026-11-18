@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Classification.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Proof
+
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
 /-!
@@ -62,10 +63,10 @@ theorem isCanonical_eq_model (x : Value) :
 theorem classify_eq_iff (x : Value) (c : FloatLib.Numerics.IEEEClass) :
     classify x = c ↔
       match c with
-      | .signalingNaN => isSNaN x = true
+      | .signalingNaN => isSignaling x = true
       | .quietNaN => isQNaN x = true
-      | .negativeInfinity => isInf x = true ∧ signBit x = true
-      | .positiveInfinity => isInf x = true ∧ signBit x = false
+      | .negativeInfinity => isInfinite x = true ∧ signBit x = true
+      | .positiveInfinity => isInfinite x = true ∧ signBit x = false
       | .negativeZero => isZero x = true ∧ signBit x = true
       | .positiveZero => isZero x = true ∧ signBit x = false
       | .negativeSubnormal => isSubnormal x = true ∧ signBit x = true
@@ -76,7 +77,7 @@ theorem classify_eq_iff (x : Value) (c : FloatLib.Numerics.IEEEClass) :
 
 /-- A value is in the signaling class if and only if the configured signaling predicate holds. -/
 @[simp] theorem classify_eq_signalingNaN_iff (x : Value) :
-    classify x = .signalingNaN ↔ isSNaN x = true := classify_eq_iff x _
+    classify x = .signalingNaN ↔ isSignaling x = true := classify_eq_iff x _
 
 /-- A value is in the quiet class if and only if the configured quiet-NaN predicate holds. -/
 @[simp] theorem classify_eq_quietNaN_iff (x : Value) :
@@ -84,12 +85,12 @@ theorem classify_eq_iff (x : Value) (c : FloatLib.Numerics.IEEEClass) :
 
 /-- Negative infinity retains its stored negative sign. -/
 @[simp] theorem classify_eq_negativeInfinity_iff (x : Value) :
-    classify x = .negativeInfinity ↔ isInf x = true ∧ signBit x = true :=
+    classify x = .negativeInfinity ↔ isInfinite x = true ∧ signBit x = true :=
   classify_eq_iff x _
 
 /-- Positive infinity retains its stored positive sign. -/
 @[simp] theorem classify_eq_positiveInfinity_iff (x : Value) :
-    classify x = .positiveInfinity ↔ isInf x = true ∧ signBit x = false :=
+    classify x = .positiveInfinity ↔ isInfinite x = true ∧ signBit x = false :=
   classify_eq_iff x _
 
 /-- Negative zero is a zero with a negative stored sign under the configured policy. -/

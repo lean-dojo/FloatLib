@@ -1,16 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Analysis.Complex.Trigonometric
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 public import FloatLib.Floats.Interval.Quantized
 public import FloatLib.Numerics.Enclosure.Elementary.Proof
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
 # Proof contracts for transcendental approximations

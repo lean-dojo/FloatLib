@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Dyadic.Order
+
 import Mathlib.Data.Int.NatAbs
 
 /-!
@@ -620,14 +621,18 @@ theorem sub_toRat (left right : Dyadic) :
   rw [add_toRat, neg_toRat]
   simp [sub_eq_add_neg]
 
-/-- Multiplying canonical zero on the left returns zero with the other operand's sign and exponent. -/
+/-- Multiplying canonical zero on the left returns zero with the other operand's sign and
+exponent. -/
 @[simp, grind =] theorem mul_zero_left (value : Dyadic) :
-    mul zero value = { negative := value.negative, significand := 0, exponent := value.exponent } := by
+    mul zero value = { negative := value.negative, significand := 0, exponent := value.exponent
+      } := by
   simp [mul, mulFields, zero]
 
-/-- Multiplying canonical zero on the right returns zero with the other operand's sign and exponent. -/
+/-- Multiplying canonical zero on the right returns zero with the other operand's sign and
+exponent. -/
 @[simp, grind =] theorem mul_zero_right (value : Dyadic) :
-    mul value zero = { negative := value.negative, significand := 0, exponent := value.exponent } := by
+    mul value zero = { negative := value.negative, significand := 0, exponent := value.exponent
+      } := by
   cases value
   simp [mul, mulFields, zero, Bool.xor]
 

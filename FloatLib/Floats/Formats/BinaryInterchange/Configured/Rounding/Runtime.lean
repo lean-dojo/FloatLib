@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Dispatch
+public import FloatLib.Kernels.Execution.Dispatch
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 
 /-!
 # Arithmetic runtime for configured binary values

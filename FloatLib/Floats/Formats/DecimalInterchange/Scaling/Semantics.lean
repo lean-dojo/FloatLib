@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
+public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Proof
 
 /-!
 # Scaling accuracy and cohort independence of exponent queries
 
 The accuracy bounds for scaling are stated with the delivered rational value and the public
 overflow flag. Exact cohort selection works even when the shifted quantum falls outside the format
-range, as long as another member of the cohort is representable. And `decimalExponent` gives the
+range, as long as another member of the cohort is representable. And `logB` gives the
 same answer for every member of a cohort.
 -/
 
@@ -106,44 +106,44 @@ theorem scale_inexact_quantum_minimal (f : Format) (mode : RoundingMode)
   exact projectMagnitude_inexact_quantum_minimal f mode s _ (q + n) hinexact d r hout a b ha he
 
 /-- A nonzero magnitude no larger than another has a radix exponent no larger. -/
-private theorem decimalExponent_le_of_magnitude_le (f g : Format) (s t : Bool) (c d : Nat)
+private theorem logB_le_of_magnitude_le (f g : Format) (s t : Bool) (c d : Nat)
     (q r : Int) (hc : c ≠ 0) (hd : d ≠ 0)
     (he : (c : ℚ) * (10 : ℚ) ^ q ≤ (d : ℚ) * (10 : ℚ) ^ r) :
-    (decimalExponent f (.finite s c q)).value ≤ (decimalExponent g (.finite t d r)).value := by
-  have hx := decimalExponent_bounds f s c q hc
-  have hy := decimalExponent_bounds g t d r hd
+    (logB f (.finite s c q)).value ≤ (logB g (.finite t d r)).value := by
+  have hx := logB_bounds f s c q hc
+  have hy := logB_bounds g t d r hd
   by_contra h
-  have hp : (10 : ℚ) ^ ((decimalExponent g (.finite t d r)).value + 1) ≤
-      (10 : ℚ) ^ (decimalExponent f (.finite s c q)).value :=
+  have hp : (10 : ℚ) ^ ((logB g (.finite t d r)).value + 1) ≤
+      (10 : ℚ) ^ (logB f (.finite s c q)).value :=
     zpow_le_zpow_right₀ (by norm_num) (by omega)
-  linarith [hx.1, hy.2]
+  exact (hy.2.trans_le (hp.trans (hx.1.trans he))).false
 
 /-- Equal nonzero magnitudes have the same radix exponent, irrespective of cohort or sign. The
 second coefficient is nonzero because the magnitudes agree. -/
-theorem decimalExponent_eq_of_equal_magnitude (f g : Format) (s t : Bool) (c d : Nat) (q r : Int)
+theorem logB_eq_of_equal_magnitude (f g : Format) (s t : Bool) (c d : Nat) (q r : Int)
     (hc : c ≠ 0) (he : (c : ℚ) * (10 : ℚ) ^ q = (d : ℚ) * (10 : ℚ) ^ r) :
-    (decimalExponent f (.finite s c q)).value = (decimalExponent g (.finite t d r)).value := by
+    (logB f (.finite s c q)).value = (logB g (.finite t d r)).value := by
   have hd : d ≠ 0 := by
     rintro rfl
     simp [hc, (zpow_pos (by norm_num : (0 : ℚ) < 10) q).ne'] at he
-  exact le_antisymm (decimalExponent_le_of_magnitude_le f g s t c d q r hc hd he.le)
-    (decimalExponent_le_of_magnitude_le g f t s d c r q hd hc he.ge)
+  exact le_antisymm (logB_le_of_magnitude_le f g s t c d q r hc hd he.le)
+    (logB_le_of_magnitude_le g f t s d c r q hd hc he.ge)
 
 /-- `logB` of either zero, at any quantum, is the negative sentinel and raises invalid. -/
-@[simp] theorem decimalExponent_zero (f : Format) (s : Bool) (q : Int) :
-    decimalExponent f (.finite s 0 q) =
-      { value := -decimalExponentSentinel f, status := { invalid := true } } :=
+@[simp] theorem logB_zero (f : Format) (s : Bool) (q : Int) :
+    logB f (.finite s 0 q) =
+      { value := -logBSentinel f, status := { invalid := true } } :=
   rfl
 
 /-- `logB` of either infinity is the positive sentinel and raises invalid. -/
-@[simp] theorem decimalExponent_infinity (f : Format) (s : Bool) :
-    decimalExponent f (.infinity s) =
-      { value := decimalExponentSentinel f, status := { invalid := true } } := rfl
+@[simp] theorem logB_infinity (f : Format) (s : Bool) :
+    logB f (.infinity s) =
+      { value := logBSentinel f, status := { invalid := true } } := rfl
 
 /-- `logB` of any NaN, quiet or signaling, is the positive sentinel and raises invalid. -/
-@[simp] theorem decimalExponent_nan (f : Format) (s t : Bool) (p : Nat) :
-    decimalExponent f (.nan s t p) =
-      { value := decimalExponentSentinel f, status := { invalid := true } } := rfl
+@[simp] theorem logB_nan (f : Format) (s t : Bool) (p : Nat) :
+    logB f (.nan s t p) =
+      { value := logBSentinel f, status := { invalid := true } } := rfl
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

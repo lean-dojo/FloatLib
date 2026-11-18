@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -41,16 +41,16 @@ instance {fmt : FloatFormat} : Repr (Interval fmt) where
 namespace Interval
 
 /-- Membership using the numerical order of `Model`, in which NaNs are unordered. -/
-def mem {fmt : FloatFormat} (I : Interval fmt) (x : Model fmt) : Prop :=
-  Model.le I.lo x ∧ Model.le x I.hi
+def Mem {fmt : FloatFormat} (I : Interval fmt) (x : Model fmt) : Prop :=
+  Model.Le I.lo x ∧ Model.Le x I.hi
 
 /-- Enable `x ∈ I` for format-generic executable intervals. -/
 instance {fmt : FloatFormat} : Membership (Model fmt) (Interval fmt) where
-  mem I x := Interval.mem I x
+  mem I x := Interval.Mem I x
 
 /-- Unfold membership into lower- and upper-endpoint comparisons. -/
 @[simp] theorem mem_iff {fmt : FloatFormat} (I : Interval fmt) (x : Model fmt) :
-    x ∈ I ↔ Model.le I.lo x ∧ Model.le x I.hi :=
+    x ∈ I ↔ Model.Le I.lo x ∧ Model.Le x I.hi :=
   Iff.rfl
 
 /--
@@ -62,7 +62,7 @@ formats, `whole` uses the two maximal finite endpoints and is valid.
 def Valid {fmt : FloatFormat} (I : Interval fmt) : Prop :=
   Model.isFinite I.lo = true ∧
     Model.isFinite I.hi = true ∧
-    Model.le I.lo I.hi
+    Model.Le I.lo I.hi
 
 /-- Validity is decided by classifying and comparing the endpoints. -/
 instance {fmt : FloatFormat} (I : Interval fmt) : Decidable I.Valid :=
@@ -78,7 +78,7 @@ overflow without ceasing to denote an ordered interval.
 def ValidExtended {fmt : FloatFormat} (I : Interval fmt) : Prop :=
   Model.isNaN I.lo = false ∧
     Model.isNaN I.hi = false ∧
-    Model.le I.lo I.hi
+    Model.Le I.lo I.hi
 
 /-- Extended validity is decided by classifying and comparing the endpoints. -/
 instance {fmt : FloatFormat} (I : Interval fmt) : Decidable I.ValidExtended :=

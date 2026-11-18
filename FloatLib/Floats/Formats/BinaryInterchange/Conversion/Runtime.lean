@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactNumericalSystem
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Core
 public import FloatLib.Numerics.Exact.SignedRat
 
 /-!
@@ -65,6 +65,11 @@ instance modelDecoder (format : FloatFormat) :
 inductive InfinityPolicy where
   /-- Preserve infinity when the destination encoding supports it, and otherwise reject the cast. -/
   | preserve
+  /--
+  Use the destination's native overflow value: infinity, NaN or signed maximum finite.
+  OCP OFP8 revision 1.0, §5.2.1 Table 3, requires this for NONSAT infinity conversion.
+  -/
+  | native
   /-- Clamp infinity to the finite destination value of greatest magnitude with the same sign. -/
   | saturate
   /-- Reject infinity even when the destination could represent it. -/
@@ -281,7 +286,7 @@ without a NaN encoding rejects the conversion.
       match Model.canonicalNaN? format with
       | some value =>
           .success (pack value)
-            { mappedSpecial := true, invalid := exceptional.isSNaN }
+            { mappedSpecial := true, invalid := exceptional.isSignaling }
       | none =>
           .failure (.exceptional .source exceptional)
 
@@ -292,6 +297,10 @@ without a NaN encoding rejects the conversion.
   match context.infinity with
   | .reject =>
       .failure (.infinity .source negative)
+  | .native =>
+      let value := Model.nativeOverflow format negative
+      let mapped := !Model.isInfinite value
+      .success (pack value) { inexact := mapped, overflow := mapped, mappedSpecial := mapped }
   | .saturate =>
       .success (pack (Model.maxFinite format negative))
         { inexact := true
@@ -347,3 +356,17 @@ def specWith {format : FloatFormat} {Destination : Type u}
 end Conversion
 end ExecFloat.Binary
 end FloatLib.Floats
+
+namespace FloatLib.Floats.ExecFloat.Binary.Conversion.ExceptionalPolicy
+
+/-- Reconstruct a `ExceptionalPolicy` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.ExecFloat.Binary.Conversion.ExceptionalPolicy
+
+namespace FloatLib.Floats.ExecFloat.Binary.Conversion.InfinityPolicy
+
+/-- Reconstruct a `InfinityPolicy` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.ExecFloat.Binary.Conversion.InfinityPolicy

@@ -1,13 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Codec.BitsProof
-public import Mathlib.Tactic.SplitIfs
+public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Runtime
 
 /-!
 # The DPD combination field and exponent continuation

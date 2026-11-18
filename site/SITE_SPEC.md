@@ -1,6 +1,6 @@
 # FloatLib website specification
 
-FloatLib's website is a technical book: an introduction, fourteen chapters, and a bibliography. It
+FloatLib's website is a technical book: an introduction, numbered chapters, and a bibliography. It
 explains the numerical representations, executable algorithms, and proofs, and it presents the
 performance measurements and external comparisons. In public the project is called FloatLib. The
 Lean namespace is `FloatLib`, the Lake package is `floatlib`, and the repository lives at
@@ -61,10 +61,22 @@ Don't present a large case count as a percentage of coverage, or the duration of
 library performance. Keep diagrams that explain a representation or an algorithm, and don't swap the
 article for dashboards, decorative cards, or proof inventories.
 
-A Markdown image can use its optional title as the visible caption and keep a description in the alt
-text. Do this on chapter figures, so the description and the caption don't repeat each other. Timing
-plots should say that lower is faster, and comparison-count plots should say they count cases, not
-time.
+A Markdown image uses its title as the visible caption and keeps a description in the alt text, so
+the two don't repeat each other. The reader prints the caption after the figure's number. Its first
+sentence says what the figure shows, and the next one to three give what was measured and its unit,
+the scales, the scope, and for a measurement the machine and the Lean version. The benchmark records identify the checkout. Timing
+plots say that lower is faster, and comparison-count plots say they count cases, not time. The alt
+text describes the image for someone who can't see it.
+
+Inside an image there is only the drawing: axes with labels that name the quantity and its unit,
+tick labels, a legend or direct labels with short series names, panel letters with a short panel
+title, numbers on bars where the exact value is the point, and in a diagram short labels on its
+parts. A title, a subtitle, a note, a sentence, a colour key written as a sentence, and where or
+how something was measured all belong in the caption. Every generator draws with
+`content/assets/figures/figstyle.py`, which fixes the font and its sizes, the line widths, the
+colours of each library and of each role in a diagram, and the widths (9 inches at 200 dpi, and
+3.8 inches for a `-mobile` arrangement), writes an SVG beside each PNG, and refuses to save a
+figure that draws a title or a sentence.
 
 Figures are numbered within each chapter: Figure 2.1, Figure 2.2, and so on. Refer to each figure
 from nearby prose and tell the reader what to look for. Link the reference to
@@ -119,26 +131,27 @@ location.
 ## Source layout
 
 - `content/landing.md`: opening definition, author byline, introduction, and highlights.
-- `content/chapters/NN-slug.md`: the fourteen chapters.
+- `content/chapters/NN-slug.md`: the guide chapters.
 - `content/references.json`: bibliography entries and primary-source links. Undated web resources
   carry an `accessed` date in `YYYY-MM-DD` form, displayed separately from the publication year.
 - `content/assets/`: published images.
 - `logo.png`: original logo artwork; `content/assets/floatlib-logo.png` is the cropped version
   used by the reader and README.
-- `content/assets/figures/` and `content/assets/data/`: figure generators and shared styles.
+- `content/assets/figures/`: figure generators and the shared style.
 - `content/phases.json`: selected declarations, their group IDs/titles, and exporter imports.
 - `data/nodes.json`: exported declarations and source provenance.
-- `tooling/`: Lean export, metadata assembly, and chapter checks.
+- `tooling/`: Lean export, metadata assembly, and chapter and figure checks.
 - `reader/`: React reader, Markdown rendering, data build, and existing route tests.
 - `build.sh`: figure freshness checks, export, chapter verification, and reader build.
 - `serve.py`: local preview server with cache revalidation and redirects to the app entry page.
 
 Chapter front matter has `number`, `slug`, `title`, `summary`, and optional internal `phases`, and
 landing front matter has `lede` and `authors`. Keep the recorded author names and affiliations
-unless the authors send a change. A Markdown image such as `![Caption](assets/figure.png)` becomes a
-figure with its caption. When the reader copies published assets, it leaves plotting code and input
-data out of the public bundle. Figure-view manifests are embedded in the rendered HTML and never
-copied out as public files of their own.
+unless the authors send a change. A Markdown image alone in its paragraph, such as
+`![Description](assets/figure.png "Caption.")`, becomes a numbered figure with its caption. When
+the reader copies published assets, it leaves plotting code and input data out of the public
+bundle. Figure-view manifests are embedded in the rendered HTML and never copied out as public
+files of their own.
 
 ## Declaration data
 
@@ -186,8 +199,8 @@ stylesheet and fonts.
 ## Measurements
 
 The performance chapter opens with the public binary measurements in
-`content/assets/public-binary-performance.png`, and `format-comparison-main.png` compares the wider
-set of formats and libraries. Each figure script names its inputs, so the site keeps no copies of
+`content/assets/public-binary-performance.png`, and its benchmark figures come from
+`benchmarks/results/figures/`. Each figure script names its inputs, so the site keeps no copies of
 benchmark CSVs. Different total widths need not imply equal precision across formats. Tell direct
 FloatLib comparisons apart from another project's own tests, and when results disagree, keep the
 disagreement and explain it instead of showing one universal pass label.
@@ -206,9 +219,11 @@ maintained published figures stay in the repository.
 unchecked host APIs, the `roundoff` analysis, and the decimal certified proofs. After
 prose-only edits, `--skip-lean` may reuse a current declaration export, and it still checks chapter
 examples and figure freshness. The build regenerates result-derived figures in local scratch and
-compares their bytes with the maintained assets. For a release build it must never skip missing
-evidence silently. Other development flags, strictness settings, and the clean-source requirement
-are in the [build-options table](tooling/README.md#build-options).
+compares their bytes with the maintained assets. `python3 site/tooling/check_figures.py --fresh`
+makes the same comparison for every figure, the explanatory diagrams included, and needs neither
+Lean nor the reader. Other development flags, strictness settings, and the clean-source
+requirement are in the
+[build-options table](tooling/README.md#build-options).
 
 Every fenced `lean` block in `content/chapters/` is extracted into a per-chapter scratch file,
 prefixed with `import FloatLib`, and compiled against the local library build. Claimed evaluation

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -45,7 +45,7 @@ theorem remainderCoefficient_eq_zero_iff (a b : Nat) (hb : b ≠ 0) :
   have hr := Nat.mod_lt a (Nat.pos_of_ne_zero hb)
   unfold remainderCoefficient remainderRoundUp
   split <;> simp only [decide_eq_true_eq] at *
-  all_goals omega
+  omega
 
 /-- Zero residuals use the lower quotient and therefore retain the input sign. -/
 theorem remainderRoundUp_eq_false_of_zero (a b : Nat) (hb : b ≠ 0)
@@ -82,12 +82,12 @@ theorem remainderQuotient_even_at_tie (a b : Nat) (hb : b ≠ 0)
   have hr := Nat.mod_lt a (Nat.pos_of_ne_zero hb)
   have hp := Nat.mod_lt (a / b) (by decide : 0 < 2)
   by_cases h : remainderRoundUp a b = true
-  · simp [remainderCoefficient, h] at htie
-    simp [remainderQuotient, h]
+  · simp only [remainderCoefficient, h, ↓reduceIte] at htie
+    simp only [remainderQuotient, h, ↓reduceIte]
     simp only [remainderRoundUp, decide_eq_true_eq] at h
     omega
-  · simp [remainderCoefficient, h] at htie
-    simp [remainderQuotient, h]
+  · simp only [remainderCoefficient, h, Bool.false_eq_true, ↓reduceIte] at htie
+    simp only [remainderQuotient, h, Bool.false_eq_true, ↓reduceIte, add_zero]
     simp only [remainderRoundUp, decide_eq_true_eq] at h
     omega
 

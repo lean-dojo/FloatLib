@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -24,7 +24,9 @@ namespace FloatLib.Floats.Formats.Flocq
 
 /-- Position of a real value relative to the lower endpoint and midpoint of a bracket. -/
 inductive Location where
+  /-- The value is the lower endpoint. -/
   | exact
+  /-- The value is strictly inside the bracket, at this order relative to the midpoint. -/
   | inexact (midpointOrder : Ordering)
   deriving DecidableEq, Repr
 
@@ -34,7 +36,9 @@ noncomputable def inbetweenLocation (d u x : ℝ) : Location :=
 
 /-- Semantic meaning of a bracket location. -/
 inductive Inbetween (d u x : ℝ) : Location → Prop where
+  /-- `x` is the lower endpoint `d`. -/
   | exact (hx : x = d) : Inbetween d u x .exact
+  /-- `x` lies strictly between `d` and `u` and compares as `l` with their midpoint. -/
   | inexact (l : Ordering) (hx : d < x ∧ x < u)
       (hmid : cmp x ((d + u) / 2) = l) : Inbetween d u x (.inexact l)
 
@@ -136,13 +140,13 @@ theorem inbetween_exists {d u : ℝ} (hdu : d < u) (location : Location) :
             linarith
 
 /-- Consecutive points in a positive-step arithmetic progression are strictly ordered. -/
-theorem orderedSteps {start step : ℝ} (hstep : 0 < step) (k : ℤ) :
+theorem ordered_steps {start step : ℝ} (hstep : 0 < step) (k : ℤ) :
     start + (k : ℝ) * step < start + (k + 1 : ℤ) * step := by
   norm_num only [Int.cast_add, Int.cast_one]
-  linarith
+  exact add_lt_add_of_le_of_lt le_rfl (mul_lt_mul_of_pos_right (lt_add_one _) hstep)
 
 /-- Midpoint of an arithmetic progression interval. -/
-theorem stepMidpoint (start step : ℝ) (steps : ℤ) :
+theorem step_midpoint (start step : ℝ) (steps : ℤ) :
     (start + (start + (steps : ℝ) * step)) / 2 =
       start + ((steps : ℝ) / 2) * step := by
   ring
@@ -159,18 +163,18 @@ theorem inbetween_step_interior {start step x : ℝ} {steps k : ℤ}
       (start + (k + 1 : ℤ) * step) x localLocation)
     (hmid : cmp x (start + ((steps : ℝ) / 2) * step) = globalOrder) :
     Inbetween start (start + (steps : ℝ) * step) x (.inexact globalOrder) := by
-  have hlocalOrder := orderedSteps (start := start) hstep k
+  have hlocalOrder := ordered_steps (start := start) hstep k
   have hlocal := inbetween_bounds hlocalOrder hl
   have hk0 : (0 : ℝ) < k := by exact_mod_cast hk.1
   have hkn : (k + 1 : ℤ) ≤ steps := Int.add_one_le_iff.mpr hk.2
   have hknR : ((k + 1 : ℤ) : ℝ) ≤ (steps : ℝ) := by exact_mod_cast hkn
   have hmid' : cmp x ((start + (start + (steps : ℝ) * step)) / 2) = globalOrder := by
-    rw [stepMidpoint]
+    rw [step_midpoint]
     exact hmid
   refine .inexact globalOrder ?_ hmid'
   constructor
   · calc
-      start < start + (k : ℝ) * step := by nlinarith
+      start < start + (k : ℝ) * step := lt_add_of_pos_right _ (mul_pos hk0 hstep)
       _ ≤ x := hlocal.1
   · calc
       x < start + ((k + 1 : ℤ) : ℝ) * step := hlocal.2
@@ -193,11 +197,11 @@ theorem inbetween_step_low {start step x : ℝ} {steps k : ℤ}
       (start + (k : ℝ) * step)
       (start + (k + 1 : ℤ) * step) x localLocation) :
     Inbetween start (start + (steps : ℝ) * step) x (.inexact .lt) := by
-  have hkSteps : k < steps := by linarith
+  have hkSteps : k < steps := by omega
   apply inbetween_step_interior hstep ⟨hk, hkSteps⟩ hl
   rw [cmp_eq_lt_iff]
-  have hlocal := inbetween_bounds (orderedSteps (start := start) hstep k) hl
-  exact hlocal.2.trans_le (step_le_stepMidpoint hstep (by linarith))
+  have hlocal := inbetween_bounds (ordered_steps (start := start) hstep k) hl
+  exact hlocal.2.trans_le (step_le_stepMidpoint hstep (by omega))
 
 /-- A subinterval strictly above the global midpoint has global location `.gt`. -/
 theorem inbetween_step_high {start step x : ℝ} {steps k : ℤ}
@@ -207,10 +211,10 @@ theorem inbetween_step_high {start step x : ℝ} {steps k : ℤ}
       (start + (k : ℝ) * step)
       (start + (k + 1 : ℤ) * step) x localLocation) :
     Inbetween start (start + (steps : ℝ) * step) x (.inexact .gt) := by
-  have hkPos : 0 < k := by linarith
+  have hkPos : 0 < k := by omega
   apply inbetween_step_interior hstep ⟨hkPos, hk⟩ hl
   rw [cmp_eq_gt_iff]
-  have hlocal := inbetween_bounds (orderedSteps (start := start) hstep k) hl
+  have hlocal := inbetween_bounds (ordered_steps (start := start) hstep k) hl
   have hindexR : (steps : ℝ) < 2 * (k : ℝ) := by exact_mod_cast hcell
   have hscaled := mul_lt_mul_of_pos_right hindexR hstep
   have hafterMid : ((steps : ℝ) / 2) * step < (k : ℝ) * step := by
@@ -236,12 +240,12 @@ theorem inbetween_step_zero_inexact {start step x : ℝ} {steps : ℤ}
   have hstep : 0 < step := by linarith [hlocal.1, hlocal.2]
   have hstepAll : step < (steps : ℝ) * step := by
     have hstepsR : (1 : ℝ) < (steps : ℝ) := by exact_mod_cast hsteps
-    nlinarith
+    exact lt_mul_of_one_lt_left hstep hstepsR
   have hstepAllStart : start + step < start + (steps : ℝ) * step := by
     simpa [add_comm] using add_lt_add_left hstepAll start
   refine .inexact .lt ⟨hlocal.1, hlocal.2.trans hstepAllStart⟩ ?_
-  rw [cmp_eq_lt_iff, stepMidpoint]
-  have hstepMid := step_le_stepMidpoint (start := start) (j := 1) hstep (by linarith)
+  rw [cmp_eq_lt_iff, step_midpoint]
+  have hstepMid := step_le_stepMidpoint (start := start) (j := 1) hstep (by assumption)
   rw [Int.cast_one, one_mul] at hstepMid
   exact hlocal.2.trans_le hstepMid
 
@@ -254,8 +258,8 @@ theorem inbetween_step_middle_even_exact {start step x : ℝ} {steps k : ℤ}
     Inbetween start (start + (steps : ℝ) * step) x (.inexact .eq) := by
   cases hl with
   | exact hx =>
-      have hkPos : 0 < k := by linarith
-      have hkSteps : k < steps := by linarith
+      have hkPos : 0 < k := by omega
+      have hkSteps : k < steps := by omega
       apply inbetween_step_interior hstep ⟨hkPos, hkSteps⟩ (.exact hx)
       rw [cmp_eq_eq_iff]
       have hmiddleR : (2 : ℝ) * (k : ℝ) = (steps : ℝ) := by exact_mod_cast hmiddle
@@ -281,8 +285,8 @@ theorem inbetween_step_middle_even_inexact {start step x : ℝ} {steps k : ℤ}
     Inbetween start (start + (steps : ℝ) * step) x (.inexact .gt) := by
   have hlocal := inbetween_strict_bounds hl
   have hstep := step_pos_of_inexact hl
-  have hkPos : 0 < k := by linarith
-  have hkSteps : k < steps := by linarith
+  have hkPos : 0 < k := by omega
+  have hkSteps : k < steps := by omega
   apply inbetween_step_interior hstep ⟨hkPos, hkSteps⟩ hl
   rw [cmp_eq_gt_iff]
   have hmiddleR : (2 : ℝ) * (k : ℝ) = (steps : ℝ) := by exact_mod_cast hmiddle
@@ -297,8 +301,8 @@ theorem inbetween_step_middle_odd_exact {start step x : ℝ} {steps k : ℤ}
     Inbetween start (start + (steps : ℝ) * step) x (.inexact .lt) := by
   cases hl with
   | exact hx =>
-      have hkPos : 0 < k := by linarith
-      have hkSteps : k < steps := by linarith
+      have hkPos : 0 < k := by omega
+      have hkSteps : k < steps := by omega
       apply inbetween_step_interior hstep ⟨hkPos, hkSteps⟩ (.exact hx)
       rw [cmp_eq_lt_iff, hx]
       have hmiddleR : (2 : ℝ) * (k : ℝ) + 1 = (steps : ℝ) := by
@@ -313,8 +317,8 @@ theorem inbetween_step_middle_odd_inexact {start step x : ℝ} {steps k : ℤ}
       (start + (k + 1 : ℤ) * step) x (.inexact order)) :
     Inbetween start (start + (steps : ℝ) * step) x (.inexact order) := by
   have hstep := step_pos_of_inexact hl
-  have hkPos : 0 < k := by linarith
-  have hkSteps : k < steps := by linarith
+  have hkPos : 0 < k := by omega
+  have hkSteps : k < steps := by omega
   apply inbetween_step_interior hstep ⟨hkPos, hkSteps⟩ hl
   cases hl with
   | inexact _ _ hlocalMid =>
@@ -383,9 +387,7 @@ theorem refineLocationEven_correct {start step x : ℝ} {steps k : ℤ}
   · have hkPos : 0 < k := lt_of_le_of_ne hk.1 (Ne.symm hkZero)
     obtain ⟨half, hhalf⟩ := even_iff_exists_two_mul.mp heven
     rcases lt_trichotomy (2 * k) steps with hlow | hmiddle | hhigh
-    · have hkHalf : k < half := by linarith
-      have hkNext : k + 1 ≤ half := Int.add_one_le_iff.mpr hkHalf
-      have hcell : 2 * k + 1 < steps := by linarith
+    · have hcell : 2 * k + 1 < steps := by omega
       simpa [refineLocationEven, hkZero, (cmp_eq_lt_iff _ _).2 hlow] using
         inbetween_step_low hstep hkPos hcell hl
     · cases location with
@@ -428,9 +430,7 @@ theorem refineLocationOdd_correct {start step x : ℝ} {steps k : ℤ}
       | inexact order =>
           simpa [refineLocationOdd, hkZero, (cmp_eq_eq_iff _ _).2 hmiddle] using
             inbetween_step_middle_odd_inexact hsteps hmiddle hl
-    · have hhalfK : half < k := by linarith
-      have hhalfNext : half + 1 ≤ k := Int.add_one_le_iff.mpr hhalfK
-      have hcell : steps < 2 * k := by linarith
+    · have hcell : steps < 2 * k := by omega
       simpa [refineLocationOdd, hkZero, (cmp_eq_gt_iff _ _).2 hhigh] using
         inbetween_step_high hstep hcell hk.2 hl
 

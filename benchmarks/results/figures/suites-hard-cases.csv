@@ -1,0 +1,145 @@
+case,outcome_or_measure,value
+"real exp, binary32, binary32 screen",done,256
+"real exp, binary32, binary32 screen",failed,0
+"real exp, binary32, binary32 screen",not expressible,0
+"real exp, binary32, binary32 screen",not run,0
+"real exp, binary64, CORE-MATH worst cases",done,16384
+"real exp, binary64, CORE-MATH worst cases",failed,0
+"real exp, binary64, CORE-MATH worst cases",not expressible,0
+"real exp, binary64, CORE-MATH worst cases",not run,0
+"real exp, binary64, Lefèvre's hard cases",done,4800
+"real exp, binary64, Lefèvre's hard cases",failed,0
+"real exp, binary64, Lefèvre's hard cases",not expressible,4
+"real exp, binary64, Lefèvre's hard cases",not run,0
+"real expm1, binary32, binary32 screen",done,256
+"real expm1, binary32, binary32 screen",failed,0
+"real expm1, binary32, binary32 screen",not expressible,0
+"real expm1, binary32, binary32 screen",not run,0
+"real expm1, binary64, CORE-MATH worst cases",done,16384
+"real expm1, binary64, CORE-MATH worst cases",failed,0
+"real expm1, binary64, CORE-MATH worst cases",not expressible,0
+"real expm1, binary64, CORE-MATH worst cases",not run,0
+"real expm1, binary64, Lefèvre's hard cases",done,15156
+"real expm1, binary64, Lefèvre's hard cases",failed,0
+"real expm1, binary64, Lefèvre's hard cases",not expressible,0
+"real expm1, binary64, Lefèvre's hard cases",not run,0
+"real log, binary32, binary32 screen",done,256
+"real log, binary32, binary32 screen",failed,0
+"real log, binary32, binary32 screen",not expressible,0
+"real log, binary32, binary32 screen",not run,0
+"real log, binary64, CORE-MATH worst cases",done,16384
+"real log, binary64, CORE-MATH worst cases",failed,0
+"real log, binary64, CORE-MATH worst cases",not expressible,0
+"real log, binary64, CORE-MATH worst cases",not run,0
+"real log, binary64, Lefèvre's hard cases",done,5583
+"real log, binary64, Lefèvre's hard cases",failed,0
+"real log, binary64, Lefèvre's hard cases",not expressible,12
+"real log, binary64, Lefèvre's hard cases",not run,0
+"real log1p, binary32, binary32 screen",done,256
+"real log1p, binary32, binary32 screen",failed,0
+"real log1p, binary32, binary32 screen",not expressible,0
+"real log1p, binary32, binary32 screen",not run,0
+"real log1p, binary64, CORE-MATH worst cases",done,16384
+"real log1p, binary64, CORE-MATH worst cases",failed,0
+"real log1p, binary64, CORE-MATH worst cases",not expressible,0
+"real log1p, binary64, CORE-MATH worst cases",not run,0
+"real log1p, binary64, Lefèvre's hard cases",done,15100
+"real log1p, binary64, Lefèvre's hard cases",failed,0
+"real log1p, binary64, Lefèvre's hard cases",not expressible,0
+"real log1p, binary64, Lefèvre's hard cases",not run,0
+"complex exp, binary32, binary32 screen",done,512
+"complex exp, binary32, binary32 screen",failed,0
+"complex exp, binary32, binary32 screen",not expressible,0
+"complex exp, binary32, binary32 screen",not run,0
+"complex exp, binary64, CORE-MATH worst cases",done,32768
+"complex exp, binary64, CORE-MATH worst cases",failed,0
+"complex exp, binary64, CORE-MATH worst cases",not expressible,0
+"complex exp, binary64, CORE-MATH worst cases",not run,0
+"complex exp, binary64, Lefèvre's hard cases",done,9600
+"complex exp, binary64, Lefèvre's hard cases",failed,0
+"complex exp, binary64, Lefèvre's hard cases",not expressible,8
+"complex exp, binary64, Lefèvre's hard cases",not run,0
+"complex expm1, binary32, binary32 screen",done,512
+"complex expm1, binary32, binary32 screen",failed,0
+"complex expm1, binary32, binary32 screen",not expressible,0
+"complex expm1, binary32, binary32 screen",not run,0
+"complex expm1, binary64, CORE-MATH worst cases",done,32766
+"complex expm1, binary64, CORE-MATH worst cases",failed,0
+"complex expm1, binary64, CORE-MATH worst cases",not expressible,2
+"complex expm1, binary64, CORE-MATH worst cases",not run,0
+"complex expm1, binary64, Lefèvre's hard cases",done,30312
+"complex expm1, binary64, Lefèvre's hard cases",failed,0
+"complex expm1, binary64, Lefèvre's hard cases",not expressible,0
+"complex expm1, binary64, Lefèvre's hard cases",not run,0
+"complex log, binary32, binary32 screen",done,512
+"complex log, binary32, binary32 screen",failed,0
+"complex log, binary32, binary32 screen",not expressible,0
+"complex log, binary32, binary32 screen",not run,0
+"complex log, binary64, CORE-MATH worst cases",done,32768
+"complex log, binary64, CORE-MATH worst cases",failed,0
+"complex log, binary64, CORE-MATH worst cases",not expressible,0
+"complex log, binary64, CORE-MATH worst cases",not run,0
+"complex log, binary64, Lefèvre's hard cases",done,11166
+"complex log, binary64, Lefèvre's hard cases",failed,0
+"complex log, binary64, Lefèvre's hard cases",not expressible,24
+"complex log, binary64, Lefèvre's hard cases",not run,0
+"complex log1p, binary32, binary32 screen",done,512
+"complex log1p, binary32, binary32 screen",failed,0
+"complex log1p, binary32, binary32 screen",not expressible,0
+"complex log1p, binary32, binary32 screen",not run,0
+"complex log1p, binary64, CORE-MATH worst cases",done,32768
+"complex log1p, binary64, CORE-MATH worst cases",failed,0
+"complex log1p, binary64, CORE-MATH worst cases",not expressible,0
+"complex log1p, binary64, CORE-MATH worst cases",not run,0
+"complex log1p, binary64, Lefèvre's hard cases",done,30200
+"complex log1p, binary64, Lefèvre's hard cases",failed,0
+"complex log1p, binary64, Lefèvre's hard cases",not expressible,0
+"complex log1p, binary64, Lefèvre's hard cases",not run,0
+"real exp, binary32, binary32 screen",median_us_now,121.054
+"real exp, binary32, binary32 screen",median_us_mpfr,1.965
+"real exp, binary32, binary32 screen",median_us_other,0.034
+"real exp, binary64, CORE-MATH worst cases",median_us_now,139.158
+"real exp, binary64, CORE-MATH worst cases",median_us_mpfr,2.45
+"real exp, binary64, CORE-MATH worst cases",median_us_other,0.082
+"real exp, binary64, Lefèvre's hard cases",median_us_now,155.374
+"real exp, binary64, Lefèvre's hard cases",median_us_mpfr,2.507
+"real exp, binary64, Lefèvre's hard cases",median_us_other,0.084
+"real expm1, binary32, binary32 screen",median_us_now,143.45
+"real expm1, binary32, binary32 screen",median_us_mpfr,2.77
+"real expm1, binary32, binary32 screen",median_us_other,0.032
+"real expm1, binary64, CORE-MATH worst cases",median_us_now,107.173
+"real expm1, binary64, CORE-MATH worst cases",median_us_mpfr,6.351
+"real expm1, binary64, CORE-MATH worst cases",median_us_other,0.138
+"real expm1, binary64, Lefèvre's hard cases",median_us_now,149.768
+"real expm1, binary64, Lefèvre's hard cases",median_us_mpfr,4.52
+"real expm1, binary64, Lefèvre's hard cases",median_us_other,0.136
+"real log, binary32, binary32 screen",median_us_now,99.379
+"real log, binary32, binary32 screen",median_us_mpfr,4.342
+"real log, binary32, binary32 screen",median_us_other,0.043
+"real log, binary64, CORE-MATH worst cases",median_us_now,124.792
+"real log, binary64, CORE-MATH worst cases",median_us_mpfr,4.894
+"real log, binary64, CORE-MATH worst cases",median_us_other,0.304
+"real log, binary64, Lefèvre's hard cases",median_us_now,134.62
+"real log, binary64, Lefèvre's hard cases",median_us_mpfr,5.061
+"real log, binary64, Lefèvre's hard cases",median_us_other,0.322
+"real log1p, binary32, binary32 screen",median_us_now,102.446
+"real log1p, binary32, binary32 screen",median_us_mpfr,4.638
+"real log1p, binary32, binary32 screen",median_us_other,0.052
+"real log1p, binary64, CORE-MATH worst cases",median_us_now,70.048
+"real log1p, binary64, CORE-MATH worst cases",median_us_mpfr,4.905
+"real log1p, binary64, CORE-MATH worst cases",median_us_other,0.062
+"real log1p, binary64, Lefèvre's hard cases",median_us_now,121.268
+"real log1p, binary64, Lefèvre's hard cases",median_us_mpfr,1.456
+"real log1p, binary64, Lefèvre's hard cases",median_us_other,0.076
+"complex exp, binary32, binary32 screen",median_us_now,1515.068
+"complex exp, binary64, CORE-MATH worst cases",median_us_now,766.396
+"complex exp, binary64, Lefèvre's hard cases",median_us_now,937.199
+"complex expm1, binary32, binary32 screen",median_us_now,1771.226
+"complex expm1, binary64, CORE-MATH worst cases",median_us_now,2520.897
+"complex expm1, binary64, Lefèvre's hard cases",median_us_now,2473.912
+"complex log, binary32, binary32 screen",median_us_now,591.619
+"complex log, binary64, CORE-MATH worst cases",median_us_now,728.612
+"complex log, binary64, Lefèvre's hard cases",median_us_now,822.987
+"complex log1p, binary32, binary32 screen",median_us_now,1440.284
+"complex log1p, binary64, CORE-MATH worst cases",median_us_now,3172.161
+"complex log1p, binary64, Lefèvre's hard cases",median_us_now,1436.144

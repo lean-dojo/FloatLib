@@ -1,24 +1,24 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 public import FloatLib.Kernels.FixedWord.Product.Proof
-public import FloatLib.Kernels.FixedWord.Difference.Proof
-public import FloatLib.Numerics.ShiftRightJam
+
 import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Data.Rat.Cast.Order
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Verified two-limb rounding
@@ -58,7 +58,7 @@ theorem UInt128.increment_toNat (value : UInt128)
       Nat.le_of_not_gt h
     have hpow : 2 ^ 128 = 2 ^ 64 * 2 ^ 64 := by norm_num
     rw [hpow] at hfit
-    nlinarith
+    omega
   have hhigh :
       (value.hi + sum.carry).toNat =
         value.hi.toNat + sum.carry.toNat := by
@@ -75,7 +75,7 @@ theorem UInt128.increment_toNat (value : UInt128)
           value.hi.toNat * 2 ^ 64 := by ring
     _ = (value.lo.toNat + 1) + value.hi.toNat * 2 ^ 64 := by
       rw [hsum]
-    _ = value.lo.toNat + value.hi.toNat * 2 ^ 64 + 1 := by ring
+    _ = value.lo.toNat + value.hi.toNat * 2 ^ 64 + 1 := by ac_rfl
 
 /-- Setting the low bit of a two-limb value agrees with natural-number bitwise OR. -/
 @[simp, grind =] theorem UInt128.setLowBit_toNat (value : UInt128) :
@@ -90,7 +90,7 @@ theorem UInt128.increment_toNat (value : UInt128)
   simp only [UInt64.toNat_one]
   calc
     (value.lo.toNat ||| 1) + value.hi.toNat * 2 ^ 64 =
-        2 ^ 64 * value.hi.toNat + (value.lo.toNat ||| 1) := by ring
+        2 ^ 64 * value.hi.toNat + (value.lo.toNat ||| 1) := by ac_rfl
     _ = (2 ^ 64 * value.hi.toNat) ||| (value.lo.toNat ||| 1) :=
       Nat.two_pow_add_eq_or_of_lt hlowSet value.hi.toNat
     _ = ((2 ^ 64 * value.hi.toNat) ||| value.lo.toNat) ||| 1 := by
@@ -99,7 +99,7 @@ theorem UInt128.increment_toNat (value : UInt128)
       rw [Nat.two_pow_add_eq_or_of_lt hlow value.hi.toNat]
     _ = (value.lo.toNat + value.hi.toNat * 2 ^ 64) ||| 1 := by
       congr 1
-      ring
+      ac_rfl
 
 /-- Setting the low bit of an even two-limb value adds one. -/
 theorem UInt128.setLowBit_toNat_of_even (value : UInt128)
@@ -137,10 +137,8 @@ namespace UInt128
     rw [UInt64.toNat_shiftLeft, hbit]
     rw [show UInt64.toNat 63 % 64 = 63 by decide]
     simp only [Nat.shiftLeft_eq]
-    have hmod : value.hi.toNat % 2 < 2 :=
-      Nat.mod_lt _ (by decide)
     rw [Nat.mod_eq_of_lt]
-    nlinarith
+    omega
   have hlowBound : value.lo.toNat / 2 < 2 ^ 63 := by
     have hlo := value.lo.toNat_lt
     omega
@@ -208,7 +206,7 @@ private theorem toNat_eq_lo_add_two_pow_mul (value : UInt128) (shift : Nat)
     rw [← pow_add, Nat.add_sub_of_le (Nat.le_of_lt hshift)]
   unfold UInt128.toNat
   rw [hpow]
-  ring
+  ac_rfl
 
 /--
 Below one word, generic nearest-even rounding of a two-limb value inspects only the discarded
@@ -276,7 +274,6 @@ theorem shiftRightLow_toNat (value : UInt128) (shift : Nat)
   rcases Nat.eq_zero_or_pos shift with rfl | hpositive
   · have hhi : value.hi = 0 := UInt64.toNat_inj.mp (by simpa using hhigh)
     simp [shiftRightLow, UInt128.toNat, hhi]
-  have hcomplement : 64 - shift < 64 := by omega
   have hlowBound : value.lo.toNat >>> shift < 2 ^ (64 - shift) := by
     rw [Nat.shiftRight_eq_div_pow, Nat.div_lt_iff_lt_mul (by positivity)]
     have hlo := value.lo.toNat_lt

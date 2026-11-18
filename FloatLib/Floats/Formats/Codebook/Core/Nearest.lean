@@ -1,14 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Algebra.Order.Group.Unbundled.Abs
 public import FloatLib.Floats.Formats.Codebook.Core.Runtime
-public import Mathlib.Algebra.Group.Nat.Defs
 
 /-!
 # Nearest-codeword quantization for finite codebooks
@@ -234,7 +232,7 @@ theorem foldl_closerEntry_spec {book : Codebook width α} (x : α)
   induction entries generalizing acc with
   | nil => simp_all
   | cons entry rest ih =>
-      obtain ⟨hmem, hrest, hacc⟩ := ih (closerEntry x acc entry) hfold
+      obtain ⟨hmem, _, hacc⟩ := ih (closerEntry x acc entry) hfold
       cases acc <;> simp only [closerEntry] at hmem hacc <;> grind
 
 /-- One scan step either takes the candidate, which is then strictly closer to `x` than any current

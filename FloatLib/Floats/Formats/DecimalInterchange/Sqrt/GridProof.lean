@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Runtime
 public import Mathlib.Analysis.Real.Sqrt
+
 import Mathlib.Tactic.Positivity.Finset
 
 /-!
@@ -68,9 +69,9 @@ theorem RoundingMode.sqrtRound_nat_sq (mode : RoundingMode) (n : Nat) :
   have hf : sqrtFloor ((n : ℚ) ^ 2) = n := by
     unfold sqrtFloor
     rw [← Nat.cast_pow, Nat.floor_natCast, Nat.sqrt_eq']
-  have hn : (0 : ℚ) ≤ n := Nat.cast_nonneg n
-  have h : ¬(2 * (n : ℚ) + 1) ^ 2 ≤ 4 * (n : ℚ) ^ 2 := by nlinarith
-  have h' : ¬(2 * (n : ℚ) + 1) ^ 2 = 4 * (n : ℚ) ^ 2 := by nlinarith
+  have h : ¬(2 * (n : ℚ) + 1) ^ 2 ≤ 4 * (n : ℚ) ^ 2 := by
+    nlinarith [Nat.cast_nonneg (α := ℚ) n]
+  have h' : ¬(2 * (n : ℚ) + 1) ^ 2 = 4 * (n : ℚ) ^ 2 := by exact fun heq => h heq.le
   cases mode <;> simp [sqrtRound, hf, sqrtIncrement, h, h', not_lt_of_ge (le_of_not_ge h)]
 
 /-- The square of an exact half-integer lies between the same two integer squares. -/
@@ -121,7 +122,7 @@ theorem sqrtRound_error_lt_one (mode : RoundingMode) {x : ℚ} (hx : 0 ≤ x) :
     rcases mode.sqrtRound_eq_floor_or_succ x with h | h
     · rw [h, abs_of_nonpos (sub_nonpos.mpr hlo)]
       linarith
-    · rw [h, Nat.cast_add, Nat.cast_one, abs_of_nonneg (by linarith)]
+    · rw [h, Nat.cast_add, Nat.cast_one, abs_of_nonneg (by positivity)]
       linarith
 
 /-- An integer adjacent to the root and on the root's side of the midpoint, as decided by the exact
@@ -138,7 +139,7 @@ private theorem abs_sub_sqrt_le_half {x : ℚ} (hx : 0 ≤ x) {n : Nat}
       have hc : (2 * (sqrtFloor x : ℝ) + 1) ^ 2 ≤ 4 * (x : ℝ) := by
         exact_mod_cast h
       nlinarith
-    rw [Nat.cast_add, Nat.cast_one, abs_of_nonneg (by linarith)]
+    rw [Nat.cast_add, Nat.cast_one, abs_of_nonneg (by positivity)]
     linarith
   · have hmid : Real.sqrt (x : ℝ) ≤ (sqrtFloor x : ℝ) + 1 / 2 := by
       apply (Real.sqrt_le_left (by positivity)).mpr
@@ -156,7 +157,7 @@ theorem sqrtRound_error_le_half (mode : RoundingMode)
   rcases hm with rfl | rfl <;>
     simp only [RoundingMode.sqrtRound, RoundingMode.sqrtIncrement, decide_eq_true_eq] <;>
     split <;> rename_i h
-  · exact Or.inl ⟨rfl, by rcases h with h | h; exact h.le; exact h.1.le⟩
+  · exact Or.inl ⟨rfl, h.elim (fun h => h.le) (fun h => h.1.le)⟩
   · exact Or.inr ⟨rfl, le_of_not_gt fun ht => h (Or.inl ht)⟩
   · exact Or.inl ⟨rfl, h⟩
   · exact Or.inr ⟨rfl, le_of_not_ge h⟩
@@ -175,7 +176,6 @@ theorem sqrtRound_down_le {x : ℚ} (hx : 0 ≤ x) :
 /-- Rounding toward positive gives an integer at least the real square root. -/
 theorem le_sqrtRound_up {x : ℚ} (hx : 0 ≤ x) :
     Real.sqrt (x : ℝ) ≤ (RoundingMode.up.sqrtRound x : ℝ) := by
-  have hlo := sqrtFloor_sq_le hx
   have hhi := sqrt_lt_sqrtFloor_succ hx
   simp only [RoundingMode.sqrtRound, RoundingMode.sqrtIncrement, decide_eq_true_eq]
   split

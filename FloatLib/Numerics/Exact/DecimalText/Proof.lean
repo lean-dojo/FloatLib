@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,8 +8,10 @@ module
 
 public import FloatLib.Numerics.Exact.DecimalText.Runtime
 public import FloatLib.Numerics.Exact.RadixText.ScannerProof
-import Mathlib.Tactic.IntervalCases
+
 import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.IntervalCases
+
 import all Init.Data.Repr
 
 /-!
@@ -26,6 +28,17 @@ formatter are inverses, and from there the dyadic conversion preserves value by 
 
 namespace FloatLib.Numerics.DecimalText
 
+/-- Constructing a scaled integer preserves its exact value, independently of the zero sign. -/
+@[simp] theorem Decimal.ofScaledInt_toRat (coefficient exponent : Int) (negativeZero : Bool) :
+    (Decimal.ofScaledInt coefficient exponent negativeZero).toRat =
+      (coefficient : ℚ) * (10 : ℚ) ^ exponent := by
+  cases coefficient with
+  | ofNat coefficient =>
+      by_cases hzero : coefficient = 0 <;>
+        simp [Decimal.ofScaledInt, Decimal.toRat, hzero]
+  | negSucc coefficient =>
+      simp [Decimal.ofScaledInt, Decimal.toRat, Int.cast_negSucc]
+
 /-- Printing any decimal digit and reading it recovers that digit. -/
 @[simp] theorem digitValue?_digitChar {digit : Nat} (hdigit : digit < 10) :
     digitValue? (Nat.digitChar digit) = some digit := by
@@ -36,7 +49,8 @@ theorem digitValue?_mem_naturalDigits {value : Nat} {character : Char}
     (hcharacter : character ∈ RadixText.naturalDigits value 10) :
     ∃ digit, digit < 10 ∧ digitValue? character = some digit := by
   by_cases hzero : value = 0
-  · simp [RadixText.naturalDigits, hzero] at hcharacter
+  · simp only [RadixText.naturalDigits, hzero, ↓reduceIte, ↓Char.isValue, List.mem_cons,
+    List.not_mem_nil, or_false] at hcharacter
     subst character
     exact ⟨0, by decide, by decide⟩
   · simp only [RadixText.naturalDigits, ite_eq_right hzero, List.mem_map,

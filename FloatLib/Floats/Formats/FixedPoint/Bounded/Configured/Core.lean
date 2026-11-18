@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Carrier
+public import FloatLib.Numerics.Executable.Carrier
 public import FloatLib.Floats.Formats.FixedPoint.Bounded.Core
 
 /-!
@@ -28,6 +28,7 @@ namespace BoundedFixedPoint
 
 /-- Type-level identity of a bounded fixed-point grid. -/
 inductive Family (radix : Radix) (fractionalDigits width : Nat) where
+  /-- The only value: the family names a format in types and carries no data. -/
   | format
 
 instance (radix : Radix) (fractionalDigits width : Nat) :

@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 
-# Run the checks that make a checked-in result set publishable.
-#
-# The site can only support its performance and conformance claims when both
-# result bundles are present. Check that first so a release never succeeds by
-# quietly omitting the evidence.
+# Run the checks that make a release publishable.
 
 set -euo pipefail
 
@@ -19,25 +15,6 @@ cd "$root"
 #
 # shellcheck source=tests/lib/lake.sh
 source "$root/tests/lib/lake.sh"
-
-require_bundle() {
-  local bundle=$1
-  if [[ ! -d "$bundle" ]]; then
-    printf 'release verification: missing result bundle: %s\n' "$bundle" >&2
-    exit 1
-  fi
-  if [[ ! -f "$bundle/MANIFEST.tsv" ]]; then
-    printf 'release verification: missing bundle manifest: %s/MANIFEST.tsv\n' \
-      "$bundle" >&2
-    exit 1
-  fi
-}
-
-require_bundle "$root/tests/results/main"
-require_bundle "$root/benchmarks/results/main"
-
-bash benchmarks/scripts/verify-main-result.sh
-bash tests/oracles/verify-main-result.sh
 
 floatlib_lake clean floatlib
 

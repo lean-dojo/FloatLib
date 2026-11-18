@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -21,31 +21,31 @@ open FloatLib.Floats.Formats.BinaryInterchange
 
 namespace FloatLibTests.Oracle.Binary16
 
-private inductive Operation where
+inductive Operation where
   | add
   | mul
 
-private def Operation.parse? : String → Option Operation
+def Operation.parse? : String → Option Operation
   | "add" => some .add
   | "mul" => some .mul
   | _ => none
 
-@[inline] private def Operation.apply (operation : Operation)
+@[inline] def Operation.apply (operation : Operation)
     (left right : Model FloatFormat.binary16) :
     Model FloatFormat.binary16 :=
   match operation with
   | .add => Model.add left right
   | .mul => Model.mul left right
 
-private def totalPairs : Nat := 2 ^ 32
+def totalPairs : Nat := 2 ^ 32
 
-private def shardBounds (index count : Nat) : Nat × Nat :=
+def shardBounds (index count : Nat) : Nat × Nat :=
   (totalPairs * index / count, totalPairs * (index + 1) / count)
 
-@[inline] private def appendWord (buffer : ByteArray) (word : Nat) : ByteArray :=
+@[inline] def appendWord (buffer : ByteArray) (word : Nat) : ByteArray :=
   (buffer.push (UInt8.ofNat word)).push (UInt8.ofNat (word >>> 8))
 
-private def makeChunk (operation : Operation) (start count : Nat) : ByteArray := Id.run do
+def makeChunk (operation : Operation) (start count : Nat) : ByteArray := Id.run do
   let mut buffer := ByteArray.empty
   for offset in [0:count] do
     let pair := start + offset
@@ -54,7 +54,7 @@ private def makeChunk (operation : Operation) (start count : Nat) : ByteArray :=
     buffer := appendWord buffer (operation.apply left right).toNatBits
   return buffer
 
-private def streamShard (operation : Operation) (start stop : Nat) : IO Unit := do
+def streamShard (operation : Operation) (start stop : Nat) : IO Unit := do
   let stdout ← IO.getStdout
   if ← stdout.isTty then
     throw <| IO.userError "refusing to write the binary result stream to a terminal"
@@ -66,10 +66,10 @@ private def streamShard (operation : Operation) (start stop : Nat) : IO Unit := 
     cursor := cursor + count
   stdout.flush
 
-private def usage : String :=
+def usage : String :=
   "usage: oracle binary16 {add|mul} SHARD_INDEX SHARD_COUNT"
 
-private def parseNat (name value : String) : IO Nat :=
+def parseNat (name value : String) : IO Nat :=
   match value.toNat? with
   | some result => pure result
   | none => throw <| IO.userError s!"invalid {name}: {value}"

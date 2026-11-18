@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -204,7 +204,7 @@ def failIntegralPowers : Thunk Nat := ⟨fun _ =>
   let bits (base exponent : Nat) :=
     Model.toNatBits (Model.pow (modelBinary32 base) (modelBinary32 exponent))
   countFailures
-    [ bits 0x3feafa59 0x40400000 == Model.toNatBits (Model.powInt (modelBinary32 0x3feafa59) 3)
+    [ bits 0x3feafa59 0x40400000 == Model.toNatBits (Model.pown (modelBinary32 0x3feafa59) 3)
     , bits 0x3feafa59 0x40400000 == 0x40c5f889
     -- (1 + 2^-23)^(2^23) rounds to e.
     , bits 0x3f800001 0x4b000000 == 0x402df854
@@ -225,7 +225,8 @@ def totalFailures : Thunk Nat := ⟨fun _ =>
 
 def report : Thunk String := ⟨fun _ =>
   let failedNames :=
-    if failedCustomChecks.get.isEmpty then "none" else String.intercalate ", " failedCustomChecks.get
+    if failedCustomChecks.get.isEmpty then "none"
+        else String.intercalate ", " failedCustomChecks.get
   String.intercalate "\n"
     [ s!"customInstances: {failCustomInstances.get}"
     , s!"failedCustomChecks: {failedNames}"

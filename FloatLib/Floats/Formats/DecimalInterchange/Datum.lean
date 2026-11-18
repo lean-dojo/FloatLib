@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Format
 public import FloatLib.Numerics.Exact.DecimalText.Notation
-public import Mathlib.Algebra.Field.Rat
 public import Mathlib.Data.Nat.Log
 
 /-!
@@ -32,8 +31,11 @@ namespace FloatLib.Floats.Formats.DecimalInterchange
 /-- A decimal datum before selecting an interchange width.
 `signaling = true` represents a signaling NaN. -/
 inductive Datum where
+  /-- The finite number `coefficient * 10 ^ quantum`, negated when `negative` is true. -/
   | finite (negative : Bool) (coefficient : Nat) (quantum : Int)
+  /-- An infinity, negative when `negative` is true. -/
   | infinity (negative : Bool)
+  /-- A NaN with its sign, whether it is signaling, and its payload. -/
   | nan (negative : Bool) (signaling : Bool) (payload : Nat)
   deriving DecidableEq
 
@@ -94,14 +96,14 @@ A decimal literal keeps its written coefficient and quantum. `1.20` is coefficie
 `-2`, as when reading the text `1.20`, and `1.2e4` is coefficient 12 at quantum 3. The power of ten
 is never expanded, so `1e1000000` is coefficient 1 at quantum 1000000.
 
-`Arithmetic.add`, `sub`, `mul`, `div`, `fma`, `sqrt`, `powInt` and `rootN` accept a literal that
+`Arithmetic.add`, `sub`, `mul`, `div`, `fma`, `sqrt`, `pown` and `rootn` accept a literal that
 doesn't fit the format, because they read a finite operand's exact value and round only the result.
 `Arithmetic.nextUp`, `nextDown` and `remainder`, the codecs and the certified functions need
 `Valid f`.
 -/
 instance : OfScientific Datum where
-  ofScientific mantissa exponentSign decimalExponent :=
-    .finite false mantissa (if exponentSign then -(decimalExponent : Int) else decimalExponent)
+  ofScientific mantissa exponentSign logB :=
+    .finite false mantissa (if exponentSign then -(logB : Int) else logB)
 
 /-- Representability at the selected precision and quantum range.
 NaN payloads have one fewer decimal digit than finite coefficients. -/

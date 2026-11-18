@@ -1,12 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Form
+public import FloatLib.Kernels.Execution.Instances -- shake: keep
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Extrema.Runtime
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 
@@ -20,7 +21,7 @@ policy is kept.
 
 Without context, an operation uses FloatLib's nearest-even, no-saturation projection policy. For
 other rounding modes, stochastic random words, saturation, or mixed-format destinations, use the
-`mode`, `saturation`, and `target` options of `ExecFloat.P3109.add` and its siblings. None of
+`mode`, `saturation`, and `target` options of `ExecFloat.P3109.Add` and its siblings. None of
 these operations raises or synthesizes IEEE exception flags.
 
 Literals round once from their exact rational value under the same default policy, and `==` is
@@ -28,6 +29,8 @@ numerical equality, so NaN compares unequal to every value, itself included.
 
 The rational real-embedding and decoding proofs are in `Arithmetic.Proof`, and the irrational-root
 refinement and decoding proofs in `Arithmetic.Sqrt.Proof`.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7 and 4.10.3–4.10.8.
 -/
 
 @[expose] public section
@@ -56,20 +59,46 @@ def estimate (format : Formats.P3109.Format) (operation : Backend.Operation) :
     | .sqrt => 120
     | .fma => 100
 
-/-- Package the single exact kernel without changing the caller's planning policy. -/
+/--
+The reference operation of a P3109 format: exact arithmetic followed by one projection under the
+default nearest-even, no-saturation policy. It is the specification of the format's capability,
+and the operation that a candidate tagged `@[compiler_optimize]` for P3109 refines.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7 and 4.10.3–4.10.8.
+-/
+def reference (format : Formats.P3109.Format) :
+    (operation : Backend.Operation) →
+      OperationSignature (Codebook.Family format.codebook) operation
+  | .add => fun left right => Add left right
+  | .sub => fun left right => Subtract left right
+  | .mul => fun left right => Multiply left right
+  | .div => fun left right => Divide left right
+  | .sqrt => fun value => Sqrt value
+  | .fma => fun left right addend => FMA left right addend
+
+/-- The exact kernel is its own reference, and the family's baseline. -/
+@[compiler_optimize baseline]
+def certified (format : Formats.P3109.Format) (operation : Backend.Operation) :
+    Backend.Certified (reference format operation) :=
+  Backend.Certified.reference (estimate format operation) (reference format operation)
+
+/--
+The capability of one operation: the planner selects among the exact baseline and every
+candidate tagged `@[compiler_optimize]` for `reference format operation`.
+-/
 @[always_inline, instance_reducible] def capability
     [Backend.PolicyFor (Codebook.Family format.codebook)]
     (operation : Backend.Operation)
-    (kernel : OperationSignature (Codebook.Family format.codebook) operation) :
+    (portfolio : Backend.Portfolio (reference format operation)) :
     Capability (Codebook.Family format.codebook) operation :=
-  Capability.ofDirectKernel operation kernel
-    (Backend.Certified.reference (estimate format operation) kernel) kernel rfl
+  Capability.ofTagged operation portfolio (certified format operation)
+    (reference format operation) rfl
 
 end Plan
 
 /-- Report-default negation, including projection of unsigned results. -/
 instance negInstance : Neg (ExecFloat.P3109 format) where
-  neg value := neg value
+  neg value := Negate value
 
 /-- A natural literal rounds once, nearest-even with no saturation request. -/
 instance (value : Nat) : OfNat (ExecFloat.P3109 format) value where
@@ -84,40 +113,25 @@ instance : OfScientific (ExecFloat.P3109 format) where
 instance comparison : ExecFloat.Comparison (Codebook.Family format.codebook) where
   compare := compare
 
-/-- Exact addition with one nearest-even report projection. -/
-@[always_inline] instance addCapability
-    [Backend.PolicyFor (Codebook.Family format.codebook)] :
-    ExecFloat.Add (Codebook.Family format.codebook) :=
-  Plan.capability .add (fun left right => add left right)
+/--
+The capability of each operation: its exact result with one nearest-even report projection.
+Division returns the report's NaN for every zero denominator, the square root is rounded by exact
+comparisons with the irrational result, and the fused multiply-add rounds no intermediate product.
+-/
+@[always_inline] instance operationCapability
+    [Backend.PolicyFor (Codebook.Family format.codebook)] (operation : Backend.Operation)
+    [portfolio : Backend.Portfolio (Plan.reference format operation)] :
+    Capability (Codebook.Family format.codebook) operation :=
+  Plan.capability operation portfolio
 
-/-- Exact subtraction with one nearest-even report projection. -/
-@[always_inline] instance subCapability
-    [Backend.PolicyFor (Codebook.Family format.codebook)] :
-    ExecFloat.Sub (Codebook.Family format.codebook) :=
-  Plan.capability .sub (fun left right => sub left right)
+/--
+Lean's kernel evaluates every P3109 operation as its reference: the exact result and one
+projection, without the planner's selection.
 
-/-- Exact multiplication with one nearest-even report projection. -/
-@[always_inline] instance mulCapability
-    [Backend.PolicyFor (Codebook.Family format.codebook)] :
-    ExecFloat.Mul (Codebook.Family format.codebook) :=
-  Plan.capability .mul (fun left right => mul left right)
-
-/-- Exact division with the report's NaN result for every zero denominator. -/
-@[always_inline] instance divCapability
-    [Backend.PolicyFor (Codebook.Family format.codebook)] :
-    ExecFloat.Div (Codebook.Family format.codebook) :=
-  Plan.capability .div (fun left right => div left right)
-
-/-- Square root rounded by exact comparisons with the irrational result. -/
-@[always_inline] instance sqrtCapability
-    [Backend.PolicyFor (Codebook.Family format.codebook)] :
-    ExecFloat.Sqrt (Codebook.Family format.codebook) :=
-  Plan.capability .sqrt (fun value => sqrt value)
-
-/-- Fused multiply-add with no rounded or saturated intermediate product. -/
-@[always_inline] instance fmaCapability
-    [Backend.PolicyFor (Codebook.Family format.codebook)] :
-    ExecFloat.Fma (Codebook.Family format.codebook) :=
-  Plan.capability .fma (fun left right addend => fma left right addend)
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7 and 4.10.3–4.10.8.
+-/
+instance directReference [Backend.PolicyFor (Codebook.Family format.codebook)]
+    (operation : Backend.Operation) [Capability (Codebook.Family format.codebook) operation] :
+    KernelPath.DirectReference (Codebook.Family format.codebook) operation where
 
 end FloatLib.Floats.ExecFloat.P3109

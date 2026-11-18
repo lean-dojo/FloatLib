@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch08-restoring-division.png: restoring division one quotient bit at a time.
 
-Chapter 13 quotes `natQuotientStep` from FloatLib/Kernels/FixedWord/Quotient/Proof.lean (checked
-against the library by `rfl` in the chapter's own Lean block) and runs the word loop
-`quotientSteps` from FloatLib/Kernels/FixedWord/Quotient/Runtime.lean on one example:
-
-    #eval quotientSteps 3 4 { quotient := 1, remainder := 1 }
-    -- { quotient := 21, remainder := 1 }
-
-that is, start from 4 = 1 * 3 + 1 and generate four more quotient bits, reaching 4 * 2^4 = 64 =
-21 * 3 + 1. This script re-runs the same step over Python integers (a transcription of the
-natural-number step: double the remainder, compare with the divisor, append a 0 and keep, or
-append a 1 and subtract) and stops with an error if the final state is not the one the chapter
-prints. Every number drawn is a value of that recurrence: the remainder in, the doubled
-remainder, the quotient bits, the remainder out, and the invariant `q * d + r = 4 * 2^n` from
-`natQuotientSteps_spec`, checked on every row.
+The example in Arithmetic performance divides 4 by 3. Starting with quotient 1 and
+remainder 1, four steps of `quotientSteps` produce quotient 21 and remainder 1.
+The Python recurrence below follows `natQuotientStep` in
+FloatLib/Kernels/FixedWord/Quotient/Proof.lean. For each row it checks the invariant
+from `natQuotientSteps_spec`, q * 3 + r = 4 * 2^n, and the bound on the remainder.
 
 Run from anywhere: python3 ch08_restoring_division.py [--out PNG]
 """
@@ -28,13 +19,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch, Rectangle  # noqa: E402
 
 # The chapter's example: dividend 4, divisor 3, initial state 4 = 1 * 3 + 1, four more bits.
 DIVIDEND = 4
 DIVISOR = 3
 STEPS = 4
-EXPECTED = (21, 1)  # the `-- { quotient := 21, remainder := 1 }` comment in chapter 13
+EXPECTED = (21, 1)  # quotient and remainder
 
 
 def nat_quotient_step(den: int, quotient: int, remainder: int) -> tuple[int, int, int, int]:
@@ -62,66 +54,56 @@ def trace() -> list[dict]:
     return rows
 
 
-def remainder_bar(ax, row: dict, *, y: float, x: float, width: float, height: float,
-                  show_zero: bool = True):
+BAR = dict(fc=fs.SKY, ec=fs.ROLE["main"], lw=fs.LW_AXIS)
+REMOVED = dict(fc="white", ec=fs.MUTED, hatch="///", lw=fs.LW_GRID)
+
+
+def remainder_bar(ax, row: dict, *, y: float, x: float, width: float, height: float):
     """A common 0..5 scale shows the doubled remainder and the divisor threshold."""
     unit = width / 5
-    ax.plot([x, x + width], [y, y], color=fs.LINE, lw=0.8)
-    ax.add_patch(Rectangle((x, y), row["doubled"] * unit, height,
-                           fc=fs.SKY, ec=fs.BLUE, lw=0.8))
+    ax.plot([x, x + width], [y, y], color=fs.LINE, lw=fs.LW_AXIS)
+    ax.add_patch(Rectangle((x, y), row["doubled"] * unit, height, **BAR))
     if row["bit"]:
-        ax.add_patch(Rectangle((x, y), DIVISOR * unit, height,
-                               fc="white", ec=fs.MUTED, hatch="///", lw=0.6))
-    ax.plot([x + DIVISOR * unit] * 2, [y - 0.05, y + height + 0.1],
-            color=fs.VERMILION, lw=1)
-    ax.text(x + DIVISOR * unit, y + height + 0.14, "3", fontsize=11.5,
-            color=fs.VERMILION, ha="center", va="bottom")
-    if show_zero:
-        ax.text(x, y - 0.06, "0", fontsize=11, va="top")
+        ax.add_patch(Rectangle((x, y), DIVISOR * unit, height, **REMOVED))
+    ax.plot([x + DIVISOR * unit] * 2, [y - 0.05, y + height + 0.05],
+            color=fs.ROLE["mark"], lw=fs.LW_REF + 0.4)
 
 
 def draw(mobile: bool, rows: list[dict]):
-    fig = plt.figure(figsize=(3.8, 8.5) if mobile else (9, 4.9))
-    fig.text(0.035, 0.98, "4 ÷ 3: grow the quotient one bit", fontsize=13.5, weight="bold", va="top")
-    fig.text(0.035, 0.915 if mobile else 0.875,
-             "Start: 4 = 1 × 3 + 1\nquotient q = 1, remainder r = 1" if mobile else
-             "Start: 4 = 1 × 3 + 1, so quotient q = 1 and remainder r = 1.",
-             fontsize=12, linespacing=1.5, va="top" if mobile else "baseline")
-    if not mobile:
-        fig.text(0.08, 0.76, "step", fontsize=11.5, color=fs.MUTED)
-        fig.text(0.23, 0.76, "Double r; compare with 3", fontsize=11.5, color=fs.MUTED)
-        fig.text(0.59, 0.76, "next bit", fontsize=11.5, color=fs.MUTED)
-        fig.text(0.74, 0.76, "new q, r", fontsize=11.5, color=fs.MUTED)
-    for i, row in enumerate(rows[1:]):
+    """One row per step: the doubled remainder against the divisor, the bit, the new q and r."""
+    width = fs.MOBILE_WIDTH if mobile else fs.WIDTH
+    pitch = 0.62 if mobile else 0.5
+    height = 0.75 + pitch * len(rows) + 0.55
+    fig = plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    # Column positions: step, bar (left edge and width), bit, quotient, remainder.
+    step_x, bar_x, bar_w, bit_x, q_x, r_x = (
+        (0.3, 0.75, 1.15, 2.2, 2.85, 3.55) if mobile else (0.6, 1.6, 2.6, 5.0, 6.4, 8.2))
+    top = height - 0.3
+    for x, label, align in ((step_x, "step", "center"), (bar_x, "$2r$ against 3", "left"),
+                            (bit_x, "bit", "center"), (q_x, "$q$", "center"),
+                            (r_x, "$r$", "center")):
+        ax.text(x, top, label, fontsize=fs.SIZE_TICK, color=fs.MUTED, ha=align, va="center")
+    ax.plot([0.15, width - 0.15], [top - 0.22] * 2, color=fs.LINE, lw=fs.LW_AXIS)
+    for index, row in enumerate(rows):
+        y = top - 0.22 - pitch * (index + 0.5)
+        ax.text(step_x, y, str(row["step"]), fontsize=fs.SIZE_LABEL, ha="center", va="center")
+        if row["doubled"] is not None:
+            remainder_bar(ax, row, y=y - 0.11, x=bar_x, width=bar_w, height=0.22)
+            ax.text(bit_x, y, str(row["bit"]), fontsize=fs.SIZE_LABEL, ha="center", va="center")
+        quotient = f"{row['q']} = ${row['q']:b}_2$"
         if mobile:
-            rect = [0.035, 0.64 - i * 0.168, 0.93, 0.148]
-            ax = fig.add_axes(rect)
-            ax.set(xlim=(0, 1), ylim=(0, 1))
-            ax.axis("off")
-            ax.add_patch(Rectangle((0, 0), 1, 1, fc=fs.PAPER_2, ec=fs.LINE, lw=0.6))
-            ax.text(0.04, 0.84, f"Step {row['step']}: 2r = {row['doubled']}", fontsize=12, weight="bold")
-            remainder_bar(ax, row, y=0.34, x=0.07, width=0.40, height=0.17)
-            action = "keep 2" if row["bit"] == 0 else "subtract 3"
-            ax.text(0.58, 0.55, action, fontsize=11.5)
-            ax.text(0.58, 0.29, f"append {row['bit']}", fontsize=12, color=fs.BLUE)
-            ax.text(0.04, 0.04, f"q = {row['q']} ({row['q']:b}₂),   r = {row['r_out']}", fontsize=11.5)
-        else:
-            ax = fig.add_axes([0.04, 0.59 - i * 0.13, 0.92, 0.13])
-            ax.set(xlim=(0, 1), ylim=(0, 1))
-            ax.axis("off")
-            ax.text(0.06, 0.48, str(row['step']), fontsize=12, ha="center")
-            remainder_bar(ax, row, y=0.32, x=0.21, width=0.24, height=0.22, show_zero=False)
-            action = f"2r = {row['doubled']}; " + ("keep" if row["bit"] == 0 else "subtract 3")
-            ax.text(0.20, 0.05, action, fontsize=11.5)
-            ax.text(0.62, 0.48, str(row['bit']), fontsize=13, color=fs.BLUE)
-            ax.text(0.76, 0.57, f"q = {row['q']} ({row['q']:b}₂)", fontsize=12)
-            ax.text(0.76, 0.17, f"r = {row['r_out']}", fontsize=12)
-    fig.text(0.035, 0.07 if mobile else 0.09,
-             "Final: 21 × 3 + 1 = 64 = 4 × 2⁴", fontsize=12, weight="bold")
-    fig.text(0.035, 0.022,
-             "Hatching: subtract one divisor.\nEvery step keeps 0 ≤ r < 3." if mobile else
-             "Hatching removes one divisor.  Every step keeps q × 3 + r = 4 × 2ⁿ and 0 ≤ r < 3.",
-             fontsize=11.5, color=fs.MUTED, linespacing=1.5)
+            quotient = f"{row['q']}\n${row['q']:b}_2$"
+        ax.text(q_x, y, quotient, fontsize=fs.SIZE_LABEL if not mobile else fs.SIZE_TICK,
+                ha="center", va="center", linespacing=1.2)
+        ax.text(r_x, y, str(row["r_out"]), fontsize=fs.SIZE_LABEL, ha="center", va="center")
+    handles = [
+        Patch(label="$2r$", **BAR),
+        Patch(label="divisor subtracted", **REMOVED),
+        Line2D([], [], color=fs.ROLE["mark"], lw=fs.LW_REF + 0.4, label="divisor 3"),
+    ]
+    fs.legend(ax, handles=handles, loc="center", bbox_to_anchor=(width / 2, 0.3),
+              bbox_transform=ax.transData, ncols=1 if mobile else 3)
     return fig
 
 
@@ -133,7 +115,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch08-restoring-division.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile, rows), target.name, target)}")
 
 

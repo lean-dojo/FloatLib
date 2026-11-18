@@ -1,0 +1,60 @@
+[
+  {
+    "id": "interval-constraint-route",
+    "declaration": "probe_constraint",
+    "imports": [
+      "FloatLib.Tactic.Interval.Constraints"
+    ],
+    "commands": [
+      "theorem probe_constraint (x : ℝ) (h₀ : 0 ≤ x) (h₁ : x ≤ 1) (h : 2 ≤ x * x) : False := by\n  interval"
+    ]
+  },
+  {
+    "id": "complex-exponential-api",
+    "declaration": "probe_complex",
+    "imports": [
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Exponential",
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Logarithm"
+    ],
+    "commands": [
+      "#check ExecComplex.exp",
+      "theorem probe_complex : True := True.intro"
+    ]
+  },
+  {
+    "id": "complex-expm1-api",
+    "declaration": "probe_complex_expm1",
+    "imports": [
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Exponential",
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Logarithm"
+    ],
+    "commands": [
+      "#check ExecComplex.expm1",
+      "theorem probe_complex_expm1 : True := True.intro"
+    ]
+  },
+  {
+    "id": "complex-log-api",
+    "declaration": "probe_complex_log",
+    "imports": [
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Exponential",
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Logarithm"
+    ],
+    "commands": [
+      "#check ExecComplex.log",
+      "theorem probe_complex_log : True := True.intro"
+    ]
+  },
+  {
+    "id": "complex-log1p-api",
+    "declaration": "probe_complex_log1p",
+    "imports": [
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Exponential",
+      "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Logarithm"
+    ],
+    "commands": [
+      "#check ExecComplex.log1p",
+      "theorem probe_complex_log1p : True := True.intro"
+    ]
+  }
+]

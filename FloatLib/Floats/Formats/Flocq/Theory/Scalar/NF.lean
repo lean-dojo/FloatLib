@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -60,7 +60,7 @@ structure NF (β : Numerics.Radix) (fexp : ℤ → ℤ) (rnd : ℝ → ℤ) wher
 namespace NF
 
 variable {β : Numerics.Radix} {fexp : ℤ → ℤ} {rnd : ℝ → ℤ}
-variable [ValidExp fexp] [ValidRnd rnd]
+variable [ValidExp fexp]
 
 /-- The rounding operator associated with the format: `roundR x = round … x`. -/
 @[inline] noncomputable def roundR (x : ℝ) : ℝ := round (β := β) (fexp := fexp) rnd x
@@ -74,15 +74,13 @@ variable [ValidExp fexp] [ValidRnd rnd]
 
 /-- The semantic value of an `NF` lies on its declared radix/exponent grid. -/
 def IsRepresentable (x : NF β fexp rnd) : Prop :=
-  genericFormat β fexp x.val
+  GenericRepresentable β fexp x.val
 
-omit [ValidRnd rnd] in
 /-- `toReal (ofReal x)` is definitionally the rounded real `roundR x`. -/
 @[simp] lemma toReal_ofReal (x : ℝ) :
     toReal (β := β) (fexp := fexp) (rnd := rnd) (ofReal (β := β) (fexp := fexp) (rnd := rnd) x) =
       roundR (β := β) (fexp := fexp) (rnd := rnd) x := rfl
 
-omit [ValidRnd rnd] in
 /-- The underlying `val` field of `ofReal x` is `roundR x`. -/
 @[simp] lemma val_ofReal (x : ℝ) :
     (ofReal (β := β) (fexp := fexp) (rnd := rnd) x).val =
@@ -130,7 +128,6 @@ noncomputable instance : Div (NF β fexp rnd) where
 noncomputable def checkedDiv (a b : NF β fexp rnd) : Option (NF β fexp rnd) :=
   if b.val = 0 then none else some (a / b)
 
-omit [ValidRnd rnd] in
 /-- Checked division rejects the zero-divisor case and nothing else. -/
 @[simp] theorem checkedDiv_eq_none_iff (a b : NF β fexp rnd) :
     checkedDiv a b = none ↔ b.val = 0 := by
@@ -173,7 +170,7 @@ noncomputable def checkedRealPow (a b : NF β fexp rnd) : Option (NF β fexp rnd
       some (positiveRealPow a b ha)
     else if hi : ∃ z : ℤ, b.val = z then
       let z := Classical.choose hi
-      if hz : 0 ≤ z then
+      if 0 ≤ z then
         some (ofReal (β := β) (fexp := fexp) (rnd := rnd) (a.val ^ z.toNat))
       else if a.val = 0 then
         none
@@ -188,13 +185,11 @@ noncomputable def checkedRealPow (a b : NF β fexp rnd) : Option (NF β fexp rnd
     else
       none
 
-omit [ValidRnd rnd] in
 /-- On a positive base, checked exponentiation is the ordinary positive real-power formula. -/
 theorem checkedRealPow_of_pos (a b : NF β fexp rnd) (ha : 0 < a.val) :
     checkedRealPow a b = some (positiveRealPow a b ha) := by
   simp [checkedRealPow, ha, positiveRealPow]
 
-omit [ValidRnd rnd] in
 /--
 A zero base with a positive exponent gives the rounded value zero: through the natural-power
 branch when the exponent is an integer, and through the zero-base branch otherwise.
@@ -234,7 +229,6 @@ noncomputable def checkedSqrt (x : NF β fexp rnd) : Option (NF β fexp rnd) :=
   else
     none
 
-omit [ValidRnd rnd] in
 /-- Checked square root rejects the negative inputs and nothing else. -/
 @[simp] theorem checkedSqrt_eq_none_iff (x : NF β fexp rnd) :
     checkedSqrt x = none ↔ ¬0 ≤ x.val := by
@@ -247,7 +241,6 @@ noncomputable def checkedLog (x : NF β fexp rnd) : Option (NF β fexp rnd) :=
   else
     none
 
-omit [ValidRnd rnd] in
 /-- Checked logarithm rejects the nonpositive inputs and nothing else. -/
 @[simp] theorem checkedLog_eq_none_iff (x : NF β fexp rnd) :
     checkedLog x = none ↔ ¬0 < x.val := by

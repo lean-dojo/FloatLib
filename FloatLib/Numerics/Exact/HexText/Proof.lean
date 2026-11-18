@@ -1,14 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Numerics.Exact.HexText.Runtime
 public import FloatLib.Numerics.Exact.DecimalText.Proof
+public import FloatLib.Numerics.Exact.HexText.Runtime
 public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
+
 import Mathlib.Tactic.IntervalCases
+
 import all Init.Data.Repr
 
 /-!

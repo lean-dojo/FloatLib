@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.PowerProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.DirectedEnclosureProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
@@ -17,8 +18,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Pi.Proof
 # Correct rounding of the total binary exponential and logarithm
 
 Take an IEEE descriptor and a finite input in the function's domain. Then
-`CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and `expMul` return a finite value if and
-only if the real result (in absolute value for `log`, `logPlus1` and `expMul`) lies below
+`CorrectlyRounded.exp`, `log`, `expm1`, `logp1` and `expMul` return a finite value if and
+only if the real result (in absolute value for `log`, `logp1` and `expMul`) lies below
 `Certified.overflowThreshold`, and every finite value they return is the nearest-even rounding of
 the real result. Nothing is assumed about the search budget or the distance from a rounding
 boundary. A search result is correctly rounded by its enclosure, and otherwise the exact
@@ -28,30 +29,30 @@ two past the finite range (`roundAt_overflowThreshold`), so no finite value is t
 real at or beyond it.
 
 At or beyond the threshold the result is the infinity with the sign of the real result. A finite
-logarithm or `logPlus1` of a finite input comes from an input in the domain. So on a finite input
+logarithm or `logp1` of a finite input comes from an input in the domain. So on a finite input
 in the domain every finite result is correctly rounded, and every other result is that infinity.
 
 From there the standard model bounds each error by `unitRoundoffAt fmt` times the magnitude of
 the exact result plus `underflowErrorAt fmt`. Rounding keeps the sign of an exact result beyond
 `underflowErrorAt fmt`, and a nonzero finite input is at least twice that in magnitude, so
-`expMinus1` of a negative input is negative and `logPlus1` of a positive input is positive.
-Whenever the certified search of `exp`, `expMinus1`, `log`, or `logPlus1` returns a result, the
+`expm1` of a negative input is negative and `logp1` of a positive input is positive.
+Whenever the certified search of `exp`, `expm1`, `log`, or `logp1` returns a result, the
 total function returns the same encoding.
 
 ## Main results
 
-* `toReal_exp_eq_roundAt`, `toReal_log_eq_roundAt`, `toReal_expMinus1_eq_roundAt`,
-  `toReal_logPlus1_eq_roundAt`, `toReal_expMul_eq_roundAt`: correct rounding when the exact result
+* `toReal_exp_eq_roundAt`, `toReal_log_eq_roundAt`, `toReal_expm1_eq_roundAt`,
+  `toReal_logp1_eq_roundAt`, `toReal_expMul_eq_roundAt`: correct rounding when the exact result
   is below the overflow threshold, and `toReal_exp_of_isFinite` and its siblings for every finite
   result.
 * `isFinite_exp_iff` and its siblings: the result is finite if and only if the exact result is
   below the overflow threshold.
 * `exp_eq_nativeOverflow` and its siblings: when the exact result reaches the threshold, the
   result is a signed infinity.
-* `toReal_pos_of_isFinite_log`, `neg_one_lt_toReal_of_isFinite_logPlus1`: a finite result comes
+* `toReal_pos_of_isFinite_log`, `neg_one_lt_toReal_of_isFinite_logp1`: a finite result comes
   from an input in the domain.
 * `abs_toReal_exp_sub_le` and its siblings: the mixed relative and absolute error bound.
-* `toReal_exp_nonneg`, `toReal_expMinus1_lt_zero`, `toReal_logPlus1_pos`, `toReal_expMul_nonneg`
+* `toReal_exp_nonneg`, `toReal_expm1_lt_zero`, `toReal_logp1_pos`, `toReal_expMul_nonneg`
   and their siblings: signs of the results.
 * `exp_eq_of_certified_exp_eq_ok` and its siblings: agreement with the certified search.
 -/
@@ -68,11 +69,11 @@ private theorem cmp_eq_cmp {x y x' y' : ℝ} (hlt : x < y ↔ x' < y') (hgt : y 
     cmp x y = cmp x' y' := by
   simp only [cmp, cmpUsing, hlt, hgt]
 
-/-- `compareAbsExpMinus1` orders `|exp argument - 1|` against every rational boundary. -/
-theorem compareAbsExpMinus1_eq_real (argument boundary : ℚ) :
-    compareAbsExpMinus1 argument boundary =
+/-- `compareAbsExpm1` orders `|exp argument - 1|` against every rational boundary. -/
+theorem compareAbsExpm1_eq_real (argument boundary : ℚ) :
+    compareAbsExpm1 argument boundary =
       cmp |Real.exp (argument : ℝ) - 1| (boundary : ℝ) := by
-  unfold compareAbsExpMinus1
+  unfold compareAbsExpm1
   split
   · rename_i hnegative
     have hexp : Real.exp (argument : ℝ) < 1 :=
@@ -216,16 +217,16 @@ theorem abs_lt_overflowThreshold_of_toReal_eq_roundAt {fmt : FloatFormat}
 
 /-! ## Enclosure searches -/
 
-/-- The logarithm enclosure contains `log (scaled * 2 ^ binaryExponent)`. -/
-theorem contains_logEnclosure {scaled : ℚ} (hscaled : 0 < scaled) (binaryExponent : ℤ)
+/-- The logarithm enclosure contains `log (scaled * 2 ^ logB)`. -/
+theorem contains_logEnclosure {scaled : ℚ} (hscaled : 0 < scaled) (logB : ℤ)
     (precision : Nat) :
-    (logEnclosure scaled binaryExponent precision).Contains
-      (Real.log ((scaled : ℝ) * 2 ^ binaryExponent)) := by
+    (logEnclosure scaled logB precision).Contains
+      (Real.log ((scaled : ℝ) * 2 ^ logB)) := by
   rw [logEnclosure, FloatLib.Numerics.Enclosure.BinaryGrid.contains_toRationalInterval]
   have h := Interval.BinaryGrid.containsReal_add precision
     (Certified.containsReal_logReduced hscaled precision)
     (FloatLib.Numerics.Enclosure.BinaryGrid.containsReal_scaleRat precision
-      (FloatLib.Numerics.Enclosure.Constants.containsReal_ln2Grid precision) binaryExponent)
+      (FloatLib.Numerics.Enclosure.Constants.containsReal_ln2Grid precision) logB)
   rw [Real.log_mul (by exact_mod_cast hscaled.ne') (zpow_ne_zero _ (by norm_num)),
     Real.log_zpow]
   simpa using h
@@ -373,34 +374,34 @@ private theorem toReal_expRat (hfmt : fmt.isIEEE = true) {argument : ℚ}
       exact toReal_round hfmt (Real.exp_pos _).le
         (ElementaryComparison.compareExp_eq_real argument) (by simp) hfinite
 
-/-- `expMinus1Rat` returns the certified `expMinus1` whenever the certified search does. -/
-theorem expMinus1Rat_eq_of_certified_expMinus1Rat_eq_ok {argument : ℚ} {budget : Certified.Budget}
-    {result : Model fmt} (hresult : Certified.expMinus1Rat fmt argument budget = .ok result) :
-    expMinus1Rat fmt argument budget = result := by
-  simp [expMinus1Rat, hresult]
+/-- `expm1Rat` returns the certified `expm1` whenever the certified search does. -/
+theorem expm1Rat_eq_of_certified_expm1Rat_eq_ok {argument : ℚ} {budget : Certified.Budget}
+    {result : Model fmt} (hresult : Certified.expm1Rat fmt argument budget = .ok result) :
+    expm1Rat fmt argument budget = result := by
+  simp [expm1Rat, hresult]
 
-private theorem isFinite_expMinus1Rat (hfmt : fmt.isIEEE = true) {argument : ℚ}
+private theorem isFinite_expm1Rat (hfmt : fmt.isIEEE = true) {argument : ℚ}
     (hrange : Real.exp (argument : ℝ) - 1 < Certified.overflowThreshold fmt)
-    (budget : Certified.Budget) : isFinite (expMinus1Rat fmt argument budget) = true := by
-  unfold expMinus1Rat
+    (budget : Certified.Budget) : isFinite (expm1Rat fmt argument budget) = true := by
+  unfold expm1Rat
   split
-  · exact Certified.isFinite_of_expMinus1Rat_eq_ok ‹_›
-  · refine isFinite_round hfmt (compareAbsExpMinus1_eq_real argument) ?_
+  · exact Certified.isFinite_of_expm1Rat_eq_ok ‹_›
+  · refine isFinite_round hfmt (compareAbsExpm1_eq_real argument) ?_
     rcases le_or_gt 0 (Real.exp (argument : ℝ) - 1) with hexp | hexp
     · rwa [abs_of_nonneg hexp]
     · rw [abs_of_neg hexp]
       linarith [one_lt_overflowThreshold hfmt, Real.exp_pos (argument : ℝ)]
 
-private theorem toReal_expMinus1Rat (hfmt : fmt.isIEEE = true) {argument : ℚ}
-    {budget : Certified.Budget} (hfinite : isFinite (expMinus1Rat fmt argument budget) = true) :
-    toReal (expMinus1Rat fmt argument budget) = roundAt fmt (Real.exp argument - 1) := by
-  cases hsearch : Certified.expMinus1Rat fmt argument budget with
+private theorem toReal_expm1Rat (hfmt : fmt.isIEEE = true) {argument : ℚ}
+    {budget : Certified.Budget} (hfinite : isFinite (expm1Rat fmt argument budget) = true) :
+    toReal (expm1Rat fmt argument budget) = roundAt fmt (Real.exp argument - 1) := by
+  cases hsearch : Certified.expm1Rat fmt argument budget with
   | ok result =>
-      rw [expMinus1Rat_eq_of_certified_expMinus1Rat_eq_ok hsearch]
-      exact Certified.toReal_of_expMinus1Rat_eq_ok hsearch
+      rw [expm1Rat_eq_of_certified_expm1Rat_eq_ok hsearch]
+      exact Certified.toReal_of_expm1Rat_eq_ok hsearch
   | error _ =>
-      simp only [expMinus1Rat, hsearch] at hfinite ⊢
-      exact toReal_round hfmt (abs_nonneg _) (compareAbsExpMinus1_eq_real argument)
+      simp only [expm1Rat, hsearch] at hfinite ⊢
+      exact toReal_round hfmt (abs_nonneg _) (compareAbsExpm1_eq_real argument)
         (signed_abs_exp_sub_one argument) hfinite
 
 private theorem isFinite_logRat (hfmt : fmt.isIEEE = true) {argument : ℚ}
@@ -470,7 +471,7 @@ private theorem isZero_of_toRat?_eq_some_zero {input : Model fmt}
   (isZero_eq_true_iff_toReal_eq_zero input (Algebraic.isFinite_of_toRat?_eq_some hinput)).mpr
     (by rw [Algebraic.toReal_of_toRat?_eq_some hinput, Rat.cast_zero])
 
-/-- The shifted argument of `logPlus1` is positive above `-1`. -/
+/-- The shifted argument of `logp1` is positive above `-1`. -/
 private theorem one_add_pos_of_neg_one_lt {input : Model fmt} {argument : ℚ}
     (hreal : toReal input = argument) (hdomain : -1 < toReal input) : 0 < 1 + argument := by
   have : (-1 : ℝ) < argument := hreal ▸ hdomain
@@ -481,23 +482,23 @@ theorem exp_eq_expRat {input : Model fmt} {argument : ℚ} (hinput : toRat? inpu
     (budget : Certified.Budget) : exp input budget = expRat fmt argument budget := by
   have hfinite := Algebraic.isFinite_of_toRat?_eq_some hinput
   simp [exp, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite, hinput]
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite, hinput]
 
-/-- `expMinus1` returns either zero unchanged. -/
-@[simp] theorem expMinus1_of_isZero {input : Model fmt} (hzero : isZero input = true)
-    (budget : Certified.Budget) : expMinus1 input budget = input := by
+/-- `expm1` returns either zero unchanged. -/
+@[simp] theorem expm1_of_isZero {input : Model fmt} (hzero : isZero input = true)
+    (budget : Certified.Budget) : expm1 input budget = input := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true input hzero
-  simp [expMinus1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite, hzero]
+  simp [expm1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite, hzero]
 
-/-- `expMinus1` of a finite nonzero input is `expMinus1Rat` at its exact value. -/
-theorem expMinus1_eq_expMinus1Rat {input : Model fmt} {argument : ℚ}
+/-- `expm1` of a finite nonzero input is `expm1Rat` at its exact value. -/
+theorem expm1_eq_expm1Rat {input : Model fmt} {argument : ℚ}
     (hinput : toRat? input = some argument) (hargument : argument ≠ 0)
     (budget : Certified.Budget) :
-    expMinus1 input budget = expMinus1Rat fmt argument budget := by
+    expm1 input budget = expm1Rat fmt argument budget := by
   have hfinite := Algebraic.isFinite_of_toRat?_eq_some hinput
-  simp [expMinus1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite,
+  simp [expm1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite,
     isZero_eq_false_of_toRat?_eq_some hinput hargument, hinput]
 
 /-- The logarithm of a finite positive input is `logRat` at its exact value. -/
@@ -506,24 +507,24 @@ theorem log_eq_logRat {input : Model fmt} {argument : ℚ} (hinput : toRat? inpu
     log input budget = logRat fmt argument hpositive budget := by
   have hfinite := Algebraic.isFinite_of_toRat?_eq_some hinput
   simp [log, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite,
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite,
     isZero_eq_false_of_toRat?_eq_some hinput hpositive.ne', hinput, hpositive]
 
-/-- `logPlus1` returns either zero unchanged. -/
-@[simp] theorem logPlus1_of_isZero {input : Model fmt} (hzero : isZero input = true)
-    (budget : Certified.Budget) : logPlus1 input budget = input := by
+/-- `logp1` returns either zero unchanged. -/
+@[simp] theorem logp1_of_isZero {input : Model fmt} (hzero : isZero input = true)
+    (budget : Certified.Budget) : logp1 input budget = input := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true input hzero
-  simp [logPlus1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite, hzero]
+  simp [logp1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite, hzero]
 
-/-- `logPlus1` of a finite nonzero input above `-1` is `logRat` at one plus its exact value. -/
-theorem logPlus1_eq_logRat {input : Model fmt} {argument : ℚ}
+/-- `logp1` of a finite nonzero input above `-1` is `logRat` at one plus its exact value. -/
+theorem logp1_eq_logRat {input : Model fmt} {argument : ℚ}
     (hinput : toRat? input = some argument) (hargument : argument ≠ 0)
     (hpositive : 0 < 1 + argument) (budget : Certified.Budget) :
-    logPlus1 input budget = logRat fmt (1 + argument) hpositive budget := by
+    logp1 input budget = logRat fmt (1 + argument) hpositive budget := by
   have hfinite := Algebraic.isFinite_of_toRat?_eq_some hinput
-  simp [logPlus1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite,
+  simp [logp1, isNaN_eq_false_of_isFinite_eq_true input hfinite,
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite,
     isZero_eq_false_of_toRat?_eq_some hinput hargument, hinput, hpositive]
 
 /-- A finite input times a finite nonzero weight is `expMulRat` at their exact values. -/
@@ -534,8 +535,9 @@ theorem expMul_eq_expMulRat {input weight : Model fmt} {argument : ℚ} {factor 
   have hfinite := Algebraic.isFinite_of_toRat?_eq_some hinput
   have hweightRat : toRat? weight = some factor.toRat := by simp [toRat?, hweight]
   simp [expMul, isNaN_eq_false_of_isFinite_eq_true input hfinite,
-    isInf_eq_false_of_isFinite_eq_true input hfinite, isNaN_eq_false_of_toDyadic?_some hweight,
-    isInf_eq_false_of_toDyadic?_some hweight, isZero_eq_false_of_toRat?_eq_some hweightRat hfactor,
+    isInfinite_eq_false_of_isFinite_eq_true input hfinite, isNaN_eq_false_of_toDyadic?_some hweight,
+    isInfinite_eq_false_of_toDyadic?_some hweight, isZero_eq_false_of_toRat?_eq_some
+      hweightRat hfactor,
     hinput, hweight]
 
 /-- A finite input times a zero weight is the zero with the weight's sign. -/
@@ -544,9 +546,9 @@ theorem expMul_eq_expMulRat {input weight : Model fmt} {argument : ℚ} {factor 
     expMul input weight budget = zero fmt (signBit weight) := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true weight hweight
   simp [expMul, isNaN_eq_false_of_isFinite_eq_true input hinput,
-    isInf_eq_false_of_isFinite_eq_true input hinput,
+    isInfinite_eq_false_of_isFinite_eq_true input hinput,
     isNaN_eq_false_of_isFinite_eq_true weight hfinite,
-    isInf_eq_false_of_isFinite_eq_true weight hfinite, hweight]
+    isInfinite_eq_false_of_isFinite_eq_true weight hfinite, hweight]
 
 /-- A finite nonzero weight decodes to a dyadic with a nonzero rational value. -/
 private theorem exists_toDyadic?_eq {weight : Model fmt} (hweight : isFinite weight = true)
@@ -607,55 +609,55 @@ theorem toReal_exp_eq_roundAt (hfmt : fmt.isIEEE = true) {input : Model fmt}
     toReal (exp input budget) = roundAt fmt (Real.exp (toReal input)) :=
   toReal_exp_of_isFinite hfmt hinput (isFinite_exp hfmt hinput hrange)
 
-/-- A finite `expMinus1` of a finite input is the correctly rounded `exp x - 1`. -/
-theorem toReal_expMinus1_of_isFinite (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- A finite `expm1` of a finite input is the correctly rounded `exp x - 1`. -/
+theorem toReal_expm1_of_isFinite (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) {budget : Certified.Budget}
-    (hfinite : isFinite (expMinus1 input budget) = true) :
-    toReal (expMinus1 input budget) = roundAt fmt (Real.exp (toReal input) - 1) := by
+    (hfinite : isFinite (expm1 input budget) = true) :
+    toReal (expm1 input budget) = roundAt fmt (Real.exp (toReal input) - 1) := by
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   by_cases hzero : argument = 0
   · subst hzero
-    simp [expMinus1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode), hreal]
-  · rw [expMinus1_eq_expMinus1Rat hdecode hzero] at hfinite ⊢
+    simp [expm1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode), hreal]
+  · rw [expm1_eq_expm1Rat hdecode hzero] at hfinite ⊢
     rw [hreal]
-    exact toReal_expMinus1Rat hfmt hfinite
+    exact toReal_expm1Rat hfmt hfinite
 
 /--
-`expMinus1` of a finite input is finite when its exact result is below the overflow threshold.
+`expm1` of a finite input is finite when its exact result is below the overflow threshold.
 -/
-theorem isFinite_expMinus1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem isFinite_expm1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true)
     (hrange : Real.exp (toReal input) - 1 < Certified.overflowThreshold fmt)
-    {budget : Certified.Budget} : isFinite (expMinus1 input budget) = true := by
+    {budget : Certified.Budget} : isFinite (expm1 input budget) = true := by
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   by_cases hzero : argument = 0
   · subst hzero
-    rwa [expMinus1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode)]
-  · rw [expMinus1_eq_expMinus1Rat hdecode hzero]
-    exact isFinite_expMinus1Rat hfmt (hreal ▸ hrange) budget
+    rwa [expm1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode)]
+  · rw [expm1_eq_expm1Rat hdecode hzero]
+    exact isFinite_expm1Rat hfmt (hreal ▸ hrange) budget
 
 /--
-`expMinus1` of a finite input is finite if and only if its exact result is below the overflow
+`expm1` of a finite input is finite if and only if its exact result is below the overflow
 threshold.
 -/
-theorem isFinite_expMinus1_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem isFinite_expm1_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) {budget : Certified.Budget} :
-    isFinite (expMinus1 input budget) = true ↔
+    isFinite (expm1 input budget) = true ↔
       Real.exp (toReal input) - 1 < Certified.overflowThreshold fmt :=
   ⟨fun hfinite => (le_abs_self _).trans_lt (abs_lt_overflowThreshold_of_toReal_eq_roundAt hfmt
-      hfinite (toReal_expMinus1_of_isFinite hfmt hinput hfinite)),
-    fun hrange => isFinite_expMinus1 hfmt hinput hrange⟩
+      hfinite (toReal_expm1_of_isFinite hfmt hinput hfinite)),
+    fun hrange => isFinite_expm1 hfmt hinput hrange⟩
 
 /--
-`expMinus1` of a finite input is correctly rounded when its exact result is below the overflow
+`expm1` of a finite input is correctly rounded when its exact result is below the overflow
 threshold.
 -/
-theorem toReal_expMinus1_eq_roundAt (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem toReal_expm1_eq_roundAt (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true)
     (hrange : Real.exp (toReal input) - 1 < Certified.overflowThreshold fmt)
     {budget : Certified.Budget} :
-    toReal (expMinus1 input budget) = roundAt fmt (Real.exp (toReal input) - 1) :=
-  toReal_expMinus1_of_isFinite hfmt hinput (isFinite_expMinus1 hfmt hinput hrange)
+    toReal (expm1 input budget) = roundAt fmt (Real.exp (toReal input) - 1) :=
+  toReal_expm1_of_isFinite hfmt hinput (isFinite_expm1 hfmt hinput hrange)
 
 /-- A finite logarithm of a finite positive input is the correctly rounded logarithm. -/
 theorem toReal_log_of_isFinite (hfmt : fmt.isIEEE = true) {input : Model fmt}
@@ -705,59 +707,59 @@ theorem toReal_log_eq_roundAt (hfmt : fmt.isIEEE = true) {input : Model fmt}
     toReal (log input budget) = roundAt fmt (Real.log (toReal input)) :=
   toReal_log_of_isFinite hfmt hinput hpositive (isFinite_log hfmt hinput hpositive hrange)
 
-/-- A finite `logPlus1` of a finite input above `-1` is the correctly rounded `log (1 + x)`. -/
-theorem toReal_logPlus1_of_isFinite (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- A finite `logp1` of a finite input above `-1` is the correctly rounded `log (1 + x)`. -/
+theorem toReal_logp1_of_isFinite (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hdomain : -1 < toReal input)
-    {budget : Certified.Budget} (hfinite : isFinite (logPlus1 input budget) = true) :
-    toReal (logPlus1 input budget) = roundAt fmt (Real.log (1 + toReal input)) := by
+    {budget : Certified.Budget} (hfinite : isFinite (logp1 input budget) = true) :
+    toReal (logp1 input budget) = roundAt fmt (Real.log (1 + toReal input)) := by
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   by_cases hzero : argument = 0
   · subst hzero
-    simp [logPlus1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode), hreal]
+    simp [logp1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode), hreal]
   · have hpositive := one_add_pos_of_neg_one_lt hreal hdomain
-    rw [logPlus1_eq_logRat hdecode hzero hpositive] at hfinite ⊢
+    rw [logp1_eq_logRat hdecode hzero hpositive] at hfinite ⊢
     rw [hreal]
     simpa using toReal_logRat hfmt hpositive hfinite
 
 /--
-`logPlus1` of a finite input above `-1` is finite when its exact result is below the overflow
+`logp1` of a finite input above `-1` is finite when its exact result is below the overflow
 threshold in magnitude.
 -/
-theorem isFinite_logPlus1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem isFinite_logp1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hdomain : -1 < toReal input)
     (hrange : |Real.log (1 + toReal input)| < Certified.overflowThreshold fmt)
-    {budget : Certified.Budget} : isFinite (logPlus1 input budget) = true := by
+    {budget : Certified.Budget} : isFinite (logp1 input budget) = true := by
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   by_cases hzero : argument = 0
   · subst hzero
-    rwa [logPlus1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode)]
+    rwa [logp1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode)]
   · have hpositive := one_add_pos_of_neg_one_lt hreal hdomain
-    rw [logPlus1_eq_logRat hdecode hzero hpositive]
+    rw [logp1_eq_logRat hdecode hzero hpositive]
     exact isFinite_logRat hfmt hpositive (by simpa [hreal] using hrange) budget
 
 /--
-`logPlus1` of a finite input above `-1` is finite if and only if its exact result is below the
+`logp1` of a finite input above `-1` is finite if and only if its exact result is below the
 overflow threshold in magnitude.
 -/
-theorem isFinite_logPlus1_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem isFinite_logp1_iff (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hdomain : -1 < toReal input)
     {budget : Certified.Budget} :
-    isFinite (logPlus1 input budget) = true ↔
+    isFinite (logp1 input budget) = true ↔
       |Real.log (1 + toReal input)| < Certified.overflowThreshold fmt :=
   ⟨fun hfinite => abs_lt_overflowThreshold_of_toReal_eq_roundAt hfmt hfinite
-      (toReal_logPlus1_of_isFinite hfmt hinput hdomain hfinite),
-    fun hrange => isFinite_logPlus1 hfmt hinput hdomain hrange⟩
+      (toReal_logp1_of_isFinite hfmt hinput hdomain hfinite),
+    fun hrange => isFinite_logp1 hfmt hinput hdomain hrange⟩
 
 /--
-`logPlus1` of a finite input above `-1` is correctly rounded when its exact result is below the
+`logp1` of a finite input above `-1` is correctly rounded when its exact result is below the
 overflow threshold in magnitude.
 -/
-theorem toReal_logPlus1_eq_roundAt (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem toReal_logp1_eq_roundAt (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hdomain : -1 < toReal input)
     (hrange : |Real.log (1 + toReal input)| < Certified.overflowThreshold fmt)
     {budget : Certified.Budget} :
-    toReal (logPlus1 input budget) = roundAt fmt (Real.log (1 + toReal input)) :=
-  toReal_logPlus1_of_isFinite hfmt hinput hdomain (isFinite_logPlus1 hfmt hinput hdomain hrange)
+    toReal (logp1 input budget) = roundAt fmt (Real.log (1 + toReal input)) :=
+  toReal_logp1_of_isFinite hfmt hinput hdomain (isFinite_logp1 hfmt hinput hdomain hrange)
 
 /-- A finite weighted exponential of finite operands is the correctly rounded product. -/
 theorem toReal_expMul_of_isFinite (hfmt : fmt.isIEEE = true) {input weight : Model fmt}
@@ -827,15 +829,15 @@ private theorem expRat_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {argument : 
       simp only [expRat, hsearch] at hnonfinite ⊢
       exact AlgebraicRounding.round_eq_nativeOverflow_of_isFinite_eq_false fmt hfmt _ _ hnonfinite
 
-private theorem expMinus1Rat_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {argument : ℚ}
+private theorem expm1Rat_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {argument : ℚ}
     {budget : Certified.Budget}
-    (hnonfinite : isFinite (expMinus1Rat fmt argument budget) = false) :
-    expMinus1Rat fmt argument budget = nativeOverflow fmt (decide (argument < 0)) := by
-  cases hsearch : Certified.expMinus1Rat fmt argument budget with
+    (hnonfinite : isFinite (expm1Rat fmt argument budget) = false) :
+    expm1Rat fmt argument budget = nativeOverflow fmt (decide (argument < 0)) := by
+  cases hsearch : Certified.expm1Rat fmt argument budget with
   | ok result =>
-      simp [expMinus1Rat, hsearch, Certified.isFinite_of_expMinus1Rat_eq_ok hsearch] at hnonfinite
+      simp [expm1Rat, hsearch, Certified.isFinite_of_expm1Rat_eq_ok hsearch] at hnonfinite
   | error _ =>
-      simp only [expMinus1Rat, hsearch] at hnonfinite ⊢
+      simp only [expm1Rat, hsearch] at hnonfinite ⊢
       exact AlgebraicRounding.round_eq_nativeOverflow_of_isFinite_eq_false fmt hfmt _ _ hnonfinite
 
 private theorem logRat_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {argument : ℚ}
@@ -875,20 +877,20 @@ theorem exp_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {input : Model fmt}
   exact expRat_eq_nativeOverflow hfmt hnonfinite
 
 /--
-`expMinus1` of a finite input is `+∞` when its exact result is at or above the overflow threshold.
+`expm1` of a finite input is `+∞` when its exact result is at or above the overflow threshold.
 -/
-theorem expMinus1_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem expm1_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true)
     (hrange : Certified.overflowThreshold fmt ≤ Real.exp (toReal input) - 1)
-    {budget : Certified.Budget} : expMinus1 input budget = nativeOverflow fmt false := by
-  have hnonfinite : isFinite (expMinus1 input budget) = false := Bool.eq_false_iff.mpr
-    fun hfinite => ((isFinite_expMinus1_iff hfmt hinput).mp hfinite).not_ge hrange
+    {budget : Certified.Budget} : expm1 input budget = nativeOverflow fmt false := by
+  have hnonfinite : isFinite (expm1 input budget) = false := Bool.eq_false_iff.mpr
+    fun hfinite => ((isFinite_expm1_iff hfmt hinput).mp hfinite).not_ge hrange
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   have hpositive : 0 < argument := by
     rw [← Rat.cast_pos (K := ℝ), ← hreal, ← Real.one_lt_exp_iff]
     linarith [one_lt_overflowThreshold hfmt]
-  rw [expMinus1_eq_expMinus1Rat hdecode hpositive.ne'] at hnonfinite ⊢
-  rw [expMinus1Rat_eq_nativeOverflow hfmt hnonfinite, decide_eq_false hpositive.not_gt]
+  rw [expm1_eq_expm1Rat hdecode hpositive.ne'] at hnonfinite ⊢
+  rw [expm1Rat_eq_nativeOverflow hfmt hnonfinite, decide_eq_false hpositive.not_gt]
 
 /--
 The logarithm of a finite positive input is the infinity with the sign of its exact result when that
@@ -908,23 +910,23 @@ theorem log_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {input : Model fmt}
   exact congrArg _ (decide_eq_decide.mpr (by norm_cast))
 
 /--
-`logPlus1` of a finite input above `-1` is the infinity with the sign of its exact result when that
+`logp1` of a finite input above `-1` is the infinity with the sign of its exact result when that
 result is at or above the overflow threshold in magnitude.
 -/
-theorem logPlus1_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem logp1_eq_nativeOverflow (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hdomain : -1 < toReal input)
     (hrange : Certified.overflowThreshold fmt ≤ |Real.log (1 + toReal input)|)
     {budget : Certified.Budget} :
-    logPlus1 input budget = nativeOverflow fmt (decide (toReal input < 0)) := by
-  have hnonfinite : isFinite (logPlus1 input budget) = false := Bool.eq_false_iff.mpr
-    fun hfinite => ((isFinite_logPlus1_iff hfmt hinput hdomain).mp hfinite).not_ge hrange
+    logp1 input budget = nativeOverflow fmt (decide (toReal input < 0)) := by
+  have hnonfinite : isFinite (logp1 input budget) = false := Bool.eq_false_iff.mpr
+    fun hfinite => ((isFinite_logp1_iff hfmt hinput hdomain).mp hfinite).not_ge hrange
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   have hzero : argument ≠ 0 := by
     rintro rfl
-    rw [logPlus1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode)] at hnonfinite
+    rw [logp1_of_isZero (isZero_of_toRat?_eq_some_zero hdecode)] at hnonfinite
     simp [hinput] at hnonfinite
   have hpositive := one_add_pos_of_neg_one_lt hreal hdomain
-  rw [logPlus1_eq_logRat hdecode hzero hpositive] at hnonfinite ⊢
+  rw [logp1_eq_logRat hdecode hzero hpositive] at hnonfinite ⊢
   rw [logRat_eq_nativeOverflow hfmt hpositive hnonfinite, hreal]
   exact congrArg _ (decide_eq_decide.mpr (by rw [add_lt_iff_neg_left]; norm_cast))
 
@@ -958,16 +960,17 @@ theorem toReal_pos_of_isFinite_log (hfmt : fmt.isIEEE = true) {input : Model fmt
   have hargument : ¬0 < argument := fun h => hnonpositive (by exact_mod_cast h)
   by_cases hzero : isZero input = true
   · simp [log, isNaN_eq_false_of_isFinite_eq_true input hinput,
-      isInf_eq_false_of_isFinite_eq_true input hinput, hzero,
+      isInfinite_eq_false_of_isFinite_eq_true input hinput, hzero,
       isFinite_nativeOverflow hfmt] at hfinite
   · simp [log, isNaN_eq_false_of_isFinite_eq_true input hinput,
-      isInf_eq_false_of_isFinite_eq_true input hinput, hzero, hdecode, hargument, invalidResult,
+      isInfinite_eq_false_of_isFinite_eq_true input hinput, hzero, hdecode,
+        hargument, invalidResult,
       hencoding, isFinite_canonicalNaN hencoding] at hfinite
 
-/-- A finite `logPlus1` of a finite input comes from an input above `-1`. -/
-theorem neg_one_lt_toReal_of_isFinite_logPlus1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- A finite `logp1` of a finite input comes from an input above `-1`. -/
+theorem neg_one_lt_toReal_of_isFinite_logp1 (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) {budget : Certified.Budget}
-    (hfinite : isFinite (logPlus1 input budget) = true) : -1 < toReal input := by
+    (hfinite : isFinite (logp1 input budget) = true) : -1 < toReal input := by
   have hencoding := FloatFormat.encoding_eq_ieee_of_isIEEE fmt hfmt
   obtain ⟨argument, hdecode, hreal⟩ := Algebraic.exists_toRat?_of_isFinite hinput
   rw [hreal]
@@ -977,11 +980,11 @@ theorem neg_one_lt_toReal_of_isFinite_logPlus1 (hfmt : fmt.isIEEE = true) {input
   have hzero : isZero input = false :=
     isZero_eq_false_of_toRat?_eq_some hdecode (fun h => hargument (by rw [h]; norm_num))
   by_cases hone : argument = -1
-  · simp [logPlus1, isNaN_eq_false_of_isFinite_eq_true input hinput,
-      isInf_eq_false_of_isFinite_eq_true input hinput, hzero, hdecode, hone,
+  · simp [logp1, isNaN_eq_false_of_isFinite_eq_true input hinput,
+      isInfinite_eq_false_of_isFinite_eq_true input hinput, hzero, hdecode, hone,
       isFinite_nativeOverflow hfmt] at hfinite
-  · simp [logPlus1, isNaN_eq_false_of_isFinite_eq_true input hinput,
-      isInf_eq_false_of_isFinite_eq_true input hinput, hzero, hdecode, hargument, hone,
+  · simp [logp1, isNaN_eq_false_of_isFinite_eq_true input hinput,
+      isInfinite_eq_false_of_isFinite_eq_true input hinput, hzero, hdecode, hargument, hone,
       invalidResult, hencoding, isFinite_canonicalNaN hencoding] at hfinite
 
 /-! ## Mixed error bounds -/
@@ -1000,16 +1003,16 @@ theorem abs_toReal_exp_sub_le (hfmt : fmt.isIEEE = true) {input : Model fmt}
   exact abs_roundAt_sub_le_unitRoundoffAt fmt _
 
 /--
-For a finite input `x` with `exp x - 1` below the overflow threshold, `expMinus1` differs from
+For a finite input `x` with `exp x - 1` below the overflow threshold, `expm1` differs from
 `exp x - 1` by at most `unitRoundoffAt fmt * |exp x - 1| + underflowErrorAt fmt`.
 -/
-theorem abs_toReal_expMinus1_sub_le (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem abs_toReal_expm1_sub_le (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true)
     (hrange : Real.exp (toReal input) - 1 < Certified.overflowThreshold fmt)
     {budget : Certified.Budget} :
-    |toReal (expMinus1 input budget) - (Real.exp (toReal input) - 1)| ≤
+    |toReal (expm1 input budget) - (Real.exp (toReal input) - 1)| ≤
       unitRoundoffAt fmt * |Real.exp (toReal input) - 1| + underflowErrorAt fmt := by
-  rw [toReal_expMinus1_eq_roundAt hfmt hinput hrange]
+  rw [toReal_expm1_eq_roundAt hfmt hinput hrange]
   exact abs_roundAt_sub_le_unitRoundoffAt fmt _
 
 /--
@@ -1026,16 +1029,16 @@ theorem abs_toReal_log_sub_le (hfmt : fmt.isIEEE = true) {input : Model fmt}
   exact abs_roundAt_sub_le_unitRoundoffAt fmt _
 
 /--
-For a finite input `x > -1` with `|log (1 + x)|` below the overflow threshold, `logPlus1` differs
+For a finite input `x > -1` with `|log (1 + x)|` below the overflow threshold, `logp1` differs
 from `log (1 + x)` by at most `unitRoundoffAt fmt * |log (1 + x)| + underflowErrorAt fmt`.
 -/
-theorem abs_toReal_logPlus1_sub_le (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem abs_toReal_logp1_sub_le (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hdomain : -1 < toReal input)
     (hrange : |Real.log (1 + toReal input)| < Certified.overflowThreshold fmt)
     {budget : Certified.Budget} :
-    |toReal (logPlus1 input budget) - Real.log (1 + toReal input)| ≤
+    |toReal (logp1 input budget) - Real.log (1 + toReal input)| ≤
       unitRoundoffAt fmt * |Real.log (1 + toReal input)| + underflowErrorAt fmt := by
-  rw [toReal_logPlus1_eq_roundAt hfmt hinput hdomain hrange]
+  rw [toReal_logp1_eq_roundAt hfmt hinput hdomain hrange]
   exact abs_roundAt_sub_le_unitRoundoffAt fmt _
 
 /--
@@ -1087,7 +1090,7 @@ theorem toReal_exp_nonneg (hfmt : fmt.isIEEE = true) (input : Model fmt)
     exact absurd hfinite hinput
   · simp
   · exact toReal_nativeOverflow_false_nonneg fmt
-  · exact absurd (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false input
+  · exact absurd (isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false input
       (by simpa using hnan) (by simpa using hinf)) hinput
 
 /--
@@ -1102,12 +1105,12 @@ theorem toReal_exp_pos (hfmt : fmt.isIEEE = true) {input : Model fmt}
   rw [toReal_exp_eq_roundAt hfmt hinput hrange]
   exact roundAt_pos fmt hlarge
 
-/-- `expMinus1` of a finite negative input is negative. -/
-theorem toReal_expMinus1_lt_zero (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- `expm1` of a finite negative input is negative. -/
+theorem toReal_expm1_lt_zero (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hnegative : toReal input < 0)
-    {budget : Certified.Budget} : toReal (expMinus1 input budget) < 0 := by
+    {budget : Certified.Budget} : toReal (expm1 input budget) < 0 := by
   have hexp : Real.exp (toReal input) < 1 := Real.exp_lt_one_iff.mpr hnegative
-  rw [toReal_expMinus1_eq_roundAt hfmt hinput (by linarith [one_lt_overflowThreshold hfmt])]
+  rw [toReal_expm1_eq_roundAt hfmt hinput (by linarith [one_lt_overflowThreshold hfmt])]
   refine roundAt_lt_zero fmt ?_
   -- With `t = 2 * underflowErrorAt fmt ≤ 1 / 2`, `1 - exp (-t) ≥ t * exp (-t) > t / 2`.
   set t := 2 * underflowErrorAt fmt
@@ -1125,16 +1128,16 @@ theorem toReal_expMinus1_lt_zero (hfmt : fmt.isIEEE = true) {input : Model fmt}
   nlinarith [Real.add_one_le_exp t, Real.exp_pos (-t), mul_pos ht (sub_pos.mpr hlower)]
 
 /--
-`expMinus1` of a finite positive input is positive when its exact result is below the overflow
+`expm1` of a finite positive input is positive when its exact result is below the overflow
 threshold.
 -/
-theorem toReal_expMinus1_pos (hfmt : fmt.isIEEE = true) {input : Model fmt}
+theorem toReal_expm1_pos (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hpositive : 0 < toReal input)
     (hrange : Real.exp (toReal input) - 1 < Certified.overflowThreshold fmt)
-    {budget : Certified.Budget} : 0 < toReal (expMinus1 input budget) := by
+    {budget : Certified.Budget} : 0 < toReal (expm1 input budget) := by
   have h := two_mul_underflowErrorAt_le_abs_toReal hinput hpositive.ne'
   rw [abs_of_pos hpositive] at h
-  rw [toReal_expMinus1_eq_roundAt hfmt hinput hrange]
+  rw [toReal_expm1_eq_roundAt hfmt hinput hrange]
   exact roundAt_pos fmt (by linarith [Real.add_one_le_exp (toReal input), underflowErrorAt_pos fmt])
 
 /-- The exponential of a finite nonpositive input is finite. -/
@@ -1144,35 +1147,35 @@ theorem isFinite_exp_of_nonpos (hfmt : fmt.isIEEE = true) {input : Model fmt}
   isFinite_exp hfmt hinput
     ((Real.exp_le_one_iff.mpr hnonpos).trans_lt (one_lt_overflowThreshold hfmt))
 
-/-- `expMinus1` of a finite nonpositive input is finite. -/
-theorem isFinite_expMinus1_of_nonpos (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- `expm1` of a finite nonpositive input is finite. -/
+theorem isFinite_expm1_of_nonpos (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hnonpos : toReal input ≤ 0)
-    {budget : Certified.Budget} : isFinite (expMinus1 input budget) = true :=
-  isFinite_expMinus1 hfmt hinput
+    {budget : Certified.Budget} : isFinite (expm1 input budget) = true :=
+  isFinite_expm1 hfmt hinput
     (by linarith [Real.exp_le_one_iff.mpr hnonpos, one_lt_overflowThreshold hfmt])
 
-/-- `logPlus1` of a finite nonnegative input is finite. -/
-theorem isFinite_logPlus1_of_nonneg (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- `logp1` of a finite nonnegative input is finite. -/
+theorem isFinite_logp1_of_nonneg (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hnonneg : 0 ≤ toReal input)
-    {budget : Certified.Budget} : isFinite (logPlus1 input budget) = true := by
+    {budget : Certified.Budget} : isFinite (logp1 input budget) = true := by
   have hbelow := abs_lt_overflowThreshold_of_toReal_eq_roundAt hfmt hinput
     (roundAt_toReal_eq input hinput).symm
   rw [abs_of_nonneg hnonneg] at hbelow
-  refine isFinite_logPlus1 hfmt hinput (by linarith) ?_
+  refine isFinite_logp1 hfmt hinput (by linarith) ?_
   rw [abs_of_nonneg (Real.log_nonneg (by linarith))]
   linarith [Real.log_le_sub_one_of_pos (by linarith : 0 < 1 + toReal input)]
 
-/-- `logPlus1` of a finite positive input is positive. -/
-theorem toReal_logPlus1_pos (hfmt : fmt.isIEEE = true) {input : Model fmt}
+/-- `logp1` of a finite positive input is positive. -/
+theorem toReal_logp1_pos (hfmt : fmt.isIEEE = true) {input : Model fmt}
     (hinput : isFinite input = true) (hpositive : 0 < toReal input)
-    {budget : Certified.Budget} : 0 < toReal (logPlus1 input budget) := by
+    {budget : Certified.Budget} : 0 < toReal (logp1 input budget) := by
   have h := two_mul_underflowErrorAt_le_abs_toReal hinput hpositive.ne'
   rw [abs_of_pos hpositive] at h
   have hη := underflowErrorAt_pos fmt
   have hquarter := underflowErrorAt_le_quarter (fmt := fmt)
   have hshift : 0 < 1 + toReal input := by linarith
-  rw [toReal_logPlus1_of_isFinite hfmt hinput (by linarith)
-    (isFinite_logPlus1_of_nonneg hfmt hinput hpositive.le)]
+  rw [toReal_logp1_of_isFinite hfmt hinput (by linarith)
+    (isFinite_logp1_of_nonneg hfmt hinput hpositive.le)]
   refine roundAt_pos fmt (lt_of_lt_of_le ?_ (Real.one_sub_inv_le_log_of_pos hshift))
   rw [show 1 - (1 + toReal input)⁻¹ = toReal input / (1 + toReal input) by field_simp; ring,
     lt_div_iff₀ hshift]
@@ -1236,17 +1239,17 @@ theorem exp_eq_of_certified_exp_eq_ok {input result : Model fmt} {budget : Certi
         rw [hdecode] at hresult
         rw [exp_eq_expRat hdecode, expRat_eq_of_certified_expRat_eq_ok hresult]
 
-/-- `expMinus1` returns the certified result whenever the certified search does. -/
-theorem expMinus1_eq_of_certified_expMinus1_eq_ok {input result : Model fmt}
-    {budget : Certified.Budget} (hresult : Certified.expMinus1 input budget = .ok result) :
-    expMinus1 input budget = result := by
-  unfold Certified.expMinus1 at hresult
+/-- `expm1` returns the certified result whenever the certified search does. -/
+theorem expm1_eq_of_certified_expm1_eq_ok {input result : Model fmt}
+    {budget : Certified.Budget} (hresult : Certified.expm1 input budget = .ok result) :
+    expm1 input budget = result := by
+  unfold Certified.expm1 at hresult
   split at hresult
   · simp at hresult
   · split at hresult
     · rename_i hzero
       cases Except.ok.inj hresult
-      exact expMinus1_of_isZero hzero budget
+      exact expm1_of_isZero hzero budget
     · rename_i hzero
       cases hdecode : toRat? input with
       | none => simp [hdecode] at hresult
@@ -1255,8 +1258,8 @@ theorem expMinus1_eq_of_certified_expMinus1_eq_ok {input result : Model fmt}
           have hargument : argument ≠ 0 := by
             rintro rfl
             exact hzero (isZero_of_toRat?_eq_some_zero hdecode)
-          rw [expMinus1_eq_expMinus1Rat hdecode hargument,
-            expMinus1Rat_eq_of_certified_expMinus1Rat_eq_ok hresult]
+          rw [expm1_eq_expm1Rat hdecode hargument,
+            expm1Rat_eq_of_certified_expm1Rat_eq_ok hresult]
 
 private theorem signBit_roundEndpoint (hfmt : fmt.isIEEE = true) (value : ℚ) (scale : ℤ) :
     signBit (Enclosure.roundEndpoint fmt value scale) = decide (value < 0) := by
@@ -1297,20 +1300,8 @@ private theorem signBit_round_of_toReal_eq_zero (hfmt : fmt.isIEEE = true) {sign
       compare (AlgebraicRounding.powerOfTwo (AlgebraicRounding.lowerExponent fmt)) ≠ .gt := by
     rw [hcompare, AlgebraicRounding.cast_powerOfTwo, ne_eq, cmp_eq_gt_iff]
     exact not_lt.mpr hsmall
-  rw [AlgebraicRounding.round, ite_eq_left hbranch, signBit_zero,
+  rw [AlgebraicRounding.round_eq fmt sign hcompare, ite_eq_left hbranch, signBit_zero,
     FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt, Bool.and_true]
-
-/-- Finite values with the same real value, and the same sign when it is zero, are equal. -/
-private theorem eq_of_toReal_eq {x y : Model fmt} (hx : isFinite x = true)
-    (hy : isFinite y = true) (hvalue : toReal x = toReal y)
-    (hsign : toReal x = 0 → signBit x = signBit y) : x = y := by
-  by_cases hzero : toReal x = 0
-  · have hxzero := (isZero_eq_true_iff_toReal_eq_zero x hx).mpr hzero
-    have hyzero := (isZero_eq_true_iff_toReal_eq_zero y hy).mpr (hvalue ▸ hzero)
-    have hdecode := toDyadic?_eq_zero_of_isZero_eq_true y hyzero
-    rw [← hsign hzero] at hdecode
-    exact eq_of_toDyadic?_eq_some (toDyadic?_eq_zero_of_isZero_eq_true x hxzero) hdecode
-  · exact eq_of_toReal_eq_of_nonzero hvalue hzero
 
 private theorem exists_enclosure_of_certified_logRat_eq_ok {argument : ℚ}
     {budget : Certified.Budget} {result : Model fmt}
@@ -1384,17 +1375,17 @@ theorem log_eq_of_certified_log_eq_ok {input result : Model fmt} {budget : Certi
             le_of_not_gt hnonpositive] at hresult
         rw [log_eq_logRat hdecode hpositive, logRat_eq_of_certified_logRat_eq_ok hpositive hresult]
 
-/-- `logPlus1` returns the certified result whenever the certified search does. -/
-theorem logPlus1_eq_of_certified_logPlus1_eq_ok {input result : Model fmt}
-    {budget : Certified.Budget} (hresult : Certified.logPlus1 input budget = .ok result) :
-    logPlus1 input budget = result := by
-  unfold Certified.logPlus1 at hresult
+/-- `logp1` returns the certified result whenever the certified search does. -/
+theorem logp1_eq_of_certified_logp1_eq_ok {input result : Model fmt}
+    {budget : Certified.Budget} (hresult : Certified.logp1 input budget = .ok result) :
+    logp1 input budget = result := by
+  unfold Certified.logp1 at hresult
   split at hresult
   · simp at hresult
   · split at hresult
     · rename_i hzero
       cases Except.ok.inj hresult
-      exact logPlus1_of_isZero hzero budget
+      exact logp1_of_isZero hzero budget
     · rename_i hzero
       cases hdecode : toRat? input with
       | none => simp [hdecode] at hresult
@@ -1405,9 +1396,9 @@ theorem logPlus1_eq_of_certified_logPlus1_eq_ok {input result : Model fmt}
             exact hzero (isZero_of_toRat?_eq_some_zero hdecode)
           have hpositive : 0 < 1 + argument := by
             by_contra hnonpositive
-            simp [Certified.logPlus1Rat, Certified.logRat,
+            simp [Certified.logp1Rat, Certified.logRat,
               isIEEE_of_certified_logRat_eq_ok hresult, le_of_not_gt hnonpositive] at hresult
-          rw [logPlus1_eq_logRat hdecode hargument hpositive,
+          rw [logp1_eq_logRat hdecode hargument hpositive,
             logRat_eq_of_certified_logRat_eq_ok hpositive hresult]
 
 /-! ## Contracts -/
@@ -1424,16 +1415,16 @@ theorem exp_correctlyRoundedCertificateOn (hfmt : fmt.isIEEE = true)
     fun _ hinput hrange => toReal_exp_eq_roundAt hfmt hinput hrange⟩
 
 /--
-`expMinus1` is correctly rounded on every finite input whose exact result is below the overflow
+`expm1` is correctly rounded on every finite input whose exact result is below the overflow
 threshold.
 -/
-theorem expMinus1_correctlyRoundedCertificateOn (hfmt : fmt.isIEEE = true)
+theorem expm1_correctlyRoundedCertificateOn (hfmt : fmt.isIEEE = true)
     (budget : Certified.Budget) :
     Contract.CorrectlyRoundedCertificateOn fmt (fun x => Real.exp x - 1)
-      (fun input => expMinus1 input budget)
+      (fun input => expm1 input budget)
       (fun input => Real.exp (toReal input) - 1 < Certified.overflowThreshold fmt) :=
-  ⟨fun _ hinput hrange => isFinite_expMinus1 hfmt hinput hrange,
-    fun _ hinput hrange => toReal_expMinus1_eq_roundAt hfmt hinput hrange⟩
+  ⟨fun _ hinput hrange => isFinite_expm1 hfmt hinput hrange,
+    fun _ hinput hrange => toReal_expm1_eq_roundAt hfmt hinput hrange⟩
 
 /--
 The logarithm is correctly rounded on every finite positive input whose exact result is below the
@@ -1448,16 +1439,16 @@ theorem log_correctlyRoundedCertificateOn (hfmt : fmt.isIEEE = true)
     fun _ hinput hdomain => toReal_log_eq_roundAt hfmt hinput hdomain.1 hdomain.2⟩
 
 /--
-`logPlus1` is correctly rounded on every finite input above `-1` whose exact result is below the
+`logp1` is correctly rounded on every finite input above `-1` whose exact result is below the
 overflow threshold in magnitude.
 -/
-theorem logPlus1_correctlyRoundedCertificateOn (hfmt : fmt.isIEEE = true)
+theorem logp1_correctlyRoundedCertificateOn (hfmt : fmt.isIEEE = true)
     (budget : Certified.Budget) :
     Contract.CorrectlyRoundedCertificateOn fmt (fun x => Real.log (1 + x))
-      (fun input => logPlus1 input budget)
+      (fun input => logp1 input budget)
       (fun input => -1 < toReal input ∧
         |Real.log (1 + toReal input)| < Certified.overflowThreshold fmt) :=
-  ⟨fun _ hinput hdomain => isFinite_logPlus1 hfmt hinput hdomain.1 hdomain.2,
-    fun _ hinput hdomain => toReal_logPlus1_eq_roundAt hfmt hinput hdomain.1 hdomain.2⟩
+  ⟨fun _ hinput hdomain => isFinite_logp1 hfmt hinput hdomain.1 hdomain.2,
+    fun _ hinput hdomain => toReal_logp1_eq_roundAt hfmt hinput hdomain.1 hdomain.2⟩
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded

@@ -5,6 +5,12 @@ The archive keeps the raw timings of all nine trials, complete numerical outputs
 the campaign records together. Verification reads it directly and rebuilds the
 nine-trial medians in matched-benchmark-summary.csv. No extraction, build, or timing
 run is needed.
+
+The figure follows the figure rules of the library and the guide's `figstyle.py`: the image
+holds the six panels with their letters, axes with units and a legend of short series names.
+What was measured, on which machine and how (nine trials, matching precision and exponent
+bounds, the square-root blocks at 1,024 bits and above) is in the caption of the chapter and
+in `benchmarks/results/flocq-matched/README.md`, not in the drawing.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 from pathlib import Path
 import statistics
 import zipfile
@@ -39,13 +46,15 @@ EXPONENT_BITS = {
     256: 19, 512: 19, 1024: 19, 2048: 19, 4096: 19,
 }
 OPERATIONS = {
-    "add": "Addition", "sub": "Subtraction", "mul": "Multiplication",
-    "div": "Division", "sqrt": "Square root", "fma": "Fused multiply-add",
+    "add": "addition", "sub": "subtraction", "mul": "multiplication",
+    "div": "division", "sqrt": "square root", "fma": "fused multiply-add",
 }
+# Implementation, legend name, its name in the guide's series map (`figstyle.SERIES`), and the
+# colour, marker and line style of that map for a `figstyle` that does not have it.
 SERIES = (
-    ("ExecFloat", "FloatLib binary (proved)", "#2a78d6", "s", "-"),
-    ("Flocq", "Extracted Flocq", "#60656f", "D", "--"),
-    ("MPFR", "MPFR", "#eb6834", "^", ":"),
+    ("ExecFloat", "FloatLib", "FloatLib", "#0072B2", "o", "-"),
+    ("Flocq", "Flocq 4.2.2, extracted", "Flocq", "#D55E00", "s", "-"),
+    ("MPFR", "MPFR", "MPFR", "#009E73", "D", "-"),
 )
 
 
@@ -236,37 +245,30 @@ def verify(results: Path) -> list[dict[str, str]]:
 
 
 def plot(rows: list[dict[str, str]], output: Path) -> None:
-    import matplotlib
+    """Draw the six-panel overview at `output` and, beside it, one view per operation."""
+    import sys
 
-    matplotlib.use("Agg")
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "site" / "content" / "assets"
+                           / "figures"))
+    import figstyle
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
-    from format_comparison import (
-        compact_operation_layout, save_operation_svg, write_operation_series,
-    )
+    import format_comparison
 
-    plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 11,
-        "text.color": "#172333", "axes.labelcolor": "#172333",
-        "xtick.color": "#586474", "ytick.color": "#586474",
-        "axes.spines.top": False, "axes.spines.right": False,
-        "axes.edgecolor": "#b9c5d5",
-    })
-    fig, axes = plt.subplots(2, 3, figsize=(12.8, 6.2), sharex=True, sharey=True)
+    figstyle.setup()
+    shared = getattr(figstyle, "SERIES", {})
     handles = {}
-    tick_labels = {10: "10 ns", 1e3: "1 µs", 1e5: "100 µs", 1e7: "10 ms", 1e9: "1 s"}
+    decades = [10, 1e3, 1e5, 1e7, 1e9]
+
     def draw_panel(ax, operation):
-        for impl, label, color, marker, style in SERIES:
+        for impl, label, name, color, marker, line in SERIES:
+            look = dict(color=color, marker=marker, linestyle=line)
+            look.update(shared.get(name, {}))
             data = sorted((r for r in rows if r["implementation"] == impl
                            and r["operation"] == operation), key=lambda r: int(r["totalBits"]))
-            line, = ax.plot(
+            handles[label], = ax.plot(
                 [int(r["totalBits"]) for r in data],
-                [float(r["medianNanosPerOp"]) for r in data],
-                color=color, marker=marker, linestyle=style,
-                linewidth=2.1 if impl == "ExecFloat" else 1.7, markersize=4.5,
-            )
-            handles[label] = line
-        ax.set_title(OPERATIONS[operation], fontsize=13, loc="left", pad=6)
+                [float(r["medianNanosPerOp"]) for r in data], label=label, **look)
         ax.set_xscale("log", base=2)
         ax.set_yscale("log")
         ax.set_xlim(4.8, 5500)
@@ -274,57 +276,62 @@ def plot(rows: list[dict[str, str]], output: Path) -> None:
         ax.xaxis.set_major_locator(FixedLocator([8, 32, 256, 4096]))
         ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{int(value):,}"))
         ax.xaxis.set_minor_locator(NullLocator())
-        ax.yaxis.set_major_locator(FixedLocator(list(tick_labels)))
-        ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: tick_labels[value]))
+        ax.yaxis.set_major_locator(FixedLocator(decades))
+        ax.yaxis.set_major_formatter(
+            FuncFormatter(lambda value, _: f"$10^{{{round(math.log10(value))}}}$"))
         ax.yaxis.set_minor_locator(NullLocator())
-        ax.grid(alpha=.22, linewidth=.7)
+        ax.grid(True, axis="y")
+        ax.grid(False, axis="x")
 
-    for ax, operation in zip(axes.flat, OPERATIONS):
+    width_label, time_label = "format width (bits)", "time per operation (ns)"
+    fig, axes = plt.subplots(2, 3, figsize=(figstyle.WIDTH, 5.6), sharex=True, sharey=True,
+                             layout="constrained")
+    for index, (ax, operation) in enumerate(zip(axes.flat, OPERATIONS)):
         draw_panel(ax, operation)
-    fig.legend(list(handles.values()), list(handles), loc="upper center",
-               bbox_to_anchor=(.55, .995), ncol=3, frameon=False, fontsize=12)
-    fig.text(.009, .49, "Time per operation · lower is faster",
-             rotation=90, ha="left", va="center", fontsize=12)
-    fig.text(.55, .018, "Encoded width (bits) · logarithmic axes",
-             ha="center", va="bottom", fontsize=12)
-    fig.subplots_adjust(left=.09, right=.985, bottom=.115, top=.88, wspace=.13, hspace=.3)
+        if hasattr(figstyle, "panel_title"):
+            figstyle.panel_title(ax, index, OPERATIONS[operation])
+        else:
+            ax.set_title(f"({chr(ord('a') + index)}) {OPERATIONS[operation]}", loc="left",
+                         fontsize=plt.rcParams["axes.labelsize"])
+    for ax in axes[-1]:
+        ax.set_xlabel(width_label)
+    fig.supylabel(time_label, fontsize=plt.rcParams["axes.labelsize"])
+    fig.legend(list(handles.values()), list(handles), loc="outside lower center", ncol=3,
+               frameon=False)
     output.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output, dpi=180)
-    plt.close(fig)
+    figstyle.save(fig, output.name, output)
 
+    # One view per operation for narrow screens. The guide's `figstyle` lays it out and writes
+    # the selector where it can; otherwise the layout of the format comparison does, with no
+    # context line and no notes.
     descriptions = {}
     for operation, title in OPERATIONS.items():
         single, ax = plt.subplots()
         draw_panel(ax, operation)
-        ax.set_xlabel("Encoded width (bits, log₂ scale)")
-        ax.set_ylabel("Time per operation (log scale)")
-        notes = (
-            f"Medians of {TRIALS} trials; lower time is faster.",
-            "Precision and exponent bounds match.",
-            ("At 1,024+ bits, square root uses complete 16-fixture blocks."
-             if operation == "sqrt" else "Result-dependent fixture chain."),
-        )
-        compact_operation_layout(
-            single, ax, title=title, context="Matched binary formats, 6 to 4,096 bits",
-            handles=list(handles.values()), labels=list(handles), notes=notes,
-            bold_labels={"FloatLib binary (proved)"},
-        )
-        save_operation_svg(single, output, operation)
+        ax.set_xlabel(width_label)
+        ax.set_ylabel(time_label)
+        if hasattr(figstyle, "compact_view"):
+            figstyle.compact_view(single, ax, title=title, handles=list(handles.values()),
+                                  labels=list(handles))
+            figstyle.save_view(single, output, operation)
+        else:
+            format_comparison.compact_operation_layout(
+                single, ax, title=title, context="", handles=list(handles.values()),
+                labels=list(handles), notes=())
+            for text in single.texts:
+                text.set_fontweight("normal")
+            format_comparison.save_operation_svg(single, output, operation)
         descriptions[operation] = (
-            f"{title}: absolute time per operation against encoded width, "
-            "on logarithmic axes with time ticks from nanoseconds to seconds. "
-            "FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. "
-            f"Medians of {TRIALS} trials."
-            + (" Square root at 1,024 bits and above uses complete 16-fixture blocks."
-               if operation == "sqrt" else " Result-dependent fixture chain.")
+            f"{title.capitalize()}: time per operation against format width, both on "
+            "logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at "
+            "eleven matching binary formats from 6 to 4,096 bits."
         )
-    write_operation_series(
+    write = getattr(figstyle, "write_views", format_comparison.write_operation_series)
+    write(
         output, descriptions,
-        overview_alt="Six arithmetic operations: absolute time per operation against encoded "
-        "width on logarithmic axes. FloatLib binary, extracted Flocq, and MPFR at eleven "
-        f"matching binary formats, medians of {TRIALS} trials. Square root at 1,024 bits "
-        "and above uses "
-        "complete 16-fixture blocks.",
+        overview_alt="Six panels, one per arithmetic operation: time per operation against "
+        "format width, both on logarithmic axes, with one line each for FloatLib, extracted "
+        "Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits.",
     )
 
 

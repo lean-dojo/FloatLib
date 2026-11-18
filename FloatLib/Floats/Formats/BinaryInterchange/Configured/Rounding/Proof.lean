@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Core.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
+
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
 /-!
@@ -47,19 +47,11 @@ namespace FloatLib.Floats.ExecFloat.Binary
 open FloatLib.Floats.Formats.BinaryInterchange
 
 variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
 
 local notation "Value" => ExecFloat (Configured.Family format code plan)
 
 namespace IEEEOutcome
 
-/-- Repacking and then decoding a model outcome preserves its value, status, and ternary value. -/
-@[simp, grind =] theorem toModel_ofModel (outcome : Model.IEEEOutcome format) :
-    toModel (ofModel (plan := plan) (code := code) outcome) = outcome := by
-  cases outcome
-  simp [toModel, ofModel]
-
-omit [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] in
 /-- `bind` delivers the value of its second step. -/
 @[simp] theorem value_bind
     (outcome : IEEEOutcome (format := format) (plan := plan) (code := code))
@@ -67,7 +59,6 @@ omit [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] in
     (outcome.bind next).value = (next outcome.value).value :=
   rfl
 
-omit [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] in
 /-- `bind` raises every flag that either step raised. -/
 @[simp] theorem status_bind
     (outcome : IEEEOutcome (format := format) (plan := plan) (code := code))
@@ -75,7 +66,6 @@ omit [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] in
     (outcome.bind next).status = outcome.status.union (next outcome.value).status :=
   rfl
 
-omit [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] in
 /-- `bind` keeps the ternary value of its second step. -/
 @[simp] theorem ternary_bind
     (outcome : IEEEOutcome (format := format) (plan := plan) (code := code))
@@ -84,6 +74,14 @@ omit [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] in
   rfl
 
 end IEEEOutcome
+
+variable [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
+
+/-- Repacking and then decoding a model outcome preserves its value, status, and ternary value. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_ofModel (outcome : Model.IEEEOutcome format) :
+    toModel (ofModel (plan := plan) (code := code) outcome) = outcome := by
+  cases outcome
+  simp [toModel, ofModel]
 
 /-- Decoding a rounded rational gives the model rounding with the same direction. -/
 @[simp, grind =] theorem toModel_ofRat (q : Rat) (mode : Model.IEEERoundingMode) :

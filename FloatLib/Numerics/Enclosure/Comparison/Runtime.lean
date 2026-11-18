@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Rational.Runtime
-public import Mathlib.Data.Nat.Find
+public import FloatLib.Numerics.Order.Search.Runtime
 
 /-!
 # Adaptive comparison with rational enclosures
@@ -30,10 +30,12 @@ instance (interval : RationalInterval) (boundary : ℚ) :
     Decidable (Separates interval boundary) :=
   inferInstanceAs (Decidable (_ ∨ _))
 
-/-- Search for the first separating interval and return whether it lies below or above the boundary. -/
+/-- Search for the first separating interval and return whether it lies below or above the
+boundary. -/
 def compare (intervals : Nat → RationalInterval) (boundary : ℚ)
     (terminates : ∃ n, Separates (intervals n) boundary) : Ordering :=
-  let interval := intervals (Nat.find terminates)
+  let interval := intervals (findWithPrefix (fun n => Separates (intervals n) boundary)
+    terminates 16)
   if interval.hi < boundary then .lt else .gt
 
 end FloatLib.Numerics.Enclosure.Comparison

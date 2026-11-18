@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -67,9 +67,9 @@ theorem hypot_eq_hypotDyadic {fmt : FloatFormat} (left right : Model fmt)
   have hnan : chooseNaN2 left right = none :=
     chooseNaN2_none_of_isFinite left right
       (isFinite_eq_true_of_toDyadic?_some hleft) (isFinite_eq_true_of_toDyadic?_some hright)
-  simp [hypot, isSNaN_eq_false_of_toDyadic?_some hleft,
-    isSNaN_eq_false_of_toDyadic?_some hright,
-    isInf_eq_false_of_toDyadic?_some hleft, isInf_eq_false_of_toDyadic?_some hright,
+  simp [hypot, isSignaling_eq_false_of_toDyadic?_some hleft,
+    isSignaling_eq_false_of_toDyadic?_some hright,
+    isInfinite_eq_false_of_toDyadic?_some hleft, isInfinite_eq_false_of_toDyadic?_some hright,
     hnan, hleft, hright]
 
 /--
@@ -82,19 +82,19 @@ theorem isFinite_of_isFinite_hypot {fmt : FloatFormat} (hfmt : fmt.isIEEE = true
     isFinite left = true ∧ isFinite right = true := by
   have hquiet {z : Model fmt} (hz : isNaN z = true) : isFinite (quietNaN z) = false :=
     isFinite_eq_false_of_isNaN ((isNaN_quietNaN z).trans hz)
-  by_cases hsl : isSNaN left = true
-  · simp [hypot, chooseNaN2, hsl, hquiet (isNaN_of_isSNaN hsl)] at h
-  by_cases hsr : isSNaN right = true
-  · simp [hypot, chooseNaN2, hsl, hsr, hquiet (isNaN_of_isSNaN hsr)] at h
-  by_cases hinf : (isInf left || isInf right) = true
+  by_cases hsl : isSignaling left = true
+  · simp [hypot, chooseNaN2, hsl, hquiet (isNaN_of_isSignaling hsl)] at h
+  by_cases hsr : isSignaling right = true
+  · simp [hypot, chooseNaN2, hsl, hsr, hquiet (isNaN_of_isSignaling hsr)] at h
+  by_cases hinf : (isInfinite left || isInfinite right) = true
   · simp [hypot, hsl, hsr, hinf, isFinite_nativeOverflow hfmt] at h
   by_cases hnl : isNaN left = true
   · simp [hypot, chooseNaN2, hsl, hsr, hinf, hnl, hquiet hnl] at h
   by_cases hnr : isNaN right = true
   · simp [hypot, chooseNaN2, hsl, hsr, hinf, hnl, hnr, hquiet hnr] at h
   simp only [Bool.or_eq_true, not_or, Bool.not_eq_true] at hinf hnl hnr
-  exact ⟨isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false left hnl hinf.1,
-    isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false right hnr hinf.2⟩
+  exact ⟨isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false left hnl hinf.1,
+    isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false right hnr hinf.2⟩
 
 /--
 The finite IEEE Euclidean norm is one nearest-even rounding of `sqrt (x² + y²)`.

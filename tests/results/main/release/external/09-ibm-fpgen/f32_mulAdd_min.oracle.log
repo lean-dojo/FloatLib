@@ -1,1 +1,0 @@
-RESULT format=f32 operation=mulAdd rounding=min cases=200 value_mismatches=0 flag_mismatches=0 parse_errors=0

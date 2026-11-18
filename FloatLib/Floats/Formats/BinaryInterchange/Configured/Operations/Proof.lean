@@ -1,16 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
+public import FloatLib.Tactic.IeeeFormat
+
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof
 
 /-!
 # Packing correctness for configured standard operations
@@ -80,20 +82,20 @@ local notation "Value" => ExecFloat (Configured.Family format code plan)
   simp [scale]
 
 /-- The integer exponent query is the descriptor-model query on the decoded value. -/
-@[simp, grind =] theorem binaryExponentInt_eq (value : Value) :
-    binaryExponentInt value = Model.binaryExponentInt (toModel value) :=
+@[simp, grind =] theorem logBInt_eq (value : Value) :
+    logBInt value = Model.logBInt (toModel value) :=
   rfl
 
-/-- Decoding configured `binaryExponent` gives the descriptor-model leading binary exponent. -/
-@[simp, grind =] theorem toModel_binaryExponent (value : Value) :
-    toModel (binaryExponent value) = Model.binaryExponent (toModel value) := by
-  simp [binaryExponent, toModel, Configured.Family.toModel]
+/-- Decoding configured `logB` gives the descriptor-model leading binary exponent. -/
+@[simp, grind =] theorem toModel_logB (value : Value) :
+    toModel (logB value) = Model.logB (toModel value) := by
+  simp [logB, toModel, Configured.Family.toModel]
 
-/-- Configured `binaryExponent` preserves the model value, status, and ternary value. -/
-@[simp, grind =] theorem IEEEOutcome.toModel_binaryExponent (value : Value) :
-    IEEEOutcome.toModel (binaryExponent value (status := true)) =
-      Model.binaryExponent (ExecFloat.Binary.toModel value) (status := true) := by
-  simp [binaryExponent]
+/-- Configured `logB` preserves the model value, status, and ternary value. -/
+@[simp, grind =] theorem IEEEOutcome.toModel_logB (value : Value) :
+    IEEEOutcome.toModel (logB value (status := true)) =
+      Model.logB (ExecFloat.Binary.toModel value) (status := true) := by
+  simp [logB]
 
 /-- Decoding configured sign copying gives descriptor-model sign copying. -/
 @[simp, grind =] theorem toModel_copySign (magnitude signSource : Value) :
@@ -213,13 +215,13 @@ rounding.
   rfl
 
 /--
-Configured `binaryExponent` with `status := true` delivers the value of configured
-`binaryExponent`.
+Configured `logB` with `status := true` delivers the value of configured
+`logB`.
 -/
-@[simp] theorem value_binaryExponent (value : Value) :
-    (binaryExponent value (status := true)).value = binaryExponent value := by
-  rw [← ofModel_toModel (binaryExponent value), toModel_binaryExponent,
-    ← Model.value_binaryExponent]
+@[simp] theorem value_logB (value : Value) :
+    (logB value (status := true)).value = logB value := by
+  rw [← ofModel_toModel (logB value), toModel_logB,
+    ← Model.value_logB]
   rfl
 
 /-- The configured upward neighbor with `status := true` delivers the upward neighbor. -/

@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Formatting
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
 public import FloatLib.Floats.Formats.IEEE754.Native
 public import FloatLibTests.Accounting
 
@@ -173,8 +173,8 @@ def clampAgreement : Nat :=
   countPairFailures Model.IEEERoundingMode.all decimals fun mode decimal =>
     Model.convertDecimalText FloatFormat.binary32 mode decimal ==
         Model.convertDecimalTextExact FloatFormat.binary32 mode decimal &&
-      Model.convertDecimalText FloatFormat.e4m3fn mode decimal ==
-        Model.convertDecimalTextExact FloatFormat.e4m3fn mode decimal &&
+      Model.convertDecimalText FloatFormat.e4m3 mode decimal ==
+        Model.convertDecimalTextExact FloatFormat.e4m3 mode decimal &&
       Model.convertDecimalText FloatFormat.e4m3fnuz mode decimal ==
         Model.convertDecimalTextExact FloatFormat.e4m3fnuz mode decimal &&
       Model.convertDecimalText FloatFormat.e2m3 mode decimal ==
@@ -247,7 +247,7 @@ def nanTextRoundTrip (fmt : FloatFormat) (bits : Nat) : Bool :=
 /-- Exhaust all binary16 NaNs and the signed and unsigned-zero FP8 NaN encodings. -/
 def nanTextRoundTrips : Nat :=
   countWhereFailures (List.range 65536) (nanTextRoundTrip .binary16) +
-  countPairFailures [FloatFormat.e4m3fn, .e4m3fnuz, .e5m2fnuz]
+  countPairFailures [FloatFormat.e4m3, .e4m3fnuz, .e5m2fnuz]
     (List.range 256) nanTextRoundTrip
 
 /-- Significant digits of a decimal significand, ignoring trailing zeros. -/
@@ -301,7 +301,7 @@ def shortestDisplays : Nat :=
   countWhereFailures (List.range 65536) (shortestDisplay .bfloat16) +
   countWhereFailures (sampleWords 0x9E3779B97F4A7C15 32 20000) (shortestDisplay .binary32) +
   countWhereFailures (sampleWords 0x2545F4914F6CDD1D 64 20000) (shortestDisplay .binary64) +
-  countPairFailures [FloatFormat.e4m3fn, .e4m3fnuz, .e5m2, .e5m2fnuz, .e2m3, .e3m2, .e2m1]
+  countPairFailures [FloatFormat.e4m3, .e4m3fnuz, .e5m2, .e5m2fnuz, .e2m3, .e3m2, .e2m1]
     (List.range 256) fun fmt bits => bits ≥ 2 ^ fmt.bitWidth || shortestDisplay fmt bits
 
 /-- Display goldens, including precision above 4096 bits and a wide exponent range. -/
@@ -346,9 +346,9 @@ def displayGoldens : Nat :=
     , (display .bfloat16 0x461c, "9984")
     , (display .bfloat16 0x4641, "1.235e4")
     , (display .bfloat16 0x4070, "3.75")
-    , (display .e4m3fn 0x47, "3.75")
-    , (display .e4m3fn 0x7e, "448")
-    , (display .e4m3fn 0x01, "0.002") ] fun (actual, expected) => actual == expected
+    , (display .e4m3 0x47, "3.75")
+    , (display .e4m3 0x7e, "448")
+    , (display .e4m3 0x01, "0.002") ] fun (actual, expected) => actual == expected
 
 /-- Every style of `format` against goldens, with and without the status option. -/
 def styleGoldens : Nat :=

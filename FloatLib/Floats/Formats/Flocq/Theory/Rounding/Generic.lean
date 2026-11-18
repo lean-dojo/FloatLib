@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -90,10 +90,10 @@ theorem round_pos_large_bounds_and_generic (rnd : ℝ → ℤ) [ValidRnd rnd]
         round (β := β) (fexp := fexp) rnd x ∧
       round (β := β) (fexp := fexp) rnd x ≤
         bpow β (magnitude β x)) ∧
-      genericFormat β fexp (round (β := β) (fexp := fexp) rnd x) := by
-  set ex := magnitude β x with hex
-  set e := fexp ex with he
-  set s := scaledMantissa β fexp x with hs
+      GenericRepresentable β fexp (round (β := β) (fexp := fexp) rnd x) := by
+  set ex := magnitude β x
+  set e := fexp ex
+  set s := scaledMantissa β fexp x
   have hxne : x ≠ 0 := hx.ne'
   have hbpowPos : 0 < bpow β e := bpow.pos β e
   have hsdiv : s = x / bpow β e := scaledMantissa_eq_div (β := β) (fexp := fexp) x
@@ -101,8 +101,8 @@ theorem round_pos_large_bounds_and_generic (rnd : ℝ → ℤ) [ValidRnd rnd]
     simpa [abs_of_pos hx] using (magnitude_spec β x hxne).1
   have hxUpper : x < bpow β ex := by
     simpa [abs_of_pos hx] using (magnitude_spec β x hxne).2
-  obtain ⟨nLower, hnLower⟩ := bpow_eq_natCast_of_nonneg β (ex - 1 - e) (by linarith)
-  obtain ⟨nUpper, hnUpper⟩ := bpow_eq_natCast_of_nonneg β (ex - e) (by linarith)
+  obtain ⟨nLower, hnLower⟩ := bpow_eq_natCast_of_nonneg β (ex - 1 - e) (by omega)
+  obtain ⟨nUpper, hnUpper⟩ := bpow_eq_natCast_of_nonneg β (ex - e) (by positivity)
   have hsLower : (nLower : ℝ) ≤ s := by
     rw [← hnLower, bpow.sub_exp, hsdiv]
     exact div_le_div_of_nonneg_right hxLower hbpowPos.le
@@ -123,19 +123,19 @@ theorem round_pos_large_bounds_and_generic (rnd : ℝ → ℤ) [ValidRnd rnd]
   refine ⟨⟨hyLower, hyUpper⟩, ?_⟩
   rcases hyUpper.eq_or_lt with hyEq | hyLt
   · rw [hyEq]
-    exact generic_format_bpow ex (validExp_large (fexp := fexp) hlarge)
-  · exact generic_format_of_mul_bpow_of_mem_bin (rnd s) hy hyLower hyLt
+    exact genericRepresentable_bpow ex (validExp_large (fexp := fexp) hlarge)
+  · exact genericRepresentable_of_mul_bpow_of_mem_bin (rnd s) hy hyLower hyLt
 
 /-- Every positive real rounds into the selected generic format. -/
 private theorem generic_format_round_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
     (x : ℝ) (hx : 0 < x) :
-    genericFormat β fexp (round (β := β) (fexp := fexp) rnd x) := by
+    GenericRepresentable β fexp (round (β := β) (fexp := fexp) rnd x) := by
   by_cases hsmall : magnitude β x ≤ fexp (magnitude β x)
   · rcases round_pos_small_cases (β := β) (fexp := fexp) rnd x hx hsmall with hy | hy
     · rw [hy]
-      exact generic_format_zero
+      exact genericRepresentable_zero
     · rw [hy]
-      exact generic_format_bpow _ (validExp_small (fexp := fexp) hsmall)
+      exact genericRepresentable_bpow _ (validExp_small (fexp := fexp) hsmall)
   · exact (round_pos_large_bounds_and_generic
       (β := β) (fexp := fexp) rnd x hx (lt_of_not_ge hsmall)).2
 
@@ -181,8 +181,8 @@ theorem negRound_truncRound : negRound truncRound = truncRound := by
     simp [negRound, truncRound, not_lt.mpr hx.le, hnx, Int.ceil_neg]
 
 /-- Rounding any real produces a value in the selected generic format. -/
-theorem generic_format_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
-    genericFormat β fexp (round (β := β) (fexp := fexp) rnd x) := by
+theorem genericRepresentable_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
+    GenericRepresentable β fexp (round (β := β) (fexp := fexp) rnd x) := by
   rcases lt_trichotomy x 0 with hx | hx | hx
   · have hpos : 0 < -x := neg_pos.mpr hx
     have hgeneric :=
@@ -190,10 +190,10 @@ theorem generic_format_round (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ) :
     have hround := round_neg (β := β) (fexp := fexp) rnd (-x)
     simp only [neg_neg] at hround
     rw [hround]
-    exact generic_format_neg _ hgeneric
+    exact genericRepresentable_neg _ hgeneric
   · subst x
     rw [round_zero]
-    exact generic_format_zero
+    exact genericRepresentable_zero
   · exact generic_format_round_pos rnd x hx
 
 end FloatLib.Floats.Formats.Flocq

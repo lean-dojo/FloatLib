@@ -1,18 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
+
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 
 /-!
 # Real-valued posit rounding specification
@@ -41,7 +41,7 @@ noncomputable def nonnegativeRealAt (format : Format) (code : Nat) : ℝ :=
 
 /-- For a nonnegative target, the greatest code whose real denotation does not exceed it. -/
 noncomputable def lowerCode (format : Format) (target : ℝ) : Nat :=
-  Model.lowerCodeByBisection
+  Numerics.bisect
     (fun code => decide (nonnegativeRealAt format code ≤ target))
     format.bits 0 format.signMaskNat
 
@@ -81,7 +81,7 @@ noncomputable def roundPositive (format : Format) (target : ℝ) : Model format 
 
 /-- Round a signed real by the standard whole-word negation symmetry. -/
 noncomputable def round (format : Format) (target : ℝ) : Model format :=
-  if target < 0 then Model.neg (roundPositive format (-target))
+  if target < 0 then Model.negate (roundPositive format (-target))
   else roundPositive format target
 
 /-- Real lower-code search agrees with rational lower-code search after exact coercion. -/
@@ -98,7 +98,7 @@ theorem lowerCode_mono (format : Format) :
     Monotone (lowerCode format) := by
   intro left right hle
   unfold lowerCode
-  apply Model.lowerCodeByBisection_mono_accept
+  apply Numerics.bisect_mono_accept
   intro code hleft
   simp only [decide_eq_true_eq] at hleft ⊢
   exact hleft.trans hle

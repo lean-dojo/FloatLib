@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Numerics.Coeff.Defect
 public import FloatLib.Numerics.Coeff.Trig
-public import FloatLib.Numerics.Packed.Literal
+public import FloatLib.Tactic.PackedRow
 
 /-!
 # An inverse and an inverse square root on the circle from kernel-checked defects
@@ -84,6 +84,7 @@ noncomputable def v : Wiener := ((2 : ℂ) ^ 40)⁻¹ • ofRow (entries 128 25 
 noncomputable def g : Wiener := ((2 : ℂ) ^ 40)⁻¹ • ofRow (entries 128 33 gRow) 16
 
 set_option maxHeartbeats 2000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- All the kernel work: range checks, the two defects, two `l1` norms and the value `g(0)`, whose
 sign one `sum` reads. -/
 theorem check :
@@ -199,6 +200,7 @@ theorem invSqrt_bound (u : ℝ) : ‖((√(2 + Real.cos u))⁻¹ : ℂ) - eval u
     _ ≤ 8e-11 := by norm_num
 
 set_option maxHeartbeats 2000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- A perturbed inverse: the last coefficient of `v` changed by `2 ^ 20` makes the defect larger
 than the bound above, and the kernel refuses it. -/
 theorem wrong_inverse :

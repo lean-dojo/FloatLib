@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Parsing
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
 public import FloatLib.Numerics.Exact.DecimalText.Notation
-public import Mathlib.Data.Nat.Log
 
 /-!
 # Shortest decimal text of binary values

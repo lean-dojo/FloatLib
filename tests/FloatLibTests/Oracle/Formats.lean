@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
 import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
 import FloatLib.Floats.Formats.OCP.MX.E8M0.Core
 import FloatLib.Floats.Formats.P3109.Runtime
 
@@ -28,7 +28,7 @@ open FloatLib.Numerics
 open FloatLib.Floats.Formats
 open FloatLib.Floats.Formats.BinaryInterchange
 
-private def emitFinite
+def emitFinite
     (family format : String)
     (bits : Nat)
     (value : FloatLib.Numerics.Dyadic)
@@ -38,14 +38,14 @@ private def emitFinite
     s!"{family},{format},{bits},finite,{value.negative},{value.significand}," ++
       s!"{value.exponent},{subnormal}"
 
-private def emitInfinity
+def emitInfinity
     (family format : String) (bits : Nat) (negative : Bool) : IO Unit :=
   IO.println s!"{family},{format},{bits},infinity,{negative},0,0,false"
 
-private def emitNaN (family format : String) (bits : Nat) : IO Unit :=
+def emitNaN (family format : String) (bits : Nat) : IO Unit :=
   IO.println s!"{family},{format},{bits},nan,false,0,0,false"
 
-private def emitBinaryFormat (name : String) (format : FloatFormat) : IO Unit := do
+def emitBinaryFormat (name : String) (format : FloatFormat) : IO Unit := do
   for bits in List.range (2 ^ format.bitWidth) do
     let value := Model.ofNatBits (fmt := format) bits
     match Model.exactValue value with
@@ -56,22 +56,22 @@ private def emitBinaryFormat (name : String) (format : FloatFormat) : IO Unit :=
     | .nan _ _ _ =>
         emitNaN "onnx" name bits
 
-private def emitE8M0 : IO Unit := do
+def emitE8M0 : IO Unit := do
   for bits in List.range 256 do
     let value := OCP.MX.E8M0.ofNatBits bits
     match OCP.MX.E8M0.toDyadic? value with
     | some exact => emitFinite "onnx" "e8m0" bits exact false
     | none => emitNaN "onnx" "e8m0" bits
 
-private def emitONNX : IO Unit := do
+def emitONNX : IO Unit := do
   emitBinaryFormat "e2m1" FloatFormat.e2m1
-  emitBinaryFormat "e4m3fn" FloatFormat.e4m3fn
+  emitBinaryFormat "e4m3" FloatFormat.e4m3
   emitBinaryFormat "e4m3fnuz" FloatFormat.e4m3fnuz
   emitBinaryFormat "e5m2" FloatFormat.e5m2
   emitBinaryFormat "e5m2fnuz" FloatFormat.e5m2fnuz
   emitE8M0
 
-private def p3109Name (format : P3109.Format) : String :=
+def p3109Name (format : P3109.Format) : String :=
   let signedness :=
     match format.signedness with
     | .signed => "s"
@@ -82,7 +82,7 @@ private def p3109Name (format : P3109.Format) : String :=
     | .extended => "e"
   s!"Binary{format.bitWidth}p{format.precision}{signedness}{domain}"
 
-private def p3109Subnormal (format : P3109.Format) (bits : Nat) : Bool :=
+def p3109Subnormal (format : P3109.Format) (bits : Nat) : Bool :=
   let magnitude :=
     match format.signedness with
     | .signed =>
@@ -90,7 +90,7 @@ private def p3109Subnormal (format : P3109.Format) (bits : Nat) : Bool :=
     | .unsigned => bits
   magnitude != 0 && magnitude / (2 ^ format.trailingBits) == 0
 
-private def emitP3109Format (format : P3109.Format) : IO Unit := do
+def emitP3109Format (format : P3109.Format) : IO Unit := do
   let name := p3109Name format
   for bits in List.range format.modulus do
     match format.decodeNat bits with
@@ -101,7 +101,7 @@ private def emitP3109Format (format : P3109.Format) : IO Unit := do
     | .exceptional _ =>
         emitNaN "p3109" name bits
 
-private def emitP3109 (minimumWidth maximumWidth : Nat) : IO Unit := do
+def emitP3109 (minimumWidth maximumWidth : Nat) : IO Unit := do
   for bitWidth in List.range (maximumWidth + 1) do
     if minimumWidth ≤ bitWidth then
       for precisionOffset in List.range bitWidth do
@@ -112,12 +112,12 @@ private def emitP3109 (minimumWidth maximumWidth : Nat) : IO Unit := do
             | some format => emitP3109Format format
             | none => pure ()
 
-private def parseNat (name text : String) : IO Nat :=
+def parseNat (name text : String) : IO Nat :=
   match text.toNat? with
   | some value => pure value
   | none => throw <| IO.userError s!"{name} must be a natural number: {text}"
 
-private def usage : String :=
+def usage : String :=
   "usage: oracle formats onnx | p3109 MIN_WIDTH MAX_WIDTH"
 
 /-- Emit exact ONNX or P3109 decoding vectors. -/

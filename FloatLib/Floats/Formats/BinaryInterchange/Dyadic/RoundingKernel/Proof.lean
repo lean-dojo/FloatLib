@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Numerics.ShiftRightJam
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
+
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Bounds
+import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
@@ -157,10 +158,6 @@ private theorem ieeeSubnormalAlignExp_eq_neg_minSubnormalExp (fmt : FloatFormat)
   have hnat :
       FloatFormat.ieeeSubnormalAlignExp fmt + 1 = fmt.bias + fmt.fracWidth :=
     Nat.sub_add_cancel hsum
-  have hcast :
-      ((FloatFormat.ieeeSubnormalAlignExp fmt : Nat) : Int) + 1 =
-        ((fmt.bias + fmt.fracWidth : Nat) : Int) := by
-    exact_mod_cast hnat
   simp only [Int.ofNat_eq_natCast] at ⊢
   omega
 
@@ -171,36 +168,8 @@ private theorem roundMantissaAtExponentEven_minSubnormal_eq_match
       match exponent + Int.ofNat (FloatFormat.ieeeSubnormalAlignExp fmt) with
       | .ofNat shift => mantissa <<< shift
       | .negSucc shift => Numerics.roundShiftRightEven mantissa (shift + 1) := by
-  rw [ieeeSubnormalAlignExp_eq_neg_minSubnormalExp]
-  have hsub :
-      exponent + -FloatFormat.ieeeMinSubnormalExponent fmt =
-        exponent - FloatFormat.ieeeMinSubnormalExponent fmt := by omega
-  rw [hsub]
-  generalize hdifference :
-    exponent - FloatFormat.ieeeMinSubnormalExponent fmt = difference
-  cases difference with
-  | ofNat shift =>
-      simp only [Int.ofNat_eq_natCast] at hdifference
-      by_cases hshift : shift = 0
-      · subst shift
-        simp only [Nat.cast_zero] at hdifference
-        have hexponent :
-            exponent = FloatFormat.ieeeMinSubnormalExponent fmt := by omega
-        simp [roundMantissaAtExponentEven, Numerics.roundShiftRightEven_def, hexponent]
-      · have htarget :
-            FloatFormat.ieeeMinSubnormalExponent fmt < exponent := by omega
-        have hshiftNat :
-            (exponent - FloatFormat.ieeeMinSubnormalExponent fmt).toNat = shift := by
-          rw [hdifference]
-          rfl
-        simp [roundMantissaAtExponentEven, not_le_of_gt htarget, hshiftNat]
-  | negSucc shift =>
-      have hexponent :
-          exponent < FloatFormat.ieeeMinSubnormalExponent fmt := by omega
-      have hshiftNat :
-          (FloatFormat.ieeeMinSubnormalExponent fmt - exponent).toNat = shift + 1 := by
-        omega
-      simp [roundMantissaAtExponentEven, hexponent.le, hshiftNat]
+  rw [ieeeSubnormalAlignExp_eq_neg_minSubnormalExp, ← sub_eq_add_neg]
+  exact roundMantissaAtExponentEven_eq_match _ _ _
 
 private theorem modelOverflow_iff_gt_maxNormal
     (fmt : FloatFormat) (exponent : Int)
@@ -670,10 +639,7 @@ private theorem roundDyadicGeneral_eq_internal_ieeeRoundDyadic_of_isIEEE
           show (d.significand.log2 : Int) + d.exponent = totalExponent from rfl]
         simp only [beq_iff_eq]
         by_cases hcarry : rounded = pow2 (fmt.fracWidth + 1)
-        · have hnormalizedMin :
-              fmt.minNormalExponent ≤ totalExponent + 1 := by
-            omega
-          have hmantissaHigh :
+        · have hmantissaHigh :
               pow2 fmt.fracWidth < pow2 (fmt.fracWidth + 1) := by
             simp [pow2_eq_two_pow, pow_succ]
           by_cases hnormalizedOverflow :
@@ -791,9 +757,6 @@ theorem roundDyadicGeneral_shiftRightJam (fmt : FloatFormat) (sign : Bool) (magn
     have hn' : exponent - fmt.minSubnormalExponent = Int.negSucc (n + discard) := by
       rw [Int.negSucc_eq] at hn ⊢
       push_cast
-      omega
-    have hn2 : 2 ≤ n + 1 := by
-      rw [Int.negSucc_eq] at hn
       omega
     rw [hn, hn']
     dsimp only

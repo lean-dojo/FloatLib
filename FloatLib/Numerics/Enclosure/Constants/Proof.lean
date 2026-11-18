@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -10,6 +10,7 @@ public import FloatLib.Numerics.Enclosure.Constants.Runtime
 public import FloatLib.Numerics.Enclosure.Elementary.Proof
 public import FloatLib.Numerics.Enclosure.Interval.BinaryGridProof
 public import FloatLib.Numerics.Enclosure.Trigonometric.AtanProof
+public import Mathlib.Algebra.Order.Floor.Semifield
 public import Mathlib.Analysis.Complex.ExponentialBounds
 public import Mathlib.Analysis.Real.Pi.Bounds
 
@@ -61,9 +62,6 @@ theorem le_levelBits_levelFor (bits : Nat) : bits ≤ levelBits (levelFor bits) 
   · simpa using ‹bits ≤ 64›
   · rw [Nat.shiftLeft_eq]
     have hlog := Nat.lt_log2_self (n := (bits - 1) / 64)
-    have hdiv := Nat.lt_mul_div_succ (bits - 1) (show 0 < 64 by decide)
-    have hmul : 64 * ((bits - 1) / 64 + 1) ≤ 64 * 2 ^ (((bits - 1) / 64).log2 + 1) :=
-      Nat.mul_le_mul_left 64 hlog
     omega
 
 /-- More bits need the same or a higher level. -/
@@ -105,8 +103,8 @@ theorem LowerApprox.shiftRight {c : ℝ} {precision value : Nat}
     · have hceilReal : (value : ℝ) + 1 ≤ ((value / 2 ^ k : ℕ) + 1 : ℝ) * 2 ^ k := by
         exact_mod_cast hceil
       have htwo : (2 : ℝ) ≤ 2 ^ k := by
-        calc (2 : ℝ) = 2 ^ 1 := by norm_num
-          _ ≤ 2 ^ k := pow_le_pow_right₀ (by norm_num) hk
+        calc (2 : ℝ) = 2 ^ 1 := (pow_one 2).symm
+          _ ≤ 2 ^ k := pow_le_pow_right₀ (one_le_two) hk
       have hlt : c * 2 ^ bits * 2 ^ k < (((value / 2 ^ k : ℕ) : ℝ) + 2) * 2 ^ k := by
         nlinarith
       exact lt_of_mul_lt_mul_right hlt hpow.le
@@ -138,7 +136,7 @@ theorem LowerApprox.abs_round_sub_lt {c : ℝ} {bits value : Nat}
 /-- `atanSmall (1/5)` at `degree` has radius `1 / (120 * 25 ^ degree)`. -/
 private theorem atanRadius_one_div_five (degree : Nat) :
     atanRadius (1 / 5) (degree + 1) = 1 / (120 * 25 ^ degree) := by
-  rw [atanRadius, abs_of_pos (by norm_num), show ((1 : ℚ) / 5) ^ 2 = 1 / 25 by norm_num,
+  rw [atanRadius_def, abs_of_pos (by norm_num), show ((1 : ℚ) / 5) ^ 2 = 1 / 25 by norm_num,
     pow_succ, one_div_pow]
   field_simp
   norm_num
@@ -146,7 +144,7 @@ private theorem atanRadius_one_div_five (degree : Nat) :
 /-- `atanSmall (1/239)` at `degree` has radius `1 / (13651680 * 57121 ^ degree)`. -/
 private theorem atanRadius_one_div_239 (degree : Nat) :
     atanRadius (1 / 239) (degree + 1) = 1 / (13651680 * 57121 ^ degree) := by
-  rw [atanRadius, abs_of_pos (by norm_num), show ((1 : ℚ) / 239) ^ 2 = 1 / 57121 by norm_num,
+  rw [atanRadius_def, abs_of_pos (by norm_num), show ((1 : ℚ) / 239) ^ 2 = 1 / 57121 by norm_num,
     pow_succ, one_div_pow]
   field_simp
   norm_num
@@ -171,8 +169,9 @@ theorem piQuarter_eq (degree : Nat) :
           (atanTaylor (1 / 239) (degree + 1) + 1 / (13651680 * 57121 ^ degree)),
         4 * (atanTaylor (1 / 5) (degree + 1) + 1 / (120 * 25 ^ degree)) -
           (atanTaylor (1 / 239) (degree + 1) - 1 / (13651680 * 57121 ^ degree))⟩ := by
-  simp only [piQuarter, atanSmall, RationalInterval.around, RationalInterval.scaleNonnegative,
-    RationalInterval.sub, RationalInterval.add, RationalInterval.neg,
+  simp only [piQuarter_def, atanSmall, RationalInterval.around_def,
+    RationalInterval.scaleNonnegative_def, RationalInterval.sub, RationalInterval.add_def,
+    RationalInterval.neg,
     Constants.atanRadius_one_div_five, Constants.atanRadius_one_div_239]
   congr 1 <;> ring
 
@@ -181,10 +180,10 @@ theorem piQuarter_width_le (degree : Nat) :
     (piQuarter degree).hi - (piQuarter degree).lo ≤ 1 / (12 * 25 ^ degree) := by
   rw [piQuarter_eq]
   dsimp only
-  have hu : (0 : ℚ) < 25 ^ degree := by positivity
+  have hu : (0 : ℚ) < 25 ^ degree := Rat.pow_pos rfl
   have hpow : (25 : ℚ) ^ degree ≤ 57121 ^ degree := pow_le_pow_left₀ (by norm_num) (by norm_num) _
   set w : ℚ := 1 / 25 ^ degree with hw
-  have hwpos : 0 < w := by positivity
+  have hwpos : 0 < w := one_div_pos.mpr hu
   have h120 : 1 / (120 * (25 : ℚ) ^ degree) = w / 120 := by rw [hw]; field_simp
   have h12 : 1 / (12 * (25 : ℚ) ^ degree) = w / 12 := by rw [hw]; field_simp
   have hlarge : 1 / (13651680 * (57121 : ℚ) ^ degree) ≤ w / 13651680 := by
@@ -206,18 +205,18 @@ theorem piQuarter_bounds (degree : Nat) :
 
 /-- The lower endpoint of Machin's enclosure exceeds two thirds. -/
 theorem two_thirds_lt_piQuarter_lo (degree : Nat) : (2 / 3 : ℚ) < (piQuarter degree).lo := by
-  obtain ⟨hlo, hhi, hwidth⟩ := piQuarter_bounds degree
+  obtain ⟨_, hhi, hwidth⟩ := piQuarter_bounds degree
   have hpi := Real.pi_gt_three
   have hsmall : (1 : ℝ) / (12 * 25 ^ degree) ≤ 1 / 12 :=
-    one_div_le_one_div_of_le (by norm_num) (by
-      have : (1 : ℝ) ≤ 25 ^ degree := one_le_pow₀ (by norm_num)
+    one_div_le_one_div_of_le (Nat.ofNat_pos) (by
+      have : (1 : ℝ) ≤ 25 ^ degree := one_le_pow₀ (Nat.one_le_ofNat)
       linarith)
   have : ((2 / 3 : ℚ) : ℝ) < (piQuarter degree).lo := by push_cast; linarith
   exact_mod_cast this
 
 /-- The lower endpoint of Machin's enclosure is positive. -/
 theorem piQuarter_lo_pos (degree : Nat) : 0 < (piQuarter degree).lo :=
-  lt_trans (by norm_num) (two_thirds_lt_piQuarter_lo degree)
+  lt_trans (div_pos rfl rfl) (two_thirds_lt_piQuarter_lo degree)
 
 end FloatLib.Numerics.Enclosure
 
@@ -247,22 +246,19 @@ private theorem two_pow_succ_le_mul_pow_piDegree (bits : Nat) :
     2 ^ (bits + 1) ≤ 12 * 25 ^ piDegree bits := by
   unfold piDegree
   have hbits : bits + 1 ≤ 4 * (bits / 4) + 4 := by omega
-  calc 2 ^ (bits + 1) ≤ 2 ^ (4 * (bits / 4) + 4) := Nat.pow_le_pow_right (by norm_num) hbits
+  calc 2 ^ (bits + 1) ≤ 2 ^ (4 * (bits / 4) + 4) := Nat.pow_le_pow_right (by decide) hbits
     _ = 16 ^ (bits / 4) * 16 := by rw [pow_add, pow_mul]; norm_num
-    _ ≤ 25 ^ (bits / 4) * 16 := Nat.mul_le_mul_right _ (Nat.pow_le_pow_left (by norm_num) _)
-    _ ≤ 25 ^ (bits / 4) * (12 * 25 ^ 4) := Nat.mul_le_mul_left _ (by norm_num)
-    _ = 12 * 25 ^ (bits / 4 + 4) := by rw [pow_add]; ring
+    _ ≤ 25 ^ (bits / 4) * 16 := Nat.mul_le_mul_right _ (Nat.pow_le_pow_left (by decide) _)
+    _ ≤ 25 ^ (bits / 4) * (12 * 25 ^ 4) := Nat.mul_le_mul_left _ (by decide)
+    _ = 12 * 25 ^ (bits / 4 + 4) := by rw [pow_add]; ac_rfl
 
 /-! ## π/2 and 2/π -/
 
 /-- Natural division brackets the real quotient. -/
-private theorem natCast_div_bounds (a b : Nat) (hb : 0 < b) :
+private theorem natCast_div_bounds (a b : Nat) (_hb : 0 < b) :
     ((a / b : ℕ) : ℝ) ≤ (a : ℝ) / b ∧ (a : ℝ) / b < (a / b : ℕ) + 1 := by
-  have hbReal : (0 : ℝ) < b := by exact_mod_cast hb
   refine ⟨Nat.cast_div_le, ?_⟩
-  rw [div_lt_iff₀ hbReal]
-  have h : (a : ℝ) < b * ((a / b : ℕ) + 1) := by exact_mod_cast Nat.lt_mul_div_succ a hb
-  linarith
+  simpa only [Nat.floor_div_eq_div] using Nat.lt_floor_add_one ((a : ℝ) / b)
 
 /--
 A floor quotient is a lower bound within two units of `c * 2 ^ bits` when the exact quotient is
@@ -284,7 +280,6 @@ theorem LowerApprox.of_div {c lo hi : ℝ} {bits numerator denominator : Nat}
 private theorem natCast_toNat_of_div {numerator : Int} {denominator : Nat} {value : ℚ}
     (hdenominator : 0 < denominator) (hvalue : (numerator : ℚ) / denominator = value)
     (hpos : 0 < value) : ((numerator.toNat : ℕ) : ℝ) = (value : ℝ) * denominator := by
-  have hdenQ : (0 : ℚ) < denominator := by exact_mod_cast hdenominator
   have hnum : (numerator : ℚ) = value * denominator := by
     rw [← hvalue]
     field_simp
@@ -325,9 +320,7 @@ theorem piLevel_halfPi_spec (bits : Nat) :
   rw [hval]
   apply LowerApprox.of_div hden (lo := 2 * ((piQuarter (piDegree bits)).lo : ℝ))
     (hi := 2 * ((piQuarter (piDegree bits)).hi : ℝ))
-  · have hdenReal : (0 : ℝ) < (piQuarterBounds (piDegree bits)).denominator := by
-      exact_mod_cast hden
-    rw [Nat.shiftLeft_eq]
+  · rw [Nat.shiftLeft_eq]
     push_cast
     rw [hcast]
     field_simp
@@ -381,7 +374,6 @@ theorem piLevel_twoOverPi_spec (bits : Nat) :
   have hsmall : (2 : ℝ) ^ bits * (hi - lo) ≤ 1 / 2 := by
     rw [pow_succ] at hscaledWidth
     linarith
-  have hquarter : (3 / 4 : ℝ) < Real.pi / 4 := by linarith
   have htwo : 2 / Real.pi * 2 ^ bits = 2 ^ bits / (2 * (Real.pi / 4)) := by
     field_simp
     ring
@@ -399,7 +391,7 @@ theorem piLevel_twoOverPi_spec (bits : Nat) :
       linarith
     have hdenom : (1 : ℝ) < 2 * (Real.pi / 4) * hi := by nlinarith
     have hfrac : (2 : ℝ) ^ bits * (hi - Real.pi / 4) / (2 * (Real.pi / 4) * hi) < 1 := by
-      rw [div_lt_one (by linarith)]
+      rw [div_lt_one (by positivity)]
       linarith
     linarith
 
@@ -424,11 +416,11 @@ theorem logSeries_two_eq (degree : Nat) :
       ⟨logOneSubTaylor (1 / 3) degree - logOneSubTaylor (-1 / 3) degree - 1 / 3 ^ degree,
         logOneSubTaylor (1 / 3) degree - logOneSubTaylor (-1 / 3) degree + 1 / 3 ^ degree⟩ := by
   have ht : ((2 : ℚ) - 1) / (2 + 1) = 1 / 3 := by norm_num
-  have hneg : -((1 : ℚ) / 3) = -1 / 3 := by norm_num
-  have habs : |(-1 / 3 : ℚ)| = 1 / 3 := by norm_num [abs_div]
-  have habs' : |(1 / 3 : ℚ)| = 1 / 3 := by norm_num
-  simp only [logSeries, ht, hneg, logOneSub, logOneSubRadius, RationalInterval.around,
-    RationalInterval.sub, RationalInterval.add, RationalInterval.neg, habs, habs']
+  have hneg : -((1 : ℚ) / 3) = -1 / 3 := neg_div' 3 1
+  have habs : |(-1 / 3 : ℚ)| = 1 / 3 := IsAbsoluteValue.abv_div abs (-1) 3
+  have habs' : |(1 / 3 : ℚ)| = 1 / 3 := IsAbsoluteValue.abv_div abs 1 3
+  simp only [logSeries_def, ht, hneg, logOneSub, logOneSubRadius_def, RationalInterval.around_def,
+    RationalInterval.sub, RationalInterval.add_def, RationalInterval.neg, habs, habs']
   have hradius : ((1 : ℚ) / 3) ^ (degree + 1) / (1 - 1 / 3) = 1 / 3 ^ degree / 2 := by
     rw [pow_succ, one_div_pow]
     field_simp
@@ -453,7 +445,7 @@ theorem ln2Bounds_eq (degree : Nat) :
   generalize split (logStep (-1 / 3)) 0 degree = minus
   have hp : (plus.denominator : ℚ) ≠ 0 := by exact_mod_cast plus.denominator_pos.ne'
   have hm : (minus.denominator : ℚ) ≠ 0 := by exact_mod_cast minus.denominator_pos.ne'
-  have hw : (3 : ℚ) ^ degree ≠ 0 := by positivity
+  have hw : (3 : ℚ) ^ degree ≠ 0 := NeZero.ne _
   push_cast
   constructor <;> field_simp
 
@@ -463,23 +455,23 @@ private theorem two_pow_succ_le_three_pow_ln2Degree (bits : Nat) :
   unfold ln2Degree
   have hbits : bits + 1 ≤ 3 * (bits / 3) + 3 := by omega
   have hdegree : 2 * (bits / 3) + 8 ≤ 2 * bits / 3 + 8 := by omega
-  calc 2 ^ (bits + 1) ≤ 2 ^ (3 * (bits / 3) + 3) := Nat.pow_le_pow_right (by norm_num) hbits
+  calc 2 ^ (bits + 1) ≤ 2 ^ (3 * (bits / 3) + 3) := Nat.pow_le_pow_right (by decide) hbits
     _ = 8 ^ (bits / 3) * 8 := by rw [pow_add, pow_mul]; norm_num
-    _ ≤ 9 ^ (bits / 3) * 8 := Nat.mul_le_mul_right _ (Nat.pow_le_pow_left (by norm_num) _)
-    _ ≤ 9 ^ (bits / 3) * 3 ^ 8 := Nat.mul_le_mul_left _ (by norm_num)
+    _ ≤ 9 ^ (bits / 3) * 8 := Nat.mul_le_mul_right _ (Nat.pow_le_pow_left (by decide) _)
+    _ ≤ 9 ^ (bits / 3) * 3 ^ 8 := Nat.mul_le_mul_left _ (by decide)
     _ = 3 ^ (2 * (bits / 3) + 8) := by rw [pow_add, pow_mul]; norm_num
-    _ ≤ 3 ^ (2 * bits / 3 + 8) := Nat.pow_le_pow_right (by norm_num) hdegree
+    _ ≤ 3 ^ (2 * bits / 3 + 8) := Nat.pow_le_pow_right (by decide) hdegree
 
 /-- `ln2Fixed bits` is within two units below `log 2 * 2 ^ bits`. -/
 theorem ln2Fixed_spec (bits : Nat) : LowerApprox (Real.log 2) bits (ln2Fixed bits) := by
-  obtain ⟨hlo, hhi⟩ := contains_logSeries 2 (ln2Degree bits) (by norm_num)
+  obtain ⟨hlo, hhi⟩ := contains_logSeries 2 (ln2Degree bits) (by decide)
   simp only [Rat.cast_ofNat] at hlo hhi
   obtain ⟨hlower, -⟩ := ln2Bounds_eq (ln2Degree bits)
   have hden := (ln2Bounds (ln2Degree bits)).denominator_pos
   have hprec : (2 : ℝ) ^ (bits + 1) ≤ 3 ^ ln2Degree bits := by
     exact_mod_cast two_pow_succ_le_three_pow_ln2Degree bits
   have height : (3 : ℝ) ^ 8 ≤ 3 ^ ln2Degree bits :=
-    pow_le_pow_right₀ (by norm_num) (by unfold ln2Degree; omega)
+    pow_le_pow_right₀ (Nat.one_le_ofNat) (by unfold ln2Degree; omega)
   have hwidth : ((logSeries 2 (ln2Degree bits)).hi : ℝ) - (logSeries 2 (ln2Degree bits)).lo =
       2 / 3 ^ ln2Degree bits := by
     rw [logSeries_two_eq]
@@ -489,7 +481,7 @@ theorem ln2Fixed_spec (bits : Nat) : LowerApprox (Real.log 2) bits (ln2Fixed bit
   have hpow : (0 : ℝ) < 3 ^ ln2Degree bits := by positivity
   have hpos : (0 : ℝ) < (logSeries 2 (ln2Degree bits)).lo := by
     have : (2 : ℝ) / 3 ^ ln2Degree bits ≤ 1 / 2 := by
-      rw [div_le_div_iff₀ hpow (by norm_num)]
+      rw [div_le_div_iff₀ hpow (two_pos)]
       nlinarith
     linarith
   have hcast := natCast_toNat_of_div hden hlower (by exact_mod_cast hpos)
@@ -498,8 +490,7 @@ theorem ln2Fixed_spec (bits : Nat) : LowerApprox (Real.log 2) bits (ln2Fixed bit
   · rw [hwidth, div_mul_eq_mul_div, div_le_one hpow]
     rw [pow_succ] at hprec
     linarith
-  · have hdenReal : (0 : ℝ) < (ln2Bounds (ln2Degree bits)).denominator := by exact_mod_cast hden
-    rw [Nat.shiftLeft_eq]
+  · rw [Nat.shiftLeft_eq]
     push_cast
     rw [hcast]
     field_simp
@@ -544,7 +535,7 @@ theorem containsReal_ln2Grid (precision : Nat) :
   have hscale : ((Interval.BinaryGrid.scale precision : ℤ) : ℝ) = 2 ^ precision := by
     rw [Interval.BinaryGrid.scale_eq_pow]
     push_cast
-    ring
+    rfl
   have hpow : (0 : ℝ) < 2 ^ precision := by positivity
   have hpow64 : (0 : ℝ) < 2 ^ 64 := by positivity
   have hsplit : Real.log 2 * 2 ^ (precision + 64) = Real.log 2 * 2 ^ precision * 2 ^ 64 := by

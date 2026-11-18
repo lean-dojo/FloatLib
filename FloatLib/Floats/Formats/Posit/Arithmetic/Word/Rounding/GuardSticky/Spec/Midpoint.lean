@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Tail
+
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -217,8 +218,6 @@ theorem streamSticky_eq_decide_midpoint_lt_of_guard
   have hshiftPos : 0 < shift := by
     dsimp [shift]
     omega
-  have hhalfPos : 0 < half :=
-    Nat.two_pow_pos _
   have hpower : 2 ^ shift = 2 * half :=
     (Nat.two_pow_pred_mul_two hshiftPos).symm.trans (Nat.mul_comm _ _)
   have hremainderLt : remainder < 2 * half := by
@@ -314,7 +313,8 @@ theorem roundFromLower_eq_midpointDecision
           streamSticky raw width retained = false := by
         rw [hsticky]
         simp [habove]
-      simp [hequal, hguardTrue, hstickyFalse]
+      simp only [hguardTrue, hstickyFalse, Nat.mod_two_bne_zero, Bool.false_or, Bool.true_and,
+        beq_iff_eq, hequal, lt_self_iff_false, ↓reduceIte]
       by_cases heven : lower % 2 = 0
       · simp [heven]
       · have hodd : lower % 2 = 1 := by

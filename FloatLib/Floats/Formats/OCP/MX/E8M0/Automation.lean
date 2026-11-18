@@ -1,23 +1,25 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
-public import FloatLib.Floats.Formats.OCP.MX.E8M0.Block
 public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Finite
 public import FloatLib.Floats.Formats.OCP.MX.E8M0.Semantics
+public import FloatLib.Tactic.Numerics -- shake: keep
 
 /-!
-# Automation for E8M0 and block formats
+# Automation for E8M0 scales
 
 Automation for exact arithmetic driven by the binary descriptors lives in
 `FloatLib.Floats.Formats.BinaryInterchange.Automation.Finite`. This module adds just the E8M0
-scale and block-decoding contracts, which have no binary descriptor to drive them.
+scale contracts, which have no binary descriptor to drive them.
 -/
+
+-- The exported attribute registrations are this module's public effect.
+set_option linter.privateModule false
 
 public meta section
 
@@ -28,8 +30,6 @@ open FloatLib.Numerics
 
 attribute [aesop safe apply (rule_sets := [Numerics])]
   E8M0.scaleDyadic_refines
-  E8M0.decodeElement_refines
-  BlockCode.decode_refines
 
 attribute [numerics_reduction]
   E8M0.numericalSystem
@@ -39,9 +39,5 @@ attribute [numerics_reduction]
   E8M0.exponent?
   E8M0.toDyadic?
   E8M0.scaleDyadic?
-  E8M0.decodeElement?
-  E8M0.decodeBlock?
-  BlockCode.decode?
-  blockSystem
 
 end FloatLib.Floats.Formats.OCP.MX

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch13-mx-block.png: shared scales and one exact dot product.
 
-Chapter 09 works one OCP MX example in Lean: a `BlockCode FloatFormat.e2m1` of four E2M1 weights
+The chapter on machine-learning formats works one OCP MX example in Lean: a `Block.Tensor` of four E2M1 weights
 sharing the E8M0 scale code 125 and a block of four E2M1 activations sharing the scale code 128,
 decoded jointly, multiplied lane by lane in exact dyadic arithmetic, summed, and rounded once
-into bfloat16 and once into E4M3FN. This figure shows the four element values before and after
+into bfloat16 and once into E4M3. This figure shows the four element values before and after
 their shared scale is applied, then follows the lane products to an exact sum. Both rounded
 outputs branch from that sum. The phone version stacks the blocks and the output choices.
 
@@ -12,7 +12,7 @@ Sources. Every code is the chapter's own Lean text (`weights` and `activations` 
 and microscaling blocks"): scale codes 125 and 128, element words 0x2, 0x5, 0xb, 0x7 and 0x4,
 0x1, 0x6, 0xa. Every value is the chapter's own `-- ` result: the decoded blocks
 #[1/4, 3/4, -3/8, 3/2] and #[4, 1, 8, -2], the exact dot product -17/4, the bfloat16 word 49288
-(0xc088, exactly -4.25) and the E4M3FN word 200 (0xc8, which is -4). The unscaled element values
+(0xc088, exactly -4.25) and the E4M3 word 200 (0xc8, which is -4). The unscaled element values
 are read off the E2M1 code table the chapter prints (codes 0 to 15). The script recomputes each
 of these from the format parameters (E2M1 = `finite 2 1`, bias 1, in
 FloatLib/Floats/Formats/BinaryInterchange/Format/Catalog.lean; E8M0 code c denotes 2^(c - 127),
@@ -36,7 +36,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
 
 # The chapter's two blocks: E8M0 scale code, then the four E2M1 element words.
 WEIGHTS = ("weights", 125, (0x2, 0x5, 0xb, 0x7))
@@ -81,7 +80,7 @@ def bfloat16_value(word: int) -> Fraction:
 
 
 def e4m3fn_value(word: int) -> Fraction:
-    """Decode an E4M3FN word (finiteMaxNaN 4 3, bias 7) that is finite and normal."""
+    """Decode an E4M3 word (finiteMaxNaN 4 3, bias 7) that is finite and normal."""
     frac = word & 0x7
     exp = (word >> 3) & 0xf
     sign = word >> 7
@@ -110,77 +109,78 @@ def check_against_chapter() -> None:
 
 
 def frac_text(value: Fraction) -> str:
+    sign = "−" if value < 0 else ""
     if value.denominator == 1:
-        return str(value.numerator)
-    return f"{value.numerator}/{value.denominator}"
+        return f"{sign}{abs(value.numerator)}"
+    return f"{sign}{abs(value.numerator)}/{value.denominator}"
 
 
 def vector(values) -> str:
     return "[" + ",  ".join(frac_text(v) for v in values) + "]"
 
 
+def node(ax, x, y, w, h, label, lines):
+    """An outlined node: its name in the corner, its values centred."""
+    fs.box(ax, x, y, w, h)
+    ax.text(x + 0.12, y + h - 0.2, label, fontsize=fs.SIZE_TICK, color=fs.MUTED, va="center")
+    body = y + (h - 0.36) / 2
+    step = 0.32
+    start = body + step * (len(lines) - 1) / 2
+    for index, line in enumerate(lines):
+        ax.text(x + w / 2, start - index * step, line, fontsize=fs.SIZE_LABEL, ha="center",
+                va="center")
+
+
 def draw(mobile: bool):
-    fig = plt.figure(figsize=(3.8, 9.0) if mobile else (9, 5.5))
-    fig.text(0.035, 0.98, "Shared scales, one exact dot product", fontsize=13.5,
-             weight="bold", va="top")
-    fig.text(0.035, 0.925 if mobile else 0.90,
-             "Worked example with four E2M1 lanes", fontsize=11.5, color=fs.MUTED)
-    canvas = fig.add_axes([0, 0, 1, 1], zorder=0)
-    canvas.set(xlim=(0, 1), ylim=(0, 1))
-    canvas.axis("off")
-    block_rects = ([(0.035, 0.69, 0.93, 0.18), (0.035, 0.46, 0.93, 0.18)] if mobile else
-                   [(0.035, 0.57, 0.44, 0.25), (0.525, 0.57, 0.44, 0.25)])
-    for block, rect in zip((WEIGHTS, ACTIVATIONS), block_rects):
+    """Two scaled blocks, their lane products, the exact sum, and one rounding per output."""
+    width, height = (fs.MOBILE_WIDTH, 8.0) if mobile else (fs.WIDTH, 4.9)
+    fig = plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    blocks = []
+    for block in (WEIGHTS, ACTIVATIONS):
         unscaled, scaled, shift = decode_block(block)
-        ax = fig.add_axes(rect)
-        ax.set(xlim=(0, 1), ylim=(0, 1))
-        ax.axis("off")
-        ax.add_patch(Rectangle((0, 0), 1, 1, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
-        ax.text(0.05, 0.83, block[0].capitalize(), fontsize=12, weight="bold")
-        ax.text(0.05, 0.62, f"E8M0 code {block[1]}: multiply by $2^{{{shift}}}$", fontsize=11.5)
-        ax.text(0.05, 0.39, vector(unscaled), fontsize=12)
-        ax.text(0.05, 0.15, "→  " + vector(scaled), fontsize=12, color=fs.BLUE)
+        blocks.append((block[0], [f"{vector(unscaled)}  ×  $2^{{{shift}}}$",
+                                  f"=  {vector(scaled)}"], f"scale code {block[1]}"))
     products = [x * y for x, y in zip(CHAPTER_WEIGHTS, CHAPTER_ACTIVATIONS)]
     assert products == [Fraction(1), Fraction(3, 4), Fraction(-3), Fraction(-3)]
-    product_y, sum_y = (0.385, 0.29) if mobile else (0.43, 0.31)
-    for x, y, w, h in block_rects:
-        # Both decoded blocks feed the same componentwise multiplication.
-        if mobile and y > 0.6:
-            canvas.plot([x + w, 0.985, 0.985],
-                        [y + h / 2, y + h / 2, product_y + 0.035],
-                        color=fs.MUTED, lw=1.1)
-            canvas.annotate("", (0.70, product_y + 0.035), (0.985, product_y + 0.035),
-                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
-        else:
-            canvas.annotate("", (0.50, product_y + 0.035), (x + w / 2, y - 0.005),
-                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
-    fig.text(0.5, product_y, "Lane products: " + vector(products), ha="center", fontsize=12)
-    canvas.annotate("", (0.5, sum_y + 0.04), (0.5, product_y - 0.01),
-                    arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
-    fig.text(0.5, sum_y, "Exact sum: −17/4 = −4.25", ha="center", fontsize=14, weight="bold")
-    # Each output is rounded independently from the exact sum; there is no output-to-output arrow.
-    outputs = ([(0.06, 0.145, 0.88, 0.082), (0.06, 0.035, 0.88, 0.082)] if mobile else
-               [(0.08, 0.06, 0.38, 0.11), (0.54, 0.06, 0.38, 0.11)])
-    for i, rect in enumerate(outputs):
-        x, y, w, h = rect
-        canvas.add_patch(Rectangle((x, y), w, h, facecolor=fs.PAPER_2, edgecolor=fs.LINE, lw=0.8))
-        text = ("bfloat16: −4.25 (exact)" if i == 0 else "E4M3FN: −4 (tie to even)")
-        canvas.text(x + 0.04, y + h * 0.56, text, fontsize=12, va="center")
+    assert sum(products) == CHAPTER_DOT == Fraction(-17, 4)
+    outputs = [("bfloat16", frac_text(CHAPTER_BF16_VALUE)), ("E4M3", frac_text(CHAPTER_E4M3FN_VALUE))]
     if mobile:
-        # A vertical bracket makes the common exact source explicit, even with stacked outputs.
-        canvas.plot([0.5, 0.025, 0.025], [sum_y - 0.012, sum_y - 0.012, 0.071],
-                    color=fs.MUTED, lw=1.1)
-        for x, y, w, h in outputs:
-            canvas.annotate("", (x, y + h / 2), (0.025, y + h / 2),
-                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
-        fig.text(0.10, 0.247, "Round this sum once to either format:", fontsize=11.5)
+        w = width - 0.4
+        ys = [6.55, 4.95, 3.75, 2.65, 1.3, 0.15]
+        for (name, lines, code), y in zip(blocks, ys[:2]):
+            node(ax, 0.2, y, w, 1.3, f"{name}, {code}", lines)
+        node(ax, 0.2, ys[2], w, 0.85, "lane products", [vector(products)])
+        node(ax, 0.2, ys[3], w, 0.85, "exact sum", [frac_text(CHAPTER_DOT)])
+        for (name, value), y in zip(outputs, ys[4:]):
+            node(ax, 0.2, y, w, 0.85, name, [value])
+        centre = width / 2
+        fs.arrow(ax, (centre, ys[0]), (centre, ys[1] + 1.3))
+        fs.arrow(ax, (centre, ys[1]), (centre, ys[2] + 0.85))
+        fs.arrow(ax, (centre, ys[2]), (centre, ys[3] + 0.85))
+        fs.arrow(ax, (centre - 0.6, ys[3]), (centre - 0.6, ys[4] + 0.85))
+        ax.text(centre - 0.45, (ys[3] + ys[4] + 0.85) / 2, "round", fontsize=fs.SIZE_TICK,
+                va="center")
+        # The second output is rounded from the exact sum too, not from the first output.
+        ax.plot([width - 0.2, width - 0.07, width - 0.07], [ys[3] + 0.42, ys[3] + 0.42,
+                                                           ys[5] + 0.42], color=fs.INK,
+                lw=fs.LW_REF)
+        fs.arrow(ax, (width - 0.07, ys[5] + 0.42), (width - 0.2, ys[5] + 0.42))
     else:
-        for x, y, w, h in outputs:
-            canvas.annotate("", (x + w / 2, y + h), (0.5, 0.205),
-                            arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
-        canvas.annotate("", (0.5, 0.26), (0.5, sum_y - 0.01),
-                        arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=1.1))
-        fig.text(0.5, 0.225, "Round the exact sum once to either format", ha="center", fontsize=11.5)
+        for (name, lines, code), x in zip(blocks, (0.3, 4.7)):
+            node(ax, x, 3.45, 4.0, 1.3, f"{name}, {code}", lines)
+        node(ax, 2.5, 2.25, 4.0, 0.85, "lane products", [vector(products)])
+        node(ax, 3.25, 1.2, 2.5, 0.85, "exact sum", [frac_text(CHAPTER_DOT)])
+        for (name, value), x in zip(outputs, (1.0, 5.5)):
+            node(ax, x, 0.15, 2.5, 0.75, name, [value])
+        fs.arrow(ax, (2.3, 3.45), (3.5, 3.1))
+        fs.arrow(ax, (6.7, 3.45), (5.5, 3.1))
+        fs.arrow(ax, (4.5, 2.25), (4.5, 2.05))
+        # Each output is rounded independently from the exact sum.
+        fs.arrow(ax, (3.25, 1.45), (2.25, 0.9))
+        fs.arrow(ax, (5.75, 1.45), (6.75, 0.9))
+        ax.text(2.45, 1.25, "round", fontsize=fs.SIZE_TICK, ha="right", va="center")
+        ax.text(6.55, 1.25, "round", fontsize=fs.SIZE_TICK, ha="left", va="center")
     return fig
 
 
@@ -195,7 +195,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch13-mx-block.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 

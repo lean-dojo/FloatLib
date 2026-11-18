@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -136,7 +136,7 @@ private theorem cast_sign_apply (sign : Sign) (mantissa : Nat) :
 /-- Lean's remainder classification locates the exact quotient relative to the integer quotient. -/
 theorem accuracyRepresents_accuracyOfFraction
     (numerator denominator : Nat) (hdenominator : denominator ≠ 0) :
-    accuracyRepresents (numerator / denominator)
+    AccuracyRepresents (numerator / denominator)
       (accuracyOfFraction (numerator % denominator) denominator)
       ((numerator : Real) / denominator) := by
   have hdenominatorPos : (0 : Real) < denominator := by
@@ -153,7 +153,7 @@ theorem accuracyRepresents_accuracyOfFraction
   unfold accuracyOfFraction
   rw [hsplit]
   split_ifs with hremainder
-  · simp [accuracyRepresents, hremainder]
+  · simp [AccuracyRepresents, hremainder]
   have hremainderPos : (0 : Real) < (numerator % denominator : Nat) := by
     exact_mod_cast Nat.pos_of_ne_zero hremainder
   have hfractionLt : ((numerator % denominator : Nat) : Real) / denominator < 1 :=
@@ -168,7 +168,7 @@ theorem accuracyRepresents_accuracyOfFraction
   · rw [Nat.compare_eq_eq] at hcompare
     have hcompareReal : (2 : Real) * (numerator % denominator : Nat) = denominator := by
       exact_mod_cast hcompare
-    show _ = _ + 1 / 2
+    change _ = _ + 1 / 2
     rw [← hcompareReal, mul_comm, ← div_div, div_self hremainderPos.ne']
   · rw [Nat.compare_eq_gt] at hcompare
     have hcompareReal : (denominator : Real) < 2 * (numerator % denominator : Nat) := by
@@ -267,9 +267,9 @@ theorem toReal_ofModel_mul_finite_eq_roundAt
         (unpackedToReal (.finite sign₁ mantissa₁ exponent₁ hmantissa₁) *
           unpackedToReal (.finite sign₂ mantissa₂ exponent₂ hmantissa₂)) := by
   have haccuracy :
-      accuracyRepresents (mantissa₁ * mantissa₂) .exact
+      AccuracyRepresents (mantissa₁ * mantissa₂) .exact
         ((mantissa₁ : Real) * mantissa₂) := by
-    simp [accuracyRepresents]
+    simp [AccuracyRepresents]
   have hround :=
     toReal_ofModel_roundWithAccuracy_eq_roundAt
       fmt hfmt (sign₁ * sign₂) (mantissa₁ * mantissa₂)
@@ -287,7 +287,8 @@ theorem toReal_ofModel_mul_finite_eq_roundAt
   congr 1
   rw [FloatLib.Floats.Formats.Flocq.bpow.add_exp]
   cases sign₁ <;> cases sign₂ <;>
-    simp [unpackedToReal_finite, modelSignBit] <;> ring
+    simp only [modelSignBit, Bool.false_eq_true, ↓reduceIte, one_mul, unpackedToReal_finite,
+      neg_mul, mul_neg, neg_neg, neg_inj] <;> ring
 
 /--
 The real quotient of two finite unpacked values is the value certified by Lean's division kernel:
@@ -430,7 +431,7 @@ theorem toReal_ofModel_div_finite_eq_roundAt
         (quotient, targetExponent, accuracy) := by
     rfl
   have haccuracy :
-      accuracyRepresents quotient accuracy
+      AccuracyRepresents quotient accuracy
         ((numerator : Real) / mantissa₂) := by
     exact accuracyRepresents_accuracyOfFraction numerator mantissa₂ hmantissa₂.ne'
   have hle :

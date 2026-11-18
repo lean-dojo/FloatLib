@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Runtime
-import FloatLib.Numerics.Bitwise
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
+
+import FloatLib.Numerics.Bitwise
 
 /-!
 # Correctness of normalization through Lean's logical float model
@@ -50,7 +51,6 @@ theorem roundToNearestEven_accuracyOfFraction_mod
       roundQuotientEven num den := by
   unfold accuracyOfFraction roundQuotientEven
   have hdenPos : 0 < den := Nat.pos_of_ne_zero hden
-  have hmodLt : num % den < den := Nat.mod_lt num hdenPos
   by_cases hrem : num % den = 0
   · simp [hrem, hdenPos, Accuracy.roundToNearestEven]
   · simp only [hrem, ite_false]
@@ -260,7 +260,7 @@ theorem roundShiftRightEven_shiftLeft_sub_of_lt_half
         (Nat.zero_lt_of_lt hremainder)
   rcases Nat.eq_zero_or_pos shift with hshift | hshift
   · subst shift
-    simp [pow2_eq_two_pow] at hremainder
+    simp only [zero_tsub, pow2_eq_two_pow, pow_zero, Order.lt_one_iff] at hremainder
     omega
   rcases Nat.eq_zero_or_pos mantissa with hmantissa | hmantissa
   · subst mantissa
@@ -408,8 +408,8 @@ theorem totalExponent_sub_mantissaBits (fmt : FloatFormat)
     Float.Model.totalExponent mantissa exponent -
         (FloatFormat.toModel fmt).mantissaBits =
       (mantissa.log2 : Int) + exponent - fmt.fracWidth := by
-  simp [Float.Model.totalExponent, Float.Model.Format.mantissaBits,
-    FloatFormat.toModel]
+  simp only [Float.Model.totalExponent, Float.Model.Format.mantissaBits, FloatFormat.toModel,
+    Nat.cast_add, Nat.cast_one]
   omega
 
 /--
@@ -562,6 +562,70 @@ theorem shiftToTargetExponent_normalized_carry
       pow2_eq_two_pow, pow_succ]
   · exact hexponent
 
+/-- A dyadic below a precision's normal threshold rounds to at most one leading bit. -/
+theorem roundMantissaAtExponentEven_le_pow2_of_below
+    (mantissa precision : Nat) (exponent floor : Int)
+    (hk : (mantissa.log2 : Int) + exponent < floor + precision) :
+    roundMantissaAtExponentEven mantissa exponent floor ≤ pow2 precision := by
+  by_cases hle : exponent ≤ floor
+  · let shift := (floor - exponent).toNat
+    have hshiftInt : (shift : Int) = floor - exponent :=
+      Int.toNat_of_nonneg (sub_nonneg.mpr hle)
+    have hlogInt :
+        (mantissa.log2 : Int) + 1 ≤ (precision : Int) + shift := by
+      rw [hshiftInt]
+      omega
+    have hlogNat : mantissa.log2 + 1 ≤ precision + shift := by
+      exact_mod_cast hlogInt
+    have hmLt : mantissa < 2 ^ (precision + shift) :=
+      (Nat.lt_log2_self (n := mantissa)).trans_le
+        (Nat.pow_le_pow_right (by decide) hlogNat)
+    have hq : mantissa >>> shift < pow2 precision := by
+      rw [Nat.shiftRight_eq_div_pow]
+      rw [Nat.div_lt_iff_lt_mul (Nat.pow_pos (by decide))]
+      rw [pow2_eq_two_pow, ← Nat.pow_add]
+      exact hmLt
+    have hround := roundShiftRightEven_le_shiftRight_add1 mantissa shift
+    simp only [roundMantissaAtExponentEven, hle, ite_true]
+    change roundShiftRightEven mantissa shift ≤ pow2 precision
+    exact hround.trans (Nat.succ_le_iff.mpr hq)
+  · have hlt : floor < exponent := lt_of_not_ge hle
+    let shift := (exponent - floor).toNat
+    have hshiftInt : (shift : Int) = exponent - floor :=
+      Int.toNat_of_nonneg (sub_nonneg.mpr hlt.le)
+    have hraw :=
+      Nat.shiftLeft_lt (m := shift) (Nat.lt_log2_self (n := mantissa))
+    have hexponent : mantissa.log2 + 1 + shift ≤ precision := by omega
+    have hpow : 2 ^ (mantissa.log2 + 1 + shift) ≤ 2 ^ precision :=
+      Nat.pow_le_pow_right (by decide) hexponent
+    simp only [roundMantissaAtExponentEven, hle, ite_false]
+    change mantissa <<< shift ≤ pow2 precision
+    simpa [pow2_eq_two_pow] using (hraw.trans_le hpow).le
+
+/-- Shift-rounding at any integer grid exponent has the descriptor-general runtime form. -/
+theorem roundMantissaAtExponentEven_eq_match (mantissa : Nat) (exponent target : Int) :
+    roundMantissaAtExponentEven mantissa exponent target =
+      match exponent - target with
+      | .ofNat shift => Nat.shiftLeft mantissa shift
+      | .negSucc shift => Numerics.roundShiftRightEven mantissa (shift + 1) := by
+  generalize hdifference : exponent - target = difference
+  cases difference with
+  | ofNat shift =>
+      simp only [Int.ofNat_eq_natCast] at hdifference
+      by_cases hshift : shift = 0
+      · subst shift
+        have hexponent : exponent = target := by omega
+        simp [roundMantissaAtExponentEven, Numerics.roundShiftRightEven_def, hexponent]
+      · have htarget : target < exponent := by omega
+        have hshiftNat : (exponent - target).toNat = shift := by
+          rw [hdifference]
+          rfl
+        simp [roundMantissaAtExponentEven, not_le_of_gt htarget, hshiftNat]
+  | negSucc shift =>
+      have hexponent : exponent < target := by omega
+      have hshiftNat : (target - exponent).toNat = shift + 1 := by omega
+      simp [roundMantissaAtExponentEven, hexponent.le, hshiftNat]
+
 /--
 An exact dyadic below the normal range rounds to at most `2^p` units of the minimum exponent.
 
@@ -574,52 +638,8 @@ theorem roundMantissaAtExponentEven_minSubnormal_le_pow2
       FloatFormat.ieeeMinNormalExponent fmt) :
     roundMantissaAtExponentEven mantissa exponent (FloatFormat.ieeeMinSubnormalExponent fmt) ≤
       pow2 fmt.fracWidth := by
-  have hscale :
-      FloatFormat.ieeeMinSubnormalExponent fmt + fmt.fracWidth =
-        FloatFormat.ieeeMinNormalExponent fmt := by
-    unfold FloatFormat.ieeeMinSubnormalExponent FloatFormat.ieeeMinNormalExponent
-    simp only [Int.ofNat_eq_natCast]
-    ring
-  by_cases hle : exponent ≤ FloatFormat.ieeeMinSubnormalExponent fmt
-  · let shift := (FloatFormat.ieeeMinSubnormalExponent fmt - exponent).toNat
-    have hshiftInt : (shift : Int) = FloatFormat.ieeeMinSubnormalExponent fmt - exponent :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr hle)
-    have hlogInt :
-        (mantissa.log2 : Int) + 1 ≤ (fmt.fracWidth : Int) + shift := by
-      rw [hshiftInt]
-      omega
-    have hlogNat : mantissa.log2 + 1 ≤ fmt.fracWidth + shift := by
-      exact_mod_cast hlogInt
-    have hmLt : mantissa < 2 ^ (fmt.fracWidth + shift) :=
-      (Nat.lt_log2_self (n := mantissa)).trans_le
-        (Nat.pow_le_pow_right (by decide) hlogNat)
-    have hq : mantissa >>> shift < pow2 fmt.fracWidth := by
-      rw [Nat.shiftRight_eq_div_pow]
-      rw [Nat.div_lt_iff_lt_mul (Nat.pow_pos (by decide))]
-      rw [pow2_eq_two_pow, ← Nat.pow_add]
-      exact hmLt
-    have hround := roundShiftRightEven_le_shiftRight_add1 mantissa shift
-    simp only [roundMantissaAtExponentEven, hle, ite_true]
-    change roundShiftRightEven mantissa shift ≤ pow2 fmt.fracWidth
-    exact hround.trans (Nat.succ_le_iff.mpr hq)
-  · have hlt : FloatFormat.ieeeMinSubnormalExponent fmt < exponent := lt_of_not_ge hle
-    let shift := (exponent - FloatFormat.ieeeMinSubnormalExponent fmt).toNat
-    have hshiftInt : (shift : Int) = exponent - FloatFormat.ieeeMinSubnormalExponent fmt :=
-      Int.toNat_of_nonneg (sub_nonneg.mpr hlt.le)
-    have hlogInt :
-        (mantissa.log2 : Int) + shift < fmt.fracWidth := by
-      rw [hshiftInt]
-      omega
-    have hlogNat : mantissa.log2 + shift < fmt.fracWidth := by
-      exact_mod_cast hlogInt
-    have hraw :=
-      Nat.shiftLeft_lt (m := shift) (Nat.lt_log2_self (n := mantissa))
-    have hexponent : mantissa.log2 + 1 + shift ≤ fmt.fracWidth := by omega
-    have hpow : 2 ^ (mantissa.log2 + 1 + shift) ≤ 2 ^ fmt.fracWidth :=
-      Nat.pow_le_pow_right (by decide) hexponent
-    simp only [roundMantissaAtExponentEven, hle, ite_false]
-    change mantissa <<< shift ≤ pow2 fmt.fracWidth
-    simpa [pow2_eq_two_pow] using (hraw.trans_le hpow).le
+  apply roundMantissaAtExponentEven_le_pow2_of_below
+  simpa [FloatFormat.ieeeMinSubnormalExponent, FloatFormat.ieeeMinNormalExponent] using hk
 
 /-- Lean's decrease-then-shift normalization agrees with direct nearest-even rounding. -/
 theorem roundedMantissa_decrease_shift_exact

@@ -5,19 +5,21 @@ Authors: Robert Weller
 -/
 module
 
+public import FloatLib.Kernels.Execution.Capability
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Backend.Proof
-public import FloatLib.Floats.ExecFloat.Core.Capability
+public import FloatLib.Tactic.FamilyCapability
 
 /-!
 # Default static-byte capability construction
 
 Byte-sized binary families get their final wiring here. Each family-selected kernel is packaged
-with its refinement theorem from `Backend.Proof` and installed as an ordinary `ExecFloat`
-capability.
+with its refinement theorem from `Backend.Proof`, tagged as the family's baseline
+(`@[compiler_optimize baseline]`), and installed as an ordinary `ExecFloat` capability.
 
 The construction is shared, so the six operations do not each need a family-specific adapter.
 Every `Family` instance uses it and supplies its own certified kernel, which may use a table or
-compute the operation itself.
+compute the operation itself. Where no tagged alternative applies the kernel is called
+directly, and otherwise the planner selects among the kernel and the tagged alternatives.
 -/
 
 @[expose] public section
@@ -26,78 +28,21 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 
 universe u
 
-/--
-Default addition for a static-byte family: the family's certified byte kernel, refining
-`Spec.add`. A `TablePlan` instance outranks it.
--/
-instance (priority := 100) addCapability
-    (F : Type u) [Family F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    @FloatLib.Floats.ExecFloat.Add F (familyEncodedFormat F) planning :=
-  FloatLib.Floats.ExecFloat.Capability.ofCertified .add
-    (FloatLib.Floats.ExecFloat.Backend.Certified.binary
-      (Backend.familyEstimate "addition") Spec.add Backend.add Backend.add_eq_spec)
+family_capability add "addition" binary
 
-/--
-Default subtraction for a static-byte family: the family's certified byte kernel, refining
-`Spec.sub`. A `TablePlan` instance outranks it.
--/
-instance (priority := 100) subCapability
-    (F : Type u) [Family F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    @FloatLib.Floats.ExecFloat.Sub F (familyEncodedFormat F) planning :=
-  FloatLib.Floats.ExecFloat.Capability.ofCertified .sub
-    (FloatLib.Floats.ExecFloat.Backend.Certified.binary
-      (Backend.familyEstimate "subtraction") Spec.sub Backend.sub Backend.sub_eq_spec)
+family_capability sub "subtraction" binary
 
-/--
-Default multiplication for a static-byte family: the family's certified byte kernel, refining
-`Spec.mul`. A `TablePlan` instance outranks it.
--/
-instance (priority := 100) mulCapability
-    (F : Type u) [Family F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    @FloatLib.Floats.ExecFloat.Mul F (familyEncodedFormat F) planning :=
-  FloatLib.Floats.ExecFloat.Capability.ofCertified .mul
-    (FloatLib.Floats.ExecFloat.Backend.Certified.binary
-      (Backend.familyEstimate "multiplication") Spec.mul Backend.mul Backend.mul_eq_spec)
+family_capability mul "multiplication" binary
 
-/--
-Default division for a static-byte family: the family's certified byte kernel, refining
-`Spec.div`. A `TablePlan` instance outranks it.
--/
-instance (priority := 100) divCapability
-    (F : Type u) [Family F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    @FloatLib.Floats.ExecFloat.Div F (familyEncodedFormat F) planning :=
-  FloatLib.Floats.ExecFloat.Capability.ofCertified .div
-    (FloatLib.Floats.ExecFloat.Backend.Certified.binary
-      (Backend.familyEstimate "division") Spec.div Backend.div Backend.div_eq_spec)
+family_capability div "division" binary
 
-/--
-Default square root for a static-byte family: the family's certified byte kernel, refining
-`Spec.sqrt`. A `TablePlan` instance outranks it.
--/
-instance (priority := 100) sqrtCapability
-    (F : Type u) [Family F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    @FloatLib.Floats.ExecFloat.Sqrt F (familyEncodedFormat F) planning :=
-  FloatLib.Floats.ExecFloat.Capability.ofCertified .sqrt
-    (FloatLib.Floats.ExecFloat.Backend.Certified.unary
-      (Backend.familyEstimate "square root") Spec.sqrt Backend.sqrt Backend.sqrt_eq_spec)
+family_capability sqrt "square root" unary
 
-/--
-Default fused multiply-add for a static-byte family: the family's certified byte kernel, refining
-`Spec.fma`. `TablePlan` has no FMA table, so a plan does not replace it. A package that wants a
-table or model FMA declares its own `Fma` instance, such as `Plans.fmaTableCapability` or
-`Plans.modelFmaCapability`, which outranks this one.
+/-
+`TablePlan` has no FMA table, so a plan does not replace the default fused multiply-add. A
+package that wants a table or model FMA declares its own `Fma` instance, such as
+`Plans.fmaTableCapability` or `Plans.modelFmaCapability`, which outranks this one.
 -/
-instance (priority := 100) fmaCapability
-    (F : Type u) [Family F]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor F] :
-    @FloatLib.Floats.ExecFloat.Fma F (familyEncodedFormat F) planning :=
-  FloatLib.Floats.ExecFloat.Capability.ofCertified .fma
-    (FloatLib.Floats.ExecFloat.Backend.Certified.ternary
-      (Backend.familyEstimate "fused multiply-add") Spec.fma Backend.fma Backend.fma_eq_spec)
+family_capability fma "fused multiply-add" ternary
 
 end FloatLib.Floats.Formats.BinaryInterchange.StaticByte

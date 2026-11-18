@@ -1,44 +1,63 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
-public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
-import all FloatLib.Floats.Formats.Posit.Model.Decode
-import all FloatLib.Kernels.FixedWord.Quotient.Compiler
-import all FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
-import all FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
-import all FloatLib.Floats.ExecFloat.Backends.Word.NormalPair.Proof
-import all FloatLib.Floats.ExecFloat.Backends.Word.ProductRound.Proof
-import all FloatLib.Floats.ExecFloat.Backends.Word.Small.Fma.Proof
-import all FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Internal
-public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
-public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
-public import FloatLibTests.Conformance.BinaryInterchange.MixedError
-public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
-public import FloatLibTests.Conformance.BinaryInterchange.Roundoff
-public import FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels
-public import FloatLibTests.Conformance.BinaryInterchange.RoundoffRegressions
-public import FloatLibTests.Conformance.BinaryInterchange.RoundoffStepRelations
-public import FloatLibTests.Conformance.BinaryInterchange.RoundoffTuples
-public import FloatLibTests.Conformance.Execution.Certificates
-public import FloatLibTests.Conformance.Formats.PackedValues
-public import FloatLibTests.Conformance.Numerics.Coeff
-public import FloatLibTests.Conformance.Numerics.IntervalCoeff
-public import FloatLibTests.Conformance.Numerics.Packed
-public import FloatLibTests.Conformance.Numerics.Wiener
-public import FloatLibTests.Conformance.Posit.Quire
 public meta import Lean.Compiler.CSimpAttr
 public meta import Lean.Compiler.ImplementedByAttr
 public meta import Lean.Elab.Command
 public meta import Lean.Meta.Basic
 public meta import Lean.Util.CollectAxioms
+public import FloatLib
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.PowerProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.ValueProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.Proof
+public import FloatLib.Floats.Formats.Block.Roundoff
+public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
+public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
+public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
+public import FloatLibTests.Conformance.BinaryInterchange.MixedError
+public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
+public import FloatLibTests.Conformance.Execution.Certificates
+public import FloatLibTests.Conformance.Numerics.Coeff
+public import FloatLibTests.Conformance.Numerics.Wiener
+public import FloatLibTests.Conformance.Posit.Quire
+public import FloatLibTests.Tactic.Interval.Coeff
+public import FloatLibTests.Tactic.PackedValues
+public import FloatLibTests.Tactic.Roundoff
+public import FloatLibTests.Tactic.Roundoff.Backward
+public import FloatLibTests.Tactic.Roundoff.Cases
+public import FloatLibTests.Tactic.Roundoff.Closed
+public import FloatLibTests.Tactic.Roundoff.Expm1x
+public import FloatLibTests.Tactic.Roundoff.Kernels
+public import FloatLibTests.Tactic.Roundoff.Native
+public import FloatLibTests.Tactic.Roundoff.Regressions
+public import FloatLibTests.Tactic.Roundoff.StepRelations
+public import FloatLibTests.Tactic.Roundoff.Tightness
+public import FloatLibTests.Tactic.Roundoff.Tuples
+
+import all FloatLib.Floats.ExecFloat.Backends.Compiled.Word.NormalPair.Proof
+import all FloatLib.Floats.ExecFloat.Backends.Compiled.Word.ProductRound.Proof
+import all FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Small.Fma.Proof
+import all FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Internal
+import all FloatLib.Floats.Formats.Posit.Model.Decode
+import all FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
+import all FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
+import all FloatLib.Kernels.FixedWord.Quotient.Compiler
+import all FloatLibTests.Conformance.Numerics.KernelComplex
+import all FloatLibTests.Conformance.Numerics.KernelExact
+import all FloatLibTests.Conformance.Numerics.Packed
+import all FloatLibTests.Numerics.Stochastic
+import all FloatLibTests.Numerics.StochasticBinary
+import all FloatLibTests.Numerics.StochasticSequential
+import all FloatLibTests.Tactic.Interval.Constraints
+import all FloatLibTests.Tactic.KernelTwin
+import all FloatLibTests.Tactic.Roundoff.Stochastic
 
 /-!
 # Kernel-axiom audit
@@ -46,7 +65,11 @@ public meta import Lean.Util.CollectAxioms
 At build time, collect the transitive axioms of every declaration of a `FloatLib` module that this
 environment holds, private declarations included. Only propositional extensionality, quotient
 soundness, and classical choice are accepted. The imports cover the public root, the optional
-binary and decimal transcendental proofs and the `roundoff` analysis.
+binary and decimal transcendental proofs, the complex elementary functions, the `roundoff`
+analysis, its block-format rules,
+and the stochastic-rounding families. All four stochastic test modules and the exact-kernel
+conformance modules (including complex balls, twins, packed dots and interval constraints) are
+loaded with `import all` and every declaration they hold is audited separately.
 
 This file reaches the library through public imports, so it holds what each module exports. A
 declaration it does not hold is checked through the declarations that use it, whose collected
@@ -55,15 +78,25 @@ integer square root and checked square root compiler certificates and four backe
 are loaded with `import all` so that their declarations are checked directly. A declaration that is
 neither held nor used, mostly compiler-generated auxiliaries and a few unused private lemmas, is
 outside this check; the source scan of `tests/checks/trust-surface.sh` still rejects `sorry` and
-`axiom` there. Unimported modules are outside this check. Symbolic certificate, quire, native-model, packed-row and
-coefficient-bound regression declarations are checked separately because they belong to
-`FloatLibTests`.
+`axiom` there. Unimported modules are outside this check. Symbolic certificate, quire, native-model,
+packed-row and coefficient-bound regression declarations are checked separately because they belong
+to `FloatLibTests`.
 
 The production traversal includes `@[csimp]` equality proofs. For the sole permitted
-`@[implemented_by]` declaration, the audit also reads Lean's attribute and checks that its
-replacement is an endpoint of the unconditional, universally quantified decoder equality theorem.
-The private decoder proof is loaded explicitly for this check. Axiom collection by itself only
-follows logical definitions and cannot validate a compiler substitution.
+`@[implemented_by]` declaration, the audit also reads Lean's attribute and checks, with the
+library's own `Provenance.checkReplacementEquality`, that its replacement is an endpoint of the
+unconditional, universally quantified decoder equality theorem registered by
+`@[replacement_proof]`. The private decoder proof is loaded explicitly for this check. Axiom
+collection by itself only follows logical definitions and cannot validate a compiler
+substitution; `@[compiler_optimize]` runs the same replacement check at registration
+(`Provenance.requireCompiled`).
+
+Lean attaches a replacement of its own to the constructor-index function `T.ctorIdx` that it
+generates for every inductive type `T` with several constructors: since Lean 4.36,
+`T.ctorIdx._impl` reads the constructor tag of its argument with `getObjTagNat`. The audit accepts
+exactly that generated pair after the library's `Provenance.isGeneratedCtorIdx` has checked its
+names, its type and both bodies, and reports how many it found. No theorem relates the tag read
+to `T.ctorIdx`; like the rest of code generation it is trusted to the compiler.
 
 `tests/checks/trust-surface.sh` inventories source uses of native proof evaluation,
 `@[implemented_by]`, `@[extern]`, and unchecked host imports. Neither audit verifies generated
@@ -90,11 +123,11 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.truncation_custom_value,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.scaled_rational_zero,
     ``FloatLibTests.Conformance.BinaryInterchange.BoundaryCases.sterbenz_negative,
-    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.toReal_expMinus1_tinyThreeHalves,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.toReal_expm1_tinyThreeHalves,
     ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.exp_eightyNine_overflows,
-    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.expMinus1_lt_zero_binary32,
-    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.expMinus1_lt_zero_bfloat16,
-    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.logPlus1_pos_leastSubnormal,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.expm1_lt_zero_binary32,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.expm1_lt_zero_bfloat16,
+    ``FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded.logp1_pos_leastSubnormal,
     ``FloatLibTests.Conformance.BinaryInterchange.MixedError.oneHot_sum_binary32,
     ``FloatLibTests.Conformance.BinaryInterchange.MixedError.oneHot_sum_bfloat16,
     ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.horner_error,
@@ -104,6 +137,74 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.expSum_nonneg,
     ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.softmax_weight_mixedError,
     ``FloatLibTests.Conformance.BinaryInterchange.Roundoff.fma_error,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.horner_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.dot_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.dotList_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.hornerArray_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.hornerLead_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.mulVec_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.linear_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.sum_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.shared_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.quotient_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.dot_both,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.dot32_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.fma_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.wideDot_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.narrowed_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.sumSquares_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.norm_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.total_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.rows_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.countedSum_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.perceptron_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.rectifier_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.monomial_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.estrin_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.centered_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.cubes_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.productOfEntries_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.productList_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffBackward.scaledSum_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.head_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.head_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.head_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.mean_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.mean_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.activate_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.activate_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.activate_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.accumulate_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.accumulate_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.scaleBy_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.first_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.first_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffCases.nested_mixedError,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.axpy_mixedError,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.axpy_closed,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.axpy_backward,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.norm_mixedError,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.dot_mixedError,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.dot_closed,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.head_mixedError,
+    ``FloatLibTests.Conformance.IEEE754.RoundoffNative.roundTrip_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTightness.sterbenz_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTightness.interval_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTightness.scaled_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTightness.scaled_backward,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffTightness.mixedAttributes_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffExpm1x.call_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffExpm1x.difference_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffExpm1x.entropy_mixedError,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffExpm1x.term_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.dot_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.horner_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.sumList_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.total_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.squarePlus_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.perceptron_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.norm_closed,
+    ``FloatLibTests.Conformance.BinaryInterchange.RoundoffClosed.wideDot_closed,
     ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scale_mixedError,
     ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.peak_mixedError,
     ``FloatLibTests.Conformance.BinaryInterchange.RoundoffKernels.scaled_mixedError,
@@ -290,6 +391,21 @@ private def auditedTestDeclarations : Array Lean.Name :=
     ``FloatLibTests.Conformance.Formats.PackedValues.blockRow.link
   ]
 
+/-- Audit all four stochastic test modules, including their private declarations. -/
+private def auditedStochasticTestModules : Array Lean.Name :=
+  #[`FloatLibTests.Numerics.Stochastic,
+    `FloatLibTests.Numerics.StochasticBinary,
+    `FloatLibTests.Tactic.Roundoff.Stochastic,
+    `FloatLibTests.Numerics.StochasticSequential]
+
+/-- Audit every declaration in the kernel conformance modules, including generated twins. -/
+private def auditedKernelTestModules : Array Lean.Name :=
+  #[`FloatLibTests.Conformance.Numerics.KernelExact,
+    `FloatLibTests.Conformance.Numerics.KernelComplex,
+    `FloatLibTests.Tactic.KernelTwin,
+    `FloatLibTests.Tactic.Interval.Constraints,
+    `FloatLibTests.Conformance.Numerics.Packed]
+
 /-- Use the defining module, since private and generated names need not start with `FloatLib`. -/
 private def isProductionDeclaration (env : Lean.Environment) (declaration : Lean.Name) : Bool :=
   match env.getModuleIdxFor? declaration with
@@ -301,30 +417,17 @@ private def checkAxioms (declaration : Lean.Name) : Lean.Elab.Command.CommandEla
     unless allowedKernelAxioms.contains axiomName do
       throwError "unapproved axiom {axiomName} occurs transitively in {declaration}"
 
-/-- Require equality on every argument, with neither extra hypotheses nor restricted inputs. -/
-private def checkReplacementEquality (logical replacement proof : Lean.Name) :
-    Lean.Meta.MetaM Unit := do
-  let .thmInfo info ← Lean.getConstInfo proof
-    | throwError "replacement refinement {proof} is not a theorem"
-  Lean.Meta.forallTelescope info.type fun arguments conclusion => do
-    let some (_, lhs, rhs) := conclusion.eq?
-      | throwError "replacement refinement {proof} does not conclude an equality"
-    unless lhs.getAppFn.constName? == some replacement &&
-        rhs.getAppFn.constName? == some logical &&
-        lhs.getAppArgs == arguments && rhs.getAppArgs == arguments do
-      throwError "replacement refinement {proof} must equate {replacement} and {logical} \
-        on all universally quantified arguments, without additional hypotheses"
-
 run_cmd
   let env := (← Lean.getEnv).setExporting false
   let logical := ``FloatLib.Floats.Formats.Posit.Model.toDyadic?
   let replacementName := `FloatLib.Floats.Formats.Posit.Model.Internal.toDyadic?
-  let proofName := `FloatLib.Floats.Formats.Posit.Model.Internal.toDyadic?_eq
   let mut productionCount : Nat := 0
   let mut privateCount : Nat := 0
+  let mut stochasticTestCount : Nat := 0
+  let mut exactTestCount : Nat := 0
   let mut csimpCount : Nat := 0
   let mut replacementCount : Nat := 0
-  let mut replacementProof? : Option Lean.Name := none
+  let mut ctorIdxCount : Nat := 0
   for (declaration, _) in env.constants do
     if isProductionDeclaration env declaration then
       productionCount := productionCount + 1
@@ -333,30 +436,43 @@ run_cmd
       if Lean.Compiler.hasCSimpAttribute env declaration then
         csimpCount := csimpCount + 1
       if let some replacement := Lean.Compiler.getImplementedBy? env declaration then
-        replacementCount := replacementCount + 1
-        unless declaration == logical &&
-            Lean.privateToUserName replacement == replacementName &&
-            env.getModuleIdxFor? replacement == env.getModuleIdxFor? logical do
-          throwError "unapproved compiler replacement: {declaration} implemented by {replacement}"
-      if Lean.privateToUserName declaration == proofName &&
-          env.getModuleIdxFor? declaration == env.getModuleIdxFor? logical then
-        if replacementProof?.isSome then
-          throwError "multiple replacement refinement theorems named {proofName}"
-        replacementProof? := some declaration
+        if FloatLib.Numerics.Provenance.isGeneratedCtorIdx env declaration replacement then
+          ctorIdxCount := ctorIdxCount + 1
+        else
+          replacementCount := replacementCount + 1
+          unless declaration == logical &&
+              Lean.privateToUserName replacement == replacementName &&
+              env.getModuleIdxFor? replacement == env.getModuleIdxFor? logical do
+            throwError "unapproved compiler replacement: {declaration} implemented by {replacement}"
       checkAxioms declaration
+    else if let some index := env.getModuleIdxFor? declaration then
+      if auditedStochasticTestModules.contains env.header.moduleNames[index.toNat]! then
+        stochasticTestCount := stochasticTestCount + 1
+        checkAxioms declaration
+      else if auditedKernelTestModules.contains env.header.moduleNames[index.toNat]! then
+        exactTestCount := exactTestCount + 1
+        checkAxioms declaration
   if productionCount = 0 || csimpCount = 0 then
     throwError "the import closure must contain FloatLib declarations and @[csimp] proofs"
   unless replacementCount = 1 do
     throwError "expected one FloatLib compiler replacement, found {replacementCount}"
+  unless exactTestCount > 0 do
+    throwError "the exact-kernel conformance declarations must be loaded"
   let some replacement := Lean.Compiler.getImplementedBy? env logical
     | throwError "the posit decoder has no compiler replacement"
-  let some replacementProof := replacementProof?
-    | throwError "the private posit decoder refinement theorem was not loaded"
+  let some replacementProof := FloatLib.Numerics.Provenance.replacementProof? env logical
+    | throwError "the posit decoder's replacement has no registered `@[replacement_proof]`"
+  unless env.getModuleIdxFor? replacementProof == env.getModuleIdxFor? logical do
+    throwError "the posit decoder's replacement proof is not in the decoder's module"
+  checkAxioms replacementProof
   Lean.Elab.Command.liftTermElabM do
     Lean.withoutExporting do
-      checkReplacementEquality logical replacement replacementProof
+      FloatLib.Numerics.Provenance.checkReplacementEquality logical replacement replacementProof
   for declaration in auditedTestDeclarations do
     checkAxioms declaration
   Lean.logInfo m!"Axiom audit passed: {productionCount} loaded production declarations \
     ({privateCount} private), {csimpCount} compiler equality proofs, \
-    {auditedTestDeclarations.size} test declarations, and one checked compiler replacement."
+    {auditedTestDeclarations.size} selected test declarations, \
+    {stochasticTestCount} stochastic test declarations, {exactTestCount} kernel conformance test \
+    declarations, one checked compiler replacement, and {ctorIdxCount} constructor-index tag reads \
+    generated by Lean."

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -13,7 +13,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Trigonometric.Pi.Termination
 public import FloatLib.Numerics.Exact.Trigonometric.PiValues.Inverse
-public import FloatLib.Numerics.Enclosure.Comparison.Cache
 
 /-!
 # Exact comparisons for pi-scaled trigonometric functions

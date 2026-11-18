@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.FiniteSemantics
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
+public import FloatLib.Tactic.Numerics -- shake: keep
 
 /-!
 # Exact finite-operation automation for `Model`
@@ -16,6 +16,9 @@ This file registers the exact-dyadic representation and the checked finite-opera
 with the representation-independent `numerics` tactic. The runtime carrier stays `Model fmt`, and
 the exact representation is a proof view that only refinement uses.
 -/
+
+-- The exported attribute registrations are this module's public effect.
+set_option linter.privateModule false
 
 public meta section
 
@@ -40,7 +43,7 @@ attribute [numerics_reduction]
   Model.toDyadic?
   Model.isFinite
   Model.isNaN
-  Model.isInf
+  Model.isInfinite
   Model.isZero
   FloatFormat.binary16
   FloatFormat.bfloat16
@@ -50,7 +53,7 @@ attribute [numerics_reduction]
   FloatFormat.binary256
   FloatFormat.tf32
   FloatFormat.e5m2
-  FloatFormat.e4m3fn
+  FloatFormat.e4m3
   FloatFormat.e4m3fnuz
   FloatFormat.e5m2fnuz
   FloatFormat.e2m1

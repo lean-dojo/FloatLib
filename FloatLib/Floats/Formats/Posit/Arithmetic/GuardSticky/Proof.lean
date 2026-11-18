@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,15 +7,15 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Spec
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
-import FloatLib.Kernels.FixedWord.Core.Proof.Word
 public import FloatLib.Numerics.Exact.Dyadic.Comparison.Proof
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
+
+import FloatLib.Kernels.FixedWord.Core.Proof.Word
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.NormNum.Pow
 
 /-!
@@ -273,7 +273,8 @@ private theorem add_shiftLeft_toNat
   rw [lawful.add_toNat _ _ (by rw [lawful.shiftLeft_toNat _ _ hshift hbase]; exact hfit),
     lawful.shiftLeft_toNat _ _ hshift hbase]
 
-/-- The shared fraction-prefix kernel implements the representation-independent normalized prefix. -/
+/-- The shared fraction-prefix kernel implements the representation-independent normalized
+prefix. -/
 theorem fractionPrefix_toNat
     (significand : α) (leading count : Nat) (hcount : count < capacity)
     (hlower : 2 ^ leading ≤ toNat significand)

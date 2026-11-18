@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
+public import FloatLib.Numerics.Quantization.Saturating
 
 /-!
 # Exponent-only scaling formats
@@ -90,28 +91,6 @@ def bias : Int := 127
   (exponent? scale).map fun exponent =>
     { value with exponent := value.exponent + exponent }
 
-/--
-Decode and scale one element of a microscaling block.
-
-`none` records either the E8M0 NaN code or a non-finite element. The operation is exact: scaling by
-a power of two changes only the dyadic exponent.
--/
-@[inline] def decodeElement? {fmt : FloatFormat} (scale : E8M0) (x : Model fmt) :
-    Option FloatLib.Numerics.Dyadic := do
-  let value ← Model.toDyadic? x
-  scaleDyadic? scale value
-
-/--
-Exact mathematical decoding of a microscaling block with one shared E8M0 scale.
-
-This function decodes an already encoded block and never chooses the shared scale. An empty
-array succeeds without inspecting the scale. On a nonempty array, a NaN scale or any non-finite
-element causes decoding to fail.
--/
-def decodeBlock? {fmt : FloatFormat} (scale : E8M0) (values : Array (Model fmt)) :
-    Option (Array FloatLib.Numerics.Dyadic) :=
-  values.mapM (decodeElement? scale)
-
 /-- Encode an in-range exponent, returning `none` outside `[-127, 127]`. -/
 def ofExponent? (exponent : Int) : Option E8M0 :=
   if -127 ≤ exponent && exponent ≤ 127 then
@@ -121,7 +100,7 @@ def ofExponent? (exponent : Int) : Option E8M0 :=
 
 /-- Encode an exponent after clamping it to the finite E8M0 range. -/
 def ofExponentSaturating (exponent : Int) : E8M0 :=
-  ofNatBits (Int.toNat (max (-127) (min 127 exponent) + bias))
+  ofNatBits (Int.toNat (Numerics.Quantization.Saturating.clamp (-127) 127 exponent + bias))
 
 /-- An E8M0 code decodes if and only if it carries an exponent, and the decoded scale is the
 positive power of two `2 ^ exponent`, with significand one and a clear sign. -/

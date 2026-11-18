@@ -1,0 +1,72 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.QuotientRound.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Core.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Division
+
+/-!
+# Width-generic wide-limb division
+
+Finite inputs are decoded from their limb fields. Division uses one arbitrary-precision integer
+quotient, which fuses significand scaling with the extra bit that nearest-even rounding needs. For
+normal operands a significand comparison determines the ratio's leading exponent, and subnormal
+operands use the general leading-exponent computation and the same certified rounder.
+
+This finite path covers zero operands, subnormal results, underflow, and overflow in every rounding
+direction. Only non-finite operands use the reference operation, whose value result doesn't depend
+on the rounding direction. `Division.Proof` proves the refinement through the codec.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb
+
+open FloatLib.Numerics
+
+/-- Integer significand read from a stored value, including subnormal and zero significands. -/
+@[inline] def divisionMantissa {fmt : FloatFormat} (value : Value fmt) : Nat :=
+  if expWord value == 0 then (fraction value).toNat else (normalMantissa value).toNat
+
+/-- The ratio exponent needs only a comparison when both significands are normalized. -/
+@[inline] def divisionRatioExponent {fmt : FloatFormat} (x y : Value fmt) (num den : Nat) : Int :=
+  if expWord x == 0 || expWord y == 0 then RationalBinary.floorLog2 num den
+  else if den ≤ num then 0 else -1
+
+/-- Try finite wide-limb division, in any rounding direction and without a precision bound. -/
+def divFinite? (fmt : FloatFormat) (x y : Value fmt) (mode : IEEERoundingMode) :
+    Option (Value fmt) :=
+  if expWord x == expAllOnes fmt || expWord y == expAllOnes fmt then
+    none
+  else
+    let sign := Bool.xor (signBit x) (signBit y)
+    let num := divisionMantissa x
+    let den := divisionMantissa y
+    let result :=
+      if den == 0 then
+        if num == 0 then invalidResult fmt else nativeOverflow fmt sign
+      else if num == 0 then
+        zero fmt sign
+      else
+        let exponent :=
+          Int.ofNat ((expWord x).toNat - 1) - Int.ofNat ((expWord y).toNat - 1)
+        FiniteQuotientRound.roundAtExponent fmt mode sign num den exponent
+          (divisionRatioExponent x y num den)
+    some (ofModel result)
+
+/--
+Total wide-limb division rounded in `mode`, nearest-even by default, with the reference
+exceptional-value policy. The configured wide-limb backend uses the default.
+-/
+def div (fmt : FloatFormat) (x y : Value fmt) (mode : IEEERoundingMode := .nearest) :
+    Value fmt :=
+  match divFinite? fmt x y mode with
+  | some result => result
+  | none => ofModel (Spec.div (toModel x) (toModel y))
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb

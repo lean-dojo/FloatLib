@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Cohort
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Saturation
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
+public import FloatLib.Floats.Formats.DecimalInterchange.Scaling.Runtime
 
 /-!
 # Exponent-operation semantics
 
-Bounds between consecutive powers of ten pin down `decimalExponent`, so for `314` the answer is
+Bounds between consecutive powers of ten pin down `logB`, so for `314` the answer is
 `2`. Scaling inherits the value, range, rounding and cohort guarantees of the projection it calls,
 signed zero and decimal tininess before rounding included.
 -/
@@ -120,15 +120,15 @@ theorem scale_underflow_iff (f : Format) (mode : RoundingMode)
 
 /-- For a nonzero finite datum, `logB` is the exponent of its leading digit, the quantum plus the
 coefficient's digit count minus one, and raises no flags. -/
-theorem decimalExponent_finite (f : Format) (s : Bool) (c : Nat) (q : Int) (hc : c ≠ 0) :
-    decimalExponent f (.finite s c q) = { value := q + (Nat.log 10 c : Int) } := by
-  cases c <;> simp_all [decimalExponent]
+theorem logB_finite (f : Format) (s : Bool) (c : Nat) (q : Int) (hc : c ≠ 0) :
+    logB f (.finite s c q) = { value := q + (Nat.log 10 c : Int) } := by
+  cases c <;> simp_all [logB]
 
 /-- The returned exponent is the unique radix-power bracket for the magnitude. -/
-theorem decimalExponent_bounds (f : Format) (s : Bool) (c : Nat) (q : Int) (hc : c ≠ 0) :
-    (10 : ℚ) ^ (decimalExponent f (.finite s c q)).value ≤ (c : ℚ) * (10 : ℚ) ^ q ∧
-      (c : ℚ) * (10 : ℚ) ^ q < (10 : ℚ) ^ ((decimalExponent f (.finite s c q)).value + 1) := by
-  rw [decimalExponent_finite f s c q hc]
+theorem logB_bounds (f : Format) (s : Bool) (c : Nat) (q : Int) (hc : c ≠ 0) :
+    (10 : ℚ) ^ (logB f (.finite s c q)).value ≤ (c : ℚ) * (10 : ℚ) ^ q ∧
+      (c : ℚ) * (10 : ℚ) ^ q < (10 : ℚ) ^ ((logB f (.finite s c q)).value + 1) := by
+  rw [logB_finite f s c q hc]
   have hl : (10 : ℚ) ^ Nat.log 10 c ≤ (c : ℚ) := by
     exact_mod_cast Nat.pow_log_le_self 10 hc
   have hu : (c : ℚ) < (10 : ℚ) ^ (Nat.log 10 c + 1) := by
@@ -142,35 +142,35 @@ theorem decimalExponent_bounds (f : Format) (s : Bool) (c : Nat) (q : Int) (hc :
 
 /-- For a valid nonzero finite datum, `logB` lies between the least quantum and `emax`, the exponent
 of the largest finite value's leading digit. -/
-theorem decimalExponent_valid_range (f : Format) (s : Bool) (c : Nat) (q : Int)
+theorem logB_valid_range (f : Format) (s : Bool) (c : Nat) (q : Int)
     (hc : c ≠ 0) (hvalid : (Datum.finite s c q).Valid f) :
-    f.minQuantum ≤ (decimalExponent f (.finite s c q)).value ∧
-      (decimalExponent f (.finite s c q)).value ≤ f.maxQuantum + (f.precision : Int) - 1 := by
+    f.minQuantum ≤ (logB f (.finite s c q)).value ∧
+      (logB f (.finite s c q)).value ≤ f.maxQuantum + (f.precision : Int) - 1 := by
   have hv := (Datum.valid_quantum_iff ..).mp hvalid
   have hl : Nat.log 10 c < f.precision := by
     apply (Nat.log_lt_iff_lt_pow (by decide : 1 < 10) hc).mpr
     simpa [← Format.coefficientBound_eq] using hv.1
-  rw [decimalExponent_finite f s c q hc]
+  rw [logB_finite f s c q hc]
   simp only
   omega
 
 /-- The exceptional integer exceeds twice either absolute endpoint of the exponent range. -/
-theorem decimalExponentSentinel_twice_bound (f : Format) :
-    2 * |f.minQuantum| < decimalExponentSentinel f ∧
-      2 * |f.maxQuantum + (f.precision : Int) - 1| < decimalExponentSentinel f := by
+theorem logBSentinel_twice_bound (f : Format) :
+    2 * |f.minQuantum| < logBSentinel f ∧
+      2 * |f.maxQuantum + (f.precision : Int) - 1| < logBSentinel f := by
   have hlo := le_max_left |f.minQuantum| |f.maxQuantum + (f.precision : Int) - 1|
   have hhi := le_max_right |f.minQuantum| |f.maxQuantum + (f.precision : Int) - 1|
   have hm := le_max_left (max |f.minQuantum| |f.maxQuantum + (f.precision : Int) - 1|)
     |logBBound f|
-  unfold decimalExponentSentinel
+  unfold logBSentinel
   omega
 
 /-- The exceptional sentinel exceeds twice the `logB` bound `emax + p - 1`. -/
-theorem decimalExponentSentinel_outside_logBBound (f : Format) :
-    2 * |logBBound f| < decimalExponentSentinel f := by
+theorem logBSentinel_outside_logBBound (f : Format) :
+    2 * |logBBound f| < logBSentinel f := by
   have hm := le_max_right (max |f.minQuantum| |f.maxQuantum + (f.precision : Int) - 1|)
     |logBBound f|
-  unfold decimalExponentSentinel
+  unfold logBSentinel
   omega
 
 /--
@@ -178,40 +178,39 @@ Whenever `logB` raises invalid, for a zero, an infinity or a NaN, its integer li
 `±2 × (emax + p - 1)`, as IEEE 754-2019 §5.3.3 requires for an integer `logBFormat`: the negative
 sentinel for a zero and the positive one otherwise.
 -/
-theorem decimalExponent_outside_logBBound (f : Format) (x : Datum)
-    (hinvalid : (decimalExponent f x).status.invalid = true) :
-    2 * |logBBound f| < |(decimalExponent f x).value| := by
-  have h := decimalExponentSentinel_outside_logBBound f
-  have hpos : 0 < decimalExponentSentinel f := lt_of_le_of_lt (by positivity) h
+theorem logB_outside_logBBound (f : Format) (x : Datum)
+    (hinvalid : (logB f x).status.invalid = true) :
+    2 * |logBBound f| < |(logB f x).value| := by
+  have h := logBSentinel_outside_logBBound f
+  have hpos : 0 < logBSentinel f := lt_of_le_of_lt (by positivity) h
   rcases x with ⟨s, _ | c, q⟩ | s | ⟨s, t, p⟩
-  · simp [decimalExponent, abs_neg, abs_of_pos hpos, h]
-  · simp [decimalExponent] at hinvalid
-  · simp [decimalExponent, abs_of_pos hpos, h]
-  · simp [decimalExponent, abs_of_pos hpos, h]
+  · simp [logB, abs_neg, abs_of_pos hpos, h]
+  · simp [logB] at hinvalid
+  · simp [logB, abs_of_pos hpos, h]
+  · simp [logB, abs_of_pos hpos, h]
 
 /-- Every valid finite exponent has absolute value less than half the exceptional sentinel. -/
-theorem decimalExponent_sentinel_twice_abs (f : Format) (s : Bool) (c : Nat) (q : Int)
+theorem logB_sentinel_twice_abs (f : Format) (s : Bool) (c : Nat) (q : Int)
     (hc : c ≠ 0) (hvalid : (Datum.finite s c q).Valid f) :
-    2 * |(decimalExponent f (.finite s c q)).value| < decimalExponentSentinel f := by
-  have hr := decimalExponent_valid_range f s c q hc hvalid
-  have hb := decimalExponentSentinel_twice_bound f
+    2 * |(logB f (.finite s c q)).value| < logBSentinel f := by
+  have hr := logB_valid_range f s c q hc hvalid
+  have hb := logBSentinel_twice_bound f
   have hlo := neg_abs_le f.minQuantum
   have hhi := le_abs_self (f.maxQuantum + (f.precision : Int) - 1)
-  rcases le_total 0 (decimalExponent f (.finite s c q)).value with h | h
+  rcases le_total 0 (logB f (.finite s c q)).value with h | h
   · rw [abs_of_nonneg h]
     omega
   · rw [abs_of_nonpos h]
     omega
 
 /-- The integer exceptional result cannot collide with a valid finite nonzero exponent. -/
-theorem decimalExponent_sentinel_separated (f : Format) (s : Bool) (c : Nat) (q : Int)
+theorem logB_sentinel_separated (f : Format) (s : Bool) (c : Nat) (q : Int)
     (hc : c ≠ 0) (hvalid : (Datum.finite s c q).Valid f) :
-    -decimalExponentSentinel f < (decimalExponent f (.finite s c q)).value ∧
-      (decimalExponent f (.finite s c q)).value < decimalExponentSentinel f := by
-  have h := decimalExponent_sentinel_twice_abs f s c q hc hvalid
-  have hp := abs_nonneg (decimalExponent f (.finite s c q)).value
-  have hlo := neg_abs_le (decimalExponent f (.finite s c q)).value
-  have hhi := le_abs_self (decimalExponent f (.finite s c q)).value
+    -logBSentinel f < (logB f (.finite s c q)).value ∧
+      (logB f (.finite s c q)).value < logBSentinel f := by
+  have h := logB_sentinel_twice_abs f s c q hc hvalid
+  have hlo := neg_abs_le (logB f (.finite s c q)).value
+  have hhi := le_abs_self (logB f (.finite s c q)).value
   omega
 
 end Arithmetic

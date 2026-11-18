@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Runtime
+
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 
 /-!
@@ -99,9 +100,11 @@ theorem isSubnormal_eq_false_of_isZero {x : Model fmt} (hx : isZero x = true) :
 
 /-- Signaling and quiet NaNs partition NaNs under every supported encoding policy. -/
 theorem isQNaN_eq_nan_and_not_signaling (x : Model fmt) :
-    isQNaN x = (isNaN x && !isSNaN x) := by
+    isQNaN x = (isNaN x && !isSignaling x) := by
   cases he : fmt.encoding <;>
-    simp [isQNaN, isSNaN, he, IEEE.isQNaN, IEEE.isSNaN] <;>
+    simp only [isQNaN, he, IEEE.isQNaN, BitVec.ofNat_eq_ofNat, isSignaling,
+      IEEE.isSignaling, Bool.not_and,
+      Bool.not_false, Bool.and_true, Bool.false_eq] <;>
     cases hn : IEEE.isNaN x <;> simp [isNaN, he, hn]
   rfl
 

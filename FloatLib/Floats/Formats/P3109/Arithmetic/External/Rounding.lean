@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -18,7 +18,8 @@ significand. The rational selection theorem covers every deterministic mode and 
 stochastic word. Everything here is about precision rounding, and saturation and encoding are
 proved in `External.Bounds` and `External.Proof`.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7.4 and 4.8.
+Reference: P3109 unapproved interim report v4.1 (14 September 2026),
+revision `2d45cf2`, §§4.7.4 and 4.8.
 -/
 
 @[expose] public section
@@ -30,14 +31,14 @@ namespace FloatLib.Floats.Formats.P3109.Arithmetic.External
 open BinaryInterchange
 
 /-- External binary descriptors always have precision greater than one. -/
-theorem precisionOf_gt_one (format : FloatFormat) : 1 < precisionOf format := by
+theorem precisionOf_gt_one (format : FloatFormat) : 1 < PrecisionOf format := by
   have h := format.fracWidth_pos
-  simp only [precisionOf]
+  simp only [PrecisionOf]
   omega
 
 /-- External code parity is the ordinary parity of the integer significand. -/
 theorem codeEven_eq (format : FloatFormat) (quantum : Int) (lower : Nat) :
-    RationalRounding.codeEven (precisionOf format) (exponentBiasOf format) quantum lower =
+    RationalRounding.codeEven (PrecisionOf format) (ExponentBiasOf format) quantum lower =
       (lower % 2 == 0) := by
   simp only [RationalRounding.codeEven, precisionOf_gt_one, ite_eq_left]
   rfl
@@ -46,15 +47,15 @@ theorem codeEven_eq (format : FloatFormat) (quantum : Int) (lower : Nat) :
 theorem quantum_eq (format : FloatFormat) (value : Rat) :
     max (RationalBinary.floorLog2 value.num.natAbs value.den) format.minNormalExponent -
         (format.fracWidth : Int) =
-      RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value := by
-  simp only [RationalRounding.quantum, precisionOf, exponentBiasOf,
+      RationalRounding.quantum (PrecisionOf format) (ExponentBiasOf format) value := by
+  simp only [RationalRounding.quantum, PrecisionOf, ExponentBiasOf,
     FloatFormat.minNormalExponent, Int.ofNat_eq_natCast, Nat.cast_add, Nat.cast_one]
   omega
 
 /-- External precision rounding implements the report formula for every mode and rational input. -/
 theorem roundFinite_toRat (format : FloatFormat) (mode : RoundingMode) (value : Rat) :
     (roundFinite format mode value).toRat =
-      RationalRounding.round (precisionOf format) (exponentBiasOf format) mode value := by
+      RationalRounding.round (PrecisionOf format) (ExponentBiasOf format) mode value := by
   by_cases hz : value = 0
   · simp [hz, roundFinite, RationalRounding.round]
   have hn : value.num.natAbs ≠ 0 := by
@@ -65,8 +66,8 @@ theorem roundFinite_toRat (format : FloatFormat) (mode : RoundingMode) (value : 
     (fun lower => lower % 2 == 0)]
   have hp :
       (fun lower => lower % 2 == 0) =
-        RationalRounding.codeEven (precisionOf format) (exponentBiasOf format)
-          (RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value) :=
+        RationalRounding.codeEven (PrecisionOf format) (ExponentBiasOf format)
+          (RationalRounding.quantum (PrecisionOf format) (ExponentBiasOf format) value) :=
     funext fun lower => (codeEven_eq format _ lower).symm
   simp only [RationalRounding.round, RationalRounding.roundAt, Int.ofNat_eq_natCast,
     quantum_eq, hp]
@@ -75,14 +76,14 @@ theorem roundFinite_toRat (format : FloatFormat) (mode : RoundingMode) (value : 
 theorem roundFinite_nearest_error (format : FloatFormat) (value : Rat) :
     |(roundFinite format .nearest value).toRat - value| ≤
       (2 : Rat) ^
-        RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value / 2 := by
+        RationalRounding.quantum (PrecisionOf format) (ExponentBiasOf format) value / 2 := by
   rw [roundFinite_toRat]
   exact RationalRounding.roundAt_nearest_error _ _ _
 
 /-- Every external mode stays within its own quantum, including each stochastic word. -/
 theorem roundFinite_error_lt_quantum (format : FloatFormat) (mode : RoundingMode) (value : Rat) :
     |(roundFinite format mode value).toRat - value| <
-      (2 : Rat) ^ RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value := by
+      (2 : Rat) ^ RationalRounding.quantum (PrecisionOf format) (ExponentBiasOf format) value := by
   rw [roundFinite_toRat]
   exact RationalRounding.roundAt_error_lt_quantum _ _ _ _
 
@@ -91,7 +92,7 @@ theorem roundFinite_up (format : FloatFormat) (value : Rat) :
     value ≤ (roundFinite format .up value).toRat ∧
       (roundFinite format .up value).toRat < value +
         (2 : Rat) ^
-          RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value := by
+          RationalRounding.quantum (PrecisionOf format) (ExponentBiasOf format) value := by
   rw [roundFinite_toRat]
   exact RationalRounding.roundAt_up _ _ _
 
@@ -100,7 +101,7 @@ theorem roundFinite_down (format : FloatFormat) (value : Rat) :
     (roundFinite format .down value).toRat ≤ value ∧
       value < (roundFinite format .down value).toRat +
         (2 : Rat) ^
-          RationalRounding.quantum (precisionOf format) (exponentBiasOf format) value := by
+          RationalRounding.quantum (PrecisionOf format) (ExponentBiasOf format) value := by
   rw [roundFinite_toRat]
   exact RationalRounding.roundAt_down _ _ _
 

@@ -1,7 +1,0 @@
-campaign_id=20261031T193210Z
-head_revision=8c8871576a941a86e73dcf0882702b823139aa93
-release=2.0.0
-source_method=git archive of the revision, identical to its checkout
-source_tree_hash=fe892ac2e38de841fefa5e6376e16efddcf0bf423caad0f50c45df191bb085f1
-source_tree_hash_files=every FloatLib/ file plus lakefile.lean, lean-toolchain, and lake-manifest.json
-dirty_files=0

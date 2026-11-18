@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -27,15 +27,15 @@ variable {format : Format}
 /--
 Negate a posit by taking the two's complement of its entire encoded word.
 
-It fixes zero and NaR and swaps every positive finite code with its negative counterpart, as the
-posit encoding specifies.
+It fixes zero and NaR and swaps every positive finite code with its negative counterpart
+(Posit Standard (2022), §5.2, note 7).
 -/
-@[inline] def neg (value : Model format) : Model format :=
+@[inline] def negate (value : Model format) : Model format :=
   ofNatBits (format.modulus - value.toNatBits)
 
 /-- Posit negation fixes the unique zero encoding. -/
 @[simp] theorem neg_zero (format : Format) :
-    neg (zero format) = zero format := by
+    negate (zero format) = zero format := by
   change
     ofBits (BitVec.ofNat format.bits
       (format.modulus - (BitVec.ofNat format.bits 0).toNat)) =
@@ -46,19 +46,19 @@ posit encoding specifies.
 
 /-- Posit two's-complement negation fixes the unique NaR encoding. -/
 @[simp] theorem neg_nar (format : Format) :
-    neg (nar format) = nar format := by
-  simp only [neg, nar_toNatBits, Format.modulus_eq_two_mul_signMaskNat,
+    negate (nar format) = nar format := by
+  simp only [negate, nar_toNatBits, Format.modulus_eq_two_mul_signMaskNat,
     Nat.two_mul, Nat.add_sub_cancel_left]
   rfl
 
 /-- Two's-complement negation is an involution on posit words. -/
-@[simp] protected theorem neg_neg (value : Model format) : neg (neg value) = value := by
+@[simp] protected theorem neg_neg (value : Model format) : negate (negate value) = value := by
   by_cases hzero : value = zero format
   · subst value
     simp
   · have hcode := toNatBits_lt_modulus value
     have hnonzero := mt (toNatBits_eq_zero_iff value).1 hzero
-    unfold neg
+    unfold negate
     rw [toNatBits_ofNatBits_of_lt _ (by omega), Nat.sub_sub_self (Nat.le_of_lt hcode),
       ofNatBits_toNatBits]
 

@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.IEEE754.Native.Model.Representation
 public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+public import FloatLib.Floats.Formats.IEEE754.Native.Model.Representation
+
 import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 
 /-!

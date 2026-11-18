@@ -1,16 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Runtime
+public import FloatLib.Numerics.Executable.Conversion.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Proof
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
+public import FloatLib.Tactic.IeeeFormat
+
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Predicates
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgreement
 
@@ -161,9 +163,12 @@ private theorem natAbs_div_den_eq_abs (value : Rat) :
     (value.num.natAbs : ℝ) / value.den = |(value : ℝ)| := by
   simp [Rat.cast_def, abs_div]
 
-private theorem signedRat_toReal (exact : SignedRat) (hvalue : exact.value ≠ 0) :
+/-- An exact signed-rational observation has the real value used by binary grid rounding. -/
+theorem signedRat_toReal (exact : SignedRat) :
     Model.signedScaledRatToReal exact.negative exact.value.num.natAbs exact.value.den 0 =
       (exact.value : ℝ) := by
+  by_cases hvalue : exact.value = 0
+  · simp [Model.signedScaledRatToReal, Model.scaledRatToReal, hvalue]
   simp only [Model.signedScaledRatToReal, Model.scaledRatToReal, Model.bpow_zero, mul_one,
     natAbs_div_den_eq_abs, exact.negative_eq_of_ne_zero hvalue]
   by_cases hnegative : exact.value < 0
@@ -190,11 +195,9 @@ theorem nearestFinite_roundRat (format : FloatFormat) (exact : SignedRat)
       Model.toReal
           (Model.roundRat format exact.negative exact.value.num.natAbs exact.value.den) =
         Model.roundAt format (exact.value : ℝ) := by
-    by_cases hzero : exact.value = 0
-    · simp [hzero]
-    · rw [Model.roundRat, Model.toReal_roundRatScaled_eq_roundAt
-        format exact.negative exact.value.num.natAbs exact.value.den 0
-        hformat hfinite, signedRat_toReal exact hzero]
+    rw [Model.roundRat, Model.toReal_roundRatScaled_eq_roundAt
+      format exact.negative exact.value.num.natAbs exact.value.den 0
+      hformat hfinite, signedRat_toReal exact]
   have hnearest :=
     (Formats.Flocq.round_nearestEven_point (β := binaryRadix) (fexp := Model.fexpOf format)
       (exact.value : ℝ)).2 (Model.toReal candidate)
@@ -284,7 +287,7 @@ theorem runWith_default_nan_eq_cast_status {src dst : FloatFormat} {Destination 
     (pack : Model dst → Destination) (x : Model src) (mode : Model.IEEERoundingMode)
     (hnan : Model.isNaN x = true) (hdst : dst.encoding ≠ .finite) :
     runWith pack Context.default
-        (.exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))) =
+        (.exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSignaling x))) =
       .success (pack (Model.cast src dst x mode (status := true)).value)
         { invalid := (Model.cast src dst x mode (status := true)).status.invalid } := by
   have hcast : Model.Internal.Directed.cast src dst x mode =
@@ -298,7 +301,7 @@ theorem runWith_default_nan_eq_cast_status {src dst : FloatFormat} {Destination 
   obtain ⟨v, hv⟩ := hsome
   simp only [runWith, quantizeExceptionalWith, Context.default, hv, Model.cast,
     Model.Internal.Status.cast, hnan, hcast, hisnan, Model.outcomeWithInvalid, Option.getD_some]
-  cases Model.isSNaN x <;> rfl
+  cases Model.isSignaling x <;> rfl
 
 /--
 Default conversion of an observed binary NaN into a destination with no NaN encoding fails with
@@ -312,9 +315,9 @@ theorem runWith_default_nan_of_encoding_finite {src dst : FloatFormat} {Destinat
     (pack : Model dst → Destination) (x : Model src) (mode : Model.IEEERoundingMode)
     (hnan : Model.isNaN x = true) (hdst : dst.encoding = .finite) :
     runWith pack Context.default
-        (.exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))) =
+        (.exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSignaling x))) =
       .failure (.exceptional .source
-        (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))) ∧
+        (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSignaling x))) ∧
       (Model.cast src dst x mode (status := true)).status.invalid = true := by
   refine ⟨?_, Model.cast_invalid_of_isNaN_of_encoding_finite x mode hnan hdst⟩
   have hv : Model.canonicalNaN? dst = none := by simp [Model.canonicalNaN?, hdst]
@@ -370,11 +373,11 @@ private theorem le_two_mul_mul_zpow_iff (q bound : ℝ) (f : ℕ) (E : ℤ) :
     bound ≤ 2 * (q * (2 : ℝ) ^ ((f : ℤ) - E)) ↔ bound * (2 : ℝ) ^ (E - f - 1) ≤ q := by
   have hinverse : (2 : ℝ) ^ ((f : ℤ) - E) * (2 * (2 : ℝ) ^ (E - f - 1)) = 1 := by
     rw [← zpow_one_add₀ (by norm_num), ← zpow_add₀ (by norm_num),
-      show (f : ℤ) - E + (1 + (E - f - 1)) = 0 by ring]
+      show (f : ℤ) - E + (1 + (E - f - 1)) = 0 by omega]
     exact zpow_zero 2
   have hscaled : 2 * (q * (2 : ℝ) ^ ((f : ℤ) - E)) * (2 : ℝ) ^ (E - f - 1) = q := by
     calc
-      _ = q * ((2 : ℝ) ^ ((f : ℤ) - E) * (2 * (2 : ℝ) ^ (E - f - 1))) := by ring
+      _ = q * ((2 : ℝ) ^ ((f : ℤ) - E) * (2 * (2 : ℝ) ^ (E - f - 1))) := by ac_rfl
       _ = q := by rw [hinverse, mul_one]
   rw [← mul_le_mul_iff_left₀ (zpow_pos (by norm_num : (0 : ℝ) < 2) (E - f - 1)), hscaled]
 
@@ -399,7 +402,7 @@ private theorem nearestAway_significandOverflow_iff (format : FloatFormat)
       (2 : ℝ) ^ format.fracWidth ≤ ((Model.maxFiniteDyadic format).significand : ℝ) := by
     simp only [Model.maxFiniteDyadic, Model.pow2_eq_two_pow]
     push_cast
-    linarith [(Nat.cast_nonneg format.maxFiniteFracField : (0 : ℝ) ≤ _)]
+    exact le_add_of_nonneg_right (Nat.cast_nonneg _)
   have hsignificandUpper :
       ((Model.maxFiniteDyadic format).significand : ℝ) + 1 ≤ 2 * (2 : ℝ) ^ format.fracWidth := by
     have hnat : (Model.maxFiniteDyadic format).significand + 1 ≤ 2 * 2 ^ format.fracWidth := by
@@ -419,7 +422,7 @@ private theorem nearestAway_significandOverflow_iff (format : FloatFormat)
     rw [hunit, ← zpow_natCast, mul_assoc, ← zpow_add₀ (by norm_num), ← zpow_one_add₀
       (by norm_num)]
     congr 1
-    ring
+    omega
   rw [hmidpoint]
   rcases lt_trichotomy (RationalBinary.floorLog2 numerator denominator)
       format.maxNormalExponent with hlt | heq | hgt
@@ -434,7 +437,7 @@ private theorem nearestAway_significandOverflow_iff (format : FloatFormat)
     have hlower : 2 * (2 : ℝ) ^ format.fracWidth * unit <
         (2 * ((Model.maxFiniteDyadic format).significand : ℝ) + 1) * unit :=
       mul_lt_mul_of_pos_right (by linarith) hunitPos
-    linarith [hbounds.2]
+    exact (hbounds.2.trans_le hpow).trans (htop.trans_lt hlower)
   · simp only [heq, lt_self_iff_false, false_or, true_and]
     rw [lt_roundQuotient_nearestAway_scaled_iff _ _ _ _ hdenominator]
     push_cast
@@ -485,7 +488,7 @@ private theorem nearestAway_significandTiny_iff (format : FloatFormat)
     rw [hunit, ← zpow_natCast, mul_assoc, ← zpow_add₀ (by norm_num),
       show (4 : ℝ) = (2 : ℝ) ^ (2 : Int) by norm_num, ← zpow_add₀ (by norm_num)]
     congr 1
-    ring
+    omega
   rw [hmidpoint]
   by_cases hnormal : format.minNormalExponent ≤ RationalBinary.floorLog2 numerator denominator
   · have hnotSub : ¬RationalBinary.floorLog2 numerator denominator < format.minNormalExponent :=
@@ -497,7 +500,7 @@ private theorem nearestAway_significandTiny_iff (format : FloatFormat)
     have hupper : (4 * (2 : ℝ) ^ format.fracWidth - 1) * unit ≤
         4 * (2 : ℝ) ^ format.fracWidth * unit :=
       mul_le_mul_of_nonneg_right (by linarith) (le_of_lt hunitPos)
-    linarith [hbounds.1]
+    exact hupper.trans (hbottom.symm.trans_le (hpow.trans hbounds.1))
   by_cases hfar : RationalBinary.floorLog2 numerator denominator + 1 < format.minNormalExponent
   · have hsub : RationalBinary.floorLog2 numerator denominator < format.minNormalExponent := by
       omega
@@ -509,7 +512,7 @@ private theorem nearestAway_significandTiny_iff (format : FloatFormat)
         2 * (2 : ℝ) ^ (format.minNormalExponent - 1) := by
       rw [← zpow_one_add₀ (by norm_num)]
       congr 1
-      ring
+      omega
     have hlower : 2 * (2 : ℝ) ^ format.fracWidth * unit <
         (4 * (2 : ℝ) ^ format.fracWidth - 1) * unit :=
       mul_lt_mul_of_pos_right (by linarith) hunitPos

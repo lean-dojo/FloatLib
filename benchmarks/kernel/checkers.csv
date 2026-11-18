@@ -1,0 +1,26 @@
+family,checker,declarations,status,exit,seconds,baseline_seconds,baseline_exit,net_seconds,lean
+exact-layer,leanchecker,541,accepted,0,126.77,128.24,0,-1.47,4.36.0
+exact-layer,leanchecker-paranoid,541,accepted,0,122.44,119.28,0,3.16,4.36.0
+exact-layer,nanoda,2295,accepted,0,0.64,0.37,0,0.27,4.36.0
+exact-layer,con-ron,2295,accepted,0,5.44,6.83,0,-1.39,4.36.0
+exact-layer,lean-export,2295,accepted,0,0.92,0.80,0,0.12,4.36.0
+exact-checks,leanchecker,232,accepted,0,13.64,10.08,0,3.56,4.36.0
+exact-checks,leanchecker-paranoid,232,accepted,0,15.16,11.12,0,4.04,4.36.0
+exact-checks,nanoda,9532,accepted,0,8.52,6.18,0,2.34,4.36.0
+exact-checks,con-ron,9532,accepted,0,11.10,10.07,0,1.03,4.36.0
+exact-checks,lean-export,9532,accepted,0,13.53,10.90,0,2.63,4.36.0
+loops-kernel,leanchecker,13,accepted,0,12.15,10.83,0,1.32,4.36.0
+loops-kernel,leanchecker-paranoid,13,accepted,0,12.82,12.83,0,-0.01,4.36.0
+loops-kernel,nanoda,13910,accepted,0,33.25,31.06,0,2.19,4.36.0
+loops-kernel,con-ron,13910,accepted,0,24.56,23.33,0,1.23,4.36.0
+loops-kernel,lean-export,13910,accepted,0,43.78,41.44,0,2.34,4.36.0
+loops-public,leanchecker,6,accepted,0,29.00,10.27,0,18.73,4.36.0
+loops-public,leanchecker-paranoid,6,accepted,0,37.18,10.05,0,27.13,4.36.0
+loops-public,nanoda,10363,accepted,0,36.99,13.54,0,23.45,4.36.0
+loops-public,con-ron,10363,accepted,0,37.42,17.84,0,19.58,4.36.0
+loops-public,lean-export,10363,accepted,0,37.15,30.67,0,6.48,4.36.0
+exhaustive,leanchecker,4,accepted,0,54.60,9.70,0,44.90,4.36.0
+exhaustive,leanchecker-paranoid,4,accepted,0,70.58,14.89,0,55.69,4.36.0
+exhaustive,nanoda,13741,no verdict,134,315.00,312.49,134,2.51,4.36.0
+exhaustive,con-ron,13741,accepted,0,74.79,23.02,0,51.77,4.36.0
+exhaustive,lean-export,13741,no verdict,137,861.33,283.92,137,577.41,4.36.0

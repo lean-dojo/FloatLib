@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Runtime
-public import FloatLib.Floats.Formats.Posit.Quire.Semantics.Runtime
 public import FloatLib.Floats.Formats.Posit.Quire.Configured.Type -- shake: keep
 
 /-!
@@ -76,7 +75,8 @@ def exactValues? :
       let values ← exactValues? rest
       pure (value :: values)
 
-/-- Exact rational products of a list of configured posit pairs, or `none` when some entry is NaR. -/
+/-- Exact rational products of a list of configured posit pairs, or `none` when some entry is
+NaR. -/
 def exactProducts? :
     List (FloatLib.Floats.ExecFloat (Configured.Family format code plan) ×
       FloatLib.Floats.ExecFloat (Configured.Family format code plan)) →
@@ -88,26 +88,30 @@ def exactProducts? :
       let products ← exactProducts? rest
       pure (left * right :: products)
 
-/-- Convert one configured posit into its associated quire without rounding. -/
+/-- Posit Standard (2022), §5.11.
+Convert one configured posit into its associated quire without rounding. -/
 @[inline] def pToQ
     (value : FloatLib.Floats.ExecFloat
       (Configured.Family format code plan)) :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.pToQ (ExecFloat.Posit.toModel value)
 
-/-- Standard quire negation. -/
+/-- Posit Standard (2022), §5.11.
+Standard quire negation. -/
 @[inline] def qNegate
     (value : Formats.Posit.Quire.Model format) :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.qNegate value
 
-/-- Standard quire absolute value. -/
+/-- Posit Standard (2022), §5.11.
+Standard quire absolute value. -/
 @[inline] def qAbs
     (value : Formats.Posit.Quire.Model format) :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.qAbs value
 
-/-- Add a configured posit to its associated quire without rounding. -/
+/-- Posit Standard (2022), §5.11.
+Add a configured posit to its associated quire without rounding. -/
 @[inline] def qAddP
     (accumulator : Formats.Posit.Quire.Model format)
     (addend : FloatLib.Floats.ExecFloat
@@ -116,7 +120,8 @@ def exactProducts? :
   Formats.Posit.Quire.Model.qAddP accumulator
     (ExecFloat.Posit.toModel addend)
 
-/-- Subtract a configured posit from its associated quire without rounding. -/
+/-- Posit Standard (2022), §5.11.
+Subtract a configured posit from its associated quire without rounding. -/
 @[inline] def qSubP
     (accumulator : Formats.Posit.Quire.Model format)
     (subtrahend : FloatLib.Floats.ExecFloat
@@ -125,19 +130,22 @@ def exactProducts? :
   Formats.Posit.Quire.Model.qSubP accumulator
     (ExecFloat.Posit.toModel subtrahend)
 
-/-- Add two configured quires without rounding. -/
+/-- Posit Standard (2022), §5.11.
+Add two configured quires without rounding. -/
 @[inline] def qAddQ
     (left right : Formats.Posit.Quire.Model format) :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.qAddQ left right
 
-/-- Subtract two configured quires without rounding. -/
+/-- Posit Standard (2022), §5.11.
+Subtract two configured quires without rounding. -/
 @[inline] def qSubQ
     (left right : Formats.Posit.Quire.Model format) :
     Formats.Posit.Quire.Model format :=
   Formats.Posit.Quire.Model.qSubQ left right
 
-/-- Accumulate one exact configured-posit product with no intermediate rounding. -/
+/-- Posit Standard (2022), §5.11.
+Accumulate one exact configured-posit product with no intermediate rounding. -/
 @[inline] def qMulAdd
     (accumulator : Formats.Posit.Quire.Model format)
     (left right : FloatLib.Floats.ExecFloat
@@ -146,7 +154,8 @@ def exactProducts? :
   Formats.Posit.Quire.Model.qMulAdd accumulator
     (ExecFloat.Posit.toModel left) (ExecFloat.Posit.toModel right)
 
-/-- Subtract one exact configured-posit product with no intermediate rounding. -/
+/-- Posit Standard (2022), §5.11.
+Subtract one exact configured-posit product with no intermediate rounding. -/
 @[inline] def qMulSub
     (accumulator : Formats.Posit.Quire.Model format)
     (left right : FloatLib.Floats.ExecFloat
@@ -155,7 +164,8 @@ def exactProducts? :
   Formats.Posit.Quire.Model.qMulSub accumulator
     (ExecFloat.Posit.toModel left) (ExecFloat.Posit.toModel right)
 
-/-- Round a configured quire once into its associated configured posit. -/
+/-- Posit Standard (2022), §5.11.
+Round a configured quire once into its associated configured posit. -/
 @[inline] def qToP
     (value : Formats.Posit.Quire.Model format) :
     FloatLib.Floats.ExecFloat (Configured.Family format code plan) :=

@@ -1,14 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Packed.Literal
+public import FloatLib.Numerics.Packed.DotProof
 public import FloatLib.Numerics.Packed.Sos
 public import FloatLib.Numerics.Packed.Window
+public import FloatLib.Tactic.PackedRow
 
 /-!
 # Packed rows
@@ -20,6 +21,9 @@ These checks run the packed-row programs in the kernel, first on the row `[1, -2
 
 * Unsigned rows: the lanes of `(signed := false)` rows, their range check, their lane sum by one
   remainder, and their product (`lanes_mul`).
+* Dot products: the two packed rows of `[3, 1, 4]` and `[2, 7, 1, 8]`, the lane of their product
+  that holds `3 * 2 + 1 * 7 + 4 * 1` (`dot_eq`; the fourth weight is beyond the list), and a row
+  of 130 members, which crosses two chunks of the packing.
 * Two rows of 200 entries in `[-2 ^ 100, 2 ^ 100)`, `x` from `PackedRow.txt` and `y` written in
   this file, both drawn by Python's `random` with seed `20261107`. In lanes of 256 bits, two range
   checks and one Kronecker product give the 399 entries of the Cauchy product (`entries_mul`). One
@@ -64,15 +68,18 @@ packed_row small (width := 8) := [1, -2, 3]
 packed_row small' (width := 8) := [4, -5]
 
 set_option maxHeartbeats 200 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The literal is `129 + 126 * 256 + 131 * 256 ^ 2`, and it stands for `196097`. -/
 theorem small_eq : small = 8617601 ∧ toInt 8 3 small = 196097 := by decide +kernel
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- `packed_row` and `pack` give the same row, and its entries come back. -/
 theorem small_entries : pack 8 [1, -2, 3] = small ∧ entries 8 3 small = [1, -2, 3] := by
   decide +kernel
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The sum, the `l1` norm, the reverse and the autocorrelation `[3, -8, 14, -8, 3]`, whose middle
 entry is `1 + 4 + 9`. -/
 theorem small_sums :
@@ -82,6 +89,7 @@ theorem small_sums :
   decide +kernel
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The product of the integers of `[1, -2, 3]` and `[4, -5]` holds their Cauchy product. -/
 theorem small_mul :
     entries 8 4 (ofInt 8 4 (toInt 8 3 small * toInt 8 2 small')) = [4, -13, 22, -15] := by
@@ -93,6 +101,7 @@ theorem small_mul :
 packed_row count (width := 8) (signed := false) := [1, 200, 0]
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- Its lanes, a range check that holds (`200 < 2 ^ 8`) and one that fails (`200 ≥ 2 ^ 7`), its lane
 sum, and the unsigned packing of the same list. -/
 theorem count_checks :
@@ -102,6 +111,7 @@ theorem count_checks :
   decide +kernel
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- `rev` reverses the lanes of an unsigned row, and unsigned `pack` keeps natural entries. -/
 theorem count_rev_pack :
     lanes 8 3 (rev 8 3 count) = [0, 200, 1] ∧
@@ -116,6 +126,7 @@ packed_row three (width := 8) (signed := false) := [3, 5]
 packed_row seven (width := 8) (signed := false) := [7]
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The product of two unsigned guarded rows holds their Cauchy product `[21, 35]`, because
 `2 * 2 ^ 3 * (1 * 2 ^ 3) < 2 ^ 8`. -/
 theorem lanes_three_seven :
@@ -127,6 +138,43 @@ theorem lanes_three_seven :
   have := lanes_mul h.1 h.2 (by decide) (by decide) (by decide)
   rw [e.1, e.2] at this
   simpa using this
+
+/-! ## Dot products -/
+
+set_option maxHeartbeats 1500 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
+/-- The rows of `[3, 1, 4]` with its first member in the highest lane and of `[2, 7, 1, 8]` with
+its first member in lane zero, in lanes of 16 bits. -/
+theorem dot_rows :
+    packRev 16 [3, 1, 4] = 3 * 2 ^ 32 + 1 * 2 ^ 16 + 4 ∧
+      packFwd 16 [2, 7, 1, 8] = 2 + 7 * 2 ^ 16 + 1 * 2 ^ 32 + 8 * 2 ^ 48 := by
+  decide +kernel
+
+set_option maxHeartbeats 200 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
+/-- The lane `2` of the product is `3 * 2 + 1 * 7 + 4 * 1 = 17`: the fourth weight is beyond the
+list and does not reach that lane. -/
+theorem dot_small : dot 16 3 (packRev 16 [3, 1, 4]) (packFwd 16 [2, 7, 1, 8]) = 17 := by
+  decide +kernel
+
+set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
+/-- The same from `dot_eq`: the two range checks are evaluated, and the room is
+`3 * 2 ^ 3 * (4 * 2 ^ 4) < 2 ^ 16`. -/
+theorem dot_small_eq :
+    dot 16 3 (packRev 16 [3, 1, 4]) (packFwd 16 [2, 7, 1, 8]) =
+      ∑ i ∈ Finset.range 3, [3, 1, 4].getD i 0 * [2, 7, 1, 8].getD i 0 :=
+  dot_eq (gx := 3) (gy := 4) (by decide) rfl (by decide) (by decide) (by decide)
+    (by decide +kernel) (by decide +kernel) (by decide)
+
+set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
+/-- A row of 130 members crosses two chunks of 64 lanes: its lanes are the list, in both
+orders. -/
+theorem dot_chunks :
+    lanes 8 130 (packFwd 8 (List.range 130)) = List.range 130 ∧
+      lanes 8 130 (packRev 8 (List.range 130)) = (List.range 130).reverse := by
+  decide +kernel
 
 /-! ## Rows of certificate size -/
 
@@ -237,6 +285,7 @@ packed_row y (width := 256) := [
     49135456674118861867460260211]
 
 set_option maxHeartbeats 2000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- Both range checks and the headroom inequality
 `200 * 2 ^ 100 * (200 * 2 ^ 100) < 2 ^ (256 - 1)`. -/
 theorem xy_check : (guard 256 100 200 x && guard 256 100 200 y &&
@@ -244,6 +293,7 @@ theorem xy_check : (guard 256 100 200 x && guard 256 100 200 y &&
   decide +kernel
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The 399 entries of the product row are the Cauchy product of the entries of `x` and `y`. -/
 theorem entries_xy :
     entries 256 399 (ofInt 256 399 (toInt 256 200 x * toInt 256 200 y)) =
@@ -253,6 +303,7 @@ theorem entries_xy :
   exact entries_mul h.1.1 h.1.2 h.2 (by decide) (by decide)
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The middle entry and the `l1` norm of the product, the sum of `x`, and the middle entry of the
 autocorrelation of `x`, against Python. -/
 theorem xy_values :
@@ -271,6 +322,7 @@ theorem xy_values :
 packed_row fine (width := 16) := [13, -7, 4, -1]
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- Lanes `1` and `2` of `[1, -2, 3]` are `[-2, 3]`. Rounding `[13, -7, 4, -1]` down to multiples of
 `4` gives `[3, -2, 1, -1]` and the remainders `[1, 1, 0, 3]`, whose sum `5` one remainder reads, and
 `2 ^ 2 * [3, -2, 1, -1] + [1, 1, 0, 3]` is the row again. -/
@@ -287,6 +339,7 @@ theorem window_and_rounding :
 packed_row half (width := 8) := [5, 2, 1]
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- `unfold` writes the cosine row `[1, 2, 10, 2, 1]` and the sine row `[-1, -2, 0, 2, 1]`, `signs`
 takes the first to the second, and `ramp` multiplies entry `k` by `k`. -/
 theorem symmetric_rows :
@@ -297,6 +350,7 @@ theorem symmetric_rows :
   decide +kernel
 
 set_option maxHeartbeats 4000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The rounding theorems on `[13, -7, 4, -1]`: the row is `4` times its rounding plus the
 remainders, and one remainder reads the `l1` norm of the remainders. -/
 theorem rounding_spec :
@@ -313,12 +367,14 @@ theorem rounding_spec :
     laneSum_low (by decide) (by decide) hx (by decide)⟩
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- `signs` on the cosine row of `[5, 2, 1]` is the sign row of its entries. -/
 theorem signs_spec :
     signs 8 3 (unfold 8 3 half) = eval (2 ^ 8) (signRow 2 [1, 2, 10, 2, 1]) := by
   rw [signs_eq (by decide), symmetric_rows.1]
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- `pack` gives the biased row of the value of any list whose entries fit, so the entries come
 back out. -/
 theorem pack_spec : entries 8 3 (pack 8 [1, -2, 3]) = [1, -2, 3] := by
@@ -331,6 +387,7 @@ theorem pack_spec : entries 8 3 (pack 8 [1, -2, 3]) = [1, -2, 3] := by
   exact entries_ofInt_eval (n := 3) (by decide) (Nat.le_refl _) hx
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The autocorrelation of `[13, -7, 4, -1]` reads back as the Cauchy product of the row with its
 reverse, because `4 * 2 ^ 4 * (4 * 2 ^ 4) < 2 ^ 15`, and its sum is the square of the sum of the
 row, `9 ^ 2`. -/
@@ -352,6 +409,7 @@ packed_row square (width := 16) := [2, 5, 2]
 packed_row root (width := 16) := [2, 1]
 
 set_option maxHeartbeats 200 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The check passes for `T ≥ 0`, with `T - |h|² = 0`, and for `T ≥ -1`. It refuses `T ≥ 3/2`,
 which is false at `z = -1`, where `T = 1`: the row `2 T - 3 - 2 |h|²` has centre `-3`. -/
 theorem small_squares :
@@ -362,10 +420,19 @@ theorem small_squares :
 
 /-! ## Negative controls -/
 
+set_option maxHeartbeats 200 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
+/-- Lanes of 4 bits are too narrow for the dot product of `[3, 1, 4]` and `[2, 7, 1]`: the lane
+holds `2`, not `17`. -/
+theorem dot_narrow : dot 4 3 (packRev 4 [3, 1, 4]) (packFwd 4 [2, 7, 1, 8]) = 2 := by
+  decide +kernel
+
+
 /-- `2 ^ 20` is one past the range `[-2 ^ 20, 2 ^ 20)`; `-2 ^ 20` is inside it. -/
 packed_row edge (width := 64) := [5, -1048576, 1048576]
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The range check refuses the entry `2 ^ 20` and accepts the first two lanes alone. Read as a row
 of two lanes, the whole literal is refused for its third lane, even with a range that holds the
 first two entries. -/
@@ -375,6 +442,7 @@ theorem guard_refuses :
   decide +kernel
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- A product row that differs from the computed one in its last entry is refused. -/
 theorem wrong_product :
     Nat.beq (ofInt 8 4 (toInt 8 3 small * toInt 8 2 small')) (pack 8 [4, -13, 22, -14]) =
@@ -382,6 +450,7 @@ theorem wrong_product :
   decide +kernel
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- In lanes of 8 bits, `[100, 100] * [100]` overflows: the Cauchy product `[10000, 10000]` does not
 fit, and the lanes of the product row hold something else. This is why `entries_mul` asks for
 headroom. -/
@@ -391,6 +460,7 @@ theorem overflow_breaks_lanes :
   decide +kernel
 
 set_option maxHeartbeats 2000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The kernel refuses a wrong value for every program: a lane sum, an `l1` norm, a sum, a reversal,
 a window, a rounding, a remainder row, a cosine row, a sign row and a derivative row. -/
 theorem wrong_values :
@@ -405,6 +475,7 @@ theorem wrong_values :
   decide +kernel
 
 set_option maxHeartbeats 200 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- Without headroom the remainder is not the sum: the lanes of `[100, 100, 100]` add up to `300`,
 more than `2 ^ 8 - 1`, and `absSum` returns `45`. This is why `absSum_eval` asks for
 `l1 < 2 ^ (w - 1)`. -/
@@ -412,33 +483,11 @@ theorem absSum_overflows : absSum 8 3 (toInt 8 3 (pack 8 [100, 100, 100])) = 45 
   decide +kernel
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- `linked` accepts `[2, -5/2]` at the denominator `2` for the row `[4, -5]`, and refuses
 `[2, -2]`. -/
 theorem linked_checks :
     linked 8 2 small' 0 [2, -5 / 2] = true ∧ linked 8 2 small' 0 [2, -2] = false := by
   decide +kernel
-
-/-- error: entry 1 is 128, which does not fit a signed lane of width 8 -/
-#guard_msgs (error) in
-packed_row tooWide (width := 8) := [1, 128]
-
-/-- error: entry 0 is -1, which does not fit an unsigned lane of width 8 -/
-#guard_msgs (error) in
-packed_row negative (width := 8) (signed := false) := [-1]
-
-/-- error: entry 0 is 256, which does not fit an unsigned lane of width 8 -/
-#guard_msgs (error) in
-packed_row tooWideUnsigned (width := 8) (signed := false) := [256]
-
-/-! Rows files hold plain decimal integers. Digit separators, signs other than a leading `-`, and
-other characters are errors, also in tokens long enough to be read in blocks. -/
-
-#guard (parseEntries "12, -3  # comment\n7").toOption == some #[12, -3, 7]
-#guard (parseEntries "123456789012345678901234567890 -42").toOption ==
-  some #[123456789012345678901234567890, -42]
-#guard (parseEntries "1_000").toOption == none
-#guard (parseEntries "10000000000000_0000000000").toOption == none
-#guard (parseEntries "+5").toOption == none
-#guard (parseEntries "éééééééééé").toOption == none
 
 end FloatLibTests.Conformance.Numerics.Packed

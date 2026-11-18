@@ -1,0 +1,37 @@
+{
+  "name": "satire",
+  "git": "https://github.com/arnabd88/Satire.git",
+  "revision": "d021397b7d804d9089ca1c8af1d05693bb962ecd",
+  "sparse": [
+    "/LICENSE*",
+    "/README*",
+    "/Results/",
+    "/benchmarks/",
+    "/empirical_analysis/",
+    "/requirements*",
+    "/requirements.txt",
+    "/results/",
+    "/src/"
+  ],
+  "sha256": {
+    "LICENSE": "e773d2bb02a4ce771c0580a9d627fa5dcecf670649265ac6897a682a05b6309b",
+    "README.md": "7a2eb7cfa05e79981e5f72f54dab92f1f8a15a56fc3d490007518b5cada45a28",
+    "src/ASTtypes.py": "60615729bd7c8b37e4cd1ec4dddc141761adeb165a05cb004b1296a1ad383b1c",
+    "src/AnalyzeNode_Serial.py": "717c487315c348d777e0058449c012936f89da90b0d8cc072234868d815e4c76",
+    "src/Globals.py": "e7cb3fe811f52420a9a0af5e2948266302b885dc2783f59ac4684af5840e618c",
+    "src/fpcore/exceptions.py": "2a312629b7df1e61ca152dd28a780e050db6fcd0cb3512c7caf74826a450f294",
+    "src/fpcore/fpcore_ast.py": "e93e2ce11165f3576a50280cbc2f5f483028ff4027e893093a4bf37e7e051eab",
+    "src/fpcore/fpcore_lexer.py": "52d2a46603cc6a0bbe71ab460236b7af6f4e5f1c154da9efd3e8463c972ecd86",
+    "src/fpcore/fpcore_parser.py": "0f3f64d05b30ed33ce92c1b31b61b1b5ae73c2e765f8d4575f7f8c5467702bb8",
+    "src/fpcore/fpcore_to_satern.py": "888b7b76e98e510c2a2ada4cb442a4e802b470badc87f0a86536fcf0f808c8f7",
+    "src/gtokens.py": "715fd52ad199f214dd7487729e58ddbcad1d499eb70465ffc26d9d1d2a179c5e",
+    "src/helper.py": "9e03f2c55670c5268e895777f29485019cdaf6b4c78ee98c52c4738f487ed6e1",
+    "src/lexer.py": "32778bceaff00d24de568ec5a141048de48136a9d3e22f42edb43bfe85078135",
+    "src/ops_def.py": "4ee0398c912e3522e18cdc9a042f47f2802e33f7a93bc01a8614b2ac3caa68b1",
+    "src/parser.py": "9d388d6d02fbd1d33cda497b7afb8b527550dfc3858bab065e236004b36eb5a2",
+    "src/satern.py": "73b6dddac9eec71da6af33c583a029cfbc2c1c0d62b910a89657c790798479d7",
+    "src/satire.py": "d4ae0103334d126ac7565e3eacd0ff03dfc8023b4dad9e4b909bf7df37a432d3",
+    "src/utils.py": "d57fe9e3a2c7d7f8bfecf5fdaf61c0defee7d920d530d5c4b7d777640e5ad105",
+    "src/utils_bak.py": "04f86dcfa6b3e76e093008af23ed78f97acf4808a9d21f6fb03ab82430b24728"
+  }
+}

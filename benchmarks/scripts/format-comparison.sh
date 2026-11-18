@@ -62,7 +62,7 @@ flocq_build_dir="$build_dir/flocq"
 flocq_external_binary="${FLOCQ_BENCH_BINARY:-}"
 flocq_runner=docker
 # We pin the exact Stillwater Universal commit we tested instead of following
-# its moving main branch:
+# its moving default branch:
 # https://github.com/stillwater-sc/universal/commit/26e69f5487b2e592b82002751d900a2437641fad
 universal_revision="${UNIVERSAL_REVISION:-26e69f5487b2e592b82002751d900a2437641fad}"
 universal_source="${UNIVERSAL_SOURCE:-$build_dir/universal-source}"

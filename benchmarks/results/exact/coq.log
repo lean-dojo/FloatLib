@@ -1,0 +1,78 @@
+ROW Z.add 64 20000
+Finished transaction in 0.186 secs (0.148u,0.037s) (successful)
+ROW Z.mul+Z.modulo 64 2000
+Finished transaction in 0.629 secs (0.629u,0.s) (successful)
+ROW Z.leb 64 20000
+Finished transaction in 0.031 secs (0.031u,0.s) (successful)
+ROW Z.gcd 64 1
+Finished transaction in 0. secs (0.u,0.s) (successful)
+ROW Z.log2 64 1
+Finished transaction in 0. secs (0.u,0.s) (successful)
+ROW BigZ.add 64 20000
+Finished transaction in 0.008 secs (0.008u,0.s) (successful)
+ROW BigZ.mul+BigZ.modulo 64 2000
+Finished transaction in 0.016 secs (0.016u,0.s) (successful)
+ROW Q: x + b < c, unreduced 64 200
+Finished transaction in 0.045 secs (0.045u,0.s) (successful)
+ROW Qred 64 1
+Finished transaction in 0. secs (0.u,0.s) (successful)
+ROW Zpow_mod 64 1
+Finished transaction in 0.029 secs (0.029u,0.s) (successful)
+ROW Zpow_mod 256 1
+Finished transaction in 1.95 secs (1.949u,0.s) (successful)
+ROW Zpow_mod 512 1
+Finished transaction in 14.358 secs (14.358u,0.s) (successful)
+ROW Z.add 1024 20000
+Finished transaction in 1.192 secs (1.192u,0.s) (successful)
+ROW Z.mul+Z.modulo 1024 20
+Finished transaction in 1.495 secs (1.495u,0.s) (successful)
+ROW Z.leb 1024 20000
+Finished transaction in 0.466 secs (0.466u,0.s) (successful)
+ROW Z.gcd 1024 1
+Finished transaction in 0.022 secs (0.022u,0.s) (successful)
+ROW Z.log2 1024 1
+Finished transaction in 0. secs (0.u,0.s) (successful)
+ROW BigZ.add 1024 20000
+Finished transaction in 0.08 secs (0.08u,0.s) (successful)
+ROW BigZ.mul+BigZ.modulo 1024 2000
+Finished transaction in 0.492 secs (0.492u,0.s) (successful)
+ROW Q: x + b < c, unreduced 1024 20
+Finished transaction in 0.791 secs (0.791u,0.s) (successful)
+ROW Qred 1024 1
+Finished transaction in 0.031 secs (0.031u,0.s) (successful)
+ROW Z.add 4096 5000
+Finished transaction in 1.244 secs (1.244u,0.s) (successful)
+ROW Z.mul+Z.modulo 4096 2
+Finished transaction in 2.392 secs (2.392u,0.s) (successful)
+ROW Z.leb 4096 5000
+Finished transaction in 0.478 secs (0.478u,0.s) (successful)
+ROW Z.gcd 4096 1
+Finished transaction in 0.356 secs (0.356u,0.s) (successful)
+ROW Z.log2 4096 1
+Finished transaction in 0. secs (0.u,0.s) (successful)
+ROW BigZ.add 4096 20000
+Finished transaction in 0.342 secs (0.342u,0.s) (successful)
+ROW BigZ.mul+BigZ.modulo 4096 200
+Finished transaction in 0.489 secs (0.489u,0.s) (successful)
+ROW Q: x + b < c, unreduced 4096 2
+Finished transaction in 1.251 secs (1.251u,0.s) (successful)
+ROW Qred 4096 1
+Finished transaction in 0.596 secs (0.537u,0.059s) (successful)
+ROW Z.add 16384 1000
+Finished transaction in 1.013 secs (1.013u,0.s) (successful)
+ROW Z.mul+Z.modulo 16384 1
+Finished transaction in 19.201 secs (19.19u,0.009s) (successful)
+ROW Z.leb 16384 1000
+Finished transaction in 0.376 secs (0.376u,0.s) (successful)
+ROW Z.gcd 16384 1
+Finished transaction in 5.721 secs (5.721u,0.s) (successful)
+ROW Z.log2 16384 1
+Finished transaction in 0.001 secs (0.001u,0.s) (successful)
+ROW BigZ.add 16384 2000
+Finished transaction in 0.885 secs (0.885u,0.s) (successful)
+ROW BigZ.mul+BigZ.modulo 16384 20
+Finished transaction in 1.889 secs (1.889u,0.s) (successful)
+ROW Q: x + b < c, unreduced 16384 1
+Finished transaction in 9.902 secs (9.902u,0.s) (successful)
+ROW Qred 16384 1
+Finished transaction in 11.011 secs (10.47u,0.539s) (successful)

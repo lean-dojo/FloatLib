@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Integer.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
+import Mathlib.Tactic.Abel
 
 /-!
 # Integer-grid rounding guarantees
@@ -40,7 +41,7 @@ private theorem signed_error (s : Bool) (n : Nat) (x : ℚ) :
   | false => rfl
   | true =>
       change |-(n : ℚ) - -x| = |(n : ℚ) - x|
-      have he : -(n : ℚ) - -x = -((n : ℚ) - x) := by ring
+      have he : -(n : ℚ) - -x = -((n : ℚ) - x) := by abel
       rw [he, abs_neg]
 
 /-- The error of integer rounding equals the error of rounding the magnitude, for either sign. -/

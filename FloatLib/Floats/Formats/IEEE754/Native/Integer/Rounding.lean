@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,10 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof.RoundToIntegral
-public import Init.Data.SInt.Float
-public import Init.Data.SInt.Float32
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Proof.RoundToIntegral.Real
 
 /-!
 # Shared integer rounding at the native boundary
@@ -128,7 +125,13 @@ theorem roundToInt_eq_roundDyadicToInt (sign : Sign) (mantissa : Nat) (exponent 
   unfold Float.Model.UnpackedFloat.roundToInt decreaseExponent shiftToExponent
   simp only [extendedMantissa_shiftRight_mantissa, ExtendedMantissa.ofMantissaAndAccuracy]
   cases exponent <;> cases sign <;>
-    simp [roundDyadicToInt, modelSignBit, Sign.apply, Nat.shiftRight_eq_div_pow] <;>
+    simp only [Sign.apply, Int.ofNat_eq_natCast, sub_zero, Int.toNat_natCast, sub_self,
+      Int.toNat_zero, pow_zero, Nat.div_one, Int.natCast_shiftLeft, roundDyadicToInt, beq_iff_eq,
+      modelSignBit, ↓reduceIte, Nat.shiftLeft_eq', right_eq_ite_iff, neg_eq_zero,
+      Int.shiftLeft_eq_zero_iff, Int.natCast_eq_zero, imp_self, Bool.false_eq_true,
+      Int.toNat_negSucc, Nat.shiftLeft_zero, CharP.cast_eq_zero, zero_sub, Int.neg_negSucc,
+      Nat.cast_add, Nat.cast_one, Int.toNat_natCast_add_one, Int.natCast_ediv, Nat.cast_pow,
+      Nat.cast_ofNat, Nat.shiftRight_eq', Nat.shiftRight_eq_div_pow] <;>
     intro h <;> simp [h]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

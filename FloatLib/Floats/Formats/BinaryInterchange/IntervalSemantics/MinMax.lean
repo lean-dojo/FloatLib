@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
 
 /-!
 # Extended-real semantics of interval endpoint selection

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,14 +7,11 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.SignedSum.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.SignedSum.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Proof
-import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
-public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
-public import FloatLib.Kernels.FixedWord.Product.Proof
 public import FloatLib.Kernels.FixedWord.SignedMagnitude.Proof
+
+import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 
 /-!
 # Correctness of packed one-word Posit signed sums

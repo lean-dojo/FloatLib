@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -40,6 +40,12 @@ structure Decimal where
 def Decimal.toRat (value : Decimal) : Rat :=
   (if value.negative then -(value.significand : Rat) else value.significand) *
     (10 : Rat) ^ value.exponent
+
+/-- An integer coefficient and decimal scale, with an optional sign for coefficient zero. -/
+def Decimal.ofScaledInt (coefficient exponent : Int) (negativeZero : Bool := false) : Decimal :=
+  { negative := coefficient < 0 || coefficient == 0 && negativeZero
+    significand := coefficient.natAbs
+    exponent := exponent }
 
 /-- Recognize the ten ASCII decimal digits and nothing else. -/
 def digitValue? (character : Char) : Option Nat :=

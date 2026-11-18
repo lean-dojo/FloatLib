@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,10 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.IEEE754.Native.Integer.FromInt
-public import FloatLib.Numerics.ShiftRightJam.Proof
-import all Init.Data.OfScientific
+
 import all Init.Data.Float.Float
 import all Init.Data.Float.Float32
+import all Init.Data.OfScientific
 
 /-!
 # Arbitrary integer constructors
@@ -137,8 +137,8 @@ private theorem mul_one_ofNat_small (spec : Format) (n : Nat)
       Float.Model.UnpackedFloat.ofNat spec n := by
   by_cases hn : n = 0
   · subst n
-    simp [Float.Model.UnpackedFloat.ofNat, Float.Model.UnpackedFloat.ofInt,
-      Float.Model.UnpackedFloat.normalize, unpack_pack_zero, Float.Model.UnpackedFloat.mul]
+    simp only [UnpackedFloat.mul, UnpackedFloat.ofNat, UnpackedFloat.ofInt,
+      UnpackedFloat.normalize, CharP.cast_eq_zero, Std.compare_self, unpack_pack_zero, zero.injEq]
     rfl
   let k := spec.mantissaBits - (n.log2 + 1)
   have hlog : n.log2 < spec.mantissaBits := (Nat.log2_lt hn).2 hsmall
@@ -222,8 +222,8 @@ private theorem neg_ofNat_succ (spec : Format) (n : Nat) :
     Float.Model.UnpackedFloat.neg (Float.Model.UnpackedFloat.ofNat spec (n + 1)) =
       Float.Model.UnpackedFloat.ofInt spec (.negSucc n) := by
   rw [ofNat_eq_round spec (n + 1) (by omega), neg_round]
-  simp [Float.Model.UnpackedFloat.ofInt, Float.Model.UnpackedFloat.normalize,
-    Int.compare_eq_lt.mpr]
+  simp only [UnpackedFloat.ofInt, UnpackedFloat.normalize, Int.negSucc_lt_zero,
+    Int.compare_eq_lt.mpr, Int.neg_negSucc, Nat.cast_add, Nat.cast_one, Int.toNat_natCast_add_one]
   rfl
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model
@@ -367,13 +367,13 @@ theorem toModel_ofFloat32_ofInt (n : Int) :
   exact Model.ofModel_ofInt_eq_roundDyadic FloatFormat.binary32 (by decide) n
 
 /-- `Int.toFloat` has the same rounding specification as `Float.ofInt`. -/
-theorem toModel_ofFloat_intToFloat (n : Int) :
+theorem toModel_ofFloat_convertFromInt (n : Int) :
     toModel (ofFloat n.toFloat : Binary64) =
       Model.roundDyadic FloatFormat.binary64 (Dyadic.ofScaledInt n 0) :=
   toModel_ofFloat_ofInt n
 
 /-- `Int.toFloat32` has the same rounding specification as `Float32.ofInt`. -/
-theorem toModel_ofFloat32_intToFloat32 (n : Int) :
+theorem toModel_ofFloat32_convertFromInt32 (n : Int) :
     toModel (ofFloat32 n.toFloat32 : Binary32) =
       Model.roundDyadic FloatFormat.binary32 (Dyadic.ofScaledInt n 0) :=
   toModel_ofFloat32_ofInt n

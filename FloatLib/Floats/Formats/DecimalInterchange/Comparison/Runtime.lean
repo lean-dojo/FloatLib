@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,12 +7,12 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Queries.Runtime
 public import FloatLib.Numerics.IEEEComparison
-public import Mathlib.Order.WithBot
+public meta import FloatLib.Tactic.IEEENames
 
 /-!
 # Exact decimal comparisons
 
-IEEE 754-2019 §5.6.1 requires 22 comparison operations. `Datum.compareQuiet` and
+IEEE 754-2019 §5.11 requires 22 comparison operations. `Datum.compareQuiet` and
 `Datum.compareSignaling` take the operation as a predicate argument, so
 `x.compareQuiet .lessEqual y` is `compareQuietLessEqual`. Values are compared as exact rationals
 extended by the two infinities, so finite cohorts don't matter and the two signed zeros are equal.
@@ -42,7 +42,8 @@ def Datum.compare (x y : Datum) : Option Ordering := do
   some (Ord.compare a b)
 
 /--
-An IEEE 754-2019 quiet comparison, with its invalid flag, raised only for a signaling NaN. The
+An IEEE 754-2019 §5.11 quiet comparison, with its invalid flag, raised only for a signaling NaN.
+The
 predicate selects the operation: `.equal` is `compareQuietEqual`, `.notEqual`
 `compareQuietNotEqual`, `.greater` `compareQuietGreater`, `.greaterEqual`
 `compareQuietGreaterEqual`, `.less` `compareQuietLess`, `.lessEqual` `compareQuietLessEqual`,
@@ -54,10 +55,11 @@ cohorts and signed zeros compare equal.
 def Datum.compareQuiet (predicate : Numerics.IEEEComparison.Predicate) (x y : Datum) :
     Numerics.IEEEComparison.Result :=
   { value := predicate.accepts (x.compare y)
-    status := { invalid := x.isSNaN || y.isSNaN } }
+    status := { invalid := x.isSignaling || y.isSignaling } }
 
 /--
-An IEEE 754-2019 signaling comparison, with its invalid flag, raised for any NaN. The predicate
+An IEEE 754-2019 §5.11 signaling comparison, with its invalid flag, raised for any NaN. The
+predicate
 selects the operation: `.equal` is `compareSignalingEqual`, `.notEqual`
 `compareSignalingNotEqual`, `.greater` `compareSignalingGreater`, `.greaterEqual`
 `compareSignalingGreaterEqual`, `.less` `compareSignalingLess`, `.lessEqual`
@@ -69,5 +71,14 @@ def Datum.compareSignaling (predicate : Numerics.IEEEComparison.Predicate) (x y 
     Numerics.IEEEComparison.Result :=
   { value := predicate.accepts (x.compare y)
     status := { invalid := x.isNaN || y.isNaN } }
+
+/-! ## The 22 comparisons by their names in the standard -/
+
+ieee_by_predicate "IEEE 754-2019 §5.11" Datum.compareQuiet (x y : Datum) :
+    Numerics.IEEEComparison.Result := fun predicate => Datum.compareQuiet predicate x y
+
+ieee_by_predicate "IEEE 754-2019 §5.11" Datum.compareSignaling (x y : Datum) :
+    Numerics.IEEEComparison.Result := fun predicate => Datum.compareSignaling predicate x y
+  without unordered ordered
 
 end FloatLib.Floats.Formats.DecimalInterchange

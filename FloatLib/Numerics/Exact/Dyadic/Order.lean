@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -97,7 +97,10 @@ theorem mul_toRat (left right : Dyadic) :
   rw [toRat, toRat, toRat, mul, mulFields,
     zpow_add₀ (by simp : (2 : Rat) ≠ 0)]
   cases hleft : left.negative <;> cases hright : right.negative <;>
-    simp [signedSignificand, hleft, hright, Bool.xor] <;> ac_rfl
+    simp only [signedSignificand, xor, bne_self_eq_false, Bool.false_eq_true, ↓reduceIte,
+      Int.ofNat_eq_natCast, Nat.cast_mul, Rat.ofInt_eq_cast, Int.cast_mul, Int.cast_natCast,
+      hleft, hright, Bool.bne_true, Bool.not_false, Int.cast_neg, neg_mul, mul_neg, neg_inj,
+      Bool.bne_false, neg_neg] <;> ac_rfl
 
 /-! ## Exponent alignment and comparison -/
 
@@ -124,7 +127,10 @@ private theorem toRat_eq_aligned (value : Dyadic) (commonExponent : Int)
     omega
   rw [toRat, hexponent, zpow_add₀ (by simp : (2 : Rat) ≠ 0)]
   cases hnegative : value.negative <;>
-    simp [signedSignificand, hnegative, hsub, Nat.shiftLeft_eq] <;>
+    simp only [signedSignificand, hnegative, Bool.false_eq_true, ↓reduceIte, Int.ofNat_eq_natCast,
+      Rat.ofInt_eq_cast, Int.cast_natCast, zpow_natCast, hsub, Int.toNat_natCast,
+      Nat.shiftLeft_eq', Nat.shiftLeft_eq, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat,
+      Int.cast_mul, Int.cast_pow, Int.cast_ofNat, Int.cast_neg, neg_mul, neg_inj] <;>
     ac_rfl
 
 /--
@@ -388,20 +394,23 @@ theorem Internal.compareScalableFields_eq_compareFields
       rw [compare_mk_zero _ _ _ _ _ hleft]
       cases leftNegative <;> simp [Internal.compareScalableFields, hleft]
     · cases leftNegative <;> cases rightNegative
-      · simp [Internal.compareScalableFields, hleft, hright]
+      · simp only [compareScalableFields, beq_iff_eq, hleft, ↓reduceIte, hright, bne_self_eq_false,
+        Bool.false_eq_true]
         rw [Internal.compareNonzeroMagnitudes_eq_compareNonnegativeFields
           leftSignificand rightSignificand leftExponent rightExponent
           hleft hright]
         rw [compareNonnegativeFields_eq_compareFields, compareFields_eq]
-      · simp [Internal.compareScalableFields, hleft, hright]
+      · simp only [compareScalableFields, beq_iff_eq, hleft, ↓reduceIte, hright, Bool.bne_true,
+        Bool.not_false, Bool.false_eq_true]
         exact ((compare_eq_gt_iff _ _).2
           ((toRat_neg_of_significand_ne_zero _ hright rfl).trans
             (toRat_pos_of_significand_ne_zero _ hleft rfl))).symm
-      · simp [Internal.compareScalableFields, hleft, hright]
+      · simp only [compareScalableFields, beq_iff_eq, hleft, ↓reduceIte, hright, Bool.bne_false]
         exact ((compare_eq_lt_iff _ _).2
           ((toRat_neg_of_significand_ne_zero _ hleft rfl).trans
             (toRat_pos_of_significand_ne_zero _ hright rfl))).symm
-      · simp [Internal.compareScalableFields, hleft, hright]
+      · simp only [compareScalableFields, beq_iff_eq, hleft, ↓reduceIte, hright, bne_self_eq_false,
+        Bool.false_eq_true]
         rw [Internal.compareNonzeroMagnitudes_eq_compareNonnegativeFields
           leftSignificand rightSignificand leftExponent rightExponent
           hleft hright]

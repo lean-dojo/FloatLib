@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Format.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
+
 import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
 /-!
@@ -48,16 +48,16 @@ theorem fromBinary_nan {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
     fromBinary f mode x =
       { value := .nan (Model.signBit x) false
           (if binaryPayload x < f.payloadBound then binaryPayload x else 0)
-        status := { invalid := Model.isSNaN x } } := by
+        status := { invalid := Model.isSignaling x } } := by
   have hd := Model.toDyadic?_eq_none_of_isNaN hx
   simp [fromBinary, Model.toRat?, hd, hx, Arithmetic.nanResult]
 
 /-- An infinite source retains its sign and raises no exception. -/
 theorem fromBinary_infinity {fmt : FloatFormat} (f : Format) (mode : RoundingMode)
-    (x : Model fmt) (hx : Model.isInf x = true) :
+    (x : Model fmt) (hx : Model.isInfinite x = true) :
     fromBinary f mode x = { value := .infinity (Model.signBit x) } := by
-  simp [fromBinary, Model.toRat?, Model.toDyadic?_eq_none_of_isInf_eq_true hx,
-    Model.isNaN_eq_false_of_isInf_eq_true x hx]
+  simp [fromBinary, Model.toRat?, Model.toDyadic?_eq_none_of_isInfinite_eq_true hx,
+    Model.isNaN_eq_false_of_isInfinite_eq_true x hx]
 
 /-- Both binary zeros retain their sign, with preferred quantum zero clamped to
 the destination quantum range. -/

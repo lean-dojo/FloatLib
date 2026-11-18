@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -13,7 +13,7 @@ public import FloatLib.Floats.Formats.P3109.Projection.Correctness
 # Real semantics and executable refinement of P3109 square root
 
 Two rounders appear here. The reference one takes the floor of a real square root and runs the
-report's rounding decision (`sqrtRoundDecision`) by comparing that root with the decision's
+report's rounding decision (`Format.roundMagnitudeUp`) by comparing that root with the decision's
 thresholds. The executable one gets the same result from natural-number square roots and
 products. Neither first projects a rational approximation of the root.
 
@@ -26,6 +26,8 @@ shared too, and we don't prove here that the decision selects the correctly roun
 theorem. Reciprocal square root and hypotenuse reuse the same rounder after forming
 their exact rational radicands, whose real roots are `1 / √x` on positive finite inputs and
 `√(x² + y²)` on finite operands (`rsqrtRadicand_finite_real`, `hypotRadicand_finite_real`).
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7.3–4.7.6, 4.10.8 and 4.10.14.
 -/
 
 @[expose] public section
@@ -38,7 +40,7 @@ namespace FloatLib.Floats.Formats.P3109.Arithmetic
 noncomputable def sqrtRoundAwayReal (format : Format) (mode : RoundingMode)
     (quantum : Int) (numerator denominator lower : Nat) : Bool :=
   let root := Real.sqrt ((numerator : Real) / denominator)
-  sqrtRoundDecision format mode quantum lower (decide (root = lower))
+  Format.roundMagnitudeUp format mode quantum lower (decide (root = lower))
     (fun scale threshold => compare root ((threshold : Real) / scale))
 
 /-- Exact integer threshold tests implement real square-root rounding in every supplied mode. -/
@@ -54,7 +56,7 @@ theorem sqrtRoundAway_eq_real (format : Format) (mode : RoundingMode)
   unfold sqrtRoundAway sqrtRoundAwayReal
   simp only [hexact]
   cases mode <;>
-    simp [sqrtRoundDecision, hcompare, hd]
+    simp [Format.roundMagnitudeUp, hcompare, hd]
 
 /--
 Reference precision rounding takes the floor and threshold comparisons of a real root.
@@ -174,22 +176,23 @@ theorem decode_projectSqrt (value : NumericalValue Rat) (mode : RoundingMode)
 /-- Square root evaluates the source value and rounds once into the target. -/
 theorem decode_sqrt (value : ExecFloat.P3109 format) (target : Format) (mode : RoundingMode)
     (saturation : SaturationMode) :
-    Format.SameDatum (decode (sqrt value target mode saturation))
+    Format.SameDatum (decode (Sqrt value target mode saturation))
       (Arithmetic.sqrtRealValue target { rounding := mode, saturation } value.toClosedRat) :=
   decode_projectSqrt value.toClosedRat mode saturation
 
 /-- Reciprocal square root projects the root of the exact reciprocal, with its report domain. -/
 theorem decode_rsqrt (value : ExecFloat.P3109 format) (target : Format) (mode : RoundingMode)
     (saturation : SaturationMode) :
-    Format.SameDatum (decode (rsqrt value target mode saturation))
+    Format.SameDatum (decode (RSqrt value target mode saturation))
       (Arithmetic.sqrtRealValue target { rounding := mode, saturation }
         (Arithmetic.rsqrtRadicand value.toClosedRat)) :=
   decode_projectSqrt _ mode saturation
 
 /-- Hypotenuse projects the root of the exact sum of squares without intermediate overflow. -/
-theorem decode_hypot (left right : ExecFloat.P3109 format)
+theorem decode_hypot {rightFormat : Format}
+    (left : ExecFloat.P3109 format) (right : ExecFloat.P3109 rightFormat)
     (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
-    Format.SameDatum (decode (hypot left right target mode saturation))
+    Format.SameDatum (decode (Hypot left right target mode saturation))
       (Arithmetic.sqrtRealValue target { rounding := mode, saturation }
         (Arithmetic.hypotRadicand left.toClosedRat right.toClosedRat)) :=
   decode_projectSqrt _ mode saturation

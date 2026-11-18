@@ -18,14 +18,15 @@ from fractions import Fraction
 from pathlib import Path
 
 import figstyle as fs
+from matplotlib.lines import Line2D
 
 OUT_NAME = "ch01-rounding-directions.png"
 INPUTS = [Fraction(-5, 2), Fraction(5, 2), Fraction(7, 2)]
 DIRECTIONS = [
-    ("Nearest even", ".nearest", round, fs.BLUE),
-    ("Toward zero", ".towardZero", math.trunc, fs.ORANGE),
-    ("Toward +∞", ".up", math.ceil, fs.GREEN),
-    ("Toward −∞", ".down", math.floor, fs.VERMILION),
+    ("nearest even", ".nearest", round, fs.ROLE["main"]),
+    ("toward zero", ".towardZero", math.trunc, fs.ROLE["main"]),
+    ("toward +∞", ".up", math.ceil, fs.ROLE["main"]),
+    ("toward −∞", ".down", math.floor, fs.ROLE["main"]),
 ]
 RESULTS = [[fn(value) for value in INPUTS] for _, _, fn, _ in DIRECTIONS]
 assert RESULTS == [[-2, 2, 4], [-2, 2, 3], [-2, 3, 4], [-3, 2, 3]]
@@ -50,35 +51,32 @@ def round_arrow(ax, left, right, y, value, result, colour):
 
 
 def legend(ax, width, y):
-    left = 0.28 if width < 4 else 2.65
-    ax.plot(left, y, marker="D", markersize=6, markerfacecolor="white",
-            markeredgecolor=fs.INK, markeredgewidth=1.1)
-    ax.text(left + 0.15, y, "Exact input", fontsize=11.5, va="center")
-    next_x = 1.88 if width < 4 else 4.65
-    ax.plot(next_x, y, "o", color=fs.INK, markersize=6)
-    ax.text(next_x + 0.15, y, "Rounded integer", fontsize=11.5, va="center")
+    handles = [
+        Line2D([], [], linestyle="none", marker="D", markersize=6.5, markerfacecolor="white",
+               markeredgecolor=fs.INK, markeredgewidth=1.1, label="exact input"),
+        Line2D([], [], linestyle="none", marker="o", markersize=6, color=fs.ROLE["main"],
+               label="rounded result"),
+    ]
+    fs.legend(ax, handles=handles, loc="center", bbox_to_anchor=(width / 2, y),
+              bbox_transform=ax.transData, ncols=2)
 
 
 def build_figure(mobile: bool = False):
     fs.setup()
-    width, height = (3.8, 8.2) if mobile else (9.0, 4.2)
+    width, height = (fs.MOBILE_WIDTH, 7.6) if mobile else (fs.WIDTH, 3.7)
     fig = fs.plt.figure(figsize=(width, height))
     ax = fs.diagram_axes(fig, (0, width), (0, height))
-    ax.text(0.18, height - 0.18,
-            "Rounding halfway inputs\nto integers" if mobile else "Rounding halfway inputs to integers",
-            fontsize=14 if mobile else 16, weight="bold", va="top")
     if mobile:
         for column, value in enumerate(INPUTS):
             top = 6.94 - column * 2.14
-            ax.text(0.23, top, f"x = {integer_text(float(value))}", fontsize=13,
-                    weight="bold", va="center")
+            ax.text(0.23, top, f"x = {integer_text(float(value))}", fontsize=fs.SIZE_LABEL, va="center")
             left, right = 2.03, 3.52
             for x, integer in ((left, math.floor(value)), (right, math.ceil(value))):
-                ax.text(x, top, integer_text(integer), fontsize=12, ha="center", va="center")
+                ax.text(x, top, integer_text(integer), fontsize=fs.SIZE_LABEL, ha="center", va="center")
                 ax.plot([x, x], [top - 0.29, top - 1.70], color=fs.LINE, lw=0.6, linestyle=":")
             for row, (label, _, _, colour) in enumerate(DIRECTIONS):
                 y = top - 0.43 - row * 0.40
-                ax.text(0.23, y, label, fontsize=11.5, va="center")
+                ax.text(0.23, y, label, fontsize=fs.SIZE_LABEL, va="center")
                 round_arrow(ax, left, right, y, value, RESULTS[row][column], colour)
             if column < len(INPUTS) - 1:
                 ax.plot([0.23, 3.57], [top - 1.89, top - 1.89], color=fs.LINE, lw=0.7)
@@ -86,13 +84,13 @@ def build_figure(mobile: bool = False):
     else:
         for row, (label, _, _, colour) in enumerate(DIRECTIONS):
             y = 2.58 - row * 0.62
-            ax.text(0.25, y, label, fontsize=12.5, va="center")
+            ax.text(0.25, y, label, fontsize=fs.SIZE_LABEL, va="center")
         for column, value in enumerate(INPUTS):
             left, right = 2.30 + column * 2.28, 3.86 + column * 2.28
             ax.text((left + right) / 2, 3.34, f"x = {integer_text(float(value))}",
-                    ha="center", va="center", fontsize=13, weight="bold")
+                    ha="center", va="center", fontsize=fs.SIZE_LABEL)
             for x, integer in ((left, math.floor(value)), (right, math.ceil(value))):
-                ax.text(x, 2.97, integer_text(integer), ha="center", va="center", fontsize=12)
+                ax.text(x, 2.97, integer_text(integer), ha="center", va="center", fontsize=fs.SIZE_LABEL)
                 ax.plot([x, x], [2.77, 0.58], color=fs.LINE, lw=0.6, linestyle=":")
             for row, (_, _, _, colour) in enumerate(DIRECTIONS):
                 round_arrow(ax, left, right, 2.58 - row * 0.62, value, RESULTS[row][column], colour)
@@ -106,7 +104,7 @@ def main() -> None:
     args = parser.parse_args()
     target = args.out or fs.ASSETS / OUT_NAME
     for mobile in (False, True):
-        path = target.with_name(f"{target.stem}-mobile{target.suffix}") if mobile else target
+        path = fs.mobile_path(target) if mobile else target
         print(f"wrote {fs.save(build_figure(mobile), OUT_NAME, path)}")
 
 

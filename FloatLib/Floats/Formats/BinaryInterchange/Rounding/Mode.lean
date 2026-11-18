@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -273,3 +273,10 @@ Conversions into binary formats take `Numerics.RoundingMode`, which also has sto
 export FloatLib.Floats.Formats.BinaryInterchange.Model (IEEERoundingMode)
 
 end FloatLib.Rounding
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode
+
+/-- Reconstruct a `IEEERoundingMode` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.IEEERoundingMode

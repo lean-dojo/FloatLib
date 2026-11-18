@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -242,8 +242,6 @@ theorem scale_lt_four_bits (value : Model format) :
     have := format.bits_ge_two
     unfold Format.payloadBits
     omega
-  have hpayloadInt : (format.payloadBits : Int) < format.bits := by
-    exact_mod_cast hpayload
   have hbounds := scale_add_fractionBits_bounds value
   simp only [Int.ofNat_eq_natCast]
   omega

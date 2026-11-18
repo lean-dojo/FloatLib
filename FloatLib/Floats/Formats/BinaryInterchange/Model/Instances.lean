@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rounding
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 
@@ -108,26 +107,26 @@ instance {fmt : FloatFormat} : BEq (Model fmt) where
 
 /-- Strict IEEE numerical order. Unordered comparisons are false. -/
 instance {fmt : FloatFormat} : LT (Model fmt) where
-  lt := lt
+  lt := Lt
 
 /-- Non-strict IEEE numerical order. Unordered comparisons are false. -/
 instance {fmt : FloatFormat} : LE (Model fmt) where
-  le := le
+  le := Le
 
 /-- Decidability of the comparison-based strict order. -/
 instance {fmt : FloatFormat} :
     DecidableRel ((· < ·) : Model fmt → Model fmt → Prop) := by
   intro left right
-  change Decidable (lt left right)
-  dsimp [lt]
+  change Decidable (Lt left right)
+  dsimp [Lt]
   infer_instance
 
 /-- Decidability of the comparison-based non-strict order. -/
 instance {fmt : FloatFormat} :
     DecidableRel ((· ≤ ·) : Model fmt → Model fmt → Prop) := by
   intro left right
-  change Decidable (le left right)
-  dsimp [le]
+  change Decidable (Le left right)
+  dsimp [Le]
   cases compare left right with
   | none => exact isFalse (by intro falseProof; cases falseProof)
   | some ordering =>

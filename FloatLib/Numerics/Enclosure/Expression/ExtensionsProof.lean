@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -62,10 +62,10 @@ private theorem decodedInputs_sound {α : Type*} {decode : α → Option ℚ}
       List.Forall₂ (fun I x => I.ContainsReal some x) decoded values := by
   induction hx generalizing decoded with
   | nil =>
-    simp at h
+    simp only [List.mapM_nil, Option.pure_def, Option.some.injEq, List.nil_eq] at h
     subst decoded
     exact ⟨rfl, .nil⟩
-  | @cons I x inputs values hi hx ih =>
+  | @cons I x inputs values hi _ ih =>
     simp only [List.mapM_cons, Option.bind_eq_bind, Option.bind_eq_some_iff,
       Option.pure_def, Option.some.injEq] at h
     obtain ⟨J, hJ, rest, hrest, rfl⟩ := h

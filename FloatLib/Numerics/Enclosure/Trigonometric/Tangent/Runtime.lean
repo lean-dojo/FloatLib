@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -20,7 +20,8 @@ interval that might contain zero.
 
 namespace FloatLib.Numerics.Enclosure
 
-/-- Enclose the residual whose sign determines the tangent comparison once cosine's sign is known. -/
+/-- Enclose the residual whose sign determines the tangent comparison once cosine's sign is
+known. -/
 def sinSubCos (argument boundary : ℚ) (degree : Nat) : RationalInterval :=
   (sinReduced argument degree).sub ((cosReduced argument degree).scale boundary)
 

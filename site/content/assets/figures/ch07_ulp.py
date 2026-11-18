@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch07-ulp.png: the unit in the last place and the two error bounds.
 
-Chapter 07 ("The unit in the last place", "What a rounded result promises") says that the ulp
+The chapter on rounding says that the ulp
 is beta^cexp(x), that nearest rounding is within half a ulp, that in a fixed precision format the
 relative bound becomes the constant u = 2^-p, and that near zero this small relative bound no
 longer holds because gradual underflow keeps the absolute spacing fixed while the values shrink.
@@ -39,6 +39,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 
 TWO = Fraction(2)
 
@@ -66,16 +68,12 @@ def ulp_at_magnitude(mag: int) -> Fraction:
 
 
 def draw(mobile: bool):
-    fig, axes = plt.subplots(2, 1, figsize=(3.8, 7.6)) if mobile else plt.subplots(
-        1, 2, figsize=(9, 4.6))
-    fig.subplots_adjust(left=0.19 if mobile else 0.09, right=0.97,
-                        bottom=0.14 if mobile else 0.20, top=0.84 if mobile else 0.74,
-                        hspace=0.60, wspace=0.30)
+    fig, axes = plt.subplots(2, 1, figsize=(fs.MOBILE_WIDTH, 7.0)) if mobile else plt.subplots(
+        1, 2, figsize=(fs.WIDTH, 3.9))
+    fig.subplots_adjust(left=0.21 if mobile else 0.09, right=0.97,
+                        bottom=0.23 if mobile else 0.27, top=0.96 if mobile else 0.92,
+                        hspace=0.45, wspace=0.32)
     ax_abs, ax_rel = axes
-    fig.text(0.035, 0.98, "Spacing and nearest-rounding bounds", fontsize=13.5,
-             weight="bold", va="top")
-    fig.text(0.035, 0.915 if mobile else 0.90,
-             "binary16; positive finite range", fontsize=11.5, color=fs.MUTED)
     mags = list(range(EMIN + 1, EMAX_NORMAL + 2))
     x_lo, x_hi = float(TWO ** EMIN), float(MAX_FINITE)
     min_normal = float(TWO ** (MIN_NORMAL_MAG - 1))
@@ -84,11 +82,10 @@ def draw(mobile: bool):
         ax.set_yscale("log", base=2)
         ax.set_xlim(x_lo, x_hi)
         ax.axvspan(x_lo, min_normal, color=fs.PAPER_2, zorder=0, linewidth=0)
-        ax.axvline(min_normal, color=fs.MUTED, linestyle=":", linewidth=1)
-        ax.set_xlabel("positive input $x$", fontsize=11.5)
+        ax.axvline(min_normal, color=fs.MUTED, linestyle=":", linewidth=fs.LW_REF)
+        ax.set_xlabel("$x$")
         ticks = [-24, -14, 0, 15]
         ax.set_xticks([2.0 ** k for k in ticks], labels=[f"$2^{{{k}}}$" for k in ticks])
-        ax.tick_params(labelsize=11)
         ax.minorticks_off()
     xs, ulps, rx, rel = [], [], [], []
     for mag in mags:
@@ -98,30 +95,39 @@ def draw(mobile: bool):
         ulps += [float(2 * half)] * 2
         rx += [float(left), float(right), None]
         rel += [float(half / left), float(half / right), None]
-    ax_abs.plot(xs, ulps, color=fs.BLUE, linewidth=1.8, label="ulp")
-    ax_abs.plot(xs, [u / 2 for u in ulps], color=fs.ORANGE, linewidth=1.7,
-                linestyle="--", label="half ulp")
+    main, second, mark = fs.ROLE["main"], fs.ROLE["second"], fs.ROLE["mark"]
+    ax_abs.plot(xs, ulps, color=main, linewidth=fs.LW_DATA)
+    ax_abs.plot(xs, [u / 2 for u in ulps], color=second, linewidth=fs.LW_DATA, linestyle="--")
     ticks = [-24, -16, -8, 0]
     ax_abs.set_yticks([2.0 ** k for k in ticks], labels=[f"$2^{{{k}}}$" for k in ticks])
     ax_abs.set_ylim(2.0 ** -27, 2.0 ** 7)
-    ax_abs.set_title("Absolute spacing", fontsize=12.5, loc="left", pad=12)
-    ax_abs.text(0.03, 0.92, "subnormal\nspacing stays fixed", transform=ax_abs.transAxes,
-                fontsize=11, va="top")
-    ax_abs.legend(loc="lower right", fontsize=11, frameon=True,
-                  facecolor="white", edgecolor="none", framealpha=1)
-    ax_rel.plot(rx, rel, color=fs.BLUE, linewidth=1.5)
-    ax_rel.axhline(float(U), color=fs.VERMILION, linestyle="--", linewidth=1.3)
-    ax_rel.axhline(float(U / 2), color=fs.VERMILION, linestyle=":", linewidth=1)
+    ax_abs.set_ylabel("spacing")
+    fs.panel_title(ax_abs, 0, "absolute spacing")
+    ax_rel.plot(rx, rel, color=main, linewidth=fs.LW_DATA)
+    ax_rel.axhline(float(U), color=mark, linestyle="--", linewidth=fs.LW_REF + 0.3)
+    ax_rel.axhline(float(U / 2), color=mark, linestyle=":", linewidth=fs.LW_REF)
     ticks = [-12, -8, -4, 0]
     ax_rel.set_yticks([2.0 ** k for k in ticks], labels=[f"$2^{{{k}}}$" for k in ticks])
     ax_rel.set_ylim(2.0 ** -13, 1)
-    ax_rel.set_title(r"Relative bound: $\mathrm{ulp}(x)/(2x)$", fontsize=12.5, loc="left", pad=12)
-    ax_rel.text(0.03, 0.91, "near zero:\nbound grows", transform=ax_rel.transAxes,
-                fontsize=11, va="top")
-    ax_rel.text(0.42, 0.48, "$u=2^{-11}$\nnormal bound", transform=ax_rel.transAxes,
-                fontsize=11.5, color=fs.VERMILION)
-    fig.text(0.035, 0.017, r"Shading: subnormals. Normals start at $2^{-14}$.",
-             fontsize=11.5, color=fs.MUTED)
+    ax_rel.set_ylabel("bound on the relative error")
+    fs.panel_title(ax_rel, 1, "relative bound")
+    handles = [
+        Line2D([], [], color=main, linewidth=fs.LW_DATA, label="ulp$(x)$"),
+        Line2D([], [], color=second, linewidth=fs.LW_DATA, linestyle="--", label="ulp$(x)/2$"),
+        Line2D([], [], color=main, linewidth=fs.LW_DATA, label="ulp$(x)/(2x)$"),
+        Line2D([], [], color=mark, linewidth=fs.LW_REF + 0.3, linestyle="--",
+               label=f"$u = 2^{{-{PREC}}}$"),
+        Line2D([], [], color=mark, linewidth=fs.LW_REF, linestyle=":", label="$u/2$"),
+        Patch(facecolor=fs.PAPER_2, edgecolor=fs.LINE, label="subnormal range"),
+    ]
+    if mobile:
+        fs.legend(fig, handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.0),
+                  ncols=2, columnspacing=1.0)
+    else:
+        fs.legend(ax_abs, handles=handles[:2] + handles[5:], loc="upper center",
+                  bbox_to_anchor=(0.5, -0.22), ncols=3, columnspacing=1.0)
+        fs.legend(ax_rel, handles=handles[2:5], loc="upper center", bbox_to_anchor=(0.5, -0.22),
+                  ncols=3, columnspacing=1.0)
     return fig
 
 
@@ -134,7 +140,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch07-ulp.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 

@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Format.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Format.Runtime
 
 /-!
 # Numeric conversion between binary and decimal interchange
@@ -55,7 +55,7 @@ def fromBinary {fmt : BinaryInterchange.FloatFormat} (target : Format) (mode : R
   | none =>
       if BinaryInterchange.Model.isNaN x then
         Arithmetic.nanResult target (BinaryInterchange.Model.signBit x) (binaryPayload x)
-          (BinaryInterchange.Model.isSNaN x)
+          (BinaryInterchange.Model.isSignaling x)
       else
         { value := .infinity (BinaryInterchange.Model.signBit x) }
 

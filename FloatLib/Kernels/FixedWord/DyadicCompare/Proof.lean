@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,13 +9,14 @@ module
 public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Order
+
 import Batteries.Data.UInt
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.NormNum.Pow
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Tactic.Positivity.Finset
 
 /-!
 # Correctness of native-word dyadic comparison
@@ -92,15 +93,15 @@ private theorem toNat_beq_zero (value : UInt64) :
 /--
 A recognized word shift preserves the corresponding exact natural-number alignment.
 
-Arithmetic backends reuse this theorem after sharing `shiftFits` with the comparison kernel.
+Arithmetic backends reuse this theorem after sharing `ShiftFits` with the comparison kernel.
 -/
 theorem shiftLeft_toNat
     (significand : UInt64) (shift : Nat)
-    (hfit : shiftFits significand shift) :
+    (hfit : ShiftFits significand shift) :
     (significand <<< UInt64.ofNat shift).toNat =
       significand.toNat <<< shift := by
   apply FloatLib.Numerics.FixedWord.shiftLeft_toNat significand shift
-  simp only [shiftFits, log2Word_eq_log2] at hfit
+  simp only [ShiftFits, log2Word_eq_log2] at hfit
   rcases hfit with hzero | hleading
   · subst significand
     simp
@@ -114,7 +115,7 @@ A recognized two-limb shift preserves the corresponding exact natural-number ali
 -/
 theorem shiftLeft128_toNat
     (significand : UInt128) (shift : Nat)
-    (hfit : shiftFits128 significand shift) :
+    (hfit : ShiftFits128 significand shift) :
     (UInt128.shiftLeft significand shift).toNat =
       significand.toNat <<< shift := by
   apply UInt128.shiftLeft_toNat significand shift
@@ -143,9 +144,8 @@ theorem compareNonnegative_eq
   · rfl
   · split
     · change
-        (if hshift : Int.toNat (rightExponent - leftExponent) < 64 then
-          if hfit :
-              shiftFits rightSignificand
+        (if Int.toNat (rightExponent - leftExponent) < 64 then
+          if ShiftFits rightSignificand
                 (Int.toNat (rightExponent - leftExponent)) then
             Ord.compare leftSignificand
               (rightSignificand <<<
@@ -171,9 +171,8 @@ theorem compareNonnegative_eq
         · rfl
       · rfl
     · change
-        (if hshift : Int.toNat (leftExponent - rightExponent) < 64 then
-          if hfit :
-              shiftFits leftSignificand
+        (if Int.toNat (leftExponent - rightExponent) < 64 then
+          if ShiftFits leftSignificand
                 (Int.toNat (leftExponent - rightExponent)) then
             Ord.compare
               (leftSignificand <<<

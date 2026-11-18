@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
+public meta import FloatLib.Tactic.FloatInfo.Codebook
+public meta import FloatLib.Tactic.FloatInfo.Codebook.Configured
 public import FloatLib.Floats.Formats.Codebook.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Codebook.Automation
 public import FloatLib.Floats.Formats.Codebook.Configured.Catalog
+public import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Proof
+public import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Codebook.Configured.Display
 public import FloatLib.Floats.Formats.Codebook.Configured.Proof
-public import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Proof
-public meta import FloatLib.Floats.Formats.Codebook.Configured.Info
-public meta import FloatLib.Floats.Formats.Codebook.Info
 
 /-!
 # Exact-width lookup numerical systems

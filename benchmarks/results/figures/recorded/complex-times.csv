@@ -1,0 +1,145 @@
+function,format,bits,run,milliseconds
+sqrt,ieee 3 2,6,tiny6,0.08
+sqrt,binary16,16,b16,0.18
+sqrt,bfloat16,16,bf16,0.20
+sqrt,ieee 7 20,28,c28,0.29
+sqrt,binary32,32,b32,0.34
+sqrt,binary64,64,b64,0.87
+sqrt,binary128,128,b128,10.53
+sqrt,ieee 19 236,256,b256,20.11
+rsqrt,ieee 3 2,6,tiny6,0.09
+rsqrt,binary16,16,b16,0.21
+rsqrt,bfloat16,16,bf16,0.22
+rsqrt,ieee 7 20,28,c28,0.37
+rsqrt,binary32,32,b32,0.43
+rsqrt,binary64,64,b64,1.30
+rsqrt,binary128,128,b128,24.24
+rsqrt,ieee 19 236,256,b256,20.67
+exp,ieee 3 2,6,tiny6,0.28
+exp,binary16,16,b16,0.40
+exp,bfloat16,16,bf16,0.48
+exp,ieee 7 20,28,c28,0.48
+exp,binary32,32,b32,0.56
+exp,binary64,64,b64,0.74
+exp,binary128,128,b128,3.52
+exp,ieee 19 236,256,b256,4.30
+expm1,ieee 3 2,6,tiny6,0.28
+expm1,binary16,16,b16,0.64
+expm1,bfloat16,16,bf16,1.02
+expm1,ieee 7 20,28,c28,1.29
+expm1,binary32,32,b32,1.59
+expm1,binary64,64,b64,5.15
+expm1,binary128,128,b128,59.05
+expm1,ieee 19 236,256,b256,4.70
+log,ieee 3 2,6,tiny6,0.18
+log,binary16,16,b16,0.28
+log,bfloat16,16,bf16,0.30
+log,ieee 7 20,28,c28,0.40
+log,binary32,32,b32,0.48
+log,binary64,64,b64,2.09
+log,binary128,128,b128,60.11
+log,ieee 19 236,256,b256,17.94
+log1p,ieee 3 2,6,tiny6,0.18
+log1p,binary16,16,b16,0.29
+log1p,bfloat16,16,bf16,0.35
+log1p,ieee 7 20,28,c28,0.44
+log1p,binary32,32,b32,0.55
+log1p,binary64,64,b64,5.10
+log1p,binary128,128,b128,242.66
+log1p,ieee 19 236,256,b256,17.28
+sin,ieee 3 2,6,tiny6,0.50
+sin,binary16,16,b16,0.64
+sin,bfloat16,16,bf16,1.05
+sin,ieee 7 20,28,c28,0.94
+sin,binary32,32,b32,1.35
+sin,binary64,64,b64,3.32
+sin,binary128,128,b128,62.28
+sin,ieee 19 236,256,b256,5.34
+cos,ieee 3 2,6,tiny6,0.43
+cos,binary16,16,b16,0.56
+cos,bfloat16,16,bf16,0.69
+cos,ieee 7 20,28,c28,0.67
+cos,binary32,32,b32,1.07
+cos,binary64,64,b64,1.46
+cos,binary128,128,b128,16.93
+cos,ieee 19 236,256,b256,5.18
+tan,ieee 3 2,6,tiny6,0.50
+tan,binary16,16,b16,0.71
+tan,bfloat16,16,bf16,1.13
+tan,ieee 7 20,28,c28,1.00
+tan,binary32,32,b32,1.52
+tan,binary64,64,b64,6.92
+tan,binary128,128,b128,1148.96
+tan,ieee 19 236,256,b256,5.91
+sinh,ieee 3 2,6,tiny6,0.52
+sinh,binary16,16,b16,0.63
+sinh,bfloat16,16,bf16,1.06
+sinh,ieee 7 20,28,c28,0.95
+sinh,binary32,32,b32,1.07
+sinh,binary64,64,b64,3.24
+sinh,binary128,128,b128,38.35
+sinh,ieee 19 236,256,b256,4.74
+cosh,ieee 3 2,6,tiny6,0.46
+cosh,binary16,16,b16,0.57
+cosh,bfloat16,16,bf16,0.71
+cosh,ieee 7 20,28,c28,0.67
+cosh,binary32,32,b32,0.73
+cosh,binary64,64,b64,1.45
+cosh,binary128,128,b128,12.35
+cosh,ieee 19 236,256,b256,4.64
+tanh,ieee 3 2,6,tiny6,0.55
+tanh,binary16,16,b16,0.70
+tanh,bfloat16,16,bf16,1.12
+tanh,ieee 7 20,28,c28,0.99
+tanh,binary32,32,b32,1.24
+tanh,binary64,64,b64,7.06
+tanh,binary128,128,b128,1162.50
+tanh,ieee 19 236,256,b256,5.24
+asin,ieee 3 2,6,tiny6,0.49
+asin,binary16,16,b16,0.57
+asin,bfloat16,16,bf16,0.83
+asin,ieee 7 20,28,c28,0.89
+asin,binary32,32,b32,1.12
+asin,binary64,64,b64,8.32
+asin,binary128,128,b128,332.41
+asin,ieee 19 236,256,b256,99.91
+acos,ieee 3 2,6,tiny6,0.43
+acos,binary16,16,b16,0.52
+acos,bfloat16,16,bf16,0.69
+acos,ieee 7 20,28,c28,0.78
+acos,binary32,32,b32,0.83
+acos,binary64,64,b64,4.24
+acos,binary128,128,b128,206.23
+acos,ieee 19 236,256,b256,16.52
+atan,ieee 3 2,6,tiny6,0.19
+atan,binary16,16,b16,0.34
+atan,bfloat16,16,bf16,0.61
+atan,ieee 7 20,28,c28,0.66
+atan,binary32,32,b32,1.00
+atan,binary64,64,b64,21.89
+atan,binary128,128,b128,1104.22
+atan,ieee 19 236,256,b256,34.24
+asinh,ieee 3 2,6,tiny6,0.43
+asinh,binary16,16,b16,0.57
+asinh,bfloat16,16,bf16,0.81
+asinh,ieee 7 20,28,c28,0.92
+asinh,binary32,32,b32,1.03
+asinh,binary64,64,b64,8.35
+asinh,binary128,128,b128,215.49
+asinh,ieee 19 236,256,b256,91.84
+acosh,ieee 3 2,6,tiny6,0.40
+acosh,binary16,16,b16,0.52
+acosh,bfloat16,16,bf16,0.69
+acosh,ieee 7 20,28,c28,0.77
+acosh,binary32,32,b32,0.83
+acosh,binary64,64,b64,4.13
+acosh,binary128,128,b128,204.25
+acosh,ieee 19 236,256,b256,17.27
+atanh,ieee 3 2,6,tiny6,0.19
+atanh,binary16,16,b16,0.34
+atanh,bfloat16,16,bf16,0.62
+atanh,ieee 7 20,28,c28,0.67
+atanh,binary32,32,b32,0.99
+atanh,binary64,64,b64,21.58
+atanh,binary128,128,b128,1143.41
+atanh,ieee 19 236,256,b256,32.66

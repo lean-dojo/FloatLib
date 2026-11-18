@@ -1,16 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
-public import Mathlib.Analysis.Real.Sqrt
 
 /-!
 # Refinement of two-limb posit arithmetic
@@ -65,19 +63,19 @@ theorem fma_eq_dyadic (heligible : NativeLimb.Eligible format)
 /-- Two-limb-rounded addition refines the reference rational specification. -/
 theorem add_eq_spec (heligible : NativeLimb.Eligible format)
     (left right : Model format) :
-    add heligible left right = Spec.add left right := by
+    add heligible left right = Spec.addition left right := by
   rw [add_eq_dyadic, DyadicArithmetic.add_eq_spec]
 
 /-- Two-limb-rounded subtraction refines the reference rational specification. -/
 theorem sub_eq_spec (heligible : NativeLimb.Eligible format)
     (left right : Model format) :
-    sub heligible left right = Spec.sub left right := by
+    sub heligible left right = Spec.subtraction left right := by
   rw [sub_eq_dyadic, DyadicArithmetic.sub_eq_spec]
 
 /-- Two-limb-rounded multiplication refines the reference rational specification. -/
 theorem mul_eq_spec (heligible : NativeLimb.Eligible format)
     (left right : Model format) :
-    mul heligible left right = Spec.mul left right := by
+    mul heligible left right = Spec.multiplication left right := by
   rw [mul_eq_dyadic, DyadicArithmetic.mul_eq_spec]
 
 /--

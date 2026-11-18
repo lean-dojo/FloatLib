@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -11,9 +11,9 @@ public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Runtime
 
 import FloatLib.Numerics.Exact.Dyadic.Order
 import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.NormNum.Pow
 
 /-!
@@ -110,7 +110,7 @@ private theorem roundRat_signed_div (format : Format) {left right : Rat}
     Model.roundRat format
         ((if leftNegative then -left else left) / (if rightNegative then -right else right)) =
       if Bool.xor leftNegative rightNegative then
-        Model.neg (Model.roundPositiveRat format (left / right))
+        Model.negate (Model.roundPositiveRat format (left / right))
       else
         Model.roundPositiveRat format (left / right) := by
   have hquotient := Model.roundRat_of_nonneg (format := format) (div_pos hleft hright).le

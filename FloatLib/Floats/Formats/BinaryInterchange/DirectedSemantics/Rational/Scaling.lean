@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -47,13 +47,16 @@ The equality also covers a zero denominator because division in `ℝ` is totaliz
 -/
 theorem signedScaledRatToReal_eq_div_toReal (dx dy : Numerics.Dyadic) :
     signedScaledRatToReal
-        (Bool.xor dx.negative dy.negative) dx.significand dy.significand (dx.exponent - dy.exponent) =
+        (Bool.xor dx.negative dy.negative) dx.significand dy.significand (dx.exponent -
+          dy.exponent) =
       dx.toReal / dy.toReal := by
   cases hxSign : dx.negative <;> cases hySign : dy.negative <;>
-    simp [signedScaledRatToReal, scaledRatToReal, Numerics.Dyadic.toReal,
-      Numerics.Dyadic.signedSignificand, hxSign, hySign, Bool.xor, bpow,
-      Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal,
-      zpow_sub₀ (by norm_num : (2 : ℝ) ≠ 0)] <;>
+    simp only [signedScaledRatToReal, xor, bne_self_eq_false, Bool.false_eq_true, ↓reduceIte,
+      scaledRatToReal, bpow, Flocq.bpow, Numerics.Radix.toReal, Numerics.binaryRadix,
+      Nat.cast_ofNat, zpow_sub₀ (by norm_num : (2 : ℝ) ≠ 0), Numerics.Dyadic.toReal,
+      Numerics.Dyadic.signedSignificand, hxSign, Int.ofNat_eq_natCast, Int.cast_natCast,
+      hySign, Bool.bne_true, Bool.not_false, Int.cast_neg, neg_mul, Bool.bne_false,
+      neg_div_neg_eq] <;>
     ring
 
 /-- Shifting the numerator realizes multiplication by a nonnegative binary power. -/

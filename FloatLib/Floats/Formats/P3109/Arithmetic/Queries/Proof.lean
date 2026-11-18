@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -19,6 +19,8 @@ Two imported facets do most of the work. The classification facet connects all e
 queries to exact decoding and order, and the neighbor facet proves immediate adjacency and the
 absence of a neighbor at either endpoint, infinite endpoints included. What this file adds is the
 positive magnitude boundary and the split of finite values into normal and subnormal cases.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1, 4.13 and 4.16.
 -/
 
 @[expose] public section
@@ -67,13 +69,13 @@ theorem no_decodePositiveFinite_between (format : Format) (bits candidate : Nat)
 theorem no_subnormal_of_precision_eq_one (format : Format) (hprecision : format.precision = 1)
     (bits : Nat) :
     ¬ (0 < bits ∧ bits < 2 ^ format.trailingBits) := by
-  simp [trailingBits, hprecision]
+  simp only [trailingBits, hprecision, tsub_self, pow_zero, Order.lt_one_iff, not_and]
   omega
 
 /-- The maximum-subnormal query returns the single NaN at precision one. -/
 theorem maxSubnormalOf_eq_nan (format : Format) (hprecision : format.precision = 1) :
-    format.maxSubnormalOf = ExecFloat.P3109.nan := by
-  simp [maxSubnormalOf, hprecision]
+    format.MaxSubnormalOf = ExecFloat.P3109.nan := by
+  simp [MaxSubnormalOf, hprecision]
 
 end FloatLib.Floats.Formats.P3109.Format
 
@@ -85,58 +87,59 @@ variable {format : Format}
 
 /-- A normal value is finite. -/
 theorem isFinite_of_isNormal (value : ExecFloat.P3109 format)
-    (h : value.isNormal = true) : value.isFinite = true := by
-  simp only [isNormal, Bool.and_eq_true] at h
+    (h : value.IsNormal = true) : value.IsFinite = true := by
+  simp only [IsNormal, Bool.and_eq_true] at h
   exact h.1
 
 /-- A subnormal value is finite. -/
 theorem isFinite_of_isSubnormal (value : ExecFloat.P3109 format)
-    (h : value.isSubnormal = true) : value.isFinite = true := by
-  simp only [isSubnormal, Bool.and_eq_true] at h
+    (h : value.IsSubnormal = true) : value.IsFinite = true := by
+  simp only [IsSubnormal, Bool.and_eq_true] at h
   exact h.1.1
 
 /-- Normal and subnormal classifications are disjoint. -/
 theorem not_isNormal_and_isSubnormal (value : ExecFloat.P3109 format) :
-    ¬ (value.isNormal = true ∧ value.isSubnormal = true) := by
-  simp only [isNormal, isSubnormal, Bool.and_eq_true, decide_eq_true_eq]
+    ¬ (value.IsNormal = true ∧ value.IsSubnormal = true) := by
+  simp only [IsNormal, IsSubnormal, Bool.and_eq_true, decide_eq_true_eq]
   omega
 
 /-- Every nonzero finite magnitude code is classified as either normal or subnormal. -/
 theorem isNormal_or_isSubnormal (value : ExecFloat.P3109 format)
-    (hfinite : value.isFinite = true) (hpositive : 0 < value.magnitudeBits) :
-    value.isNormal = true ∨ value.isSubnormal = true := by
-  simp only [isNormal, isSubnormal, hfinite, Bool.true_and, decide_eq_true_eq,
+    (hfinite : value.IsFinite = true) (hpositive : 0 < value.magnitudeBits) :
+    value.IsNormal = true ∨ value.IsSubnormal = true := by
+  simp only [IsNormal, IsSubnormal, hfinite, Bool.true_and, decide_eq_true_eq,
     Bool.and_eq_true]
   omega
 
 /-- Precision-one formats classify no value as subnormal. -/
 theorem isSubnormal_eq_false_of_precision_eq_one (value : ExecFloat.P3109 format)
-    (hprecision : format.precision = 1) : value.isSubnormal = false := by
-  simp [isSubnormal, Format.trailingBits, hprecision]
+    (hprecision : format.precision = 1) : value.IsSubnormal = false := by
+  simp only [IsSubnormal, Format.trailingBits, hprecision, tsub_self, pow_zero, Order.lt_one_iff,
+    Bool.and_eq_false_imp, Bool.and_eq_true, decide_eq_true_eq, decide_eq_false_iff_not, and_imp]
   omega
 
 /-- The upper neighbor of NaN is NaN. -/
 theorem nextGreaterThan_of_isNaN (value : ExecFloat.P3109 format)
-    (h : value.isNaN = true) : value.nextGreaterThan = nan := by
-  simp [nextGreaterThan, h]
+    (h : value.IsNaN = true) : value.NextGreaterThan = nan := by
+  simp [NextGreaterThan, h]
 
 /-- The lower neighbor of NaN is NaN. -/
 theorem nextLessThan_of_isNaN (value : ExecFloat.P3109 format)
-    (h : value.isNaN = true) : value.nextLessThan = nan := by
-  simp [nextLessThan, h]
+    (h : value.IsNaN = true) : value.NextLessThan = nan := by
+  simp [NextLessThan, h]
 
 /-- Interior nonnegative codes advance by one under the upper-neighbor operation. -/
 theorem nextGreaterThan_of_nonnegative (value : ExecFloat.P3109 format)
-    (hnan : value.isNaN = false) (hsign : value.isSignMinus = false)
+    (hnan : value.IsNaN = false) (hsign : value.IsSignMinus = false)
     (hend : value.toNatBits ≠ format.positiveInfinityBits) :
-    value.nextGreaterThan = ofNatBits (value.toNatBits + 1) := by
-  simp [nextGreaterThan, hnan, hsign, hend]
+    value.NextGreaterThan = ofNatBits (value.toNatBits + 1) := by
+  simp [NextGreaterThan, hnan, hsign, hend]
 
 /-- Positive codes descend by one under the lower-neighbor operation. -/
 theorem nextLessThan_of_positive (value : ExecFloat.P3109 format)
-    (hnan : value.isNaN = false) (hzero : value.isZero = false)
-    (hsign : value.isSignMinus = false) :
-    value.nextLessThan = ofNatBits (value.toNatBits - 1) := by
-  simp [nextLessThan, hnan, hzero, hsign]
+    (hnan : value.IsNaN = false) (hzero : value.IsZero = false)
+    (hsign : value.IsSignMinus = false) :
+    value.NextLessThan = ofNatBits (value.toNatBits - 1) := by
+  simp [NextLessThan, hnan, hzero, hsign]
 
 end FloatLib.Floats.ExecFloat.P3109

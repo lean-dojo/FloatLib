@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Coeff.Trig
-public import FloatLib.Numerics.Packed.Literal
+public import FloatLib.Tactic.PackedRow
 
 /-!
 # Bounds on cosine polynomials
@@ -95,6 +95,7 @@ packed_row upper (width := 88) := [
     -104950737, -53577111, 119561199]
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The range checks of the half row and of the empty sine row, and the two sum-of-squares checks,
 each with a real factor of 64 lanes. -/
 theorem sup_check :
@@ -119,6 +120,7 @@ theorem sup_bound (u : ℝ) :
   constructor <;> linarith
 
 set_option maxHeartbeats 200 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The `l1` bound from one `absSum`, 2.17 times larger. -/
 theorem l1_value : absSum 88 64 (toInt 88 64 half) = 13763340627163358185920 := by decide +kernel
 
@@ -134,6 +136,7 @@ theorem chebyshev_bound :
   ring
 
 set_option maxHeartbeats 2000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The derivative of `R` is the sine polynomial of the row that `ramp` computes; lane `3` of that
 row is `3 r₃`. -/
 theorem deriv_cos (u : ℝ) :
@@ -155,6 +158,7 @@ theorem l1_bounds (u : ℝ) {z : ℂ} (hz : ‖z‖ = 1) :
   exact ⟨by exact_mod_cast h1, by exact_mod_cast h2⟩
 
 set_option maxHeartbeats 4000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The derivative row passes a range check, and its `absSum` bounds `|R'|` on the circle. -/
 theorem deriv_bound (u : ℝ) :
     |∑ k ∈ range (entries 88 64 (ofInt 88 64 (ramp 88 64 half))).length,
@@ -197,6 +201,7 @@ packed_row small (width := 16) := [1, -2, 3]
 packed_row small' (width := 16) := [4, -5]
 
 set_option maxHeartbeats 1000 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- The Kronecker product of the two rows is the product of their Laurent polynomials, here
 `(z⁻¹ - 2 + 3 z) (4 - 5 z)`. -/
 theorem small_product {z : ℂ} (hz : z ≠ 0) :
@@ -206,6 +211,7 @@ theorem small_product {z : ℂ} (hz : z ≠ 0) :
   exact laurent_entries_mul hg.1 hg.2 (by norm_num) (by norm_num) (by norm_num) hz 1 0
 
 set_option maxHeartbeats 400 in
+-- About three times what the check uses: the build fails when its kernel cost grows.
 /-- A bound below the grid maximum of `-2 R` is false, so no certificate can pass for it: the
 kernel refuses the factor `lower` at `12678091114997094547454`. -/
 theorem below_sup_refused :

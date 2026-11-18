@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Proof
+
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
 
 /-!
@@ -104,12 +105,12 @@ theorem totalOrder_nan_iff {x y : Value} (hx : isNaN x = true) (hy : isNaN y = t
     totalOrder x y = true ↔
       (signBit x = true ∧ signBit y = false) ∨ signBit x = signBit y ∧
         (if signBit x then
-          (isSNaN x = false ∧ isSNaN y = true) ∨
-            isSNaN x = isSNaN y ∧
+          (isSignaling x = false ∧ isSignaling y = true) ∨
+            isSignaling x = isSignaling y ∧
               Model.fracField (toModel y) ≤ Model.fracField (toModel x)
         else
-          (isSNaN x = true ∧ isSNaN y = false) ∨
-            isSNaN x = isSNaN y ∧
+          (isSignaling x = true ∧ isSignaling y = false) ∨
+            isSignaling x = isSignaling y ∧
               Model.fracField (toModel x) ≤ Model.fracField (toModel y)) :=
   Model.totalOrder_nan_iff hx hy
 
@@ -147,8 +148,8 @@ theorem totalOrderMag_zero {x y : Value} (hx : isZero x = true) :
 /-- Configured NaN magnitudes compare signaling class, then increasing fraction payload. -/
 theorem totalOrderMag_nan_iff {x y : Value} (hx : isNaN x = true) (hy : isNaN y = true) :
     totalOrderMag x y = true ↔
-      (isSNaN x = true ∧ isSNaN y = false) ∨
-        isSNaN x = isSNaN y ∧
+      (isSignaling x = true ∧ isSignaling y = false) ∨
+        isSignaling x = isSignaling y ∧
           Model.fracField (toModel x) ≤ Model.fracField (toModel y) :=
   Model.totalOrderMag_nan_iff hx hy
 

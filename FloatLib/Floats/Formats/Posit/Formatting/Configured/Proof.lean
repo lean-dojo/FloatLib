@@ -1,14 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Configured.Instances
 public import FloatLib.Floats.Formats.Posit.Formatting.Configured.Runtime
 public import FloatLib.Floats.Formats.Posit.Formatting.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Instances
+
 import FloatLib.Floats.Formats.Posit.Configured.Storage.Family.Proof
 
 /-!

@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 public import FloatLib.Floats.Formats.Posit.Configured.Plan.Core.ModelCandidates
 
 /-!
@@ -31,40 +30,40 @@ open FloatLib.Floats.ExecFloat.Backend
 @[noinline] def addCandidates
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    CandidateSet (Certified (@Spec.add format plan code inferInstance)) :=
-  CandidateSet.withReference (genericEstimate plan .add) Spec.add <|
+    CandidateSet (Certified (@Spec.addition format plan code inferInstance)) :=
+  CandidateSet.withReference (genericEstimate plan .add) Spec.addition <|
     (nativeLimbAdd? format plan).toList ++
     [Certified.binary (dyadicEstimate plan .add)
-      Spec.add Backend.dyadicAdd Backend.dyadicAdd_eq_spec]
+      Spec.addition Backend.dyadicAdd Backend.dyadicAdd_eq_spec]
 
 /-- Representation-independent certified subtraction candidates for a configured posit. -/
 @[noinline] def subCandidates
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    CandidateSet (Certified (@Spec.sub format plan code inferInstance)) :=
-  CandidateSet.withReference (genericEstimate plan .sub) Spec.sub <|
+    CandidateSet (Certified (@Spec.subtraction format plan code inferInstance)) :=
+  CandidateSet.withReference (genericEstimate plan .sub) Spec.subtraction <|
     (nativeLimbSub? format plan).toList ++
     [Certified.binary (dyadicEstimate plan .sub)
-      Spec.sub Backend.dyadicSub Backend.dyadicSub_eq_spec]
+      Spec.subtraction Backend.dyadicSub Backend.dyadicSub_eq_spec]
 
 /-- Representation-independent certified multiplication candidates for a configured posit. -/
 @[noinline] def mulCandidates
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    CandidateSet (Certified (@Spec.mul format plan code inferInstance)) :=
-  CandidateSet.withReference (genericEstimate plan .mul) Spec.mul <|
+    CandidateSet (Certified (@Spec.multiplication format plan code inferInstance)) :=
+  CandidateSet.withReference (genericEstimate plan .mul) Spec.multiplication <|
     (nativeLimbMul? format plan).toList ++
     [Certified.binary (dyadicEstimate plan .mul)
-      Spec.mul Backend.dyadicMul Backend.dyadicMul_eq_spec]
+      Spec.multiplication Backend.dyadicMul Backend.dyadicMul_eq_spec]
 
 /-- Representation-independent certified division candidates for a configured posit. -/
 @[noinline] def divCandidates
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    CandidateSet (Certified (@Spec.div format plan code inferInstance)) :=
-  CandidateSet.withReference (genericEstimate plan .div) Spec.div <|
+    CandidateSet (Certified (@Spec.division format plan code inferInstance)) :=
+  CandidateSet.withReference (genericEstimate plan .div) Spec.division <|
     [Certified.binary (dyadicEstimate plan .div)
-      Spec.div Backend.dyadicDiv Backend.dyadicDiv_eq_spec]
+      Spec.division Backend.dyadicDiv Backend.dyadicDiv_eq_spec]
 
 /-- Representation-independent certified square-root candidates for a configured posit. -/
 @[noinline] def sqrtCandidates

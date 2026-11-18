@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Codec.BitsProof
+public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Runtime
 
 /-!
 # Bit preservation and datum semantics of decimal sign operations
@@ -50,8 +50,8 @@ theorem negate_eq_withSign (d : Datum) :
     (d.withSign s).Valid f ↔ d.Valid f := by cases d <;> rfl
 
 /-- Changing the sign never quiets a signaling NaN or makes a datum signaling. -/
-@[simp] theorem withSign_isSNaN (s : Bool) (d : Datum) :
-    (d.withSign s).isSNaN = d.isSNaN := by cases d <;> rfl
+@[simp] theorem withSign_isSignaling (s : Bool) (d : Datum) :
+    (d.withSign s).isSignaling = d.isSignaling := by cases d <;> rfl
 
 /-- Negation does not affect validity in a format. -/
 @[simp] theorem negate_valid (f : Format) (d : Datum) : d.negate.Valid f ↔ d.Valid f := by
@@ -88,7 +88,9 @@ theorem pack_negative_payload (f : Format) (w : BitVec f.bitWidth) :
   have heq := Nat.mod_add_div w.toNat f.signBase
   have hcases : w.toNat / f.signBase = 0 ∨ w.toNat / f.signBase = 1 :=
     Nat.le_one_iff_eq_zero_or_eq_one.mp (Nat.le_of_lt_succ hd)
-  rcases hcases with h | h <;> rw [h] at heq <;> simp [negative, payload, h] <;>
+  rcases hcases with h | h <;> rw [h] at heq <;>
+    simp only [negative, h, bne_self_eq_false, Bool.false_eq_true, ↓reduceIte, payload, zero_add,
+    Nat.reduceBNe] <;>
     omega
 
 /-- Rewriting a word's sign bit with its own value leaves every bit unchanged. -/

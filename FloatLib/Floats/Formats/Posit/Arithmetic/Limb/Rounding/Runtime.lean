@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -65,7 +65,7 @@ arbitrary-width implementation, which applies the same exact rounding semantics.
   else
     let magnitude := DyadicRounding.magnitude value
     if value.negative then
-      Model.neg (roundPositive format heligible magnitude)
+      Model.negate (roundPositive format heligible magnitude)
     else
       roundPositive format heligible magnitude
 

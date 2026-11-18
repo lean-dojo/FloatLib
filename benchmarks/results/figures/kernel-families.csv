@@ -1,0 +1,54 @@
+operation,as_written_us,with_rules_us
+"fixed-point(2,8) add",936.8,272.2
+"fixed-point(2,8) sub",951.5,277.0
+logarithmic(10) mul,1267.5,606.8
+p3109-binary8p4se add,5235.0,371.8
+p3109-binary8p4se mul,5386.3,404.0
+p3109-binary8p4se div,5750.4,407.0
+posit8 add,9072.2,290.2
+posit8 mul,9098.2,251.4
+posit8 div,13727.8,272.2
+posit16 add,9511.1,302.2
+posit16 mul,9390.3,314.6
+posit32 add,10499.1,298.1
+posit32 mul,9195.1,261.3
+posit32 div,27791.4,280.0
+posit64 add,9593.2,307.1
+posit64 mul,10000.1,297.7
+"posit16 quire 3 + 3 * 5, rounded",32080.2,431.8
+posit32 literal 0.1,62272.2,194.6
+posit16 literals 1.5 + 2.25,79265.5,588.8
+mx-e2m1 quantize,37323.2,1332.0
+mx-e2m3 quantize,163196.9,1412.1
+mx-e4m3 quantize,721138.5,1480.6
+mx-e5m2 quantize,709388.1,1489.7
+mx-int8 quantize,588827.9,1200.2
+"mx-e4m3 block of 4, one element",823184.3,7969.0
+"mx-e4m3 block of 32, one element",797544.9,24604.8
+"mx-e4m3 dequantize (value of a word, compared with 9/4)",2529.2,575.2
+"mx-e4m3 block of 4, scale (compared with 1/32)",16038.3,5813.5
+decimal64 quantize,1481.7,153.2
+decimal64 addition,5090.9,323.6
+decimal64 multiplication,4591.4,265.6
+decimal64 division,5074.7,417.5
+decimal64 squareRoot,6514.7,544.3
+decimal64 fusedMultiplyAdd,4958.1,368.7
+decimal64 compareQuietLess,2634.3,201.8
+ocp-fp8 e4m3 add,2579.0,118.0
+ocp-fp8 e4m3 mul,2234.0,80.0
+ocp-fp8 e4m3 fma,3335.0,152.0
+ocp-fp8 e5m2 add,3337.0,120.0
+ocp-fp8 e5m2 mul,2919.0,77.0
+ocp-fp8 e5m2 fma,4197.0,149.0
+MX block: e5m2 finite,,1732.6
+MX block: e4m3 finite,,1746.3
+MX block: e3m2 finite,,1679.1
+MX block: e2m3 finite,,1687.8
+MX block: e2m1 finite,,1614.1
+MX block: int8 finite,,1470.2
+MX block: e4m3 block32 element,,24006.8
+NVFP4 block of 16: quantize-element n=16,,917512.8
+NVFP4 block of 16: quantize-scales n=16,,846053.3
+NVFP4 block of 16: decode-element n=16,,5478.0
+NVFP4 block of 16: Dot n=16,,67069.3
+NVFP4 block of 16: DotGeneral n=16,,68345.1

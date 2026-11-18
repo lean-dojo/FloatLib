@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch14-tapered-precision.png: significand bits against magnitude.
 
-Chapter 11 compares a 32-bit posit with binary32: 28 significand bits at one against 24, 12
+The chapter on posits compares a 32-bit posit with binary32: 28 significand bits at one against 24, 12
 against 24 at 2^64, a range of [2^-120, 2^120] against binary32's 2^-149 (through subnormals) to
 about 2^128. This figure plots the number of significand bits (fraction bits plus the implicit
 leading one) that each format has for values in the binade [2^E, 2^(E+1)), as a function of E.
@@ -43,8 +43,8 @@ B32_EXP_WIDTH = 8                  # FloatFormat.binary32.expWidth
 B32_FRAC_WIDTH = 23                # FloatFormat.binary32.fracWidth
 B32_BIAS = 127                     # FloatFormat.binary32.exponentBias
 
-POSIT_STYLE = dict(color=fs.BLUE, linestyle="-", linewidth=2.0)
-B32_STYLE = dict(color=fs.ORANGE, linestyle="--", linewidth=2.0)
+POSIT_STYLE = dict(color=fs.ROLE["main"], linestyle="-", linewidth=fs.LW_DATA)
+B32_STYLE = dict(color=fs.ROLE["second"], linestyle="--", linewidth=fs.LW_DATA)
 
 
 def posit_significand_bits(binade: int) -> int | None:
@@ -94,47 +94,40 @@ def step_series(function, lo: int, hi: int, *, min_bits: int = 1):
     return xs, ys
 
 
-def draw_mobile(target: Path, px, py, bx, by, isolated: list[int]) -> Path:
-    """Keep both precision curves and their comparison points at phone size."""
-    fig, ax = fs.plt.subplots(figsize=(4.25, 6.5))
-    fig.subplots_adjust(left=0.17, right=0.96, bottom=0.37, top=0.89)
+ISOLATED_STYLE = dict(linestyle="None", marker="|", markersize=6, markeredgewidth=1,
+                      color=fs.ROLE["main"])
+
+
+def plot(ax, px, py, bx, by, isolated: list[int]) -> None:
+    """Both precision curves on shared axes; thin marks stay distinct for adjacent binades."""
     ax.step(px, py, where="post", **POSIT_STYLE)
     ax.step(bx, by, where="post", **B32_STYLE)
-    ax.plot(isolated, [1] * len(isolated), linestyle="None", marker="|",
-            markersize=6, markeredgewidth=1, color=fs.BLUE)
-
-    for binade in (0, 64):
-        ax.plot([binade], [posit_significand_bits(binade)],
-                marker="o", color=fs.BLUE, markersize=6, zorder=5)
-        ax.plot([binade], [binary32_significand_bits(binade)],
-                marker="s", color=fs.ORANGE, markersize=6,
-                markerfacecolor="white", markeredgewidth=1.4, zorder=5)
+    ax.plot(isolated, [1] * len(isolated), **ISOLATED_STYLE)
     ax.set_xlim(-160, 145)
     ax.set_ylim(0, 31.5)
-    ticks = list(range(-150, 151, 30))
-    ax.set_xticks(ticks, labels=[f"2^{t}" if t else "1" for t in ticks],
-                  rotation=90)
     ax.set_yticks(range(0, 31, 4))
-    ax.tick_params(labelsize=12)
-    ax.set_xlabel("Magnitude of the value", fontsize=12)
-    ax.set_ylabel("Significand bits", fontsize=12)
+    ax.set_xlabel("magnitude of the value")
+    ax.set_ylabel("significand (bits)")
 
-    handles = [
-        Line2D([], [], marker="o", markersize=6, label="32-bit posit", **POSIT_STYLE),
-        Line2D([], [], marker="s", markersize=6, markerfacecolor="white",
-               markeredgewidth=1.4, label="binary32", **B32_STYLE),
+
+def key() -> list:
+    return [
+        Line2D([], [], label="posit32", **POSIT_STYLE),
+        Line2D([], [], label="binary32", **B32_STYLE),
+        Line2D([], [], label="one posit in the binade", **ISOLATED_STYLE),
     ]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.54, 0.98),
-               ncol=2, fontsize=12, columnspacing=1.0, handlelength=1.5)
-    for x, label in ((0.08, "Value"), (0.42, "Posit"), (0.70, "binary32")):
-        fig.text(x, 0.17, label, fontsize=12, fontweight="bold")
-    for y, binade in ((0.115, 0), (0.06, 64)):
-        fig.text(0.08, y, "1" if binade == 0 else f"2^{binade}", fontsize=12)
-        fig.text(0.42, y, str(posit_significand_bits(binade)), fontsize=12)
-        fig.text(0.70, y, str(binary32_significand_bits(binade)), fontsize=12)
-    fig.text(0.08, 0.005, "Significand = fraction bits + one.", fontsize=12)
-    return fs.save(fig, "ch14-tapered-precision.png",
-                   target.with_name(f"{target.stem}-mobile.png"))
+
+
+def draw_mobile(target: Path, px, py, bx, by, isolated: list[int]) -> Path:
+    """Keep both precision curves and their comparison points at phone size."""
+    fig, ax = fs.plt.subplots(figsize=(fs.MOBILE_WIDTH, 4.2))
+    fig.subplots_adjust(left=0.19, right=0.96, bottom=0.20, top=0.80)
+    plot(ax, px, py, bx, by, isolated)
+    ticks = [-120, -60, 0, 60, 120]
+    ax.set_xticks(ticks, labels=[rf"$2^{{{t}}}$" if t else "1" for t in ticks])
+    fs.legend(fig, handles=key(), loc="upper center", bbox_to_anchor=(0.54, 0.99), ncols=2,
+              columnspacing=1.0)
+    return fs.save(fig, "ch14-tapered-precision.png", fs.mobile_path(target))
 
 
 def main() -> None:
@@ -147,54 +140,14 @@ def main() -> None:
 
     px, py = step_series(posit_significand_bits, -160, 160, min_bits=2)
     bx, by = step_series(binary32_significand_bits, -160, 160)
-    ax.step(px, py, where="post", **POSIT_STYLE)
-    ax.step(bx, by, where="post", **B32_STYLE)
     isolated = [e for e in range(-160, 161) if posit_significand_bits(e) == 1]
-    # Thin vertical markers remain distinct even for adjacent powers of two.
-    ax.plot(isolated, [1] * len(isolated), linestyle="None", marker="|",
-            markersize=6, markeredgewidth=1, color=fs.BLUE)
-
-    # The chapter's two comparison points, read off the same functions. At one the binary32
-    # marker sits inside the posit tent, so its label goes straight below it on two lines,
-    # where the tent is still above the text; at 2^64 both labels fit to the right.
-    for binade in (0, 64):
-        p = posit_significand_bits(binade)
-        b = binary32_significand_bits(binade)
-        x = binade
-        ax.plot([x], [p], marker="o", color=fs.BLUE, markersize=6, zorder=5)
-        ax.plot([x], [b], marker="s", color=fs.ORANGE, markersize=6, markerfacecolor="white",
-                markeredgewidth=1.4, zorder=5)
-        if binade == 0:
-            ax.annotate(f"posit {p} bits at 1", (x, p), textcoords="offset points",
-                        xytext=(0, 9), ha="center", va="bottom", fontsize=9.5, color=fs.INK)
-            ax.annotate(f"binary32\n{b} bits at 1", (x, b), textcoords="offset points",
-                        xytext=(0, -12), ha="center", va="top", fontsize=9.5, color=fs.INK,
-                        linespacing=1.2,
-                        arrowprops=dict(arrowstyle="-", color=fs.INK, lw=0.7, shrinkA=0,
-                                        shrinkB=5))
-        else:
-            at = rf"at $2^{{{binade}}}$"
-            ax.annotate(f"posit {p} bits {at}", (x, p), textcoords="offset points",
-                        xytext=(8, 9), ha="left", va="bottom", fontsize=9.5, color=fs.INK)
-            ax.annotate(f"binary32 {b} bits {at}", (x, b), textcoords="offset points",
-                        xytext=(8, -11), ha="left", va="top", fontsize=9.5, color=fs.INK)
-
-    ax.set_xlim(-160, 145)
-    ax.set_ylim(0, 31.5)
+    plot(ax, px, py, bx, by, isolated)
+    # The chapter's two comparison points, read off the same functions.
+    assert (posit_significand_bits(0), binary32_significand_bits(0)) == (28, 24)
+    assert (posit_significand_bits(64), binary32_significand_bits(64)) == (12, 24)
     ticks = list(range(-150, 151, 30))
-    ax.set_xticks(ticks, labels=[rf"$2^{{{t}}}$" for t in ticks])
-    ax.set_yticks(range(0, 31, 4))
-    ax.set_xlabel("magnitude of the value")
-    ax.set_ylabel("significand bits (fraction bits plus one)")
-
-    handles = [
-        Line2D([], [], marker="o", markersize=6, label="32-bit posit (Posit.Format with 32 bits)",
-               **POSIT_STYLE),
-        Line2D([], [], marker="s", markersize=6, markerfacecolor="white", markeredgewidth=1.4,
-               label="binary32 (FloatFormat.binary32)", **B32_STYLE),
-    ]
-    ax.legend(handles=handles, loc="lower left", bbox_to_anchor=(0.0, 1.0), ncol=2,
-              columnspacing=2.0)
+    ax.set_xticks(ticks, labels=[rf"$2^{{{t}}}$" if t else "1" for t in ticks])
+    fs.legend(ax, handles=key(), loc="lower left", bbox_to_anchor=(0.0, 1.02), ncols=3)
 
     out = fs.save(fig, "ch14-tapered-precision.png", args.out)
     draw_mobile(out, px, py, bx, by, isolated)

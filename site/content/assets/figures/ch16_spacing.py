@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch16-spacing.png: the representable values of five systems on one line.
 
-Chapter 12 covers fixed point, logarithmic numbers, codebooks and shared-scale blocks, and
+The chapter on fixed point and other formats covers fixed point, logarithmic numbers, codebooks and shared-scale blocks, and
 contrasts them with floating point. This figure marks the representable values between -8 and 8,
 truncating the logarithmic exponents to -4 through 3 as labelled. One strip per system makes
 the spacing rules visible side by side: uniform
@@ -20,8 +20,8 @@ Every value set is computed from the decoders in the Lean source, at small param
 * logarithmic: FloatLib/Floats/Formats/Logarithmic/Exact/Runtime.lean, Code.toRat gives zero
   or +-radix^exponent, at binaryRadix; the exponent is an unbounded Int, so only exponents -4
   to 3 are drawn and the powers continue toward zero;
-* shared-scale blocks: FloatLib/Floats/Formats/Block/SharedScale/Core.lean, lane i decodes to
-  significands[i] * 2^exponent with an unbounded integer significand; one strip per shared
+* shared-scale blocks: FloatLib/Floats/Formats/Block/Configured.lean (`sharedScale`), lane i
+  decodes to element[i] * 2^exponent with an unbounded integer element; one strip per shared
   exponent, -2, 0 and 2;
 * codebooks: FloatLib/Floats/Formats/Codebook/Catalog/Runtime.lean, ternary2 (00 -> 0,
   01 -> +1, 10 -> -1, 11 reserved) and bipolar1 (0 -> -1, 1 -> +1).
@@ -93,45 +93,40 @@ def block(exponent: int):
     return within(s * step for s in range(-n, n + 1))
 
 
+# (family, parameter, values): the label of a row is "family, parameter".
 STRIPS = [
-    ("Fixed point: step 1/4", fs.BLUE, fixed_point()),
-    ("Floating point: E2M3", fs.ORANGE, e2m3()),
-    ("Logarithmic: zero and ±2ᵉ", fs.GREEN, logarithmic()),
-    ("Shared scale: step 1/4", fs.PURPLE, block(-2)),
-    ("Shared scale: step 1", fs.PURPLE, block(0)),
-    ("Shared scale: step 4", fs.PURPLE, block(2)),
-    ("Ternary: −1, 0, 1", fs.VERMILION, within(Fraction(v) for v in TERNARY2.values())),
-    ("Bipolar: −1, 1", fs.VERMILION, within(Fraction(v) for v in BIPOLAR1.values())),
+    ("fixed point", "step 1/4", fixed_point()),
+    ("floating point", "E2M3", e2m3()),
+    ("logarithmic", "exponents −4 to 3", logarithmic()),
+    ("shared scale", "step 1/4", block(-2)),
+    ("shared scale", "step 1", block(0)),
+    ("shared scale", "step 4", block(2)),
+    ("ternary", "", within(Fraction(v) for v in TERNARY2.values())),
+    ("bipolar", "", within(Fraction(v) for v in BIPOLAR1.values())),
 ]
 
 
 def draw(mobile: bool):
-    fig = plt.figure(figsize=(3.8, 8.6) if mobile else (9, 5.9))
-    fig.text(0.035, 0.98, "Different rules for spacing", fontsize=14, weight="bold", va="top")
-    fig.text(0.035, 0.915 if mobile else 0.89, "Representable values from −8 to 8",
-             fontsize=12, color=fs.MUTED)
-    ax = fig.add_axes([0.07, 0.09, 0.88, 0.77] if mobile else [0.04, 0.10, 0.92, 0.72])
-    for i, (label, colour, values) in enumerate(STRIPS):
-        y = 7 - i
-        ax.hlines(y, -LIMIT, LIMIT, color=fs.LINE, lw=0.8)
-        ax.vlines([float(v) for v in values], y - 0.15, y + 0.15, color=colour, lw=1.1)
-        if not mobile:
-            if i == 2:
-                label += " (e = −4 to 3 shown; continues toward 0)"
-            elif i == 6:
-                label += " (fourth code reserved)"
-        ax.text(-LIMIT, y + 0.40, label, fontsize=12, va="bottom")
-        if mobile and i == 2:
-            ax.text(-LIMIT, y + 0.17, "e = −4 to 3 shown; continues toward 0", fontsize=11, va="bottom")
-        elif mobile and i == 6:
-            ax.text(-LIMIT, y + 0.17, "fourth code reserved", fontsize=11, va="bottom", color=fs.MUTED)
-    ax.set(xlim=(-LIMIT - 0.2, LIMIT + 0.2), ylim=(-0.5, 7.95))
-    ax.set_xticks([-8, -4, 0, 4, 8])
-    ax.tick_params(axis="x", labelsize=11.5)
-    ax.set_yticks([])
+    """One row of marks per format on a shared linear value axis."""
+    fig, ax = plt.subplots(figsize=(fs.MOBILE_WIDTH, 5.4) if mobile else (fs.WIDTH, 4.0))
+    fig.subplots_adjust(left=0.42 if mobile else 0.27, right=0.96, top=0.98,
+                        bottom=0.13 if mobile else 0.15)
+    rows = len(STRIPS)
+    labels = []
+    for i, (family, parameter, values) in enumerate(STRIPS):
+        y = rows - 1 - i
+        ax.hlines(y, -LIMIT, LIMIT, color=fs.LINE, lw=fs.LW_AXIS)
+        ax.vlines([float(v) for v in values], y - 0.22, y + 0.22, color=fs.ROLE["main"],
+                  lw=fs.LW_REF)
+        joiner = "\n" if mobile else ", "
+        labels.append(family + (joiner + parameter if parameter else ""))
+    ax.set(xlim=(-LIMIT - 0.2, LIMIT + 0.2), ylim=(-0.6, rows - 0.4))
+    ax.set_xticks([-8, -4, 0, 4, 8], labels=["−8", "−4", "0", "4", "8"])
+    ax.set_yticks(range(rows - 1, -1, -1), labels=labels)
+    ax.tick_params(axis="y", length=0)
     ax.spines["left"].set_visible(False)
     ax.grid(False)
-    ax.set_xlabel("value (same linear axis)", fontsize=11.5)
+    ax.set_xlabel("value")
     return fig
 
 
@@ -144,7 +139,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch16-spacing.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 

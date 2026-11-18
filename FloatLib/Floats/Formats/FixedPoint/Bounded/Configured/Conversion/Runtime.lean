@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Core
 public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Core
 
 /-!
 # Bounded fixed-point conversion runtime
@@ -79,7 +79,7 @@ The signed output coefficient after nearest-even rounding and the selected overf
 The wrapping relation uses centered integer reduction, and saturation uses the signed range
 endpoints. Neither clause refers to a fixed-width encoding kernel.
 -/
-def coefficientSpec (policy : OverflowPolicy) (exact : Rat) (stored : Int) : Prop :=
+def CoefficientSpec (policy : OverflowPolicy) (exact : Rat) (stored : Int) : Prop :=
   let nearest := roundRatEven (exact * Formats.FixedPoint.scale radix fractionalDigits)
   match policy with
   | .reject =>
@@ -103,7 +103,7 @@ def spec :
   fun policy input outcome =>
     match input, outcome with
     | .finite exact, .success rounded indicators =>
-        coefficientSpec (radix := radix) (fractionalDigits := fractionalDigits) (width := width)
+        CoefficientSpec (radix := radix) (fractionalDigits := fractionalDigits) (width := width)
             policy exact (coefficient rounded) ∧
           indicators = finiteStatus policy exact rounded
     | .finite exact, .failure reason =>

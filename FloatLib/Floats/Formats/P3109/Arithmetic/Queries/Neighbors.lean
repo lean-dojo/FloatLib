@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -15,6 +15,8 @@ Leave out NaN, and the values of a P3109 format, in numerical order, line up wit
 interval of integers. The upper and lower neighbor operations move one step in that interval, and
 they return NaN if and only if the requested neighbor doesn't exist. Infinite endpoints follow the
 same order as finite values.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.16.
 -/
 
 @[expose] public section
@@ -39,7 +41,9 @@ theorem orderIndex_bounds (format : Format) (bits : Nat)
       format.orderIndex bits ≤ format.lastOrderIndex := by
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   cases hs : format.signedness <;>
-    simp [orderIndex, firstOrderIndex, lastOrderIndex, nanBits, hs] at * <;>
+    simp only [nanBits, hs, ne_eq, firstOrderIndex, ↓reduceIte, orderIndex, true_and,
+      tsub_le_iff_right, lastOrderIndex, Order.le_sub_one_iff, reduceCtorEq, false_and,
+      Nat.cast_nonneg, ge_iff_le] at * <;>
     (try split_ifs) <;> omega
 
 end FloatLib.Floats.Formats.P3109.Format
@@ -61,7 +65,7 @@ def orderIndex (value : ExecFloat.P3109 format) : Int :=
 
 /-- The executable NaN predicate agrees with exact decoding. -/
 theorem isNaN_iff_decode (value : ExecFloat.P3109 format) :
-    value.isNaN = true ↔ value.decode = .exceptional (.nan) := by
+    value.IsNaN = true ↔ value.decode = .exceptional (.nan) := by
   rw [decode_eq_format_decode]
   change (value.toNatBits == format.nanBits) = true ↔
     format.decodeNat value.toNatBits = .exceptional (.nan)
@@ -71,45 +75,45 @@ theorem isNaN_iff_decode (value : ExecFloat.P3109 format) :
 
 /-- A NaN left operand is unordered under the public strict comparison. -/
 theorem less_of_isNaN_left (left right : ExecFloat.P3109 format)
-    (hleft : left.isNaN = true) : left.less right = false := by
-  simp only [less, toClosedRat, (isNaN_iff_decode left).mp hleft,
-    Arithmetic.toRat, Arithmetic.nan, Arithmetic.less]
+    (hleft : left.IsNaN = true) : left.CompareLess right = false := by
+  simp only [CompareLess, toClosedRat, (isNaN_iff_decode left).mp hleft,
+    Arithmetic.toRat, Arithmetic.nan, Arithmetic.CompareLess]
 
 /-- A NaN right operand is unordered under the public strict comparison. -/
 theorem less_of_isNaN_right (left right : ExecFloat.P3109 format)
-    (hright : right.isNaN = true) : left.less right = false := by
+    (hright : right.IsNaN = true) : left.CompareLess right = false := by
   have hdecode := (isNaN_iff_decode right).mp hright
-  unfold less toClosedRat
+  unfold CompareLess toClosedRat
   rw [hdecode]
   cases Arithmetic.toRat left.decode <;> rfl
 
 /-- Strict comparison holds iff both operands are non-NaN and their order indices increase. -/
 theorem less_iff_orderIndex (left right : ExecFloat.P3109 format) :
-    left.less right = true ↔ left.isNaN = false ∧ right.isNaN = false ∧
+    left.CompareLess right = true ↔ left.IsNaN = false ∧ right.IsNaN = false ∧
       left.orderIndex < right.orderIndex := by
-  by_cases hl : left.isNaN = false
-  · by_cases hr : right.isNaN = false
-    · have hln : left.toNatBits ≠ format.nanBits := by simpa [isNaN] using hl
-      have hrn : right.toNatBits ≠ format.nanBits := by simpa [isNaN] using hr
+  by_cases hl : left.IsNaN = false
+  · by_cases hr : right.IsNaN = false
+    · have hln : left.toNatBits ≠ format.nanBits := by simpa [IsNaN] using hl
+      have hrn : right.toNatBits ≠ format.nanBits := by simpa [IsNaN] using hr
       simp only [hl, hr, true_and]
-      unfold less toClosedRat
+      unfold CompareLess toClosedRat
       rw [decode_eq_format_decode, decode_eq_format_decode]
-      change Arithmetic.less (Arithmetic.toRat (format.decodeNat left.toNatBits))
+      change Arithmetic.CompareLess (Arithmetic.toRat (format.decodeNat left.toNatBits))
         (Arithmetic.toRat (format.decodeNat right.toNatBits)) = true ↔
           format.orderIndex left.toNatBits < format.orderIndex right.toNatBits
       exact
         format.less_decodeNat_iff_orderIndex left.toNatBits right.toNatBits
           left.toNatBits_lt_modulus right.toNatBits_lt_modulus hln hrn
-    · have hrt : right.isNaN = true := Bool.ne_false_iff.mp hr
+    · have hrt : right.IsNaN = true := Bool.ne_false_iff.mp hr
       simp [less_of_isNaN_right left right hrt, hr]
-  · have hlt : left.isNaN = true := Bool.ne_false_iff.mp hl
+  · have hlt : left.IsNaN = true := Bool.ne_false_iff.mp hl
     simp [less_of_isNaN_left left right hlt, hl]
 
 /-- Non-NaN executable values lie between the numerical index endpoints. -/
-theorem orderIndex_bounds (value : ExecFloat.P3109 format) (hnan : value.isNaN = false) :
+theorem orderIndex_bounds (value : ExecFloat.P3109 format) (hnan : value.IsNaN = false) :
     format.firstOrderIndex ≤ value.orderIndex ∧ value.orderIndex ≤ format.lastOrderIndex := by
   exact format.orderIndex_bounds value.toNatBits value.toNatBits_lt_modulus
-    (by simpa [isNaN] using hnan)
+    (by simpa [IsNaN] using hnan)
 
 /-- The public zero constructor has code zero. -/
 @[simp] theorem toNatBits_zero : (zero (format := format)).toNatBits = 0 := by
@@ -125,160 +129,186 @@ theorem orderIndex_bounds (value : ExecFloat.P3109 format) (hnan : value.isNaN =
 code has an order index at or above the greatest one, so the input is not NaN. -/
 theorem nextGreaterThan_orderIndex (value : ExecFloat.P3109 format)
     (hindex : value.orderIndex < format.lastOrderIndex) :
-    value.nextGreaterThan.isNaN = false ∧
-      value.nextGreaterThan.orderIndex = value.orderIndex + 1 := by
+    value.NextGreaterThan.IsNaN = false ∧
+      value.NextGreaterThan.orderIndex = value.orderIndex + 1 := by
   have hbits := value.toNatBits_lt_modulus
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   have hpow : 2 ^ format.bitWidth = format.modulus := rfl
   have hboundary := format.one_lt_signBoundary
-  have hnan : value.isNaN = false := by
+  have hnan : value.IsNaN = false := by
     apply Bool.eq_false_iff.mpr
     intro h
-    have hb : value.toNatBits = format.nanBits := by simpa [isNaN] using h
+    have hb : value.toNatBits = format.nanBits := by simpa [IsNaN] using h
     simp only [orderIndex, Format.orderIndex, Format.lastOrderIndex, hb, Format.nanBits] at hindex
-    cases hs : format.signedness <;> simp [hs] at hindex <;> omega
-  have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [isNaN] using hnan
-  simp only [nextGreaterThan, hnan, Bool.false_eq_true, ite_false]
+    cases hs : format.signedness <;>
+      simp only [hs, lt_self_iff_false, and_false, ↓reduceIte, reduceCtorEq,
+        false_and] at hindex <;> omega
+  have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [IsNaN] using hnan
+  simp only [NextGreaterThan, hnan, Bool.false_eq_true, ite_false]
   cases hs : format.signedness <;>
     (by_cases hn : format.signBoundary < value.toNatBits) <;>
     (by_cases hunit : value.toNatBits = format.signBoundary + 1) <;>
     (by_cases hend : value.toNatBits = format.positiveInfinityBits) <;>
-    simp [orderIndex, Format.orderIndex, Format.lastOrderIndex, Format.positiveInfinityBits,
-      Format.nanBits, hs, hn] at hindex hnanBits hend <;>
-    simp (disch := omega) [isSignMinus, hs, hn, hunit, hend,
-      isNaN, orderIndex, Format.orderIndex, Format.nanBits, Format.positiveInfinityBits,
-      Nat.mod_eq_of_lt] <;>
+    simp only [orderIndex, Format.orderIndex, hs, hn, and_self,
+      ↓reduceIte, Format.lastOrderIndex, sub_lt_sub_iff_left,
+      Nat.one_lt_cast, Format.nanBits, ne_eq,
+      Format.positiveInfinityBits, and_false, reduceCtorEq, and_true] at hindex hnanBits hend <;>
+    simp (disch := omega) only [IsNaN, IsSignMinus, hs, BEq.rfl, hunit, lt_add_iff_pos_right,
+      not_lt_one, decide_false, Bool.and_false, Bool.false_eq_true, ↓reduceIte,
+      Format.positiveInfinityBits, Nat.sub_eq_zero_of_le, Nat.reduceBeqDiff, toNatBits_ofNatBits,
+      Nat.mod_eq_of_lt, Format.nanBits, beq_eq_false_iff_ne, ne_eq, orderIndex, Format.orderIndex,
+      Order.lt_add_one_iff, le_of_subsingleton, and_self, CharP.cast_eq_zero, sub_self, and_false,
+      zero_add, OfNat.ofNat_eq_ofNat, OfNat.ofNat_ne_one, Order.lt_one_iff, decide_true,
+      Bool.and_self, toNatBits_zero, not_lt_zero, Nat.cast_add, Nat.cast_one, sub_add_cancel_left,
+      Int.reduceNeg, neg_add_cancel, and_true, hend, toNatBits_nan, Bool.true_eq_false,
+      lt_self_iff_false, hn, beq_iff_eq, true_and, Nat.cast_sub,
+      ite_eq_right_iff, reduceCtorEq, Bool.and_true, false_and] <;>
     (try split_ifs) <;>
     (try simp (disch := omega) only [toNatBits_ofNatBits, Nat.mod_eq_of_lt]) <;> omega
 
 /-- Above the least datum, the lower neighbor exists and retreats by one in numerical order. -/
 theorem nextLessThan_orderIndex (value : ExecFloat.P3109 format)
-    (hnan : value.isNaN = false) (hindex : format.firstOrderIndex < value.orderIndex) :
-    value.nextLessThan.isNaN = false ∧
-      value.nextLessThan.orderIndex = value.orderIndex - 1 := by
+    (hnan : value.IsNaN = false) (hindex : format.firstOrderIndex < value.orderIndex) :
+    value.NextLessThan.IsNaN = false ∧
+      value.NextLessThan.orderIndex = value.orderIndex - 1 := by
   have hbits := value.toNatBits_lt_modulus
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   have hpow : 2 ^ format.bitWidth = format.modulus := rfl
   have hboundary := format.one_lt_signBoundary
-  have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [isNaN] using hnan
-  simp only [nextLessThan, hnan, Bool.false_eq_true, ite_false]
+  have hnanBits : value.toNatBits ≠ format.nanBits := by simpa [IsNaN] using hnan
+  simp only [NextLessThan, hnan, Bool.false_eq_true, ite_false]
   cases hs : format.signedness <;>
     (by_cases hn : format.signBoundary < value.toNatBits) <;>
     (by_cases hz : value.toNatBits = 0) <;>
     (by_cases hend : value.toNatBits = format.negativeInfinityBits) <;>
-    simp [orderIndex, Format.orderIndex, Format.firstOrderIndex, Format.negativeInfinityBits,
-      Format.nanBits, hs, hn] at hindex hnanBits hend <;>
-    simp (disch := omega) [isZero, isSignMinus, hs, hn, hz, hend,
-      isNaN, orderIndex, Format.orderIndex, Format.nanBits, Format.negativeInfinityBits,
-      Nat.mod_eq_of_lt] <;>
+    simp only [Format.firstOrderIndex, hs, ↓reduceIte, orderIndex,
+      Format.orderIndex, hn, and_self, Format.nanBits, ne_eq,
+      Format.negativeInfinityBits, and_false, reduceCtorEq, and_true,
+      Int.natCast_pos] at hindex hnanBits hend <;>
+    simp (disch := omega) only [IsNaN, IsZero, hz, BEq.rfl, ↓reduceIte, toNatBits_ofNatBits,
+      Nat.mod_eq_of_lt, Format.nanBits, hs, beq_eq_false_iff_ne, ne_eq, Nat.add_eq_left,
+      OfNat.ofNat_ne_zero, not_false_eq_true, orderIndex, Format.orderIndex, lt_add_iff_pos_right,
+      not_lt_one, and_false, CharP.cast_eq_zero, not_lt_zero, zero_sub,
+      Int.reduceNeg, zero_eq_neg, OfNat.ofNat_eq_ofNat, hend, Nat.sub_eq_zero_of_le, beq_iff_eq,
+      IsSignMinus, hn, decide_true, Bool.and_self, Format.negativeInfinityBits,
+      Order.lt_add_one_iff, true_and, Nat.cast_add, Nat.cast_one, and_self, one_ne_zero,
+      Order.lt_one_iff, sub_add_cancel_left, decide_false, Bool.and_false, Bool.false_eq_true,
+      sub_self, Nat.cast_sub, ite_eq_right_iff, reduceCtorEq, toNatBits_nan, Bool.true_eq_false,
+      Bool.and_true, false_and, and_true] <;>
     (try split_ifs) <;> omega
 
 /-- The greatest numerical datum has no upper neighbor, in either finite or extended formats. -/
 theorem nextGreaterThan_eq_nan_of_last (value : ExecFloat.P3109 format)
-    (hindex : value.orderIndex = format.lastOrderIndex) : value.nextGreaterThan = nan := by
-  have hbits := value.toNatBits_lt_modulus
+    (hindex : value.orderIndex = format.lastOrderIndex) : value.NextGreaterThan = nan := by
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   have hboundary := format.one_lt_signBoundary
   cases hs : format.signedness <;>
     (by_cases hn : format.signBoundary < value.toNatBits) <;>
-    simp [orderIndex, Format.orderIndex, Format.lastOrderIndex, hs, hn] at hindex <;>
-    simp (disch := omega) [nextGreaterThan, isNaN, isSignMinus, hs, hn,
-      Format.positiveInfinityBits, Format.nanBits] <;>
+    simp only [orderIndex, Format.orderIndex, hs, hn, and_self, ↓reduceIte, Format.lastOrderIndex,
+      sub_right_inj, Nat.cast_eq_one, and_false, reduceCtorEq, and_true] at hindex <;>
+    simp (disch := omega) only [NextGreaterThan, IsNaN, Format.nanBits, hs, beq_iff_eq,
+      IsSignMinus, BEq.rfl, hn, decide_true, Bool.and_self, ↓reduceIte, Nat.sub_eq_zero_of_le,
+      ite_eq_left_iff, forall_const, decide_false, Bool.and_false, Bool.false_eq_true,
+      Format.positiveInfinityBits, Bool.and_true, reduceCtorEq] <;>
     (try split_ifs) <;> omega
 
 /-- The least numerical datum has no lower neighbor, in either finite or extended formats. -/
 theorem nextLessThan_eq_nan_of_first (value : ExecFloat.P3109 format)
-    (hindex : value.orderIndex = format.firstOrderIndex) : value.nextLessThan = nan := by
-  have hbits := value.toNatBits_lt_modulus
+    (hindex : value.orderIndex = format.firstOrderIndex) : value.NextLessThan = nan := by
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   have hboundary := format.one_lt_signBoundary
   cases hs : format.signedness <;>
     (by_cases hn : format.signBoundary < value.toNatBits) <;>
-    simp [orderIndex, Format.orderIndex, Format.firstOrderIndex, hs, hn] at hindex <;>
-    simp (disch := omega) [nextLessThan, isNaN, isZero, isSignMinus, hs, hn,
-      Format.negativeInfinityBits, Format.nanBits] <;>
-    (try split_ifs) <;> (try simp) <;> omega
+    simp only [orderIndex, Format.orderIndex, hs, hn, and_self, ↓reduceIte,
+      Format.firstOrderIndex, and_false, reduceCtorEq, and_true, Int.natCast_eq_zero] at hindex <;>
+    simp (disch := omega) only [NextLessThan, IsNaN, Format.nanBits, hs, beq_iff_eq, IsZero,
+      BEq.rfl, ↓reduceIte, IsSignMinus, hn, decide_true, Bool.and_self,
+      Format.negativeInfinityBits, ite_eq_left_iff, decide_false, Bool.and_false,
+      Bool.false_eq_true, Nat.sub_eq_zero_of_le, forall_const, reduceCtorEq, Bool.and_true] <;>
+    (try split_ifs) <;> (try simp only [implies_true]) <;> omega
 
 /-- Whenever a greater value exists, the upper neighbor is strictly greater than the input. -/
 theorem less_nextGreaterThan (value candidate : ExecFloat.P3109 format)
-    (h : value.less candidate = true) : value.less value.nextGreaterThan = true := by
+    (h : value.CompareLess candidate = true) : value.CompareLess value.NextGreaterThan = true := by
   obtain ⟨hv, hc, horder⟩ := (less_iff_orderIndex value candidate).mp h
   have hcBound := (orderIndex_bounds candidate hc).2
   obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
-  exact (less_iff_orderIndex value value.nextGreaterThan).mpr ⟨hv, hn, by omega⟩
+  exact (less_iff_orderIndex value value.NextGreaterThan).mpr ⟨hv, hn, by omega⟩
 
 /-- No value greater than the input is smaller than its upper neighbor. -/
 theorem not_less_nextGreaterThan (value candidate : ExecFloat.P3109 format)
-    (h : value.less candidate = true) : candidate.less value.nextGreaterThan = false := by
-  obtain ⟨hv, hc, horder⟩ := (less_iff_orderIndex value candidate).mp h
+    (h : value.CompareLess candidate = true) : candidate.CompareLess value.NextGreaterThan =
+      false := by
+  obtain ⟨_, hc, horder⟩ := (less_iff_orderIndex value candidate).mp h
   have hcBound := (orderIndex_bounds candidate hc).2
-  obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
+  obtain ⟨_, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
   apply Bool.eq_false_iff.mpr
   intro hless
-  have := (less_iff_orderIndex candidate value.nextGreaterThan).mp hless
+  have := (less_iff_orderIndex candidate value.NextGreaterThan).mp hless
   omega
 
 /-- Whenever a lesser value exists, the lower neighbor is strictly smaller than the input. -/
 theorem nextLessThan_less (value candidate : ExecFloat.P3109 format)
-    (h : candidate.less value = true) : value.nextLessThan.less value = true := by
+    (h : candidate.CompareLess value = true) : value.NextLessThan.CompareLess value = true := by
   obtain ⟨hc, hv, horder⟩ := (less_iff_orderIndex candidate value).mp h
   have hcBound := (orderIndex_bounds candidate hc).1
   obtain ⟨hn, hstep⟩ := nextLessThan_orderIndex value hv (by omega)
-  exact (less_iff_orderIndex value.nextLessThan value).mpr ⟨hn, hv, by omega⟩
+  exact (less_iff_orderIndex value.NextLessThan value).mpr ⟨hn, hv, by omega⟩
 
 /-- No value smaller than the input is greater than its lower neighbor. -/
 theorem not_nextLessThan_less (value candidate : ExecFloat.P3109 format)
-    (h : candidate.less value = true) : value.nextLessThan.less candidate = false := by
+    (h : candidate.CompareLess value = true) : value.NextLessThan.CompareLess candidate = false
+      := by
   obtain ⟨hc, hv, horder⟩ := (less_iff_orderIndex candidate value).mp h
   have hcBound := (orderIndex_bounds candidate hc).1
-  obtain ⟨hn, hstep⟩ := nextLessThan_orderIndex value hv (by omega)
+  obtain ⟨_, hstep⟩ := nextLessThan_orderIndex value hv (by omega)
   apply Bool.eq_false_iff.mpr
   intro hless
-  have := (less_iff_orderIndex value.nextLessThan candidate).mp hless
+  have := (less_iff_orderIndex value.NextLessThan candidate).mp hless
   omega
 
 /-- The upper-neighbor result is NaN if and only if the numerical order has no greater datum. -/
 theorem nextGreaterThan_isNaN_iff (value : ExecFloat.P3109 format) :
-    value.nextGreaterThan.isNaN = true ↔
-      ¬ ∃ candidate : ExecFloat.P3109 format, value.less candidate = true := by
+    value.NextGreaterThan.IsNaN = true ↔
+      ¬ ∃ candidate : ExecFloat.P3109 format, value.CompareLess candidate = true := by
   constructor
   · rintro hnan ⟨candidate, hcandidate⟩
     have hnext := less_nextGreaterThan value candidate hcandidate
-    have := (less_iff_orderIndex value value.nextGreaterThan).mp hnext
+    have := (less_iff_orderIndex value value.NextGreaterThan).mp hnext
     simp_all
   · intro hnone
-    by_cases hnan : value.isNaN = true
-    · simp only [nextGreaterThan, hnan, ite_true]
-      simp [isNaN]
-    · have hfinite : value.isNaN = false := Bool.eq_false_iff.mpr hnan
+    by_cases hnan : value.IsNaN = true
+    · simp only [NextGreaterThan, hnan, ite_true]
+      simp [IsNaN]
+    · have hfinite : value.IsNaN = false := Bool.eq_false_iff.mpr hnan
       have hbound := (orderIndex_bounds value hfinite).2
       by_cases hend : value.orderIndex = format.lastOrderIndex
       · rw [nextGreaterThan_eq_nan_of_last value hend]
-        simp [isNaN]
+        simp [IsNaN]
       · obtain ⟨hn, hstep⟩ := nextGreaterThan_orderIndex value (by omega)
-        exact False.elim (hnone ⟨value.nextGreaterThan,
-          (less_iff_orderIndex value value.nextGreaterThan).mpr ⟨hfinite, hn, by omega⟩⟩)
+        exact False.elim (hnone ⟨value.NextGreaterThan,
+          (less_iff_orderIndex value value.NextGreaterThan).mpr ⟨hfinite, hn, by omega⟩⟩)
 
 /-- The lower-neighbor result is NaN if and only if the numerical order has no lesser datum. -/
 theorem nextLessThan_isNaN_iff (value : ExecFloat.P3109 format) :
-    value.nextLessThan.isNaN = true ↔
-      ¬ ∃ candidate : ExecFloat.P3109 format, candidate.less value = true := by
+    value.NextLessThan.IsNaN = true ↔
+      ¬ ∃ candidate : ExecFloat.P3109 format, candidate.CompareLess value = true := by
   constructor
   · rintro hnan ⟨candidate, hcandidate⟩
     have hnext := nextLessThan_less value candidate hcandidate
-    have := (less_iff_orderIndex value.nextLessThan value).mp hnext
+    have := (less_iff_orderIndex value.NextLessThan value).mp hnext
     simp_all
   · intro hnone
-    by_cases hnan : value.isNaN = true
-    · simp only [nextLessThan, hnan, ite_true]
-      simp [isNaN]
-    · have hfinite : value.isNaN = false := Bool.eq_false_iff.mpr hnan
+    by_cases hnan : value.IsNaN = true
+    · simp only [NextLessThan, hnan, ite_true]
+      simp [IsNaN]
+    · have hfinite : value.IsNaN = false := Bool.eq_false_iff.mpr hnan
       have hbound := (orderIndex_bounds value hfinite).1
       by_cases hend : value.orderIndex = format.firstOrderIndex
       · rw [nextLessThan_eq_nan_of_first value hend]
-        simp [isNaN]
+        simp [IsNaN]
       · obtain ⟨hn, hstep⟩ := nextLessThan_orderIndex value hfinite (by omega)
-        exact False.elim (hnone ⟨value.nextLessThan,
-          (less_iff_orderIndex value.nextLessThan value).mpr ⟨hn, hfinite, by omega⟩⟩)
+        exact False.elim (hnone ⟨value.NextLessThan,
+          (less_iff_orderIndex value.NextLessThan value).mpr ⟨hn, hfinite, by omega⟩⟩)
 
 end FloatLib.Floats.ExecFloat.P3109

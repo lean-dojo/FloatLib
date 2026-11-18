@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Generic.AddDyadic.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.AddDyadic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 
 /-!
 # Reference arithmetic with exact dyadic intermediates
@@ -43,12 +42,12 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.Spec
       match chooseNaN2 x y with
       | some nan => nan
       | none =>
-          if isInf x then
-            if isInf y then
+          if isInfinite x then
+            if isInfinite y then
               if signBit x == signBit y then x else invalidResult fmt
             else
               x
-          else if isInf y then
+          else if isInfinite y then
             y
           else
             invalidResult fmt
@@ -104,10 +103,10 @@ shares the convention.
       match chooseNaN2 x y with
       | some nan => nan
       | none =>
-          if isInf x then
+          if isInfinite x then
             if isZero y then invalidResult fmt
             else nativeOverflow fmt (signBit x != signBit y)
-          else if isInf y then
+          else if isInfinite y then
             if isZero x then invalidResult fmt
             else nativeOverflow fmt (signBit x != signBit y)
           else
@@ -120,17 +119,17 @@ shares the convention.
   match chooseNaN3 x y z with
   | some nan => nan
   | none =>
-      if isInf x || isInf y then
+      if isInfinite x || isInfinite y then
         if isZero x || isZero y then
           invalidResult fmt
         else
           let prodSign := Bool.xor (signBit x) (signBit y)
           let prodInf := nativeOverflow fmt prodSign
-          if isInf z then
+          if isInfinite z then
             if signBit z != prodSign then invalidResult fmt else prodInf
           else
             prodInf
-      else if isInf z then
+      else if isInfinite z then
         z
       else
         match toDyadic? x, toDyadic? y, toDyadic? z with
@@ -150,17 +149,17 @@ so an addend far from the product in exponent builds no correspondingly wide int
   match chooseNaN3 x y z with
   | some nan => nan
   | none =>
-      if isInf x || isInf y then
+      if isInfinite x || isInfinite y then
         if isZero x || isZero y then
           invalidResult fmt
         else
           let prodSign := Bool.xor (signBit x) (signBit y)
           let prodInf := nativeOverflow fmt prodSign
-          if isInf z then
+          if isInfinite z then
             if signBit z != prodSign then invalidResult fmt else prodInf
           else
             prodInf
-      else if isInf z then
+      else if isInfinite z then
         z
       else
         match toDyadic? x, toDyadic? y, toDyadic? z with

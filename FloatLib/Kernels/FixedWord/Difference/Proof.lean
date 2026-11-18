@@ -1,21 +1,22 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.Difference.Runtime
 public import FloatLib.Kernels.FixedWord.Core.Proof
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Data.Rat.Cast.Order
+public import FloatLib.Kernels.FixedWord.Difference.Runtime
+
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Verified fixed-limb differences
@@ -39,6 +40,11 @@ namespace FloatLib.Numerics.FixedWord.UInt128
   have hyLow := y.lo.toNat_lt
   simp only [← UInt64.toNat_inj]
   omega
+
+/-- A false native two-word comparison gives the reverse weak inequality. -/
+@[simp, grind =] theorem less_eq_false_iff (x y : UInt128) :
+    less x y = false ↔ y.toNat ≤ x.toNat := by
+  simp only [Bool.eq_false_iff, ne_eq, less_eq_true_iff, not_lt]
 
 /-- Native three-way comparison agrees with comparison of mathematical values. -/
 @[simp, grind =] theorem compare_eq_toNat_compare_toNat (x y : UInt128) :
@@ -73,8 +79,6 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
   unfold UInt128.toNat at hordered
   have hxLow := x.lo.toNat_lt
   have hyLow := y.lo.toNat_lt
-  have hxHigh := x.hi.toNat_lt
-  have hyHigh := y.hi.toNat_lt
   by_cases hborrow : x.lo < y.lo
   · have hlowLt : x.lo.toNat < y.lo.toNat :=
       UInt64.lt_iff_toNat_lt.mp hborrow
@@ -85,7 +89,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
     have hhighAfterLe : (1 : UInt64) ≤ x.hi - y.hi := by
       apply UInt64.le_iff_toNat_le.mpr
       rw [UInt64.toNat_sub_of_le _ _ hhighBaseLe]
-      simp
+      simp only [UInt64.reduceToNat]
       omega
     simp only [hborrow, ite_true]
     rw [UInt64.toNat_sub,
@@ -181,8 +185,7 @@ theorem sub_toNat (x y : UInt128) (hordered : y.toNat ≤ x.toNat) :
           2 ^ shift * (value.hi.toNat / 2 ^ shift)) * 2 ^ (64 - shift) := by ring
       _ = _ := by rw [hhighDecompose]
   · by_cases hwidth : shift < 128
-    · have hlarge : 64 ≤ shift := Nat.le_of_not_gt hsmall
-      let inner := shift - 64
+    · let inner := shift - 64
       have hinner : inner < 64 := by
         dsimp [inner]
         omega
@@ -228,8 +231,7 @@ theorem singleBit_toNat_of_lt (index : Nat) (hindex : index < 128) :
     rw [FloatLib.Numerics.FixedWord.shiftLeft_toNat
       (1 : UInt64) index hfit]
     simp [Nat.shiftLeft_eq]
-  · have hlarge : 64 ≤ index := Nat.le_of_not_gt hsmall
-    have hinner : index - 64 < 64 := by omega
+  · have hinner : index - 64 < 64 := by omega
     have hfit : (1 : UInt64).toNat <<< (index - 64) < 2 ^ 64 := by
       simp only [UInt64.toNat_one, Nat.shiftLeft_eq, one_mul]
       exact Nat.pow_lt_pow_right (by decide) hinner
@@ -350,9 +352,6 @@ theorem shiftLeft_toNat (value : UInt128) (shift : Nat)
       rw [hvalueZero]
       simp [UInt128.toNat]
     let inner := shift - 64
-    have hinner : inner < 64 := by
-      unfold inner
-      omega
     have hshiftEq : shift = 64 + inner := by
       unfold inner
       omega

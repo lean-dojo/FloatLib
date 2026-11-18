@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -27,32 +27,32 @@ variable {fmt : FloatFormat}
 theorem classify_eq_iff (x : Model fmt) (c : Numerics.IEEEClass) :
     classify x = c ↔
       match c with
-      | .signalingNaN => isSNaN x = true
+      | .signalingNaN => isSignaling x = true
       | .quietNaN => isQNaN x = true
-      | .negativeInfinity => isInf x = true ∧ signBit x = true
-      | .positiveInfinity => isInf x = true ∧ signBit x = false
+      | .negativeInfinity => isInfinite x = true ∧ signBit x = true
+      | .positiveInfinity => isInfinite x = true ∧ signBit x = false
       | .negativeZero => isZero x = true ∧ signBit x = true
       | .positiveZero => isZero x = true ∧ signBit x = false
       | .negativeSubnormal => isSubnormal x = true ∧ signBit x = true
       | .positiveSubnormal => isSubnormal x = true ∧ signBit x = false
       | .negativeNormal => isNormal x = true ∧ signBit x = true
       | .positiveNormal => isNormal x = true ∧ signBit x = false := by
-  have hfinite := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x
+  have hfinite := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x
   have hnan := isNaN_eq_false_of_isFinite_eq_true x
-  have hinf := isInf_eq_false_of_isFinite_eq_true x
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x
   have hzero := isFinite_eq_true_of_isZero_eq_true x
   have hsub := isFinite_of_isSubnormal (x := x)
   have hnormal := isNormal_iff x
-  have hsignaling := isNaN_of_isSNaN (x := x)
+  have hsignaling := isNaN_of_isSignaling (x := x)
   have hquiet := isQNaN_eq_nan_and_not_signaling x
-  have hinfNaN := isNaN_eq_false_of_isInf_eq_true x
+  have hinfNaN := isNaN_eq_false_of_isInfinite_eq_true x
   have hzeroSub := isSubnormal_eq_false_of_isZero (x := x)
   unfold classify
   split_ifs <;> cases c <;> simp_all
 
-/-- The class is `.signalingNaN` if and only if `isSNaN` holds. -/
+/-- The class is `.signalingNaN` if and only if `isSignaling` holds. -/
 @[simp] theorem classify_eq_signalingNaN_iff (x : Model fmt) :
-    classify x = .signalingNaN ↔ isSNaN x = true :=
+    classify x = .signalingNaN ↔ isSignaling x = true :=
   classify_eq_iff x _
 
 /-- The class is `.quietNaN` if and only if `isQNaN` holds. -/
@@ -62,12 +62,12 @@ theorem classify_eq_iff (x : Model fmt) (c : Numerics.IEEEClass) :
 
 /-- Negative infinity is infinity with the sign bit set. -/
 @[simp] theorem classify_eq_negativeInfinity_iff (x : Model fmt) :
-    classify x = .negativeInfinity ↔ isInf x = true ∧ signBit x = true :=
+    classify x = .negativeInfinity ↔ isInfinite x = true ∧ signBit x = true :=
   classify_eq_iff x _
 
 /-- Positive infinity is infinity with the sign bit clear. -/
 @[simp] theorem classify_eq_positiveInfinity_iff (x : Model fmt) :
-    classify x = .positiveInfinity ↔ isInf x = true ∧ signBit x = false :=
+    classify x = .positiveInfinity ↔ isInfinite x = true ∧ signBit x = false :=
   classify_eq_iff x _
 
 /-- Negative zero is a policy zero with the sign bit set. FNUZ has no such value. -/
@@ -105,8 +105,8 @@ theorem isNaN_iff_classify (x : Model fmt) :
     isNaN x = true ↔ classify x = .signalingNaN ∨ classify x = .quietNaN := by
   rw [classify_eq_signalingNaN_iff, classify_eq_quietNaN_iff,
     isQNaN_eq_nan_and_not_signaling]
-  have hs := isNaN_of_isSNaN (x := x)
-  cases hn : isNaN x <;> cases hsn : isSNaN x <;> simp_all
+  have hs := isNaN_of_isSignaling (x := x)
+  cases hn : isNaN x <;> cases hsn : isSignaling x <;> simp_all
 
 /-- A word is finite if and only if its class is a zero, subnormal or normal one of either sign. -/
 theorem isFinite_iff_classify (x : Model fmt) :

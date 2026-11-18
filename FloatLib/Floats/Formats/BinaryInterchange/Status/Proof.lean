@@ -1,20 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.DyadicOrder
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Tininess
 public import FloatLib.Numerics.IEEEStatus.Proof
+
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.NonNaN
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.NonNaN
 
 /-!
 # Correctness of IEEE exception status
@@ -240,9 +238,9 @@ theorem rationalTernaryScaled_eq_dyadicTernary {fmt : FloatFormat} (exact : Nume
 theorem exactInfinityTernary_eq_eq_iff {fmt : FloatFormat} (negative : Bool)
     (value : Model fmt) :
     exactInfinityTernary negative value = .eq ↔
-      isInf value = true ∧ signBit value = negative := by
+      isInfinite value = true ∧ signBit value = negative := by
   unfold exactInfinityTernary
-  cases hinf : isInf value <;> cases hsign : signBit value <;> cases negative <;> simp
+  cases hinf : isInfinite value <;> cases hsign : signBit value <;> cases negative <;> simp
 
 /--
 Any delivery other than the exact infinity itself has the exact-infinity ternary value `.lt` for
@@ -250,7 +248,7 @@ Any delivery other than the exact infinity itself has the exact-infinity ternary
 of a format without infinities it is the convention of `IEEEOutcome.ternary`.
 -/
 theorem exactInfinityTernary_of_not_infinity {fmt : FloatFormat} (negative : Bool)
-    {value : Model fmt} (hvalue : ¬(isInf value = true ∧ signBit value = negative)) :
+    {value : Model fmt} (hvalue : ¬(isInfinite value = true ∧ signBit value = negative)) :
     exactInfinityTernary negative value = if negative then .gt else .lt := by
   unfold exactInfinityTernary
   rw [ite_eq_right (by simpa [Bool.and_eq_true, beq_iff_eq] using hvalue)]
@@ -331,7 +329,7 @@ private def roundingStatusShape {fmt : FloatFormat} (rounded : Model fmt) (overf
     { overflow := true, inexact := true }
   else if hfinite : isFinite rounded = true then
     { underflow := tiny && inexact hfinite, inexact := inexact hfinite }
-  else if isInf rounded then
+  else if isInfinite rounded then
     { overflow := true, inexact := true }
   else
     { invalid := true }
@@ -367,16 +365,16 @@ private theorem roundingStatusShape_cases {fmt : FloatFormat} (rounded : Model f
       (overflows = false ∧ ∃ hfinite : isFinite rounded = true,
         roundingStatusShape rounded overflows tiny inexact =
           { underflow := tiny && inexact hfinite, inexact := inexact hfinite }) ∨
-      (overflows = false ∧ isFinite rounded = false ∧ isInf rounded = true ∧
+      (overflows = false ∧ isFinite rounded = false ∧ isInfinite rounded = true ∧
         roundingStatusShape rounded overflows tiny inexact =
           { overflow := true, inexact := true }) ∨
-      (overflows = false ∧ isFinite rounded = false ∧ isInf rounded = false ∧
+      (overflows = false ∧ isFinite rounded = false ∧ isInfinite rounded = false ∧
         roundingStatusShape rounded overflows tiny inexact = { invalid := true }) := by
   unfold roundingStatusShape
   cases overflows
   · by_cases hfinite : isFinite rounded = true
     · exact Or.inr (Or.inl ⟨rfl, hfinite, by simp [hfinite]⟩)
-    · cases isInf rounded <;> simp [hfinite]
+    · cases isInfinite rounded <;> simp [hfinite]
   · simp
 
 private theorem roundingStatusShape_inexact_of_underflow {fmt : FloatFormat}
@@ -389,7 +387,7 @@ private theorem roundingStatusShape_inexact_of_underflow {fmt : FloatFormat}
 private theorem roundingStatusShape_overflow {fmt : FloatFormat}
     (rounded : Model fmt) (overflows tiny : Bool) (inexact : isFinite rounded = true → Bool) :
     (roundingStatusShape rounded overflows tiny inexact).overflow =
-      (overflows || (!isFinite rounded && isInf rounded)) := by
+      (overflows || (!isFinite rounded && isInfinite rounded)) := by
   rcases roundingStatusShape_cases rounded overflows tiny inexact with
     ⟨_, hs⟩ | ⟨_, _, hs⟩ | ⟨_, _, _, hs⟩ | ⟨_, _, _, hs⟩ <;> simp_all
 
@@ -410,7 +408,7 @@ private theorem roundingStatusShape_not_underflow_of_overflow {fmt : FloatFormat
 private theorem roundingStatusShape_invalid {fmt : FloatFormat}
     (rounded : Model fmt) (overflows tiny : Bool) (inexact : isFinite rounded = true → Bool) :
     (roundingStatusShape rounded overflows tiny inexact).invalid =
-      (!overflows && !isFinite rounded && !isInf rounded) := by
+      (!overflows && !isFinite rounded && !isInfinite rounded) := by
   rcases roundingStatusShape_cases rounded overflows tiny inexact with
     ⟨_, hs⟩ | ⟨_, _, hs⟩ | ⟨_, _, _, hs⟩ | ⟨_, _, _, hs⟩ <;> simp_all
 
@@ -436,7 +434,7 @@ or the supplied rounded result is an infinity.
     (mode : IEEERoundingMode) (exact : Numerics.Dyadic) (rounded : Model fmt) :
     (dyadicRoundingStatus fmt mode exact rounded).overflow =
       (dyadicRoundingOverflows fmt mode exact ||
-        (!isFinite rounded && isInf rounded)) := by
+        (!isFinite rounded && isInfinite rounded)) := by
   rw [dyadicRoundingStatus_eq_shape, roundingStatusShape_overflow]
 
 /-- For a finite result, dyadic overflow is the exact-value overflow classification. -/
@@ -484,7 +482,7 @@ threshold or the supplied rounded result is an infinity.
     (exponent : Int) (rounded : Model fmt) :
     (rationalRoundingStatusScaled fmt mode sign numerator denominator exponent rounded).overflow =
       (rationalRoundingOverflowsScaled fmt mode sign numerator denominator exponent ||
-        (!isFinite rounded && isInf rounded)) := by
+        (!isFinite rounded && isInfinite rounded)) := by
   rw [rationalRoundingStatusScaled_eq_shape, roundingStatusShape_overflow]
 
 /--
@@ -529,7 +527,7 @@ and the supplied result is neither finite nor infinite.
     (rounded : Model fmt) :
     (dyadicRoundingStatus fmt mode exact rounded).invalid =
       (!dyadicRoundingOverflows fmt mode exact &&
-        !isFinite rounded && !isInf rounded) := by
+        !isFinite rounded && !isInfinite rounded) := by
   rw [dyadicRoundingStatus_eq_shape, roundingStatusShape_invalid]
 
 /-- A finite dyadic rounding result cannot raise invalid. -/
@@ -560,7 +558,7 @@ false and the supplied result is neither finite nor infinite.
     (rationalRoundingStatusScaled fmt mode sign numerator denominator exponent
       rounded).invalid =
         (!rationalRoundingOverflowsScaled fmt mode sign numerator denominator exponent &&
-          !isFinite rounded && !isInf rounded) := by
+          !isFinite rounded && !isInfinite rounded) := by
   rw [rationalRoundingStatusScaled_eq_shape, roundingStatusShape_invalid]
 
 /-- A finite scaled rational rounding result cannot raise invalid. -/
@@ -620,8 +618,8 @@ Multiplication with `status := true` delivers the value of multiplication in the
   cases mode <;> unfold Internal.Status.div Internal.Directed.div
   · split
     · rename_i dx dy hx hy
-      simp [Internal.Nearest.div, DivBackend.word_eq_spec, Spec.div, hx, hy,
-        Internal.Directed.roundRatScaled]
+      simp only [beq_iff_eq, Internal.Directed.roundRatScaled, Internal.Nearest.div,
+        DivBackend.word_eq_spec, Spec.div, hx, hy]
       by_cases hdy : dy.significand = 0 <;>
         by_cases hdx : dx.significand = 0 <;>
           simp [hdy, hdx]
@@ -633,12 +631,12 @@ Multiplication with `status := true` delivers the value of multiplication in the
       have hyNaN := isNaN_eq_false_of_toDyadic?_some hy
       have hchoose : chooseNaN2 x y = none :=
         (chooseNaN2_eq_none_iff x y).2 ⟨hxNaN, hyNaN⟩
-      have hxInf := isInf_eq_false_of_toDyadic?_some hx
-      have hyInf := isInf_eq_false_of_toDyadic?_some hy
+      have hxInf := isInfinite_eq_false_of_toDyadic?_some hx
+      have hyInf := isInfinite_eq_false_of_toDyadic?_some hy
       have hxFinite :=
-        isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hxNaN hxInf
+        isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hxNaN hxInf
       have hyFinite :=
-        isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hyNaN hyInf
+        isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hyNaN hyInf
       have hxExact := finiteDyadic_eq_of_toDyadic hxFinite hx
       have hyExact := finiteDyadic_eq_of_toDyadic hyFinite hy
       have hxZero := isZero_eq_beq_zero_of_toDyadic?_some hx
@@ -648,8 +646,8 @@ Multiplication with `status := true` delivers the value of multiplication in the
       have hsign :
           Bool.xor dx.negative dy.negative = (dx.negative != dy.negative) := by
         cases dx.negative <;> cases dy.negative <;> rfl
-      simp [hchoose, hxInf, hyInf, hxExact, hyExact, hxZero, hyZero,
-        ← hxSign, ← hySign]
+      simp only [beq_iff_eq, hxInf, Bool.false_eq_true, ↓reduceDIte, hyInf, hyZero, hxZero, ←
+        hxSign, ← hySign, hxExact, hyExact, hchoose, withNaNSelection_of_none]
       by_cases hdy : dy.significand = 0 <;>
         by_cases hdx : dx.significand = 0 <;>
           simp [hdy, hdx, hsign]
@@ -712,11 +710,11 @@ theorem add_invalid
           let exact := addDyadic dx dy
           let value := add x y (mode := mode)
           !dyadicRoundingOverflows fmt mode exact &&
-            !isFinite value && !isInf value
+            !isFinite value && !isInfinite value
       | _, _ =>
-          isSNaN x || isSNaN y ||
+          isSignaling x || isSignaling y ||
             (!(isNaN x || isNaN y) &&
-              (isInf x && isInf y && signBit x != signBit y)) := by
+              (isInfinite x && isInfinite y && signBit x != signBit y)) := by
   cases hx : toDyadic? x <;> cases hy : toDyadic? y <;>
     simp [← Internal.Status.add_eq, Internal.Status.add, Internal.Directed.add_eq, hx, hy]
 
@@ -756,11 +754,11 @@ theorem mul_invalid
               exponent := dx.exponent + dy.exponent }
           let value := mul x y (mode := mode)
           !dyadicRoundingOverflows fmt mode exact &&
-            !isFinite value && !isInf value
+            !isFinite value && !isInfinite value
       | _, _ =>
-          isSNaN x || isSNaN y ||
+          isSignaling x || isSignaling y ||
             (!(isNaN x || isNaN y) &&
-              ((isInf x && isZero y) || (isInf y && isZero x))) := by
+              ((isInfinite x && isZero y) || (isInfinite y && isZero x))) := by
   cases hx : toDyadic? x <;> cases hy : toDyadic? y <;>
     simp [← Internal.Status.mul_eq, Internal.Status.mul, Internal.Directed.mul_eq, hx, hy]
 
@@ -805,15 +803,15 @@ theorem fma_invalid
           let exact := addDyadic product dz
           let value := fma x y z (mode := mode)
           !dyadicRoundingOverflows fmt mode exact &&
-            !isFinite value && !isInf value
+            !isFinite value && !isInfinite value
       | _, _, _ =>
           let hasNaN := isNaN x || isNaN y || isNaN z
-          let invalidProduct := (isInf x || isInf y) && (isZero x || isZero y)
-          let productIsInf := (isInf x || isInf y) && !(isZero x || isZero y)
+          let invalidProduct := (isInfinite x || isInfinite y) && (isZero x || isZero y)
+          let productIsInf := (isInfinite x || isInfinite y) && !(isZero x || isZero y)
           let oppositeInfiniteAddend :=
-            productIsInf && isInf z &&
+            productIsInf && isInfinite z &&
               signBit z != Bool.xor (signBit x) (signBit y)
-          isSNaN x || isSNaN y || isSNaN z ||
+          isSignaling x || isSignaling y || isSignaling z ||
             invalidProduct || (!hasNaN && oppositeInfiniteAddend) := by
   cases hx : toDyadic? x <;> cases hy : toDyadic? y <;>
     cases hz : toDyadic? z <;> simp [← Internal.Status.fma_eq, Internal.Status.fma,
@@ -889,10 +887,10 @@ theorem div_invalid
                 exponentDifference
             !rationalRoundingOverflowsScaled fmt mode sign dx.significand dy.significand
                 exponentDifference &&
-              !isFinite value && !isInf value
+              !isFinite value && !isInfinite value
       | _, _ =>
-          isSNaN x || isSNaN y ||
-            (!(isNaN x || isNaN y) && (isInf x && isInf y)) := by
+          isSignaling x || isSignaling y ||
+            (!(isNaN x || isNaN y) && (isInfinite x && isInfinite y)) := by
   cases hx : toDyadic? x <;> cases hy : toDyadic? y
   case some.some dx dy =>
     by_cases hxzero : dx.significand = 0 <;>
@@ -912,18 +910,19 @@ classes and signs of the operands alone, as IEEE 754-2019 §7.2 specifies. Overf
 the `overflow` flag. -/
 
 /-- A number is finite or an infinity, so the rounding status's invalid test fails on it. -/
-private theorem not_isFinite_and_not_isInf_eq_false {fmt : FloatFormat} {x : Model fmt}
-    (hnan : isNaN x = false) : (!isFinite x && !isInf x) = false := by
-  cases hinf : isInf x
-  · simp [isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hinf]
+private theorem not_isFinite_and_not_isInfinite_eq_false {fmt : FloatFormat} {x : Model fmt}
+    (hnan : isNaN x = false) : (!isFinite x && !isInfinite x) = false := by
+  cases hinf : isInfinite x
+  · simp [isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnan hinf]
   · simp
 
 /-- A decoded finite operand is neither a NaN, a signaling NaN, nor an infinity. -/
 private theorem classes_of_toDyadic?_some {fmt : FloatFormat} {x : Model fmt}
     {d : Numerics.Dyadic} (hx : toDyadic? x = some d) :
-    isNaN x = false ∧ isSNaN x = false ∧ isInf x = false := by
+    isNaN x = false ∧ isSignaling x = false ∧ isInfinite x = false := by
   have hnan := isNaN_eq_false_of_toDyadic?_some hx
-  exact ⟨hnan, isSNaN_eq_false_of_isNaN_eq_false x hnan, isInf_eq_false_of_toDyadic?_some hx⟩
+  exact ⟨hnan, isSignaling_eq_false_of_isNaN_eq_false x hnan,
+    isInfinite_eq_false_of_toDyadic?_some hx⟩
 
 /-- A word without a dyadic decoding is not a zero. -/
 private theorem isZero_eq_false_of_toDyadic?_eq_none {fmt : FloatFormat} {x : Model fmt}
@@ -941,14 +940,15 @@ every rounding direction.
 theorem add_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt) (mode : IEEERoundingMode) :
     (add x y (mode := mode) (status := true)).status.invalid =
-      (isSNaN x || isSNaN y ||
-        (!(isNaN x || isNaN y) && (isInf x && isInf y && signBit x != signBit y))) := by
+      (isSignaling x || isSignaling y ||
+        (!(isNaN x || isNaN y) && (isInfinite x && isInfinite y && signBit x != signBit y))) := by
   rw [add_invalid]
   cases hx : toDyadic? x <;> cases hy : toDyadic? y
   case some.some dx dy =>
     obtain ⟨-, hxs, hxi⟩ := classes_of_toDyadic?_some hx
     obtain ⟨-, hys, -⟩ := classes_of_toDyadic?_some hy
-    have hvalue := not_isFinite_and_not_isInf_eq_false <| isNaN_add_eq_false_of_isFinite x y mode
+    have hvalue := not_isFinite_and_not_isInfinite_eq_false <|
+      isNaN_add_eq_false_of_isFinite x y mode
       hfmt (isFinite_eq_true_of_toDyadic?_some hx) (isFinite_eq_true_of_toDyadic?_some hy)
     simp only [Bool.and_assoc, hvalue, Bool.and_false, hxs, hys, hxi, Bool.false_and,
       Bool.and_false, Bool.or_false]
@@ -962,14 +962,15 @@ every rounding direction.
 theorem mul_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt) (mode : IEEERoundingMode) :
     (mul x y (mode := mode) (status := true)).status.invalid =
-      (isSNaN x || isSNaN y ||
-        (!(isNaN x || isNaN y) && ((isInf x && isZero y) || (isInf y && isZero x)))) := by
+      (isSignaling x || isSignaling y ||
+        (!(isNaN x || isNaN y) && ((isInfinite x && isZero y) || (isInfinite y && isZero x)))) := by
   rw [mul_invalid]
   cases hx : toDyadic? x <;> cases hy : toDyadic? y
   case some.some dx dy =>
     obtain ⟨-, hxs, hxi⟩ := classes_of_toDyadic?_some hx
     obtain ⟨-, hys, hyi⟩ := classes_of_toDyadic?_some hy
-    have hvalue := not_isFinite_and_not_isInf_eq_false <| isNaN_mul_eq_false_of_isFinite x y mode
+    have hvalue := not_isFinite_and_not_isInfinite_eq_false <|
+      isNaN_mul_eq_false_of_isFinite x y mode
       hfmt (isFinite_eq_true_of_toDyadic?_some hx) (isFinite_eq_true_of_toDyadic?_some hy)
     simp only [Bool.and_assoc, hvalue, Bool.and_false, hxs, hys, hxi, hyi, Bool.false_and,
       Bool.or_false]
@@ -991,11 +992,11 @@ theorem fma_invalid_of_isIEEE
     (mode : IEEERoundingMode) :
     (fma x y z (mode := mode) (status := true)).status.invalid =
       let hasNaN := isNaN x || isNaN y || isNaN z
-      let invalidProduct := (isInf x || isInf y) && (isZero x || isZero y)
-      let productIsInf := (isInf x || isInf y) && !(isZero x || isZero y)
+      let invalidProduct := (isInfinite x || isInfinite y) && (isZero x || isZero y)
+      let productIsInf := (isInfinite x || isInfinite y) && !(isZero x || isZero y)
       let oppositeInfiniteAddend :=
-        productIsInf && isInf z && signBit z != Bool.xor (signBit x) (signBit y)
-      isSNaN x || isSNaN y || isSNaN z ||
+        productIsInf && isInfinite z && signBit z != Bool.xor (signBit x) (signBit y)
+      isSignaling x || isSignaling y || isSignaling z ||
         invalidProduct || (!hasNaN && oppositeInfiniteAddend) := by
   rw [fma_invalid]
   cases hx : toDyadic? x <;> cases hy : toDyadic? y <;> cases hz : toDyadic? z
@@ -1003,7 +1004,7 @@ theorem fma_invalid_of_isIEEE
     obtain ⟨-, hxs, hxi⟩ := classes_of_toDyadic?_some hx
     obtain ⟨-, hys, hyi⟩ := classes_of_toDyadic?_some hy
     obtain ⟨-, hzs, hzi⟩ := classes_of_toDyadic?_some hz
-    have hvalue := not_isFinite_and_not_isInf_eq_false <| isNaN_fma_eq_false_of_isFinite x y z
+    have hvalue := not_isFinite_and_not_isInfinite_eq_false <| isNaN_fma_eq_false_of_isFinite x y z
       mode hfmt (isFinite_eq_true_of_toDyadic?_some hx) (isFinite_eq_true_of_toDyadic?_some hy)
       (isFinite_eq_true_of_toDyadic?_some hz)
     simp only [Bool.and_assoc, hvalue, Bool.and_false, hxs, hys, hzs, hxi, hyi, hzi,
@@ -1019,8 +1020,8 @@ operands rounds to a number, in every rounding direction.
 theorem div_invalid_of_isIEEE
     {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x y : Model fmt) (mode : IEEERoundingMode) :
     (div x y (mode := mode) (status := true)).status.invalid =
-      (isSNaN x || isSNaN y ||
-        (!(isNaN x || isNaN y) && ((isInf x && isInf y) || (isZero x && isZero y)))) := by
+      (isSignaling x || isSignaling y ||
+        (!(isNaN x || isNaN y) && ((isInfinite x && isInfinite y) || (isZero x && isZero y)))) := by
   rw [div_invalid]
   cases hx : toDyadic? x <;> cases hy : toDyadic? y
   case some.some dx dy =>
@@ -1035,8 +1036,9 @@ theorem div_invalid_of_isIEEE
       by_cases hdx : dx.significand = 0
       · simp [hdy', hdx]
       · have hdx' : (dx.significand == 0) = false := by simpa using hdx
-        have hvalue := not_isFinite_and_not_isInf_eq_false <|
-          Internal.Directed.isNaN_roundRatScaled_eq_false fmt mode (Bool.xor dx.negative dy.negative)
+        have hvalue := not_isFinite_and_not_isInfinite_eq_false <|
+          Internal.Directed.isNaN_roundRatScaled_eq_false fmt mode (Bool.xor dx.negative
+            dy.negative)
             dx.significand dy.significand (dx.exponent - dy.exponent) hfmt hdy
         simp only [hdy', hdx', Bool.false_eq_true, ite_false, Bool.and_assoc, hvalue,
           Bool.and_false]
@@ -1073,7 +1075,7 @@ positive finite values. These cases cover every input.
 theorem sqrt_status_of_isNaN {fmt : FloatFormat} {x : Model fmt} (mode : IEEERoundingMode)
     (hnan : isNaN x = true) :
     sqrt x (mode := mode) (status := true) =
-      outcomeWithInvalid (sqrt x (mode := mode)) (isSNaN x) := by
+      outcomeWithInvalid (sqrt x (mode := mode)) (isSignaling x) := by
   cases hsign : signBit x
   · simp [← Internal.Status.sqrt_eq, Internal.Status.sqrt, Internal.Directed.sqrt_eq, hsign,
     toDyadic?_eq_none_of_isNaN hnan]
@@ -1099,12 +1101,13 @@ theorem sqrt_status_of_signBit {fmt : FloatFormat} {x : Model fmt} (mode : IEEER
     hsign]
 
 /-- `+∞` delivers the square-root value and raises nothing. -/
-theorem sqrt_status_of_isInf {fmt : FloatFormat} {x : Model fmt} (mode : IEEERoundingMode)
-    (hinf : isInf x = true) (hsign : signBit x = false) :
+theorem sqrt_status_of_isInfinite {fmt : FloatFormat} {x : Model fmt} (mode : IEEERoundingMode)
+    (hinf : isInfinite x = true) (hsign : signBit x = false) :
     sqrt x (mode := mode) (status := true) = outcomeWithInvalid (sqrt x (mode := mode)) false := by
-  have hsnan := isSNaN_eq_false_of_isNaN_eq_false x (isNaN_eq_false_of_isInf_eq_true x hinf)
+  have hsnan := isSignaling_eq_false_of_isNaN_eq_false x
+    (isNaN_eq_false_of_isInfinite_eq_true x hinf)
   simp [← Internal.Status.sqrt_eq, Internal.Status.sqrt, Internal.Directed.sqrt_eq, hsign,
-    toDyadic?_eq_none_of_isInf_eq_true hinf, hsnan]
+    toDyadic?_eq_none_of_isInfinite_eq_true hinf, hsnan]
 
 /--
 On a finite input with a clear sign, the ternary value compares the squared delivery with the
@@ -1149,13 +1152,13 @@ theorem sqrt_status_of_toDyadic {fmt : FloatFormat} {x : Model fmt} {exact : Num
 theorem sqrt_invalid {fmt : FloatFormat}
     (x : Model fmt) (mode : IEEERoundingMode) :
     (sqrt x (mode := mode) (status := true)).status.invalid =
-      (isSNaN x || (!isNaN x && signBit x && !isZero x)) := by
+      (isSignaling x || (!isNaN x && signBit x && !isZero x)) := by
   by_cases hnan : isNaN x = true
   · rw [sqrt_status_of_isNaN mode hnan]
     simp [hnan]
   · have hnanFalse : isNaN x = false :=
       Bool.eq_false_of_not_eq_true hnan
-    have hsnanFalse := isSNaN_eq_false_of_isNaN_eq_false x hnanFalse
+    have hsnanFalse := isSignaling_eq_false_of_isNaN_eq_false x hnanFalse
     by_cases hzero : isZero x = true
     · rw [sqrt_status_of_isZero mode hzero]
       simp [hsnanFalse, hzero]

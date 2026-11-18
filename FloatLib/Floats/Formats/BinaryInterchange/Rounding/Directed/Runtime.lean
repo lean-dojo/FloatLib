@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Nearest
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 
 /-!
 # Executable directed rounding
@@ -63,13 +62,15 @@ def roundRatMagnitudeDirectedScaled (fmt : FloatFormat) (roundMagnitudeUp sign :
         zero fmt sign
     else if totalExponent < minNormal then
       let (scaledNumerator, scaledDenominator) :=
-        Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent + Int.ofNat subnormalAlign)
+        Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent + Int.ofNat
+          subnormalAlign)
       let fraction :=
         roundQuotDirected roundMagnitudeUp scaledNumerator scaledDenominator
       packRoundedSubnormal fmt sign (zero fmt sign) fraction
     else
       let shift : Int := Int.ofNat precision - rationalExponent
-      let (scaledNumerator, scaledDenominator) := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator shift
+      let (scaledNumerator, scaledDenominator) := Numerics.RationalBinary.scaleByPowerOfTwo
+        numerator denominator shift
       let roundedMantissa :=
         roundQuotDirected roundMagnitudeUp scaledNumerator scaledDenominator
       packRoundedNormal fmt sign (directedOverflow fmt sign roundMagnitudeUp)
@@ -106,7 +107,7 @@ def rationalIsGridTieScaled (fmt : FloatFormat) (numerator denominator : Nat)
       2 * (scaledNumerator % scaledDenominator) == scaledDenominator
 
 /--
-Round an exact scaled signed rational to nearest with ties away from zero, IEEE 754-2019
+Round an exact scaled signed rational to nearest with ties away from zero, IEEE 754-2019 §4.3.1
 `roundTiesToAway`.
 
 This is the rational twin of `roundDyadicNearestAway`. Off a grid tie it is nearest-even rounding,
@@ -197,19 +198,19 @@ def add {fmt : FloatFormat} (mode : IEEERoundingMode)
     | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
-        if hxInf : isInf x then
-          if isInf y then
+        if hxInf : isInfinite x then
+          if isInfinite y then
             if Model.signBit x == Model.signBit y then x else invalidResult fmt
           else
             x
-        else if hyInf : isInf y then
+        else if hyInf : isInfinite y then
           y
         else
           let hxFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN.1
               (Bool.eq_false_of_not_eq_true hxInf)
           let hyFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hnotNaN.2
               (Bool.eq_false_of_not_eq_true hyInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
@@ -231,19 +232,19 @@ far apart in exponent build no integer as wide as their exponent gap.
     | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
-        if hxInf : isInf x then
-          if isInf y then
+        if hxInf : isInfinite x then
+          if isInfinite y then
             if Model.signBit x == Model.signBit y then x else invalidResult fmt
           else
             x
-        else if hyInf : isInf y then
+        else if hyInf : isInfinite y then
           y
         else
           let hxFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN.1
               (Bool.eq_false_of_not_eq_true hxInf)
           let hyFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hnotNaN.2
               (Bool.eq_false_of_not_eq_true hyInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
@@ -282,18 +283,18 @@ def mul {fmt : FloatFormat} (mode : IEEERoundingMode)
     | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
-        if hxInf : isInf x then
+        if hxInf : isInfinite x then
           if isZero y then invalidResult fmt
           else nativeOverflow fmt (Model.signBit x != Model.signBit y)
-        else if hyInf : isInf y then
+        else if hyInf : isInfinite y then
           if isZero x then invalidResult fmt
           else nativeOverflow fmt (Model.signBit x != Model.signBit y)
         else
           let hxFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN.1
               (Bool.eq_false_of_not_eq_true hxInf)
           let hyFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hnotNaN.2
               (Bool.eq_false_of_not_eq_true hyInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
@@ -317,20 +318,20 @@ def div {fmt : FloatFormat} (mode : IEEERoundingMode)
     | .away =>
       withNaNSelection (chooseNaN2 x y) fun hnan =>
         let hnotNaN := (chooseNaN2_eq_none_iff x y).1 hnan
-        if hxInf : isInf x then
-          if isInf y then invalidResult fmt
+        if hxInf : isInfinite x then
+          if isInfinite y then invalidResult fmt
           else nativeOverflow fmt (Model.signBit x != Model.signBit y)
-        else if hyInf : isInf y then
+        else if hyInf : isInfinite y then
           zero fmt (Model.signBit x != Model.signBit y)
         else if isZero y then
           if isZero x then invalidResult fmt
           else nativeOverflow fmt (Model.signBit x != Model.signBit y)
         else
           let hxFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN.1
               (Bool.eq_false_of_not_eq_true hxInf)
           let hyFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hnotNaN.2
               (Bool.eq_false_of_not_eq_true hyInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
@@ -356,33 +357,33 @@ def fma {fmt : FloatFormat} (mode : IEEERoundingMode)
     | .away =>
       withNaNSelection (chooseNaN3 x y z) fun hnan =>
         let hnotNaN := (chooseNaN3_eq_none_iff x y z).1 hnan
-        if hxyInf : isInf x || isInf y then
+        if hxyInf : isInfinite x || isInfinite y then
           if isZero x || isZero y then
             invalidResult fmt
           else
             let productSign := Bool.xor (Model.signBit x) (Model.signBit y)
             let productInfinity := nativeOverflow fmt productSign
-            if isInf z then
+            if isInfinite z then
               if Model.signBit z != productSign then invalidResult fmt else productInfinity
             else
               productInfinity
-        else if hzInf : isInf z then
+        else if hzInf : isInfinite z then
           z
         else
-          let hxInf : isInf x = false := by
-            cases hx : isInf x
+          let hxInf : isInfinite x = false := by
+            cases hx : isInfinite x
             · rfl
             · simp [hx] at hxyInf
-          let hyInf : isInf y = false := by
-            cases hy : isInf y
+          let hyInf : isInfinite y = false := by
+            cases hy : isInfinite y
             · rfl
             · simp [hy] at hxyInf
           let hxFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1 hxInf
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN.1 hxInf
           let hyFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2.1 hyInf
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hnotNaN.2.1 hyInf
           let hzFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false z hnotNaN.2.2
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false z hnotNaN.2.2
               (Bool.eq_false_of_not_eq_true hzInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
@@ -408,33 +409,33 @@ def fma {fmt : FloatFormat} (mode : IEEERoundingMode)
     | .away =>
       withNaNSelection (chooseNaN3 x y z) fun hnan =>
         let hnotNaN := (chooseNaN3_eq_none_iff x y z).1 hnan
-        if hxyInf : isInf x || isInf y then
+        if hxyInf : isInfinite x || isInfinite y then
           if isZero x || isZero y then
             invalidResult fmt
           else
             let productSign := Bool.xor (Model.signBit x) (Model.signBit y)
             let productInfinity := nativeOverflow fmt productSign
-            if isInf z then
+            if isInfinite z then
               if Model.signBit z != productSign then invalidResult fmt else productInfinity
             else
               productInfinity
-        else if hzInf : isInf z then
+        else if hzInf : isInfinite z then
           z
         else
-          let hxInf : isInf x = false := by
-            cases hx : isInf x
+          let hxInf : isInfinite x = false := by
+            cases hx : isInfinite x
             · rfl
             · simp [hx] at hxyInf
-          let hyInf : isInf y = false := by
-            cases hy : isInf y
+          let hyInf : isInfinite y = false := by
+            cases hy : isInfinite y
             · rfl
             · simp [hy] at hxyInf
           let hxFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN.1 hxInf
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN.1 hxInf
           let hyFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hnotNaN.2.1 hyInf
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hnotNaN.2.1 hyInf
           let hzFinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false z hnotNaN.2.2
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false z hnotNaN.2.2
               (Bool.eq_false_of_not_eq_true hzInf)
           let dx := finiteDyadic x hxFinite
           let dy := finiteDyadic y hyFinite
@@ -506,7 +507,7 @@ def sqrt {fmt : FloatFormat} (mode : IEEERoundingMode)
   | .towardZero | .up | .down | .away =>
       withNaNSelection (chooseNaN1 x) fun hnan =>
         let hnotNaN := (chooseNaN1_eq_none_iff x).1 hnan
-        if hxInf : isInf x then
+        if hxInf : isInfinite x then
           if Model.signBit x then invalidResult fmt else nativeOverflow fmt false
         else if isZero x then
           x
@@ -514,7 +515,7 @@ def sqrt {fmt : FloatFormat} (mode : IEEERoundingMode)
           invalidResult fmt
         else
           let hfinite :=
-            isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnotNaN
+            isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnotNaN
               (Bool.eq_false_of_not_eq_true hxInf)
           let value := finiteDyadic x hfinite
           let bracket := sqrtDyadicBracket fmt value

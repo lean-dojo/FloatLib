@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 public import FloatLib.Numerics.Enclosure.Rational.Proof
+public import FloatLib.Numerics.Enclosure.Trigonometric.Runtime
 public import Mathlib.Analysis.Calculus.Taylor
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
 
@@ -29,7 +29,6 @@ open scoped ContDiff
 /-- Rational sine coefficients are the exact real derivatives at the origin. -/
 theorem cast_sinCoefficient (n : Nat) :
     (sinCoefficient n : ℝ) = iteratedDeriv n Real.sin 0 := by
-  have hdecomp := Nat.mod_add_div n 2
   by_cases h : n % 2 = 0
   · have hn : n = 2 * (n / 2) := by omega
     rw [sinCoefficient, ite_eq_left h, hn, Real.iteratedDeriv_even_sin]
@@ -42,7 +41,6 @@ theorem cast_sinCoefficient (n : Nat) :
 /-- Rational cosine coefficients are the exact real derivatives at the origin. -/
 theorem cast_cosCoefficient (n : Nat) :
     (cosCoefficient n : ℝ) = iteratedDeriv n Real.cos 0 := by
-  have hdecomp := Nat.mod_add_div n 2
   by_cases h : n % 2 = 0
   · have hn : n = 2 * (n / 2) := by omega
     rw [cosCoefficient, ite_eq_left h]
@@ -86,14 +84,14 @@ private theorem abs_sub_taylor_le (f : ℝ → ℝ) (x : ℝ) (n : Nat)
 /-- The executable sine polynomial has a valid remainder bound for every rational input. -/
 theorem abs_sin_sub_sinTaylor_le (x : ℚ) (degree : Nat) :
     |Real.sin (x : ℝ) - (sinTaylor x degree : ℝ)| ≤ (trigRadius x degree : ℝ) := by
-  simpa [sinTaylor, trigRadius, cast_sinCoefficient] using
+  simpa [sinTaylor_def, trigRadius_def, cast_sinCoefficient] using
     abs_sub_taylor_le Real.sin (x : ℝ) degree Real.contDiff_sin
       Real.abs_iteratedDeriv_sin_le_one
 
 /-- The executable cosine polynomial has the same global remainder guarantee. -/
 theorem abs_cos_sub_cosTaylor_le (x : ℚ) (degree : Nat) :
     |Real.cos (x : ℝ) - (cosTaylor x degree : ℝ)| ≤ (trigRadius x degree : ℝ) := by
-  simpa [cosTaylor, trigRadius, cast_cosCoefficient] using
+  simpa [cosTaylor_def, trigRadius_def, cast_cosCoefficient] using
     abs_sub_taylor_le Real.cos (x : ℝ) degree Real.contDiff_cos
       Real.abs_iteratedDeriv_cos_le_one
 
@@ -103,8 +101,8 @@ theorem contains_restrictUnit {interval : RationalInterval} {x : ℝ}
     (restrictUnit interval).Contains x := by
   rcases abs_le.mp hbound with ⟨hlower, hupper⟩
   constructor
-  · simpa [restrictUnit] using max_le hlower hx.1
-  · simpa [restrictUnit] using le_min hupper hx.2
+  · simpa [restrictUnit_def] using max_le hlower hx.1
+  · simpa [restrictUnit_def] using le_min hupper hx.2
 
 /-- Every finite degree provides a sound enclosure of sine on all rational arguments. -/
 theorem contains_sin (x : ℚ) (degree : Nat) :

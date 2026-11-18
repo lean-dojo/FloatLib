@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Operation.Semantics
 public import FloatLib.Numerics.Core.Proof
+public import FloatLib.Numerics.Operation.Semantics
 
 /-!
 # Proof-indexed finite operations
@@ -25,6 +25,8 @@ the input denotations, the refinement contract determines the output's finite sc
 @[expose] public section
 
 namespace FloatLib.Numerics.Operation
+
+open NumericalSystem.AtFinite
 
 universe u v w x y z u₁ v₁
 
@@ -62,13 +64,13 @@ theorem denote_eq {A B : NumericalSystem} {run : A.Code → B.Code}
     (code : A.AtFinite value)
     (hspec : spec value = expected) :
     B.denote (run code.1) = .finite expected := by
-  rw [denote hrefines code.2, hspec]
+  rw [denote hrefines code.represents, hspec]
 
 /-- Apply a finite unary refinement to a proof-indexed finite value. -/
 @[inline] def applyAt {A B : NumericalSystem} {run : A.Code → B.Code}
     {spec : A.Scalar → B.Scalar} (hrefines : Finite1 A B run spec)
     {value : A.Scalar} (code : A.AtFinite value) : B.AtFinite (spec value) :=
-  ⟨run code.1, denote hrefines code.2⟩
+  ofRepresents (run code.1) (denote hrefines code.represents)
 
 end Finite1
 
@@ -115,7 +117,7 @@ theorem denote_eq {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
     (left : A.AtFinite leftValue) (right : B.AtFinite rightValue)
     (hspec : spec leftValue rightValue = expected) :
     C.denote (run left.1 right.1) = .finite expected := by
-  rw [denote hrefines left.2 right.2, hspec]
+  rw [denote hrefines left.represents right.represents, hspec]
 
 /-- Apply a finite two-input refinement to proof-indexed finite values. -/
 @[inline] def applyAt {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
@@ -123,7 +125,7 @@ theorem denote_eq {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
     {leftValue : A.Scalar} {rightValue : B.Scalar}
     (left : A.AtFinite leftValue) (right : B.AtFinite rightValue) :
     C.AtFinite (spec leftValue rightValue) :=
-  ⟨run left.1 right.1, denote hrefines left.2 right.2⟩
+  ofRepresents (run left.1 right.1) (denote hrefines left.represents right.represents)
 
 end Finite2
 
@@ -171,7 +173,7 @@ theorem denote_eq {A B C D : NumericalSystem}
     (third : C.AtFinite thirdValue)
     (hspec : spec firstValue secondValue thirdValue = expected) :
     D.denote (run first.1 second.1 third.1) = .finite expected := by
-  rw [denote hrefines first.2 second.2 third.2, hspec]
+  rw [denote hrefines first.represents second.represents third.represents, hspec]
 
 /-- Apply a finite three-input refinement to proof-indexed finite values. -/
 @[inline] def applyAt {A B C D : NumericalSystem}
@@ -182,7 +184,8 @@ theorem denote_eq {A B C D : NumericalSystem}
     (first : A.AtFinite firstValue) (second : B.AtFinite secondValue)
     (third : C.AtFinite thirdValue) :
     D.AtFinite (spec firstValue secondValue thirdValue) :=
-  ⟨run first.1 second.1 third.1, denote hrefines first.2 second.2 third.2⟩
+  ofRepresents (run first.1 second.1 third.1)
+    (denote hrefines first.represents second.represents third.represents)
 
 end Finite3
 
@@ -207,7 +210,7 @@ theorem denote_eq {A B : NumericalSystem} {run : A.Code → B.Code}
     (code : A.AtFinite value)
     (haccept : accept code.1 (run code.1)) (hspec : spec value = expected) :
     B.denote (run code.1) = .finite expected := by
-  rw [denote hrefines code.2 haccept, hspec]
+  rw [denote hrefines code.represents haccept, hspec]
 
 /-- Apply a condition-aware finite unary refinement to a proof-indexed value. -/
 @[inline] def applyAt {A B : NumericalSystem} {run : A.Code → B.Code}
@@ -215,7 +218,7 @@ theorem denote_eq {A B : NumericalSystem} {run : A.Code → B.Code}
     (hrefines : Finite1If A B run spec accept) {value : A.Scalar}
     (code : A.AtFinite value) (haccept : accept code.1 (run code.1)) :
     B.AtFinite (spec value) :=
-  ⟨run code.1, denote hrefines code.2 haccept⟩
+  ofRepresents (run code.1) (denote hrefines code.represents haccept)
 
 end Finite1If
 
@@ -242,7 +245,7 @@ theorem denote_eq {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
     (haccept : accept left.1 right.1 (run left.1 right.1))
     (hspec : spec leftValue rightValue = expected) :
     C.denote (run left.1 right.1) = .finite expected := by
-  rw [denote hrefines left.2 right.2 haccept, hspec]
+  rw [denote hrefines left.represents right.represents haccept, hspec]
 
 /-- Apply a condition-aware finite two-input refinement to proof-indexed values. -/
 @[inline] def applyAt {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
@@ -253,7 +256,7 @@ theorem denote_eq {A B C : NumericalSystem} {run : A.Code → B.Code → C.Code}
     (left : A.AtFinite leftValue) (right : B.AtFinite rightValue)
     (haccept : accept left.1 right.1 (run left.1 right.1)) :
     C.AtFinite (spec leftValue rightValue) :=
-  ⟨run left.1 right.1, denote hrefines left.2 right.2 haccept⟩
+  ofRepresents (run left.1 right.1) (denote hrefines left.represents right.represents haccept)
 
 end Finite2If
 
@@ -288,7 +291,7 @@ theorem denote_eq {A B C D : NumericalSystem}
     (haccept : accept first.1 second.1 third.1 (run first.1 second.1 third.1))
     (hspec : spec firstValue secondValue thirdValue = expected) :
     D.denote (run first.1 second.1 third.1) = .finite expected := by
-  rw [denote hrefines first.2 second.2 third.2 haccept, hspec]
+  rw [denote hrefines first.represents second.represents third.represents haccept, hspec]
 
 /-- Apply a condition-aware finite three-input refinement to proof-indexed values. -/
 @[inline] def applyAt {A B C D : NumericalSystem}
@@ -301,8 +304,8 @@ theorem denote_eq {A B C D : NumericalSystem}
     (third : C.AtFinite thirdValue)
     (haccept : accept first.1 second.1 third.1 (run first.1 second.1 third.1)) :
     D.AtFinite (spec firstValue secondValue thirdValue) :=
-  ⟨run first.1 second.1 third.1,
-    denote hrefines first.2 second.2 third.2 haccept⟩
+  ofRepresents (run first.1 second.1 third.1)
+    (denote hrefines first.represents second.represents third.represents haccept)
 
 end Finite3If
 

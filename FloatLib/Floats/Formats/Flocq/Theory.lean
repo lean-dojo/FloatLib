@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -48,7 +48,8 @@ public import FloatLib.Floats.Formats.Flocq.Theory.Special.FTZ
 Import this module for the whole rounded-real theory: the radix-parametric format and rounding
 theory, exact mantissa and exponent negation and multiplication, and the rounded scalar `NF`. None
 of it depends on concrete IEEE bit encodings. The definitions you'll meet most are `FloatRep`,
-`genericFormat`, `round`, `ulp`, and `bpow`. For a smaller dependency set, import a child module.
+`GenericRepresentable`, `round`, `ulp`, and `bpow`. For a smaller dependency set, import a child
+module.
 
 ## Analysis
 

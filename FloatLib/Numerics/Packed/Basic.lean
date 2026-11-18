@@ -1,10 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
+
+public import FloatLib.Numerics.Kernel.Z
 
 /-!
 # Packed rows
@@ -58,17 +60,17 @@ The specification, on integer lists:
 * `fits_of_l1_lt` and `l1_le_of_bound`: the two directions between `l1` bounds and range checks.
 * `linked_sound`: what a passing `linked` says, entry by entry.
 
-The soundness theorems of the kernel programs are in `FloatLib.Numerics.Packed.Proof`, and
-`packed_row` in `FloatLib.Numerics.Packed.Literal` brings large rows in as raw literals.
+The soundness theorems of the kernel programs are in `FloatLib.Numerics.Packed.Proof.Unsigned`, and
+`packed_row` in `FloatLib.Tactic.PackedRow` brings large rows in as raw literals.
 
 ## Implementation notes
 
 Signed rows are `Int` values only where a certificate does a few operations per row, such as a
 product or a difference, and biased `Nat` values wherever lanes are read, because the kernel
-interprets every `Int` operation. Strides and masks are shifts: under `decide +kernel`, Lean 4.35
-evaluates `Nat.pow 2 k` only for `k ≤ 2 ^ 24`, while `1 <<< k` goes well beyond. The kernel keeps
-every intermediate value until a declaration ends, so a check that uses one row several times
-should do so inside one theorem.
+interprets every `Int` operation. Strides and masks are shifts: under `decide +kernel`, Lean
+v4.36.0 evaluates `Nat.pow 2 k` only for `k ≤ 2 ^ 24`, while `1 <<< k` goes well beyond. The
+kernel keeps every intermediate value until a declaration ends, so a check that uses one row
+several times should do so inside one theorem.
 
 Rows carry no scale. A row of values `x k * q` with one rational factor `q` is the integer row `x`
 together with `q`, so binary, decimal and fixed-point data all use the same integer programs, and
@@ -92,7 +94,7 @@ check polynomial identities in the same spirit, by comparing two big numbers in 
   LNCS 1656 (1999), 290–305, <https://doi.org/10.1007/3-540-48319-5_19>.
 * Michael Beeler, R. William Gosper and Richard Schroeppel, *HAKMEM*, MIT AI Memo 239 (1972),
   item 169, <https://dspace.mit.edu/handle/1721.1/6086>.
-* Lean 4, release v4.35.0, `type_checker::reduce_nat` in `src/kernel/type_checker.cpp`, which lists
+* Lean 4, release v4.36.0, `type_checker::reduce_nat` in `src/kernel/type_checker.cpp`, which lists
   the functions the kernel computes on literals: <https://github.com/leanprover/lean4>.
 * Leonardo de Moura, Lean 4 pull request 15999, *Kronecker certificates* for `grind` and
   `Sym.simp`: <https://github.com/leanprover/lean4/pull/15999>.
@@ -122,16 +124,17 @@ def bias (w n : Nat) : Nat := Nat.mul (pow2 (Nat.sub w 1)) (ones w n)
 def lane (w k u : Nat) : Nat := Nat.land (Nat.shiftRight u (Nat.mul w k)) (Nat.sub (pow2 w) 1)
 
 /-- The signed entry in lane `k` of the biased row `u`, `lane w k u - 2 ^ (w - 1)`. -/
-def entry (w k u : Nat) : Int := Int.subNatNat (lane w k u) (pow2 (Nat.sub w 1))
+def entry (w k u : Nat) : Int := Kernel.Z.subNat (lane w k u) (pow2 (Nat.sub w 1))
 
 /-- The integer that the biased row `u` of `n` lanes stands for, `u - bias w n`. -/
-def toInt (w n u : Nat) : Int := Int.subNatNat u (bias w n)
+def toInt (w n u : Nat) : Int := Kernel.Z.subNat u (bias w n)
 
 /-- The biased row of `n` lanes of the integer `z`, `z + bias w n`. -/
-def ofInt (w n : Nat) (z : Int) : Nat := Int.toNat (Int.add z (Int.ofNat (bias w n)))
+def ofInt (w n : Nat) (z : Int) : Nat :=
+  Kernel.Z.toNat (Kernel.Z.add z (Int.ofNat (bias w n)))
 
 /-- The signed row `z` moved up by `k` lanes, `z * 2 ^ (w * k)`; lanes `[0, k)` become zero. -/
-def shift (w k : Nat) (z : Int) : Int := Int.mul z (Int.ofNat (pow2 (Nat.mul w k)))
+def shift (w k : Nat) (z : Int) : Int := Kernel.Z.mul z (Int.ofNat (pow2 (Nat.mul w k)))
 
 /-- The row of a list: lane `k` holds `xs[k] + 2 ^ (w - 1)`, or `xs[k]` itself with
 `(signed := false)`. This walks the list, so use it for rows the kernel derives from other data,
@@ -170,10 +173,12 @@ def posSum (w n : Nat) (z : Int) : Nat :=
       (Nat.sub (pow2 (Nat.sub w 1)) 1)))
 
 /-- The sum of the absolute values of the entries of the signed row `z` of `n` lanes. -/
-def absSum (w n : Nat) (z : Int) : Nat := Nat.add (posSum w n z) (posSum w n (Int.neg z))
+def absSum (w n : Nat) (z : Int) : Nat :=
+  Nat.add (posSum w n z) (posSum w n (Kernel.Z.neg z))
 
 /-- The sum of the entries of the signed row `z` of `n` lanes. -/
-def sum (w n : Nat) (z : Int) : Int := Int.subNatNat (posSum w n z) (posSum w n (Int.neg z))
+def sum (w n : Nat) (z : Int) : Int :=
+  Kernel.Z.subNat (posSum w n z) (posSum w n (Kernel.Z.neg z))
 
 /-- Lanes `[0, n)` of `u` in reverse order, splitting the lanes in halves; `d` bounds the depth of
 the recursion. -/
@@ -192,7 +197,7 @@ def rev (w n u : Nat) : Nat := revAux w n n u
 
 /-- The autocorrelation of the biased row `u` of `n` lanes, by one Kronecker product: the signed
 row of `2 * n - 1` lanes whose lane `n - 1 + m` is `∑ j, x[j] * x[j - m]` for the entries `x`. -/
-def autocorr (w n u : Nat) : Int := Int.mul (toInt w n u) (toInt w n (rev w n u))
+def autocorr (w n u : Nat) : Int := Kernel.Z.mul (toInt w n u) (toInt w n (rev w n u))
 
 /-- Lanes `k, k + 1, …` of the biased row `u` hold the rationals `xs` times `d`: each
 `x = num / den` passes `num * d = entry * den`, two integer products per entry and no rational
@@ -248,7 +253,7 @@ theorem pow2_eq (k : Nat) : pow2 k = 2 ^ k := by simp [pow2, Nat.shiftLeft_eq]
 /-- A lane is a digit in base `2 ^ w`. -/
 theorem lane_eq (w k u : Nat) : lane w k u = u / 2 ^ (w * k) % 2 ^ w := by
   simp only [lane, pow2_eq, Nat.sub_eq, Nat.mul_eq]
-  show (u >>> (w * k)) &&& (2 ^ w - 1) = _
+  change (u >>> (w * k)) &&& (2 ^ w - 1) = _
   rw [Nat.and_two_pow_sub_one_eq_mod, Nat.shiftRight_eq_div_pow]
 
 /-- A lane has `w` bits. -/
@@ -257,14 +262,16 @@ theorem lane_lt (w k u : Nat) : lane w k u < 2 ^ w := by
 
 /-- An entry is its lane minus the bias. -/
 theorem entry_eq (w k u : Nat) : entry w k u = (lane w k u : Int) - 2 ^ (w - 1) := by
-  simp [entry, Int.subNatNat_eq_coe, pow2_eq]
+  simp [entry, Kernel.Z.subNat_eq, pow2_eq]
 
 /-- `toInt` subtracts the bias. -/
 theorem toInt_eq (w n u : Nat) : toInt w n u = (u : Int) - bias w n := by
-  simp [toInt, Int.subNatNat_eq_coe]
+  simp [toInt, Kernel.Z.subNat_eq]
 
 /-- `ofInt` adds the bias. -/
-theorem ofInt_eq (w n : Nat) (z : Int) : ofInt w n z = (z + bias w n).toNat := rfl
+theorem ofInt_eq (w n : Nat) (z : Int) : ofInt w n z = (z + bias w n).toNat := by
+  rw [ofInt, Kernel.Z.toNat_eq, Kernel.Z.add_eq]
+  rfl
 
 /-- `lanes w n u` has `n` lanes. -/
 theorem length_lanes (w n u : Nat) : (lanes w n u).length = n := by simp [lanes]
@@ -310,7 +317,7 @@ theorem natCast_two_pow (k : Nat) : ((2 ^ k : Nat) : Int) = (2 : Int) ^ k := rfl
 theorem shift_eval (w k : Nat) (xs : List Int) :
     shift w k (eval (2 ^ w) xs) = eval (2 ^ w) (List.replicate k 0 ++ xs) := by
   simp only [eval_append, eval_zeros, List.length_replicate, Int.zero_add, ← Int.pow_mul, shift,
-    pow2_eq, Nat.mul_eq, Int.ofNat_eq_natCast, natCast_two_pow, Int.mul_def, Int.mul_comm]
+    pow2_eq, Nat.mul_eq, Int.ofNat_eq_natCast, natCast_two_pow, Kernel.Z.mul_eq, Int.mul_comm]
 
 /-- `eval` is additive. -/
 theorem eval_add (b : Int) : ∀ xs ys, eval b (add xs ys) = eval b xs + eval b ys
@@ -339,7 +346,8 @@ theorem eval_conv (b : Int) : ∀ xs ys, eval b (conv xs ys) = eval b xs * eval 
 theorem neg_eval (b : Int) (xs : List Int) : -eval b xs = eval b (xs.map fun x => -x) := by
   have := eval_smul b (-1) xs
   simp only [smul] at this
-  rw [show (xs.map fun x => -x) = xs.map ((-1) * ·) by simp, this]; omega
+  rw [show (xs.map fun x => -x) = xs.map ((-1) * ·) by
+    simp, this]; omega
 
 /-- `l1` of a cons. -/
 theorem l1_cons (x : Int) (xs : List Int) : l1 (x :: xs) = x.natAbs + l1 xs := by simp [l1]
@@ -377,7 +385,7 @@ theorem l1_conv_le : ∀ xs ys, l1 (conv xs ys) ≤ l1 xs * l1 ys
       have h2 := l1_conv_le xs ys
       rw [l1_smul, l1_cons] at h1
       rw [l1_cons, Nat.add_mul]
-      simp at h1
+      simp only [Int.natAbs_zero, Nat.zero_add] at h1
       omega
 
 /-- Sums of nonnegative rows are nonnegative. -/
@@ -463,7 +471,8 @@ theorem length_conv {ys : List Int} (hys : ys ≠ []) :
     ∀ {xs : List Int}, xs ≠ [] → (conv xs ys).length = xs.length + ys.length - 1
   | [x], _ => by
       have : 1 ≤ ys.length := List.length_pos_iff.mpr hys
-      simp [conv, length_add, smul]; omega
+      simp only [conv, smul, length_add, List.length_map, List.length_cons, List.length_nil,
+        Nat.zero_add, Nat.add_sub_cancel_left]; omega
   | x :: x' :: xs, _ => by
       have ih := length_conv hys (xs := x' :: xs) (by simp)
       have : 1 ≤ ys.length := List.length_pos_iff.mpr hys

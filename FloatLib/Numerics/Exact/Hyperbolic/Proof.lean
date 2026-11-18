@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Exact.Hyperbolic.Runtime
 public import FloatLib.Numerics.Exact.Elementary.Proof
+public import FloatLib.Numerics.Exact.Hyperbolic.Runtime
 public import Mathlib.Analysis.SpecialFunctions.Arcosh
 public import Mathlib.Analysis.SpecialFunctions.Arsinh
 public import Mathlib.Analysis.SpecialFunctions.Artanh
@@ -119,7 +119,8 @@ theorem compareSinh_eq_real (argument boundary : ℚ) :
       subst argument
       simp [cmp, cmpUsing]
 
-/-- The logarithmic preliminary bound and the adaptive hyperbolic cosine comparison are both exact. -/
+/-- The logarithmic preliminary bound and the adaptive hyperbolic cosine comparison are both
+exact. -/
 theorem compareCoshPositive_eq_real (argument boundary : ℚ) (hpositive : 0 < argument) :
     compareCoshPositive argument boundary hpositive =
       cmp (Real.cosh (argument : ℝ)) (boundary : ℝ) := by
@@ -211,7 +212,8 @@ theorem prepareArsinh_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
     · rw [Enclosure.Comparison.Prepared.compare, prepareArsinhPositive_eq_compare,
         compareArsinh_eq_real, Rat.cast_neg, Real.arsinh_neg, Rat.cast_neg, cmp_swap]
       simp only [cmp, cmpUsing, neg_lt_neg_iff]
-    · have hzero : argument = 0 := by linarith
+    · have hzero : argument = 0 := by
+        exact le_antisymm (not_lt.mp ‹¬0 < argument›) (not_lt.mp ‹¬argument < 0›)
       subst argument
       simp [Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]
 

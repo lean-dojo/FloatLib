@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Steps
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Neighbors.Steps
 public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Proof
+import Mathlib.Tactic.Order
 
 /-!
 # Neighbor range, status and cohort guarantees
@@ -45,7 +46,7 @@ theorem neighbor_normalize (f : Format) (s : Bool) (c : Nat) (q : Int)
     have hz : (roundedPair f .nearest false ((c : ℚ) * (10 : ℚ) ^ q)).1 = 0 :=
       by omega
     rw [hz, Nat.cast_zero, zero_mul] at he
-    linarith
+    order
   · exact (roundedPair_quantum_le_of_valid f .nearest false c q hv).trans
       ((Datum.valid_quantum_iff ..).mp hv).2.2
 
@@ -97,18 +98,18 @@ theorem nextDown_valid (f : Format) (x : Datum) (hx : x.Valid f) :
 /-- Neighbor steps raise `invalid` for signaling NaNs and nothing else, and leave all other flags
 clear. -/
 theorem nextUp_status (f : Format) (x : Datum) :
-    (nextUp f x).status = { invalid := x.isSNaN } := by
+    (nextUp f x).status = { invalid := x.isSignaling } := by
   cases x with
   | nan s t p => rfl
   | infinity s => cases s <;> rfl
   | finite s c q =>
-      simp only [nextUp, Datum.isSNaN]
+      simp only [nextUp, Datum.isSignaling]
       split <;> rfl
 
 /-- `nextDown` raises invalid if and only if the input is a signaling NaN, and leaves all other
 flags clear. -/
 theorem nextDown_status (f : Format) (x : Datum) :
-    (nextDown f x).status = { invalid := x.isSNaN } := by
+    (nextDown f x).status = { invalid := x.isSignaling } := by
   simp only [nextDown, nextUp_status]
   cases x <;> rfl
 

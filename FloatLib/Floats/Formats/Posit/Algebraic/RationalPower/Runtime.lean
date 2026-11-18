@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -66,7 +66,7 @@ requires a positive exponent. A negative base rounds its magnitude and restores 
   else if base < 0 then
     if exponent.den = 1 then
       let magnitude := roundPositiveRatPower format (-base) exponent
-      if exponent.num % 2 = 0 then magnitude else neg magnitude
+      if exponent.num % 2 = 0 then magnitude else negate magnitude
     else nar format
   else
     roundPositiveRatPower format base exponent

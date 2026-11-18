@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -12,7 +12,8 @@ public import Mathlib.Data.PNat.Basic
 /-!
 # P3109 scaled blocks
 
-Chapter 5 of the unapproved P3109 interim report 4.0.3 defines a block as a nonempty sequence
+Chapter 5 of the unapproved P3109 interim report v4.1 (14 September 2026) defines a block as a
+    nonempty sequence
 with one scale of its own type. Decoding multiplies exact closed rational observations, and
 projection normalizes each exact result before one destination projection. Zero and infinite
 result scales follow the special rules of §5.4.2 and never go through ordinary division.
@@ -24,7 +25,7 @@ exact rational closed operations, and transcendental functions would need an eva
 own, which this module doesn't install.
 
 Reference: §§5.3–5.8 of
-<https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308>.
+<https://github.com/P3109/Public/tree/2d45cf2fe0314d32251f5439d9d3ed078f93fbb9>.
 -/
 
 @[expose] public section
@@ -44,9 +45,13 @@ structure Block (Scale Element : Type) (length : ℕ+) where
 
 /-- A scalar rounding rule for the whole block, or same-width stochastic words, one per lane. -/
 inductive BlockRounding (length : ℕ+) where
+  /-- One rounding mode for every lane. -/
   | scalar (mode : RoundingMode)
+  /-- The report's stochastic rule A, with one `width`-bit random word per lane. -/
   | stochasticA (width : Nat) (words : Vector (BitVec width) length)
+  /-- The report's stochastic rule B, with one `width`-bit random word per lane. -/
   | stochasticB (width : Nat) (words : Vector (BitVec width) length)
+  /-- The report's stochastic rule C, with one `width`-bit random word per lane. -/
   | stochasticC (width : Nat) (words : Vector (BitVec width) length)
 
 /-- Projection attributes shared by a block, with per-lane random words for stochastic modes. -/
@@ -76,7 +81,7 @@ variable [ExactDecoder Source SourceExact] [ExactMap SourceExact Rat]
 /-- Exact §5.4.1 decoding, including the closed rules for nonfinite scale or element codes. -/
 def decode (block : Block Scale Source length) : Vector (NumericalValue Rat) length :=
   let scale := Mixed.decode block.scale
-  block.values.map fun value => Arithmetic.mul scale (Mixed.decode value)
+  block.values.map fun value => Arithmetic.Multiply scale (Mixed.decode value)
 
 /-- Closed signum, with zero mapped to zero and either infinity to its sign. -/
 def signum : NumericalValue Rat → NumericalValue Rat
@@ -90,9 +95,9 @@ scale maps other inputs to zero, and an infinite scale maps them to a signed uni
 -/
 def normalize : NumericalValue Rat → NumericalValue Rat → NumericalValue Rat
   | .exceptional _, _ | _, .exceptional _ => Arithmetic.nan
-  | .infinity negative, value => if negative then Arithmetic.neg (signum value) else signum value
+  | .infinity negative, value => if negative then Arithmetic.Negate (signum value) else signum value
   | .finite scale, value =>
-      if scale = 0 then .finite 0 else Arithmetic.div value (.finite scale)
+      if scale = 0 then .finite 0 else Arithmetic.Divide value (.finite scale)
 
 /-- Normalize exact lane results at the supplied scale, then project each lane once. -/
 def project (destination : Destination Result) (policy : BlockPolicy length) (scale : Scale)
@@ -101,25 +106,30 @@ def project (destination : Destination Result) (policy : BlockPolicy length) (sc
   Vector.ofFn fun lane : Fin (length : Nat) =>
     destination.project (policy.at lane) (normalize exactScale values[lane.val])
 
-/-- §5.5.1 conversion out of a block, with independent scalar destination and lane attributes. -/
-def convertFrom (destination : Destination Result) (policy : BlockPolicy length)
+/-- P3109 interim report v4.1, §5.5.1: conversion out of a block, with independent destination
+    and lane
+    attributes. -/
+def ConvertFromBlock (destination : Destination Result) (policy : BlockPolicy length)
     (block : Block Scale Source length) : Vector Result length :=
   let values := decode block
   Vector.ofFn fun lane : Fin (length : Nat) =>
     destination.project (policy.at lane) values[lane.val]
 
-/-- §5.5.2 conversion to a block whose result scale is given as an operand. -/
-def convertTo (destination : Destination Result) (policy : BlockPolicy length)
+/-- P3109 interim report v4.1, §5.5.2: conversion to a block whose result scale is given as an
+    operand. -/
+def ConvertToBlock (destination : Destination Result) (policy : BlockPolicy length)
     (values : Vector Source length) (scale : Scale) : Block Scale Result length :=
   ⟨scale, project destination policy scale (values.map Mixed.decode)⟩
 
 /-- Maximum finite absolute value. All-NaN and all-infinite blocks follow closed extrema rules. -/
 def maxAbsFinite (values : Vector (NumericalValue Rat) length) : NumericalValue Rat :=
   values.toList.foldl (fun largest value =>
-    Arithmetic.maximumFinite largest (Arithmetic.abs value)) Arithmetic.nan
+    Arithmetic.MaximumFinite largest (Arithmetic.Abs value)) Arithmetic.nan
 
-/-- §5.5.3 select a scale by projecting the maximum finite magnitude, then normalize every lane. -/
-def convertToMaxAbsFinite (scaleDestination : Destination Scale)
+/-- P3109 interim report v4.1, §5.5.3: project the maximum finite magnitude to select a scale,
+    then normalize
+    lanes. -/
+def ConvertToBlockMaxAbsFinite (scaleDestination : Destination Scale)
     (destination : Destination Result) (scalePolicy : ProjectionPolicy)
     (policy : BlockPolicy length) (values : Vector Source length) : Block Scale Result length :=
   let exact := values.map Mixed.decode
@@ -128,19 +138,22 @@ def convertToMaxAbsFinite (scaleDestination : Destination Scale)
 
 /-- Ordered exact closed sum, with a zero identity and no intermediate projections. -/
 def sumExact (values : Vector (NumericalValue Rat) length) : NumericalValue Rat :=
-  values.toList.foldl Arithmetic.add (.finite 0)
+  values.toList.foldl Arithmetic.Add (.finite 0)
 
 /-- Ordered exact closed product, with a one identity and no intermediate projections. -/
 def productExact (values : Vector (NumericalValue Rat) length) : NumericalValue Rat :=
-  values.toList.foldl Arithmetic.mul (.finite 1)
+  values.toList.foldl Arithmetic.Multiply (.finite 1)
 
-/-- §5.6.1 sum every decoded lane and project the complete sum once. -/
-def reduceAdd (destination : Destination Result) (policy : ProjectionPolicy)
+/-- P3109 interim report v4.1, §5.6.1: sum every decoded lane exactly and project the complete
+    sum once. -/
+def BlockReduceAdd (destination : Destination Result) (policy : ProjectionPolicy)
     (block : Block Scale Source length) : Result :=
   destination.project policy (sumExact (decode block))
 
-/-- §5.6.1 multiply every decoded lane and project the complete product once. -/
-def reduceMultiply (destination : Destination Result) (policy : ProjectionPolicy)
+/-- P3109 interim report v4.1, §5.6.1: multiply every decoded lane exactly and project the
+    complete product
+    once. -/
+def BlockReduceMultiply (destination : Destination Result) (policy : ProjectionPolicy)
     (block : Block Scale Source length) : Result :=
   destination.project policy (productExact (decode block))
 
@@ -154,10 +167,11 @@ def dotExact (left : Block Scale Source length) (right : Block RightScale Right 
   let leftValues := decode left
   let rightValues := decode right
   sumExact (Vector.ofFn fun lane : Fin (length : Nat) =>
-    Arithmetic.mul leftValues[lane.val] rightValues[lane.val])
+    Arithmetic.Multiply leftValues[lane.val] rightValues[lane.val])
 
-/-- Project a complete block dot product once, with no rounded lane product or partial sum. -/
-def dotProduct (destination : Destination Result) (policy : ProjectionPolicy)
+/-- P3109 interim report v4.1, §5.6.2: project the exact block dot product once, with no
+    intermediate rounding. -/
+def BlockDotProduct (destination : Destination Result) (policy : ProjectionPolicy)
     (left : Block Scale Source length) (right : Block RightScale Right length) : Result :=
   destination.project policy (dotExact left right)
 

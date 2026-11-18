@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -97,15 +97,15 @@ namespace AtValue
 
 /-- Attach the signed-infinity interpretation of an executable value known to be infinite. -/
 @[inline] def ofInf {fmt : FloatFormat} (x : Model fmt)
-    (hinf : isInf x = true) : AtValue fmt (.infinity (signBit x)) :=
+    (hinf : isInfinite x = true) : AtValue fmt (.infinity (signBit x)) :=
   ⟨x, by
-    have hnan := isNaN_eq_false_of_isInf_eq_true x hinf
+    have hnan := isNaN_eq_false_of_isInfinite_eq_true x hinf
     simp [toNumericalValue, hnan, hinf]⟩
 
 /-- Attach the payload-preserving interpretation of an executable value known to be a NaN. -/
 @[inline] def ofNaN {fmt : FloatFormat} (x : Model fmt)
     (hnan : isNaN x = true) :
-    AtValue fmt (.exceptional (.nan (some (nanPayload x)) (signBit x) (isSNaN x))) :=
+    AtValue fmt (.exceptional (.nan (some (nanPayload x)) (signBit x) (isSignaling x))) :=
   ⟨x, by simp [toNumericalValue, hnan]⟩
 
 /-- Positive infinity with its total interpretation in a conventional IEEE format. -/
@@ -115,7 +115,7 @@ namespace AtValue
     have hsupports :=
       FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
     simp [toNumericalValue, isNaN_posInf,
-      isInf_posInf fmt hsupports]⟩
+      isInfinite_posInf fmt hsupports]⟩
 
 /-- Negative infinity with its total interpretation in a conventional IEEE format. -/
 @[inline] def negInf (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
@@ -124,7 +124,7 @@ namespace AtValue
     have hsupports :=
       FloatFormat.supportsInfinity_eq_true_of_isIEEE fmt hfmt
     simp [toNumericalValue, isNaN_negInf,
-      isInf_negInf fmt hsupports]⟩
+      isInfinite_negInf fmt hsupports]⟩
 
 /-- The bundled executable value has its indexed total interpretation. -/
 @[simp] theorem denote {fmt : FloatFormat} {v : NumericalValue ℝ} (x : AtValue fmt v) :

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch07-rounding-staircase.png: round to nearest even as a step function.
 
-Chapter 07 ("Rounding as a function on the reals") defines rounding as scale, round the integer,
+The chapter on rounding defines rounding as scale, round the integer,
 scale back, and remarks that the one difficulty is that two inputs may have different canonical
 exponents. This figure draws the function on a grid with three binary digits across the powers
 of two at 1 and 2, where the canonical exponent changes and the steps double in width. The
@@ -15,8 +15,9 @@ FloatLib/Floats/Formats/Flocq/Theory/Format/Formats.lean, the function is `round
 `cexp` from FloatLib/Floats/Formats/Flocq/Theory/Core.lean, all re-implemented below on exact
 rationals. Three binary digits is the precision the chapter itself uses for a small example.
 
-The phone companion keeps every step and endpoint, with spacing labels, the marker key and
-the worked tie outside the plot. --out writes both images beside the supplied path.
+The phone companion keeps every step and endpoint, with the marker key below the plot. The
+worked tie (1.125 goes to 1) is checked here and described in the caption. --out writes both
+images beside the supplied path.
 
 Run from anywhere: python3 ch07_rounding_staircase.py [--out PNG]
 """
@@ -111,58 +112,53 @@ def check_rounding(points: list[Fraction], lo: Fraction, hi: Fraction) -> None:
     assert round_ne(Fraction(9, 8)) == 1
 
 
-def draw_mobile(points: list[Fraction], lo: Fraction, hi: Fraction):
-    fig = plt.figure(figsize=(3.8, 8.1))
-    fig.text(0.04, 0.98, "Rounding to nearest even", fontsize=14, weight="bold", va="top")
-    fig.text(0.04, 0.925, "Three binary digits; grid points 0.5 to 2.5", fontsize=11.5, va="top")
-    for x, label, exponent in zip(
-            (0.20, 0.52, 0.84),
-            (r"$0.5 \leq x < 1$", r"$1 \leq x < 2$", r"$2 \leq x < 4$"),
-            (-3, -2, -1)):
-        fig.text(x, 0.867, label, ha="center", fontsize=11.5)
-        fig.text(x, 0.832, f"gap $2^{{{exponent}}}$", ha="center", fontsize=11.5, color=fs.MUTED)
+STEP = fs.ROLE["main"]
 
-    ax = fig.add_axes([0.19, 0.40, 0.78, 0.366])
+
+def key(filled: dict, opened: dict, width: float, square: float) -> list:
+    """Legend handles shared by both arrangements."""
+    return [
+        Line2D([], [], color=STEP, linewidth=width, label="reals rounded to one grid point"),
+        Line2D([], [], label="tie rounded to this point", **filled),
+        Line2D([], [], label="tie rounded to the neighbour", **opened),
+        Line2D([], [], marker="s", markersize=square, color=fs.INK, linestyle="None",
+               label="grid point"),
+        Line2D([], [], color=fs.MUTED, linewidth=fs.LW_REF, label="$y = x$"),
+    ]
+
+
+def draw_mobile(points: list[Fraction], lo: Fraction, hi: Fraction):
+    fig = plt.figure(figsize=(fs.MOBILE_WIDTH, 5.6))
+    ax = fig.add_axes([0.19, 0.40, 0.78, 0.53])
     span = (float(lo) - 0.06, float(hi) + 0.28)
     ax.set(xlim=span, ylim=span, aspect="equal")
     ax.axvspan(1, 2, color=fs.PAPER_2, zorder=0, linewidth=0)
     for power in (1, 2):
         ax.axvline(power, color=fs.MUTED, linestyle=":", linewidth=0.9, zorder=1)
     ax.plot(span, span, color=fs.MUTED, linewidth=0.9, zorder=2)
-    filled = dict(marker="o", markersize=4.6, markerfacecolor=fs.BLUE,
-                  markeredgecolor=fs.BLUE, linestyle="None", zorder=5)
+    filled = dict(marker="o", markersize=4.6, markerfacecolor=STEP,
+                  markeredgecolor=STEP, linestyle="None", zorder=5)
     opened = dict(marker="o", markersize=4.6, markerfacecolor="white",
-                  markeredgecolor=fs.BLUE, markeredgewidth=1.0, linestyle="None", zorder=5)
+                  markeredgecolor=STEP, markeredgewidth=1.0, linestyle="None", zorder=5)
+    fs.value_grid(ax, "both")
     for i, value in enumerate(points):
         if not lo <= value <= hi:
             continue
         left, right = (points[i - 1] + value) / 2, (value + points[i + 1]) / 2
-        ax.plot([float(left), float(right)], [float(value)] * 2, color=fs.BLUE,
-                linewidth=1.8, solid_capstyle="butt", zorder=4)
+        ax.plot([float(left), float(right)], [float(value)] * 2, color=STEP,
+                linewidth=fs.LW_DATA, solid_capstyle="butt", zorder=4)
         for midpoint in (left, right):
             ax.plot(float(midpoint), float(value), **(filled if round_ne(midpoint) == value else opened))
         ax.plot(float(value), float(value), marker="s", markersize=3.4, color=fs.INK,
                 linestyle="None", zorder=6)
     ticks = [float(v) for v in points if lo <= v <= hi]
-    ax.set_xticks(ticks, labels=[f"{v:g}" for v in ticks], fontsize=11.5)
-    ax.set_yticks(ticks, labels=[f"{v:g}" for v in ticks], fontsize=11.5)
+    ax.set_xticks(ticks, labels=[f"{v:g}" for v in ticks], fontsize=fs.SIZE_SMALL)
+    ax.set_yticks(ticks, labels=[f"{v:g}" for v in ticks], fontsize=fs.SIZE_SMALL)
     ax.tick_params(axis="x", labelrotation=90)
-    ax.set_xlabel("input $x$", fontsize=12)
-    ax.set_ylabel("rounded value", fontsize=12)
-    ax.annotate("tie", (1.125, 1), xytext=(1.50, 0.68), fontsize=12,
-                arrowprops=dict(arrowstyle="->", color=fs.INK, lw=1), va="center")
-    handles = [
-        Line2D([], [], color=fs.BLUE, linewidth=1.8, label="inputs sent to one grid point"),
-        Line2D([], [], label="tie lands here", **filled),
-        Line2D([], [], label="tie goes to the other neighbor", **opened),
-        Line2D([], [], marker="s", markersize=3.4, color=fs.INK, linestyle="None",
-               label="grid point: rounding fixes it"),
-        Line2D([], [], color=fs.MUTED, linewidth=0.9, label="$y=x$"),
-    ]
-    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.035, 0.29),
-               fontsize=11.5, labelspacing=0.55, handlelength=1.7, borderaxespad=0)
-    fig.text(0.04, 0.09, "Tie: 1.125 → 1\nEven 1.00₂ wins over odd 1.01₂.",
-             fontsize=12, va="top", linespacing=1.5)
+    ax.set_xlabel("$x$")
+    ax.set_ylabel("$x$ rounded to nearest even")
+    fs.legend(fig, handles=key(filled, opened, fs.LW_DATA, 3.4), loc="upper left",
+              bbox_to_anchor=(0.06, 0.25))
     return fig
 
 
@@ -178,8 +174,9 @@ def main() -> None:
     check_rounding(points, lo, hi)
 
     fs.setup()
-    fig, ax = fs.figure(6.2)
-    fig.subplots_adjust(left=0.1, right=0.98, bottom=0.1, top=0.97)
+    fig = plt.figure(figsize=(fs.WIDTH, 5.6))
+    ax = fig.add_axes([0.09, 0.12, 0.58, 0.86])
+    fs.value_grid(ax, "both")
     span = (float(lo) - 0.06, float(hi) + 0.28)   # room above the last step for the spacing labels
     ax.set_xlim(*span)
     ax.set_ylim(*span)
@@ -191,17 +188,17 @@ def main() -> None:
         if i % 2 == 1:
             ax.axvspan(float(left), float(right), color=fs.PAPER_2, zorder=0, linewidth=0)
         ax.text(float(max(left, lo) + min(right, hi)) / 2, span[1] - 0.05,
-                f"spacing $2^{{{fexp(e)}}}$", ha="center", va="top", fontsize=9.5, color=fs.MUTED)
+                f"spacing $2^{{{fexp(e)}}}$", ha="center", va="top", fontsize=fs.SIZE_TICK, color=fs.MUTED)
     for p in (1, 2):
         ax.axvline(p, color=fs.MUTED, linestyle=":", linewidth=0.9, zorder=1)
 
     ax.plot(span, span, color=fs.MUTED, linewidth=0.9, zorder=2)
 
     # The staircase: for each grid point, the interval of reals that rounds to it.
-    tie_style_in = dict(marker="o", markersize=5.5, markerfacecolor=fs.BLUE,
-                        markeredgecolor=fs.BLUE, linestyle="None", zorder=5)
+    tie_style_in = dict(marker="o", markersize=5.5, markerfacecolor=STEP,
+                        markeredgecolor=STEP, linestyle="None", zorder=5)
     tie_style_out = dict(marker="o", markersize=5.5, markerfacecolor="white",
-                         markeredgecolor=fs.BLUE, markeredgewidth=1.2, linestyle="None", zorder=5)
+                         markeredgecolor=STEP, markeredgewidth=1.2, linestyle="None", zorder=5)
     for i, g in enumerate(points):
         if not (lo <= g <= hi):
             continue
@@ -211,7 +208,7 @@ def main() -> None:
         # Everything strictly between the midpoints rounds to g; the script checks a sample.
         for t in (m_lo + (m_hi - m_lo) / 3, m_lo + 2 * (m_hi - m_lo) / 3):
             assert round_ne(t) == g
-        ax.plot([float(m_lo), float(m_hi)], [float(g), float(g)], color=fs.BLUE,
+        ax.plot([float(m_lo), float(m_hi)], [float(g), float(g)], color=STEP,
                 linewidth=2.2, solid_capstyle="butt", zorder=4)
         ax.plot([float(m_lo)], [float(g)], **(tie_style_in if round_ne(m_lo) == g else tie_style_out))
         ax.plot([float(m_hi)], [float(g)], **(tie_style_in if round_ne(m_hi) == g else tie_style_out))
@@ -219,37 +216,24 @@ def main() -> None:
                 linestyle="None", zorder=6)
 
     ticks = [float(g) for g in inside]
-    ax.set_xticks(ticks, labels=[f"{t:g}" for t in ticks], fontsize=8.5)
-    ax.set_yticks(ticks, labels=[f"{t:g}" for t in ticks], fontsize=8.5)
+    ax.set_xticks(ticks, labels=[f"{t:g}" for t in ticks], fontsize=fs.SIZE_SMALL)
+    ax.set_yticks(ticks, labels=[f"{t:g}" for t in ticks], fontsize=fs.SIZE_SMALL)
     ax.tick_params(axis="x", labelrotation=90)
     ax.set_xlabel("$x$")
-    ax.set_ylabel("round to nearest even of $x$, three binary digits")
+    ax.set_ylabel("$x$ rounded to nearest even")
 
     # One tie spelled out: 1.125 goes to 1 because 1.00 is even and 1.01 is odd.
     t = Fraction(9, 8)
     r = round_ne(t)
     assert r == 1
-    ax.annotate(f"the tie at {float(t):g} goes to {float(r):g},\n"
-                f"significand ${significand(r)}_2$ even, ${significand(t + Fraction(1, 8))}_2$ odd",
-                (float(t), float(r)), xytext=(float(t) + 0.12, float(r) - 0.42), fontsize=9,
-                ha="left", va="top", zorder=7,
-                bbox=dict(facecolor="white", edgecolor="none", pad=0.2),
-                arrowprops=dict(arrowstyle="-|>", color=fs.INK, lw=0.9, shrinkA=2, shrinkB=4))
+    assert significand(r) == "1.00" and significand(t + Fraction(1, 8)) == "1.01"
 
-    handles = [
-        Line2D([], [], color=fs.BLUE, linewidth=2.2, label="reals sent to one grid point"),
-        Line2D([], [], label="a tie that lands here", **tie_style_in),
-        Line2D([], [], label="a tie that goes to the other neighbour", **tie_style_out),
-        Line2D([], [], marker="s", markersize=4, color=fs.INK, linestyle="None",
-               label="grid point, fixed by rounding"),
-        Line2D([], [], color=fs.MUTED, linewidth=0.9, label="$y = x$"),
-    ]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 0.93), fontsize=9,
-              frameon=True, facecolor="white", edgecolor="none", framealpha=1.0)
+    fs.legend(fig, handles=key(tie_style_in, tie_style_out, 2.2, 4), loc="center left",
+              bbox_to_anchor=(0.67, 0.55))
 
     out = fs.save(fig, "ch07-rounding-staircase.png", args.out)
     print(f"wrote {out}")
-    mobile = out.with_name(out.stem + "-mobile.png")
+    mobile = fs.mobile_path(out)
     print(f"wrote {fs.save(draw_mobile(points, lo, hi), mobile.name, mobile)}")
 
 

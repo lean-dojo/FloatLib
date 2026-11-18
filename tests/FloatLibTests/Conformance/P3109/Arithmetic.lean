@@ -1,18 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib
+public import FloatLib.Floats.Formats.P3109
 
 /-!
 # P3109 carrier arithmetic
 
-Checks for the `ExecFloat.P3109` surface: literals, `isInf`, `==` with NaN unequal to itself, the
-`mode`, `saturation`, and `target` options of the arithmetic, `ofRat` with its default policy,
+Checks for the `ExecFloat.P3109` surface: literals, `IsInfinite`, `==` with NaN unequal to itself,
+the `mode`, `saturation`, and `target` options of the arithmetic, `ofRat` with its default policy,
 conversion with `(mode := ...)`, and `#eval` of a value. Closed cases use `binary8p4se`, whose
 code `8e + t` has exponent field `e` and three trailing bits `t`.
 -/
@@ -24,6 +24,31 @@ namespace FloatLibTests.Conformance.P3109.Arithmetic
 open FloatLib.Floats
 open FloatLib.Floats.Formats
 
+-- Independent report formulas retain separate source and destination descriptors.
+example {source : P3109.Format} (value : ExecFloat.P3109 source) (target : P3109.Format)
+    (mode : P3109.RoundingMode) (sat : P3109.SaturationMode) (q : Rat)
+    (hv : value.toClosedRat = .finite q) (hq : 0 ≤ q) :
+    P3109.Format.SameDatum (ExecFloat.P3109.decode (value.Sqrt target mode sat))
+      (P3109.ComparisonRounding.reportValue target ⟨mode, sat⟩ (Real.sqrt (q : ℝ))) :=
+  ExecFloat.P3109.decode_sqrt_report value target mode sat q hv hq
+
+example {source : P3109.Format} (value : ExecFloat.P3109 source) (target : P3109.Format)
+    (mode : P3109.RoundingMode) (sat : P3109.SaturationMode) (q : Rat)
+    (hv : value.toClosedRat = .finite q) (hq : 0 < q) :
+    P3109.Format.SameDatum (ExecFloat.P3109.decode (value.RSqrt target mode sat))
+      (P3109.ComparisonRounding.reportValue target ⟨mode, sat⟩
+        (1 / Real.sqrt (q : ℝ))) :=
+  ExecFloat.P3109.decode_rsqrt_report value target mode sat q hv hq
+
+example {leftFormat rightFormat : P3109.Format}
+    (left : ExecFloat.P3109 leftFormat) (right : ExecFloat.P3109 rightFormat)
+    (target : P3109.Format) (mode : P3109.RoundingMode) (sat : P3109.SaturationMode)
+    (x y : Rat) (hx : left.toClosedRat = .finite x) (hy : right.toClosedRat = .finite y) :
+    P3109.Format.SameDatum (ExecFloat.P3109.decode (left.Hypot right target mode sat))
+      (P3109.ComparisonRounding.reportValue target ⟨mode, sat⟩
+        (Real.sqrt ((x : ℝ) ^ 2 + (y : ℝ) ^ 2))) :=
+  ExecFloat.P3109.decode_hypot_report left right target mode sat x y hx hy
+
 /-- The descriptor used by the closed checks. -/
 abbrev B8P4 := ExecFloat.P3109 .binary8p4se
 
@@ -34,10 +59,10 @@ example :
       (0 : B8P4).toNatBits) = (68, 196, 127, 0) := by
   decide +kernel
 
--- `isInf` tests either infinity, as on the binary formats.
+-- `IsInfinite` tests either infinity.
 example :
-    (300 : B8P4).isInf = true ∧ (-300 : B8P4).isInf = true ∧ (224 : B8P4).isInf = false ∧
-      (ExecFloat.P3109.nan : B8P4).isInf = false := by
+    (300 : B8P4).IsInfinite = true ∧ (-300 : B8P4).IsInfinite = true ∧
+      (224 : B8P4).IsInfinite = false ∧ (ExecFloat.P3109.nan : B8P4).IsInfinite = false := by
   decide +kernel
 
 -- `==` is numerical equality: NaN is unequal to itself, and `compare` leaves NaN unordered.
@@ -51,32 +76,32 @@ example :
 -- `1 + 1/16` is the midpoint of 1 and 9/8: nearest-even keeps 1, the upward and ties-away
 -- modes take 9/8, and the downward mode keeps 1.
 example :
-    ((ExecFloat.P3109.add (1 : B8P4) 0.0625).toNatBits,
-      (ExecFloat.P3109.add (1 : B8P4) 0.0625 (mode := .up)).toNatBits,
-      (ExecFloat.P3109.add (1 : B8P4) 0.0625 (mode := .nearestAway)).toNatBits,
-      (ExecFloat.P3109.add (1 : B8P4) 0.0625 (mode := .down)).toNatBits) =
+    ((ExecFloat.P3109.Add (1 : B8P4) (0.0625 : B8P4)).toNatBits,
+      (ExecFloat.P3109.Add (1 : B8P4) (0.0625 : B8P4) (mode := .up)).toNatBits,
+      (ExecFloat.P3109.Add (1 : B8P4) (0.0625 : B8P4) (mode := .nearestAway)).toNatBits,
+      (ExecFloat.P3109.Add (1 : B8P4) (0.0625 : B8P4) (mode := .down)).toNatBits) =
       (64, 65, 65, 64) := by
   decide +kernel
 
 -- `16 * 16` overflows: no saturation request gives infinity, finite saturation the largest
 -- finite code 126.
 example :
-    ((ExecFloat.P3109.mul (16 : B8P4) 16).toNatBits,
-      (ExecFloat.P3109.mul (16 : B8P4) 16 (saturation := .finite)).toNatBits) =
+    ((ExecFloat.P3109.Multiply (16 : B8P4) (16 : B8P4)).toNatBits,
+      (ExecFloat.P3109.Multiply (16 : B8P4) (16 : B8P4) (saturation := .finite)).toNatBits) =
       (127, 126) := by
   decide +kernel
 
 -- `target` projects into another descriptor: upward rounding of `1 + 1/16` in binary8p3se gives
 -- 5/4, code `4e + t` with `e = 16` and `t = 1`.
 example :
-    (ExecFloat.P3109.add (1 : B8P4) 0.0625 (target := .binary8p3se) (mode := .up)).toNatBits =
-      65 := by
+    (ExecFloat.P3109.Add (1 : B8P4) (0.0625 : B8P4)
+      (target := .binary8p3se) (mode := .up)).toNatBits = 65 := by
   decide +kernel
 
 -- Square root rounds the exact real root: `√2` lies between 11/8 and 3/2, nearer the first.
 example :
-    ((ExecFloat.P3109.sqrt (2 : B8P4)).toNatBits,
-      (ExecFloat.P3109.sqrt (2 : B8P4) (mode := .up)).toNatBits) = (67, 68) := by
+    ((ExecFloat.P3109.Sqrt (2 : B8P4)).toNatBits,
+      (ExecFloat.P3109.Sqrt (2 : B8P4) (mode := .up)).toNatBits) = (67, 68) := by
   decide +kernel
 
 -- `ofRat` defaults to nearest-even with no saturation request, and conversion takes the same
@@ -106,7 +131,7 @@ private def modelOperands : List (BinaryInterchange.Model .binary32) :=
 example :
     modelOperands.map P3109.Arithmetic.Mixed.decode = [.finite 0, P3109.Arithmetic.nan] ∧
       modelOperands.map (fun operand =>
-        (P3109.Arithmetic.Mixed.add (P3109.Arithmetic.Destination.p3109 .binary8p4se) operand
+        (P3109.Arithmetic.Mixed.Add (P3109.Arithmetic.Destination.p3109 .binary8p4se) operand
           (1 : Rat)).toNatBits) = [64, 128] := by
   decide +kernel
 

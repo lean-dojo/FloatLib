@@ -1,17 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Special
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
+
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 
 /-!
@@ -53,12 +52,12 @@ private theorem toModel_of_isNaN {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   simp [toModel, unpack, unpackExponent_eq_ones x hparts.1,
     unpackMantissa_ne_zero x hparts.2]
 
-private theorem toModel_of_isInf {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (x : Model fmt) (hx : isInf x = true) :
+private theorem toModel_of_isInfinite {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+    (x : Model fmt) (hx : isInfinite x = true) :
     toModel x = .infinity (modelSign (signBit x)) := by
   have hencoding := ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
   have hparts : expField x = fmt.expAllOnesNat ∧ fracField x = 0 := by
-    simpa [isInf, hencoding, IEEE.isInf] using hx
+    simpa [isInfinite, hencoding, IEEE.isInfinite] using hx
   have hm : unpackMantissa (toModelBits x) = 0#_ := by
     apply BitVec.toNat_inj.mp
     simpa only [unpackMantissa_toNat, BitVec.toNat_ofNat, Nat.zero_mod] using hparts.2
@@ -97,7 +96,9 @@ private theorem unpack_nan_or (spec : Format) (x y : BitVec spec.numBits)
   have he : unpackExponent x = -1#_ := by
     by_contra he
     simp only [unpack, he, ite_false] at hx
-    split at hx <;> simp_all
+    split at hx <;> simp_all only [BitVec.zero_eq_neg_one_iff, BitVec.toNat_ofNat, Nat.zero_mod,
+      CharP.cast_eq_zero, zero_sub, neg_add_rev, BitVec.toNat_append, pow_one, Nat.mod_succ,
+      reduceCtorEq]
     split at hx <;> simp_all
   have hm : unpackMantissa x ≠ 0#_ := by
     intro hm
@@ -158,9 +159,9 @@ theorem canonicalizeModel_sqrt_eq_model {fmt : FloatFormat} (hfmt : fmt.isIEEE =
           canonicalizeModel (invalidResult fmt) = ofModel fmt .notANumber := by
         rw [invalidResult_eq_canonicalNaN_of_isIEEE fmt hfmt]
         exact congrArg (ofModel fmt) (toModel_canonicalNaN fmt)
-      cases hinf : isInf x with
+      cases hinf : isInfinite x with
       | true =>
-          rw [toModel_of_isInf hfmt x hinf]
+          rw [toModel_of_isInfinite hfmt x hinf]
           cases hsign : signBit x <;>
             simp [Spec.sqrt, chooseNaN1, hnan, hinf, hsign, modelSign,
               UnpackedFloat.sqrt, hcanonical, nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt,
@@ -172,7 +173,7 @@ theorem canonicalizeModel_sqrt_eq_model {fmt : FloatFormat} (hfmt : fmt.isIEEE =
               simp [Spec.sqrt, chooseNaN1, hnan, hinf, hzero, hm, UnpackedFloat.sqrt,
                 canonicalizeModel]
           | false =>
-              have hfinite := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false
+              have hfinite := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false
                 x hnan hinf
               cases hsign : signBit x with
               | false =>

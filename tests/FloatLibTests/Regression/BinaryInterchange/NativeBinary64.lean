@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -341,7 +341,8 @@ open NativeHarness.Binary64
 @[noinline] def genericFma (x y z : Value) : Value :=
   Model.FmaBackend.generic x y z
 
-/-- Cases accepted by the native route alongside exceptional and differently aligned baseline cases. -/
+/-- Cases accepted by the native route alongside exceptional and differently aligned baseline
+cases. -/
 def fixtures : Array (UInt64 × UInt64 × UInt64) :=
   #[
     ⟨0x3ff0000000000000, 0x3ff0000000000000, 0x3ff0000000000000⟩,

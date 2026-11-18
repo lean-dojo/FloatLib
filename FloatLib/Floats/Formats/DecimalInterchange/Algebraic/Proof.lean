@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Runtime
-public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Special
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Root.Semantics
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Direction
+public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Special
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Direction
 
 /-!
 # Numerical guarantees for decimal algebraic operations
@@ -35,9 +34,9 @@ theorem square_valid (f : Format) (mode : RoundingMode) (x : Datum) :
 
 /-- An integer power always delivers a valid datum of the format, including NaN, pole, infinite and
 overflowed results. -/
-theorem powInt_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
-    (powInt f mode x n).value.Valid f := by
-  cases x <;> simp only [powInt]
+theorem pown_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
+    (pown f mode x n).value.Valid f := by
+  cases x <;> simp only [pown]
   all_goals repeat first
     | exact project_valid ..
     | exact projectMagnitude_valid f mode _ (by rfl) _
@@ -47,17 +46,17 @@ theorem powInt_valid (f : Format) (mode : RoundingMode) (x : Datum) (n : Int) :
 
 /-- The reciprocal square root always delivers a valid datum of the format, including
 invalid-operation NaNs, the infinities of signed zeros, and overflowed results. -/
-theorem rsqrt_valid (f : Format) (mode : RoundingMode) (x : Datum) :
-    (rsqrt f mode x).value.Valid f := by
+theorem rSqrt_valid (f : Format) (mode : RoundingMode) (x : Datum) :
+    (rSqrt f mode x).value.Valid f := by
   cases x with
   | nan s t p => exact nanResult_valid ..
   | infinity s =>
-    simp only [rsqrt]
+    simp only [rSqrt]
     split
     · exact invalidResult_valid f
     · exact projectMagnitude_valid f mode false (by rfl) _
   | finite s c q =>
-    simp only [rsqrt]
+    simp only [rSqrt]
     split
     · trivial
     · split
@@ -78,10 +77,10 @@ theorem hypot_valid (f : Format) (mode : RoundingMode) (x y : Datum) :
     | split
 
 /-- Without a pole, a finite integer power is a single rational projection. -/
-theorem powInt_eq_project (f : Format) (mode : RoundingMode) (x : Datum)
+theorem pown_eq_project (f : Format) (mode : RoundingMode) (x : Datum)
     (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n) :
     ∃ preferred negativeZero,
-      powInt f mode x n = project f mode (a ^ n) preferred negativeZero := by
+      pown f mode x n = project f mode (a ^ n) preferred negativeZero := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
   rename_i s c q
@@ -90,12 +89,12 @@ theorem powInt_eq_project (f : Format) (mode : RoundingMode) (x : Datum)
     rcases ha with ha | ha
     · simp [hc] at ha
     · omega
-  exact ⟨q * n, powerSign s n, by simp [powInt, hpole, Datum.finiteValue]⟩
+  exact ⟨q * n, powerSign s n, by simp [pown, hpole, Datum.finiteValue]⟩
 
 /-- Positive finite reciprocal square root uses the exact reciprocal as its radicand. -/
-theorem rsqrt_eq_sqrtMagnitude (f : Format) (mode : RoundingMode)
+theorem rSqrt_eq_sqrtMagnitude (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : 0 < a) :
-    ∃ preferred, rsqrt f mode x = sqrtMagnitude f mode a⁻¹ preferred := by
+    ∃ preferred, rSqrt f mode x = sqrtMagnitude f mode a⁻¹ preferred := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   subst a
   rename_i s c q
@@ -110,7 +109,7 @@ theorem rsqrt_eq_sqrtMagnitude (f : Format) (mode : RoundingMode)
       simp only [↓reduceIte, neg_mul] at ha
       linarith
   subst s
-  exact ⟨(-q) / 2, by simp [rsqrt, hc]⟩
+  exact ⟨(-q) / 2, by simp [rSqrt, hc]⟩
 
 /-- Hypotenuse uses an unrounded sum of squares, including when both operands are zero. -/
 theorem hypot_eq_sqrtMagnitude (f : Format) (mode : RoundingMode)
@@ -217,38 +216,38 @@ theorem abs_square_towardZero_le (f : Format)
 
 /-- In both nearest modes, a nonoverflowing integer power of a finite datum without a pole (a
 nonzero base or a nonnegative exponent) is finite and within half a grid unit of the exact power. -/
-theorem powInt_error_le_half (f : Format) (mode : RoundingMode)
+theorem pown_error_le_half (f : Format) (mode : RoundingMode)
     (hm : mode = .nearest ∨ mode = .nearestAway)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n)
-    (hfinite : (powInt f mode x n).status.overflow = false) :
-    ∃ value, (powInt f mode x n).value.toRat? = some value ∧
+    (hfinite : (pown f mode x n).status.overflow = false) :
+    ∃ value, (pown f mode x n).value.toRat? = some value ∧
       |value - a ^ n| ≤ (10 : ℚ) ^ roundingQuantum f |a ^ n| / 2 := by
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f mode x a hx n ha
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f mode x a hx n ha
   rw [he] at hfinite ⊢
   exact project_error_le_half f mode hm _ _ _ hfinite
 
 /-- In every rounding direction, a nonoverflowing integer power of a finite datum without a pole is
 finite and less than one grid unit from the exact power. -/
-theorem powInt_error_lt_one (f : Format) (mode : RoundingMode)
+theorem pown_error_lt_one (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n)
-    (hfinite : (powInt f mode x n).status.overflow = false) :
-    ∃ value, (powInt f mode x n).value.toRat? = some value ∧
+    (hfinite : (pown f mode x n).status.overflow = false) :
+    ∃ value, (pown f mode x n).value.toRat? = some value ∧
       |value - a ^ n| < (10 : ℚ) ^ roundingQuantum f |a ^ n| := by
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f mode x a hx n ha
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f mode x a hx n ha
   rw [he] at hfinite ⊢
   exact project_error_lt_one f mode _ _ _ hfinite
 
 /-- An integer power of a finite datum raises inexact if and only if a finite result differs from
 the exact power, also when it overflows to the greatest finite datum. A pole gives an infinity, so a
 finite result excludes it. -/
-theorem powInt_inexact_iff (f : Format) (mode : RoundingMode)
+theorem pown_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a) (n : Int)
-    (hv : (powInt f mode x n).value.toRat? = some value) :
-    (powInt f mode x n).status.inexact = true ↔ value ≠ a ^ n := by
+    (hv : (pown f mode x n).value.toRat? = some value) :
+    (pown f mode x n).status.inexact = true ↔ value ≠ a ^ n := by
   by_cases hpole : a = 0 ∧ n < 0
   · obtain ⟨s, q, rfl⟩ := Datum.toRat?_eq_some_zero_iff.mp (hpole.1 ▸ hx)
-    simp [powInt_zero_neg f mode s q n hpole.2, Datum.toRat?_eq] at hv
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f mode x a hx n
+    simp [pown_zero_neg f mode s q n hpole.2, Datum.toRat?_eq] at hv
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f mode x a hx n
     ((not_and_or.mp hpole).imp id le_of_not_gt)
   rw [he] at hv ⊢
   exact project_inexact_iff f mode _ _ _ _ hv
@@ -256,40 +255,40 @@ theorem powInt_inexact_iff (f : Format) (mode : RoundingMode)
 /-- An integer power of a finite datum raises underflow if and only if the exact power is below the
 least normal magnitude in absolute value and the result is inexact. A pole raises only
 divide-by-zero, and an overflowing power is never tiny. -/
-theorem powInt_underflow_iff (f : Format) (mode : RoundingMode)
+theorem pown_underflow_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) :
-    (powInt f mode x n).status.underflow = true ↔
-      |a ^ n| < f.minNormal ∧ (powInt f mode x n).status.inexact = true := by
+    (pown f mode x n).status.underflow = true ↔
+      |a ^ n| < f.minNormal ∧ (pown f mode x n).status.inexact = true := by
   by_cases hpole : a = 0 ∧ n < 0
   · obtain ⟨s, q, rfl⟩ := Datum.toRat?_eq_some_zero_iff.mp (hpole.1 ▸ hx)
-    simp [powInt_zero_neg f mode s q n hpole.2]
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f mode x a hx n
+    simp [pown_zero_neg f mode s q n hpole.2]
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f mode x a hx n
     ((not_and_or.mp hpole).imp id le_of_not_gt)
   rw [he]
   exact project_underflow_iff f mode _ _ _
 
 /-- In both nearest modes, a nonoverflowing reciprocal square root of a positive finite datum is
 finite and within half a grid unit of the real reciprocal square root. -/
-theorem rsqrt_error_le_half (f : Format) (mode : RoundingMode)
+theorem rSqrt_error_le_half (f : Format) (mode : RoundingMode)
     (hm : mode = .nearest ∨ mode = .nearestAway)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : 0 < a)
-    (hfinite : (rsqrt f mode x).status.overflow = false) :
-    ∃ value : ℚ, (rsqrt f mode x).value.toRat? = some value ∧
+    (hfinite : (rSqrt f mode x).status.overflow = false) :
+    ∃ value : ℚ, (rSqrt f mode x).value.toRat? = some value ∧
       |(value : ℝ) - (Real.sqrt (a : ℝ))⁻¹| ≤
         (10 : ℝ) ^ sqrtQuantum f a⁻¹ / 2 := by
-  obtain ⟨preferred, he⟩ := rsqrt_eq_sqrtMagnitude f mode x a hx ha
+  obtain ⟨preferred, he⟩ := rSqrt_eq_sqrtMagnitude f mode x a hx ha
   rw [he] at hfinite ⊢
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_error_le_half f mode hm (inv_nonneg.mpr ha.le) preferred hfinite
 
 /-- In every rounding direction, a nonoverflowing reciprocal square root of a positive finite datum
 is finite and less than one grid unit from the real reciprocal square root. -/
-theorem rsqrt_error_lt_one (f : Format) (mode : RoundingMode)
+theorem rSqrt_error_lt_one (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : 0 < a)
-    (hfinite : (rsqrt f mode x).status.overflow = false) :
-    ∃ value : ℚ, (rsqrt f mode x).value.toRat? = some value ∧
+    (hfinite : (rSqrt f mode x).status.overflow = false) :
+    ∃ value : ℚ, (rSqrt f mode x).value.toRat? = some value ∧
       |(value : ℝ) - (Real.sqrt (a : ℝ))⁻¹| < (10 : ℝ) ^ sqrtQuantum f a⁻¹ := by
-  obtain ⟨preferred, he⟩ := rsqrt_eq_sqrtMagnitude f mode x a hx ha
+  obtain ⟨preferred, he⟩ := rSqrt_eq_sqrtMagnitude f mode x a hx ha
   rw [he] at hfinite ⊢
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_error_lt_one f mode (inv_nonneg.mpr ha.le) preferred hfinite
@@ -323,20 +322,20 @@ theorem hypot_error_lt_one (f : Format) (mode : RoundingMode)
 
 /-- A finite datum with a nonpositive value has an infinite or NaN reciprocal square root, which
 raises neither underflow nor inexact. -/
-private theorem rsqrt_of_nonpos (f : Format) (mode : RoundingMode) (x : Datum) (a : ℚ)
+private theorem rSqrt_of_nonpos (f : Format) (mode : RoundingMode) (x : Datum) (a : ℚ)
     (hx : x.toRat? = some a) (ha : a ≤ 0) :
-    (rsqrt f mode x).value.toRat? = none ∧ (rsqrt f mode x).status.underflow = false ∧
-      (rsqrt f mode x).status.inexact = false := by
+    (rSqrt f mode x).value.toRat? = none ∧ (rSqrt f mode x).status.underflow = false ∧
+      (rSqrt f mode x).status.inexact = false := by
   cases x <;> simp only [Datum.toRat?_eq, Option.some.injEq, reduceCtorEq] at hx
   rename_i s c q
   by_cases hc : c = 0
-  · simp [rsqrt, hc, Datum.toRat?_eq]
+  · simp [rSqrt, hc, Datum.toRat?_eq]
   cases s
   · simp only [Bool.false_eq_true, ↓reduceIte, one_mul] at hx
     have hpos : (0 : ℚ) < (c : ℚ) * (10 : ℚ) ^ q :=
       mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hc) (zpow_pos (by norm_num) _)
-    linarith
-  · simp [rsqrt, hc, invalidResult, Datum.toRat?_eq]
+    exact (not_le_of_gt (show (0 : ℚ) < a from hx ▸ hpos) ha).elim
+  · simp [rSqrt, hc, invalidResult, Datum.toRat?_eq]
 
 /-- An overflowing square root with a finite result raises inexact and lies below the exact root. -/
 private theorem sqrtMagnitude_value_lt_of_overflow (f : Format) (mode : RoundingMode) {x : ℚ}
@@ -373,14 +372,14 @@ private theorem sqrtMagnitude_inexact_iff_of_eq_some (f : Format) (mode : Roundi
 /-- The reciprocal square root of a finite datum raises inexact if and only if a finite result
 differs from the real reciprocal square root, also when it overflows to the greatest finite datum.
 A zero or negative operand gives an infinity or a NaN, so a finite result has a positive operand. -/
-theorem rsqrt_inexact_iff (f : Format) (mode : RoundingMode)
+theorem rSqrt_inexact_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a value : ℚ) (hx : x.toRat? = some a)
-    (hv : (rsqrt f mode x).value.toRat? = some value) :
-    (rsqrt f mode x).status.inexact = true ↔
+    (hv : (rSqrt f mode x).value.toRat? = some value) :
+    (rSqrt f mode x).status.inexact = true ↔
       (value : ℝ) ≠ (Real.sqrt (a : ℝ))⁻¹ := by
   rcases le_or_gt a 0 with ha | ha
-  · simp [(rsqrt_of_nonpos f mode x a hx ha).1] at hv
-  obtain ⟨preferred, he⟩ := rsqrt_eq_sqrtMagnitude f mode x a hx ha
+  · simp [(rSqrt_of_nonpos f mode x a hx ha).1] at hv
+  obtain ⟨preferred, he⟩ := rSqrt_eq_sqrtMagnitude f mode x a hx ha
   rw [he] at hv ⊢
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_inexact_iff_of_eq_some f mode (inv_nonneg.mpr ha.le) preferred value hv
@@ -388,15 +387,15 @@ theorem rsqrt_inexact_iff (f : Format) (mode : RoundingMode)
 /-- The reciprocal square root of a finite datum raises underflow if and only if the real
 reciprocal square root is below the least normal magnitude and the result is inexact. A zero or
 negative operand raises only divide-by-zero or invalid, and an overflowing root is never tiny. -/
-theorem rsqrt_underflow_iff (f : Format) (mode : RoundingMode)
+theorem rSqrt_underflow_iff (f : Format) (mode : RoundingMode)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) :
-    (rsqrt f mode x).status.underflow = true ↔
+    (rSqrt f mode x).status.underflow = true ↔
       (Real.sqrt (a : ℝ))⁻¹ < (f.minNormal : ℝ) ∧
-        (rsqrt f mode x).status.inexact = true := by
+        (rSqrt f mode x).status.inexact = true := by
   rcases le_or_gt a 0 with ha | ha
-  · obtain ⟨-, hu, hi⟩ := rsqrt_of_nonpos f mode x a hx ha
+  · obtain ⟨-, hu, hi⟩ := rSqrt_of_nonpos f mode x a hx ha
     simp [hu, hi]
-  obtain ⟨preferred, he⟩ := rsqrt_eq_sqrtMagnitude f mode x a hx ha
+  obtain ⟨preferred, he⟩ := rSqrt_eq_sqrtMagnitude f mode x a hx ha
   rw [he]
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_underflow_iff f mode (inv_nonneg.mpr ha.le) preferred
@@ -429,12 +428,12 @@ theorem hypot_underflow_iff (f : Format) (mode : RoundingMode)
 
 /-- Rounding toward positive, a nonoverflowing reciprocal square root of a positive finite datum is
 finite and at least the real reciprocal square root. -/
-theorem le_rsqrt_up (f : Format)
+theorem le_rSqrt_up (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : 0 < a)
-    (hfinite : (rsqrt f .up x).status.overflow = false) :
-    ∃ value : ℚ, (rsqrt f .up x).value.toRat? = some value ∧
+    (hfinite : (rSqrt f .up x).status.overflow = false) :
+    ∃ value : ℚ, (rSqrt f .up x).value.toRat? = some value ∧
       (Real.sqrt (a : ℝ))⁻¹ ≤ (value : ℝ) := by
-  obtain ⟨preferred, he⟩ := rsqrt_eq_sqrtMagnitude f .up x a hx ha
+  obtain ⟨preferred, he⟩ := rSqrt_eq_sqrtMagnitude f .up x a hx ha
   rw [he] at hfinite ⊢
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     le_sqrtMagnitude_up f (inv_nonneg.mpr ha.le) preferred hfinite
@@ -442,12 +441,12 @@ theorem le_rsqrt_up (f : Format)
 /-- Rounding toward zero or toward negative, the reciprocal square root of a positive finite datum
 is finite and at most the real reciprocal square root. The two modes agree because the result is
 positive. An overflow delivers the greatest finite datum, which lies below the root. -/
-theorem rsqrt_directed_le (f : Format) (mode : RoundingMode)
+theorem rSqrt_directed_le (f : Format) (mode : RoundingMode)
     (hm : mode = .towardZero ∨ mode = .down)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (ha : 0 < a) :
-    ∃ value : ℚ, (rsqrt f mode x).value.toRat? = some value ∧
+    ∃ value : ℚ, (rSqrt f mode x).value.toRat? = some value ∧
       (value : ℝ) ≤ (Real.sqrt (a : ℝ))⁻¹ := by
-  obtain ⟨preferred, he⟩ := rsqrt_eq_sqrtMagnitude f mode x a hx ha
+  obtain ⟨preferred, he⟩ := rSqrt_eq_sqrtMagnitude f mode x a hx ha
   rw [he]
   simpa only [Rat.cast_inv, Real.sqrt_inv] using
     sqrtMagnitude_directed_le f mode hm (inv_nonneg.mpr ha.le) preferred
@@ -479,30 +478,30 @@ theorem hypot_directed_le (f : Format) (mode : RoundingMode)
 
 /-- Rounding toward positive, a nonoverflowing integer power of a finite datum without a pole is
 finite and at least the exact power. -/
-theorem le_powInt_up (f : Format)
+theorem le_pown_up (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n)
-    (hfinite : (powInt f .up x n).status.overflow = false) :
-    ∃ value : ℚ, (powInt f .up x n).value.toRat? = some value ∧ a ^ n ≤ value := by
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f .up x a hx n ha
+    (hfinite : (pown f .up x n).status.overflow = false) :
+    ∃ value : ℚ, (pown f .up x n).value.toRat? = some value ∧ a ^ n ≤ value := by
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f .up x a hx n ha
   rw [he] at hfinite ⊢
   exact le_project_up f _ _ _ hfinite
 
 /-- Rounding toward negative, a nonoverflowing integer power of a finite datum without a pole is
 finite and at most the exact power. -/
-theorem powInt_down_le (f : Format)
+theorem pown_down_le (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n)
-    (hfinite : (powInt f .down x n).status.overflow = false) :
-    ∃ value : ℚ, (powInt f .down x n).value.toRat? = some value ∧ value ≤ a ^ n := by
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f .down x a hx n ha
+    (hfinite : (pown f .down x n).status.overflow = false) :
+    ∃ value : ℚ, (pown f .down x n).value.toRat? = some value ∧ value ≤ a ^ n := by
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f .down x a hx n ha
   rw [he] at hfinite ⊢
   exact project_down_le f _ _ _ hfinite
 
 /-- Rounding toward zero, an integer power of a finite datum without a pole is finite and no larger
 in magnitude than the exact power, also when it overflows to the greatest finite datum. -/
-theorem abs_powInt_towardZero_le (f : Format)
+theorem abs_pown_towardZero_le (f : Format)
     (x : Datum) (a : ℚ) (hx : x.toRat? = some a) (n : Int) (ha : a ≠ 0 ∨ 0 ≤ n) :
-    ∃ value : ℚ, (powInt f .towardZero x n).value.toRat? = some value ∧ |value| ≤ |a ^ n| := by
-  obtain ⟨preferred, negativeZero, he⟩ := powInt_eq_project f .towardZero x a hx n ha
+    ∃ value : ℚ, (pown f .towardZero x n).value.toRat? = some value ∧ |value| ≤ |a ^ n| := by
+  obtain ⟨preferred, negativeZero, he⟩ := pown_eq_project f .towardZero x a hx n ha
   rw [he]
   exact abs_project_towardZero_le f _ _ _
 

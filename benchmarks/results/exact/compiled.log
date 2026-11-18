@@ -1,0 +1,69 @@
+COMPILED nat/Nat.add bits=64 ns=386 sink=0
+COMPILED nat/Nat.mul bits=64 ns=365 sink=158
+COMPILED nat/Nat.div (2n by n bits) bits=64 ns=489 sink=1
+COMPILED nat/Nat.gcd bits=64 ns=283 sink=6
+COMPILED nat/Kernel.size bits=64 ns=5553 sink=0
+COMPILED nat/Kernel.isqrt bits=64 ns=10092 sink=943
+COMPILED root/IntegerRoot.newton 3 bits=64 ns=11261 sink=653
+COMPILED root/IntegerRoot.Seeded.newton 3 bits=64 ns=2025 sink=653
+COMPILED int/Signed.mul bits=64 ns=700 sink=158
+COMPILED rat/a + b < c (Rat) bits=64 ns=2672 sink=1
+COMPILED rat/a + b < c (Frac) bits=64 ns=3064 sink=0
+COMPILED dyad/Dyad.add bits=64 ns=1143 sink=808
+COMPILED ball/Ball.mul bits=64 ns=1786 sink=158
+COMPILED nat/Nat.add bits=1024 ns=444 sink=312
+COMPILED nat/Nat.mul bits=1024 ns=635 sink=856
+COMPILED nat/Nat.div (2n by n bits) bits=1024 ns=1090 sink=476
+COMPILED nat/Nat.gcd bits=1024 ns=6182 sink=351
+COMPILED nat/Kernel.size bits=1024 ns=117650 sink=0
+COMPILED nat/Kernel.isqrt bits=1024 ns=257362 sink=353
+COMPILED root/IntegerRoot.newton 3 bits=1024 ns=251710 sink=578
+COMPILED root/IntegerRoot.Seeded.newton 3 bits=1024 ns=10344 sink=578
+COMPILED int/Signed.mul bits=1024 ns=1312 sink=856
+COMPILED rat/a + b < c (Rat) bits=1024 ns=28244 sink=0
+COMPILED rat/a + b < c (Frac) bits=1024 ns=7406 sink=1
+COMPILED dyad/Dyad.add bits=1024 ns=2099 sink=0
+COMPILED ball/Ball.mul bits=1024 ns=4773 sink=856
+COMPILED nat/Nat.add bits=4096 ns=851 sink=256
+COMPILED nat/Nat.mul bits=4096 ns=3024 sink=865
+COMPILED nat/Nat.div (2n by n bits) bits=4096 ns=7825 sink=265
+COMPILED nat/Nat.gcd bits=4096 ns=36967 sink=1
+COMPILED nat/Kernel.size bits=4096 ns=102608 sink=0
+COMPILED nat/Kernel.isqrt bits=4096 ns=276773 sink=0
+COMPILED root/IntegerRoot.newton 3 bits=4096 ns=275254 sink=0
+COMPILED root/IntegerRoot.Seeded.newton 3 bits=4096 ns=19932 sink=0
+COMPILED int/Signed.mul bits=4096 ns=2834 sink=865
+COMPILED rat/a + b < c (Rat) bits=4096 ns=123554 sink=1
+COMPILED rat/a + b < c (Frac) bits=4096 ns=16384 sink=1
+COMPILED dyad/Dyad.add bits=4096 ns=1252 sink=780
+COMPILED ball/Ball.mul bits=4096 ns=4267 sink=865
+COMPILED nat/Nat.add bits=16384 ns=1158 sink=0
+COMPILED nat/Nat.mul bits=16384 ns=17750 sink=633
+COMPILED nat/Nat.div (2n by n bits) bits=16384 ns=57639 sink=563
+COMPILED nat/Nat.gcd bits=16384 ns=224266 sink=9
+COMPILED nat/Kernel.size bits=16384 ns=87046 sink=0
+COMPILED nat/Kernel.isqrt bits=16384 ns=958189 sink=0
+COMPILED root/IntegerRoot.newton 3 bits=16384 ns=827990 sink=0
+COMPILED root/IntegerRoot.Seeded.newton 3 bits=16384 ns=99635 sink=0
+COMPILED int/Signed.mul bits=16384 ns=18773 sink=633
+COMPILED rat/a + b < c (Rat) bits=16384 ns=791978 sink=1
+COMPILED rat/a + b < c (Frac) bits=16384 ns=113565 sink=1
+COMPILED dyad/Dyad.add bits=16384 ns=2774 sink=0
+COMPILED ball/Ball.mul bits=16384 ns=22127 sink=633
+COMPILED nat/Nat.add bits=100000 ns=5816 sink=352
+COMPILED nat/Nat.mul bits=100000 ns=280187 sink=304
+COMPILED nat/Nat.div (2n by n bits) bits=100000 ns=981311 sink=60
+COMPILED nat/Nat.gcd bits=100000 ns=4100013 sink=136
+COMPILED nat/Kernel.size bits=100000 ns=80353 sink=0
+COMPILED nat/Kernel.isqrt bits=100000 ns=9012165 sink=0
+COMPILED root/IntegerRoot.newton 3 bits=100000 ns=7110284 sink=0
+COMPILED root/IntegerRoot.Seeded.newton 3 bits=100000 ns=2524396 sink=0
+COMPILED int/Signed.mul bits=100000 ns=240167 sink=304
+COMPILED rat/a + b < c (Rat) bits=100000 ns=12197135 sink=1
+COMPILED rat/a + b < c (Frac) bits=100000 ns=1560909 sink=0
+COMPILED dyad/Dyad.add bits=100000 ns=9649 sink=0
+COMPILED ball/Ball.mul bits=100000 ns=234626 sink=304
+COMPILED mod/powModWindow 0 (binary) bits=64 ns=31599 sink=911
+COMPILED mod/powModWindow 0 (binary) bits=256 ns=161764 sink=665
+COMPILED mod/powModWindow 0 (binary) bits=1024 ns=1443330 sink=517
+COMPILED mod/powModWindow 0 (binary) bits=4096 ns=35319237 sink=976

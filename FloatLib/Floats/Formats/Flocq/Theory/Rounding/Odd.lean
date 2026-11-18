@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 
 /-!
 # Round to Odd
@@ -130,11 +130,11 @@ theorem nearestEven_roundOdd_binary_extra (extra : ℕ) (x : ℝ) :
   set H : ℤ := (2 : ℤ) ^ (extra + 1) with hH
   have hKtwo : K = 2 * H := by
     rw [hK, hH, pow_succ]
-    ring
+    ac_rfl
   have hKpos : (0 : ℝ) < (K : ℝ) := by
     rw [hK]
     positivity
-  have hKEven : Even K := ⟨H, by rw [hKtwo]; ring⟩
+  have hKEven : Even K := ⟨H, by rw [hKtwo]; omega⟩
   have hKcast : (2 : ℝ) ^ (extra + 2) = (K : ℝ) := by
     rw [hK]
     push_cast
@@ -207,23 +207,23 @@ theorem roundAtScale_nearestEven_after_odd_binary_extra
   rw [hnormalize, nearestEven_roundOdd_binary_extra extra (x / step)]
 
 /-- If `x` is not representable, round-to-odd selects an odd scaled integer mantissa. -/
-theorem oddRound_scaled_mantissa_odd_of_not_generic
+theorem oddRound_scaledMantissa_odd_of_not_generic
     {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp] {x : ℝ}
-    (hx : ¬genericFormat β fexp x) :
+    (hx : ¬GenericRepresentable β fexp x) :
     Odd (oddRound (scaledMantissa β fexp x)) := by
   apply oddRound_odd_of_inexact
   intro hs
   apply hx
-  apply generic_format_of_scaled_mantissa_int
+  apply genericRepresentable_of_scaledMantissa_int
     (n := ⌊scaledMantissa β fexp x⌋)
   exact hs
 
 /-- Round-to-odd produces a value in the selected generic format. -/
-theorem generic_format_round_odd
+theorem genericRepresentable_round_odd
     {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp] (x : ℝ) :
-    genericFormat β fexp
+    GenericRepresentable β fexp
       (round (β := β) (fexp := fexp) oddRound x) :=
-  generic_format_round oddRound x
+  genericRepresentable_round oddRound x
 
 /--
 Semantic round-to-odd specification at the grid exponent selected for the input.
@@ -241,10 +241,10 @@ def RoundOddPoint (β : Numerics.Radix) (F : ℝ → Prop) (exponent : ℤ) (x f
 /-- Generic rounding with `oddRound` satisfies the round-to-odd point specification. -/
 theorem round_odd_point
     {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp] (x : ℝ) :
-    RoundOddPoint β (genericFormat β fexp) (cexp β fexp x) x
+    RoundOddPoint β (GenericRepresentable β fexp) (cexp β fexp x) x
       (round (β := β) (fexp := fexp) oddRound x) := by
-  refine ⟨generic_format_round_odd x, ?_⟩
-  by_cases hx : genericFormat β fexp x
+  refine ⟨genericRepresentable_round_odd x, ?_⟩
+  by_cases hx : GenericRepresentable β fexp x
   · exact Or.inl (round_preserves_generic oddRound x hx)
   · right
     constructor
@@ -255,14 +255,14 @@ theorem round_odd_point
       · exact Or.inr (by simpa [hceil] using
           (round_ceil_point (β := β) (fexp := fexp) x))
     · refine ⟨oddRound (scaledMantissa β fexp x), rfl, ?_⟩
-      exact oddRound_scaled_mantissa_odd_of_not_generic hx
+      exact oddRound_scaledMantissa_odd_of_not_generic hx
 
 /-- Flocq's round-to-odd point predicate, testing parity at the result's canonical exponent.
 Abrupt-underflow grids can give a different exponent to the input and output, so input-grid
 parity alone does not establish this predicate. -/
 def RoundOddCanonicalPoint (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp]
     (x f : ℝ) : Prop :=
-  RoundOddPoint β (genericFormat β fexp) (cexp β fexp f) x f
+  RoundOddPoint β (GenericRepresentable β fexp) (cexp β fexp f) x f
 
 /-- Input-grid rounding satisfies canonical round-to-odd whenever the canonical exponent is
 preserved. Fixed-point grids always satisfy this condition. -/
@@ -275,7 +275,7 @@ theorem round_odd_canonical_point_of_cexp_eq
   exact round_odd_point x
 
 /-- Fixed-point round-to-odd meets Flocq's canonical parity convention for every input. -/
-theorem round_odd_canonical_point_FIX (β : Numerics.Radix) (exponent : ℤ) (x : ℝ) :
+theorem round_odd_canonical_point_fix (β : Numerics.Radix) (exponent : ℤ) (x : ℝ) :
     RoundOddCanonicalPoint β (fixExp exponent) x
       (round (β := β) (fexp := fixExp exponent) oddRound x) := by
   apply round_odd_canonical_point_of_cexp_eq

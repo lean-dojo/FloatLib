@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -67,7 +67,7 @@ theorem nextDown_infinite_bound (f : Format) (x : Datum) (hx : x.Valid f)
   have h := nextUp_infinite_bound f x.negate (by simpa using hx) (-a)
     (Datum.negate_toRat?_of_eq_some ha) hout y.negate (-v) (by simpa using hy)
     (Datum.negate_toRat?_of_eq_some hv)
-  linarith
+  exact neg_le_neg_iff.mp h
 
 /-- `nextUp` leaves `+∞` unchanged, with no flags. -/
 @[simp] theorem nextUp_positive_infinity (f : Format) :

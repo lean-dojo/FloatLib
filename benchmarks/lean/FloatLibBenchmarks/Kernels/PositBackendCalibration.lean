@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -109,8 +109,8 @@ private def printRow
 
 private def calibrateBinary
     {format : Format} {width_le : format.bits ≤ 8}
-    {spec : Value format width_le → Value format width_le → Value format width_le}
-    (operation : Operation) (candidates : CandidateSet (Certified spec))
+    {reference : Value format width_le → Value format width_le → Value format width_le}
+    (operation : Operation) (candidates : CandidateSet (Certified reference))
     (iterations : Nat) : IO Unit := do
   let policy := Policy.default
   let selected := selectCandidate policy candidates.estimates
@@ -136,8 +136,8 @@ private def calibrateBinary
 
 private def calibrateUnary
     {format : Format} {width_le : format.bits ≤ 8}
-    {spec : Value format width_le → Value format width_le}
-    (operation : Operation) (candidates : CandidateSet (Certified spec))
+    {reference : Value format width_le → Value format width_le}
+    (operation : Operation) (candidates : CandidateSet (Certified reference))
     (iterations : Nat) : IO Unit := do
   let policy := Policy.default
   let selected := selectCandidate policy candidates.estimates
@@ -161,10 +161,10 @@ private def calibrateUnary
 
 private def calibrateTernary
     {format : Format} {width_le : format.bits ≤ 8}
-    {spec :
+    {reference :
       Value format width_le → Value format width_le →
         Value format width_le → Value format width_le}
-    (operation : Operation) (candidates : CandidateSet (Certified spec))
+    (operation : Operation) (candidates : CandidateSet (Certified reference))
     (iterations : Nat) : IO Unit := do
   let policy := Policy.default
   let selected := selectCandidate policy candidates.estimates

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,8 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.Codebook.Arithmetic.Runtime
 public import FloatLib.Numerics.Operation.Semantics
-public import Mathlib.Algebra.Group.Nat.Defs
-public import Mathlib.Algebra.Ring.Int.Defs
 
 /-!
 # Correctness of catalog-codebook arithmetic
@@ -47,8 +45,8 @@ theorem neg_refines :
   intro code value hvalue
   rcases bitVec1_cases code with hcode | hcode <;> subst code
   all_goals
-    simp [NumericalSystem.Represents, Codebook.numericalSystem,
-      Catalog.bipolar1] at hvalue
+    simp only [NumericalSystem.Represents, bipolar1, Int.reduceNeg, numericalSystem,
+      BitVec.toNat_ofNat, pow_one, Nat.zero_mod, Nat.mod_succ] at hvalue
   all_goals
     injection hvalue with hvalue
     subst value
@@ -64,8 +62,8 @@ theorem mul_refines :
   rcases bitVec1_cases left with hleft | hleft <;> subst left <;>
     rcases bitVec1_cases right with hright | hright <;> subst right
   all_goals
-    simp [NumericalSystem.Represents, Codebook.numericalSystem,
-      Catalog.bipolar1] at hx hy
+    simp only [NumericalSystem.Represents, bipolar1, Int.reduceNeg, numericalSystem,
+      BitVec.toNat_ofNat, pow_one, Nat.zero_mod, Nat.mod_succ] at hx hy
   all_goals
     injection hx with hx
     injection hy with hy
@@ -95,8 +93,9 @@ theorem neg_refines :
   intro code value hvalue
   rcases bitVec2_cases code with hcode | hcode | hcode | hcode <;> subst code
   all_goals
-    simp [NumericalSystem.Represents, Codebook.numericalSystem,
-      Catalog.ternary2] at hvalue
+    simp only [NumericalSystem.Represents, ternary2, Int.reduceNeg, numericalSystem,
+      BitVec.toNat_ofNat, Nat.reducePow, Nat.zero_mod, Nat.one_mod, Nat.reduceMod, Nat.mod_succ,
+      reduceCtorEq] at hvalue
   all_goals
     injection hvalue with hvalue
     subst value
@@ -111,8 +110,9 @@ theorem mul_refines :
   rcases bitVec2_cases left with hleft | hleft | hleft | hleft <;> subst left <;>
     rcases bitVec2_cases right with hright | hright | hright | hright <;> subst right
   all_goals
-    simp [NumericalSystem.Represents, Codebook.numericalSystem,
-      Catalog.ternary2] at hx hy
+    simp only [NumericalSystem.Represents, ternary2, Int.reduceNeg, numericalSystem,
+      BitVec.toNat_ofNat, Nat.reducePow, Nat.zero_mod, Nat.one_mod, Nat.reduceMod, Nat.mod_succ,
+      reduceCtorEq] at hx hy
   all_goals
     injection hx with hx
     injection hy with hy

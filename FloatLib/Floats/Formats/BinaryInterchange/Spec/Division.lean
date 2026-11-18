@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
 
 /-!
 # Division specification
@@ -30,10 +30,10 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model.Spec
   match chooseNaN2 x y with
   | some nan => nan
   | none =>
-      if isInf x then
-        if isInf y then invalidResult fmt
+      if isInfinite x then
+        if isInfinite y then invalidResult fmt
         else nativeOverflow fmt (signBit x != signBit y)
-      else if isInf y then
+      else if isInfinite y then
         zero fmt (signBit x != signBit y)
       else
         invalidResult fmt

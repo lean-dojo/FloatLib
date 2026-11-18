@@ -1,0 +1,39 @@
+format,term,label,as_written_us,with_rules_us
+binary32,add-outcome,add x y (status := true),11892.1,376.9
+binary32,sub-outcome,sub x y (status := true),11637.1,387.0
+binary32,mul-outcome,mul x y (status := true),11609.0,339.1
+binary32,div-outcome,div x y (status := true),9772.2,348.7
+binary32,sqrt-outcome,sqrt x (status := true),10569.8,209.9
+binary32,fma-outcome,fma x y z (status := true),15323.2,438.3
+binary32,roundToIntegral-outcome,roundToIntegral x (status := true),7273.7,316.6
+binary32,less,x < y,2088.7,71.9
+binary32,equal,x == y,2076.1,59.0
+binary32,totalOrder,totalOrder x y,1720.4,64.1
+binary32,isNaN,isNaN x,117.1,31.3
+binary32,roundToIntegral,roundToIntegral x,4587.2,78.8
+binary32,toInt,x.toInt?,828.1,77.8
+binary32,toRat,toRat? x,596.1,114.3
+binary32,cast,cast into the next narrower format,4800.6,72.8
+binary32,cast-outcome,the same cast (status := true),9979.9,305.7
+binary32,decimal,a decimal literal,1981.8,90.1
+binary32,rational,"ofRat q, rounded up",2197.6,275.0
+binary32,rational-outcome,ofRat q (status := true),5841.1,573.4
+binary64,add-outcome,add x y (status := true),12691.1,382.3
+binary64,sub-outcome,sub x y (status := true),12921.9,385.8
+binary64,mul-outcome,mul x y (status := true),12401.1,322.1
+binary64,div-outcome,div x y (status := true),12556.6,351.4
+binary64,sqrt-outcome,sqrt x (status := true),17497.1,208.4
+binary64,fma-outcome,fma x y z (status := true),19093.6,420.1
+binary64,roundToIntegral-outcome,roundToIntegral x (status := true),8550.1,306.7
+binary64,less,x < y,2237.9,72.6
+binary64,equal,x == y,2252.6,58.1
+binary64,totalOrder,totalOrder x y,2027.4,63.0
+binary64,isNaN,isNaN x,101.0,29.7
+binary64,roundToIntegral,roundToIntegral x,5288.7,78.3
+binary64,toInt,x.toInt?,713.8,71.7
+binary64,toRat,toRat? x,569.4,113.0
+binary64,cast,cast into the next narrower format,5768.0,70.9
+binary64,cast-outcome,the same cast (status := true),11747.8,295.6
+binary64,decimal,a decimal literal,1989.2,88.1
+binary64,rational,"ofRat q, rounded up",1990.3,295.3
+binary64,rational-outcome,ofRat q (status := true),6687.4,544.9

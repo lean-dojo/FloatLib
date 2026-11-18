@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,13 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.IntegerRoot.Runtime
-public import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
+public import FloatLib.Numerics.Kernel.RootProof
+
 import Mathlib.Data.Nat.Log
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Data.Rat.Cast.Order
 
 /-!
 # Exactness of seeded integer roots
@@ -70,17 +66,50 @@ private theorem initial_upper (value degree : Nat) (hd : 0 < degree) :
       Nat.pow_le_pow_left (by omega) degree
 
 /-- The seeded Newton root is the floor root for every input and degree. -/
-theorem newton_eq_nthRoot (degree value : Nat) :
-    newton degree value = Nat.nthRoot degree value := by
+theorem Seeded.newton_eq_nthRoot (degree value : Nat) :
+    Seeded.newton degree value = Nat.nthRoot degree value := by
   match degree with
   | 0 => rfl
   | 1 => rfl
   | degree + 2 =>
-    dsimp only [newton]
+    dsimp only [Seeded.newton]
     split
     · rename_i hvalue
       rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hvalue with rfl | rfl <;> simp
     · apply go_eq_nthRoot _ _ _ _ (by rfl)
       simpa [Nat.add_assoc] using initial_upper value (degree + 2) (by omega)
+
+/-- The checked Newton root is the floor root for every input and degree. -/
+theorem newton_eq_nthRoot (degree value : Nat) :
+    newton degree value = Nat.nthRoot degree value := by
+  change Bool.casesOn (motive := fun _ => Nat) (Nat.ble value 1)
+    (Bool.casesOn (motive := fun _ => Nat)
+      (Kernel.isRoot degree (Kernel.rootGuess degree value) value) (Seeded.newton degree value)
+      (Kernel.rootGuess degree value))
+    (Seeded.newton degree value) = _
+  cases Nat.ble value 1
+  · change Bool.casesOn (motive := fun _ => Nat)
+      (Kernel.isRoot degree (Kernel.rootGuess degree value) value) (Seeded.newton degree value)
+      (Kernel.rootGuess degree value) = _
+    cases h : Kernel.isRoot degree (Kernel.rootGuess degree value) value
+    · exact Seeded.newton_eq_nthRoot degree value
+    · have hk : degree ≠ 0 := by
+        rintro rfl
+        rw [Kernel.isRoot_zero] at h
+        cases h
+      exact (Kernel.isRoot_iff hk _ value).1 h
+  · exact Seeded.newton_eq_nthRoot degree value
+
+/-- The checked root and the seeded root agree. -/
+theorem newton_eq_seeded (degree value : Nat) :
+    newton degree value = Seeded.newton degree value := by
+  rw [newton_eq_nthRoot, Seeded.newton_eq_nthRoot]
+
+/--
+Compiled code runs the seeded loop. The kernel body of `newton` builds its count of steps and its
+bit length from operations that are cheap for the kernel and slow as compiled code (five to eight
+times slower than the seeded loop), so a compiled caller imports this module.
+-/
+compiled_as newton := Seeded.newton by newton_eq_seeded
 
 end FloatLib.Numerics.IntegerRoot

@@ -6,43 +6,43 @@
       "id": "all",
       "label": "All operations",
       "src": "flocq-matched.png",
-      "alt": "Six arithmetic operations: absolute time per operation against encoded width on logarithmic axes. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats, medians of 9 trials. Square root at 1,024 bits and above uses complete 16-fixture blocks."
+      "alt": "Six panels, one per arithmetic operation: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     },
     {
       "id": "add",
       "label": "Addition",
       "src": "flocq-matched-add.svg",
-      "alt": "Addition: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. Medians of 9 trials. Result-dependent fixture chain."
+      "alt": "Addition: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     },
     {
       "id": "sub",
       "label": "Subtraction",
       "src": "flocq-matched-sub.svg",
-      "alt": "Subtraction: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. Medians of 9 trials. Result-dependent fixture chain."
+      "alt": "Subtraction: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     },
     {
       "id": "mul",
       "label": "Multiplication",
       "src": "flocq-matched-mul.svg",
-      "alt": "Multiplication: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. Medians of 9 trials. Result-dependent fixture chain."
+      "alt": "Multiplication: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     },
     {
       "id": "div",
       "label": "Division",
       "src": "flocq-matched-div.svg",
-      "alt": "Division: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. Medians of 9 trials. Result-dependent fixture chain."
+      "alt": "Division: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     },
     {
       "id": "sqrt",
       "label": "Square root",
       "src": "flocq-matched-sqrt.svg",
-      "alt": "Square root: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. Medians of 9 trials. Square root at 1,024 bits and above uses complete 16-fixture blocks."
+      "alt": "Square root: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     },
     {
       "id": "fma",
       "label": "Fused multiply-add",
       "src": "flocq-matched-fma.svg",
-      "alt": "Fused multiply-add: absolute time per operation against encoded width, on logarithmic axes with time ticks from nanoseconds to seconds. FloatLib binary, extracted Flocq, and MPFR at eleven matching binary formats. Medians of 9 trials. Result-dependent fixture chain."
+      "alt": "Fused multiply-add: time per operation against format width, both on logarithmic axes, with one line each for FloatLib, extracted Flocq and MPFR at eleven matching binary formats from 6 to 4,096 bits."
     }
   ]
 }

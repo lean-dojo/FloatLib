@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -15,10 +15,14 @@ public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
 keeps the IEEE-style infinity and NaN encodings. Those belong to this format package, and the
 universal executable carrier doesn't assume them.
 
-Planning works as it does for E4M3FN. Balanced and throughput planning answer addition,
+Planning works as it does for E4M3. Balanced and throughput planning answer addition,
 subtraction, multiplication, division, and square root from exhaustive byte tables, and latency
 planning runs the arithmetic kernels. Fused multiply-add goes to the proved generic single-rounding
 kernel, which meets the same specification without a 16,777,216-entry ternary table.
+
+The format encoding is specified in OFP8 revision 1.0, §5.1. Arithmetic
+operations in this module are FloatLib extensions: OFP8 §4 leaves arithmetic
+outside its scope; §5.2.1 specifies conversion behavior.
 
 ## Reference
 
@@ -102,10 +106,13 @@ meta instance : StaticByte.FamilyInfo E5M2.Family where
   sqrtTable := sqrtTable
 
 @[always_inline, instance_reducible] instance
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E5M2.Family] :
-    FloatLib.Floats.ExecFloat.Fma E5M2.Family :=
-  StaticByte.Plans.modelFmaCapability width_le_eight
-    Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
+    {_ : FloatLib.Floats.ExecFloat.Backend.PolicyFor E5M2.Family} :
+    FloatLib.Floats.ExecFloat.Capability.Static (F := E5M2.Family) .fma
+      (StaticByte.Spec.fma (F := E5M2.Family)) where
+  spec_eq := rfl
+  capability :=
+    StaticByte.Plans.modelFmaCapability width_le_eight
+      Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
 end E5M2
 
@@ -116,6 +123,8 @@ answer the five basic operations from certified byte tables.
 
 `ExecFloat.Binary (exponentBits := 5) (fractionBits := 2)` is the same format on the general binary
 carrier, with directed rounding and status options.
+
+Reference: OCP 8-bit Floating Point Specification (OFP8), revision 1.0, §5.1, Tables 1–2.
 -/
 abbrev E5M2 := ExecFloat E5M2.Family
 

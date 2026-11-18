@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
-public import FloatLib.Floats.Formats.P3109.Projection.RealSelection
+public import FloatLib.Floats.Formats.P3109.Projection.Comparison.Selection
 
 /-!
 # Square-root stochastic selection formulas
@@ -17,7 +17,7 @@ irrational. The executable squared-threshold comparisons implement the floor and
 §4.7.4 on that fractional part, for exact roots too and for every supplied stochastic word. These
 equalities say nothing about probability or the quality of the random bits.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §§4.7.4, 4.10.8.
+Reference: P3109 unapproved interim report v4.1, 14 September 2026, §§4.7.4, 4.10.8.
 -/
 
 @[expose] public section
@@ -35,25 +35,7 @@ theorem sqrtFraction_bounds (numerator denominator : Nat) (hd : 0 < denominator)
     0 ≤ sqrtFraction numerator denominator ∧ sqrtFraction numerator denominator < 1 := by
   have h := sqrtFloor_real_bounds numerator denominator hd
   dsimp only [sqrtFraction]
-  constructor <;> linarith
-
-/-- The guarded threshold test shared by stochastic A and B: unless the root is exact, comparing
-it with `(lower * scale + (scale - random)) / scale` is the floor formula on its fraction. -/
-private theorem floorThreshold_eq (numerator denominator : Nat) (hd : 0 < denominator)
-    (scale random : Nat) (hrandom : random < scale) :
-    (if decide (Real.sqrt ((numerator : Real) / denominator) =
-          sqrtFloor numerator denominator) then false
-      else compare (Real.sqrt ((numerator : Real) / denominator))
-          (((sqrtFloor numerator denominator * scale + (scale - random) : Nat) : Real) /
-            (scale : Real)) != .lt) =
-      decide (scale ≤ ⌊sqrtFraction numerator denominator * scale⌋₊ + random) := by
-  have hroot := (sqrtFloor_real_bounds numerator denominator hd).1
-  by_cases he : Real.sqrt ((numerator : Real) / denominator) = sqrtFloor numerator denominator
-  · simp [sqrtFraction, he, Nat.not_le.mpr hrandom]
-  · simp only [he, decide_false, Bool.false_eq_true, ite_false]
-    apply Bool.eq_iff_iff.mpr
-    simp only [bne_iff_ne, ne_eq, compare_lt_iff_lt, decide_eq_true_eq, not_lt]
-    exact (RealRounding.floor_selection_iff _ _ _ _ hrandom hroot).symm
+  exact ⟨sub_nonneg.mpr h.1, (sub_lt_iff_lt_add').mpr h.2⟩
 
 /-- Executable stochastic A is the report's floor formula for the root's exact fractional part. -/
 theorem sqrtRoundAway_stochasticA (format : Format) (quantum : Int) (random : RandomBits)
@@ -63,9 +45,8 @@ theorem sqrtRoundAway_stochasticA (format : Format) (quantum : Int) (random : Ra
       decide (2 ^ random.width ≤
         ⌊sqrtFraction numerator denominator * 2 ^ random.width⌋₊ + random.toNat) := by
   rw [sqrtRoundAway_eq_real _ _ _ _ _ _ hd]
-  simpa only [sqrtRoundAwayReal, sqrtRoundDecision, Nat.cast_pow, Nat.cast_ofNat] using
-    floorThreshold_eq numerator denominator hd _ _
-      (RationalRounding.random_lt_modulus random)
+  exact format.roundMagnitudeUp_stochasticA quantum random _ _
+    (sqrtFloor_real_bounds numerator denominator hd).1
 
 /-- Executable stochastic B is the report's doubled-word floor formula. -/
 theorem sqrtRoundAway_stochasticB (format : Format) (quantum : Int) (random : RandomBits)
@@ -76,12 +57,8 @@ theorem sqrtRoundAway_stochasticB (format : Format) (quantum : Int) (random : Ra
         ⌊sqrtFraction numerator denominator * 2 ^ (random.width + 1)⌋₊ +
           (2 * random.toNat + 1)) := by
   rw [sqrtRoundAway_eq_real _ _ _ _ _ _ hd]
-  have hr : 2 * random.toNat + 1 < 2 ^ (random.width + 1) := by
-    have := RationalRounding.random_lt_modulus random
-    rw [pow_succ]
-    omega
-  simpa only [sqrtRoundAwayReal, sqrtRoundDecision, Nat.cast_pow, Nat.cast_ofNat] using
-    floorThreshold_eq numerator denominator hd _ _ hr
+  exact format.roundMagnitudeUp_stochasticB quantum random _ _
+    (sqrtFloor_real_bounds numerator denominator hd).1
 
 /-- Executable stochastic C is RNITE of the exact fraction, including even upper-boundary ties. -/
 theorem sqrtRoundAway_stochasticC (format : Format) (quantum : Int) (random : RandomBits)
@@ -89,20 +66,10 @@ theorem sqrtRoundAway_stochasticC (format : Format) (quantum : Int) (random : Ra
     sqrtRoundAway format (.stochasticC random) quantum numerator denominator
         (sqrtFloor numerator denominator) =
       decide (2 ^ random.width ≤
-        RealRounding.nearestEven (sqrtFraction numerator denominator * 2 ^ random.width) +
+        RoundingFormula.nearestEven (sqrtFraction numerator denominator * 2 ^ random.width) +
           random.toNat) := by
   rw [sqrtRoundAway_eq_real _ _ _ _ _ _ hd]
-  have hr := RationalRounding.random_lt_modulus random
-  have hroot := (sqrtFloor_real_bounds numerator denominator hd).1
-  by_cases he : Real.sqrt ((numerator : Real) / denominator) = sqrtFloor numerator denominator
-  · simp [sqrtRoundAwayReal, sqrtRoundDecision, sqrtFraction, he, Nat.not_le.mpr hr,
-      RealRounding.nearestEven]
-  · simp only [sqrtRoundAwayReal, sqrtRoundDecision, he, decide_false, Bool.false_eq_true,
-      ite_false]
-    apply Bool.eq_iff_iff.mpr
-    simp only [Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq, compare_gt_iff_gt,
-      compare_eq_iff_eq, decide_eq_true_eq]
-    simpa only [sqrtFraction, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_pow] using
-      (RealRounding.nearestEven_selection_iff _ _ _ _ hr hroot).symm
+  exact format.roundMagnitudeUp_stochasticC quantum random _ _
+    (sqrtFloor_real_bounds numerator denominator hd).1
 
 end FloatLib.Floats.Formats.P3109.Arithmetic

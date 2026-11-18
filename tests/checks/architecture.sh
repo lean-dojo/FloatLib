@@ -32,7 +32,7 @@ mapfile -t kernel_sources < <(
 )
 mapfile -t production_sources < <(
   printf '%s\n' "${floatlib_sources[@]}" |
-    awk '$0 == "FloatLib.lean" || /^FloatLib\/(Numerics|Kernels|Floats)(\.lean|\/)/'
+    awk '$0 == "FloatLib.lean" || /^FloatLib\/(Numerics|Kernels|Floats|Tactic|Util)(\.lean|\/)/'
 )
 
 # Public modules follow the same predictable UpperCamelCase path convention as mathlib. Keeping
@@ -434,6 +434,34 @@ if [[ -n "$unreachable_modules" ]]; then
   fail "FloatLib modules are not reachable from a maintained root"
 fi
 
+# `lake lint` reads the declarations in the import closure of each module of `lintRoots` in
+# `lakefile.lean`. A library module in no closure would never be linted.
+mapfile -t lint_roots < <(
+  awk '/^def lintRoots/ { inside = 1 } inside { print } inside && /\]/ { exit }' lakefile.lean |
+    grep -oE '"FloatLib[A-Za-z0-9_.]*"' |
+    tr -d '"'
+)
+[[ "${#lint_roots[@]}" -gt 0 ]] || fail "lakefile.lean passes no module to the linter"
+for module in "${lint_roots[@]}"; do
+  [[ -f "$(floatlib_module_source "$module")" ]] || fail "lint root $module has no source file"
+done
+unlinted_modules="$(
+  comm -23 \
+    <(
+      printf '%s\n' "${floatlib_sources[@]}" |
+        awk '$0 == "FloatLib.lean" || /^FloatLib\//' |
+        while IFS= read -r source; do
+          floatlib_source_module "$source"
+        done |
+        LC_ALL=C sort -u
+    ) \
+    <(printf '%s\n' "${floatlib_sources[@]}" | floatlib_reachable_modules "${lint_roots[@]}")
+)"
+if [[ -n "$unlinted_modules" ]]; then
+  printf '%s\n' "$unlinted_modules" >&2
+  fail "library modules are outside the import closure of every lint root in lakefile.lean"
+fi
+
 mapfile -t expected_example_modules < <(
   for source in "${example_sources[@]}"; do
     module="${source%.lean}"
@@ -552,7 +580,7 @@ fi
 
 if runtime_meta_imports="$(
   rg -n \
-    '^(public[[:space:]]+)?(meta[[:space:]]+)?import (Lean\.Elab|FloatLib\.Floats\.(ExecFloat\.Info|Formats\..*\.Info))|^[[:space:]]*#float_info\b' \
+    '^(public[[:space:]]+)?(meta[[:space:]]+)?import (Lean\.Elab|FloatLib\.Tactic\.FloatInfo)|^[[:space:]]*#float_info\b' \
     "${runtime_files[@]}"
 )"; then
   printf '%s\n' "$runtime_meta_imports" >&2
@@ -612,7 +640,7 @@ mapfile -t format_family_files < <(
 )
 if runtime_info_imports="$(
   rg -n \
-    '^public import FloatLib\.Floats\.(ExecFloat\.Info|Formats\..*\.Info)$' \
+    '^public import FloatLib\.Tactic\.FloatInfo(\.|$)' \
     "${format_family_files[@]}"
 )"; then
   printf '%s\n' "$runtime_info_imports" >&2

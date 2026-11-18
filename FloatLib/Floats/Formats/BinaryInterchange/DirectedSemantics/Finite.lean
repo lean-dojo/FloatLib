@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
-import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
+
+import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Sqrt.Proof
+import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
+import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
 
 /-!
 # Finite-operand helpers for directed arithmetic
@@ -106,8 +107,8 @@ theorem add_eq_of_toDyadic?_some
   have hx := isFinite_eq_true_of_toDyadic?_some hdx
   have hy := isFinite_eq_true_of_toDyadic?_some hdy
   have hchoose := chooseNaN2_none_of_isFinite x y hx hy
-  have hxInf := isInf_eq_false_of_isFinite_eq_true x hx
-  have hyInf := isInf_eq_false_of_isFinite_eq_true y hy
+  have hxInf := isInfinite_eq_false_of_isFinite_eq_true x hx
+  have hyInf := isInfinite_eq_false_of_isFinite_eq_true y hy
   cases mode <;> first
     | exact absurd rfl hmode
     | simp [add, Internal.Directed.add, hchoose, hxInf, hyInf, hdx, hdy]
@@ -125,8 +126,8 @@ theorem mul_eq_of_toDyadic?_some
   have hx := isFinite_eq_true_of_toDyadic?_some hdx
   have hy := isFinite_eq_true_of_toDyadic?_some hdy
   have hchoose := chooseNaN2_none_of_isFinite x y hx hy
-  have hxInf := isInf_eq_false_of_isFinite_eq_true x hx
-  have hyInf := isInf_eq_false_of_isFinite_eq_true y hy
+  have hxInf := isInfinite_eq_false_of_isFinite_eq_true x hx
+  have hyInf := isInfinite_eq_false_of_isFinite_eq_true y hy
   cases mode <;> first
     | exact absurd rfl hmode
     | simp [mul, Internal.Directed.mul, hchoose, hxInf, hyInf, hdx, hdy]
@@ -146,8 +147,8 @@ theorem div_eq_of_toDyadic?_some
   have hx := isFinite_eq_true_of_toDyadic?_some hdx
   have hy := isFinite_eq_true_of_toDyadic?_some hdy
   have hchoose := chooseNaN2_none_of_isFinite x y hx hy
-  have hxInf := isInf_eq_false_of_isFinite_eq_true x hx
-  have hyInf := isInf_eq_false_of_isFinite_eq_true y hy
+  have hxInf := isInfinite_eq_false_of_isFinite_eq_true x hx
+  have hyInf := isInfinite_eq_false_of_isFinite_eq_true y hy
   have hdyMant := significand_ne_zero_of_toDyadic?_some_of_isZero_eq_false hdy hy0
   by_cases hdxMant : dx.significand = 0
   · cases mode <;> first
@@ -168,7 +169,7 @@ theorem sqrt_of_isZero {fmt : FloatFormat} {mode : IEEERoundingMode} {x : Model 
     sqrt x (mode := mode) = x := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true x hzero
   have hchoose := chooseNaN1_none_of_isFinite x hfinite
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hfinite
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hfinite
   cases mode
   case nearest | nearestAway =>
     change Internal.Nearest.sqrt x = x
@@ -187,7 +188,7 @@ theorem sqrt_down_eq_roundDyadicDown_of_toDyadic?_some
   have hfinite := isFinite_eq_true_of_toDyadic?_some hd
   cases hzero : isZero x
   · simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
-      isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
+      isInfinite_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
   · have hdZero := toDyadic?_eq_zero_of_isZero_eq_true x hzero
     rw [hd, hsign] at hdZero
     obtain rfl := Option.some.inj hdZero
@@ -206,7 +207,7 @@ theorem sqrt_up_eq_roundDyadicUp_of_toDyadic?_some
   have hfinite := isFinite_eq_true_of_toDyadic?_some hd
   cases hzero : isZero x
   · simp [sqrt, Internal.Directed.sqrt, chooseNaN1_none_of_isFinite x hfinite,
-      isInf_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
+      isInfinite_eq_false_of_isFinite_eq_true x hfinite, hzero, hsign, hd]
   · have hdZero := toDyadic?_eq_zero_of_isZero_eq_true x hzero
     rw [hd, hsign] at hdZero
     obtain rfl := Option.some.inj hdZero

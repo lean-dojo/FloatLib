@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Capabilities.Radix
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-
 /-!
 # FloatRep core (Flocq-style rounded arithmetic)
 
@@ -40,7 +38,6 @@ For executable, bit-level binary semantics (NaN/Inf/signed zero), see
 
 @[expose] public section
 
-
 namespace FloatLib.Floats.Formats.Flocq
 
 /-- A radix-$\beta$ floating-point representation with integer mantissa and exponent. -/
@@ -55,7 +52,7 @@ namespace FloatRep
 variable {β : Numerics.Radix} (f : FloatRep β)
 
 /-- Structural zero test: the mantissa is `0`. -/
-def isZero : Prop := f.mantissa = 0
+def IsZero : Prop := f.mantissa = 0
 
 /-- Sign of the mantissa (matches the sign of `toReal` since $\beta^e>0$). -/
 def sign : ℤ := Int.sign f.mantissa
@@ -152,14 +149,15 @@ class MonotoneExp (fexp : ℤ → ℤ) : Prop where
 /-- Optional local growth bound used by selected numerical estimates. -/
 class BoundedExpGrowth (fexp : ℤ → ℤ) : Prop where
   /-- Successive magnitudes select exponents differing by at most one. -/
-  boundedGrowth : ∀ k : ℤ, |fexp (k + 1) - fexp k| ≤ 1
+  bounded_growth : ∀ k : ℤ, |fexp (k + 1) - fexp k| ≤ 1
 
 /-- A witness that the format has a lower exponent region, in Flocq's sense. -/
 def IsNegligibleExp (fexp : ℤ → ℤ) (n : ℤ) : Prop :=
   n ≤ fexp n
 
 /--
-Select a witness $n\le\mathtt{fexp}(n)$ when the format has one. Unbounded formats such as FLX return
+Select a witness $n\le\mathtt{fexp}(n)$ when the format has one. Unbounded formats such as FLX
+return
 `none`, and lower-bounded formats such as FLT return `some n`.
 -/
 noncomputable def negligibleExp (fexp : ℤ → ℤ) : Option ℤ := by
@@ -205,7 +203,8 @@ restricts the API to valid exponent functions, although evaluating this expressi
 noncomputable def cexp (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp] (x : ℝ) : ℤ :=
   fexp (magnitude β x)
 
-/-- A float representation is canonical when its stored exponent is the exponent selected for its value. -/
+/-- A float representation is canonical when its stored exponent is the exponent selected for its
+value. -/
 def Canonical (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp]
     (f : FloatRep β) : Prop :=
   f.exponent = cexp β fexp (toReal f)
@@ -225,7 +224,7 @@ Generic format predicate (Flocq-style).
 This says that $x$ is exactly representable in the format picked out by $\beta$ and `fexp`.
 One way to read it is: the scaled mantissa is an integer (so there is no rounding error).
 -/
-def genericFormat (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp] (x : ℝ) : Prop :=
+def GenericRepresentable (β : Numerics.Radix) (fexp : ℤ → ℤ) [ValidExp fexp] (x : ℝ) : Prop :=
   x =
     toReal (β := β)
       { mantissa := ⌊scaledMantissa β fexp x⌋
@@ -260,7 +259,7 @@ Informally: an ulp is a step size on a real grid, so it cannot be negative.
 -/
 lemma nonneg (x : ℝ) : 0 ≤ ulp β fexp x := by
   by_cases hx : x = 0
-  · simp [ulp, hx]
+  · simp only [ulp, hx, ↓reduceIte]
     split <;> simp [bpow.nonneg]
   · simp [ulp, hx, bpow.nonneg]
 

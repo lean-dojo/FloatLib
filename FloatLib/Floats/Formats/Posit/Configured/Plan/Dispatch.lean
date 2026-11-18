@@ -1,16 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Core.Capability
-public import FloatLib.Floats.Formats.Posit.Configured.Plan.ByteDispatch.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Word16.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Word32.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Word64.Proof
+public import FloatLib.Tactic.PlanCapability
+public import FloatLib.Tactic.PlannedCapability
+public import FloatLib.Tactic.PortfolioCapability
 
 /-!
 # Static Posit storage-plan dispatch
@@ -37,355 +35,79 @@ namespace FloatLib.Floats.Formats.Posit.Configured.Plan
 open FloatLib.Floats.ExecFloat
 open FloatLib.Floats.ExecFloat.Backend
 
-/--
-Addition capability chosen by matching on the storage-plan constructor.
+plan_capability Add add binary ByteDispatch.add_fun_eq_spec "Addition" for Spec.addition :=
+  let heligible : Model.NativeLimb.Eligible format := width_le
+  Capability.ofCertified .add <| Certified.binary
+    (storedNativeLimbEstimate (format := format) .add)
+    Spec.addition
+    (Backend.storedNativeLimbAdd width_le heligible)
+    (Backend.storedNativeLimbAdd_eq_spec width_le heligible)
 
-The byte plan keeps its policy-sensitive table portfolio. Every other built-in plan has one
-first-order winner, and its capability is built from that operation's kernel alone. We inline this
-definition on purpose, so a closed public width reduces the plan match at compile time and leaves
-only the named carrier kernel in the generated hot path.
--/
-@[always_inline, instance_reducible] def addCapabilityForPlan
-    (format : Format) (plan : StoragePlan format)
-    [planning : PolicyFor (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Add (Family format (Code plan) plan) :=
-  match plan, planning with
-  | .byte width_le, planning =>
-      Capability.ofCandidates .add
-        Spec.add (addByteCandidates format width_le)
-        (ByteDispatch.add planning.policy width_le)
-        (ByteDispatch.add_fun_eq_spec planning.policy width_le)
-  | .word16 width_le, _planning =>
-      Capability.ofCertified .add <| Certified.binary
-        (storedNativeWordEstimate (.word16 width_le) .add)
-        Spec.add
-        (Backend.Word16.add width_le)
-        (Backend.Word16.add_eq_spec width_le)
-  | .word32 width_le, _planning =>
-      Capability.ofCertified .add <| Certified.binary
-        (storedNativeWordEstimate (.word32 width_le) .add)
-        Spec.add
-        (Backend.Word32.add width_le)
-        (Backend.Word32.add_eq_spec width_le)
-  | .word64 width_le, _planning =>
-      Capability.ofCertified .add <| Certified.binary
-        (storedNativeWordEstimate (.word64 width_le) .add)
-        Spec.add
-        (Backend.Word64.add width_le)
-        (Backend.Word64.add_eq_spec width_le)
-  | .pair width_le, _planning =>
-      let heligible : Model.NativeLimb.Eligible format := width_le
-      Capability.ofCertified .add <| Certified.binary
-        (storedNativeLimbEstimate (format := format) .add)
-        Spec.add
-        (Backend.storedNativeLimbAdd width_le heligible)
-        (Backend.storedNativeLimbAdd_eq_spec width_le heligible)
-  | .wide, _planning =>
-      Capability.ofCertified .add <| Certified.binary
-        (dyadicEstimate (.wide : StoragePlan format) .add)
-        Spec.add Backend.dyadicAdd Backend.dyadicAdd_eq_spec
+plan_capability Sub sub binary ByteDispatch.sub_fun_eq_spec "Subtraction" for Spec.subtraction :=
+  let heligible : Model.NativeLimb.Eligible format := width_le
+  Capability.ofCertified .sub <| Certified.binary
+    (storedNativeLimbEstimate (format := format) .sub)
+    Spec.subtraction
+    (Backend.storedNativeLimbSub width_le heligible)
+    (Backend.storedNativeLimbSub_eq_spec width_le heligible)
 
-/-- Subtraction capability chosen by matching on the storage-plan constructor. -/
-@[always_inline, instance_reducible] def subCapabilityForPlan
-    (format : Format) (plan : StoragePlan format)
-    [planning : PolicyFor (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Sub (Family format (Code plan) plan) :=
-  match plan, planning with
-  | .byte width_le, planning =>
-      Capability.ofCandidates .sub
-        Spec.sub (subByteCandidates format width_le)
-        (ByteDispatch.sub planning.policy width_le)
-        (ByteDispatch.sub_fun_eq_spec planning.policy width_le)
-  | .word16 width_le, _planning =>
-      Capability.ofCertified .sub <| Certified.binary
-        (storedNativeWordEstimate (.word16 width_le) .sub)
-        Spec.sub
-        (Backend.Word16.sub width_le)
-        (Backend.Word16.sub_eq_spec width_le)
-  | .word32 width_le, _planning =>
-      Capability.ofCertified .sub <| Certified.binary
-        (storedNativeWordEstimate (.word32 width_le) .sub)
-        Spec.sub
-        (Backend.Word32.sub width_le)
-        (Backend.Word32.sub_eq_spec width_le)
-  | .word64 width_le, _planning =>
-      Capability.ofCertified .sub <| Certified.binary
-        (storedNativeWordEstimate (.word64 width_le) .sub)
-        Spec.sub
-        (Backend.Word64.sub width_le)
-        (Backend.Word64.sub_eq_spec width_le)
-  | .pair width_le, _planning =>
-      let heligible : Model.NativeLimb.Eligible format := width_le
-      Capability.ofCertified .sub <| Certified.binary
-        (storedNativeLimbEstimate (format := format) .sub)
-        Spec.sub
-        (Backend.storedNativeLimbSub width_le heligible)
-        (Backend.storedNativeLimbSub_eq_spec width_le heligible)
-  | .wide, _planning =>
-      Capability.ofCertified .sub <| Certified.binary
-        (dyadicEstimate (.wide : StoragePlan format) .sub)
-        Spec.sub Backend.dyadicSub Backend.dyadicSub_eq_spec
+plan_capability Mul mul binary ByteDispatch.mul_fun_eq_spec "Multiplication" for
+    Spec.multiplication :=
+  let heligible : Model.NativeLimb.Eligible format := width_le
+  Capability.ofCertified .mul <| Certified.binary
+    (storedNativeLimbEstimate (format := format) .mul)
+    Spec.multiplication
+    (Backend.storedNativeLimbMul width_le heligible)
+    (Backend.storedNativeLimbMul_eq_spec width_le heligible)
 
-/-- Multiplication capability chosen by matching on the storage-plan constructor. -/
-@[always_inline, instance_reducible] def mulCapabilityForPlan
-    (format : Format) (plan : StoragePlan format)
-    [planning : PolicyFor (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Mul (Family format (Code plan) plan) :=
-  match plan, planning with
-  | .byte width_le, planning =>
-      Capability.ofCandidates .mul
-        Spec.mul (mulByteCandidates format width_le)
-        (ByteDispatch.mul planning.policy width_le)
-        (ByteDispatch.mul_fun_eq_spec planning.policy width_le)
-  | .word16 width_le, _planning =>
-      Capability.ofCertified .mul <| Certified.binary
-        (storedNativeWordEstimate (.word16 width_le) .mul)
-        Spec.mul
-        (Backend.Word16.mul width_le)
-        (Backend.Word16.mul_eq_spec width_le)
-  | .word32 width_le, _planning =>
-      Capability.ofCertified .mul <| Certified.binary
-        (storedNativeWordEstimate (.word32 width_le) .mul)
-        Spec.mul
-        (Backend.Word32.mul width_le)
-        (Backend.Word32.mul_eq_spec width_le)
-  | .word64 width_le, _planning =>
-      Capability.ofCertified .mul <| Certified.binary
-        (storedNativeWordEstimate (.word64 width_le) .mul)
-        Spec.mul
-        (Backend.Word64.mul width_le)
-        (Backend.Word64.mul_eq_spec width_le)
-  | .pair width_le, _planning =>
-      let heligible : Model.NativeLimb.Eligible format := width_le
-      Capability.ofCertified .mul <| Certified.binary
-        (storedNativeLimbEstimate (format := format) .mul)
-        Spec.mul
-        (Backend.storedNativeLimbMul width_le heligible)
-        (Backend.storedNativeLimbMul_eq_spec width_le heligible)
-  | .wide, _planning =>
-      Capability.ofCertified .mul <| Certified.binary
-        (dyadicEstimate (.wide : StoragePlan format) .mul)
-        Spec.mul Backend.dyadicMul Backend.dyadicMul_eq_spec
+plan_capability Div div binary ByteDispatch.div_fun_eq_spec "Division" for Spec.division :=
+  Capability.ofCertified .div <| Certified.binary
+    (dyadicEstimate (.pair width_le) .div)
+    Spec.division
+    (Backend.storedNativeLimbDiv width_le)
+    (Backend.storedNativeLimbDiv_eq_spec width_le)
 
-/-- Division capability chosen by matching on the storage-plan constructor. -/
-@[always_inline, instance_reducible] def divCapabilityForPlan
-    (format : Format) (plan : StoragePlan format)
-    [planning : PolicyFor (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Div (Family format (Code plan) plan) :=
-  match plan, planning with
-  | .byte width_le, planning =>
-      Capability.ofCandidates .div
-        Spec.div (divByteCandidates format width_le)
-        (ByteDispatch.div planning.policy width_le)
-        (ByteDispatch.div_fun_eq_spec planning.policy width_le)
-  | .word16 width_le, _planning =>
-      Capability.ofCertified .div <| Certified.binary
-        (storedNativeWordEstimate (.word16 width_le) .div)
-        Spec.div
-        (Backend.Word16.div width_le)
-        (Backend.Word16.div_eq_spec width_le)
-  | .word32 width_le, _planning =>
-      Capability.ofCertified .div <| Certified.binary
-        (storedNativeWordEstimate (.word32 width_le) .div)
-        Spec.div
-        (Backend.Word32.div width_le)
-        (Backend.Word32.div_eq_spec width_le)
-  | .word64 width_le, _planning =>
-      Capability.ofCertified .div <| Certified.binary
-        (storedNativeWordEstimate (.word64 width_le) .div)
-        Spec.div
-        (Backend.Word64.div width_le)
-        (Backend.Word64.div_eq_spec width_le)
-  | .pair width_le, _planning =>
-      Capability.ofCertified .div <| Certified.binary
-        (dyadicEstimate (.pair width_le) .div)
-        Spec.div
-        (Backend.storedNativeLimbDiv width_le)
-        (Backend.storedNativeLimbDiv_eq_spec width_le)
-  | .wide, _planning =>
-      Capability.ofCertified .div <| Certified.binary
-        (dyadicEstimate (.wide : StoragePlan format) .div)
-        Spec.div Backend.dyadicDiv Backend.dyadicDiv_eq_spec
+plan_capability Sqrt sqrt unary ByteDispatch.sqrt_fun_eq_spec "Square-root" for Spec.sqrt :=
+  Capability.ofCertified .sqrt <| Certified.unary
+    (storedNativeLimbEstimate (format := format) .sqrt)
+    Spec.sqrt
+    (Backend.storedNativeLimbSqrt width_le)
+    (Backend.storedNativeLimbSqrt_eq_spec width_le)
 
-/-- Square-root capability chosen by matching on the storage-plan constructor. -/
-@[always_inline, instance_reducible] def sqrtCapabilityForPlan
-    (format : Format) (plan : StoragePlan format)
-    [planning : PolicyFor (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Sqrt (Family format (Code plan) plan) :=
-  match plan, planning with
-  | .byte width_le, planning =>
-      Capability.ofCandidates .sqrt
-        Spec.sqrt (sqrtByteCandidates format width_le)
-        (ByteDispatch.sqrt planning.policy width_le)
-        (ByteDispatch.sqrt_fun_eq_spec planning.policy width_le)
-  | .word16 width_le, _planning =>
-      Capability.ofCertified .sqrt <| Certified.unary
-        (storedNativeWordEstimate (.word16 width_le) .sqrt)
-        Spec.sqrt
-        (Backend.Word16.sqrt width_le)
-        (Backend.Word16.sqrt_eq_spec width_le)
-  | .word32 width_le, _planning =>
-      Capability.ofCertified .sqrt <| Certified.unary
-        (storedNativeWordEstimate (.word32 width_le) .sqrt)
-        Spec.sqrt
-        (Backend.Word32.sqrt width_le)
-        (Backend.Word32.sqrt_eq_spec width_le)
-  | .word64 width_le, _planning =>
-      Capability.ofCertified .sqrt <| Certified.unary
-        (storedNativeWordEstimate (.word64 width_le) .sqrt)
-        Spec.sqrt
-        (Backend.Word64.sqrt width_le)
-        (Backend.Word64.sqrt_eq_spec width_le)
-  | .pair width_le, _planning =>
-      Capability.ofCertified .sqrt <| Certified.unary
-        (storedNativeLimbEstimate (format := format) .sqrt)
-        Spec.sqrt
-        (Backend.storedNativeLimbSqrt width_le)
-        (Backend.storedNativeLimbSqrt_eq_spec width_le)
-  | .wide, _planning =>
-      Capability.ofCertified .sqrt <| Certified.unary
-        (dyadicEstimate (.wide : StoragePlan format) .sqrt)
-        Spec.sqrt Backend.dyadicSqrt Backend.dyadicSqrt_eq_spec
-
-/-- Fused-multiply-add capability chosen by matching on the storage-plan constructor. -/
-@[always_inline, instance_reducible] def fmaCapabilityForPlan
-    (format : Format) (plan : StoragePlan format)
-    [planning : PolicyFor (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Fma (Family format (Code plan) plan) :=
-  match plan, planning with
-  | .byte width_le, planning =>
-      Capability.ofCandidates .fma
-        Spec.fma (fmaByteCandidates format width_le)
-        (ByteDispatch.fma planning.policy width_le)
-        (ByteDispatch.fma_fun_eq_spec planning.policy width_le)
-  | .word16 width_le, _planning =>
-      Capability.ofCertified .fma <| Certified.ternary
-        (storedNativeWordEstimate (.word16 width_le) .fma)
-        Spec.fma
-        (Backend.Word16.fma width_le)
-        (Backend.Word16.fma_eq_spec width_le)
-  | .word32 width_le, _planning =>
-      Capability.ofCertified .fma <| Certified.ternary
-        (storedNativeWordEstimate (.word32 width_le) .fma)
-        Spec.fma
-        (Backend.Word32.fma width_le)
-        (Backend.Word32.fma_eq_spec width_le)
-  | .word64 width_le, _planning =>
-      Capability.ofCertified .fma <| Certified.ternary
-        (storedNativeWordEstimate (.word64 width_le) .fma)
-        Spec.fma
-        (Backend.Word64.fma width_le)
-        (Backend.Word64.fma_eq_spec width_le)
-  | .pair width_le, _planning =>
-      let heligible : Model.NativeLimb.Eligible format := width_le
-      Capability.ofCertified .fma <| Certified.ternary
-        (storedNativeLimbEstimate (format := format) .fma)
-        Spec.fma
-        (Backend.storedNativeLimbFma width_le heligible)
-        (Backend.storedNativeLimbFma_eq_spec width_le heligible)
-  | .wide, _planning =>
-      Capability.ofCertified .fma <| Certified.ternary
-        (dyadicEstimate (.wide : StoragePlan format) .fma)
-        Spec.fma Backend.dyadicFma Backend.dyadicFma_eq_spec
+plan_capability Fma fma ternary ByteDispatch.fma_fun_eq_spec "Fused-multiply-add" for Spec.fma :=
+  let heligible : Model.NativeLimb.Eligible format := width_le
+  Capability.ofCertified .fma <| Certified.ternary
+    (storedNativeLimbEstimate (format := format) .fma)
+    Spec.fma
+    (Backend.storedNativeLimbFma width_le heligible)
+    (Backend.storedNativeLimbFma_eq_spec width_le heligible)
 
 end FloatLib.Floats.Formats.Posit.Configured.Plan
 
 namespace FloatLib.Floats.Formats.Posit.Configured
 
 /-!
-Built-in storage-plan instances take priority over the representation-independent instance. Their
+Built-in storage-plan instances take priority over the representation-independent instance, which
+has a low priority: they are static capabilities, served by `Capability.ofStatic`. Their
 inline constructors, one per operation, specialize a closed public width to one carrier and one
-first-order executor. Custom codecs keep the generic certified candidate portfolios below.
+first-order executor. Custom codecs keep the generic certified candidate portfolios below. Every
+instance takes the portfolio of candidates tagged `@[compiler_optimize]` for its reference
+operation: a built-in plan keeps its static kernel where no tagged candidate applies
+(`Capability.Static`), and a custom codec selects among its own candidates and the tagged ones.
 -/
 
-@[always_inline] instance (priority := 1100) addPlannedCapability
-    (format : Format) (plan : StoragePlan format)
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Add (Family format (Code plan) plan) :=
-  Plan.addCapabilityForPlan format plan
+planned_capability add for Spec.addition
+planned_capability sub for Spec.subtraction
+planned_capability mul for Spec.multiplication
+planned_capability div for Spec.division
+planned_capability sqrt for Spec.sqrt
+planned_capability fma for Spec.fma
 
-@[always_inline] instance (priority := 1100) subPlannedCapability
-    (format : Format) (plan : StoragePlan format)
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Sub (Family format (Code plan) plan) :=
-  Plan.subCapabilityForPlan format plan
-
-@[always_inline] instance (priority := 1100) mulPlannedCapability
-    (format : Format) (plan : StoragePlan format)
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Mul (Family format (Code plan) plan) :=
-  Plan.mulCapabilityForPlan format plan
-
-@[always_inline] instance (priority := 1100) divPlannedCapability
-    (format : Format) (plan : StoragePlan format)
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Div (Family format (Code plan) plan) :=
-  Plan.divCapabilityForPlan format plan
-
-@[always_inline] instance (priority := 1100) sqrtPlannedCapability
-    (format : Format) (plan : StoragePlan format)
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Sqrt (Family format (Code plan) plan) :=
-  Plan.sqrtCapabilityForPlan format plan
-
-@[always_inline] instance (priority := 1100) fmaPlannedCapability
-    (format : Format) (plan : StoragePlan format)
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Fma (Family format (Code plan) plan) :=
-  Plan.fmaCapabilityForPlan format plan
-
-instance addCapability
-    (format : Format) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Add (Family format code plan) where
-  spec := Spec.add
-  candidates := Plan.addCandidates format plan
-
-instance subCapability
-    (format : Format) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Sub (Family format code plan) where
-  spec := Spec.sub
-  candidates := Plan.subCandidates format plan
-
-instance mulCapability
-    (format : Format) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Mul (Family format code plan) where
-  spec := Spec.mul
-  candidates := Plan.mulCandidates format plan
-
-instance divCapability
-    (format : Format) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Div (Family format code plan) where
-  spec := Spec.div
-  candidates := Plan.divCandidates format plan
-
-instance sqrtCapability
-    (format : Format) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Sqrt (Family format code plan) where
-  spec := Spec.sqrt
-  candidates := Plan.sqrtCandidates format plan
-
-instance fmaCapability
-    (format : Format) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Fma (Family format code plan) where
-  spec := Spec.fma
-  candidates := Plan.fmaCandidates format plan
+portfolio_capability Add add Format for Spec.addition
+portfolio_capability Sub sub Format for Spec.subtraction
+portfolio_capability Mul mul Format for Spec.multiplication
+portfolio_capability Div div Format for Spec.division
+portfolio_capability Sqrt sqrt Format for Spec.sqrt
+portfolio_capability Fma fma Format for Spec.fma
 
 end FloatLib.Floats.Formats.Posit.Configured

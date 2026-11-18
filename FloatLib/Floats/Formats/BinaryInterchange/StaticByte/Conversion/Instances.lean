@@ -1,17 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
+public import FloatLib.Kernels.Execution.Instances -- shake: keep
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Conversion.Proof
-public import FloatLib.Floats.ExecFloat.Comparison
 
 /-!
 # Ordinary interfaces and exact conversion for static-byte formats

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Scaling
+
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.NearestEven
 
 /-!
@@ -81,7 +82,8 @@ theorem ceil_div_eq_roundQuotient_up (numerator denominator : Nat) :
         (quotient : Real) + (remainder : Real) / (denominator : Real) := by
     have h :=
       congrArg (fun value : Real => value / (denominator : Real)) hdivisionReal
-    simp [add_div, hdenominatorReal] at h
+    simp only [Nat.cast_mul, add_div, ne_eq, hdenominatorReal, not_false_eq_true,
+      mul_div_cancel_left₀] at h
     simpa [Nat.cast_div] using h.symm
   by_cases hremainder : remainder = 0
   · rw [hsplit, hremainder]
@@ -102,7 +104,7 @@ theorem ceil_div_eq_roundQuotient_up (numerator denominator : Nat) :
         Numerics.roundQuotient .up numerator denominator = quotient + 1 := by
       simp [Numerics.roundQuotient_up_eq, hdenominator, quotient, remainder, hremainder]
     rw [hsplit, hroundUp, Int.ceil_eq_iff]
-    constructor <;> norm_num <;> linarith
+    constructor <;> norm_num <;> assumption
 
 /-- The exact real quotient lies below its natural ceiling quotient. -/
 theorem div_le_natCast_roundQuotient_up (numerator denominator : Nat) :
@@ -310,7 +312,7 @@ theorem pow2_le_roundQuotDirected_of_le_div
       rw [pow2_eq_two_pow]
       exact_mod_cast Nat.two_pow_pos exponent
     simp only [Nat.cast_zero, div_zero] at hlower
-    linarith
+    exact hpositive.not_ge hlower
   have hdenominatorPos : (0 : Real) < denominator := by
     exact_mod_cast Nat.pos_of_ne_zero hdenominator
   have hmulReal :
@@ -339,7 +341,8 @@ theorem roundQuotDirected_le_pow2_of_div_lt
         ((pow2 exponent : Nat) : Real)) :
     roundQuotDirected roundUp numerator denominator ≤ pow2 exponent := by
   by_cases hdenominator : denominator = 0
-  · cases roundUp <;> simp [roundQuotDirected, hdenominator, Numerics.roundQuotient_up_eq]
+  · cases roundUp <;> simp only [roundQuotDirected, Bool.false_eq_true, ↓reduceIte, hdenominator,
+    Nat.div_zero, zero_le, Numerics.roundQuotient_up_eq]
   have hdenominatorPos : (0 : Real) < denominator := by
     exact_mod_cast Nat.pos_of_ne_zero hdenominator
   have hmulReal :

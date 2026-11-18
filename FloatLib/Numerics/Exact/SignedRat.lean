@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Numerics.Exact.Dyadic.Basic
 public import FloatLib.Numerics.Exact.Zero
 public import Mathlib.Algebra.Order.Field.Basic
+
 import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
@@ -62,6 +63,9 @@ namespace SignedRat
   cases hvalue
   cases hnegative
   rfl
+
+/-- Two signed rationals are equal exactly when their values and sign bits are equal. -/
+add_decl_doc FloatLib.Numerics.SignedRat.ext_iff
 
 /--
 Numerical equality, ignoring the sign attached to zero.
@@ -127,7 +131,7 @@ instance : Zero SignedRat where
 
 /-- Both signed-zero representations are mathematical zero for checked exact arithmetic. -/
 instance : ExactZero SignedRat where
-  isZero value := value.value = 0
+  IsZero value := value.value = 0
   zero_is_zero := value_zero
   decidableIsZero _ := inferInstance
 

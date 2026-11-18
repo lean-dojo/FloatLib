@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,20 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Interval.Real
+public import FloatLib.Numerics.ErrorBound.Algebra
 public import FloatLib.Numerics.MixedError.Basic
-public import Mathlib.Analysis.Calculus.Deriv.Basic
-public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
-public import Mathlib.Topology.MetricSpace.Lipschitz
-import Mathlib.Algebra.Order.Group.MinMax
-import Mathlib.Analysis.Calculus.MeanValue
+
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Ring
 
 /-!
 # Absolute error propagation
@@ -46,14 +40,6 @@ noncomputable section
 
 /-- An exact input introduces no arithmetic error. -/
 theorem exact_error (x : ℝ) : |x - x| ≤ 0 := by simp
-
-/-- Numerical interpretation and propagation of input errors are independent proof steps. -/
-theorem compose_error {actual intermediate reference localError inputError : ℝ}
-    (hlocal : |actual - intermediate| ≤ localError)
-    (hinput : |intermediate - reference| ≤ inputError) :
-    |actual - reference| ≤ inputError + localError :=
-  ((abs_sub_le actual intermediate reference).trans (add_le_add hlocal hinput)).trans_eq
-    (add_comm localError inputError)
 
 /-- A Lipschitz function scales the input error before the implementation's local error is added. -/
 theorem lipschitz_error {f : ℝ → ℝ} {constant : NNReal}
@@ -107,20 +93,8 @@ also covers a real reference below zero, where `Real.sqrt` is totalized to zero.
 theorem sqrt_error {a x result inputError localError : ℝ}
     (hinput : |a - x| ≤ inputError)
     (hlocal : |result - Real.sqrt a| ≤ localError) :
-    |result - Real.sqrt x| ≤ Real.sqrt inputError + localError := by
-  have he : 0 ≤ inputError := (abs_nonneg _).trans hinput
-  have root_le (u v : ℝ) (hu : u ≤ v + inputError) :
-      Real.sqrt u ≤ Real.sqrt v + Real.sqrt inputError := by
-    apply Real.sqrt_le_iff.mpr
-    refine ⟨add_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _), ?_⟩
-    have hv : v ≤ Real.sqrt v ^ 2 := by
-      rw [Real.sq_sqrt']
-      exact le_max_left _ _
-    nlinarith [Real.sq_sqrt he,
-      mul_nonneg (Real.sqrt_nonneg v) (Real.sqrt_nonneg inputError)]
-  have lower := root_le x a (by linarith [(abs_le.mp hinput).1])
-  have upper := root_le a x (by linarith [(abs_le.mp hinput).2])
-  exact compose_error hlocal (abs_le.mpr ⟨by linarith, by linarith⟩)
+    |result - Real.sqrt x| ≤ Real.sqrt inputError + localError :=
+  compose_error hlocal ((abs_sqrt_sub_sqrt_le_sqrt a x).trans (Real.sqrt_le_sqrt hinput))
 
 /-- The error of a square root propagated from an input error `e` between `a` and `x`: the
 smaller of the Hölder bound `√e` and the Lipschitz bound `e / (√a + √x)` of the two roots. -/
@@ -158,25 +132,15 @@ value at the ends, when `e ≥ 0` or the interval does not contain zero. -/
 private theorem abs_rpow_le_max {a x t e : ℝ} (ht : t ∈ Set.Icc (min a x) (max a x))
     (hsign : 0 < a * x ∨ 0 ≤ e) : |t| ^ e ≤ max (|a| ^ e) (|x| ^ e) := by
   obtain ⟨lower, upper⟩ := ht
-  have hend : ∀ u, u = |a| ∨ u = |x| → u ^ e ≤ max (|a| ^ e) (|x| ^ e) := by
-    rintro u (rfl | rfl)
-    · exact le_max_left _ _
-    · exact le_max_right _ _
-  have choose : ∀ (f : ℝ → ℝ → ℝ), (f |a| |x| = |a| ∨ f |a| |x| = |x|) →
-      f |a| |x| ^ e ≤ max (|a| ^ e) (|x| ^ e) := fun f h => hend _ h
   have hmax : |t| ≤ max |a| |x| := by
     rcases le_total a x with h | h
     · rw [min_eq_left h] at lower; rw [max_eq_right h] at upper
-      exact abs_le.2 ⟨by linarith [neg_abs_le a, le_max_left |a| |x|], by
-        linarith [le_abs_self x, le_max_right |a| |x|]⟩
+      exact abs_le_max_abs_abs lower upper
     · rw [min_eq_right h] at lower; rw [max_eq_left h] at upper
-      exact abs_le.2 ⟨by linarith [neg_abs_le x, le_max_right |a| |x|], by
-        linarith [le_abs_self a, le_max_left |a| |x|]⟩
+      simpa only [max_comm] using abs_le_max_abs_abs lower upper
   have monotone (he : 0 ≤ e) : |t| ^ e ≤ max (|a| ^ e) (|x| ^ e) :=
-    (Real.rpow_le_rpow (abs_nonneg t) hmax he).trans
-      (choose max (by rcases le_total |a| |x| with h | h
-                      · exact .inr (max_eq_right h)
-                      · exact .inl (max_eq_left h)))
+    (Real.rpow_le_rpow (abs_nonneg t) hmax he).trans_eq
+      (Real.rpow_max (abs_nonneg a) (abs_nonneg x) he)
   rcases hsign with hsame | he
   · rcases le_total 0 e with he | he
     · exact monotone he
@@ -189,12 +153,12 @@ private theorem abs_rpow_le_max {a x t e : ℝ} (ht : t ∈ Set.Icc (min a x) (m
         rw [abs_of_neg ha, abs_of_neg hx, abs_of_neg ht]
         refine ⟨lt_min (by linarith) (by linarith), ?_⟩
         rcases le_total a x with h | h
-        · rw [max_eq_right h] at upper; exact min_le_of_right_le (by linarith)
-        · rw [max_eq_left h] at upper; exact min_le_of_left_le (by linarith)
-    exact (Real.rpow_le_rpow_of_nonpos hmin.1 hmin.2 he).trans
-      (choose min (by rcases le_total |a| |x| with h | h
-                      · exact .inl (min_eq_left h)
-                      · exact .inr (min_eq_right h)))
+        · rw [max_eq_right h] at upper; exact min_le_of_right_le (neg_le_neg upper)
+        · rw [max_eq_left h] at upper; exact min_le_of_left_le (neg_le_neg upper)
+    apply (Real.rpow_le_rpow_of_nonpos hmin.1 hmin.2 he).trans
+    rcases min_choice |a| |x| with h | h
+    · rw [h]; exact le_max_left _ _
+    · rw [h]; exact le_max_right _ _
   · exact monotone he
 
 /-- A point between two values of the same sign is not zero. -/
@@ -221,7 +185,7 @@ theorem rpow_const_error {a b x y result baseError localError : ℝ}
   rw [(hderiv t ht).deriv, abs_mul]
   gcongr
   exact (Real.abs_rpow_le_abs_rpow t (b - 1)).trans
-    (abs_rpow_le_max ht (hsign.imp id fun h => by linarith))
+    (abs_rpow_le_max ht (hsign.imp id fun h => by positivity))
 
 /-- A real power of a positive base propagates the errors of its base and its exponent, each by
 the mean value theorem with the larger slope at the ends of its interval. -/
@@ -250,11 +214,8 @@ theorem rpow_error {a b x y result baseError exponentError localError : ℝ}
       rcases le_total b y with h | h
       · rw [min_eq_left h]; exact le_max_left _ _
       · rw [min_eq_right h]; exact le_max_right _ _
-  calc |result - x ^ y| ≤ |result - a ^ b| + (|a ^ b - x ^ b| + |x ^ b - x ^ y|) := by
-        have := abs_sub_le (a ^ b) (x ^ b) (x ^ y)
-        have := abs_sub_le result (a ^ b) (x ^ y)
-        linarith
-    _ ≤ _ := by linarith
+  simpa only [add_zero, zero_add, add_comm, add_left_comm, add_assoc] using
+    compose_error hlocal (compose_error base exponent)
 
 /-- Logarithmic input error needs a positive margin for both the computed and reference values. -/
 theorem log_error {a x result inputError localError : ℝ} (ha : 0 < a) (hx : 0 < x)
@@ -301,7 +262,7 @@ theorem tanh_error {a x result inputError localError : ℝ}
     rw [(derivative value).deriv,
       abs_of_nonneg (one_div_nonneg.mpr (sq_nonneg (Real.cosh value)))]
     apply (div_le_one (sq_pos_of_pos (Real.cosh_pos value))).mpr
-    nlinarith [Real.one_le_cosh value, sq_nonneg (Real.cosh value - 1)]
+    exact one_le_pow₀ (Real.one_le_cosh value)
   simpa only [one_mul] using derivative_error (f := Real.tanh) (derivativeBound := 1)
     zero_le_one (fun value _ => (derivative value).differentiableAt)
     (fun value _ => bound value) hinput hlocal
@@ -375,46 +336,6 @@ theorem positive_of_error_lt {actual reference error : ℝ}
   have lower := (abs_le.mp herror).1
   linarith
 
-/-- Compose input perturbations with the error of the operation actually executed. -/
-theorem add_error {a b x y r ea eb er : ℝ}
-    (ha : |a - x| ≤ ea) (hb : |b - y| ≤ eb)
-    (hr : |r - (a + b)| ≤ er) :
-    |r - (x + y)| ≤ ea + eb + er := by
-  have hp : |(a + b) - (x + y)| ≤ ea + eb := by
-    rw [add_sub_add_comm]
-    exact (abs_add_le _ _).trans (add_le_add ha hb)
-  exact ((abs_sub_le r (a + b) (x + y)).trans (add_le_add hr hp)).trans_eq
-    (add_comm er (ea + eb))
-
-/-- Subtraction retains both input errors even when its exact result is very small. -/
-theorem sub_error {a b x y r ea eb er : ℝ}
-    (ha : |a - x| ≤ ea) (hb : |b - y| ≤ eb)
-    (hr : |r - (a - b)| ≤ er) :
-    |r - (x - y)| ≤ ea + eb + er := by
-  have hp : |(a - b) - (x - y)| ≤ ea + eb := by
-    have he : (a - b) - (x - y) = (a - x) - (b - y) := by ring
-    rw [he]
-    exact (abs_sub _ _).trans (add_le_add ha hb)
-  exact ((abs_sub_le r (a - b) (x - y)).trans (add_le_add hr hp)).trans_eq
-    (add_comm er (ea + eb))
-
-/-- An asymmetric product bound avoids discarding the higher-order input error.
-One factor is the computed value and the other is the exact reference value. -/
-theorem mul_error {a b x y r ea eb er : ℝ}
-    (ha : |a - x| ≤ ea) (hb : |b - y| ≤ eb)
-    (hr : |r - a * b| ≤ er) :
-    |r - x * y| ≤ |b| * ea + |x| * eb + er := by
-  have hp : |a * b - x * y| ≤ |b| * ea + |x| * eb := by
-    calc
-      |a * b - x * y| = |(a - x) * b + x * (b - y)| := by congr 1; ring
-      _ ≤ |(a - x) * b| + |x * (b - y)| := abs_add_le _ _
-      _ = |b| * |a - x| + |x| * |b - y| := by rw [abs_mul, abs_mul]; ring
-      _ ≤ |b| * ea + |x| * eb :=
-        add_le_add (mul_le_mul_of_nonneg_left ha (abs_nonneg b))
-          (mul_le_mul_of_nonneg_left hb (abs_nonneg x))
-  exact ((abs_sub_le r (a * b) (x * y)).trans (add_le_add hr hp)).trans_eq
-    (add_comm er (|b| * ea + |x| * eb))
-
 /-- Division exposes both the computed and reference denominator.
 The reference denominator must be nonzero independently of the floating-point zero test. -/
 theorem div_error {a b x y r ea eb er : ℝ} (hb0 : b ≠ 0) (hy0 : y ≠ 0)
@@ -425,8 +346,11 @@ theorem div_error {a b x y r ea eb er : ℝ} (hb0 : b ≠ 0) (hy0 : y ≠ 0)
     calc
       |a / b - x / y| = |(a - x) / b + x * (y - b) / (b * y)| := by
         congr 1
-        field_simp
-        ring
+        calc
+          _ = (a / b - x / b) + (x / b - x / y) :=
+            (sub_add_sub_cancel _ _ _).symm
+          _ = _ := by
+            rw [div_sub_div_same, div_sub_div _ _ hb0 hy0, mul_comm b x, ← mul_sub]
       _ ≤ |(a - x) / b| + |x * (y - b) / (b * y)| := abs_add_le _ _
       _ = |a - x| / |b| + |x| * |b - y| / (|b| * |y|) := by
         rw [abs_div, abs_div, abs_mul, abs_mul, abs_sub_comm y b]
@@ -435,8 +359,7 @@ theorem div_error {a b x y r ea eb er : ℝ} (hb0 : b ≠ 0) (hy0 : y ≠ 0)
           (div_le_div_of_nonneg_right
             (mul_le_mul_of_nonneg_left hb (abs_nonneg x))
             (mul_nonneg (abs_nonneg b) (abs_nonneg y)))
-  exact ((abs_sub_le r (a / b) (x / y)).trans (add_le_add hr hp)).trans_eq
-    (add_comm er (ea / |b| + |x| * eb / (|b| * |y|)))
+  exact compose_error hr hp
 
 /-- Distance to the farther endpoint bounds the error of any candidate against a real value
 in the interval. The candidate itself need not belong to the interval. -/
@@ -469,6 +392,8 @@ theorem mixedError_dite {α : Type*} (observe : α → ℝ) (condition : Prop) [
   · exact hyes h
   · exact hno h
 
+-- The instance is used: the statement's `dite`, an argument of the bound function `P`, takes it.
+set_option linter.extra.unusedDecidableInType false in
 /-- A property of both cases of a dependent `if` holds of the case it selects. -/
 theorem dite_of_forall {α : Sort*} {P : α → Prop} {c : Prop} [Decidable c] {yes : c → α}
     {no : ¬c → α} (hyes : ∀ h, P (yes h)) (hno : ∀ h, P (no h)) : P (dite c yes no) := by

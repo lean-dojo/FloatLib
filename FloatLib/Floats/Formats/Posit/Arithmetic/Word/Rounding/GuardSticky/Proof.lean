@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,10 +7,11 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.GuardSticky.Proof
-import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
 public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
+
+import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
 
 /-!
 # Correctness of direct one-word guard-and-sticky Posit rounding
@@ -18,7 +19,8 @@ public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
 This proof and its two-limb twin together make the one-word and two-limb kernels execution
 refinements of a single rounding rule, chosen by exact intermediate capacity alone.
 
-`candidateCarrierLawful` shows that the `UInt64` candidate carrier satisfies the shared carrier
+`lawfulCandidateCarrier_candidateCarrier` shows that the `UInt64` candidate carrier satisfies the
+shared carrier
 laws at capacity 64, and the shared theorems then give the packing and rounding refinement. The
 remaining proofs connect the one-word entry points to the arbitrary-width direct rounder. Those
 entry points add the zero test, the exact minimum-positive comparison, and sign restoration.
@@ -40,7 +42,7 @@ Bit and suffix reads are exact at every width. The arithmetic laws hold under th
 shared rounder establishes: shifts stay below 64 positions, sums and successors fit the word, and
 masks are narrower than the word.
 -/
-theorem candidateCarrierLawful :
+theorem lawfulCandidateCarrier_candidateCarrier :
     GuardStickyCarrier.LawfulCandidateCarrier candidateCarrier UInt64.toNat 64 where
   bitAt_eq_testBit := NativeWord.bitAt_eq_testBit
   hasLowBits_eq value width := by
@@ -71,14 +73,14 @@ theorem candidateCarrierLawful :
     have honeLe : shiftLeft 1 leading ≤ value := by
       rw [UInt64.le_iff_toNat_le, honeShift]
       exact hlower
-    show (value - shiftLeft 1 leading).toNat = value.toNat - 2 ^ leading
+    change (value - shiftLeft 1 leading).toNat = value.toNat - 2 ^ leading
     rw [UInt64.toNat_sub_of_le value (shiftLeft 1 leading) honeLe, honeShift]
   add_toNat left right hfit := by
-    show (left + right).toNat = left.toNat + right.toNat
+    change (left + right).toNat = left.toNat + right.toNat
     rw [UInt64.toNat_add, Nat.mod_eq_of_lt hfit]
   lowOnes_toNat := NativeWord.lowMask_toNat
   increment_toNat value hfit := by
-    show (value + 1).toNat = value.toNat + 1
+    change (value + 1).toNat = value.toNat + 1
     rw [UInt64.toNat_add, UInt64.toNat_one, Nat.mod_eq_of_lt hfit]
   isOdd_eq := FixedWord.lowBitIsNonzero_eq_odd
   log2_eq := FixedWord.log2Word_toNat
@@ -136,7 +138,8 @@ theorem roundPositiveCodeWord_toNat_eq_direct
       simp [hnonzero]
     rw [ite_eq_right hspecial, ite_eq_left hunderflow, UInt64.toNat_one]
   · rw [ite_eq_right hunderflow]
-    exact GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct candidateCarrierLawful
+    exact GuardStickyCarrier.roundNormalizedPositive_toNat_eq_direct
+      lawfulCandidateCarrier_candidateCarrier
       format significand exponent (payloadBits_lt_of_eligible format heligible) hnonzero
 
 /-- Natural-number positive rounding has the same direct semantics. -/

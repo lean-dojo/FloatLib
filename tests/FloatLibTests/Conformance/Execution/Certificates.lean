@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Proof.Certificate
-public import FloatLib.Floats.Formats.FiniteOnly
+public import FloatLib.Kernels.Execution.Certificate
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Backends
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Instances
+public import FloatLib.Floats.Formats.FiniteOnly
 public import FloatLib.Floats.Formats.OCP
 public import FloatLib.Floats.Formats.Posit
 
@@ -56,8 +56,8 @@ Concrete witnesses make accidental loss of any public family registration a comp
 generic `staticByte` theorem proves the mathematics; these declarations audit the exported names.
 -/
 
-theorem ocpE4M3FN : FullArithmeticCertificate E4M3FN.Family :=
-  fullArithmeticCertificate E4M3FN.Family
+theorem ocpE4M3FN : FullArithmeticCertificate E4M3.Family :=
+  fullArithmeticCertificate E4M3.Family
 
 theorem ocpE5M2 : FullArithmeticCertificate E5M2.Family :=
   fullArithmeticCertificate E5M2.Family

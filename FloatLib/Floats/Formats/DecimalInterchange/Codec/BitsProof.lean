@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -46,7 +46,9 @@ theorem pack_toNat (f : Format) (s : Bool) (n : Nat) (h : n < f.signBase) :
 @[simp] theorem negative_pack (f : Format) (s : Bool) (n : Nat) (h : n < f.signBase) :
     negative f (pack f s n) = s := by
   rw [negative, pack_toNat f s n h]
-  cases s <;> simp <;> omega
+  cases s <;>
+    simp only [Bool.false_eq_true, ↓reduceIte, zero_add, bne_eq_false_iff_eq, Nat.div_eq_zero_iff,
+    bne_iff_ne, ne_eq, add_lt_iff_neg_left, not_lt_zero, or_false] <;> omega
 
 /-- The bits below the sign of a packed word are the packed payload, for any payload below the sign
 bit. -/

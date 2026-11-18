@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,13 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Expression.Basic
-public import FloatLib.Numerics.Enclosure.Interval.BinaryGrid
-public import FloatLib.Numerics.Enclosure.Interval.Elementary
 public import FloatLib.Numerics.Enclosure.Interval.Fused
-public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.InverseHyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.InverseTrig
-public import FloatLib.Numerics.Enclosure.Interval.Operations
 public import FloatLib.Numerics.Enclosure.Interval.Powers
 
 /-!

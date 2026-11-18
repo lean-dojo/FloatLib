@@ -1,1 +1,0 @@
-Linux benchmark-host.example.invalid 6.12.95-124.187.amzn2023.x86_64 #1 SMP PREEMPT_DYNAMIC Mon Jul 27 20:39:41 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux

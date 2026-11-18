@@ -1,17 +1,16 @@
 ---
 number: "11"
 slug: proving-numerical-bounds
-title: Proving error bounds
-summary: "How to prove a real inequality with the `interval` tactic, how to get an error bound for floating-point code with the `roundoff` tactic, how `interval` bounds a polynomial over its whole domain from its coefficients, and what each one assumes."
+title: "Intervals and roundoff bounds"
+summary: "How to prove a real inequality with the `interval` tactic, how to get a forward or a backward error bound for floating-point code with the `roundoff` tactic, how `interval` bounds a polynomial over its whole domain from its coefficients, and what each one assumes."
 phases: [status-and-directed, planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
-The `interval` tactic proves real inequalities by evaluating certified bounds on expressions. The `roundoff` tactic proves error bounds for floating-point programs. Both produce proof terms that Lean checks. This chapter introduces these tactics and the coefficient-based bounds that `interval` can use for polynomials over a whole domain.
+On $[0,1]$, the real expression $x(1-x)$ is at most $1/4$. If a binary32 program evaluates the same formula, its subtraction and multiplication each round. A proof about the program needs to account for those steps. FloatLib's `interval` tactic bounds the real expression over the whole input interval. The `roundoff` tactic bounds the difference between a floating-point calculation and its real counterpart.
 
 ## How to prove an inequality with `interval`
 
-Say a proof needs $x(1-x)\le 1/3$ for every $x\in[0,1]$. You can hand the expression to FloatLib.
-`Set.Icc 0 1` is the closed interval $[0,1]$, so the hypothesis `hx` says that $x$ lies in it:
+To prove the simpler bound $x(1-x)\le 1/3$, give `interval` the expression and a hypothesis on $x$. In Lean, `Set.Icc 0 1` denotes the closed interval $[0,1]$.
 
 ```lean
 example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 3 := by
@@ -34,14 +33,7 @@ example (x y : ℝ) (hx : x ∈ Set.Icc (-1) 1) (hy : y ∈ Set.Icc 2 3) :
   interval
 ```
 
-These are proofs about the real expressions as written. A floating-point program is a different
-story, because it rounds at every operation to a number the format can store, and that's what our
-[`roundoff` tactic](#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code) is
-for. It builds the theorem that ties the program to its real expression from the
-[rounding and reduction bounds](#/chapter/the-mathematics-of-rounding) of each operation it meets,
-and interval evaluation can then close whatever numerical inequalities are left. So there are two
-questions here. Is the math true, and how far can the program drift from it? `interval` answers the
-first, and `roundoff` the second.
+For a floating-point implementation, [`roundoff`](#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code) applies the [rounding and reduction bounds](#/chapter/the-mathematics-of-rounding) of each operation. You can use `interval` on the resulting real inequalities.
 
 ## Why does `interval` cut the range into pieces?
 
@@ -204,9 +196,8 @@ example : Real.logb 2 sqrtTwo < (1 : ℝ) := by interval
 
 `bounds` returns the two endpoints and `valid` proves `lower ≤ constant` and `constant ≤ upper`.
 Both take the requested precision as `_`. Fixed bounds ignore it, and a provider, whoever registers
-the bounds, can use it for narrower ones. A constant like Catalan's takes more work. There the
-provider also has to supply an executable approximation and a theorem bounding its remainder, since
-registration doesn't derive them. Importing the provider's module brings its registration along, and
+the bounds, can use it for narrower ones. A fixed rational enclosure also works for Catalan's constant once you prove it. To obtain tighter
+bounds as precision increases, supply an executable approximation with a proved error bound. Importing the provider's module brings its registration along, and
 executable certificate definitions exported from a Lean module need `@[expose]`. A later applicable
 registration replaces an earlier one.
 
@@ -243,6 +234,113 @@ selects. Dimensions have to reduce to concrete numbers (symbolic ones need a gen
 lemma first), and sums over a finite range or a listed set can use guarded hypotheses such as
 `∀ i ∈ Finset.range 4, x i ∈ Set.Icc 0 1`.
 
+## How to prove that constraints have no common point
+
+Often the statement isn't one inequality. A region of attraction, a safety argument or one case of a larger proof says that a set of constraints is empty: no point satisfies all of them. `interval` proves that too. Your goal can be `False` with the constraints as hypotheses, a negated existential, or an implication to `False` under binders, and the constraints can be any combination by `∧`, `∨`, `¬` and `→` of `≤`, `<`, `=` and `≠` between the expressions of the sections above. Let's start with a disc and a half-plane that don't meet:
+
+```lean
+example (x y : ℝ) (hx : -2 ≤ x) (hx' : x ≤ 2) (hy : -2 ≤ y) (hy' : y ≤ 2)
+    (h1 : x ^ 2 + y ^ 2 ≤ 1) (h2 : x + y ≥ 3 / 2) : False := by
+  interval
+
+example : ¬ ∃ x : ℝ, 0 ≤ x ∧ x ≤ 1 ∧ x * (1 - x) > 13 / 50 := by
+  interval
+
+example (x : ℝ) (h : (0 ≤ x ∧ x ≤ 1) ∨ (2 ≤ x ∧ x ≤ 3)) (hx : -1 ≤ x) (hx' : x ≤ 4)
+    (h' : (x - 3 / 2) ^ 2 < 1 / 5) : False := by
+  interval
+```
+
+Any other goal that isn't one inequality is proved by refuting its negation, so a conjunction, a membership, an equality or an inclusion of sets works as well:
+
+```lean
+example (x : ℝ) (hx : x ∈ Set.Icc (1 : ℝ) 2) : x ^ 2 ∈ Set.Icc (1 : ℝ) 4 := by
+  interval
+
+example : {x : ℝ | 0 ≤ x ∧ x ≤ 1} ⊆ {x : ℝ | x ^ 2 ≤ 1} := by
+  interval
+```
+
+The coordinates can be plain variables, the entries of a vector `Fin n → ℝ`, the fields of a structure, or any real terms that hypotheses bound. A hypothesis `∀ i, P (x i)` over the indices of such a vector is read for each entry. Membership in a named set is unfolded, and so is a definition whose value has no bound of its own.
+
+### What does the tactic do with a set of constraints?
+
+It plays a game of elimination on boxes. It reads a box from the bounds among the constraints and then searches, with compiled code, for a tree of smaller boxes. On each box every comparison has one of three values: it fails at every point, it holds at every point, or the enclosure can't tell. A box where one comparison of a conjunction fails, or every case of a disjunction, is done. A box that is undecided is cut in half, and the search goes on in both halves. What comes out is a certificate, a [[FloatLib.Numerics.Interval.Refutation]]: the tree of cuts, and for each leaf the comparison that fails there.
+
+Then the kernel checks the certificate in one evaluation of [[FloatLib.Numerics.Interval.Constraint.refutes]], which evaluates only the comparison that each leaf names, and [[FloatLib.Numerics.Interval.Constraint.refutes_sound]] turns the answer into the proof. Nothing from the search is trusted, so the search is free to guess.
+
+### What if a constraint holds with no margin?
+
+Then no box separates it from zero and cutting never ends. The standard case is an equilibrium: a Lyapunov function whose derivative along the flow is negative everywhere except at the origin, where it is zero. Here is the claim that it is never nonnegative away from the origin:
+
+```lean
+example (x y : ℝ) (hx : -1 ≤ x) (hx' : x ≤ 1) (hy : -1 ≤ y) (hy' : y ≤ 1)
+    (h0 : x ^ 2 + y ^ 2 > 0)
+    (h : 2 * x * (-x + y / 2 - x * y ^ 2 / 10) + 2 * y * (-x / 2 - y) ≥ 0) : False := by
+  interval
+```
+
+When the search stops at a small box, `interval` writes each undecided comparison $a \le b$ as a quadratic form around the simplest rational point $c$ of that box,
+
+$$a - b = \sum_k M_{kk}(x)\,d_k^2 + 2\sum_{k<l} M_{kl}(x)\,d_k d_l,\qquad d_k = x_k - c_k,$$
+
+where the entries of the matrix $M(x)$ are whatever is left of each term: numbers, other variables, function values. `ring` proves the identity. If $M(x)$ is positive definite for every $x$ in a box around $c$, the form is positive there except at $c$, so $a \le b$ leaves only the point $c$, and the other constraints are checked at that point. The kernel checks definiteness with intervals, in any dimension, by eliminating one coordinate at a time ([[FloatLib.Numerics.Interval.Form.definiteOn]], with [[FloatLib.Numerics.Interval.Form.vanishes_of_definiteOn]] as the theorem behind it). In the example the matrix has the entries $2 + y^2/5$, $0$ and $2$.
+
+The same idea decides a strict comparison whose form is only semidefinite, a sum of nonnegative terms that a comparison bounds by zero, two comparisons that touch at a point when one combination $a - b + \mu\,(c - d)$ with a rational $\mu > 0$ is definite, a quotient whose comparison holds with equality at a point, and values of the sine, the cosine, the hyperbolic tangent and the arctangent that vanish at the point. It doesn't decide two sets that touch when the multiplier is irrational, as it is when a level is given with $\pi$, a zero margin that needs three or more constraints at once unless products of pairs decide it, or one where an exponential, a logarithm or a square root vanishes with the form.
+
+An inequality goal still goes to the boxes of the first section. When they don't prove it, the tactic tries the constraint that the inequality fails, which is how $x(1-x) \le 1/4$ on $[0,1]$ is proved: the bound is attained at $x = 1/2$, and the form $(x - 1/2)^2$ decides it.
+
+```lean
+example (x : ℝ) (h0 : 0 ≤ x) (h1 : x ≤ 1) : x * (1 - x) ≤ 1 / 4 := by
+  interval
+```
+
+### What if the constraints give no box?
+
+A variable needs bounds, and when the hypotheses don't state them the tactic derives them, with proof. An ellipsoid bounds its variables:
+
+```lean
+example (x y : ℝ) (h : 3 / 2 * x ^ 2 - x * y + y ^ 2 ≤ 3 / 20)
+    (h' : x < -6 / 5 ∨ x > 6 / 5 ∨ y < -6 / 5 ∨ y > 6 / 5 ∨ x ^ 2 + y ^ 2 > 36 / 25) : False := by
+  interval
+```
+
+Bounds also come from `|t| ≤ r`, `max` and `min`, from comparisons that are affine in the variable, and from a comparison with an expression in bounded variables, such as $y \le e^x$. A variable that still has no bounds is an error that names it. Half-lines aren't boxes, because the enclosures need both ends. A set that is unbounded in a variable is decided only by arithmetic on the comparisons, through `linarith`, products of the linear comparisons and `nlinarith`, which is enough for polynomial comparisons such as this one:
+
+```lean
+example {x y : ℝ} (hx : x ≤ -2) (hy : 3 ≤ y) : 16 ≤ x ^ 4 ∧ x ^ 3 ≤ -8 ∧ 6 ≤ -x * y := by
+  interval
+```
+
+### Which hints can you give?
+
+Every hint is checked by the kernel like the rest, so a wrong one costs time and nothing else. `(cut := [(x, 0), (y, 1 / 2)])` cuts the box at these points first. `(ball := [(x, 0, 1 / 4)])` names a box around a point, which is decided by the forms around its center, and `(form := …)` states the upper triangle of the matrix yourself. `(box := [(x, -2, 2)])` states bounds that follow from the constraints, and `(facts := [sq_nonneg (x - y)])` gives terms to every step that calls `linarith` or `nlinarith`. `(depth := 60)` and `(boxes := 100000)` raise the limits of the search, which are 40 cuts along a branch and 20000 boxes, and `(maxHeartbeats := 400000)` the limit of the kernel check, which is 20000 and 200 more for each box of the certificate.
+
+```lean
+example (x y : ℝ) (hx : -1 ≤ x) (hx' : x ≤ 1) (hy : -1 ≤ y) (hy' : y ≤ 1)
+    (h0 : x ^ 2 + y ^ 2 > 0) (h : x ^ 2 * Real.exp (2 * y) + y ^ 2 ≤ 0) : False := by
+  interval (ball := [(x, 0, 1 / 2), (y, 0, 1 / 2)]) (form := [[Real.exp (2 * y), 0], [1]])
+
+example (x y : ℝ) (h : x ^ 2 + y ^ 2 + Real.cos x ≤ 2) (h' : x * y > 4) : False := by
+  interval (box := [(x, -2, 2), (y, -2, 2)]) (facts := [sq_nonneg x, sq_nonneg y])
+```
+
+When the tactic fails, the message names the box where the search stopped, the constraints that are undecided there with the enclosures that fail to exclude them, and the limit that stopped it. If every constraint holds on a whole box, it says so: the set isn't empty and the goal is false as stated, unless some hypothesis was not read as a constraint, in which case the message lists those. A failed call leaves the goal as it was, and `set_option trace.interval.constraints true` lists the steps it took.
+
+### How much does `interval` prove on other projects' goals?
+
+We measured on goals we didn't write for this engine: the tests of `interval` in FloatLib, of `dyadic_interval` in Mathlib, of `cega` in SymLean, and the IEANTN floors, each goal as its own file with one tactic call.
+
+| Corpus | Goals | `interval` | Mathlib `dyadic_interval` | SymLean `cega` |
+| --- | ---: | ---: | ---: | ---: |
+| FloatLib tests of `interval` | 52 | 46 | 1 | 13 |
+| Mathlib tests of `dyadic_interval` | 56 | 55 | 56 | 34 |
+| SymLean tests of `cega` | 56 | 55 | 9 | 56 |
+| IEANTN floors | 5 | 5 | 0 | 5 |
+| all | 169 | 161 | 66 | 108 |
+
+A count for a corpus says what an engine did on that corpus, not what it does on all goals. Why doesn't `interval` close everything? One Mathlib test has a hypothesis in Mathlib's own interval type, and six FloatLib tests need definitions of their test module, so no engine closes those six as single files. `dyadic_interval` and `cega` each close all of their own tests and far fewer of the others', which is what you'd expect of tests written for one tool :) A closed goal takes 6.0 seconds at the median, most of it the imports of the file.
+
 ## How to get an error bound for floating-point code
 
 Now let's put the rounding back in. A program on `Binary32` values rounds after every operation, so
@@ -260,12 +358,12 @@ The composition theorems bound the resulting error of the complete expression.
 The bound compares the computed value with the reference. It's absolute, $|x-x_0|\le\beta$, or
 mixed, where `MixedError x x₀ r a` means $|x-x_0|\le r|x_0|+a$, a relative part plus an absolute
 part. Finiteness (no infinity or NaN), exact decoded values and signs are proved the same way. The
-tactic needs its own import, `FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff`, as in
+tactic needs its own import, `FloatLib.Tactic.Roundoff`, as in
 this example from the library's tests:
 
 ```lean standalone
 import FloatLib
-import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff
+import FloatLib.Tactic.Roundoff
 
 open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
 
@@ -394,20 +492,59 @@ In binary32, $u=2^{-24}$ and $\eta=2^{-150}$. For four products of magnitude at 
 term is about $4u\cdot4=16u$ and the second about $4u+4\eta$, so the computed dot product lands
 within about $20u\approx1.19\times10^{-6}$ of the exact one. That's a little above the textbook bound
 $\gamma_4\sum_j|p_j|\approx16u$ [@higham2002], because the loop charges every addition the same
-relative error, including the first one from zero, which is exact.
+relative error, including the first one from zero, which is exact. The closed form that
+`roundoff closed theorem` generates, in the section on backward error below, weights each product
+by its own roundings and comes to about $14u$.
 
 In the second example the premise comes from four plain conditions: finite entries, $|p_j|\le b$,
 $(1+u)^{n+1}\le2$, and $2(n+1)(b+\eta)\le\Omega$. In binary32 the growth condition holds while
 $n+1\le\ln2/\ln(1+u)$, up to 11,629,079 terms, and with $b=1$ and $n=4$ the last condition asks for
 $10(1+2^{-150})\le\Omega\approx3.40\times10^{38}$, which is hardly asking at all.
 
+### What changes when storage is narrower than arithmetic?
+
+"A bfloat16 dot product" can mean two different programs. One rounds every product and every partial sum to bfloat16. Another reads bfloat16 entries, widens them to binary32, and multiplies and accumulates there. `roundoff` can't guess which one you mean, so you write the casts:
+
+```lean standalone
+import FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError.Rounding
+import FloatLib.Tactic.Roundoff
+
+open FloatLib.Floats.Formats.BinaryInterchange
+
+roundoff mixed theorem stored_dot_error :=
+  fun (xs : List (Model FloatFormat.bfloat16 × Model FloatFormat.bfloat16)) =>
+    Model.toReal (xs.foldl (fun acc pair => Model.add acc
+      (Model.mul (Model.cast _ FloatFormat.binary32 pair.1)
+        (Model.cast _ FloatFormat.binary32 pair.2))) (Model.zero _ false))
+```
+
+Here only the additions round. Widening a bfloat16 value to binary32 introduces no error when the result is finite. And the product is exact too: bfloat16 has eight bits of precision, so the product of two of its significands needs at most sixteen, and binary32 has twenty-four. It's like multiplying two two-digit numbers on a calculator with eight digits, where nothing can be cut off. So the generated bound drops the product's allowance, and the factor that repeats in the accumulation is $1+2^{-24}$ where the all-bfloat16 program has $1+2^{-8}$.
+
+There are four rules behind this, each stated once for all descriptors:
+
+- **Widening casts are exact** when the destination's grid contains the source's and the result is finite.
+- **A product is exact** when the two source precisions sum to at most the destination's, the destination's subnormal grid contains both source grids, the product is finite, and the exact product is zero or in the destination's normal range ([[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_mul_cast_exact]]). For binary32 products the precision and grid conditions hold with two bfloat16, binary16, E4M3, E5M2, E2M1, E2M3 or E3M2 values.
+- **Narrowing casts round once**, with the destination's budget $(u,\eta)$, plus a term for saturation where the destination saturates ([[FloatLib.Floats.Formats.BinaryInterchange.Model.cast_rounding_policy]]). The bound is written out below.
+- **Scaling by a power of two is exact** when the input and output are finite and either the shift is nonnegative, the input is zero, or the scaled value stays normal.
+
+With $M$ for the destination's largest finite magnitude, the narrowing bound is
+
+$$|\operatorname{cast}(x)-x|\le u|x|+\eta+\max(0,|x|-M).$$
+
+A fused multiply-add into the wide format keeps the one-rounding rule it already had, and a different reduction tree needs a theorem for that tree.
+
+Don't skip the conditions that depend on the values. Take the smallest positive bfloat16 subnormal, $2^{-133}$. Both operands widen exactly, but their square is $2^{-266}$, far below binary32's smallest subnormal $2^{-149}$, so the binary32 product is zero. Precision alone can't justify an exact product, which is why the rule asks for the range. Saturation is the same kind of trap on the other side: casting binary32's exactly represented $1000$ to E2M1 returns $6$, its largest finite value. That result is finite and its error is $994$, and the last term of the narrowing bound is there to say so. A negative shift can lose bits as well. Scaling binary32's smallest subnormal by $2^{-1}$ gives zero.
+
+Two things to keep in mind when you read a generated bound. If a hidden activation is stored back in bfloat16 or FP8, that cast must appear in the program, and its error survives into the next layer: widening it again doesn't undo it. And the bounds start from the decoded stored inputs. To include the quantization of master weights, put those casts in the analyzed program or supply their input-error bounds. What the theorem accounts for is the schedule you wrote, and connecting a device kernel to that schedule is a separate obligation.
+
 ## What else can `roundoff` read?
 
 Literals go through the same analysis, exact when the format represents them, and so do integer
 conversions, rounding to integral values and the C maximum loop `if m < x then x else m`. FloatLib's
-correctly rounded exponential, logarithm, `expMinus1`, `logPlus1` and `expMul` each contribute one
-rounding at their real result on an IEEE descriptor, while sine, cosine and the hyperbolic functions
-use FloatLib's rational enclosures. Loops can run over lists, arrays, vectors and matrices, and a
+correctly rounded exponential, logarithm, `expm1`, `logp1`, `expMul` and `expm1x` each
+contribute one rounding at their real result on an IEEE descriptor, while sine, cosine and the
+hyperbolic functions use FloatLib's rational enclosures. A `match`, a program on Lean's native
+floats and the function `expm1x` have their own sections below. Loops can run over lists, arrays, vectors and matrices, and a
 loop whose state is a pair or a nondependent record carries one relation for all its components.
 
 Say such a loop tests a rounded component, like a sum that stops once an addition leaves it
@@ -423,20 +560,25 @@ for the dot product its premise asks every visited partial sum and product to be
 proof you don't need a named theorem:
 `have bound := by roundoff (ExecFloat.Binary.toReal (program x))` infers a bound once its range
 premises are provable. `[roundoff_rule]` registers a bound of your own, and another library
-registers its containers with `@[roundoff_extension]`.
+registers its containers with `@[roundoff_extension]`. Rules that match the same computation
+are tried in the order in which they were registered.
 
 ## What does `roundoff` ask you to prove?
 
-Each rounding rule, the theorem `roundoff` uses for one operation, holds for IEEE descriptors, and
-the tactic proves that condition from the context or leaves it as a goal. The rules need finite
+The arithmetic rounding rules hold for IEEE descriptors; the cast rules also cover the other
+encoding policies described above. The tactic proves the required descriptor conditions from the
+context or leaves them as goals. The rules need finite
 results, division a finite divisor and square root a finite operand in its domain, and whatever the
 tactic can't prove comes back as a premise or a goal. For a loop the budget is a symbolic
 recurrence, a step-by-step formula, so comparing it with a numerical tolerance of your own is a
 separate step, like the closed form above.
 
 **Note:** The operator rules are the nearest-even rounding theorems of the ordinary operators. A
-named call with a directed mode, such as `ExecFloat.Binary.add x y (mode := .up)`, has no rule, so
-`roundoff` asks you for a bound on it.
+sum, a difference, a product or a fused multiply-add called with a rounding mode, such as
+`ExecFloat.Binary.add x y (mode := .up)`, has its own rule, with the unit roundoff of that mode,
+and so has the rounding of a real, `Model.roundAt format x mode`. The section on tightness below
+shows one. A quotient or a square root with a mode other than the default has no rule, so
+`roundoff` asks you for a bound on those.
 
 ## Which reference does the bound use?
 
@@ -492,6 +634,399 @@ The rest you take on trust:
 
 Inside index data, though, a function over numerical values is checked wherever it travels, in a
 list, a record or a generic helper, and applied only at plain index data.
+
+## Backward error
+
+A forward bound says how far the computed value is from the exact one. A backward-error statement turns the question around: for which inputs is the computed value exactly right? If those inputs are within a few rounding errors of yours, the program has done as well as your data allows. `roundoff (backward := true) theorem` writes and proves that statement from the same code, and `roundoff closed theorem` turns it into a forward bound in closed form:
+
+```lean standalone
+import FloatLib
+import FloatLib.Tactic.Roundoff
+
+open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+  [ExecFloat.ModelCodec plan (Model format) code]
+  [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
+
+local notation "Value" => ExecFloat (Configured.Family format code plan)
+
+/-- The dot product of two functions on `Fin n`, from zero. -/
+def dot {n : Nat} (x y : Fin n → Value) : Value :=
+  Fin.foldl n (fun s j => s + x j * y j) 0
+
+roundoff (backward := true) theorem dot_backward :=
+  fun {n : Nat} (x y : Fin n → Value) (hformat : format.isIEEE = true) =>
+    ExecFloat.Binary.toReal (dot x y)
+
+#check @dot_backward
+-- @dot_backward : ∀ {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+--   [inst : ExecFloat.ModelCodec plan (Model format) code]
+--   [inst_1 : ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] {n : ℕ} (x y : Fin n → Value),
+--   format.isIEEE = true →
+--     ExecFloat.Binary.isFinite (dot x y) = true →
+--       ∃ δx,
+--         (∀ (j : Fin n), |δx j| ≤ (1 + Model.unitRoundoffAt format) ^ (n - 1 - ↑j + 2) - 1) ∧
+--           |ExecFloat.Binary.toReal (dot x y) -
+--                 List.foldl (fun s j => s + ExecFloat.Binary.toReal (x j) * (1 + δx j) * ExecFloat.Binary.toReal (y j)) 0
+--                   (List.finRange n)| ≤
+--             Model.underflowErrorAt format * (1 + Model.unitRoundoffAt format) *
+--               ∑ k ∈ Finset.range n, (1 + Model.unitRoundoffAt format) ^ k
+
+roundoff closed theorem dot_closed :=
+  fun {n : Nat} (x y : Fin n → Value) (hformat : format.isIEEE = true) =>
+    ExecFloat.Binary.toReal (dot x y)
+
+#check @dot_closed
+-- @dot_closed : ∀ {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+--   [inst : ExecFloat.ModelCodec plan (Model format) code]
+--   [inst_1 : ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] {n : ℕ} (x y : Fin n → Value),
+--   format.isIEEE = true →
+--     ExecFloat.Binary.isFinite (dot x y) = true →
+--       |ExecFloat.Binary.toReal (dot x y) -
+--             List.foldl (fun s j => s + ExecFloat.Binary.toReal (x j) * ExecFloat.Binary.toReal (y j)) 0
+--               (List.finRange n)| ≤
+--         ∑ j,
+--             |ExecFloat.Binary.toReal (x j)| * ((1 + Model.unitRoundoffAt format) ^ (n - 1 - ↑j + 2) - 1) *
+--               |ExecFloat.Binary.toReal (y j)| +
+--           Model.underflowErrorAt format * (1 + Model.unitRoundoffAt format) *
+--             ∑ k ∈ Finset.range n, (1 + Model.unitRoundoffAt format) ^ k
+```
+
+### How to read the backward-error theorem
+
+`#check @dot_backward` prints one statement for every length, every IEEE descriptor and every storage plan. It says there is a perturbation `δx j` for each entry of `x`, such that the computed dot product is the exact dot product of the entries `x j * (1 + δx j)` with `y`, up to the term on its last two lines.
+
+Each `δx j` is bounded by a count of the roundings that entry went through. Its product rounds once, and so does each addition from its own on. One rounding multiplies by a factor within $u$ of one, so $k$ roundings give $(1+u)^k-1$, here with $k=n-1-j+2$. The first entry takes $n+1$ roundings and the last one two. Higham's bound for the same loop is $\gamma_n=nu/(1-nu)$ [@higham2002]. We have $n+1$ where he has $n$ because the analysis charges the first addition, to an exact zero, a rounding it doesn't make.
+
+The last term is there because a product can underflow. A product in the subnormal range is off by up to $\eta$, and no small relative change of `x j` accounts for that. So the statement is an equality up to about $n\eta$, which Higham calls mixed forward-backward stability. A program whose operations can't underflow gets a plain equality. And look at the premise: the forward theorem asks for a range condition at every step of the loop, and this one asks only that the result is finite, because a finite sum has finite terms and a finite product has finite factors.
+
+### How to choose the perturbed inputs
+
+By default every input may carry a perturbation, and a product gives its rounding to its left factor. `(perturb := [y])` names the inputs that may be perturbed, and `(factor := right)` gives the rounding of every product to its right factor. Sometimes the analysis has to choose for you. In Horner's rule `(a * x + b) * x + c` the point `x` is read twice, and the two reads would need different perturbations. So the analysis leaves `x` alone and moves every rounding onto the coefficients, which is the classical result: `a` takes four roundings, `b` three and `c` one. `roundoff (backward := true) mixed theorem` states the forward mixed bound and the backward statement together.
+
+What does the mode read? Loops over lists, arrays, vectors, `Fin n` and matrices, squares, branches, a maximum or minimum of finite values, the mixed-precision rules and the fused multiply-add. It refuses when a rounding has nowhere to go, and the message names the subterm and the reason. It never states a weaker theorem instead. A literal in a rounded sum (`x + 1`), an input read with roundings that differ (`x * x + x`), cancellation between computed intermediates, a compensated sum and a function such as the exponential are refused, and each message suggests `roundoff mixed theorem`, which gives a forward bound for all of these.
+
+### How to get the forward bound in closed form
+
+A backward statement gives a forward bound: perturbing `x j` by `δx j` changes the product `x j * y j` by at most $|\delta x_j|\,|x_jy_j|$. `dot_closed` above states the result of that argument directly,
+
+$$
+\Bigl|\hat s-\sum_j x_jy_j\Bigr|\le\sum_j\bigl((1+u)^{n-1-j+2}-1\bigr)|x_jy_j|
++\eta(1+u)\sum_{k<n}(1+u)^k .
+$$
+
+Each product is weighted by the bound of its own perturbation, not by the largest one. For four products of magnitude at most one, that is about $(5+4+3+2)u=14u$, where the closed form of the recurrence gives $20u$. Each read is bounded by itself here, so `x * x + x`, `x + 1` and a softmax weight all have closed forward bounds although none has a backward-error form.
+
+Which forward theorem should you use? The recurrence of `roundoff mixed theorem` follows the partial sums, so it sees cancellation, and it can be relative. By contrast, the closed form reads only the magnitudes of the terms. For positive terms the two agree. For 4,096 random terms of mixed signs in binary32, our benchmark script measured a recurrence bound of 120 times the actual error and a closed form of 9,470 times it. These numbers are the script's, not Lean's. `#roundoff_shape name` reads the mixed bound of a generated theorem and says whether it is relative, which is a reading of the statement, not a theorem about it.
+
+### How does this compare with earlier work?
+
+The statements are the ones in Higham's book [@higham2002], where each algorithm gets its own proof by hand. LAProof [@laproof2023] is a Coq library with hand-written proofs of backward and mixed bounds, underflow included, for inner products and matrix operations. Bean [@bean2025] is a typed first-order language in which a program's type is its backward error bound, and a variable is not used twice. The tool eggshel [@eggshel2026] works with a more general definition of backward stability and searches for a proof within a syntactic class of programs.
+
+What is new here is that the program is ordinary Lean code over FloatLib's executable formats, the code you run, and each theorem is a Lean proof that the kernel checks against the model of the arithmetic. No soundness theorem of a type system or of a search stands between the program and the bound. One statement covers every IEEE descriptor, with underflow in it, loops have symbolic length, and each entry gets the bound of its own position in place of one $\gamma_n$ for all. What it doesn't do: compensated sums and functions such as the exponential have no backward theorem, a whole matrix product is stated entry by entry or row by row, and the definition of backward error is the classical one.
+
+## How does `roundoff` read a `match`, a branch or a native float?
+
+Code that depends on a size or on a case of an inductive type has a `match` in it, and each alternative is a different computation with its own error. `roundoff` analyzes the alternatives one by one, each under the facts its patterns give. In the forward theorem the reference, the budgets and the premise are each the `match` of what the alternatives have. Closed and backward theorems are stated the other way round: the statement is the `match` of the statements of the alternatives, each with its own premises and perturbations. Three things are refused, each with a message that names the `match`: a pattern that binds part of a value computed from floating-point values, a pattern that takes a number apart, and overlapping patterns in the closed and backward modes. The forward mode handles overlapping patterns.
+
+A program on Lean's own `Float32` or `Float` is observed through `ExecFloat.Binary.ofFloat32` or `ExecFloat.Binary.ofFloat`, which read the same value as a `Binary32` or a `Binary64`. `roundoff` moves that import inward by proved laws of the native operations: addition, subtraction, multiplication, division, square root, negation, natural-number literals and the round trips. What you get is the theorem of the same program on `Binary32`, in all four modes:
+
+```lean standalone
+import FloatLib
+import FloatLib.Tactic.Roundoff
+
+open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+
+/-- `a x + y` on Lean's native binary32. -/
+def axpy (a x y : Float32) : Float32 := a * x + y
+
+roundoff mixed theorem axpy_mixedError :=
+  fun (a x y : Float32) =>
+    ExecFloat.Binary.toReal (ExecFloat.Binary.ofFloat32 (axpy a x y) : Binary32)
+```
+
+What do these theorems rest on? Each law is a theorem about Lean's logical model of `Float32` and `Float`. That the compiled code and the processor compute what the model says is trusted, and [TRUST.md](https://github.com/lean-dojo/FloatLib/blob/main/TRUST.md) says so. Elementary functions of the native types are different: `Float32.exp` calls the host's C library, which promises no rounding, so there is no law for it and `roundoff` refuses it with that reason. An import into another format, such as a `Float32` read as a `Binary64`, and the native 16-bit carriers have no rule yet.
+
+## How to check that a bound is useful
+
+A proved bound can still be useless. If it is larger than the value it bounds, it doesn't even tell you the sign of the result, and that is what cancellation does to a bound. `#roundoff_check` runs the program at inputs, evaluates the reference and the bound of a generated theorem there, and warns when the bound is at least the magnitude of the reference. Here is the gradient of cross-entropy with respect to the target logit, written two ways:
+
+```lean standalone
+import FloatLib
+import FloatLib.Tactic.Roundoff
+
+open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+  [ExecFloat.ModelCodec plan (Model format) code]
+  [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
+
+local notation "Value" => ExecFloat (Configured.Family format code plan)
+
+/-- The target gradient of cross-entropy as `1 / (1 + s) - 1`. -/
+roundoff mixed theorem subtracted :=
+  fun (s : Value) (hformat : format.isIEEE = true) (hs : 0 ≤ ExecFloat.Binary.toReal s) =>
+    ExecFloat.Binary.toReal (1 / (1 + s) - 1)
+
+/-- The same gradient as `-(s / (1 + s))`. -/
+roundoff mixed theorem divided :=
+  fun (s : Value) (hformat : format.isIEEE = true) (hs : 0 ≤ ExecFloat.Binary.toReal s) =>
+    ExecFloat.Binary.toReal (-(s / (1 + s)))
+
+/--
+warning: evaluated at 1 input
+  computed value  0
+  reference       -5.9604641e-8 (exact)
+  error           5.960e-8
+  bound           1.192e-7 (bound / error = 2.00)
+  premises        3 hold, 0 do not, 0 not evaluated
+  The bound is at least the magnitude 5.960e-8 of the reference: there the theorem does not fix the sign of the result. The computation cancels, or the bound is not relative to its result.
+  This is a report at the inputs above, not a proof.
+-/
+#guard_msgs (whitespace := lax) in
+#roundoff_check subtracted (5.9604645e-8 : Binary32)
+
+#roundoff_check divided (5.9604645e-8 : Binary32)
+-- evaluated at 1 input
+--   computed value  -5.9604645e-8
+--   reference       -5.9604641e-8 (exact)
+--   error           3.553e-15
+--   bound           7.105e-15 (bound / error = 2.00)
+--   premises        3 hold, 0 do not, 0 not evaluated
+--   bound / |reference| = 1.19e-7: the bound fixes the sign of the result.
+--   This is a report at the inputs above, not a proof.
+```
+
+At $s=2^{-24}$ in binary32 the sum `1 + s` rounds to one, and the first form computes zero. You give the inputs as arguments of the theorem, and whatever you leave out is sampled. This command reports and nothing more: it proves nothing, no theorem depends on it, and a sample that looks fine says nothing about the inputs you didn't try. It runs the compiled program, so in a file that begins with `module` the functions your program calls need a `meta import` too.
+
+## How does `roundoff` keep a bound tight?
+
+A rounding that doesn't happen shouldn't be charged, and one that does shouldn't be charged more than it costs. Here is what the analysis recognizes.
+
+Two values within a factor of two of each other subtract exactly (Sterbenz) [@sterbenz1974]. `roundoff` recognizes that from your hypotheses, whether they are the two bounds `y / 2 ≤ x` and `x ≤ 2 * y` or interval facts such as `x ∈ Set.Icc 1 2` and `1 ≤ y ∧ y ≤ 2`, and the subtraction then costs nothing in the forward, the closed and the backward mode. The only rounding left in `(x - y) * z` is that of the product:
+
+```lean standalone
+import FloatLib
+import FloatLib.Tactic.Roundoff
+
+open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+  [ExecFloat.ModelCodec plan (Model format) code]
+  [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
+
+local notation "Value" => ExecFloat (Configured.Family format code plan)
+
+/-- A difference of two values within a factor of two of each other, scaled. -/
+roundoff mixed theorem scaledDifference :=
+  fun (x y z : Value) (hformat : format.isIEEE = true)
+      (hlow : ExecFloat.Binary.toReal y / 2 ≤ ExecFloat.Binary.toReal x)
+      (hhigh : ExecFloat.Binary.toReal x ≤ 2 * ExecFloat.Binary.toReal y) =>
+    ExecFloat.Binary.toReal ((x - y) * z)
+
+#check @scaledDifference
+-- @scaledDifference : ∀ {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+--   [inst : ExecFloat.ModelCodec plan (Model format) code]
+--   [inst_1 : ExecFloat.Backend.PolicyFor (Configured.Family format code plan)] (x y z : Value),
+--   format.isIEEE = true →
+--     ExecFloat.Binary.toReal y / 2 ≤ ExecFloat.Binary.toReal x →
+--       ExecFloat.Binary.toReal x ≤ 2 * ExecFloat.Binary.toReal y →
+--         have output := (x - y) * z;
+--         have reference := (ExecFloat.Binary.toReal x - ExecFloat.Binary.toReal y) * ExecFloat.Binary.toReal z;
+--         ExecFloat.Binary.isFinite x = true ∧
+--             ExecFloat.Binary.isFinite y = true ∧
+--               ExecFloat.Binary.isFinite z = true ∧ |reference| ≤ (Model.posMaxFinite format).toReal →
+--           ExecFloat.Binary.isFinite output = true ∧
+--             MixedError (ExecFloat.Binary.toReal output) reference (Model.unitRoundoffAt format)
+--               (Model.underflowErrorAt format)
+
+/-- The lower endpoint of `x * y + z`: both operations round toward negative infinity. -/
+def lowerAffine (x y z : Value) : Value :=
+  ExecFloat.Binary.add (ExecFloat.Binary.mul x y (mode := .down)) z (mode := .down)
+
+roundoff mixed theorem lowerAffine_mixed :=
+  fun (x y z : Value) (hformat : format.isIEEE = true) =>
+    ExecFloat.Binary.toReal (lowerAffine x y z)
+```
+
+A rounding to nearest misses by at most half a unit in the last place and a directed rounding by at most a whole one. So each rounding attribute has its own unit roundoff: `Model.unitRoundoffIn format mode` is `u` for the two nearest modes and `2 u` for the four directed ones. This covers the rounding of a real, `Model.roundAt`, and a sum, a difference, a product or a fused multiply-add called with a mode, as in `lowerAffine` above. Directed rounding can return the largest finite magnitude after overflow. The directed rules therefore require the exact result to be in range. A quotient or a square root with a mode other than the default has no rule yet.
+
+A mixed theorem gives you the computed value in an interval centered at the reference, $x_0\pm(r|x_0|+a)$. It also gives the exact value in an interval centered at the computed one, $x\pm(r|x|+a)/(1-r)$ (`MixedError.mem_Icc_computed`), which reads only quantities your program has.
+
+And for long loops in short formats there are sharper constants than the classical $(1+u)^{n-1}-1$. Rump proved that $(n-1)u$ alone is enough for a sum of $n$ terms [@rump2012], and Jeannerod and Rump that $nu$ is enough for an inner product when no exact product is subnormal [@jeannerodRump2013] [@jeannerodRump2018]. FloatLib's `Model.abs_toReal_foldl_add_sub_le` and `Model.abs_toReal_foldl_add_mul_sub_le` cover left-to-right accumulation of any length in an IEEE format. Both require a seed of real value zero and a finite final result. The inner-product bound also requires each exact product to be zero or in the normal range. The same theorem names under `ExecFloat.Binary` apply to configured values. For 1,024 terms at eight bits of precision the linear constant is 13 times tighter than the power.
+
+What did the benchmark script measure, as bound over actual error? For a scaled difference of two values within a factor of two, the mixed bound is 3.05 times the error. For the lower endpoint of `x * y + z` with both operations rounded downward, the bound is 3.4 times the error in the median, and the computed endpoint was below the exact value in every trial. One thing isn't done: the first addition of a loop, to an exact zero, is still charged a rounding, which costs up to a third at length 4 and nothing visible from length 256 on. These numbers are the script's, not Lean's.
+
+## How to compute `exp x - 1 - x`
+
+Some stable formulas need the exponential without the first two terms of its series. A relative
+entropy is one: with $s_i=\log(q_i/p_i)$,
+
+$$\sum_i p_i\log\frac{p_i}{q_i}=\sum_i p_i\,(e^{s_i}-1-s_i)$$
+
+for two distributions, and every term on the right is nonnegative, where the terms on the left
+cancel. Near zero the three terms of `exp x - 1 - x` cancel as well: at $x=2^{-30}$ in binary64
+the expression evaluated operation by operation is exactly zero, and the value is about
+$x^2/2$.
+
+`ExecFloat.Binary.CorrectlyRounded.expm1x x` computes it with one rounding. The name is that of
+R's package DPQ [@maechlerDPQ]; the GNU Scientific Library has the scaled form
+`gsl_sf_exprel_2`, which is $2(e^x-1-x)/x^2$ [@gslSpecfunc]. Ours is correctly rounded at every
+binary precision and in every rounding attribute: `(mode := .down)` and the others, nearest-even
+if you don't say.
+
+```lean standalone
+import FloatLib
+import FloatLib.Tactic.Roundoff
+
+open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
+open ExecFloat.Binary.CorrectlyRounded
+
+variable {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+  [ExecFloat.ModelCodec plan (Model format) code]
+  [ExecFloat.Backend.PolicyFor (Configured.Family format code plan)]
+
+local notation "Value" => ExecFloat (Configured.Family format code plan)
+
+roundoff mixed theorem expm1x_mixedError :=
+  fun (x : Value) (hformat : format.isIEEE = true) => ExecFloat.Binary.toReal (expm1x x)
+
+#check @expm1x_mixedError
+-- @expm1x_mixedError : ∀ {format : FloatFormat} {plan : Configured.StoragePlan format} {code : Type}
+--   [inst : ExecFloat.ModelCodec plan (Model format) code] (x : Value),
+--   format.isIEEE = true →
+--     have output := expm1x x;
+--     have reference := Real.exp (ExecFloat.Binary.toReal x) - 1 - ExecFloat.Binary.toReal x;
+--     ExecFloat.Binary.isFinite x = true ∧ |reference| < ↑(Model.Transcendentals.Certified.overflowThreshold format) →
+--       output.isFinite = true ∧
+--         MixedError output.toReal reference (Model.unitRoundoffAt format) (Model.underflowErrorAt format)
+
+/-- `2⁻³⁰` in binary64. -/
+def tiny : Binary64 := ExecFloat.Binary.ofRat (1 / 1073741824)
+
+#eval (ExecFloat.Binary.toRat? (expm1x tiny)).map fun q => q * 2 ^ 113
+-- some 4503599628768597
+
+#eval ExecFloat.Binary.toRat? (exp tiny - 1 - tiny)
+-- some 0
+```
+
+How is it rounded? Not by a series and a subtraction. The function compares $e^x$ exactly with
+rational candidates, which the library already does for the exponential, and a comparison of
+$e^x-1-x$ with $b$ is a comparison of $e^x$ with $b+1+x$. So nothing is ever subtracted in
+floating point, and there is no cancellation at any argument. For the directed attributes, `AlgebraicRounding.roundDown` and `roundUp` use the shared
+comparison-rounding engine to round a positive real downward and upward. The value is irrational for every nonzero
+rational argument, so it never sits on a tie and both nearest attributes agree.
+
+For an IEEE format and a finite input, `toReal_expm1x_of_isFinite` says that a finite result
+below the overflow threshold is `Model.roundAt format (exp x - 1 - x) mode`, in each of the six
+attributes, and `mixedError_toReal_expm1x` gives the mixed error with the unit roundoff of the
+attribute. The result is never negative (`toReal_expm1x_nonneg`), so a sum of terms
+`p i * expm1x (s i)` with nonnegative `p i` gets the relative step budget of a sum of
+nonnegative terms. An inexact argument passes through the function by its derivative $e^t-1$,
+which is small where the argument is (`MixedError.exp_sub_one_sub`).
+
+`roundoff` has the contract of the function in every attribute. In the default one the exact
+value is asked to be below the overflow threshold. A call such as `expm1x x (mode := .up)` asks
+for a little more, an exact value at most the largest finite value, because an upward rounding
+of a value between those two is `+∞` (`toReal_expm1x_eq_roundAt_mode`, `isFinite_expm1x_mode`).
+It then gets the unit roundoff of its attribute, $2u$ for the directed ones.
+
+`roundoff closed theorem` keeps the rounding of the function on its value. For one call it
+proves $|e^x-1-x|\,u+\eta$. Spread over the three terms of the reference it would be
+$(e^x+1+|x|)\,u+\eta$, which is about $2u$ however small the value is: at $x=2^{-10}$ that is
+four million times larger. The same holds for `expm1`, whose reference $e^x-1$ has two terms.
+An inexact argument passes through $e^s-1-s$ by the derivative here too, where the three terms
+would let its whole error through twice.
+
+The benchmark script compared the two forms of the relative entropy for 16 outcomes in binary32,
+with the logarithms computed by the program. When `q` is within one part in a thousand of `p`,
+the bound of the sum of `p * (log p - log q)` is 2.2 times the exact value, so that theorem
+doesn't fix the sign, and at one part in ten thousand the computed value was zero or negative
+in 39 of 100 trials. The bound of the sum of `p * expm1x (log q - log p)` is a thousandth and a
+hundredth of the exact value there. The function decides every rounding by comparisons, with no
+enclosure search before them, so it is slower than `exp` and `expm1`.
+
+## Fresh stochastic rounding
+
+Rounding to the nearest value can repeat the same error at every step of a sum. For example, repeated additions of a positive increment smaller than half the local spacing can all round back to the same accumulator. Stochastic rounding flips a biased coin instead. It chooses between the two neighbours of the exact value so that the error has mean zero.
+
+Let's look at one rounding first. In bfloat16, $257/256$ sits between $1$ and $129/128$. Choosing each with probability $1/2$ gives errors $-1/256$ and $1/256$: the mean error is zero and its second moment is $1/65536$. In general, for neighbours $a<b$ and $a\le x\le b$, choose the upper one with probability $(x-a)/(b-a)$. Then the mean is $x$, and the variance is $(x-a)(b-x)\le (b-a)^2/4$. We prove this law once, for a two-point measure, and then connect it to the grids of the formats and to the rounder that runs.
+
+### What can go wrong with a real random word?
+
+That rounder compares `entropy % denominator` with a remainder. Uniform words in `0, …, M-1` give the ideal probabilities when the denominator divides `M`, and not otherwise. For a midpoint and three equally likely words, the residues modulo two are `0, 1, 0`, so this implementation chooses the upper endpoint with probability $2/3$, not $1/2$. So divisibility is a premise. `StochasticSafe` checks it together with the finite, unclipped endpoint conditions, and the theorems below carry it. A fixed entropy width need not satisfy it for every rational input: products of bfloat16 numbers need `M = 65536`, and with `M = 256` the runtime is biased.
+
+Saturation, flushing, overflow and NaNs have results of their own. An unbiased finite-value theorem needs premises that exclude a changed or exceptional endpoint.
+
+### How to get the bound of a whole loop
+
+`roundoff` has a probability version, which follows a computation that consumes fresh entropy at each rounding. Here is a sum of any length, with the format and the entropy range left as parameters, followed by a three-step bfloat16 sum with 16 entropy bits per rounding:
+
+```lean standalone
+import FloatLib.Tactic.Roundoff.Stochastic
+import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.StochasticSupport
+
+open FloatLib.Floats.Formats.BinaryInterchange
+open FloatLib.Floats.Formats.BinaryInterchange.Model.Policy
+open FloatLib.Numerics.Quantization.Stochastic
+
+roundoff stochastic theorem fresh_sum :=
+  fun (fmt : FloatFormat) (M : ℕ) (hM : 0 < M) (xs : ℕ → ℚ) (n : ℕ) ↦
+    roundedSum (binaryRounder fmt M) xs 0 n
+
+#check fresh_sum_mean
+#check fresh_sum_second
+#check fresh_sum_tail
+#check fresh_sum_confidence
+
+open MeasureTheory
+
+private abbrev rounder := binaryRounder FloatFormat.bfloat16 65536
+private abbrev support := binarySupport FloatFormat.bfloat16 65536
+
+private def terms (k : ℕ) : ℚ := [129 / 128, 3 / 2, 131 / 128].getD k 0
+
+private theorem terms_safe : SumSafe rounder terms 0 3 :=
+  support.sum_safe terms 0 3 (by decide +kernel)
+
+example :
+    (∫ h, (roundedSum rounder terms 0 3 h : ℝ)
+      ∂historyLaw (wordLaw 65536 (by decide)) 3) =
+      ((0 : ℚ) : ℝ) + ∑ k ∈ Finset.range 3, (terms k : ℝ) :=
+  fresh_sum_mean FloatFormat.bfloat16 65536 (by decide) terms 3 terms_safe
+
+/-- The same sum with a number for its budget. -/
+example :
+    Certificate (historyLaw (wordLaw 65536 (by decide)) 3)
+      (fun h ↦ (roundedSum rounder terms 0 3 h : ℝ))
+      (((0 : ℚ) : ℝ) + ∑ k ∈ Finset.range 3, (terms k : ℝ))
+      (Real.toNNReal ((3 / 16384 : ℚ) : ℝ)) :=
+  support.sum_certificate (binaryRounder_law _ _ _) terms 0 3
+    (fun _ ↦ 1 / 16384) (3 / 16384)
+    (by decide +kernel) (by decide +kernel) (by decide +kernel)
+```
+
+You get four theorems about the actual rational output of `roundedSum` under `historyLaw (wordLaw M hM) n`, where each history supplies one independent, uniform word per addition. `fresh_sum_mean` equates the expected output with the exact sum. Its three siblings bound the centered second moment, the tail probability and the confidence radius. All four keep the premise `SumSafe`, which asks for the local admissibility condition at every reachable step and history.
+
+For a concrete loop you don't prove `SumSafe` by hand. `binarySupport` lists the two possible outcomes of each rounding, `Rounder.Support.sum_safe` turns a kernel check of the listed accumulators into `SumSafe` for every history, and `Rounder.Support.sum_certificate` returns the certificate with a rational budget. That is the second half of the example.
+
+### Why does the error of a long sum stay small?
+
+A step's rounding cell can depend on every earlier rounding, so its error need not be independent of the earlier errors. Fresh entropy and the law of one rounding are enough anyway: the cross terms vanish after conditioning on the history so far. If every reachable cell at step $k$ has width at most $g_k$, put $C=\sum_k g_k^2/4$. Then the centered error $E$ satisfies
+
+$$
+\mathbb E[E]=0,\qquad \mathbb E[E^2]\le C,\qquad
+\Pr(|E|\ge\varepsilon)\le 2\exp\!\left(-\frac{\varepsilon^2}{2C}\right)
+$$
+
+for $C>0$ and $\varepsilon\ge0$, so $\sqrt{2C\log(2/\delta)}$ is a confidence radius for $0<\delta<1$. In the example the additions have cells of width at most $1/64$, so $C\le 3/16384$. When $C=0$ the error is zero almost surely.
+
+`roundedDot` spends fresh entropy on each product and each addition, and `roundedAffine` includes the bias addition. One command handles all of these loops and the wrappers around them, matrix entries included, and `Rounder.Support.safe` and `Rounder.Support.affine_certificate` give their certificates.
+
+Two limits. What the command proves comes from the loop and the rounder's law, so it doesn't prove that an external random-number generator supplies independent uniform words. And nonlinear layers need further reasoning, because a mean-zero input error does not give a mean-zero error after a ReLU. Our [network results](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Numerics/Quantization/Stochastic/Network.lean) propagate bounds that account for uncertain activation signs instead.
 
 ## How does `interval` prove infinitely many cases at once?
 
@@ -777,9 +1312,9 @@ that rule out a lane overflowing. A complex factor $p + iq$ adds three more prod
 reversal. `Packed.sosCheck_sound` says what a passing check means for the lists of integers, and
 `Coeff.laurent_sosCheck` turns it into the inequality on the circle.
 
-In our measurements on Lean 4.35, a two-sided bound on a cosine polynomial with 200 integer
-coefficients below $2^{80}$ takes about 0.14 s of kernel time, most of it the link between the 200
-coefficients of the goal and their row, and the whole tactic call about as long. The certified
+In our measurements on Lean v4.36.0, a two-sided bound on a cosine polynomial with 200 integer
+coefficients below $2^{80}$ takes about 0.13 s of kernel time, most of it the link between the 200
+coefficients of the goal and their row, and the tactic call about as long. The certified
 bound is within $4 \cdot 10^{-7}$ of the maximum, relative to its size, while the $\ell^1$ bound is
 3.45 times larger.
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -145,11 +145,11 @@ Cast `x` from format `src` into format `dst` with nearest-even rounding, the ker
       h ▸ quietNaN x
     else
       propagatedNaN dst (Model.signBit x) (nanPayload x)
-  else if hinf : isInf x = true then
+  else if hinf : isInfinite x = true then
     nativeOverflow dst (Model.signBit x)
   else
     have hfinite : isFinite x = true :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x
         (Bool.eq_false_of_not_eq_true hnan)
         (Bool.eq_false_of_not_eq_true hinf)
     if h : src = dst then
@@ -185,11 +185,11 @@ dyadic and rounds once in the destination format.
   | mode =>
       if hnan : isNaN x = true then
         Nearest.cast src dst x
-      else if hinf : isInf x = true then
+      else if hinf : isInfinite x = true then
         Nearest.cast src dst x
       else
         have hfinite : isFinite x = true :=
-          isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x
+          isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x
             (Bool.eq_false_of_not_eq_true hnan)
             (Bool.eq_false_of_not_eq_true hinf)
         if h : src = dst then
@@ -226,16 +226,16 @@ def Status.cast (src dst : FloatFormat) (x : Model src)
     (mode : IEEERoundingMode) : IEEEOutcome dst :=
   let value := Directed.cast src dst x mode
   if hnan : isNaN x = true then
-    outcomeWithInvalid value (isSNaN x || !isNaN value)
-  else if hinf : isInf x = true then
+    outcomeWithInvalid value (isSignaling x || !isNaN value)
+  else if hinf : isInfinite x = true then
     let ternary := exactInfinityTernary (Model.signBit x) value
-    if isInf value then
+    if isInfinite value then
       { value, status := .clear, ternary }
     else
       { value, status := { overflow := true, inexact := true }, ternary }
   else
     have hfinite : isFinite x = true :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x
         (Bool.eq_false_of_not_eq_true hnan)
         (Bool.eq_false_of_not_eq_true hinf)
     let exact := finiteDyadic x hfinite

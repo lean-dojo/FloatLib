@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Dispatch
+public import FloatLib.Kernels.Execution.Dispatch
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked
 public import FloatLibTests.Accounting
@@ -161,7 +161,8 @@ def binary64FmaFailures : Thunk Nat := ⟨fun _ =>
 
 /-- Sampled disagreements between public binary64 dispatch and the selected software kernels. -/
 def binary64DispatchFailures : Thunk Nat := ⟨fun _ =>
-  binary64AddFailures.get + binary64SubFailures.get + binary64MulFailures.get + binary64DivFailures.get +
+  binary64AddFailures.get + binary64SubFailures.get + binary64MulFailures.get +
+      binary64DivFailures.get +
     binary64SqrtFailures.get + binary64FmaFailures.get⟩
 
 /-- Total sampled disagreements across configured paths and unchecked host functions. -/

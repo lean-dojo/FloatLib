@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -60,6 +60,9 @@ inductive Failure where
   -/
   | inconclusive
   deriving DecidableEq
+
+/-- Reconstruct a `Failure` constructor from its constructor index. -/
+add_decl_doc Failure.ofNat_ctorIdx
 
 /-- `#eval` writes a failure with a leading dot, as `.domain` or `.inconclusive`. -/
 instance : Repr Failure where

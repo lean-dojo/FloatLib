@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
 public import FloatLib.Numerics.Core.Representation
 public import FloatLib.Numerics.Quantization.Spec
@@ -17,8 +16,10 @@ public import FloatLib.Numerics.Quantization.Spec
 Here a Flocq-style format, given by a radix and an exponent function, becomes an ordinary FloatLib
 `EncodedFormat` that doesn't depend on any representation. A runtime code is a canonical pair of an
 integer mantissa and an integer exponent. Lean erases the proof of canonicality, and the code
-denotes the real number `m * β^e`. The central theorem, `representable_iff_genericFormat`, says
-that a real is representable in the common system if and only if it satisfies `genericFormat`.
+denotes the real number `m * β^e`. The central theorem, `representable_iff_genericRepresentable`,
+says
+that a real is representable in the common system if and only if it satisfies
+`GenericRepresentable`.
 
 The definitions mirror the separation in Flocq between:
 
@@ -49,6 +50,7 @@ The constructor carries no format data. The radix and exponent function are type
 specialized users do not pass a runtime descriptor through arithmetic kernels.
 -/
 inductive GenericFormat (β : Numerics.Radix) (fexp : ℤ → ℤ) where
+  /-- The only value: the radix and the exponent function are in the type. -/
   | format
 
 /-- Canonical mantissa/exponent codes of a valid Flocq-style generic format. -/
@@ -79,15 +81,15 @@ exponent. -/
 Common FloatLib representability coincides with the Flocq-style `generic_format`
 predicate.
 -/
-theorem representable_iff_genericFormat (x : ℝ) :
+theorem representable_iff_genericRepresentable (x : ℝ) :
     (formatSystem (GenericFormat β fexp)).Representable x ↔
-      genericFormat β fexp x := by
+      GenericRepresentable β fexp x := by
   constructor
   · rintro ⟨code, hcode⟩
     have hvalue : toReal code.1 = x :=
       (represents_iff β fexp code x).1 hcode
     rw [← hvalue]
-    exact generic_format_of_canonical code.1 code.2
+    exact genericRepresentable_of_canonical code.1 code.2
   · intro hx
     obtain ⟨value, hvalue, hcanonical⟩ :=
       canonical_exists_of_generic (β := β) (fexp := fexp) hx
@@ -99,13 +101,13 @@ Choose a canonical code for a value already known to belong to the generic forma
 It is noncomputable and meant for proofs. Concrete fixed-precision format families supply their
 own executable packing kernels.
 -/
-noncomputable def encodeGeneric (x : ℝ) (hx : genericFormat β fexp x) :
+noncomputable def encodeGeneric (x : ℝ) (hx : GenericRepresentable β fexp x) :
     FormatCode (GenericFormat β fexp) :=
   let witness := canonical_exists_of_generic (β := β) (fexp := fexp) hx
   ⟨Classical.choose witness, (Classical.choose_spec witness).2⟩
 
 /-- `encodeGeneric` denotes the real value from which it was chosen. -/
-theorem encodeGeneric_represents (x : ℝ) (hx : genericFormat β fexp x) :
+theorem encodeGeneric_represents (x : ℝ) (hx : GenericRepresentable β fexp x) :
     FormatRepresents (GenericFormat β fexp) (encodeGeneric β fexp x hx) x := by
   apply (represents_iff β fexp _ x).2
   exact (Classical.choose_spec
@@ -116,7 +118,7 @@ noncomputable def roundCode (mode : IEEERoundingMode) (x : ℝ) :
     FormatCode (GenericFormat β fexp) :=
   encodeGeneric β fexp
     (round (β := β) (fexp := fexp) (roundingFunction mode) x)
-    (generic_format_round (roundingFunction mode) x)
+    (genericRepresentable_round (roundingFunction mode) x)
 
 /-- The selected code denotes the rounded result in the given direction. -/
 theorem roundCode_represents (mode : IEEERoundingMode) (x : ℝ) :
@@ -143,7 +145,7 @@ theorem roundCode_of_representable (mode : IEEERoundingMode) {x : ℝ}
     (hx : (formatSystem (GenericFormat β fexp)).Representable x) :
     FormatRepresents (GenericFormat β fexp)
       (roundCode β fexp mode x) x := by
-  rw [representable_iff_genericFormat β fexp x] at hx
+  rw [representable_iff_genericRepresentable β fexp x] at hx
   simpa [round_preserves_generic (roundingFunction mode) x hx] using
     roundCode_represents β fexp mode x
 

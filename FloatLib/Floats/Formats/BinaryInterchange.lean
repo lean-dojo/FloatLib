@@ -1,52 +1,61 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Accumulation
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Matmul
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Activations
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Instances
-public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+public meta import FloatLib.Tactic.FloatInfo.BinaryInterchange.Command
+public meta import FloatLib.Tactic.FloatInfo.BinaryInterchange.Complex
+public meta import FloatLib.Tactic.FloatInfo.BinaryInterchange.Profile
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Homogeneous
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Semantics
-public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Automation
 public import FloatLib.Floats.Formats.BinaryInterchange.Automation.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Automation
-public meta import FloatLib.Floats.Formats.BinaryInterchange.Complex.Info
-public import FloatLib.Floats.Formats.BinaryInterchange.DType.Cast
-public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Backends
-public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Instances
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.ErrorBounds
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.KernelPath
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.DType.Cast
 public import FloatLib.Floats.Formats.BinaryInterchange.DType.Semantics
-public import FloatLib.Floats.Formats.BinaryInterchange.Reduction
-public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
+public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Backends
+public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.KernelPath
+public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
+public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Recommended.KernelPath
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval
+public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Activations
+public import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.Lanes
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.Carrier
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.ExactValue
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.Instances
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Accumulation
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.MixedPrecision.Matmul
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
+public import FloatLib.Floats.Formats.BinaryInterchange.Reduction
+public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Mode
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Agreement
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.NearestAwayAgreement
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
-public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Profile
-public meta import FloatLib.Floats.Formats.BinaryInterchange.Info.Command
+public import FloatLib.Floats.Formats.BinaryInterchange.Semantics
+public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte
+public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.KernelPath
+public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
@@ -61,6 +70,11 @@ and mathematical proofs. Scalar conversions and finite reductions are included. 
 accumulate the exact sum or dot product and round the final result once.
 Square, reciprocal square root, hypotenuse, integer powers, and integer-degree roots also
 round once, with real-rounding theorems for conventional IEEE descriptors.
+`Model.formatOfAddition`, `formatOfSubtraction`, `formatOfMultiplication`, `formatOfDivision` and
+`formatOfFusedMultiplyAdd` are the arithmetic of IEEE 754-2019 §5.4.1 with operands and result
+in different formats: one rounding of the exact result into the destination, with flags. In
+one format and for finite operands they deliver `add`, `sub`, `mul`, `div` and `fma` in every
+rounding direction (`Operations.FormatOf.Homogeneous`).
 
 ## References
 
@@ -89,6 +103,18 @@ is correctly rounded whenever its result is finite
 is correctly rounded whenever its certified enclosure search settles
 (`Model.Power.pow_spec_of_certified`). Certified `sqrt` and `abs` are available here, but their
 `MathFunctions` aliases need the elementary-function import.
+
+## Computing in the kernel
+
+The `KernelPath` modules define the six arithmetic operations in all six rounding directions, their
+status flags and those of integral rounding, of rounded rational numbers and of casts, literals,
+comparisons, the total order, classification, casts and conversions to integers and to exact
+rational values on encodings, with natural-number operations that Lean's kernel accelerates. They
+prove each one equal to its reference operation for every descriptor and lift them to configured,
+static-byte and descriptor values. The tactic `float_decide` rewrites a goal to these operations
+and lets the kernel decide it. `Configured.Recommended.KernelPath` adds, for configured values,
+the 22 comparisons of IEEE 754-2019 §5.11, the integral roundings and integer conversions under
+their names, `abs`, `copySign` and the eight minimum and maximum operations of §9.6.
 
 Import `FloatLib.Floats.ExecFloat` for the universal capability API, or this module for
 descriptor-model execution. Import `FloatLib.Floats.Formats.BinaryInterchange.Semantics` for the

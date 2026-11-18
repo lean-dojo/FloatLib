@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,6 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.SquareRoot
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Activations
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Arithmetic
-public import FloatLib.Floats.Interval.ERealCoercions
 
 /-!
 # Activation enclosures for executable binary intervals

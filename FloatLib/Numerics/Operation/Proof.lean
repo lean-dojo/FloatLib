@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Numerics.Operation.Proof.Total
-public import FloatLib.Numerics.Operation.Proof.Finite
 public import FloatLib.Numerics.Operation.Proof.Checked
+public import FloatLib.Numerics.Operation.Proof.Finite
 public import FloatLib.Numerics.Operation.Proof.Quantizer
+public import FloatLib.Numerics.Operation.Proof.Total
 
 /-!
 # Proof-indexed application of numerical operations

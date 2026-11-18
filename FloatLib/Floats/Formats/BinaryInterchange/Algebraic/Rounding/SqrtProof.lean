@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.SqrtRuntime
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.SqrtRuntime
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 public import FloatLib.Kernels.IntegerRoot.Proof
 
@@ -128,7 +128,7 @@ theorem cmp_halfIntegerPower_eq_root
   have hdouble : (2 * target) ^ degree = ((numerator <<< degree : Nat) : ℝ) / denominator := by
     rw [mul_pow, hroot]
     simp only [Nat.shiftLeft_eq, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat]
-    ring
+    rw [mul_div_right_comm]; ac_rfl
   rw [cmp_integerPower_eq_root _ _ _ _ (2 * target) hden hdegree
     (by positivity) hdouble]
   have hlt : 2 * target < ((2 * candidate + 1 : Nat) : ℝ) ↔
@@ -320,7 +320,7 @@ theorem rootRat_eq_root (fmt : FloatFormat) (sign : Bool) (radicand : Rat) (degr
        else if b = lowerExponent fmt ∧ compare (powerOfTwo b) = .eq then zero fmt sign
        else roundCertificate fmt sign (rootCertificate fmt radicand degree)) =
         round fmt sign compare
-    unfold round
+    rw [show round fmt sign compare = _ from round_eq fmt sign hcompare]
     by_cases hsmall : compare (powerOfTwo (lowerExponent fmt)) ≠ .gt
     · rw [ite_eq_left hsmall]
       have hle : target ≤ Flocq.bpow Numerics.binaryRadix (lowerExponent fmt) := by

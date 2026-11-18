@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Trigonometric.Atan2.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Atan2.Runtime
+public import FloatLib.Floats.Formats.Posit.Trigonometric.Atan2.Proof
 
 /-!
 # Correct rounding of configured posit two-coordinate arctangent
@@ -64,7 +64,8 @@ theorem arcTan2_eq_nar_of_origin (x y : Value)
 /-- Configured `arcTan2Pi` rounds the exact principal argument divided by pi. -/
 theorem arcTan2Pi_eq_real (x y : Value) {a b : Rat}
     (hx : toRat? x = some a) (hy : toRat? y = some b) (horigin : ¬ (a = 0 ∧ b = 0)) :
-    toModel (arcTan2Pi x y) = Model.RealRounding.round format (Complex.arg ⟨(a : ℝ), (b : ℝ)⟩ / Real.pi) := by
+    toModel (arcTan2Pi x y) = Model.RealRounding.round format (Complex.arg ⟨(a : ℝ), (b : ℝ)⟩ /
+      Real.pi) := by
   rw [toModel_arcTan2Pi]
   exact Model.arcTan2Pi_eq_real _ _ hx hy horigin
 

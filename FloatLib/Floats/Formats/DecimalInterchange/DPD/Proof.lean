@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
+public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.DPD.FieldsProof
 public import FloatLib.Floats.Formats.DecimalInterchange.DPD.TrailingProof
-public import FloatLib.Floats.Formats.DecimalInterchange.Codec.Proof
 
 /-!
 # DPD coefficient correctness and complete datum round trips

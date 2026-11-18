@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -127,7 +127,7 @@ degrees included, so it doesn't rely on real powers of a negative base.
 theorem rootN_eq_neg_roundPositive (value : Model format) {q : Rat} (degree : Int)
     (hvalue : value.toRat? = some q) (hq : q < 0) (hodd : degree % 2 ≠ 0) :
     rootN value degree =
-      neg (RealRounding.roundPositive format ((-(q : ℝ)) ^ (degree : ℝ)⁻¹)) := by
+      negate (RealRounding.roundPositive format ((-(q : ℝ)) ^ (degree : ℝ)⁻¹)) := by
   have hdegree : degree ≠ 0 := by
     intro hzero
     exact hodd (by simp [hzero])
@@ -153,8 +153,9 @@ theorem rootN_zero_of_neg (degree : Int) (hdegree : degree < 0) :
 theorem rootN_zero_of_pos (degree : Int) (hdegree : 0 < degree) :
     rootN (zero format) degree = zero format := by
   simp only [rootN, toRat?_zero]
-  simp [RootRounding.round, ComparisonRounding.round, ComparisonRounding.roundCode,
-    RootRounding.compareRoot, hdegree.not_gt, ne_of_gt hdegree]
+  simp only [ne_of_gt hdegree, ↓reduceIte, hdegree.not_gt, and_false, lt_self_iff_false,
+    false_and, RootRounding.round, ComparisonRounding.round, ComparisonRounding.roundCode,
+    RootRounding.compareRoot, abs_zero, cmp_self_eq_eq, ne_eq, reduceCtorEq, not_false_eq_true]
   rfl
 
 /-- Even-degree roots of a negative finite input are not real. -/

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Dyadic.Core.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
+
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.NearestEven
 
@@ -51,9 +52,7 @@ theorem roundQuot_nearest_eq_roundQuotientEven
   · have hdenominatorPos : 0 < denominator :=
       Nat.pos_of_ne_zero hdenominator
     simp [hremainder, hdenominatorPos]
-  · have htwicePos : 0 < 2 * (numerator % denominator) := by
-      omega
-    simp [hremainder]
+  · simp [hremainder]
 
 /-- Policy truncation is the lower directed quotient primitive. -/
 theorem roundQuot_towardZero_eq_roundQuotDirected
@@ -153,9 +152,6 @@ private theorem roundQuotDirected_scaledDyadic_eq
   let scaled :=
     Numerics.RationalBinary.scaleByPowerOfTwo
       mantissa 1 (exponent - targetExponent)
-  have hdenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
-      mantissa 1 (exponent - targetExponent) (by decide)
   have hvalue :
       (scaled.1 : Real) / (scaled.2 : Real) =
         (mantissa : Real) * bpow (exponent - targetExponent) := by
@@ -197,37 +193,6 @@ theorem exponent_add_subnormalAlign
   simp only [Int.ofNat_eq_natCast]
   omega
 
-/-- Exponent alignment by nearest-even rounding has the branch form used by the dyadic rounder. -/
-private theorem roundMantissaAtExponentEven_eq_match
-    (mantissa : Nat) (exponent targetExponent : Int) :
-    roundMantissaAtExponentEven mantissa exponent targetExponent =
-      match exponent - targetExponent with
-      | .ofNat shift => Nat.shiftLeft mantissa shift
-      | .negSucc shift => roundShiftRightEven mantissa (shift + 1) := by
-  cases hdiff : exponent - targetExponent with
-  | ofNat shift =>
-      cases shift with
-      | zero =>
-          have heq : exponent = targetExponent := by
-            norm_num at hdiff
-            omega
-          simp [roundMantissaAtExponentEven, Numerics.roundShiftRightEven_def, heq]
-      | succ shift =>
-          have hnot : ¬exponent ≤ targetExponent := by
-            norm_num at hdiff
-            omega
-          simp [roundMantissaAtExponentEven, hnot, hdiff]
-  | negSucc shift =>
-      have hle : exponent ≤ targetExponent := by
-        omega
-      have htoNat : (targetExponent - exponent).toNat = shift + 1 := by
-        have hpos : targetExponent - exponent = Int.ofNat (shift + 1) := by
-          norm_num at hdiff ⊢
-          omega
-        rw [hpos]
-        rfl
-      simp [roundMantissaAtExponentEven, hle, htoNat]
-
 /-- A dyadic strictly below half the target unit rounds to zero under nearest-even. -/
 private theorem roundMantissaAtExponentEven_eq_zero_of_far_below
     (mantissa : Nat) (exponent targetExponent : Int)
@@ -240,8 +205,6 @@ private theorem roundMantissaAtExponentEven_eq_zero_of_far_below
   let shift := (targetExponent - exponent).toNat
   have hshiftInt : (shift : Int) = targetExponent - exponent := by
     exact Int.toNat_of_nonneg (sub_nonneg.mpr hexponent.le)
-  have hshiftPos : 0 < shift := by
-    exact Int.pos_iff_toNat_pos.mp (sub_pos.mpr hexponent)
   have hlogShift : mantissa.log2 + 1 ≤ shift - 1 := by
     have hlogShiftInt :
         Int.ofNat (mantissa.log2 + 1) < Int.ofNat shift := by
@@ -308,7 +271,7 @@ private theorem roundQuot_rescaled_eq
   · have hshift :
         exponent + (Int.ofNat fmt.fracWidth - (Int.ofNat mantissa.log2 + exponent)) =
           Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 := by
-      ring
+      omega
     simp only [shifted, shift, hlog]
     change roundQuot rounding sign entropy
         (Numerics.RationalBinary.scaleByPowerOfTwo scaled.1 scaled.2
@@ -390,7 +353,7 @@ theorem roundRatGeneralOfDenNeZero_nearest_dyadic_eq
           rw [show Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 =
               exponent -
                 (Int.ofNat mantissa.log2 + exponent -
-                  Int.ofNat fmt.fracWidth) by ring]
+                  Int.ofNat fmt.fracWidth) by omega]
           simpa using
             roundQuotientEven_scaledDyadic_eq mantissa exponent
               (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth)
@@ -423,15 +386,9 @@ theorem roundRatGeneralOfDenNeZero_nearest_dyadic_eq
               (match exponent - fmt.minSubnormalExponent with
                 | .ofNat shift => Nat.shiftLeft mantissa shift
                 | .negSucc shift =>
-                    roundShiftRightEven mantissa (shift + 1)) = 0 := by
-            rw [← roundMantissaAtExponentEven_eq_match]
-            exact hrounded
-          have hmatchZero' :
-              (match exponent - fmt.minSubnormalExponent with
-                | .ofNat shift => mantissa <<< shift
-                | .negSucc shift =>
                     roundShiftRightEven mantissa (shift + 1)) = 0 :=
-            hmatchZero
+            (roundMantissaAtExponentEven_eq_match
+              mantissa exponent fmt.minSubnormalExponent).symm.trans hrounded
           simp only [ite_eq_left hsubnormal, ite_eq_left htiny,
             tinyRoundsMagnitudeUp?]
           cases hdiff : exponent - fmt.minSubnormalExponent <;>
@@ -664,7 +621,7 @@ theorem roundRatMagnitudeDirectedScaled_dyadic_eq
       rw [show Int.ofNat fmt.fracWidth - Int.ofNat mantissa.log2 =
           exponent -
             (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth) by
-        ring]
+        omega]
       simpa using
         roundQuotDirected_scaledDyadic_eq roundUp mantissa exponent
           (Int.ofNat mantissa.log2 + exponent - Int.ofNat fmt.fracWidth)

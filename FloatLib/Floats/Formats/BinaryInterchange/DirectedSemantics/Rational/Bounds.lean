@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -27,15 +27,6 @@ namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
 
 section
-
-@[simp] private theorem toEReal_posZero_eq_zero (fmt : FloatFormat) :
-    toEReal (posZero fmt) = 0 := by
-  rw [toEReal_eq_coe_toReal_of_isFinite _ (isFinite_posZero fmt), toReal_posZero, EReal.coe_zero]
-
-@[simp] private theorem toEReal_negZero_eq_zero
-    (fmt : FloatFormat) (hfmt : fmt.supportsSignedZero = true) :
-    toEReal (negZero fmt) = 0 := by
-  simpa only [ite_eq_left rfl, ite_true] using toEReal_signedZero fmt hfmt true
 
 /--
 In a conventional IEEE format with a nonzero denominator, changing only the stored sign negates a

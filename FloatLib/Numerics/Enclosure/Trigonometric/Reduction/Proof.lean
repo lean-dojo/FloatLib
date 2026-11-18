@@ -1,13 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Runtime
 public import FloatLib.Numerics.Enclosure.Trigonometric.Proof
+public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Runtime
+
+import FloatLib.Numerics.ErrorBound.Algebra
 import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
@@ -57,7 +59,7 @@ theorem abs_trigReducedArgument_le (x : ℚ) (degree : Nat) :
     |trigReducedArgument x degree| ≤ 4 := by
   have hc := half_le_trigQuarter degree
   have hcone := trigQuarter_le_one degree
-  have hpos : 0 < 8 * trigQuarter degree := by linarith
+  have hpos : 0 < 8 * trigQuarter degree := by positivity
   have hid : trigReducedArgument x degree =
       (x / (8 * trigQuarter degree) - (trigTurns x degree : ℚ)) *
         (8 * trigQuarter degree) := by
@@ -73,7 +75,7 @@ theorem abs_trigReducedArgument_le (x : ℚ) (degree : Nat) :
 theorem abs_trigTurns_le (x : ℚ) (degree : Nat) :
     |(trigTurns x degree : ℚ)| ≤ |x| + 1 := by
   have hc := half_le_trigQuarter degree
-  have hp : 0 < 8 * trigQuarter degree := by linarith
+  have hp : 0 < 8 * trigQuarter degree := by positivity
   have hdiv : |x / (8 * trigQuarter degree)| ≤ |x| := by
     rw [abs_div, abs_of_pos hp]
     exact (div_le_iff₀ hp).mpr (by nlinarith [abs_nonneg x])
@@ -96,7 +98,7 @@ theorem trigReductionError_le (x : ℚ) (degree : Nat) :
     trigReductionError x degree ≤
       8 * (|x| + 1) * ((piQuarter degree).hi - trigQuarter degree) := by
   exact mul_le_mul_of_nonneg_right
-    (mul_le_mul_of_nonneg_left (abs_trigTurns_le x degree) (by norm_num))
+    (mul_le_mul_of_nonneg_left (abs_trigTurns_le x degree) (by decide))
     (sub_nonneg.mpr (trigQuarter_le_hi degree))
 
 /-- The approximate remainder is close to an exact integer translate by `2π`. -/
@@ -139,29 +141,17 @@ theorem abs_cos_sub_reduced_le (x : ℚ) (degree : Nat) :
 theorem abs_sin_sub_reducedTaylor_le (x : ℚ) (degree : Nat) :
     |Real.sin (x : ℝ) - (sinTaylor (trigReducedArgument x degree) degree : ℝ)| ≤
       (trigReducedRadius x degree : ℝ) := by
-  calc
-    _ ≤ |Real.sin (x : ℝ) - Real.sin (trigReducedArgument x degree : ℝ)| +
-        |Real.sin (trigReducedArgument x degree : ℝ) -
-          (sinTaylor (trigReducedArgument x degree) degree : ℝ)| := abs_sub_le _ _ _
-    _ ≤ (trigReducedRadius x degree : ℝ) := by
-      have h₁ := abs_sin_sub_reduced_le x degree
-      have h₂ := abs_sin_sub_sinTaylor_le (trigReducedArgument x degree) degree
-      push_cast [trigReducedRadius]
-      linarith
+  simpa only [trigReducedRadius, Rat.cast_add] using
+    compose_error (abs_sin_sub_reduced_le x degree)
+      (abs_sin_sub_sinTaylor_le (trigReducedArgument x degree) degree)
 
 /-- Combined period and Taylor errors bound the cosine polynomial at the reduced argument. -/
 theorem abs_cos_sub_reducedTaylor_le (x : ℚ) (degree : Nat) :
     |Real.cos (x : ℝ) - (cosTaylor (trigReducedArgument x degree) degree : ℝ)| ≤
       (trigReducedRadius x degree : ℝ) := by
-  calc
-    _ ≤ |Real.cos (x : ℝ) - Real.cos (trigReducedArgument x degree : ℝ)| +
-        |Real.cos (trigReducedArgument x degree : ℝ) -
-          (cosTaylor (trigReducedArgument x degree) degree : ℝ)| := abs_sub_le _ _ _
-    _ ≤ (trigReducedRadius x degree : ℝ) := by
-      have h₁ := abs_cos_sub_reduced_le x degree
-      have h₂ := abs_cos_sub_cosTaylor_le (trigReducedArgument x degree) degree
-      push_cast [trigReducedRadius]
-      linarith
+  simpa only [trigReducedRadius, Rat.cast_add] using
+    compose_error (abs_cos_sub_reduced_le x degree)
+      (abs_cos_sub_cosTaylor_le (trigReducedArgument x degree) degree)
 
 /-- The reduced sine enclosure contains the exact sine at every rational input and degree. -/
 theorem contains_sinReduced (x : ℚ) (degree : Nat) :

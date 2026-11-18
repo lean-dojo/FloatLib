@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.ModelCodec
 public import FloatLib.Floats.Formats.Posit.Configured.Storage.Code.Proof
-public import FloatLib.Floats.ExecFloat.Carrier
 
 /-!
 # Storage codecs for configured posits

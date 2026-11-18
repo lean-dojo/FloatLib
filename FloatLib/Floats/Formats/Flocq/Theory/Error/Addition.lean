@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.Flocq.Theory.Error.Exactness
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
+import Mathlib.Tactic.Abel
 
 /-!
 # Exactness of Addition Errors
@@ -41,8 +42,8 @@ variable {β : Numerics.Radix} {fexp : ℤ → ℤ}
 /-- Addition-error exactness when the first operand has the smaller canonical exponent. -/
 private theorem add_round_error_generic_aux {rnd : ℝ → ℤ} [ValidRndToNearest rnd] {x y : ℝ}
     (hxy : cexp β fexp x ≤ cexp β fexp y)
-    (hx : genericFormat β fexp x) (hy : genericFormat β fexp y) :
-    genericFormat β fexp
+    (hx : GenericRepresentable β fexp x) (hy : GenericRepresentable β fexp y) :
+    GenericRepresentable β fexp
       (round (β := β) (fexp := fexp) rnd (x + y) - (x + y)) := by
   let ex := cexp β fexp x
   -- Both operands lie on the grid of the smaller canonical exponent `ex`.
@@ -69,16 +70,16 @@ private theorem add_round_error_generic_aux {rnd : ℝ → ℤ} [ValidRndToNeare
     push_cast
     ring
   by_cases herr0 : err = 0
-  · change genericFormat β fexp err
+  · change GenericRepresentable β fexp err
     rw [herr0]
-    exact generic_format_zero
+    exact genericRepresentable_zero
   have hnear := (round_toNearest_point
     (β := β) (fexp := fexp) rnd (x + y)).2 y hy
   have herrLe : abs err ≤ abs x := by
     simpa [err] using hnear
   have hcexp : cexp β fexp err ≤ ex := by
     exact cexp_mono_abs β herr0 herrLe
-  apply generic_format_of_toReal_of_cexp_le errorFloat err herr
+  apply genericRepresentable_of_toReal_of_cexp_le errorFloat err herr
   exact hcexp
 
 /--
@@ -88,8 +89,8 @@ The rounding rule is implicit because the conclusion determines it, and `nearest
 usual instance. The statement needs a monotone exponent function and fails for directed rounding.
 -/
 theorem add_round_error_generic {rnd : ℝ → ℤ} [ValidRndToNearest rnd] {x y : ℝ}
-    (hx : genericFormat β fexp x) (hy : genericFormat β fexp y) :
-    genericFormat β fexp
+    (hx : GenericRepresentable β fexp x) (hy : GenericRepresentable β fexp y) :
+    GenericRepresentable β fexp
       (round (β := β) (fexp := fexp) rnd (x + y) - (x + y)) := by
   rcases le_total (cexp β fexp x) (cexp β fexp y) with hxy | hyx
   · exact add_round_error_generic_aux hxy hx hy
@@ -104,61 +105,61 @@ This is the specification met by the TwoSum and FastTwoSum algorithms.  The term
 `x + y - round (x + y)`, and its representability is `add_round_error_generic` up to sign.
 -/
 theorem add_round_exact_error {rnd : ℝ → ℤ} [ValidRndToNearest rnd] {x y : ℝ}
-    (hx : genericFormat β fexp x) (hy : genericFormat β fexp y) :
-    ∃ e : ℝ, genericFormat β fexp e ∧
+    (hx : GenericRepresentable β fexp x) (hy : GenericRepresentable β fexp y) :
+    ∃ e : ℝ, GenericRepresentable β fexp e ∧
       x + y = round (β := β) (fexp := fexp) rnd (x + y) + e := by
-  refine ⟨x + y - round (β := β) (fexp := fexp) rnd (x + y), ?_, by ring⟩
+  refine ⟨x + y - round (β := β) (fexp := fexp) rnd (x + y), ?_, by abel⟩
   have herr := add_round_error_generic (β := β) (fexp := fexp) (rnd := rnd) hx hy
-  simpa [neg_sub] using generic_format_neg (β := β) (fexp := fexp) _ herr
+  simpa [neg_sub] using genericRepresentable_neg (β := β) (fexp := fexp) _ herr
 
 /-- Every FLT value lies on its minimum-exponent FIX grid. -/
-theorem generic_format_FLT_to_FIX (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
-    (hx : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x) :
-    genericFormat β (fixExp emin) x := by
-  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
+theorem genericRepresentable_flt_to_fix (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
+    (hx : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) x) :
+    GenericRepresentable β (fixExp emin) x := by
+  let : ValidExp (fltExp emin prec) := validExp_flt emin prec hprec
   let : ValidExp (fixExp emin) := fixValidExp emin
   obtain ⟨m, hxf⟩ := exists_int_mul_bpow_of_le_cexp hx (e := emin)
     (by simp [cexp, fltExp])
-  apply generic_format_of_toReal_of_cexp_le
+  apply genericRepresentable_of_toReal_of_cexp_le
     ({ mantissa := m, exponent := emin } : FloatRep β) x hxf
   simp [cexp, fixExp]
 
 /-- A bounded FIX value is FLT-representable, including the radix-power boundary. -/
-theorem generic_format_FIX_to_FLT_of_abs_le (emin prec : ℤ) (hprec : 0 < prec)
-    {x : ℝ} (hx : genericFormat β (fixExp emin) x)
+theorem genericRepresentable_fix_to_flt_of_abs_le (emin prec : ℤ) (hprec : 0 < prec)
+    {x : ℝ} (hx : GenericRepresentable β (fixExp emin) x)
     (hbound : abs x ≤ bpow β (prec + emin)) :
-    @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x := by
+    @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) x := by
   let : ValidExp (fixExp emin) := fixValidExp emin
-  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
+  let : ValidExp (fltExp emin prec) := validExp_flt emin prec hprec
   by_cases hx0 : x = 0
   · subst x
-    exact generic_format_zero
+    exact genericRepresentable_zero
   rcases hbound.eq_or_lt with heq | hlt
-  · have habsFmt : genericFormat β (fltExp emin prec) (abs x) := by
+  · have habsFmt : GenericRepresentable β (fltExp emin prec) (abs x) := by
       rw [heq]
-      apply generic_format_bpow
+      apply genericRepresentable_bpow
       unfold fltExp
-      rw [max_eq_left (by linarith)]
-      linarith
-    exact (generic_format_abs_iff (β := β) (fexp := fltExp emin prec) x).mp habsFmt
+      rw [max_eq_left (by omega)]
+      omega
+    exact (genericRepresentable_abs_iff (β := β) (fexp := fltExp emin prec) x).mp habsFmt
   · obtain ⟨f, hxf, hfe⟩ :=
-      (generic_format_FIX_iff (β := β) emin x).mp hx
-    apply generic_format_of_toReal_of_cexp_le f x hxf
+      (genericRepresentable_fix_iff (β := β) emin x).mp hx
+    apply genericRepresentable_of_toReal_of_cexp_le f x hxf
     have hmag : magnitude β x ≤ prec + emin :=
       magnitude_le_of_abs_lt_bpow β x (prec + emin) hx0 hlt
     rw [hfe]
-    simp [cexp, fltExp]
-    linarith
+    simp only [cexp, fltExp, sup_le_iff, tsub_le_iff_right, Std.le_refl, and_true, ge_iff_le]
+    omega
 
 /-- A small enough sum of two FLT values is itself FLT-representable. -/
-theorem generic_format_FLT_add_small (emin prec : ℤ) (hprec : 0 < prec)
+theorem genericRepresentable_flt_add_small (emin prec : ℤ) (hprec : 0 < prec)
     {x y : ℝ}
-    (hx : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x)
-    (hy : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) y)
+    (hx : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) x)
+    (hy : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) y)
     (hbound : abs (x + y) ≤ bpow β (prec + emin)) :
-    @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) (x + y) := by
-  exact generic_format_FIX_to_FLT_of_abs_le (β := β) emin prec hprec
-    (generic_format_FIX_add emin (generic_format_FLT_to_FIX emin prec hprec hx)
-      (generic_format_FLT_to_FIX emin prec hprec hy)) hbound
+    @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) (x + y) := by
+  exact genericRepresentable_fix_to_flt_of_abs_le (β := β) emin prec hprec
+    (genericRepresentable_fix_add emin (genericRepresentable_flt_to_fix emin prec hprec hx)
+      (genericRepresentable_flt_to_fix emin prec hprec hy)) hbound
 
 end FloatLib.Floats.Formats.Flocq

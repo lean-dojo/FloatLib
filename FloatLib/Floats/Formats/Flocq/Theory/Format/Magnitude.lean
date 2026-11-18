@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Core
 public import Mathlib.Data.Int.Log
+
 import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 /-!
@@ -81,7 +82,7 @@ theorem magnitude_le_of_abs_lt_bpow (β : Numerics.Radix) (x : ℝ) (e : ℤ)
   have hexp : magnitude β x - 1 < e :=
     (bpow_lt_bpow_iff β (magnitude β x - 1) e).mp
       (hlower.trans_lt hupper)
-  linarith
+  omega
 
 /-- Radix-power bounds uniquely determine magnitude. -/
 theorem magnitude_eq_of_bpow_bounds (β : Numerics.Radix) (x : ℝ) (e : ℤ)
@@ -140,7 +141,7 @@ theorem magnitude_mul_bpow (β : Numerics.Radix) (x : ℝ) (e : ℤ) (hx : x ≠
           bpow β (magnitude β x - 1) * bpow β e := by
         rw [← bpow.add_exp]
         congr 1
-        ring
+        omega
       _ ≤ abs x * bpow β e := mul_le_mul_of_nonneg_right
         (bpow_magnitude_sub_one_le β x hx) (bpow.nonneg β e)
   · rw [abs_mul, abs_of_pos (bpow.pos β e)]
@@ -171,6 +172,6 @@ equal exponent: a value on a coarser grid also lies on every finer one.
 theorem exists_int_mul_bpow_of_le (β : Numerics.Radix) (n : ℤ) {e e' : ℤ} (h : e' ≤ e) :
     ∃ m : ℤ, (n : ℝ) * bpow β e = (m : ℝ) * bpow β e' := by
   obtain ⟨N, hN⟩ := exists_bpow_eq_int_mul_bpow β h
-  exact ⟨n * N, by rw [hN]; push_cast; ring⟩
+  exact ⟨n * N, by rw [hN]; push_cast; ac_rfl⟩
 
 end FloatLib.Floats.Formats.Flocq

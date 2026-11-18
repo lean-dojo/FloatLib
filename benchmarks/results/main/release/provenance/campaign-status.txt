@@ -1,6 +1,0 @@
-campaign_id=20261031T193210Z
-run_mode=benchmark
-started_utc=2026-10-31T19:34:42Z
-finished_utc=2026-10-31T22:07:09Z
-benchmark_cpu=91
-run_exit_code=0

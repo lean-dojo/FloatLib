@@ -1,22 +1,21 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Carrier
-public import FloatLib.Floats.Formats.OCP.MX.E8M0.Block
+public import FloatLib.Numerics.Executable.Carrier
 public import FloatLib.Floats.Formats.OCP.MX.E8M0.Semantics
 
 /-!
-# Configured OCP MX identities
+# Configured E8M0 identity
 
 E8M0 is an exponent-only shared scale with no sign and no fraction, so it doesn't fit the scalar
-floating-point layout. An MX block stores that scale together with an array of binary element
-words. Both get families on the common `ExecFloat` carrier, and both keep their complete encodings
-there.
+floating-point layout. It gets its own family on the common `ExecFloat` carrier and keeps its
+complete encoding there. A block that stores an E8M0 scale with its elements is a stored tensor of
+the general block format, `ExecFloat.Block (Standard.format group profile)`.
 
 ## References
 
@@ -39,6 +38,7 @@ namespace E8M0
 
 /-- Type-level identity of the OCP E8M0 exponent-only scale encoding. -/
 inductive Family where
+  /-- The only value: the family names a format in types and carries no data. -/
   | format
 
 instance : EncodedFormat Family where
@@ -52,25 +52,6 @@ end E8M0
 
 /-- OCP E8M0 exponent-only shared scale on the common executable carrier. -/
 abbrev E8M0 := FloatLib.Floats.ExecFloat E8M0.Family
-
-namespace Block
-
-/-- Type-level identity of an E8M0-scaled block with one binary element descriptor. -/
-inductive Family (format : FloatFormat) where
-  | format
-
-instance (format : FloatFormat) : EncodedFormat (Family format) where
-  Code := Formats.OCP.MX.BlockCode format
-  Scalar := Array Numerics.Dyadic
-
-instance (format : FloatFormat) : FormatSemantics (Family format) where
-  denote block := (Formats.OCP.MX.blockSystem format).denote block
-
-end Block
-
-/-- Runtime-sized E8M0-scaled block with the selected binary element descriptor. -/
-abbrev Block (format : FloatFormat) :=
-  FloatLib.Floats.ExecFloat (Block.Family format)
 
 end ExecFloat.OCP.MX
 end FloatLib.Floats

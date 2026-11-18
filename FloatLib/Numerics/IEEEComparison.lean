@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Data.Ordering.Basic
 public import FloatLib.Numerics.IEEEStatus
+public import Mathlib.Data.Ordering.Basic
 
 /-!
 # IEEE comparison predicates
@@ -31,8 +31,30 @@ structure Result where
 
 /-- Truth sets named by the IEEE quiet and signaling comparison operations. -/
 inductive Predicate where
-  | equal | notEqual | greater | greaterEqual | less | lessEqual
-  | unordered | ordered | lessUnordered | notGreater | notLess | greaterUnordered
+  /-- True of equal operands. -/
+  | equal
+  /-- True of operands that are less, greater or unordered. -/
+  | notEqual
+  /-- True of a greater left operand. -/
+  | greater
+  /-- True of a greater or equal left operand. -/
+  | greaterEqual
+  /-- True of a smaller left operand. -/
+  | less
+  /-- True of a smaller or equal left operand. -/
+  | lessEqual
+  /-- True of unordered operands. -/
+  | unordered
+  /-- True of operands that are less, equal or greater. -/
+  | ordered
+  /-- True of a smaller left operand and of unordered operands. -/
+  | lessUnordered
+  /-- True of operands that are less, equal or unordered. -/
+  | notGreater
+  /-- True of operands that are greater, equal or unordered. -/
+  | notLess
+  /-- True of a greater left operand and of unordered operands. -/
+  | greaterUnordered
   deriving DecidableEq, Repr
 
 /-- Whether a predicate accepts a relation, where `none` denotes unordered operands. -/
@@ -81,3 +103,10 @@ theorem accepts_greaterUnordered (relation : Option Ordering) :
   | some relation => cases relation <;> rfl
 
 end FloatLib.Numerics.IEEEComparison
+
+namespace FloatLib.Numerics.IEEEComparison.Predicate
+
+/-- Reconstruct a `Predicate` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.IEEEComparison.Predicate

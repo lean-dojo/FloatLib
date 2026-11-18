@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -98,8 +98,6 @@ theorem nearestEven_neg (x : ℝ) :
     have hfloorNeg : ⌊-x⌋ = -⌊x⌋ - 1 := by
       rw [Int.floor_neg, hceil]
       ring
-    have hlt : (⌊x⌋ : ℝ) < x := lt_of_le_of_ne (Int.floor_le x) (Ne.symm hint)
-    have hgt : x < (⌊x⌋ : ℝ) + 1 := Int.lt_floor_add_one x
     have hparity : Even (-⌊x⌋ - 1) ↔ ¬Even ⌊x⌋ := by
       rw [show -⌊x⌋ - 1 = -(⌊x⌋ + 1) by ring, even_neg, Int.even_add_one]
     simp only [nearestEven, hfloorNeg, Int.cast_sub, Int.cast_neg, Int.cast_one, hparity]
@@ -159,9 +157,10 @@ theorem nearestEven_div_eq_roundQuotientEven
     simpa only [Int.fract, floor_real_nat_div, Int.cast_natCast, quotient, remainder] using
       (Int.fract_div_natCast_eq_div_natCast_mod (m := num) (n := den) (k := ℝ))
   unfold nearestEven
-  simp [hfloor]
+  simp only [hfloor, Int.cast_natCast, one_div, gt_iff_lt, Int.even_natCast, Int.ofNat_eq_natCast]
   rw [hfract]
-  simp [roundQuotientEven, quotient, remainder]
+  simp only [Int.natCast_ediv, roundQuotientEven, beq_iff_eq, Nat.cast_ite, Nat.cast_add,
+    Nat.cast_one, remainder, quotient]
   have hlt :
       (((num % den : Nat) : ℝ) / (den : ℝ) < (2⁻¹ : ℝ)) ↔
         2 * (num % den) < den := by

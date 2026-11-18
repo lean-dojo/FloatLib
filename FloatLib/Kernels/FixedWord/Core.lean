@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.Core.Runtime
 public import FloatLib.Kernels.FixedWord.Core.Proof
+public import FloatLib.Kernels.FixedWord.Core.Runtime
 
 /-!
 # Verified native-word primitives

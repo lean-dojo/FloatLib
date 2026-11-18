@@ -15,7 +15,7 @@ model and the numerical results.
 
 You need a Linux machine with Git, Python 3, `taskset`, and Lean's Elan toolchain manager.
 The script downloads FLoPS and its Mathlib dependencies and builds each library with its own
-pinned Lean version (our reported measurements used Lean 4.35.0 for FloatLib 2.0.0 and 4.28.0
+pinned Lean version (our reported measurements used Lean 4.35.0 for FloatLib and 4.28.0
 for FLoPS). Choose local directories for source dependencies, builds, and the new result:
 
 ```bash

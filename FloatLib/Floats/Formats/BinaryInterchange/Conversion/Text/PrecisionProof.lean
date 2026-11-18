@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Digits
-public import FloatLib.Numerics.Exact.RadixText.PrecisionProof
 public import FloatLib.Numerics.Exact.DecimalText.PrecisionProof
 public import FloatLib.Numerics.Exact.HexText.Proof
 
@@ -123,7 +122,8 @@ theorem significantDecimal_coefficient_bounds (mode : IEEERoundingMode)
 /-- Enough decimal digits preserve the exact value, for any binary descriptor and direction. -/
 theorem significantDecimal_exact (mode : IEEERoundingMode) (value : DecimalText.Decimal)
     (digits : ℕ+) (hc : value.significand < 10 ^ (digits : Nat)) :
-    (DecimalText.significantDecimal (roundTextMagnitude mode) value digits).toRat = value.toRat := by
+    (DecimalText.significantDecimal (roundTextMagnitude mode) value digits).toRat =
+      value.toRat := by
   have h := RadixText.significant_exact 10 (roundTextMagnitude mode)
     (roundTextMagnitude_natCast mode) value.negative value.significand value.exponent digits hc
   have hs := DecimalText.significantDecimal_negative (roundTextMagnitude mode) value digits
@@ -172,7 +172,9 @@ theorem roundTextMagnitude_nearest_midpoint (negative : Bool) (n : Nat) :
   have h := roundRatEven_half_step (n : Int)
   simp only [Int.cast_natCast] at h
   simp only [roundTextMagnitude, h]
-  split <;> split <;> simp_all <;> omega
+  split <;> split <;>
+    simp_all only [one_div, ↓reduceIte, Int.natAbs_natCast, Nat.mod_two_not_eq_zero,
+    Nat.left_eq_add, one_ne_zero] <;> omega
 
 /-- The same half-grid error guarantee holds in any external radix greater than one. -/
 theorem significantMagnitude_nearest_error (radix : Nat) (hradix : 1 < radix)

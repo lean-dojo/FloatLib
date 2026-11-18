@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Quire.Capacity
+
 import Mathlib.Tactic.Ring.RingNF
+import Mathlib.Tactic.Bound
 
 /-!
 # Exact accumulation loops in a standard posit quire
@@ -113,7 +115,7 @@ private theorem natAbs_add_le_and_ordinary
     calc
       _ ≤ accumulator.natAbs + increment.natAbs := Int.natAbs_add_le _ _
       _ ≤ consumed * bound + bound := Nat.add_le_add haccumulator hincrement
-      _ = (consumed + 1) * bound := by ring
+      _ = (consumed + 1) * bound := by rw [add_mul]; ac_rfl
   exact ⟨hsum, ordinaryCoefficient_of_natAbs_le_mul hsum hconsumed hbound hlimit⟩
 
 /-! ## Fused product accumulation -/

@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Data.Nat.Log
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Power
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Packing.Bounds
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Power
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
 
 /-!
@@ -95,8 +94,9 @@ theorem le_shiftRightCeil_mul_pow2 (n shift : Nat) :
         have hceil : Numerics.shiftRightCeil n (Nat.succ shift) = quotient := by
           have hshiftNonzero : (Nat.succ shift == 0) = false := by
             simp
-          simp (config := { zeta := true })
-            [Numerics.shiftRightCeil, hshiftNonzero]
+          simp (config := { zeta := true }) only [Numerics.shiftRightCeil, Nat.succ_eq_add_one,
+            hshiftNonzero, Bool.false_eq_true, ↓reduceIte, Nat.shiftRight_eq', Nat.shiftLeft_eq',
+            beq_iff_eq]
           rw [hshift', hrem']
           simp [hzero]
         have hceil' :
@@ -115,8 +115,9 @@ theorem le_shiftRightCeil_mul_pow2 (n shift : Nat) :
         have hceil : Numerics.shiftRightCeil n (Nat.succ shift) = quotient + 1 := by
           have hshiftNonzero : (Nat.succ shift == 0) = false := by
             simp
-          simp (config := { zeta := true })
-            [Numerics.shiftRightCeil, hshiftNonzero]
+          simp (config := { zeta := true }) only [Numerics.shiftRightCeil, Nat.succ_eq_add_one,
+            hshiftNonzero, Bool.false_eq_true, ↓reduceIte, Nat.shiftRight_eq', Nat.shiftLeft_eq',
+            beq_iff_eq]
           rw [hshift', hrem']
           simp [hzero]
         simp [hceil, hnle, divisor]
@@ -128,7 +129,8 @@ theorem _root_.FloatLib.Numerics.shiftRightCeil_le_shiftRight_add_one (n shift :
   | zero =>
       simp [Numerics.shiftRightCeil]
   | succ shift =>
-      simp (config := { zeta := true }) [Numerics.shiftRightCeil]
+      simp (config := { zeta := true }) only [Numerics.shiftRightCeil, Nat.reduceBeqDiff,
+        Bool.false_eq_true, ↓reduceIte, Nat.shiftRight_eq', Nat.shiftLeft_eq', beq_iff_eq]
       split <;> omega
 
 /-- A floor right shift never exceeds the corresponding ceiling right shift. -/
@@ -138,7 +140,8 @@ theorem _root_.FloatLib.Numerics.shiftRight_le_shiftRightCeil (n shift : Nat) :
   | zero =>
       simp [Numerics.shiftRightCeil]
   | succ shift =>
-      simp (config := { zeta := true }) [Numerics.shiftRightCeil]
+      simp (config := { zeta := true }) only [Nat.shiftRight_eq', Numerics.shiftRightCeil,
+        Nat.reduceBeqDiff, Bool.false_eq_true, ↓reduceIte, Nat.shiftLeft_eq', beq_iff_eq]
       split <;> omega
 
 /-- The leading power of two does not exceed a nonzero natural number. -/
@@ -174,7 +177,9 @@ theorem posMinSubnormal_eq_ofFields (fmt : FloatFormat) :
     posMinSubnormal fmt = ofFields fmt false 0 1 := by
   apply congrArg ofBits
   apply BitVec.eq_of_toNat_eq
-  simp [mkBits, FloatFormat.fracMask, FloatFormat.fracMaskNat, FloatFormat.ofWordNat]
+  simp only [FloatFormat.ofWordNat, BitVec.toNat_ofNat, mkBits, Bool.false_eq_true, ↓reduceIte,
+    BitVec.ofNat_eq_ofNat, BitVec.zero_and, BitVec.zero_shiftLeft, BitVec.or_self,
+    FloatFormat.fracMask, FloatFormat.fracMaskNat, BitVec.zero_or, BitVec.toNat_and]
   have hbitWidthPos : 0 < fmt.bitWidth := by
     unfold FloatFormat.bitWidth
     omega
@@ -301,7 +306,7 @@ private theorem bpow_maxNormalExponent_le_toReal_posMaxFinite (fmt : FloatFormat
         bpow fmt.maxNormalExponent := by
     rw [← bpow_ofNat, ← bpow_add]
     congr 1
-    ring
+    omega
   rw [← hpower]
   simpa [abs_of_nonneg (bpow_nonneg _)] using h
 

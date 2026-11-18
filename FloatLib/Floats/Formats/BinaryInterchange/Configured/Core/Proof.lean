@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Add.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Div.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Fma.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Mul.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Dispatch.Sqrt.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Core.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Add.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Div.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Fma.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Mul.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.Sqrt.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Family.Runtime
 
 /-!

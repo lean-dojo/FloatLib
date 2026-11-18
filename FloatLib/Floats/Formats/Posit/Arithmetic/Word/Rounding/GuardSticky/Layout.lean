@@ -1,15 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
-public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Order
-public import Mathlib.Data.Nat.Bitwise
+
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -222,7 +220,7 @@ theorem nonnegativeRatAt_positiveInteriorCarry
             omega
       _ =
         (2 * (2 ^ run - 1) + 1) * 2 ^ nextScale := by
-          ring
+          rw [add_mul]; ac_rfl
       _ = (2 ^ (run + 1) - 1) * 2 ^ nextScale := by
         rw [hcoefficient]
   by_cases hnext : run + 1 < format.payloadBits
@@ -309,7 +307,7 @@ theorem nonnegativeRatAt_negativeInteriorCarry
           (-(Int.ofNat run) + 1) * 4 := by
       simp only [Int.ofNat_eq_natCast]
       rw [Int.ofNat_sub (m := 1) (n := run) (by omega)]
-      ring
+      omega
     rw [hexponent] at hsemantic
     rw [hcode]
     have htrailingCode :
@@ -373,7 +371,7 @@ theorem nonnegativeRatAt_positiveInteriorThreshold
       format.payloadBits + 1 - run =
         (format.payloadBits - run) + 1 by omega]
     rw [Nat.pow_succ]
-    ring
+    rw [mul_add]; ac_rfl
   rw [← hcode]
   exact hsemantic
 
@@ -410,7 +408,7 @@ theorem nonnegativeRatAt_negativeInteriorThreshold
       format.payloadBits + 1 - run - 1 =
         (format.payloadBits - run - 1) + 1 by omega]
     rw [Nat.pow_succ]
-    ring
+    omega
   rw [← hcode, hwidth]
   exact hsemantic
 

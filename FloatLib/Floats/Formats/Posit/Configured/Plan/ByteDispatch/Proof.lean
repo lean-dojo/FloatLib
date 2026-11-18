@@ -1,14 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Configured.Backend.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Byte.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.ByteTable.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Plan.ByteCandidates
 public import FloatLib.Floats.Formats.Posit.Configured.Plan.ByteDispatch.Runtime
 
@@ -145,9 +142,9 @@ variable {format : Format}
 theorem addSelected_eq_spec
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.add)
+      (ByteTable.encoding format width_le) Model.Spec.addition)
     (left right : ByteFloat format width_le) :
-    addSelected selection width_le table left right = Spec.add left right := by
+    addSelected selection width_le table left right = Spec.addition left right := by
   unfold addSelected
   cases selection with
   | reference => rfl
@@ -159,7 +156,7 @@ theorem addSelected_eq_spec
 theorem add_eq_spec
     (policy : Policy) (width_le : format.bits ≤ 8)
     (left right : ByteFloat format width_le) :
-    add policy width_le left right = Spec.add left right :=
+    add policy width_le left right = Spec.addition left right :=
   addSelected_eq_spec
     (select policy format width_le .add) width_le
     (ByteTable.addTable width_le) left right
@@ -168,9 +165,9 @@ theorem add_eq_spec
 theorem subSelected_eq_spec
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.sub)
+      (ByteTable.encoding format width_le) Model.Spec.subtraction)
     (left right : ByteFloat format width_le) :
-    subSelected selection width_le table left right = Spec.sub left right := by
+    subSelected selection width_le table left right = Spec.subtraction left right := by
   unfold subSelected
   cases selection with
   | reference => rfl
@@ -182,7 +179,7 @@ theorem subSelected_eq_spec
 theorem sub_eq_spec
     (policy : Policy) (width_le : format.bits ≤ 8)
     (left right : ByteFloat format width_le) :
-    sub policy width_le left right = Spec.sub left right :=
+    sub policy width_le left right = Spec.subtraction left right :=
   subSelected_eq_spec
     (select policy format width_le .sub) width_le
     (ByteTable.subTable width_le) left right
@@ -191,9 +188,9 @@ theorem sub_eq_spec
 theorem mulSelected_eq_spec
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.mul)
+      (ByteTable.encoding format width_le) Model.Spec.multiplication)
     (left right : ByteFloat format width_le) :
-    mulSelected selection width_le table left right = Spec.mul left right := by
+    mulSelected selection width_le table left right = Spec.multiplication left right := by
   unfold mulSelected
   cases selection with
   | reference => rfl
@@ -205,7 +202,7 @@ theorem mulSelected_eq_spec
 theorem mul_eq_spec
     (policy : Policy) (width_le : format.bits ≤ 8)
     (left right : ByteFloat format width_le) :
-    mul policy width_le left right = Spec.mul left right :=
+    mul policy width_le left right = Spec.multiplication left right :=
   mulSelected_eq_spec
     (select policy format width_le .mul) width_le
     (ByteTable.mulTable width_le) left right
@@ -214,9 +211,9 @@ theorem mul_eq_spec
 theorem divSelected_eq_spec
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.div)
+      (ByteTable.encoding format width_le) Model.Spec.division)
     (left right : ByteFloat format width_le) :
-    divSelected selection width_le table left right = Spec.div left right := by
+    divSelected selection width_le table left right = Spec.division left right := by
   unfold divSelected
   cases selection with
   | reference => rfl
@@ -228,7 +225,7 @@ theorem divSelected_eq_spec
 theorem div_eq_spec
     (policy : Policy) (width_le : format.bits ≤ 8)
     (left right : ByteFloat format width_le) :
-    div policy width_le left right = Spec.div left right :=
+    div policy width_le left right = Spec.division left right :=
   divSelected_eq_spec
     (select policy format width_le .div) width_le
     (ByteTable.divTable width_le) left right
@@ -284,25 +281,25 @@ theorem fma_eq_spec
 
 /-- Policy-selected byte addition equals the configured specification as a function. -/
 theorem add_fun_eq_spec (policy : Policy) (width_le : format.bits ≤ 8) :
-    add policy width_le = Spec.add := by
+    add policy width_le = Spec.addition := by
   funext left right
   exact add_eq_spec policy width_le left right
 
 /-- Policy-selected byte subtraction equals the configured specification as a function. -/
 theorem sub_fun_eq_spec (policy : Policy) (width_le : format.bits ≤ 8) :
-    sub policy width_le = Spec.sub := by
+    sub policy width_le = Spec.subtraction := by
   funext left right
   exact sub_eq_spec policy width_le left right
 
 /-- Policy-selected byte multiplication equals the configured specification as a function. -/
 theorem mul_fun_eq_spec (policy : Policy) (width_le : format.bits ≤ 8) :
-    mul policy width_le = Spec.mul := by
+    mul policy width_le = Spec.multiplication := by
   funext left right
   exact mul_eq_spec policy width_le left right
 
 /-- Policy-selected byte division equals the configured specification as a function. -/
 theorem div_fun_eq_spec (policy : Policy) (width_le : format.bits ≤ 8) :
-    div policy width_le = Spec.div := by
+    div policy width_le = Spec.division := by
   funext left right
   exact div_eq_spec policy width_le left right
 

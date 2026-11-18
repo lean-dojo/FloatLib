@@ -1,0 +1,131 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.Kernel.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Spec.Dyadic
+
+/-!
+# From the compact finite kernels to the reference operations
+
+Each wide-limb kernel proves that an accepted result is the compact finite kernel
+(`FiniteKernel.add?`, `mul?`, or `fma?`) on the operand models. This module supplies the last step
+of each refinement: whenever a compact finite kernel accepts its operands, the reference operation
+`Model.Spec.add`, `mul`, or `fma` returns the same value (`spec_add_of_add?_eq_some` and its
+siblings). It also records two facts that the alignment kernel uses to order its operands by scale:
+negating a model value flips only the decoded sign (`decode?_neg`), and the unsigned-scale sum is
+commutative (`roundSum_comm`).
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb
+
+variable {fmt : FloatFormat}
+
+/-- An accepted compact finite addition is the reference addition. -/
+theorem spec_add_of_add?_eq_some (x y r : Model fmt) (h : FiniteKernel.add? x y = some r) :
+    Spec.add x y = r := by
+  rw [FiniteKernel.add_eq_spec] at h
+  unfold Spec.add
+  cases hx : toDyadic? x with
+  | none =>
+      rw [hx] at h
+      exact absurd h (by simp)
+  | some dx =>
+      cases hy : toDyadic? y with
+      | none =>
+          rw [hx, hy] at h
+          exact absurd h (by simp)
+      | some dy =>
+          rw [hx, hy] at h
+          simpa using h
+
+/-- An accepted compact finite multiplication is the reference multiplication. -/
+theorem spec_mul_of_mul?_eq_some (x y r : Model fmt) (h : FiniteKernel.mul? x y = some r) :
+    Spec.mul x y = r := by
+  rw [FiniteKernel.mul_eq_spec] at h
+  unfold Spec.mul
+  cases hx : toDyadic? x with
+  | none =>
+      rw [hx] at h
+      exact absurd h (by simp)
+  | some dx =>
+      cases hy : toDyadic? y with
+      | none =>
+          rw [hx, hy] at h
+          exact absurd h (by simp)
+      | some dy =>
+          rw [hx, hy] at h
+          dsimp only at h ⊢
+          split at h <;> rename_i hcond
+          · rw [ite_eq_left hcond]
+            simpa using h
+          · rw [ite_eq_right hcond]
+            simpa using h
+
+/-- An accepted compact finite fused multiply-add is the reference fused multiply-add. -/
+theorem spec_fma_of_fma?_eq_some (x y z r : Model fmt) (h : FiniteKernel.fma? x y z = some r) :
+    Spec.fma x y z = r := by
+  rw [FiniteKernel.fma_eq_spec] at h
+  unfold Spec.fma
+  cases hx : toDyadic? x with
+  | none =>
+      rw [hx] at h
+      exact absurd h (by simp)
+  | some dx =>
+      cases hy : toDyadic? y with
+      | none =>
+          rw [hx, hy] at h
+          exact absurd h (by simp)
+      | some dy =>
+          cases hz : toDyadic? z with
+          | none =>
+              rw [hx, hy, hz] at h
+              exact absurd h (by simp)
+          | some dz =>
+              rw [hx, hy, hz] at h
+              have hxNaN := isNaN_eq_false_of_toDyadic?_some hx
+              have hyNaN := isNaN_eq_false_of_toDyadic?_some hy
+              have hzNaN := isNaN_eq_false_of_toDyadic?_some hz
+              have hxSNaN := isSignaling_eq_false_of_toDyadic?_some hx
+              have hySNaN := isSignaling_eq_false_of_toDyadic?_some hy
+              have hzSNaN := isSignaling_eq_false_of_toDyadic?_some hz
+              have hxInf := isInfinite_eq_false_of_toDyadic?_some hx
+              have hyInf := isInfinite_eq_false_of_toDyadic?_some hy
+              have hzInf := isInfinite_eq_false_of_toDyadic?_some hz
+              simp only [chooseNaN3, hxNaN, hyNaN, hzNaN, hxSNaN, hySNaN, hzSNaN, hxInf, hyInf,
+                hzInf,
+                Bool.false_eq_true, ite_false, Bool.or_self]
+              simpa using h
+
+/-- Negating a conventional IEEE value flips only the decoded sign. -/
+theorem decode?_neg (hieee : fmt.isIEEE = true) (m : Model fmt) :
+    FiniteKernel.decode? (neg m) =
+      (FiniteKernel.decode? m).map fun c => { c with sign := !c.sign } :=
+  FiniteKernel.decode?_neg hieee m
+
+/-- The unsigned-scale exact sum does not depend on the order of its operands. -/
+theorem roundSum_comm (roundOffset : Nat) (aSign bSign : Bool)
+    (a sa b sb : Nat) :
+    FiniteScaleAdd.roundSum fmt roundOffset aSign bSign a sa b sb =
+      FiniteScaleAdd.roundSum fmt roundOffset bSign aSign b sb a sa := by
+  unfold FiniteScaleAdd.roundSum
+  simp only [FiniteScaleAdd.roundAligned_eq, beq_iff_eq]
+  by_cases ha : a = 0 <;> by_cases hb : b = 0
+  · simp [ha, hb, Bool.and_comm]
+  · simp [ha, hb]
+  · simp [ha, hb]
+  · by_cases hab : sa ≤ sb <;> by_cases hba : sb ≤ sa
+    · obtain rfl : sa = sb := le_antisymm hab hba
+      simp only [ha, hb, le_refl, ite_true, ite_false, Nat.sub_self, Nat.shiftLeft_zero]
+      exact FiniteScaleAdd.roundMagnitudes_comm _ _ _ _ _ _ _
+    · simp [ha, hb, hab, hba]
+    · simp [ha, hb, hab, hba]
+    · omega
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb

@@ -1,16 +1,16 @@
 ---
 number: "01"
 slug: using-the-library
-title: "FloatLib for absolute beginners"
+title: "Getting started"
 summary: "Set up FloatLib, do arithmetic in a floating-point format, see the exact value of each result, choose a rounding direction, read the status flags and prove a first theorem."
 phases: [planner-and-configured, ieee-formats, binary-arithmetic]
 ---
 
-Welcome to the absolute beginner's guide to FloatLib. FloatLib implements numerical formats and proves properties of their arithmetic in Lean 4. This chapter introduces the library through binary32 calculations. You will evaluate expressions, inspect their exact stored values, select a rounding direction, read exception flags and prove a theorem about an operation.
+Welcome to FloatLib. We'll use one Lean file to calculate with binary32 values and prove what the calculation returns. Along the way we'll inspect the exact values behind the printed decimals and see which operations raise an exception flag.
 
 ## What is a floating-point number?
 
-A computer keeps each number in a fixed number of bits, so it can't keep every real number. A finite binary floating-point number is an integer with a limited number of binary digits times a power of two, like scientific notation in base two. The power of two moves, or floats, the binary point, hence the name. A format fixes how many bits each part gets. Two common formats are binary32 and binary64, the 32-bit and 64-bit binary formats of the IEEE 754 standard. Most real numbers, $0.1$ among them, don't fit a format exactly, so the format stores a nearby number that does. That step is called rounding.
+A fixed-width format has only finitely many bit patterns, so it can represent only finitely many real numbers. A finite binary floating-point number is an integer with a limited number of binary digits times a power of two, like scientific notation in base two. The power of two moves, or floats, the binary point, hence the name. A format fixes how many bits each part gets. Two common formats are binary32 and binary64, the 32-bit and 64-bit binary formats of the IEEE 754 standard. Most real numbers, $0.1$ among them, don't fit a format exactly, so the format stores a nearby number that does. That step is called rounding.
 
 The expression `0.1 + 0.2 == 0.3` evaluates to `true` in binary32 and `false` in binary64. These comparisons use the stored values of the literals and the rounded sum. The examples below show how to inspect those values and explain the difference.
 
@@ -107,7 +107,7 @@ Those are the two binary32 neighbours of one third, $11184810 \cdot 2^{-25}$, ab
 
 ## How to read the status flags
 
-A direction decides which neighbour you get, and the flags tell you what happened in that one operation. IEEE 754 asks each operation to report five conditions: invalid, divide by zero, overflow, underflow and inexact. The standard calls them exceptions, though nothing is thrown.
+A direction decides which neighbour you get, and the flags tell you what happened in that one operation. IEEE 754 defines five exception conditions. They are invalid operation, division by zero, overflow, underflow and inexact. The standard calls them exceptions, though nothing is thrown.
 
 With `(status := true)`, the operation returns three fields. `value` is the rounded result, `status` is an [[FloatLib.Numerics.IEEEStatus]] containing the five exception flags, and `ternary` records whether the result is below, equal to or above the exact value. This is the same three-way comparison used by MPFR. [[FloatLib.Floats.Formats.BinaryInterchange.Model.value_add]] states that requesting status does not change the value returned by addition. The following examples show downward rounding and operations that raise exception flags:
 
@@ -140,7 +140,13 @@ Statuses are ordinary returned data, with no global sticky register (one where a
 
 ## How to prove your first theorem
 
-So far every answer has come from an `#eval`, and an `#eval` answers for one input. A theorem answers for every input, and Lean checks its proof. Let's prove one about addition. Addition has a reference definition, a short specification of what it should compute, and a refinement theorem saying the code that runs agrees with it (the code refines the specification, filling in how to compute it). FloatLib can run an addition with different implementations, called backends, and a part of the library called the planner picks one. [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] says the executable addition equals the reference addition [[FloatLib.Floats.ExecFloat.Spec.add]], whichever backend the planner picked. Since `+` calls `ExecFloat.add`, you can state it for two binary32 values in ordinary notation:
+We used `#eval` to display the sum of `x` and `y`. To prove its value, state the equality and ask FloatLib's `float_decide` tactic to check it in Lean's kernel:
+
+```lean
+example : x + y = 3.75 := by float_decide
+```
+
+This proof uses the particular values assigned to `x` and `y`. For arbitrary operands, [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] says that addition returns the same word as the reference operation [[FloatLib.Floats.ExecFloat.Spec.add]]. The planner can choose among several certified implementations of addition. The same theorem applies to each one.
 
 ```lean
 example (a b : Binary32) : a + b = ExecFloat.Spec.add a b :=
@@ -153,7 +159,7 @@ Say you want to rewrite `a + b` inside a larger goal. For that there's `ExecFloa
 
 FloatLib's source has three parts, and that one proof uses all of them, as [Figure 1.1](#/chapter/using-the-library/figure-ch19-layers) shows for a binary32 addition. [Floats](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats) gives words their format and calls the integer algorithms in [Kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Kernels). Those come with refinement proofs built on [Numerics](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics), where exact values and contracts, the promises an operation makes about its result, are defined. [Chapter 03](#/chapter/the-numerical-models) takes that addition apart, and the [theorem guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md) lists the public arithmetic theorems with their imports and hypotheses.
 
-![Exact values in Numerics, integer algorithms in Kernels, and configured formats in Floats.](assets/ch19-layers.png "An executable operation is connected to its exact-value specification by a refinement proof.")
+![Three stacked boxes: Floats (formats and stored values) with the expression x + y : Binary 8 23, Kernels (integer algorithms) with align, add, round, and Numerics (exact values and contracts) with dyadics and rounding laws. A solid arrow labelled calls runs from Floats to Kernels, and a dotted arrow labelled proved using runs from Kernels to Numerics](assets/ch19-layers.png "The three parts of the source behind one binary32 addition. Floats calls an integer algorithm in Kernels, and that algorithm is proved correct with the exact values and rounding laws of Numerics. The solid arrow is a call at run time, and the dotted arrow is a dependency of the proof.")
 
 ## How to trap a number between two roundings
 
@@ -239,11 +245,11 @@ The report also lists the format's constants. For binary32 the largest finite va
 
 ## Which import do you need?
 
-`import FloatLib` gives you the format families and their arithmetic, and a few things need one more import. Take the transcendental functions, binary `exp`, `log` and `sin`. For those you add `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`. It makes `MathFunctions`, the class (Lean's word for an interface) that generic code calls for `exp`, `log` and the rest, work on FloatLib's values, both the ones you compute with and the model values the proofs reason about, and it adds powers with a floating-point exponent on model values. Without it, FloatLib's binary values have no `MathFunctions` instance, though Lean's own `Float` and the reals do, and FloatLib's values have integer powers through `powInt` but no power with a floating-point exponent.
+`import FloatLib` gives you the format families and their arithmetic, and a few things need one more import. Take the transcendental functions, binary `exp`, `log` and `sin`. For those you add `FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals`. It makes `MathFunctions`, the class (Lean's word for an interface) that generic code calls for `exp`, `log` and the rest, work on FloatLib's values, both the ones you compute with and the model values the proofs reason about, and it adds powers with a floating-point exponent on model values. Without it, FloatLib's binary values have no `MathFunctions` instance, though Lean's own `Float` and the reals do, and FloatLib's values have integer powers through `pown` but no power with a floating-point exponent.
 
-That import also brings two ways to ask for a correctly rounded answer, the exact result rounded once. The certified searches `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expMinus1` and `logPlus1` return one or tell you why they couldn't certify one. In `FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded`, which comes with it, `ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and weighted `exp x * w` always return one on IEEE formats. With the transcendental import in place, opening the scope `FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath` makes generic `MathFunctions` code use them for `exp` and `log`.
+That import also brings two ways to ask for a correctly rounded answer, the exact result rounded once. The certified searches `ExecFloat.Binary.Certified.exp`, `log`, `pow`, `expm1` and `logp1` return one or tell you why they couldn't certify one. In `FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded`, which comes with it, `ExecFloat.Binary.CorrectlyRounded.exp`, `log`, `expm1`, `logp1` and weighted `exp x * w` always return one on IEEE formats. With the transcendental import in place, opening the scope `FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath` makes generic `MathFunctions` code use them for `exp` and `log`.
 
-And watch out for the `roundoff` tactic of [chapter 11](#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code), which proves error bounds. It needs `FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff`, which `import FloatLib` doesn't reach.
+And watch out for the `roundoff` tactic of [chapter 11](#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code), which proves error bounds. It needs `FloatLib.Tactic.Roundoff`, which `import FloatLib` doesn't reach.
 
 For fewer dependencies, import only the layer you need:
 

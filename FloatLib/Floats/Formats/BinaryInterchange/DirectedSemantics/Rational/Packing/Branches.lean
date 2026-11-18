@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Grid
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Internal
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Grid
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Runtime
 
 /-!
@@ -80,7 +80,8 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq
     Bool.false_eq_true, ite_false, beq_iff_eq, gt_iff_lt, ge_iff_le, FloatFormat.subnormalAlignExp]
   rfl
 
-/-- Above the largest normal exponent, positive directed packing returns the directed overflow result. -/
+/-- Above the largest normal exponent, positive directed packing returns the directed overflow
+result. -/
 theorem roundRatMagnitudeDirectedScaled_pos_eq_overflow
     (fmt : FloatFormat) (roundUp : Bool) (numerator denominator : Nat)
     (exponent : Int)
@@ -118,7 +119,8 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_underflow
     hnumerator hdenominator]
   simp only [ite_eq_right (not_lt_of_ge hmax), ite_eq_left hunderflow]
 
-/-- In the subnormal range, positive downward packing stores the truncated quotient as a subnormal. -/
+/-- In the subnormal range, positive downward packing stores the truncated quotient as a
+subnormal. -/
 theorem roundRatMagnitudeDirectedScaled_pos_eq_subnormal_down
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
@@ -277,7 +279,8 @@ theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_no_carry
     ite_eq_right (not_lt_of_ge hnormal),
     ite_eq_right hcarry, hguard, Bool.false_eq_true]
 
-/-- A carry-out whose incremented exponent still fits stores the smallest mantissa one binade higher. -/
+/-- A carry-out whose incremented exponent still fits stores the smallest mantissa one binade
+higher. -/
 theorem roundRatMagnitudeDirectedScaled_pos_eq_normal_up_carry
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)

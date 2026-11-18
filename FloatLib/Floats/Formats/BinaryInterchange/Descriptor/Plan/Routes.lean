@@ -1,16 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.FixedLimb.Pair.Core.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Small.Mul.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.TwoWordMul.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Estimates
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Core.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Core.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Mul.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Word.TwoWordMul.Runtime
 
 /-!
 # Structural routes for binary descriptor execution
@@ -35,8 +34,11 @@ Several routes share one dispatcher function, but retain distinct cost metadata 
 specialized kernels have different performance.
 -/
 inductive StructuralRoute where
+  /-- The kernel specialized to binary32 or binary64. -/
   | fixedFormat
+  /-- The kernel on one native word, for a format that one word holds. -/
   | nativeWord
+  /-- The kernel on a fixed number of native words: the two-word pair kernels. -/
   | fixedLimbs
   deriving DecidableEq, Repr
 
@@ -110,3 +112,10 @@ def structuralRoute? (format : FloatFormat) : Operation → Option StructuralRou
         none
 
 end FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.StructuralRoute
+
+/-- Reconstruct a `StructuralRoute` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.StructuralRoute

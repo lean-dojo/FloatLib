@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -29,7 +29,9 @@ open FloatLib.Numerics
 
 /-- Exact logarithmic code at radix `radix`. -/
 inductive Code (radix : Radix) where
+  /-- Zero, which is no power of the radix. -/
   | zero
+  /-- The number `radix ^ exponent`, negated when `negative` is true. -/
   | value (negative : Bool) (exponent : Int)
   deriving DecidableEq, Repr
 

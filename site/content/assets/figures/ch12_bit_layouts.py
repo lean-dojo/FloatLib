@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch12-bit-layouts.png: the five named 16 to 128 bit layouts to one scale.
 
-Chapter 08 tabulates binary16, bfloat16, binary32, binary64 and binary128 as five values of the
+The chapter on IEEE binary formats tabulates binary16, bfloat16, binary32, binary64 and binary128 as five values of the
 one `FloatFormat` descriptor. This figure draws the stored word of each as a row of three fields,
 sign, exponent and fraction, with the same width per bit in every row, so the reader sees that the
 exponent field grows from five bits to fifteen while the fraction grows from seven to one hundred
@@ -40,9 +40,9 @@ FORMATS = (
     ("binary128", 15, 112),
 )
 
-SIGN_COLOUR = fs.MUTED
-EXP_COLOUR = fs.ORANGE
-FRAC_COLOUR = fs.SKY
+SIGN_COLOUR = fs.FIELD["sign"]
+EXP_COLOUR = fs.FIELD["exponent"]
+FRAC_COLOUR = fs.FIELD["fraction"]
 
 ROW_HEIGHT = 0.8
 ROW_PITCH = 1.45
@@ -53,23 +53,28 @@ def bit_width(exp_width: int, frac_width: int) -> int:
     return 1 + exp_width + frac_width
 
 
+def key() -> list:
+    """Legend handles shared by both arrangements."""
+    return [Patch(facecolor=colour, edgecolor=fs.INK, linewidth=fs.LW_AXIS, label=label)
+            for colour, label in ((SIGN_COLOUR, "sign"), (EXP_COLOUR, "exponent"),
+                                  (FRAC_COLOUR, "fraction"))]
+
+
 def draw_mobile():
-    fig = plt.figure(figsize=(3.8, 7.4))
-    fig.text(0.04, 0.98, "Five binary storage layouts", fontsize=14, weight="bold", va="top")
-    fig.text(0.04, 0.922, "One sign bit in every format.", fontsize=12, va="top")
-    ax = fig.add_axes([0.04, 0.10, 0.92, 0.77])
+    fig = plt.figure(figsize=(fs.MOBILE_WIDTH, 6.6))
+    ax = fig.add_axes([0.04, 0.10, 0.92, 0.88])
     ax.set(xlim=(0, 130), ylim=(-0.05, 6.05))
     ax.axis("off")
     for row, (name, exponent, fraction) in enumerate(FORMATS):
         y = 5.2 - 1.15 * row
         total = bit_width(exponent, fraction)
-        ax.text(0, y + 0.55, f"{name}  ({total} bits)", fontsize=12.5, weight="bold")
+        ax.text(0, y + 0.55, f"{name}, {total} bits", fontsize=fs.SIZE_LABEL)
         fields = [("", 1, SIGN_COLOUR), ("", exponent, EXP_COLOUR), ("", fraction, FRAC_COLOUR)]
         end = fs.bit_layout(ax, fields, y=y, height=0.25, label_bits=False)
         assert end == total
-        for x, label in [(0, "sign 1"), (26, f"exponent {exponent}"), (82, f"fraction {fraction}")]:
-            ax.text(x, y - 0.30, label, fontsize=11.5)
-    fig.text(0.04, 0.034, "Every row uses the same width per bit.", fontsize=11.5, va="top")
+        ax.text(0, y - 0.30, f"1 + {exponent} + {fraction}", fontsize=fs.SIZE_TICK, color=fs.MUTED)
+    fs.legend(fig, handles=key(), loc="lower center", bbox_to_anchor=(0.5, 0.02), ncols=3,
+              columnspacing=1.0, handlelength=1.4)
     return fig
 
 
@@ -82,7 +87,7 @@ def main() -> None:
     fs.setup()
     widest = max(bit_width(e, f) for _, e, f in FORMATS)
 
-    fig, ax = fs.figure(4.3)
+    fig, ax = fs.figure(4.0)
     fig.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0.0)
     ax.axis("off")
     ax.grid(False)
@@ -95,30 +100,22 @@ def main() -> None:
             (str(exp_width), exp_width, EXP_COLOUR),
             (str(frac_width), frac_width, FRAC_COLOUR),
         ]
-        end = fs.bit_layout(ax, fields, y=y, height=ROW_HEIGHT, label_bits=False, name_size=10)
+        end = fs.bit_layout(ax, fields, y=y, height=ROW_HEIGHT, label_bits=False, name_size=fs.SIZE_TICK)
         total = bit_width(exp_width, frac_width)
         assert end == total
-        ax.text(-1.5, y + ROW_HEIGHT / 2, name, ha="right", va="center", fontsize=10.5,
+        ax.text(-1.5, y + ROW_HEIGHT / 2, name, ha="right", va="center", fontsize=fs.SIZE_TICK,
                 color=fs.INK)
         ax.text(end + 1.5, y + ROW_HEIGHT / 2, f"{total} bits", ha="left", va="center",
-                fontsize=9.5, color=fs.MUTED)
-
-    handles = [
-        Patch(facecolor=SIGN_COLOUR, edgecolor=fs.INK, linewidth=0.9, label="sign (1 bit)"),
-        Patch(facecolor=EXP_COLOUR, edgecolor=fs.INK, linewidth=0.9,
-              label="exponent (width in bits inside)"),
-        Patch(facecolor=FRAC_COLOUR, edgecolor=fs.INK, linewidth=0.9,
-              label="fraction (width in bits inside)"),
-    ]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.05, 1.0), ncol=3,
-              fontsize=9.5, handlelength=1.6, columnspacing=1.6, borderaxespad=0.0)
+                fontsize=fs.SIZE_TICK, color=fs.MUTED)
 
     ax.set_xlim(-16, widest + 12)
-    ax.set_ylim(-(len(FORMATS) - 1) * ROW_PITCH - 0.35, ROW_HEIGHT + 1.3)
+    ax.set_ylim(-(len(FORMATS) - 1) * ROW_PITCH - 1.5, ROW_HEIGHT + 0.2)
+    fs.legend(ax, handles=key(), loc="lower center", bbox_to_anchor=(0.5, 0.0), ncols=3,
+              handlelength=1.6)
 
     out = fs.save(fig, "ch12-bit-layouts.png", out=args.out)
     print(f"wrote {out}")
-    mobile = out.with_name(out.stem + "-mobile.png")
+    mobile = fs.mobile_path(out)
     print(f"wrote {fs.save(draw_mobile(), mobile.name, mobile)}")
 
 

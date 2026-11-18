@@ -1,20 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public meta import FloatLib.Tactic.FloatInfo.Posit.Quire
+public import FloatLib.Floats.Formats.Posit.Configured.Instances
+public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.Posit.Quire.Configured.Proof
 public import FloatLib.Floats.Formats.Posit.Quire.Configured.Views
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Proof
-public import FloatLib.Floats.Formats.Posit.Quire.Capacity
-public import FloatLib.Floats.Formats.Posit.Quire.Accumulation
-public meta import FloatLib.Floats.Formats.Posit.Quire.Info
 public import FloatLib.Numerics.Reduction
-public import FloatLib.Floats.Formats.Posit.Configured.Instances
 
 /-!
 # Exact dot products with a posit quire

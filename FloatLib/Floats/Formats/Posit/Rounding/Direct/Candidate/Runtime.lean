@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Descriptor
+public import FloatLib.Kernels.FixedWord.Core.Runtime
+public import FloatLib.Numerics.Exact.Dyadic.Basic
+
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
-public import FloatLib.Floats.Formats.Posit.Descriptor
-public import FloatLib.Numerics.Exact.Dyadic.Basic
-public import FloatLib.Kernels.FixedWord.Core.Runtime
 
 /-!
 # Executable direct posit candidate generation

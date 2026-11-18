@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Trigonometric.Runtime
+
 import FloatLib.Numerics.Order.Comparison
 
 /-!
@@ -80,7 +81,8 @@ theorem compareArctan_eq_real (argument boundary : ℚ) :
 
 /-- The cosine sign and the residual sign determine the exact tangent ordering. -/
 theorem prepareTan_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ) :
-    (prepareTan argument levels).compare boundary = cmp (Real.tan (argument : ℝ)) (boundary : ℝ) := by
+    (prepareTan argument levels).compare boundary = cmp (Real.tan (argument : ℝ)) (boundary :
+      ℝ) := by
   by_cases hzero : argument = 0
   · subst argument
     simp [prepareTan, Enclosure.Comparison.Prepared.compare, cmp, cmpUsing]

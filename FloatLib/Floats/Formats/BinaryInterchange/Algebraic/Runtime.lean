@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Generic.Sqrt.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.SqrtRuntime
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
-public import FloatLib.Floats.ExecFloat.Backends.Generic.Sqrt.Runtime
 
 /-!
 # Single-round binary algebraic operations
@@ -23,7 +22,7 @@ powers can materialize large exact integers, because the exponent is not capped.
 
 Signed zero, infinities and invalid arguments are handled before exact evaluation. A zero
 integer exponent returns one, even for a quiet NaN base, but signaling NaNs are quieted first.
-Degree zero is invalid for `rootN`.
+Degree zero is invalid for `rootn`.
 -/
 
 @[expose] public section
@@ -49,13 +48,13 @@ Reciprocal square root, rounded once from the exact reciprocal radicand.
 Positive infinity gives positive zero. Signed zero gives the correspondingly signed overflow
 value. Negative nonzero inputs are invalid, and NaNs follow the unary propagation policy.
 -/
-@[specialize fmt] def rsqrt {fmt : FloatFormat} (value : Model fmt) : Model fmt :=
+@[specialize fmt] def rSqrt {fmt : FloatFormat} (value : Model fmt) : Model fmt :=
   match chooseNaN1 value with
   | some nan => nan
   | none =>
     if isZero value then nativeOverflow fmt (signBit value)
     else if signBit value then invalidResult fmt
-    else if isInf value then posZero fmt
+    else if isInfinite value then posZero fmt
     else
       match toRat? value with
       | none => invalidResult fmt
@@ -68,9 +67,9 @@ An infinite operand gives positive overflow, including when the other operand is
 A signaling NaN takes precedence. Two zeros give positive zero, independently of their signs.
 -/
 @[specialize fmt] def hypot {fmt : FloatFormat} (left right : Model fmt) : Model fmt :=
-  if isSNaN left || isSNaN right then
+  if isSignaling left || isSignaling right then
     (chooseNaN2 left right).getD (invalidResult fmt)
-  else if isInf left || isInf right then nativeOverflow fmt false
+  else if isInfinite left || isInfinite right then nativeOverflow fmt false
   else
     match chooseNaN2 left right with
     | some nan => nan
@@ -87,8 +86,8 @@ exponents. For a zero or infinite base the result is negative if and only if the
 and the exponent is odd. A signaling NaN is quieted before the zero-exponent rule, and otherwise
 the zero exponent returns one.
 -/
-@[specialize fmt] def powInt {fmt : FloatFormat} (value : Model fmt) (exponent : Int) : Model fmt :=
-  if isSNaN value then (chooseNaN1 value).getD (invalidResult fmt)
+@[specialize fmt] def pown {fmt : FloatFormat} (value : Model fmt) (exponent : Int) : Model fmt :=
+  if isSignaling value then (chooseNaN1 value).getD (invalidResult fmt)
   else if exponent = 0 then posOne fmt
   else
     match chooseNaN1 value with
@@ -97,7 +96,7 @@ the zero exponent returns one.
       let sign := signBit value && exponent % 2 != 0
       if isZero value then
         if exponent < 0 then nativeOverflow fmt sign else zero fmt sign
-      else if isInf value then
+      else if isInfinite value then
         if exponent < 0 then zero fmt sign else nativeOverflow fmt sign
       else
         match toRat? value with
@@ -114,7 +113,7 @@ only if the input is negative zero and the degree is odd. NaN inputs are quieted
 degree, keeping their payload. Negative nonzero inputs with even degree, and every other input
 with degree zero, are invalid.
 -/
-@[specialize fmt] def rootN {fmt : FloatFormat} (value : Model fmt) (degree : Int) : Model fmt :=
+@[specialize fmt] def rootn {fmt : FloatFormat} (value : Model fmt) (degree : Int) : Model fmt :=
   match chooseNaN1 value with
   | some nan => nan
   | none =>
@@ -124,7 +123,7 @@ with degree zero, are invalid.
       if isZero value then
         if degree < 0 then nativeOverflow fmt sign else zero fmt sign
       else if signBit value && degree % 2 == 0 then invalidResult fmt
-      else if isInf value then
+      else if isInfinite value then
         if degree < 0 then zero fmt sign else nativeOverflow fmt sign
       else
         match toRat? value with

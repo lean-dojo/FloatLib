@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Quantization.Deterministic.ShiftRight
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Algebra.Order.Sub.Basic
+
 import Mathlib.Algebra.Order.Group.Nat
+import Mathlib.Algebra.Order.Sub.Basic
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Magnitude rounding rules
@@ -193,7 +194,8 @@ Nearest-even keeps the convention of `roundQuotientEven`, which returns `0` for 
   | up =>
       by_cases hzero : numerator = 0
       · simp [roundQuotient, hzero]
-      · simp [roundQuotient, hzero]
+      · simp only [roundQuotient, Nat.reduceBEq, Bool.or_false, beq_iff_eq, hzero, ↓reduceIte,
+        Nat.div_one]
         omega
   | nearestEven => simp [roundQuotient, roundQuotientEven, Nat.mod_one]
   | nearestAway => simp only [roundQuotient, Nat.mul_one]; omega
@@ -228,7 +230,9 @@ theorem shiftRightIsTie_eq_true_iff (value shift : Nat) :
       simp only [shiftRightIsTie, Nat.add_sub_cancel, shiftRightRemainder_eq_mod,
         mod_two_pow_succ_eq]
       cases value.testBit t
-      · simp
+      · simp only [Nat.reduceBneDiff, Bool.and_false, Bool.false_and, Bool.false_eq_true,
+        lt_add_iff_pos_left, add_pos_iff, zero_lt_one, or_true, ↓reduceIte, mul_zero, add_zero,
+        true_and, false_iff, ne_eq]
         omega
       · simp
 
@@ -487,7 +491,10 @@ theorem roundShiftRight_eq_roundQuotient (rule : MagnitudeRounding) (value shift
           rw [mod_two_pow_succ_eq]
           have hlow : value % 2 ^ t < 2 ^ t := Nat.mod_lt _ (Nat.two_pow_pos t)
           rw [pow_succ]
-          cases value.testBit t <;> simp <;> omega
+          cases value.testBit t <;>
+            simp only [Bool.false_eq_true, ↓reduceIte, mul_zero, add_zero, right_eq_ite_iff,
+            zero_ne_one, imp_false, not_le, gt_iff_lt, mul_one, left_eq_ite_iff, one_ne_zero,
+            not_lt, ge_iff_le] <;> omega
 
 /--
 Nearest-away shift rounding is nearest-even shift rounding with an exact tie sent to the ceiling.
@@ -531,7 +538,6 @@ theorem compare_roundShiftRight_mul_two_pow (rule : MagnitudeRounding) (value sh
         .eq := by
   have hbits := guard_or_sticky_eq_decide value shift hshift
   have hsplit := Nat.div_add_mod value (2 ^ shift)
-  have hlow : value % 2 ^ shift < 2 ^ shift := Nat.mod_lt _ (Nat.two_pow_pos shift)
   rw [roundShiftRight_eq_guard_sticky rule value shift hshift]
   have hmul : value / 2 ^ shift * 2 ^ shift = 2 ^ shift * (value / 2 ^ shift) :=
     Nat.mul_comm _ _
@@ -571,3 +577,10 @@ theorem compare_roundShiftRight_mul_two_pow_signed (rule : MagnitudeRounding) (n
   cases negative <;> split_ifs <;> simp_all
 
 end FloatLib.Numerics
+
+namespace FloatLib.Numerics.MagnitudeRounding
+
+/-- Reconstruct a `MagnitudeRounding` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.MagnitudeRounding

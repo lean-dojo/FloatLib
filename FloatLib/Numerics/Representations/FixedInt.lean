@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Representations.FixedInt.Core
-public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
 public import FloatLib.Numerics.Representations.FixedInt.Semantics.Arithmetic
+public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
 public import FloatLib.Numerics.Representations.FixedInt.Semantics.Refinement
 
 /-!

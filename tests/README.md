@@ -25,9 +25,11 @@ To also replay the compiled FloatLib declarations through Lean's kernel:
 FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh
 ```
 
-This runs `leanchecker`, which loads the stored declarations and checks them again with the same
-kernel used during compilation. It's opt-in because loading the dependency environments can take
-hundreds of GiB of memory.
+This runs `checks/kernel-replay.sh`, which loads the stored declarations of each library module
+and checks them again with the same kernel used during compilation, one module per process. It's
+opt-in because the whole library takes about an hour of processor time. Set
+`KERNEL_REPLAY_JOBS` to the number of processes to run at a time (default 4, up to 6 GB each),
+or name module prefixes to replay a part: `bash tests/checks/kernel-replay.sh FloatLib.Numerics.Kernel`.
 
 For just the proofs and native regressions, or to choose a native suite:
 
@@ -41,6 +43,17 @@ The helper shares the scripts' build lock and keeps compiler output outside the 
 you want a particular local build directory, set `FLOATLIB_BUILD_DIR` before you source it, and
 `TMPDIR` controls where temporary work goes. Every command below also starts at the repository
 root.
+
+The conformance modules are checked when they compile. Besides the format and operation
+contracts they cover the kernel path and its lane programs (`Tactic/FloatDecide`,
+`Tactic/LaneDecide`, `Tactic/LaneTable`, `Conformance/Formats/KernelPaths`, `Conformance/Numerics/KernelExact`), the generated
+`roundoff` theorems (`Tactic/Roundoff/Backward`, `Tactic/Roundoff/Closed`, `Tactic/Roundoff/MixedPrecision`,
+`Tactic/Roundoff/Block`, `Tactic/Roundoff/Shape`), the backend tags and what they refuse
+(`Tactic/KernelOptimize`, `Tactic/CompilerOptimize`), the block formats
+(`Conformance/Formats/BlockTheory`, with worked instances on explicit data in `BlockExamples`),
+stochastic rounding (`Numerics/Stochastic*`) and the constraint route of `interval`
+(`Tactic/Interval/Constraints`: goal shapes, zero margins, sets without a box, hints,
+failure messages, the trace of the route, and certificates written by hand).
 
 Native suites cover models, public instances, rounding policies, integer kernels, tiny formats,
 transcendental kernels (behind the named `Configured.Transcendentals` import), exact
@@ -71,11 +84,10 @@ and proof workflow.
 
 ## Results and external comparisons
 
-You can verify the saved results or run new comparisons:
+To run the comparisons:
 
 | Command | What it does |
 | --- | --- |
-| `bash tests/oracles/verify-main-result.sh` | Check saved artifacts and captured sources, regenerate figures, and compare the captured source inputs with this checkout |
 | `bash tests/oracles/check.sh --profile quick` | Build current source and run a bounded set of independent comparisons and native checks |
 | `bash tests/oracles/check.sh --profile release` | Build current source and run the full set of comparisons supported by the runner |
 
@@ -90,14 +102,11 @@ use `--results`.
 Both profiles compare binary16 addition and multiplication with MPFR on 16 left operands:
 signed zeros, subnormals, the smallest normal, ordinary normals, the largest finite magnitudes,
 infinities, and quiet and signaling NaNs. Pairing each with all 65,536 right encodings gives
-2,097,152 comparisons across the two operations. Saved results keep the smaller operand selection
-they were captured with.
+2,097,152 comparisons across the two operations.
 
-The [external guide](EXTERNAL.md) has the prerequisites, individual commands, comparison policies,
-and instructions for rerendering saved data, and its [SoftPosit discussion](EXTERNAL.md#softposit)
-explains why the results contain some differences. Most [ecosystem rows](results/main/ecosystem)
-run an upstream project's own checks, so a pass there doesn't show agreement with FloatLib. For
-timing experiments, use the [benchmark guide](../benchmarks/README.md).
+The [external guide](EXTERNAL.md) has the prerequisites, individual commands and comparison
+policies, and its [SoftPosit discussion](EXTERNAL.md#softposit) explains why the results contain
+some differences. For timing experiments, use the [benchmark guide](../benchmarks/README.md).
 
 ## Exhaustive fused multiply-add
 
@@ -135,14 +144,19 @@ Python interpreter for the Lean adapter.
 
 ## Trust surface
 
+The complete list, with the reason each item is trusted, is in [TRUST.md](../TRUST.md). The
+table below says where each mechanism is and what audits it.
+
 | Mechanism | Where | Audit |
 | --- | --- | --- |
 | `NativeFPU.Unchecked` host arithmetic | `Configured/NativeFPU/Unchecked.lean` | `floatlib_test_lake exe check native`; checks agreement with the software path |
-| Posit `toDyadic?` `@[implemented_by]` | `Posit/Model/Decode.lean` | `Internal.toDyadic?_eq` |
+| Posit `toDyadic?` `@[implemented_by]` | `Posit/Model/Decode.lean` | `Internal.toDyadic?_eq`, registered with `@[replacement_proof]`; `@[compiler_optimize]` refuses a backend that reaches any other replacement (`Util/Provenance.lean`) |
+| Lean's generated `T.ctorIdx._impl` tag read | every inductive type with several constructors, since Lean 4.36 | names, type and both bodies checked by `Provenance.isGeneratedCtorIdx` and counted by `Trust/Axioms.lean`; no equality theorem |
+| Host binary32 arithmetic of the native 16-bit carriers | `IEEE754/Native/Half.lean` | `floatlib_test_lake exe check native`; compares the arithmetic, square root, negation and comparisons with the software models. Narrowing, widening and NaN normalization are proved |
 | `native_decide` in conformance | `FloatLibTests/Conformance/**` | exact counts in `checks/trust-surface.sh`; none in library semantics |
-| `unsafe` expression evaluation in the inspection command | `ExecFloat/Info/Inspection.lean` | one use in `readString`, counted by `checks/trust-surface.sh` |
+| `unsafe` expression evaluation in the inspection command | `FloatLib/Tactic/FloatInfo/Inspection.lean` | one use in `readString`, counted by `checks/trust-surface.sh` |
 | `unsafe` site-export entry point | `site/tooling/ExportNodes.lean` | one use in `main`, counted by `checks/trust-surface.sh` |
-| `unsafe` evaluation of a registered extension | `Automation/Roundoff/Extension.lean` | one `evalConstCheck` use, counted by `checks/trust-surface.sh` |
+| `unsafe` evaluation of a registered extension | `FloatLib/Tactic/Roundoff/Extension.lean` | one `evalConstCheck` use, counted by `checks/trust-surface.sh` |
 
 We use `native_decide` when native evaluation makes a useful finite check faster. It saves time
 while the build proves the proposition and does nothing for FloatLib's arithmetic at runtime. In
@@ -186,6 +200,33 @@ bash tests/checks/version-pins.sh --source-only
 The source-only flags skip Lean execution, while the full verifier compiles the axiom audit and
 checks the active toolchain as usual. Source discovery picks up untracked renamed files and skips
 deleted paths, `.lake`, and saved results.
+
+`checks/source-screen.py` counts duplicate definitions, duplicate theorems, theorems with one
+statement under two names, and library declarations that nothing uses. It reads the source text,
+so it finds candidates and proves nothing about them; a name in the list of an axiom audit and a
+`#check` line are not uses. `checks/source-screen.txt` holds its output for this release, and
+the verifier fails when a count exceeds the recorded limit:
+
+```bash
+python3 tests/checks/source-screen.py --list            # the groups and the candidates
+python3 tests/checks/source-screen.py --revision main   # the counts of another revision
+```
+
+`checks/doc-links.py` checks the links of every Markdown file: guide links and their anchors,
+relative files, links into this repository on GitHub, and the citations and declaration links of
+the guide chapters. It needs no build, so the verifier runs it before anything is compiled:
+
+```bash
+python3 tests/checks/doc-links.py
+```
+
+`checks/linters.sh` builds the library and the tests with `--wfail`, so that a linter warning
+fails the check, and then runs `lake lint` on every lint root. The linters are the
+`linterOptions` of `lakefile.lean` and of `tests/lakefile.lean`:
+
+```bash
+bash tests/checks/linters.sh
+```
 
 ## Layout
 

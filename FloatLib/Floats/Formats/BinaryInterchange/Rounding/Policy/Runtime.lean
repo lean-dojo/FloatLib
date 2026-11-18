@@ -1,20 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
-public import FloatLib.Numerics.Operation.Context
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Directed.Dyadic
 
 /-!
 # Executable policy-aware binary quantization
 
-A format's bit patterns don't decide how a value is written into it. E4M3FN has one fixed set of
+A format's bit patterns don't decide how a value is written into it. E4M3 has one fixed set of
 bit patterns, yet it supports both saturating and non-saturating conversions, and hardware may
 flush a subnormal result to zero even when the storage format can represent that subnormal. So
 this module keeps the encoding policy and the operation policy apart.
@@ -39,7 +37,7 @@ theorems in `Rounding.Policy.Agreement` and `Rounding.Policy.NearestAwayAgreemen
 merely by delegation.
 
 Both engines resolve overflow through `directedOverflow`. A finite-with-NaN encoding such as
-E4M3FN therefore saturates to its largest finite value in the truncating direction, and produces
+E4M3 therefore saturates to its largest finite value in the truncating direction, and produces
 its NaN word only when the direction carries the magnitude past that value.
 
 References:

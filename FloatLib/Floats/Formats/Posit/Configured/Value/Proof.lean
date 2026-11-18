@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Configured.Comparison
 public import FloatLib.Floats.Formats.Posit.Configured.Constants
 public import FloatLib.Floats.Formats.Posit.Configured.Instances
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Comparison
 
 /-!
 # Correctness of the configured posit value interface
@@ -146,8 +146,7 @@ instance or depend on its implementation name.
 @[simp, grind =] theorem compareEqual_eq_true_iff
     (left right : FloatLib.Floats.ExecFloat (Configured.Family format code plan)) :
     FloatLib.Floats.ExecFloat.compareEqual left right = true ↔ left = right := by
-  simp [FloatLib.Floats.ExecFloat.compareEqual,
-    compare_def, cmp_eq_eq_iff]
+  simp only [compareEqual, compare_def, Option.some_beq_some, beq_iff_eq, cmp_eq_eq_iff]
   constructor
   · exact Configured.Family.toModel_injective
   · intro equality
@@ -180,7 +179,8 @@ instance or depend on its implementation name.
       toModel left ≤ toModel right
   rw [FloatLib.Floats.ExecFloat.compareLessEqual, compare_def]
   cases comparison : cmp (toModel left) (toModel right) <;>
-    simp_all [cmp_eq_lt_iff, cmp_eq_eq_iff, cmp_eq_gt_iff]
+    simp_all only [cmp_eq_lt_iff, true_iff, cmp_eq_eq_iff, Std.le_refl, cmp_eq_gt_iff,
+      Bool.false_eq_true, false_iff, not_le]
   exact le_of_lt comparison
 
 /-- Boolean posit greater-than agrees with the standard signed-word order. -/
@@ -201,7 +201,8 @@ instance or depend on its implementation name.
       toModel right ≤ toModel left
   rw [FloatLib.Floats.ExecFloat.compareGreaterEqual, compare_def]
   cases comparison : cmp (toModel left) (toModel right) <;>
-    simp_all [cmp_eq_lt_iff, cmp_eq_eq_iff, cmp_eq_gt_iff]
+    simp_all only [cmp_eq_lt_iff, Bool.false_eq_true, false_iff, not_le, cmp_eq_eq_iff,
+      Std.le_refl, cmp_eq_gt_iff, true_iff]
   exact le_of_lt comparison
 
 end ExecFloat.Posit

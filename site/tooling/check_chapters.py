@@ -575,10 +575,9 @@ def write_lean_file(chapter: Chapter, scratch: Path) -> None:
         chapter.standalone_units.append(CompileUnit(lean_path, line_map, f"block {block.index}"))
 
 
-def compile_lean(lean_path: Path, repo_root: Path, build_dir: Path, lake: str,
+def compile_lean(lean_path: Path, repo_root: Path, env: dict[str, str],
                  timeout: float) -> CompileResult:
-    command = [lake, f"-KbuildDir={build_dir}", "env", "lean", "--json", str(lean_path)]
-    env = dict(os.environ, FLOATLIB_BUILD_DIR=str(build_dir))
+    command = ["lean", "--json", str(lean_path)]
     start = time.monotonic()
     try:
         proc = subprocess.run(command, cwd=repo_root, env=env, capture_output=True, text=True,
@@ -969,9 +968,20 @@ def main(argv: list[str]) -> int:
     if not args.no_compile:
         to_compile = [(c, unit) for c in chapters for unit in c.compile_units]
         if to_compile:
+            # Lake caches the build directory in its compiled package configuration. Resolve the
+            # requested directory once, then let every example use the same compiler environment.
+            setup = subprocess.run(
+                [lake, "-R", f"-KbuildDir={args.build_dir}", "env", sys.executable, "-c",
+                 "import json, os; print(json.dumps(dict(os.environ)))"],
+                cwd=args.repo_root, env=dict(os.environ, FLOATLIB_BUILD_DIR=str(args.build_dir)),
+                capture_output=True, text=True)
+            if setup.returncode:
+                print(f"check_chapters: lake env failed: {setup.stderr}", file=sys.stderr)
+                return 2
+            lean_env = json.loads(setup.stdout)
             with ThreadPoolExecutor(max_workers=min(args.jobs, len(to_compile))) as pool:
                 futures = [(c, unit, pool.submit(compile_lean, unit.path, args.repo_root,
-                                                 args.build_dir, lake, args.timeout))
+                                                 lean_env, args.timeout))
                            for c, unit in to_compile]
                 for chapter, unit, future in futures:
                     apply_compile_result(chapter, unit, future.result(), args.timeout)

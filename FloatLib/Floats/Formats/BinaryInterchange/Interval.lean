@@ -1,15 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Core
-public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Arithmetic
+public meta import FloatLib.Tactic.FloatInfo.BinaryInterchange.Interval
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Activations
-public meta import FloatLib.Floats.Formats.BinaryInterchange.Interval.Info
+public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Arithmetic
+public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Core
+
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!

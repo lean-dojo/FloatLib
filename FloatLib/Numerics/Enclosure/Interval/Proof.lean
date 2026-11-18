@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -54,7 +54,8 @@ theorem decode_bounds_of_encloseInterval? (R : OutwardRounding α β) {a : Inter
     cases hhi : R.enclose? a.hi with
     | none => simp [encloseInterval?, hlo, hhi] at h
     | some hi =>
-      simp [encloseInterval?, hlo, hhi] at h
+      simp only [encloseInterval?, hlo, hhi, Option.pure_def, Option.bind_eq_bind,
+        Option.bind_some, Option.some.injEq] at h
       subst I
       obtain ⟨a₁, a₂, ha₁, _, ha, _⟩ := R.sound hlo
       obtain ⟨b₁, b₂, _, hb₂, _, hb⟩ := R.sound hhi
@@ -107,9 +108,8 @@ theorem contains_liftBinary? (R : OutwardRounding α β)
   exact contains_encloseInterval? R hK
     (hf a b x y ((contains_iff_of_decode? ha x).1 hx) ((contains_iff_of_decode? hb y).1 hy))
 
-variable [Field β] [IsStrictOrderedRing β]
+variable [Field β]
 
-omit [IsStrictOrderedRing β] in
 /--
 Division succeeds exactly when both inputs decode, the denominator range lies strictly on one
 side of zero, and the four-corner quotient bounds round outward.
@@ -123,6 +123,20 @@ theorem div?_eq_some_iff (R : OutwardRounding α β) {I J K : Interval α} :
             maxOfFour (a.lo / b.lo) (a.lo / b.hi) (a.hi / b.lo) (a.hi / b.hi)⟩ = some K := by
   unfold div?
   cases I.decode? R.decode <;> cases J.decode? R.decode <;> simp
+
+/-- A denominator range containing zero is rejected by division, including a zero endpoint. -/
+theorem div?_eq_none_of_contains_zero (R : OutwardRounding α β) {I J : Interval α}
+    (hzero : J.Contains R.decode 0) : div? R I J = none := by
+  cases ha : I.decode? R.decode with
+  | none => simp [div?, ha]
+  | some a =>
+    cases hb : J.decode? R.decode with
+    | none => simp [div?, ha, hb]
+    | some b =>
+      obtain ⟨hlo, hhi⟩ := (contains_iff_of_decode? hb 0).mp hzero
+      simp [div?, ha, hb, not_lt_of_ge hlo, not_lt_of_ge hhi]
+
+variable [IsStrictOrderedRing β]
 
 /-- Every successful negation encloses the exact negative value. -/
 theorem contains_neg? (R : OutwardRounding α β) {I K : Interval α}
@@ -154,19 +168,6 @@ theorem contains_mul? (R : OutwardRounding α β) {I J K : Interval α}
   apply contains_liftBinary? R _ (· * ·) ?_ h hx hy
   intro a b x y hx hy
   exact mul_bounds_Icc a.lo a.hi b.lo b.hi x y hx hy
-
-omit [IsStrictOrderedRing β] in
-/-- A denominator range containing zero is rejected by division, including a zero endpoint. -/
-theorem div?_eq_none_of_contains_zero (R : OutwardRounding α β) {I J : Interval α}
-    (hzero : J.Contains R.decode 0) : div? R I J = none := by
-  cases ha : I.decode? R.decode with
-  | none => simp [div?, ha]
-  | some a =>
-    cases hb : J.decode? R.decode with
-    | none => simp [div?, ha, hb]
-    | some b =>
-      obtain ⟨hlo, hhi⟩ := (contains_iff_of_decode? hb 0).mp hzero
-      simp [div?, ha, hb, not_lt_of_ge hlo, not_lt_of_ge hhi]
 
 /--
 Every successful division encloses the exact quotient. The denominator is then nonzero:

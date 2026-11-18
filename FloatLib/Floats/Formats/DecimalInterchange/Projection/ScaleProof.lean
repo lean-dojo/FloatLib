@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Scale
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.FormatProof
+public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Scale
 
 /-!
 # Range guarantees for the selected decimal grid
@@ -68,7 +68,8 @@ theorem scaleShift_lower {p : Nat} (hp : 0 < p) {x : ℚ}
     unfold scaleShift at *
     omega
   by_cases hz : ⌊x⌋₊ = 0
-  · simp [hz, scaleShift] at hk
+  · simp only [scaleShift, hz, Nat.log_zero_right, zero_add, tsub_pos_iff_lt,
+    Nat.lt_one_iff] at hk
     omega
   have hx : 0 ≤ x := zero_le_one.trans (Nat.floor_pos.mp (Nat.pos_of_ne_zero hz))
   have hpow := Nat.pow_log_le_self 10 hz

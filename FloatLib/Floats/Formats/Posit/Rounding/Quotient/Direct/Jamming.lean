@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Prefix.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Midpoint
+public import FloatLib.Floats.Formats.Posit.Rounding.Prefix.Proof
 
 import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -77,7 +77,7 @@ theorem quotient_lt_quotientFraction
   have hfractionPositive :
       (0 : Rat) < (remainder : Rat) / (denominator : Rat) :=
     div_pos hremainderRat hdenominatorRat
-  linarith
+  exact lt_add_of_pos_right _ hfractionPositive
 
 /--
 A Euclidean quotient plus its proper remainder lies below a natural boundary exactly when the
@@ -96,7 +96,7 @@ theorem quotientFraction_lt_natCast_iff
   · intro hquotient
     have hsuccessor : (quotient : Rat) + 1 ≤ boundary := by
       exact_mod_cast hquotient
-    linarith [hbounds.2]
+    exact hbounds.2.trans_le hsuccessor
 
 /--
 A natural boundary lies below a Euclidean quotient plus its proper remainder exactly when it lies
@@ -255,7 +255,7 @@ theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
             2 ^ shift * (jammed / 2 ^ shift) :=
         Nat.add_lt_add_right hremainderBound _
       _ = (jammed / 2 ^ shift + 1) * 2 ^ shift := by
-        ring
+        rw [add_mul]; ac_rfl
   have hquotientLeJammed : quotient ≤ jammed := le_jamRemainder quotient remainder
   have hquotientSuccessorLe :
       quotient + 1 ≤
@@ -269,7 +269,7 @@ theorem quotientFraction_lt_paddedStreamPrefix_jamRemainder_succ
     exact_mod_cast hquotientSuccessorLe
   rw [streamPrefix_eq_div_of_le hretained.le]
   dsimp [jammed, shift] at *
-  linarith
+  exact hfraction.trans_le hquotientSuccessorLeRat
 
 /--
 An exact quotient fraction and its jammed finite tail lie on the same lower side of every
@@ -390,7 +390,7 @@ theorem trailingRat_exactTailRaw_succ
       unfold exactTailRaw fractionRaw at hsuccessor
       rw [hpowerWidth] at hsuccessor
       have := Nat.two_pow_pos leading
-      nlinarith
+      simp_all
     rw [hrawSuccessor, trailingRat_exactTailRaw (exponentField + 1) (2 ^ leading) leading
       hexponentSuccessor le_rfl (by omega)]
     have hsignificandMaxRat : (significand : Rat) + 1 = 2 * (2 ^ leading : Nat) := by

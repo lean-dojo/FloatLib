@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.Selection.Certified
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 
 /-!
 # Static-byte planning runtime
@@ -209,6 +209,8 @@ structure BuiltinSelection (format : FloatFormat)
     throughput = tablePreferred format
       FloatLib.Floats.ExecFloat.Backend.Policy.throughput name operation
 
+-- Lean generates this lemma with the structure. Its three `_eq` fields fix the data fields, so
+-- `simp` proves it from its hypotheses, which is what `simpNF` reports.
 attribute [nolint simpNF] BuiltinSelection.mk.injEq
 
 /-- The latency profile rejects a table accepted by balanced and throughput planning. -/

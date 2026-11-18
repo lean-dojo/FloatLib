@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.SinCosProof
 public import FloatLib.Numerics.Enclosure.Rational.AffineConvergence
 public import FloatLib.Numerics.Enclosure.Rational.Convergence
+public import FloatLib.Numerics.Enclosure.Trigonometric.SinCosProof
 
 /-!
 # Convergence of global rational sine and cosine bounds
@@ -29,7 +29,7 @@ open scoped Topology
 /-- The global trigonometric Lagrange radius tends to zero at every rational input. -/
 theorem tendsto_trigRadius (x : ℚ) :
     Tendsto (fun n : Nat => (trigRadius x n : ℝ)) atTop (𝓝 0) := by
-  simpa [trigRadius, Function.comp_def] using
+  simpa [trigRadius_def, Function.comp_def] using
     (Real.summable_pow_div_factorial |(x : ℝ)|).tendsto_atTop_zero.comp
       (tendsto_add_atTop_nat 1)
 
@@ -48,7 +48,7 @@ theorem tendsto_restrictUnit_lo {α : Type*} {l : Filter α}
     {intervals : α → RationalInterval} {x : ℝ}
     (hlo : Tendsto (fun a => ((intervals a).lo : ℝ)) l (𝓝 x)) (hx : -1 ≤ x) :
     Tendsto (fun a => ((restrictUnit (intervals a)).lo : ℝ)) l (𝓝 x) := by
-  simpa [restrictUnit, max_eq_right hx] using
+  simpa [restrictUnit_def, max_eq_right hx] using
     (tendsto_const_nhds (x := (-1 : ℝ))).max hlo
 
 /-- Clamping upper endpoints at `1` preserves any limit at most `1`. -/
@@ -56,7 +56,7 @@ theorem tendsto_restrictUnit_hi {α : Type*} {l : Filter α}
     {intervals : α → RationalInterval} {x : ℝ}
     (hhi : Tendsto (fun a => ((intervals a).hi : ℝ)) l (𝓝 x)) (hx : x ≤ 1) :
     Tendsto (fun a => ((restrictUnit (intervals a)).hi : ℝ)) l (𝓝 x) := by
-  simpa [restrictUnit, min_eq_right hx] using
+  simpa [restrictUnit_def, min_eq_right hx] using
     (tendsto_const_nhds (x := (1 : ℝ))).min hhi
 
 /--
@@ -85,7 +85,7 @@ theorem tendsto_restrictUnit_around_hi {α : Type*} {l : Filter α} {center radi
 theorem trigRadius_le_trigRadius_four {argument : ℚ} (hargument : |argument| ≤ 4)
     (degree : Nat) :
     trigRadius argument degree ≤ trigRadius 4 degree := by
-  unfold trigRadius
+  rw [trigRadius_def, trigRadius_def]
   apply div_le_div_of_nonneg_right _ (Nat.cast_nonneg _)
   apply pow_le_pow_left₀ (abs_nonneg _)
   simpa using hargument
@@ -96,7 +96,7 @@ theorem tendsto_trigRadius_of_abs_le_four {argument : Nat → ℚ}
     Tendsto (fun n : Nat => (trigRadius (argument n) n : ℝ)) atTop (𝓝 0) := by
   apply squeeze_zero (fun n => ?_) (fun n => ?_) (tendsto_trigRadius 4)
   · have h : (0 : ℚ) ≤ trigRadius (argument n) n := by
-      unfold trigRadius
+      rw [trigRadius_def]
       positivity
     exact_mod_cast h
   · exact_mod_cast trigRadius_le_trigRadius_four (hargument n) n

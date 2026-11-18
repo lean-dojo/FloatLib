@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,13 +7,14 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Jamming
+public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Runtime
+
 import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Tactic.FieldSimp
-public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Runtime
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -189,11 +190,6 @@ theorem normalizedQuotient_bounds
     constructor
     · apply (Nat.le_div_iff_mul_le hdenominatorPositive).2
       have hdenominatorLe : denominator ≤ 2 * numerator := by
-        have hpowerLe :
-            2 ^ (common + 1) ≤ 2 * numerator := by
-          rw [pow_succ]
-          simpa [Nat.mul_comm] using
-            Nat.mul_le_mul_left 2 hnumeratorLower
         omega
       calc
         2 ^ leading * denominator ≤
@@ -201,7 +197,7 @@ theorem normalizedQuotient_bounds
           Nat.mul_le_mul_left _ hdenominatorLe
         _ = numerator * 2 ^ (leading + 1) := by
           rw [pow_succ]
-          ring
+          ac_rfl
     · apply (Nat.div_lt_iff_lt_mul hdenominatorPositive).2
       calc
         numerator * 2 ^ (leading + 1) <
@@ -209,7 +205,7 @@ theorem normalizedQuotient_bounds
           Nat.mul_lt_mul_of_pos_right hbelow
             (Nat.two_pow_pos _)
         _ = 2 ^ (leading + 1) * denominator := by
-          ring
+          ac_rfl
   · rw [ite_eq_right hbelow]
     have hordered : denominator ≤ numerator :=
       Nat.le_of_not_gt hbelow
@@ -219,11 +215,6 @@ theorem normalizedQuotient_bounds
         Nat.mul_le_mul_left (2 ^ leading) hordered
     · apply (Nat.div_lt_iff_lt_mul hdenominatorPositive).2
       have hnumeratorLt : numerator < 2 * denominator := by
-        have hpowerLe :
-            2 ^ (common + 1) ≤ 2 * denominator := by
-          rw [pow_succ]
-          simpa [Nat.mul_comm] using
-            Nat.mul_le_mul_left 2 hdenominatorLower
         omega
       calc
         numerator * 2 ^ leading <
@@ -232,7 +223,7 @@ theorem normalizedQuotient_bounds
             (Nat.two_pow_pos _)
         _ = 2 ^ (leading + 1) * denominator := by
           rw [pow_succ]
-          ring
+          ac_rfl
 
 /-- Jamming a normalized quotient preserves its leading position without overflowing it. -/
 theorem jamRemainder_bounds
@@ -432,7 +423,7 @@ theorem quotientFraction_normalized_lt_sixteen
     have hquotientSuccessorLeRat :
         (quotient : Rat) + 1 ≤ (2 ^ (leading + 1) : Nat) := by
       exact_mod_cast hquotientSuccessorLe
-    linarith
+    exact hfractionUpper.trans_le hquotientSuccessorLeRat
   have hleadingPositive : (0 : Rat) < (2 ^ leading : Nat) := by
     exact_mod_cast Nat.two_pow_pos leading
   have hratioLtTwo :
@@ -446,7 +437,7 @@ theorem quotientFraction_normalized_lt_sixteen
           2 * (2 ^ leading : Nat) := by
       rw [pow_succ, Nat.cast_mul]
       norm_num
-      ring
+      ac_rfl
     rw [← hpower]
     exact hnormalizedNumerator
   have hpowerPositive :
@@ -553,7 +544,7 @@ theorem dyadicRatio_eq_quotientFraction_mul_zpow
               ((2 : Rat) ^
                   (Int.ofNat denominatorLeading - Int.ofNat numeratorLeading) *
                 (2 : Rat) ^ Int.ofNat steps) := by
-              ring
+              ac_rfl
           _ = _ := by
             rw [← zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
   rw [hfraction]
@@ -584,7 +575,7 @@ theorem dyadicRatio_eq_quotientFraction_mul_zpow
         rw [← zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
         congr 1
         omega]
-      ring
+      ac_rfl
 
 /-! ## Executable prefix correctness -/
 
@@ -610,8 +601,6 @@ theorem prefixAtLeading_quotient_spec
     normalizeSignificands numerator.significand denominator.significand
   let commonLeading :=
     max numerator.significand.log2 denominator.significand.log2
-  let steps :=
-    if normalized.numerator < normalized.denominator then leading + 1 else leading
   have hnormalized :=
     normalizeSignificands_spec numerator.significand denominator.significand
       hnumerator hdenominator

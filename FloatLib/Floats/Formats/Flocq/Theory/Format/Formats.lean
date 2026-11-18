@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -100,7 +100,7 @@ instance fixValidExp (emin : ℤ) : ValidExp (fixExp emin) where
   flocq_valid := by
     intro k
     constructor
-    · intro h; simp [fixExp] at h ⊢; exact Int.le_of_lt h
+    · intro h; simp only [fixExp] at h ⊢; exact Int.le_of_lt h
     · intro _; simp [fixExp]
 
 /-- The constant FIX exponent function is monotone. -/
@@ -109,10 +109,10 @@ instance fixMonotoneExp (emin : ℤ) : MonotoneExp (fixExp emin) where
 
 /-- The constant FIX exponent function selects the same exponent in successive bins. -/
 instance fixBoundedExpGrowth (emin : ℤ) : BoundedExpGrowth (fixExp emin) where
-  boundedGrowth := by simp [fixExp]
+  bounded_growth := by simp [fixExp]
 
 /-- The ULP at zero for a fixed-point grid is its fixed grid step. -/
-theorem ulp_zero_FIX (emin : ℤ) :
+theorem ulp_zero_fix (emin : ℤ) :
     ulp β (fixExp emin) 0 = bpow β emin :=
   ulp.zero_of_isNegligibleExp β (fixExp emin) (m := emin) le_rfl
 
@@ -137,27 +137,27 @@ def flxExp (prec : ℤ) : ℤ → ℤ := fun e => e - prec
 /--
 `flxExp prec` satisfies `ValidExp` for positive precision.
 -/
-abbrev flxValidExp (prec : ℤ) (h : 0 < prec) : ValidExp (flxExp prec) where
+theorem validExp_flx (prec : ℤ) (h : 0 < prec) : ValidExp (flxExp prec) where
   flocq_valid := by
     intro k
     constructor
-    · intro H; simp [flxExp] at H ⊢; linarith
-    · intro H; simp [flxExp] at H ⊢
-      constructor
-      · linarith
-      · intros l hl; exfalso; linarith [h, H]
+    · intro _
+      change k + 1 - prec ≤ k
+      omega
+    · intro H
+      change k ≤ k - prec at H
+      omega
 
 /-- `flxExp prec` satisfies the generic exponent axioms if and only if `prec` is positive. -/
-theorem validExp_FLX_iff (prec : ℤ) : ValidExp (flxExp prec) ↔ 0 < prec := by
+theorem validExp_flx_iff (prec : ℤ) : ValidExp (flxExp prec) ↔ 0 < prec := by
   constructor
   · intro hvalid
     by_contra hprec
-    have hnonpos : prec ≤ 0 := le_of_not_gt hprec
-    have hsecond := (hvalid.flocq_valid 0).2 (by simp [flxExp]; linarith)
-    have := hsecond.1
-    simp [flxExp] at this
-    linarith
-  · exact flxValidExp prec
+    have hsecond := (hvalid.flocq_valid 0).2 (show 0 ≤ 0 - prec by omega)
+    have hbound := hsecond.1
+    change 0 - prec + 1 - prec ≤ 0 - prec at hbound
+    omega
+  · exact validExp_flx prec
 
 namespace FormatPrecision
 
@@ -166,21 +166,18 @@ def flxExp (precision : FormatPrecision) : ℤ → ℤ := Flocq.flxExp precision
 
 /-- A checked precision automatically discharges the FLX exponent-validity obligation. -/
 instance flxExpValid (precision : FormatPrecision) : ValidExp precision.flxExp :=
-  flxValidExp precision.toInt precision.toInt_pos
+  validExp_flx precision.toInt precision.toInt_pos
 
 end FormatPrecision
 
 
 /-- The FLX exponent selector is monotone for every precision parameter. -/
-abbrev flxMonotoneExp (prec : ℤ) : MonotoneExp (flxExp prec) where
-  monotone := by
-    intros k1 k2 hk
-    simp [flxExp]
-    linarith
+theorem monotoneExp_flx (prec : ℤ) : MonotoneExp (flxExp prec) where
+  monotone _ _ hk := sub_le_sub_right hk prec
 
 /-- The FLX exponent selector has bounded one-step growth. -/
-abbrev flxBoundedExpGrowth (prec : ℤ) : BoundedExpGrowth (flxExp prec) where
-  boundedGrowth := by simp [flxExp]
+theorem boundedExpGrowth_flx (prec : ℤ) : BoundedExpGrowth (flxExp prec) where
+  bounded_growth := by simp [flxExp]
 
 /--
 Exact representability predicate for `FLX`.
@@ -198,17 +195,17 @@ theorem not_flxFormat_of_nonpos (prec : ℤ) (hprec : prec ≤ 0) (x : ℝ) :
   simp [FLXFormat, not_lt_of_ge hprec]
 
 /-- The unbounded FLX exponent function has no negligible exponent. -/
-theorem negligibleExp_FLX (prec : ℤ) (hprec : 0 < prec) :
+theorem negligibleExp_flx (prec : ℤ) (hprec : 0 < prec) :
     negligibleExp (flxExp prec) = none := by
   rw [negligibleExp_eq_none_iff]
   rintro ⟨n, hn⟩
-  simp [IsNegligibleExp, flxExp] at hn
-  linarith
+  change n ≤ n - prec at hn
+  omega
 
 /-- Consequently, the generic ULP of zero is zero for FLX. -/
-theorem ulp_zero_FLX (prec : ℤ) (hprec : 0 < prec) :
-    @ulp β (flxExp prec) (flxValidExp prec hprec) 0 = 0 := by
-  simp [ulp, negligibleExp_FLX prec hprec]
+theorem ulp_zero_flx (prec : ℤ) (hprec : 0 < prec) :
+    @ulp β (flxExp prec) (validExp_flx prec hprec) 0 = 0 := by
+  simp [ulp, negligibleExp_flx prec hprec]
 
 /--
 `fltExp emin prec` is the lower-exponent-bounded family with gradual underflow.
@@ -225,26 +222,24 @@ def fltExp (emin prec : ℤ) : ℤ → ℤ := fun e => max (e - prec) emin
 This validity witness connects proofs to an executable binary descriptor through
 `BinaryInterchange.Model.fexpOf` and `BinaryInterchange.Model.roundAt`.
 -/
-abbrev fltValidExp (emin prec : ℤ) (h : 0 < prec) : ValidExp (fltExp emin prec) where
+theorem validExp_flt (emin prec : ℤ) (h : 0 < prec) : ValidExp (fltExp emin prec) where
   flocq_valid := by
     intro k
     constructor
     · intro hk
       have hk' : max (k - prec) emin < k := by simpa [fltExp] using hk
-      have hprec1 : (1 : ℤ) ≤ prec := by linarith [h]
       have hemin_le : emin ≤ k :=
         le_of_lt (lt_of_le_of_lt (le_max_right (k - prec) emin) hk')
-      have hleft_le : k + 1 - prec ≤ k := by linarith [hprec1]
+      have hleft_le : k + 1 - prec ≤ k := by omega
       simpa [fltExp] using (max_le_iff).2 ⟨hleft_le, hemin_le⟩
     · intro hk
       have hk' : k ≤ max (k - prec) emin := by simpa [fltExp] using hk
       have hk_cases : k ≤ k - prec ∨ k ≤ emin := (le_max_iff).1 hk'
       have hprec0 : 0 ≤ prec := le_of_lt h
-      have hprec1 : (1 : ℤ) ≤ prec := by linarith [h]
       cases hk_cases with
       | inl hk_le =>
           exfalso
-          have : k - prec < k := by linarith [h]
+          have : k - prec < k := by omega
           exact (not_le_of_gt this) hk_le
       | inr hk_le_emin =>
           have hk_fexp : fltExp emin prec k = emin := by
@@ -252,8 +247,8 @@ abbrev fltValidExp (emin prec : ℤ) (h : 0 < prec) : ValidExp (fltExp emin prec
             have : k - prec ≤ emin - prec := sub_le_sub_right hk_le_emin prec
             exact this.trans (sub_le_self emin hprec0)
           constructor
-          · have hleft : emin + 1 - prec ≤ emin := by linarith [hprec1]
-            simp [hk_fexp]
+          · have hleft : emin + 1 - prec ≤ emin := by omega
+            simp only [hk_fexp, ge_iff_le]
             dsimp [fltExp]
             exact (max_le_iff).2 ⟨hleft, le_rfl⟩
           · intro l hl
@@ -264,19 +259,18 @@ abbrev fltValidExp (emin prec : ℤ) (h : 0 < prec) : ValidExp (fltExp emin prec
             exact max_eq_right hle
 
 /-- `fltExp emin prec` satisfies the exponent axioms if and only if the precision is positive. -/
-theorem validExp_FLT_iff (emin prec : ℤ) : ValidExp (fltExp emin prec) ↔ 0 < prec := by
+theorem validExp_flt_iff (emin prec : ℤ) : ValidExp (fltExp emin prec) ↔ 0 < prec := by
   constructor
   · intro hvalid
     by_contra hprec
-    have hnonpos : prec ≤ 0 := le_of_not_gt hprec
     have hk : emin ≤ fltExp emin prec emin := by simp [fltExp]
     have hnext := ((hvalid.flocq_valid emin).2 hk).1
     have hlower : fltExp emin prec (fltExp emin prec emin + 1) ≥
         fltExp emin prec emin + 1 := by
       apply le_max_of_le_left
-      linarith
-    linarith
-  · exact fltValidExp emin prec
+      omega
+    omega
+  · exact validExp_flt emin prec
 
 namespace FormatPrecision
 
@@ -287,40 +281,23 @@ def fltExp (precision : FormatPrecision) (emin : ℤ) : ℤ → ℤ :=
 /-- A checked precision automatically discharges the gradual-underflow validity obligation. -/
 instance fltExpValid (precision : FormatPrecision) (emin : ℤ) :
     ValidExp (precision.fltExp emin) :=
-  fltValidExp emin precision.toInt precision.toInt_pos
+  validExp_flt emin precision.toInt precision.toInt_pos
 
 end FormatPrecision
 
 
 /-- The gradual-underflow FLT exponent selector has bounded one-step growth. -/
-abbrev fltBoundedExpGrowth (emin prec : ℤ) :
+theorem boundedExpGrowth_flt (emin prec : ℤ) :
     BoundedExpGrowth (fltExp emin prec) where
-  boundedGrowth := by
+  bounded_growth := by
     intro k
-    simp [fltExp]
-    have h1 : max (k + 1 - prec) emin ≤ max (k - prec) emin + 1 := by
-      simp [max_def]
-      split_ifs with h2 h3
-      · linarith
-      · linarith
-      · linarith
-      · linarith
-    have h2 : max (k - prec) emin ≤ max (k + 1 - prec) emin + 1 := by
-      simp [max_def]
-      split_ifs with h4 h5
-      · linarith
-      · linarith
-      · linarith
-      · linarith
-    exact abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩
+    simpa [fltExp] using abs_max_sub_max_le_abs (k + 1 - prec) (k - prec) emin
 
 /-- The gradual-underflow FLT exponent selector is monotone. -/
-abbrev fltMonotoneExp (emin prec : ℤ) : MonotoneExp (fltExp emin prec) where
+theorem monotoneExp_flt (emin prec : ℤ) : MonotoneExp (fltExp emin prec) where
   monotone := by
     intros k1 k2 hk
-    simp only [fltExp]
-    have h1 : k1 - prec ≤ k2 - prec := by linarith [hk]
-    exact max_le_max h1 (le_refl emin)
+    exact max_le_max (sub_le_sub_right hk prec) le_rfl
 
 /--
 Exact representability predicate for `FLT`.
@@ -340,15 +317,15 @@ theorem not_fltFormat_of_nonpos (emin prec : ℤ) (hprec : prec ≤ 0) (x : ℝ)
   simp [FLTFormat, not_lt_of_ge hprec]
 
 /-- FLT has a negligible-exponent witness at `emin`. -/
-theorem exists_negligibleExp_FLT (emin prec : ℤ) :
+theorem exists_negligibleExp_flt (emin prec : ℤ) :
     ∃ n, IsNegligibleExp (fltExp emin prec) n := by
   refine ⟨emin, ?_⟩
   exact le_max_right _ _
 
 /-- The ULP at zero for FLT is the smallest grid step $\beta^{\mathtt{emin}}$. -/
-theorem ulp_zero_FLT (emin prec : ℤ) (hprec : 0 < prec) :
-    @ulp β (fltExp emin prec) (fltValidExp emin prec hprec) 0 = bpow β emin := by
-  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
+theorem ulp_zero_flt (emin prec : ℤ) (hprec : 0 < prec) :
+    @ulp β (fltExp emin prec) (validExp_flt emin prec hprec) 0 = bpow β emin := by
+  let : ValidExp (fltExp emin prec) := validExp_flt emin prec hprec
   rw [ulp.zero_of_isNegligibleExp β (fltExp emin prec) (le_max_right (emin - prec) emin)]
   rw [fltExp, max_eq_right (sub_le_self emin hprec.le)]
 

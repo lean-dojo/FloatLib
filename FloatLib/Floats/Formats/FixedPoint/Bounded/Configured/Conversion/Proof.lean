@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Runtime
 public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Conversion.Runtime
 public import FloatLib.Numerics.Representations.FixedInt.Semantics.Basic
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 
 /-!
 # Bounded fixed-point conversion proofs
@@ -112,8 +112,11 @@ theorem finiteStatus_eq (policy : OverflowPolicy) (exact : Rat)
         saturated := decide (¬FixedInt.InRange width nearest ∧ policy = .saturate)
         wrapped := decide (¬FixedInt.InRange width nearest ∧ policy = .wrap) } := by
   cases policy <;>
-    simp [finiteStatus, coefficientInRange, Formats.FixedPoint.Bounded.coefficientOf,
-      Formats.FixedPoint.Bounded.scale] <;>
+    simp only [finiteStatus, coefficientInRange, Formats.FixedPoint.Bounded.coefficientOf,
+      Formats.FixedPoint.Bounded.scale, decide_not, reduceCtorEq, and_false, decide_false,
+      ConversionStatus.mk.injEq, Bool.not_eq_eq_eq_not, Bool.not_not, Bool.and_eq_false_imp,
+      Bool.not_true, beq_eq_false_iff_ne, ne_eq, not_false_eq_true, implies_true, and_self,
+      and_true, true_and, BEq.rfl, Bool.and_true] <;>
     exact Bool.decide_congr Iff.rfl
 
 private theorem coefficient_injective :

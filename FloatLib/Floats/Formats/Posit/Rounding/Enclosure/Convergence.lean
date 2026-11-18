@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.Posit.Rounding.Enclosure.Proof
 public import FloatLib.Numerics.Enclosure.Elementary.Convergence
 public import Mathlib.NumberTheory.Real.Irrational
+
 import FloatLib.Numerics.Enclosure.Elementary.Irrational
 
 /-!
@@ -50,10 +51,10 @@ private theorem eventually_decide_rat_le_eq {x : ℝ} (hx : Irrational x) (q : �
 private theorem eventually_bisection_eq (format : Format) {x : ℝ} (hx : Irrational x)
     (steps lower upper : Nat) :
     ∀ᶠ y in 𝓝 x,
-      Model.lowerCodeByBisection
+      Numerics.bisect
         (fun code => decide (RealRounding.nonnegativeRealAt format code ≤ y))
         steps lower upper =
-      Model.lowerCodeByBisection
+      Numerics.bisect
         (fun code => decide (RealRounding.nonnegativeRealAt format code ≤ x))
         steps lower upper := by
   induction steps generalizing lower upper with
@@ -67,10 +68,10 @@ private theorem eventually_bisection_eq (format : Format) {x : ℝ} (hx : Irrati
             (Model.nonnegativeRatAt format ((lower + upper) / 2))
         filter_upwards [hguard, ih ((lower + upper) / 2) upper,
           ih lower ((lower + upper) / 2)] with y hy hleft hright
-        simp only [Model.lowerCodeByBisection, ite_eq_left hsplit]
+        simp only [Numerics.bisect, ite_eq_left hsplit]
         simp only [hy, hleft, hright]
       · exact Eventually.of_forall fun _ => by
-          simp only [Model.lowerCodeByBisection, ite_eq_right hsplit]
+          simp only [Numerics.bisect, ite_eq_right hsplit]
 
 /-- The finite lower-code search is locally constant at every irrational target. -/
 theorem eventually_lowerCode_eq (format : Format) {x : ℝ} (hx : Irrational x) :

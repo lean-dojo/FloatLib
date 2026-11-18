@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
 
 /-!
@@ -49,7 +49,7 @@ theorem subnormalAlignExp_add_minSubnormalExponent (fmt : FloatFormat) :
     FloatFormat.minNormalExponent
   rw [hcast]
   simp only [Int.ofNat_eq_natCast, Int.natCast_add]
-  ring
+  omega
 
 /-- Rescaling onto the subnormal grid and back is the identity on the exact rational value. -/
 theorem scaledRatToReal_subnormal_grid
@@ -77,7 +77,7 @@ theorem scaledRatToReal_normal_grid
       scaledRatToReal numerator denominator exponent := by
   rw [scaledRatToReal_mul_bpow]
   congr 1
-  ring
+  omega
 
 /-- The quotient scaled to the normal grid lies in the normalized mantissa interval. -/
 theorem scaleByPowerOfTwo_normal_bounds
@@ -101,7 +101,7 @@ theorem scaleByPowerOfTwo_normal_bounds
       Numerics.RationalBinary.floorLog2 numerator denominator + shift =
         Int.ofNat fmt.fracWidth := by
     simp only [shift, rationalExponent]
-    ring
+    omega
   have hupperExponent :
       Numerics.RationalBinary.floorLog2 numerator denominator + shift + 1 =
         Int.ofNat (fmt.fracWidth + 1) := by
@@ -145,7 +145,8 @@ theorem scaleByPowerOfTwo_subnormal_lt_pow2
     _ = ((pow2 fmt.fracWidth : Nat) : Real) :=
       bpow_ofNat fmt.fracWidth
 
-/-- In the subnormal range, the quotient scaled to the subnormal grid lies in `[1, 2 ^ fracWidth)`. -/
+/-- In the subnormal range, the quotient scaled to the subnormal grid lies in `[1, 2 ^
+fracWidth)`. -/
 theorem scaleByPowerOfTwo_subnormal_bounds
     (fmt : FloatFormat) (numerator denominator : Nat) (exponent : Int)
     (hnumerator : numerator ≠ 0) (hdenominator : denominator ≠ 0)
@@ -169,13 +170,12 @@ theorem scaleByPowerOfTwo_subnormal_bounds
     scaleByPowerOfTwo_floorLog2_bounds
       numerator denominator shift hnumerator hdenominator
   have halign := subnormalAlignExp_add_minSubnormalExponent fmt
-  have hnormal := minSubnormalExponent_add_fracWidth fmt
   have hscaledExponent :
       scaledExponent =
         Numerics.RationalBinary.floorLog2 numerator denominator + exponent +
           Int.ofNat (FloatFormat.subnormalAlignExp fmt) := by
     simp only [scaledExponent, shift]
-    ring
+    ac_rfl
   have hscaledNonneg : 0 ≤ scaledExponent := by
     rw [hscaledExponent]
     omega
@@ -204,8 +204,6 @@ theorem roundQuotDirected_normal_bounds
   let rationalExponent := Numerics.RationalBinary.floorLog2 numerator denominator
   let shift := Int.ofNat fmt.fracWidth - rationalExponent
   let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator shift
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator shift hdenominator
   have hbounds :=
     scaleByPowerOfTwo_normal_bounds
       fmt numerator denominator hnumerator hdenominator
@@ -237,8 +235,6 @@ theorem roundQuotDirected_subnormal_bounds
   let shift :=
     exponent + Int.ofNat (FloatFormat.subnormalAlignExp fmt)
   let scaled := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator shift
-  have hscaledDenominator : scaled.2 ≠ 0 :=
-    Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator shift hdenominator
   have hbounds :=
     scaleByPowerOfTwo_subnormal_bounds
       fmt numerator denominator exponent hnumerator hdenominator hlow hhigh

@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
+
+import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
 
 /-!
 # Widening a packed binary word

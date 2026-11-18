@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -77,7 +77,7 @@ theorem cosPi_eq_zero_iff (argument : ℚ) :
         have : value = 0 := by exact_mod_cast hcast
         simp [this]
     have hsign : (-1 : ℚ) ^ Int.floor argument ≠ 0 :=
-      zpow_ne_zero _ (by norm_num)
+      zpow_ne_zero _ (by decide)
     dsimp only [cosPiExact] at hclassified
     rw [halfTurnSign_eq_zpow] at hclassified
     split at hclassified
@@ -116,7 +116,7 @@ theorem tanPiExact_eq_real (argument value : ℚ)
       · rename_i h
         cases hvalue
         rw [h, tan_quarter_mul_pi]
-        norm_num
+        exact Rat.cast_one.symm
       · cases hvalue
 
 /-- Rational multiples of pi strictly between `-π/2` and `π/2` are determined by their tangent. -/
@@ -153,7 +153,7 @@ theorem irrational_tanPi_of_exact_none (argument : ℚ)
   · have hcenter : centeredPi argument = 1 / 4 := by
       refine eq_of_tan_mul_pi_eq hbounds (by norm_num) ?_
       rw [htan, h, tan_quarter_mul_pi]
-      norm_num
+      exact Rat.cast_one
     norm_num [tanPiExact, hcenter] at hnone
 
 end FloatLib.Numerics.TrigonometricComparison

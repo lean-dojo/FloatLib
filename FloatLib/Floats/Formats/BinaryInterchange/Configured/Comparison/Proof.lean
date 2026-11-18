@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -59,7 +59,7 @@ theorem compareSignaling_value_of_toEReal? (predicate : Numerics.IEEEComparison.
 theorem compareQuiet_invalid_iff (predicate : Numerics.IEEEComparison.Predicate)
     (x y : Value) :
     (compareQuiet predicate x y).status.invalid = true ↔
-      Model.isSNaN (toModel x) = true ∨ Model.isSNaN (toModel y) = true :=
+      Model.isSignaling (toModel x) = true ∨ Model.isSignaling (toModel y) = true :=
   Model.compareQuiet_invalid_iff predicate _ _
 
 /-- Signaling configured comparison raises invalid if and only if an operand is a NaN. -/

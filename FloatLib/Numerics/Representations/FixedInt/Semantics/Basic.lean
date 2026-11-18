@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Representations.FixedInt.Core
 public import FloatLib.Numerics.Core.Proof
-public import Mathlib.Algebra.Group.Int.Defs
+public import FloatLib.Numerics.Representations.FixedInt.Core
 
 /-!
 # Representation semantics of fixed-width signed integers

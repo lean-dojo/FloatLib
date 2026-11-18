@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -107,13 +107,16 @@ meta instance : StaticByte.FamilyInfo E2M3.Family where
   sqrtTable := sqrtTable
 
 @[always_inline, instance_reducible] instance
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E2M3.Family] :
-    FloatLib.Floats.ExecFloat.Fma E2M3.Family :=
-  StaticByte.Plans.fmaTableCapability
-    "OCP MX E2M3 fused-multiply-add table"
-    (.throughputOnly (by decide) (by decide) (by decide))
-    width_le_eight fmaTable
-    Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
+    {_ : FloatLib.Floats.ExecFloat.Backend.PolicyFor E2M3.Family} :
+    FloatLib.Floats.ExecFloat.Capability.Static (F := E2M3.Family) .fma
+      (StaticByte.Spec.fma (F := E2M3.Family)) where
+  spec_eq := rfl
+  capability :=
+    StaticByte.Plans.fmaTableCapability
+      "OCP MX E2M3 fused-multiply-add table"
+      (.throughputOnly (by decide) (by decide) (by decide))
+      width_le_eight fmaTable
+      Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
 end E2M3
 

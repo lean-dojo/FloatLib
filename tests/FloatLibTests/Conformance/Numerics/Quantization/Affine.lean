@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Quantization.Automation
 public meta import FloatLib.Numerics.Quantization
+public import FloatLib.Numerics.Quantization.Automation
 
 /-!
 # Affine-quantization refinement check
@@ -28,7 +28,7 @@ private def int8Quarter : AffineQuantizer where
   qmin := -128
   qmax := 127
   scale_pos := by norm_num
-  codeRange := by norm_num
+  code_range := by norm_num
 
 attribute [numerics_reduction] int8Quarter
 

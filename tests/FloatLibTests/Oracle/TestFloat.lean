@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
 import FloatLibTests.Oracle.Parsing
@@ -26,6 +26,10 @@ after rounding, matching the `Model` operations with `status := true`.
 
 The checker calls logical `Model` operations. It executes neither configured `ExecFloat`
 backends nor the opt-in `NativeFPU.Unchecked` host API.
+
+Reference: For the IEEE 754 conventions in C, see ISO/IEC 9899:2024 (WG14 N3220), §F.2.2 and
+§F.10 paragraph 17. The payload-selection ambiguity is discussed in Agner Fog, NaN payload
+propagation — unresolved issues (2018), “What should happen when two payloads are combined?”.
 -/
 
 open FloatLib.Floats.Formats.BinaryInterchange
@@ -34,7 +38,7 @@ namespace FloatLibTests.Oracle.TestFloat
 
 open Parsing
 
-private inductive Operation where
+inductive Operation where
   | add
   | sub
   | mul
@@ -55,10 +59,10 @@ private inductive Operation where
   | copy
   | neg
   | abs
-  | isSNaN
+  | isSignaling
   | isSubnormal
   | isNormal
-  | isInf
+  | isInfinite
   | isFinite
   | isNaN
   | isZero
@@ -66,7 +70,7 @@ private inductive Operation where
   | cast (destination : FloatFormat)
   deriving Repr
 
-private def Operation.parse? : String → Option Operation
+def Operation.parse? : String → Option Operation
   | "add" => some .add
   | "sub" => some .sub
   | "mul" => some .mul
@@ -87,10 +91,10 @@ private def Operation.parse? : String → Option Operation
   | "copy" => some .copy
   | "neg" => some .neg
   | "abs" => some .abs
-  | "isSNaN" => some .isSNaN
+  | "isSignaling" => some .isSignaling
   | "isSubnormal" => some .isSubnormal
   | "isNormal" => some .isNormal
-  | "isInf" => some .isInf
+  | "isInfinite" => some .isInfinite
   | "isFinite" => some .isFinite
   | "isNaN" => some .isNaN
   | "isZero" => some .isZero
@@ -102,14 +106,14 @@ private def Operation.parse? : String → Option Operation
   | "to_f128" => some (.cast .binary128)
   | _ => none
 
-private def parseRoundingMode? : String → Option Model.IEEERoundingMode
+def parseRoundingMode? : String → Option Model.IEEERoundingMode
   | "near_even" => some .nearest
   | "minMag" => some .towardZero
   | "min" => some .down
   | "max" => some .up
   | _ => none
 
-private def formatName? : String → Option FloatFormat
+def formatName? : String → Option FloatFormat
   | "bf16" => some .bfloat16
   | "f16" => some .binary16
   | "f32" => some .binary32
@@ -117,22 +121,22 @@ private def formatName? : String → Option FloatFormat
   | "f128" => some .binary128
   | _ => none
 
-private def statusBits (status : FloatLib.Numerics.IEEEStatus) : Nat :=
+def statusBits (status : FloatLib.Numerics.IEEEStatus) : Nat :=
   (if status.inexact then 1 else 0) +
   (if status.underflow then 2 else 0) +
   (if status.overflow then 4 else 0) +
   (if status.divideByZero then 8 else 0) +
   (if status.invalid then 16 else 0)
 
-private def sameResult {format : FloatFormat}
+def sameResult {format : FloatFormat}
     (actual : Model format) (expectedBits : Nat) : Bool :=
   let expected := Model.ofNatBits (fmt := format) expectedBits
   if Model.isNaN actual && Model.isNaN expected then
-    Model.isSNaN actual == Model.isSNaN expected
+    Model.isSignaling actual == Model.isSignaling expected
   else
     actual.toNatBits == expected.toNatBits
 
-private structure Check where
+structure Check where
   valueMatches : Bool
   flagsMatch : Bool
   actualValue : Nat
@@ -140,7 +144,7 @@ private structure Check where
   actualFlags : Nat
   expectedFlags : Nat
 
-private def checkOutcome {format : FloatFormat}
+def checkOutcome {format : FloatFormat}
     (outcome : Model.IEEEOutcome format)
     (expectedValue expectedFlags : Nat) : Check :=
   let actualFlags := statusBits outcome.status
@@ -151,7 +155,7 @@ private def checkOutcome {format : FloatFormat}
     actualFlags
     expectedFlags }
 
-private def checkBoolean (actual : Bool) (expectedValue expectedFlags : Nat) : Check :=
+def checkBoolean (actual : Bool) (expectedValue expectedFlags : Nat) : Check :=
   let actualValue := if actual then 1 else 0
   { valueMatches := actualValue == expectedValue
     flagsMatch := expectedFlags == 0
@@ -160,11 +164,11 @@ private def checkBoolean (actual : Bool) (expectedValue expectedFlags : Nat) : C
     actualFlags := 0
     expectedFlags }
 
-private def maxNumMag {format : FloatFormat}
+def maxNumMag {format : FloatFormat}
     (left right : Model format) : Model format :=
-  if Model.isSNaN left then
+  if Model.isSignaling left then
     Model.quietNaN left
-  else if Model.isSNaN right then
+  else if Model.isSignaling right then
     Model.quietNaN right
   else if Model.isNaN left then
     if Model.isNaN right then Model.quietNaN left else right
@@ -180,26 +184,26 @@ private def maxNumMag {format : FloatFormat}
     else
       Model.maximum left right
 
-private def unaryOutcome {format : FloatFormat}
+def unaryOutcome {format : FloatFormat}
     (value input : Model format) : Model.IEEEOutcome format :=
-  Model.outcomeWithInvalid value (Model.isSNaN input)
+  Model.outcomeWithInvalid value (Model.isSignaling input)
 
-private def selectionOutcome {format : FloatFormat}
+def selectionOutcome {format : FloatFormat}
     (value left right : Model format) : Model.IEEEOutcome format :=
-  Model.outcomeWithInvalid value (Model.isSNaN left || Model.isSNaN right)
+  Model.outcomeWithInvalid value (Model.isSignaling left || Model.isSignaling right)
 
-private def comparisonStatus {format : FloatFormat}
+def comparisonStatus {format : FloatFormat}
     (operation : Operation) (left right : Model format) : FloatLib.Numerics.IEEEStatus :=
   let invalid :=
     match operation with
     | .eq | .leQuiet | .ltQuiet =>
-        Model.isSNaN left || Model.isSNaN right
+        Model.isSignaling left || Model.isSignaling right
     | .le | .lt | .eqSignaling =>
         Model.isNaN left || Model.isNaN right
     | _ => false
   { invalid }
 
-private def comparisonResult {format : FloatFormat}
+def comparisonResult {format : FloatFormat}
     (operation : Operation) (left right : Model format) : Bool :=
   match operation, Model.compare left right with
   | .eq, some .eq
@@ -212,7 +216,7 @@ private def comparisonResult {format : FloatFormat}
   | .ltQuiet, some .lt => true
   | _, _ => false
 
-private def parseBits (name : String) (width : Nat) (text : String) : Except String Nat := do
+def parseBits (name : String) (width : Nat) (text : String) : Except String Nat := do
   let some bits := parseHex? text
     | throw s!"invalid hexadecimal {name}: {text}"
   if bits < 2 ^ width then
@@ -220,19 +224,19 @@ private def parseBits (name : String) (width : Nat) (text : String) : Except Str
   else
     throw s!"{name} exceeds its {width}-bit format: {text}"
 
-private def parseFloat (format : FloatFormat) (text : String) : Except String (Model format) := do
+def parseFloat (format : FloatFormat) (text : String) : Except String (Model format) := do
   let bits ← parseBits "floating-point field" format.bitWidth text
   pure (Model.ofNatBits (fmt := format) bits)
 
-private def parseExpectedFloat (format : FloatFormat) (text : String) : Except String Nat :=
+def parseExpectedFloat (format : FloatFormat) (text : String) : Except String Nat :=
   parseBits "floating-point result" format.bitWidth text
 
-private def parseExpected (name text : String) : Except String Nat := do
+def parseExpected (name text : String) : Except String Nat := do
   let some value := parseHex? text
     | throw s!"invalid hexadecimal {name}: {text}"
   pure value
 
-private def applyBinary? {format : FloatFormat}
+def applyBinary? {format : FloatFormat}
     (operation : Operation) (rounding : Model.IEEERoundingMode)
     (left right : Model format) : Option (Model.IEEEOutcome format) :=
   match operation with
@@ -243,7 +247,7 @@ private def applyBinary? {format : FloatFormat}
   | .rem => some (Model.remainder left right (status := true))
   | _ => none
 
-private def checkLine (format : FloatFormat) (operation : Operation)
+def checkLine (format : FloatFormat) (operation : Operation)
     (rounding : Model.IEEERoundingMode) (line : String) : Except String Check := do
   match operation, fields line with
   | .cast destination, [inputText, expectedText, flagsText] =>
@@ -277,11 +281,11 @@ private def checkLine (format : FloatFormat) (operation : Operation)
       let expected ← parseExpectedFloat format expectedText
       let flags ← parseExpected "flags" flagsText
       pure (checkOutcome (unaryOutcome (Model.abs input) input) expected flags)
-  | .isSNaN, [inputText, expectedText, flagsText] =>
+  | .isSignaling, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpected "Boolean result" expectedText
       let flags ← parseExpected "flags" flagsText
-      pure (checkBoolean (Model.isSNaN input) expected flags)
+      pure (checkBoolean (Model.isSignaling input) expected flags)
   | .isSubnormal, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpected "Boolean result" expectedText
@@ -293,11 +297,11 @@ private def checkLine (format : FloatFormat) (operation : Operation)
       let flags ← parseExpected "flags" flagsText
       let actual := Model.isFinite input && !Model.isZero input && !Model.isSubnormal input
       pure (checkBoolean actual expected flags)
-  | .isInf, [inputText, expectedText, flagsText] =>
+  | .isInfinite, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpected "Boolean result" expectedText
       let flags ← parseExpected "flags" flagsText
-      pure (checkBoolean (Model.isInf input) expected flags)
+      pure (checkBoolean (Model.isInfinite input) expected flags)
   | .isFinite, [inputText, expectedText, flagsText] =>
       let input ← parseFloat format inputText
       let expected ← parseExpected "Boolean result" expectedText
@@ -324,7 +328,8 @@ private def checkLine (format : FloatFormat) (operation : Operation)
       let addend ← parseFloat format addendText
       let expected ← parseExpectedFloat format expectedText
       let flags ← parseExpected "flags" flagsText
-      pure (checkOutcome (Model.fma left right addend (mode := rounding) (status := true)) expected flags)
+      pure (checkOutcome (Model.fma left right addend (mode := rounding) (status := true))
+          expected flags)
   | .add, [leftText, rightText, expectedText, flagsText]
   | .sub, [leftText, rightText, expectedText, flagsText]
   | .mul, [leftText, rightText, expectedText, flagsText]
@@ -380,22 +385,22 @@ private def checkLine (format : FloatFormat) (operation : Operation)
   | _, input =>
       throw s!"wrong field count for {repr operation}: {input.length}"
 
-private structure Statistics where
+structure Statistics where
   cases : Nat := 0
   valueMismatches : Nat := 0
   flagMismatches : Nat := 0
   parseErrors : Nat := 0
 
-private def Statistics.failed (statistics : Statistics) : Bool :=
+def Statistics.failed (statistics : Statistics) : Bool :=
   statistics.cases == 0 ||
   statistics.valueMismatches != 0 ||
   statistics.flagMismatches != 0 ||
   statistics.parseErrors != 0
 
-private def hexText (value : Nat) : String :=
+def hexText (value : Nat) : String :=
   String.ofList (Nat.toDigits 16 value)
 
-private def reportMismatch (caseNumber : Nat) (line : String) (check : Check) : IO Unit := do
+def reportMismatch (caseNumber : Nat) (line : String) (check : Check) : IO Unit := do
   IO.eprintln s!"case {caseNumber}: {line.trimAscii.copy}"
   if !check.valueMatches then
     IO.eprintln
@@ -404,7 +409,7 @@ private def reportMismatch (caseNumber : Nat) (line : String) (check : Check) : 
     IO.eprintln
       s!"  flags: actual={hexText check.actualFlags} expected={hexText check.expectedFlags}"
 
-private partial def checkStream (format : FloatFormat) (operation : Operation)
+partial def checkStream (format : FloatFormat) (operation : Operation)
     (rounding : Model.IEEERoundingMode) (maximumReports : Nat) :
     IO Statistics := do
   let stdin ← IO.getStdin
@@ -437,15 +442,15 @@ private partial def checkStream (format : FloatFormat) (operation : Operation)
             (reports + 1)
   loop {} 0
 
-private def usage : String :=
+def usage : String :=
   "usage: oracle testfloat {bf16|f16|f32|f64|f128} " ++
   "{add|sub|mul|div|mulAdd|sqrt|rem|roundToInt|eq|le|lt|" ++
   "eq_signaling|le_quiet|lt_quiet|minNum|maxNum|maxNumMag|copy|neg|abs|" ++
-  "isSNaN|isSubnormal|isNormal|isInf|isFinite|isNaN|isZero|signBit|" ++
+  "isSignaling|isSubnormal|isNormal|isInfinite|isFinite|isNaN|isZero|signBit|" ++
   "to_bf16|to_f16|to_f32|to_f64|to_f128} " ++
   "{near_even|minMag|min|max} [MAX_REPORTS]"
 
-private def parseMaximumReports (text : String) : IO Nat :=
+def parseMaximumReports (text : String) : IO Nat :=
   match text.toNat? with
   | some value => pure value
   | none => throw <| IO.userError s!"invalid maximum report count: {text}"

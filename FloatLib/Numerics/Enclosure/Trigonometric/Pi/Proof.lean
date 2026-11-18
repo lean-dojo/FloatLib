@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Numerics.Enclosure.Trigonometric.Pi.Runtime
 public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Proof
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Containment after exact rational angle reduction
@@ -96,29 +98,17 @@ theorem abs_cosPi_sub_cosArgument_le (argument : ℚ) (degree : Nat) :
 theorem abs_sinPi_sub_taylor_le (argument : ℚ) (degree : Nat) :
     |Real.sin ((argument : ℝ) * Real.pi) -
       (sinTaylor (piArgument argument degree) degree : ℝ)| ≤ (piRadius argument degree : ℝ) := by
-  calc
-    _ ≤ |Real.sin ((argument : ℝ) * Real.pi) - Real.sin (piArgument argument degree : ℝ)| +
-        |Real.sin (piArgument argument degree : ℝ) -
-          (sinTaylor (piArgument argument degree) degree : ℝ)| := abs_sub_le _ _ _
-    _ ≤ _ := by
-      have h₁ := abs_sinPi_sub_sinArgument_le argument degree
-      have h₂ := abs_sin_sub_sinTaylor_le (piArgument argument degree) degree
-      push_cast [piRadius]
-      linarith
+  simpa only [piRadius, Rat.cast_add] using
+    compose_error (abs_sinPi_sub_sinArgument_le argument degree)
+      (abs_sin_sub_sinTaylor_le (piArgument argument degree) degree)
 
 /-- Taylor and argument errors together bound the pi-scaled cosine polynomial. -/
 theorem abs_cosPi_sub_taylor_le (argument : ℚ) (degree : Nat) :
     |Real.cos ((argument : ℝ) * Real.pi) -
       (cosTaylor (piArgument argument degree) degree : ℝ)| ≤ (piRadius argument degree : ℝ) := by
-  calc
-    _ ≤ |Real.cos ((argument : ℝ) * Real.pi) - Real.cos (piArgument argument degree : ℝ)| +
-        |Real.cos (piArgument argument degree : ℝ) -
-          (cosTaylor (piArgument argument degree) degree : ℝ)| := abs_sub_le _ _ _
-    _ ≤ _ := by
-      have h₁ := abs_cosPi_sub_cosArgument_le argument degree
-      have h₂ := abs_cos_sub_cosTaylor_le (piArgument argument degree) degree
-      push_cast [piRadius]
-      linarith
+  simpa only [piRadius, Rat.cast_add] using
+    compose_error (abs_cosPi_sub_cosArgument_le argument degree)
+      (abs_cos_sub_cosTaylor_le (piArgument argument degree) degree)
 
 /-- Every sine enclosure contains the exact value, including rational-angle special values. -/
 theorem contains_sinPi (argument : ℚ) (degree : Nat) :

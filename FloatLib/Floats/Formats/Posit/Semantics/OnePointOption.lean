@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -24,7 +24,8 @@ namespace Option
 
 variable {K L : Type*}
 
-/-- Send `some x` to the point `x` of the one-point compactification and `none` to the added point. -/
+/-- Send `some x` to the point `x` of the one-point compactification and `none` to the added
+point. -/
 def toOnePoint : Option K → OnePoint K
   | some x => (x : OnePoint K)
   | none => OnePoint.infty

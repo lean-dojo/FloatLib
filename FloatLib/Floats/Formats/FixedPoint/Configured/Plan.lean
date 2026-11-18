@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.FixedPoint.Configured.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
+public import FloatLib.Tactic.CompilerOptimize
 
 /-!
 # Execution planning for exact fixed-point arithmetic
@@ -15,9 +15,10 @@ public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 For exact fixed point, each direct integer-coefficient operation is both the executable
 implementation and its own reference specification.
 
-Same-scale addition and subtraction need no rounding, so this plan registers their direct
-implementations with `ExecFloat`. Their rational exactness is proved in `Configured.Proof`.
-Conversions and scale-composing multiplication have APIs of their own.
+Same-scale addition and subtraction need no rounding, so this plan tags their direct
+implementations as the baselines of the family (`@[compiler_optimize baseline]`). Their rational
+exactness is proved in `Configured.Proof`. Conversions and scale-composing multiplication have
+APIs of their own.
 -/
 
 @[expose] public section
@@ -39,12 +40,14 @@ def estimate (operation : Backend.Operation) : Backend.Candidate where
     | _ => 3
 
 /-- Certified exact same-scale addition. -/
+@[compiler_optimize baseline]
 def addCertified :
     Backend.Certified (FixedPoint.add (radix := radix)
       (fractionalDigits := fractionalDigits)) :=
   Backend.Certified.reference (estimate .add) FixedPoint.add
 
 /-- Certified exact same-scale subtraction. -/
+@[compiler_optimize baseline]
 def subCertified :
     Backend.Certified (FixedPoint.sub (radix := radix)
       (fractionalDigits := fractionalDigits)) :=

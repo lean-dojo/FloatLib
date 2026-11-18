@@ -1,0 +1,71 @@
+{
+  "fpbench": {
+    "first_utc": "2026-11-17T23:13:13Z",
+    "last_utc": "2026-11-17T23:24:07Z",
+    "floatlib_commits": [
+      "ce4078d275b4d4e0549dc971c5a2a736741ce436"
+    ],
+    "rows": 816,
+    "results_csv": {
+      "bytes": 4472775,
+      "sha256": "acb5af09e311ddb4c8f9013425310b5d976afc7d7d66801ee5b862bef60a4872"
+    },
+    "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
+    "thread_limit": "3",
+    "workers": 8
+  },
+  "fpbench-tools": {
+    "rows": 1632,
+    "results_csv": {
+      "bytes": 2672554,
+      "sha256": "fd20fd40da8a07cb3e0b21686c815735acb31965ba15c90995ac9d4628901156"
+    },
+    "note": "external tools, independent of FloatLib's commit"
+  },
+  "inequalities": {
+    "first_utc": "2026-11-17T22:02:41Z",
+    "last_utc": "2026-11-17T22:26:49Z",
+    "floatlib_commits": [
+      "c45ccda33278b0bec7d2523eb288ec9741d5008f"
+    ],
+    "rows": 2224,
+    "results_csv": {
+      "bytes": 3046080,
+      "sha256": "154a5a72d0fd671a78b27b15adfdeb16d7b310b4322efbeaabad79139358f458"
+    },
+    "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
+    "thread_limit": "3",
+    "workers": 8
+  },
+  "correct-rounding": {
+    "first_utc": "2026-11-17T22:27:50Z",
+    "last_utc": "2026-11-17T22:32:07Z",
+    "floatlib_commits": [
+      "c45ccda33278b0bec7d2523eb288ec9741d5008f"
+    ],
+    "rows": 321645,
+    "results_csv": {
+      "bytes": 241913837,
+      "sha256": "b781823f0593874f263c6238fbb67e4be1d4ce5756b5e377cbf61c9dad4d9785"
+    },
+    "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
+    "thread_limit": "3",
+    "workers": 8
+  },
+  "testfloat": {
+    "first_utc": "2026-11-17T22:34:02Z",
+    "last_utc": "2026-11-17T22:38:34Z",
+    "floatlib_commits": [
+      "c45ccda33278b0bec7d2523eb288ec9741d5008f"
+    ],
+    "rows": 210,
+    "results_csv": {
+      "bytes": 272627,
+      "sha256": "318da1053312b60fbe18e667924977ae6be0850663c33462b1985ba0b9af589d"
+    },
+    "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
+    "thread_limit": "3",
+    "workers": 8
+  },
+  "conditions": "The run of 2026-11-17 (Lean v4.36.0): eight Lean processes at a time, three threads each, on a shared 96-thread Xeon Platinum 8275CL. Limits per process: FPBench 60 seconds and 4 GB (`lean -M 4096`) for a conditional and for a numerical proof; inequalities 20 seconds and 4 GB; TestFloat 900 seconds per campaign. Hard-to-round inputs: 16,384 sampled CORE-MATH cases per function, and the binary32 screens."
+}

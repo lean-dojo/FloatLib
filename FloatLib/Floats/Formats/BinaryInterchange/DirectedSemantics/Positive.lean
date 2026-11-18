@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
-public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Modes
+
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
 
 /-!
@@ -59,13 +59,13 @@ section
 
 /-- Every rounding direction returns a value on the grid of `fmt`. -/
 theorem genericFormat_roundAt (fmt : FloatFormat) (x : ℝ) (mode : IEEERoundingMode := .nearest) :
-    genericFormat Numerics.binaryRadix (fexpOf fmt) (roundAt fmt x mode) := by
+    GenericRepresentable Numerics.binaryRadix (fexpOf fmt) (roundAt fmt x mode) := by
   rw [roundAt_eq_round]
-  exact generic_format_round (roundingFunction mode) x
+  exact genericRepresentable_round (roundingFunction mode) x
 
 /-- Every rounding direction fixes a value already on the grid of `fmt`. -/
 theorem roundAt_of_genericFormat (fmt : FloatFormat) {x : ℝ}
-    (hx : genericFormat Numerics.binaryRadix (fexpOf fmt) x)
+    (hx : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) x)
     (mode : IEEERoundingMode := .nearest) :
     roundAt fmt x mode = x := by
   rw [roundAt_eq_round]
@@ -168,7 +168,7 @@ theorem roundMantissaAtExponentUp_ne_zero
     simp only [roundMantissaAtExponentUp, hle, ite_true]
     intro hzero
     rw [hzero] at hcover
-    simp at hcover
+    simp only [zero_mul, nonpos_iff_eq_zero] at hcover
     exact hm hcover
   · simp [roundMantissaAtExponentUp, hle, Nat.shiftLeft_eq, hm]
 

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.LimbArray.Shift.Runtime
 public import FloatLib.Kernels.LimbArray.Arithmetic.Proof
+public import FloatLib.Kernels.LimbArray.Shift.Runtime
 public import FloatLib.Numerics.ShiftRightJam.Proof
 
 /-!
@@ -79,8 +79,7 @@ theorem shiftLeftLimb_testBit (v : LimbArray) (q r i m : Nat) (hr : r < 32) (hm 
           simp only [hrm, decide_true, Bool.true_and, hle]
           congr 1
           omega
-        · have hle : ¬ (32 * q + r ≤ 32 * (q + 0) + m) := by omega
-          simp [hrm]
+        · simp [hrm]
     · rw [ite_eq_right hcase]
       rw [Bool.or_eq_true, beq_iff_eq, beq_iff_eq, not_or] at hcase
       obtain ⟨hr0, hj0⟩ := hcase
@@ -110,7 +109,8 @@ theorem limb_shiftLeft (v : LimbArray) (k i : Nat) :
   simp only [shiftLeft, limb_ofFn, dite_eq_ite]
 
 /-- The left shift multiplies the value by `2^k`. -/
-@[simp, grind =] theorem toNat_shiftLeft (v : LimbArray) (k : Nat) : toNat (shiftLeft v k) = toNat v * 2 ^ k := by
+@[simp, grind =] theorem toNat_shiftLeft (v : LimbArray) (k : Nat) : toNat (shiftLeft v k) =
+    toNat v * 2 ^ k := by
   refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
   rw [Nat.testBit_mul_two_pow, limb_shiftLeft]
   have hk : 32 * (k / 32) + k % 32 = k := Nat.div_add_mod k 32
@@ -166,7 +166,8 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
   simp only [shiftRight, limb_ofFn, dite_eq_ite]
 
 /-- The right shift divides the value by `2^k`. -/
-@[simp, grind =] theorem toNat_shiftRight (v : LimbArray) (k : Nat) : toNat (shiftRight v k) = toNat v / 2 ^ k := by
+@[simp, grind =] theorem toNat_shiftRight (v : LimbArray) (k : Nat) : toNat (shiftRight v k) =
+    toNat v / 2 ^ k := by
   refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
   rw [Nat.testBit_div_two_pow, limb_shiftRight]
   have hk : 32 * (k / 32) + k % 32 = k := Nat.div_add_mod k 32
@@ -210,7 +211,6 @@ theorem limb_shiftRight (v : LimbArray) (k i : Nat) :
         simp at hcond
       have hsize : 1 ≤ v.size := by
         by_contra hcontra
-        have hzero : v.size = 0 := by omega
         apply hne
         rw [toNat_eq_segment_of_size_le (n := 0) (by omega)]
         rfl

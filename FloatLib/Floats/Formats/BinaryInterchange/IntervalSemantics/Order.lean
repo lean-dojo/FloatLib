@@ -1,14 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
+
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
+import Mathlib.Tactic.Bound
 
 /-!
 # Order of interval endpoints
@@ -29,8 +31,8 @@ section
 /-- The proposition-valued and Boolean executable non-strict orders agree. -/
 theorem le_iff_leB_eq_true
     {fmt : FloatFormat} (x y : Model fmt) :
-    Model.le x y ↔ leB x y = true := by
-  unfold Model.le leB
+    Model.Le x y ↔ leB x y = true := by
+  unfold Model.Le leB
   cases hcompare : compare x y with
   | none => simp
   | some order =>
@@ -40,18 +42,18 @@ theorem le_iff_leB_eq_true
 theorem le_iff_toEReal_le_of_isNaN_eq_false
     {fmt : FloatFormat} (x y : Model fmt)
     (hx : isNaN x = false) (hy : isNaN y = false) :
-    Model.le x y ↔ toEReal x ≤ toEReal y := by
+    Model.Le x y ↔ toEReal x ≤ toEReal y := by
   obtain ⟨ex, hex⟩ := exists_toEReal?_of_isNaN_eq_false x hx
   obtain ⟨ey, hey⟩ := exists_toEReal?_of_isNaN_eq_false y hy
   have hxTotal : toEReal x = ex := toEReal_of_toEReal? hex
   have hyTotal : toEReal y = ey := toEReal_of_toEReal? hey
   rcases lt_trichotomy ex ey with hlt | heq | hgt
   · have hcompare := (compare_eq_some_lt_iff_toEReal_lt hex hey).2 hlt
-    simp [Model.le, hcompare, hxTotal, hyTotal, hlt.le]
+    simp [Model.Le, hcompare, hxTotal, hyTotal, hlt.le]
   · have hcompare := (compare_eq_some_eq_iff_toEReal_eq hex hey).2 heq
-    simp [Model.le, hcompare, hxTotal, hyTotal, heq.le]
+    simp [Model.Le, hcompare, hxTotal, hyTotal, heq.le]
   · have hcompare := (compare_eq_some_gt_iff_toEReal_gt hex hey).2 hgt
-    simp [Model.le, hcompare, hxTotal, hyTotal, not_le_of_gt hgt]
+    simp [Model.Le, hcompare, hxTotal, hyTotal, not_le_of_gt hgt]
 
 /-- Boolean endpoint comparison agrees with extended-real order on non-NaN values. -/
 theorem leB_eq_true_iff_toEReal_le_of_isNaN_eq_false
@@ -74,7 +76,7 @@ theorem leB_eq_true_iff_toReal_le_of_isFinite
 theorem le_iff_toReal_le_of_isFinite
     {fmt : FloatFormat} (x y : Model fmt)
     (hx : isFinite x = true) (hy : isFinite y = true) :
-    Model.le x y ↔ toReal x ≤ toReal y := by
+    Model.Le x y ↔ toReal x ≤ toReal y := by
   rw [le_iff_leB_eq_true, leB_eq_true_iff_toReal_le_of_isFinite x y hx hy]
 
 /-- Ordered, non-NaN extended-real endpoints define a valid interval. -/
@@ -127,7 +129,7 @@ theorem validExtended_whole (fmt : FloatFormat) : ValidExtended (whole fmt) := b
     apply (le_iff_toEReal_le_of_isNaN_eq_false
       (negInf fmt) (posInf fmt)
       (isNaN_negInf fmt) (isNaN_posInf fmt)).2
-    simp [toEReal_eq_ite, isNaN_negInf fmt, isInf_negInf fmt hsupports]
+    simp [toEReal_eq_ite, isNaN_negInf fmt, isInfinite_negInf fmt hsupports]
   all_goals
     have hwhole : whole fmt = ⟨maxFinite fmt true, maxFinite fmt false⟩ := by
       simp [whole, Model.infinityOrMaxFinite, hencoding]
@@ -142,7 +144,7 @@ theorem validExtended_whole (fmt : FloatFormat) : ValidExtended (whole fmt) := b
       rw [hvalue]
       exact mul_nonneg (Nat.cast_nonneg _) (bpow_nonneg _)
     rw [hneg, toReal_neg _ (isFinite_maxFinite fmt false)]
-    linarith
+    bound
 
 /-- Every extended-real value belongs to the full IEEE range. -/
 theorem eRealMem_whole (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) (x : EReal) :

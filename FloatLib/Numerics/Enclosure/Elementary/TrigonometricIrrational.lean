@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Elementary.ComplexTranscendental
-public import Mathlib.Analysis.Complex.Trigonometric
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 public import Mathlib.NumberTheory.Real.Irrational
 
 /-!

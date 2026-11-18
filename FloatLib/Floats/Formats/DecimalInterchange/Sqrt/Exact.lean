@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Cohort.Optimal
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Proof
 
 /-!
 # Exact representable square roots
@@ -49,10 +49,6 @@ theorem sqrtRound_lt_coefficientBound_of_valid (f : Format) (mode : RoundingMode
   have hbound := div_sqrtQuantum_lt f (((c : ℚ) * (10 : ℚ) ^ q) ^ 2)
   rw [scaled_decimal_sq c hq] at hbound ⊢
   rw [mode.sqrtRound_nat_sq]
-  have hn : (0 : ℚ) ≤ ((c * 10 ^
-      (q - sqrtQuantum f (((c : ℚ) * (10 : ℚ) ^ q) ^ 2)).toNat : Nat) : ℚ) :=
-    Nat.cast_nonneg _
-  have hb : (0 : ℚ) ≤ f.coefficientBound := Nat.cast_nonneg _
   exact_mod_cast (show (((c * 10 ^
       (q - sqrtQuantum f (((c : ℚ) * (10 : ℚ) ^ q) ^ 2)).toNat : Nat) : ℚ)) <
       (f.coefficientBound : ℚ) by nlinarith)

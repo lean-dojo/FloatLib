@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -11,8 +11,8 @@ The adaptive comparison carries an erased proof that the logarithm bounds eventu
 
 module
 
-public import FloatLib.Numerics.Exact.RationalPower.Exact.Proof
 public import FloatLib.Numerics.Exact.RationalPower.Enclosure.Proof
+public import FloatLib.Numerics.Exact.RationalPower.Exact.Proof
 
 /-!
 # Exact comparisons with rational powers

@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public import FloatLib.Floats.ExecFloat.Carrier
-public import FloatLib.Floats.ExecFloat.Comparison
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
-public import FloatLib.Floats.ExecFloat.Dispatch
-public import FloatLib.Floats.ExecFloat.Instances
+public import FloatLib.Numerics.Executable.Carrier
+public import FloatLib.Numerics.Executable.Comparison
+public import FloatLib.Numerics.Executable.Conversion.Runtime
+public import FloatLib.Kernels.Execution.Dispatch
+public import FloatLib.Kernels.Execution.Instances
 
 /-!
 # Execution-only `ExecFloat` interface

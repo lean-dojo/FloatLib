@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,14 +8,15 @@ module
 
 public import FloatLib.Kernels.FixedWord.Core.Proof
 public import FloatLib.Kernels.FixedWord.Product.Runtime
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.Ring.RingNF
-import Mathlib.Data.Rat.Cast.Order
+
 import Mathlib.Algebra.Order.Field.Basic
+import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Verified fixed-limb significand products
@@ -67,8 +68,8 @@ theorem UInt256.toNat_ofUInt128ShiftedLeft (value : UInt128) (shift : Nat)
     congr 1
     omega
   rw [Nat.shiftLeft_eq, hshift]
-  set inner := 2 ^ (shift - 64) with hinner
-  set complement := 2 ^ (64 - (shift - 64)) with hcomplementDef
+  set inner := 2 ^ (shift - 64)
+  set complement := 2 ^ (64 - (shift - 64))
   set rlo := value.lo.toNat % complement
   set qlo := value.lo.toNat / complement
   set rhi := value.hi.toNat % complement
@@ -108,7 +109,8 @@ theorem UInt256.low128_toNat_of_lt (value : UInt256)
 @[simp, grind =] theorem UInt256.toNat_eq_zero_iff (value : UInt256) :
     value.toNat = 0 ↔ value = ⟨0, 0, 0, 0⟩ := by
   cases value
-  simp [UInt256.toNat, uint64_toNat_eq_zero]
+  simp only [toNat, Nat.reducePow, Nat.add_eq_zero_iff, uint64_toNat_eq_zero, mul_eq_zero,
+    OfNat.ofNat_ne_zero, or_false, mk.injEq]
   tauto
 
 /-- A four-word value is determined by its natural-number interpretation. -/
@@ -121,11 +123,9 @@ theorem UInt256.toNat_injective : Function.Injective UInt256.toNat := by
       have hx0 := x0.toNat_lt
       have hx1 := x1.toNat_lt
       have hx2 := x2.toNat_lt
-      have hx3 := x3.toNat_lt
       have hy0 := y0.toNat_lt
       have hy1 := y1.toNat_lt
       have hy2 := y2.toNat_lt
-      have hy3 := y3.toNat_lt
       simp only [UInt256.toNat] at hvalue
       have h0 : x0.toNat = y0.toNat := by omega
       have h1 : x1.toNat = y1.toNat := by omega
@@ -149,7 +149,7 @@ theorem add64_toNat (x y : UInt64) :
 /-- `add64` returns a carry of zero or one. -/
 theorem add64_carry_le_one (x y : UInt64) :
     (add64 x y).carry.toNat ≤ 1 := by
-  simp [add64]
+  simp only [add64]
   split <;> simp
 
 /-- `addCarry64` represents natural-number addition with an incoming carry. -/
@@ -219,7 +219,7 @@ theorem add128_value_toNat_of_carry_zero (x y : UInt128)
     (add128 x y).value.toNat = x.toNat + y.toNat := by
   have hexact := add128_toNat x y
   dsimp only at hexact ⊢
-  simp [hcarry] at hexact
+  simp only [hcarry, UInt64.toNat_zero, Nat.reducePow, zero_mul, add_zero] at hexact
   exact hexact
 
 /--
@@ -261,7 +261,7 @@ theorem add256_value_toNat_of_carry_zero (x y : UInt256)
     (add256 x y).value.toNat = x.toNat + y.toNat := by
   have hexact := add256_toNat x y
   dsimp only at hexact ⊢
-  simp [hcarry] at hexact
+  simp only [hcarry, UInt64.toNat_zero, Nat.reducePow, zero_mul, add_zero] at hexact
   exact hexact
 
 /-- Native four-limb leading-bit selection agrees with `Nat.log2`. -/
@@ -415,14 +415,7 @@ theorem add256_value_toNat (x y : UInt256) :
     calc x.toNat * y.toNat < 2 ^ 128 * 2 ^ 128 := Nat.mul_lt_mul'' x.toNat_lt y.toNat_lt
       _ = 2 ^ 256 := by norm_num
   have htopFit : p11.hi.toNat + carry2.toNat < 2 ^ 64 := by
-    have hle : (p11.hi.toNat + carry2.toNat) * 2 ^ 192 ≤ x.toNat * y.toNat := by
-      rw [hcolumns]
-      exact Nat.le_add_left _ _
-    have hlt : (p11.hi.toNat + carry2.toNat) * 2 ^ 192 < 2 ^ 64 * 2 ^ 192 :=
-      calc (p11.hi.toNat + carry2.toNat) * 2 ^ 192 ≤ x.toNat * y.toNat := hle
-        _ < 2 ^ 256 := hbound
-        _ = 2 ^ 64 * 2 ^ 192 := by norm_num
-    exact Nat.lt_of_mul_lt_mul_right hlt
+    omega
   have htop : (p11.hi + carry2).toNat = p11.hi.toNat + carry2.toNat :=
     uint64_add_toNat_of_lt _ _ htopFit
   change p00.lo.toNat + second1.value.toNat * 2 ^ 64 + third2.value.toNat * 2 ^ 128 +

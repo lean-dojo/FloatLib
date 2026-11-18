@@ -1,0 +1,257 @@
+family,path,bits,median_us,min_us,max_us,operations
+arithmetic (add to fma),as written,8,3864.3,2523.4,182502.3,6
+arithmetic (add to fma),as written,16,4675.95,3758.9,6197.4,6
+arithmetic (add to fma),as written,32,4249.0,3557.5,5334.5,6
+arithmetic (add to fma),as written,64,4526.4,2948.7,13131.2,6
+arithmetic (add to fma),as written,128,9030.65,4238.9,105495.7,6
+arithmetic (add to fma),as written,256,4955.35,2581.4,19381.4,6
+arithmetic (add to fma),as written,1024,15045.75,2507.6,78100.6,6
+arithmetic (add to fma),as written,4096,69592.9,2340.8,363187.4,6
+arithmetic (add to fma),with rules,8,145.1,117.3,209.5,6
+arithmetic (add to fma),with rules,16,141.39999999999998,117.1,180.9,6
+arithmetic (add to fma),with rules,32,151.05,129.4,185.8,6
+arithmetic (add to fma),with rules,64,141.45,107.9,192.6,6
+arithmetic (add to fma),with rules,128,149.35000000000002,126.4,294.7,6
+arithmetic (add to fma),with rules,256,152.55,117.5,292.8,6
+arithmetic (add to fma),with rules,1024,170.25,128.5,319.9,6
+arithmetic (add to fma),with rules,4096,183.0,127.1,649.4,6
+comparisons,as written,8,1685.0,511.4,2033.5,22
+comparisons,as written,16,1727.35,518.4,2777.4,22
+comparisons,as written,32,1872.75,524.7,2059.7,22
+comparisons,as written,64,2122.95,457.8,2749.3,22
+comparisons,as written,128,2763.95,572.3,3140.6,22
+comparisons,as written,256,3826.55,474.0,3998.7,22
+comparisons,as written,1024,12410.75,476.4,19442.0,22
+comparisons,as written,4096,50797.4,276.2,57305.4,22
+comparisons,with rules,8,145.7,140.6,184.0,22
+comparisons,with rules,16,145.15,140.7,266.5,22
+comparisons,with rules,32,146.7,139.8,255.1,22
+comparisons,with rules,64,117.80000000000001,108.9,193.8,22
+comparisons,with rules,128,154.15,148.8,185.7,22
+comparisons,with rules,256,146.95,142.6,162.3,22
+comparisons,with rules,1024,151.5,145.2,290.5,22
+comparisons,with rules,4096,150.15,146.2,329.3,22
+roundToIntegral,as written,8,2596.75,1854.3,3384.1,6
+roundToIntegral,as written,16,2622.45,1825.2,3363.7,6
+roundToIntegral,as written,32,2865.3,1883.9,3887.9,6
+roundToIntegral,as written,64,3821.2999999999997,2011.8,6078.2,6
+roundToIntegral,as written,128,4217.049999999999,1920.1,6501.8,6
+roundToIntegral,as written,256,6200.05,1847.6,10482.1,6
+roundToIntegral,as written,1024,19389.75,1792.3,42781.1,6
+roundToIntegral,as written,4096,103965.55,1671.7,293320.3,6
+roundToIntegral,with rules,8,136.15,134.4,137.8,6
+roundToIntegral,with rules,16,139.35,136.8,143.8,6
+roundToIntegral,with rules,32,140.60000000000002,137.5,179.2,6
+roundToIntegral,with rules,64,136.7,105.0,222.1,6
+roundToIntegral,with rules,128,152.7,147.7,195.4,6
+roundToIntegral,with rules,256,161.4,156.1,245.5,6
+roundToIntegral,with rules,1024,228.75,219.7,416.9,6
+roundToIntegral,with rules,4096,248.1,242.1,387.9,6
+convertToInteger,as written,8,840.75,628.0,1143.1,10
+convertToInteger,as written,16,837.6,631.7,1055.6,10
+convertToInteger,as written,32,877.7,642.6,1265.7,10
+convertToInteger,as written,64,797.3,574.9,1033.9,10
+convertToInteger,as written,128,834.95,614.3,1091.6,10
+convertToInteger,as written,256,858.1,651.6,1186.9,10
+convertToInteger,as written,1024,867.2,619.5,1628.9,10
+convertToInteger,as written,4096,702.95,446.8,970.2,10
+convertToInteger,with rules,8,603.4,154.5,1320.9,10
+convertToInteger,with rules,16,587.55,153.0,1256.9,10
+convertToInteger,with rules,32,640.5500000000001,153.3,1321.0,10
+convertToInteger,with rules,64,574.95,120.0,1260.8,10
+convertToInteger,with rules,128,657.8000000000001,153.6,1369.4,10
+convertToInteger,with rules,256,613.3,153.3,1261.7,10
+convertToInteger,with rules,1024,662.45,157.4,1194.7,10
+convertToInteger,with rules,4096,640.4499999999999,155.5,1793.6,10
+classification,as written,8,118.9,97.2,432.4,9
+classification,as written,16,128.0,105.1,438.3,9
+classification,as written,32,129.4,103.7,451.8,9
+classification,as written,64,177.9,152.5,587.2,9
+classification,as written,128,137.6,104.5,459.8,9
+classification,as written,256,121.0,100.1,435.1,9
+classification,as written,1024,120.4,97.0,431.9,9
+classification,as written,4096,358.3,358.3,358.3,1
+classification,with rules,8,67.3,1.4,179.2,10
+classification,with rules,16,68.25,3.7,182.0,10
+classification,with rules,32,73.8,19.3,179.9,9
+classification,with rules,64,71.7,4.6,217.0,9
+classification,with rules,128,68.35,1.8,183.1,10
+classification,with rules,256,73.5,15.8,186.2,9
+classification,with rules,1024,83.35,19.5,182.9,10
+classification,with rules,4096,78.6,18.2,182.7,9
+minimum and maximum,as written,8,2188.5,1904.7,2519.5,8
+minimum and maximum,as written,16,2371.85,2093.2,2689.5,8
+minimum and maximum,as written,32,2610.1,2161.9,2882.0,8
+minimum and maximum,as written,64,2742.3500000000004,2209.8,3270.1,8
+minimum and maximum,as written,128,4022.1000000000004,3082.6,4842.7,8
+minimum and maximum,as written,256,5603.45,4000.9,7093.2,8
+minimum and maximum,as written,1024,18749.8,12408.0,26287.5,8
+minimum and maximum,as written,4096,231560.34999999998,45766.0,389624.0,8
+minimum and maximum,with rules,8,176.35,171.1,184.1,8
+minimum and maximum,with rules,16,179.5,174.2,227.5,8
+minimum and maximum,with rules,32,174.75,169.6,183.1,8
+minimum and maximum,with rules,64,141.9,138.4,155.2,8
+minimum and maximum,with rules,128,186.1,180.6,204.2,8
+minimum and maximum,with rules,256,182.75,179.3,188.1,8
+minimum and maximum,with rules,1024,187.3,178.7,388.5,8
+minimum and maximum,with rules,4096,180.9,178.4,329.9,8
+sign operations,as written,8,435.7,273.9,683.5,3
+sign operations,as written,16,584.1,429.8,662.7,3
+sign operations,as written,32,346.6,1.4,656.0,4
+sign operations,as written,64,371.8,359.8,596.7,3
+sign operations,as written,128,401.29999999999995,10.4,735.7,4
+sign operations,as written,256,393.9,221.5,577.6,3
+sign operations,as written,1024,392.4,218.0,604.8,3
+sign operations,as written,4096,190.8,21.7,387.8,3
+sign operations,with rules,8,43.65,34.1,88.2,4
+sign operations,with rules,16,66.35,36.5,109.8,4
+sign operations,with rules,32,41.65,34.5,95.9,4
+sign operations,with rules,64,24.849999999999998,5.6,120.9,4
+sign operations,with rules,128,44.25,36.8,191.0,4
+sign operations,with rules,256,42.3,33.5,92.5,4
+sign operations,with rules,1024,71.6,43.4,103.4,4
+sign operations,with rules,4096,43.45,36.0,98.3,4
+total order,as written,8,1459.85,1400.2,1519.5,2
+total order,as written,16,1521.9,1451.7,1592.1,2
+total order,as written,32,1730.1,1572.5,1887.7,2
+total order,as written,64,2508.05,2238.7,2777.4,2
+total order,as written,128,3083.55,2454.9,3712.2,2
+total order,as written,256,4743.3,3469.3,6017.3,2
+total order,as written,1024,19004.9,12577.7,25432.1,2
+total order,as written,4096,81085.65,58605.5,103565.8,2
+total order,with rules,8,151.45,123.1,179.8,2
+total order,with rules,16,154.8,129.0,180.6,2
+total order,with rules,32,154.9,124.2,185.6,2
+total order,with rules,64,157.55,125.9,189.2,2
+total order,with rules,128,160.2,130.2,190.2,2
+total order,with rules,256,158.6,127.2,190.0,2
+total order,with rules,1024,165.65,137.5,193.8,2
+total order,with rules,4096,160.75,131.5,190.0,2
+scaleB and logB,as written,8,2420.25,2213.1,2627.4,2
+scaleB and logB,as written,16,2650.75,2293.6,3007.9,2
+scaleB and logB,as written,32,2861.1499999999996,2446.2,3276.1,2
+scaleB and logB,as written,64,3655.0,2680.5,4629.5,2
+scaleB and logB,as written,128,5203.85,3406.5,7001.2,2
+scaleB and logB,as written,256,8867.4,4652.3,13082.5,2
+scaleB and logB,as written,1024,30747.75,12055.4,49440.1,2
+scaleB and logB,as written,4096,159477.15,54117.6,264836.7,2
+scaleB and logB,with rules,8,236.3,180.0,292.6,2
+scaleB and logB,with rules,16,241.25,183.6,298.9,2
+scaleB and logB,with rules,32,247.1,196.0,298.2,2
+scaleB and logB,with rules,64,216.7,157.0,276.4,2
+scaleB and logB,with rules,128,251.3,200.0,302.6,2
+scaleB and logB,with rules,256,261.05,218.4,303.7,2
+scaleB and logB,with rules,1024,314.15,262.9,365.4,2
+scaleB and logB,with rules,4096,293.45,286.2,300.7,2
+"neighbours, remainder",as written,8,692.1,664.9,3695.1,3
+"neighbours, remainder",as written,16,709.6,652.9,3904.4,3
+"neighbours, remainder",as written,32,711.2,655.0,4541.3,3
+"neighbours, remainder",as written,64,659.5,600.9,5713.8,3
+"neighbours, remainder",as written,128,750.3,690.9,8641.6,3
+"neighbours, remainder",as written,256,653.7,625.4,13887.3,3
+"neighbours, remainder",as written,1024,672.6,632.2,50608.1,3
+"neighbours, remainder",as written,4096,474.5,419.0,234471.0,3
+"neighbours, remainder",with rules,8,818.4,778.7,3654.4,3
+"neighbours, remainder",with rules,16,799.1,763.9,4092.7,3
+"neighbours, remainder",with rules,32,799.6,758.3,4683.7,3
+"neighbours, remainder",with rules,64,796.4,747.8,5888.3,3
+"neighbours, remainder",with rules,128,964.7,916.6,8794.3,3
+"neighbours, remainder",with rules,256,773.8,734.2,14464.8,3
+"neighbours, remainder",with rules,1024,768.5,748.4,54080.2,3
+"neighbours, remainder",with rules,4096,804.0,740.3,265641.2,3
+formatOf,as written,8,4475.3,2925.6,4656.4,5
+formatOf,as written,16,4458.0,2862.6,5410.8,5
+formatOf,as written,32,5010.0,3179.1,6922.4,5
+formatOf,as written,64,7171.7,4242.2,10500.1,5
+formatOf,as written,128,10830.4,5197.7,17765.4,5
+formatOf,as written,256,19991.4,8011.2,33497.3,5
+formatOf,as written,1024,90174.5,26697.1,177582.5,5
+formatOf,as written,4096,419104.4,114784.2,722752.9,5
+formatOf,with rules,8,4354.8,2848.9,4543.8,5
+formatOf,with rules,16,4326.7,2875.9,5181.6,5
+formatOf,with rules,32,5337.7,3138.3,6886.2,5
+formatOf,with rules,64,7100.8,4298.6,10025.0,5
+formatOf,with rules,128,10785.8,5203.6,18185.2,5
+formatOf,with rules,256,20128.6,7921.8,53915.0,5
+formatOf,with rules,1024,87384.7,28745.6,183292.0,5
+formatOf,with rules,4096,429034.5,116253.5,724637.7,5
+augmented,as written,8,6375.8,6151.3,6953.7,3
+augmented,as written,16,7371.4,7334.9,8508.0,3
+augmented,as written,32,8728.2,8560.1,10607.0,3
+augmented,as written,64,10917.1,9062.9,15836.0,3
+augmented,as written,128,17526.2,13498.1,23346.0,3
+augmented,as written,256,29101.3,22987.9,40046.2,3
+augmented,as written,1024,129711.3,84824.8,154893.7,3
+augmented,as written,4096,611408.8,594008.0,1964744.8,3
+augmented,with rules,8,6254.1,6006.5,6547.4,3
+augmented,with rules,16,7262.9,7238.0,8161.0,3
+augmented,with rules,32,8577.7,8416.4,10519.1,3
+augmented,with rules,64,11315.2,9122.7,13560.6,3
+augmented,with rules,128,17011.5,13633.1,23144.2,3
+augmented,with rules,256,28290.8,22579.3,38970.4,3
+augmented,with rules,1024,112446.7,86092.1,155643.7,3
+augmented,with rules,4096,554660.3,400552.4,1288595.7,3
+NaN payload,as written,8,3162.1,2330.8,3187.3,3
+NaN payload,as written,16,3372.9,2758.9,3442.8,3
+NaN payload,as written,32,4239.7,3478.2,4522.5,3
+NaN payload,as written,64,4637.1,4402.7,4801.1,3
+NaN payload,as written,128,6982.6,6792.3,6999.7,3
+NaN payload,as written,256,12734.0,11986.5,13093.3,3
+NaN payload,as written,1024,49729.5,43251.1,50741.8,3
+NaN payload,as written,4096,212634.4,201407.2,246359.9,3
+NaN payload,with rules,8,3389.6,279.0,3480.9,3
+NaN payload,with rules,16,3673.2,255.0,3703.9,3
+NaN payload,with rules,32,3932.5,258.7,4275.5,3
+NaN payload,with rules,64,4568.2,263.8,4778.5,3
+NaN payload,with rules,128,6965.1,270.8,7043.7,3
+NaN payload,with rules,256,10882.6,270.7,11031.2,3
+NaN payload,with rules,1024,38759.3,495.1,39352.4,3
+NaN payload,with rules,4096,162103.2,273.2,189472.4,3
+reductions,as written,8,10513.900000000001,6920.5,17078.4,12
+reductions,as written,16,11303.55,8166.1,20787.8,12
+reductions,as written,32,12841.65,8311.0,22689.8,12
+reductions,as written,64,16237.3,8818.3,21764.2,12
+reductions,as written,128,23781.0,10758.6,39408.4,12
+reductions,as written,256,35692.7,9125.9,61147.2,12
+reductions,as written,1024,125659.4,25202.2,262237.8,12
+reductions,as written,4096,606253.6,95548.1,2937317.0,11
+reductions,with rules,8,10263.0,6951.2,16576.0,12
+reductions,with rules,16,11815.15,8351.5,20197.4,12
+reductions,with rules,32,12702.0,8228.1,22741.2,12
+reductions,with rules,64,16163.800000000001,8395.2,22756.7,12
+reductions,with rules,128,23603.1,10919.0,38318.4,12
+reductions,with rules,256,35105.15,9068.2,58946.4,12
+reductions,with rules,1024,134965.25,23788.3,267219.6,12
+reductions,with rules,4096,539630.4,95829.6,2524596.7,11
+conversions,as written,8,10276.0,2505.2,20435.3,6
+conversions,as written,16,16650.8,2734.3,24358.8,6
+conversions,as written,32,26288.8,612.7,35299.2,6
+conversions,as written,64,60083.9,4759.9,71898.9,6
+conversions,as written,128,162545.75,6643.1,176762.4,6
+conversions,as written,256,521713.05,10082.3,584943.3,6
+conversions,as written,1024,73252.5,35715.1,110789.9,2
+conversions,as written,4096,495284.6,404508.3,586060.9,2
+conversions,with rules,8,11064.400000000001,168.5,16430.0,6
+conversions,with rules,16,16847.9,165.4,32692.9,6
+conversions,with rules,32,27123.95,130.3,33547.3,6
+conversions,with rules,64,60273.1,136.0,79078.8,6
+conversions,with rules,128,158027.6,181.6,180665.0,6
+conversions,with rules,256,525710.05,198.6,580311.2,6
+conversions,with rules,1024,19946.2,246.8,39645.6,2
+conversions,with rules,4096,85111.0,279.9,169942.1,2
+functions of 9.2,as written,8,27281.4,3158.9,64980.1,38
+functions of 9.2,as written,16,30432.55,3729.1,63178.9,38
+functions of 9.2,as written,32,33875.8,5132.1,60902.5,38
+functions of 9.2,as written,64,49031.350000000006,10223.4,100606.9,38
+functions of 9.2,as written,128,67320.55,11593.3,316570.3,38
+functions of 9.2,as written,256,121566.79999999999,18609.1,722866.4,38
+functions of 9.2,as written,1024,720660.8,73919.8,3746999.1,37
+functions of 9.2,as written,4096,1484513.3,284141.0,2478063.6,11
+functions of 9.2,with rules,8,26391.25,3272.6,65213.5,38
+functions of 9.2,with rules,16,29576.6,3866.5,62406.7,38
+functions of 9.2,with rules,32,33674.05,5241.5,60987.0,38
+functions of 9.2,with rules,64,44818.9,9894.9,100700.2,38
+functions of 9.2,with rules,128,59825.5,11397.3,317041.6,38
+functions of 9.2,with rules,256,119847.75,18692.1,727220.2,38
+functions of 9.2,with rules,1024,719904.9,77682.4,3791820.4,37
+functions of 9.2,with rules,4096,1330677.45,294531.5,2795235.9,10

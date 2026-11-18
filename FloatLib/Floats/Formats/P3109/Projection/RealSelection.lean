@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -16,22 +16,16 @@ To test the report's floor and nearest-even formulas, it's enough to compare the
 fraction with one rational threshold, and that works for irrational fractions too. These identities
 are what justify the integer square comparisons used when rounding a square root.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
+Reference: P3109 unapproved interim report v4.1, 14 September 2026, §4.7.4.
 -/
 
 @[expose] public section
 
 namespace FloatLib.Floats.Formats.P3109.RealRounding
 
-/-- Nearest integer to a nonnegative real, with ties sent to the even integer. -/
-noncomputable def nearestEven (value : Real) : Nat :=
-  let lower : Nat := ⌊value⌋₊
-  if value < lower + 1 / 2 ∨ (value = lower + 1 / 2 ∧ lower % 2 = 0) then lower
-  else lower + 1
-
 /-- The real RNITE formula preserves natural numbers. -/
-@[simp] theorem nearestEven_natCast (n : Nat) : nearestEven (n : Real) = n := by
-  simp only [nearestEven, Nat.floor_natCast]
+@[simp] theorem nearestEven_natCast (n : Nat) : RoundingFormula.nearestEven (n : Real) = n := by
+  simp only [RoundingFormula.nearestEven, Nat.floor_natCast]
   simp
 
 /--
@@ -39,14 +33,14 @@ Reaching an integer by nearest-even rounding is decided at its lower halfway poi
 At that point it is the parity of the upper integer that decides the tie.
 -/
 theorem le_nearestEven_iff (value : Real) (boundary : Nat) (hv : 0 ≤ value) :
-    boundary ≤ nearestEven value ↔
+    boundary ≤ RoundingFormula.nearestEven value ↔
       (boundary : Real) - 1 / 2 < value ∨
         (value = (boundary : Real) - 1 / 2 ∧ boundary % 2 = 0) := by
   have hlo := Nat.floor_le hv
   have hhi := Nat.lt_floor_add_one value
   have hfloor := Nat.mod_lt ⌊value⌋₊ (by decide : 0 < 2)
   have hbmod := Nat.mod_lt boundary (by decide : 0 < 2)
-  dsimp only [nearestEven]
+  dsimp only [RoundingFormula.nearestEven]
   split_ifs with h
   · constructor
     · intro hle
@@ -64,7 +58,7 @@ theorem le_nearestEven_iff (value : Real) (boundary : Nat) (hv : 0 ≤ value) :
           · linarith
           · have : (boundary : Real) = (⌊value⌋₊ : Real) + 1 := by linarith
             exact_mod_cast this
-        rcases ht with ht | ⟨ht, hbpar⟩
+        rcases ht with ht | ⟨_, hbpar⟩
         · linarith
         · omega
   · push Not at h
@@ -110,14 +104,14 @@ theorem floor_selection_iff (root : Real) (lower scale random : Nat)
 even. -/
 theorem nearestEven_selection_iff (root : Real) (lower scale random : Nat)
     (hrandom : random < scale) (hroot : (lower : Real) ≤ root) :
-    scale ≤ nearestEven ((root - lower) * scale) + random ↔
+    scale ≤ RoundingFormula.nearestEven ((root - lower) * scale) + random ↔
       ((lower * (2 * scale) + (2 * (scale - random) - 1) : Nat) : Real) / (2 * scale) < root ∨
         (root = ((lower * (2 * scale) + (2 * (scale - random) - 1) : Nat) : Real) /
           (2 * scale) ∧ (scale - random) % 2 = 0) := by
   have hscale : 0 < scale := by omega
   have hnonneg : 0 ≤ (root - lower) * scale := by positivity
-  have hsub : scale - random ≤ nearestEven ((root - lower) * scale) ↔
-      scale ≤ nearestEven ((root - lower) * scale) + random := by omega
+  have hsub : scale - random ≤ RoundingFormula.nearestEven ((root - lower) * scale) ↔
+      scale ≤ RoundingFormula.nearestEven ((root - lower) * scale) + random := by omega
   rw [← hsub, le_nearestEven_iff _ _ hnonneg]
   have hs : (0 : Real) < scale := by exact_mod_cast hscale
   have ht :

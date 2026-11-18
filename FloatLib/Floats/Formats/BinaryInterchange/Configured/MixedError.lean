@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError.Attribute
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Summation
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Real
+
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 
 /-!
@@ -58,6 +61,16 @@ theorem mixedError_toReal_of_eq_roundAt {value : Value} {t : ℝ}
     (h : toReal value = Model.roundAt format t) :
     MixedError (toReal value) t (Model.unitRoundoffAt format) (Model.underflowErrorAt format) :=
   Model.mixedError_toReal_of_eq_roundAt h
+
+/--
+A configured value equal to the rounding of `t` in a rounding attribute has the mixed error of
+that attribute.
+-/
+theorem mixedError_toReal_of_eq_roundAt_mode {value : Value} {t : ℝ}
+    {mode : Model.IEEERoundingMode} (h : toReal value = Model.roundAt format t mode) :
+    MixedError (toReal value) t (Model.unitRoundoffIn format mode)
+      (Model.underflowErrorIn format mode) :=
+  Model.mixedError_toReal_of_eq_roundAt_mode h
 
 /-! ## Negation, `max` and `min` -/
 
@@ -331,6 +344,20 @@ theorem mixedError_toReal_sub_of_sterbenz {left right : Value}
   unfold toReal isFinite at *
   rw [toModel_hSub]
   exact Model.mixedError_toReal_sub_of_sterbenz hformat hleft hright eleft eright hsign hlr hrl
+
+/-- Sterbenz subtraction in the form of a generated theorem: the difference is finite, because
+finite values of one sign cannot overflow when subtracted, and it adds no rounding error. -/
+theorem sub_of_sterbenz {left right : Value}
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (eleft : MixedError (toReal left) x₀ rx ax) (eright : MixedError (toReal right) y₀ ry ay)
+    (hsign : 0 ≤ toReal left * toReal right) (hlr : |toReal left| ≤ 2 * |toReal right|)
+    (hrl : |toReal right| ≤ 2 * |toReal left|) (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite (left - right) = true ∧
+      MixedError (toReal (left - right)) (x₀ - y₀) 0 (rx * |x₀| + ax + (ry * |y₀| + ay)) := by
+  refine ⟨?_, mixedError_toReal_sub_of_sterbenz hleft hright eleft eright hsign hlr hrl⟩
+  unfold toReal isFinite at *
+  rw [toModel_hSub]
+  exact Model.isFinite_sub_of_same_sign hformat hleft hright hsign
 
 /-- Subtracting a finite configured value from itself has zero error against `x₀ - x₀`, whatever
 the value's own error. -/
@@ -609,12 +636,12 @@ theorem le_toReal_foldl_add {term : ι → Value} {seed : Value}
       have hseedBound : toReal seed ≤ toReal (seed + term i) :=
         calc toReal seed = Model.roundAt format (toReal seed) :=
               (Model.roundAt_toReal_eq _ hseedFinite).symm
-          _ ≤ _ := Model.roundAt_mono _ (by linarith [hnonneg.1])
+          _ ≤ _ := Model.roundAt_mono _ (by exact le_add_of_nonneg_right hnonneg.1)
           _ = _ := hrounded.symm
       have htermBound : toReal (term i) ≤ toReal (seed + term i) :=
         calc toReal (term i) = Model.roundAt format (toReal (term i)) :=
               (Model.roundAt_toReal_eq _ htermFinite).symm
-          _ ≤ _ := Model.roundAt_mono _ (by linarith)
+          _ ≤ _ := Model.roundAt_mono _ (by exact le_add_of_nonneg_left hseed)
           _ = _ := hrounded.symm
       obtain ⟨hnextBound, htermsBound⟩ := ih hsum hnonneg.2 (hseed.trans hseedBound)
       simp only [List.foldl_cons, List.mem_cons, forall_eq_or_imp]
@@ -772,6 +799,45 @@ theorem toRat?_foldl_add_eq_single {term : ι → Value} {seed : Value}
   unfold toRat? at *
   rw [toModel_foldl_add]
   exact Model.toRat?_foldl_add_eq_single hformat hl hj hseed hterm hzero
+
+/--
+A configured left-to-right sum of `n` terms of any sign, from a seed of real value zero, has
+error at most `(n - 1) * u * Σ |term i|` against the exact sum, for `u = Model.unitRoundoffAt
+format`, when the result is finite: the linear constant of Rump (2012), as in
+`Model.abs_toReal_foldl_add_sub_le`.
+-/
+theorem abs_toReal_foldl_add_sub_le {term : ι → Value} {seed : Value} (hseed : toReal seed = 0)
+    (hsum : isFinite (l.foldl (fun acc i => acc + term i) seed) = true)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    |toReal (l.foldl (fun acc i => acc + term i) seed) - (l.map fun i => toReal (term i)).sum| ≤
+      (l.length - 1 : ℕ) * Model.unitRoundoffAt format *
+        (l.map fun i => |toReal (term i)|).sum := by
+  unfold toReal isFinite at *
+  rw [toModel_foldl_add] at hsum ⊢
+  exact Model.abs_toReal_foldl_add_sub_le hformat hseed hsum
+
+/--
+The configured inner product loop `acc := acc + left i * right i` over `n` indices, from a seed
+of real value zero, has error at most `n * u * Σ |left i * right i|` against the exact inner
+product, for `u = Model.unitRoundoffAt format`, when the result is finite and no exact product
+is in the subnormal range: the linear constant of Jeannerod and Rump (2013), as in
+`Model.abs_toReal_foldl_add_mul_sub_le`.
+-/
+theorem abs_toReal_foldl_add_mul_sub_le {left right : ι → Value} {seed : Value}
+    [mul : ExecFloat.Mul (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec mul Configured.Spec.mul]
+    (hseed : toReal seed = 0)
+    (hsum : isFinite (l.foldl (fun acc i => acc + left i * right i) seed) = true)
+    (hnormal : ∀ i ∈ l, Model.NoUnderflowAt format (toReal (left i) * toReal (right i)))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    |toReal (l.foldl (fun acc i => acc + left i * right i) seed) -
+        (l.map fun i => toReal (left i) * toReal (right i)).sum| ≤
+      l.length * Model.unitRoundoffAt format *
+        (l.map fun i => |toReal (left i) * toReal (right i)|).sum := by
+  unfold toReal isFinite at *
+  rw [toModel_foldl_add (term := fun i => left i * right i)] at hsum ⊢
+  simp only [toModel_hMul] at hsum ⊢
+  exact Model.abs_toReal_foldl_add_mul_sub_le hformat hseed hsum hnormal
 
 end Sum
 

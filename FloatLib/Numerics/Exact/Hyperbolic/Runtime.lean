@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -11,8 +11,9 @@ Adaptive comparisons require erased proofs that some rational enclosure separate
 
 module
 
-public import FloatLib.Numerics.Exact.Elementary.Runtime
 public import FloatLib.Numerics.Enclosure.Hyperbolic.Proof
+public import FloatLib.Numerics.Exact.Elementary.Runtime
+import Mathlib.Tactic.Bound
 
 /-!
 # Exact comparisons for hyperbolic functions
@@ -34,7 +35,7 @@ namespace FloatLib.Numerics.HyperbolicComparison
 def compareArtanh (argument boundary : ℚ) (hlower : -1 < argument) (hupper : argument < 1) :
     Ordering :=
   ElementaryComparison.compareLog ((1 + argument) / (1 - argument)) (2 * boundary)
-    (div_pos (by linarith) (by linarith))
+    (div_pos (by linarith) (by positivity))
 
 /-- Compare hyperbolic tangent with a rational boundary, using its inverse on `(-1, 1)`. -/
 def compareTanh (argument boundary : ℚ) : Ordering :=
@@ -100,8 +101,8 @@ before the boundary closure, so rounding queries share the first `levels` Taylor
 -/
 def prepareArsinhPositive (argument : ℚ) (levels : Nat) (hpositive : 0 < argument) :
     Enclosure.Comparison.Prepared :=
-  let upper := ElementaryComparison.prepareLog (2 * argument + 1) levels (by linarith)
-  let lower := ElementaryComparison.prepareLog (2 * argument) levels (by linarith)
+  let upper := ElementaryComparison.prepareLog (2 * argument + 1) levels (by positivity)
+  let lower := ElementaryComparison.prepareLog (2 * argument) levels (by positivity)
   .direct (fun boundary =>
     if hboundary : 0 < boundary then
       (if (upper.compare boundary).swap = .lt then
@@ -126,8 +127,8 @@ Prepare inverse hyperbolic cosine with shared logarithms of `2 * argument` and
 -/
 def prepareArcosh (argument : ℚ) (levels : Nat) : Enclosure.Comparison.Prepared :=
   if hargument : 1 < argument then
-    let upper := ElementaryComparison.prepareLog (2 * argument) levels (by linarith)
-    let lower := ElementaryComparison.prepareLog (2 * argument - 1) levels (by linarith)
+    let upper := ElementaryComparison.prepareLog (2 * argument) levels (by positivity)
+    let lower := ElementaryComparison.prepareLog (2 * argument - 1) levels (by bound)
     .direct (fun boundary =>
       if hboundary : 0 < boundary then
         (if (upper.compare boundary).swap = .lt then
@@ -143,7 +144,7 @@ def prepareArcosh (argument : ℚ) (levels : Nat) : Enclosure.Comparison.Prepare
 def prepareArtanh (argument : ℚ) (levels : Nat)
     (hlower : -1 < argument) (hupper : argument < 1) : Enclosure.Comparison.Prepared :=
   let logarithm := ElementaryComparison.prepareLog ((1 + argument) / (1 - argument)) levels
-    (div_pos (by linarith) (by linarith))
+    (div_pos (by linarith) (by positivity))
   .direct (fun boundary => logarithm.compare (2 * boundary))
 
 end FloatLib.Numerics.HyperbolicComparison

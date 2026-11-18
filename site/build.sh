@@ -9,20 +9,16 @@
 # twice gives the same site; nothing is committed. The export first builds its selected imports,
 # including the optional APIs that a default library build does not reach.
 #
-# Result-derived figures are prebuilt inputs. The preflight regenerates each one in a temporary
-# directory and compares the bytes, rather than trusting mtimes copied between machines.
-# Result trees are required by default. A developer working only on the reader
-# can opt out explicitly with --allow-missing-results.
+# The figures are prebuilt inputs. The preflight (site/tooling/check_figures.py --fresh)
+# regenerates each one in a temporary directory and compares the bytes, rather than trusting
+# mtimes copied between machines.
 #
-# Usage: site/build.sh [--skip-lean] [--skip-check] [--no-compile]
-#                      [--allow-missing-results] [--require-clean]
+# Usage: site/build.sh [--skip-lean] [--skip-check] [--no-compile] [--require-clean]
 #   --skip-lean      reuse the local nodes.raw.json instead of rerunning the Lean exporter
 #                    (a second instead of a minute; enough after editing prose, titles, or phases
 #                    that only rename, not after changing which constants are selected)
 #   --skip-check     skip check_chapters.py entirely (only for quick reader iterations)
 #   --no-compile     run the chapter checks without compiling the Lean blocks
-#   --allow-missing-results
-#                    build the reader without checking result-derived figures; development only
 #   --require-clean  fail when the exported data includes uncommitted library files;
 #                    use this for a published build
 #
@@ -60,7 +56,6 @@ export_args=()
 check_args=(--jobs "${FLOATLIB_SITE_JOBS:-1}")
 run_check=1
 require_clean="${FLOATLIB_SITE_REQUIRE_CLEAN:-0}"
-allow_missing_results=0
 if [[ "${FLOATLIB_SITE_STRICT:-1}" != "0" ]]; then
   check_args+=("--strict")
 fi
@@ -69,17 +64,11 @@ for arg in "$@"; do
     --skip-lean) export_args+=("--skip-lean") ;;
     --skip-check) run_check=0 ;;
     --no-compile) check_args+=("--no-compile") ;;
-    --allow-missing-results) allow_missing_results=1 ;;
     --require-clean) require_clean=1 ;;
-    -h|--help) sed -n '2,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,41p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "build.sh: unknown option $arg" >&2; exit 2 ;;
   esac
 done
-
-if [[ "$require_clean" == "1" && "$allow_missing_results" == "1" ]]; then
-  echo "build.sh: --require-clean cannot be combined with --allow-missing-results" >&2
-  exit 2
-fi
 
 if [[ ! -d "$FLOATLIB_BUILD_DIR/lib" ]]; then
   echo "build.sh: $FLOATLIB_BUILD_DIR has no lib/ directory; build the library first or set FLOATLIB_BUILD_DIR" >&2
@@ -92,90 +81,12 @@ for tool in lake python3 node corepack rsync; do
   fi
 done
 
-benchmark_result="$root/benchmarks/results/main/release/benchmark"
-flocq_result="$root/benchmarks/results/flocq-matched"
-public_binary_result="$root/benchmarks/results/public-binary"
-external_result="$root/tests/results/main/release/external"
-ecosystem_result="$root/tests/results/main/ecosystem"
-if [[ -d "$benchmark_result" && -d "$flocq_result" &&
-      -f "$public_binary_result/measurements.csv" && -f "$public_binary_result/metadata.json" &&
-      -d "$external_result" && -d "$ecosystem_result" ]]; then
-  result_scratch="$(mktemp -d "${FLOATLIB_BUILD_DIR}-site-results.XXXXXX")"
-  cleanup_result_scratch() {
-    rm -rf -- "$result_scratch"
-  }
-  trap cleanup_result_scratch EXIT
-
-  "$root/benchmarks/scripts/verify-main-result.sh"
-  "$root/tests/oracles/verify-main-result.sh"
-
-  mkdir -p "$result_scratch/format"
-  python3 "$root/site/content/assets/data/plot_format_comparison.py" \
-    --out-dir "$result_scratch/format"
-  python3 "$root/benchmarks/plots/flocq_matched.py" \
-    --out "$result_scratch/flocq-matched.png"
-  python3 "$root/site/content/assets/figures/ch10_external_ratios.py" \
-    --out "$result_scratch/ch10-external-ratios.png"
-  python3 "$root/site/content/assets/figures/ch11_universal_preflight.py" \
-    --out "$result_scratch/ch11-universal-preflight.png"
-  python3 "$root/site/content/assets/figures/ch11_conformance_evidence.py" \
-    --out "$result_scratch/ch11-conformance-evidence.png"
-  python3 "$root/site/content/assets/figures/ch17_host_vs_software.py" \
-    --out "$result_scratch/ch17-host-vs-software.png"
-  python3 "$root/site/content/assets/figures/ch15_public_binary.py" \
-    --out "$result_scratch/public-binary-performance.png"
-
-  # Compare every generated view, including the single-operation plots used on phones.
-  python3 - "$root/site/content/assets" "$result_scratch" <<'PY'
-from pathlib import Path
-import json
-import sys
-
-assets, scratch = map(Path, sys.argv[1:])
-generated = {}
-for directory in (scratch, scratch / "format"):
-    for file in directory.iterdir():
-        if file.suffix in {".png", ".svg"} or file.name.endswith("-series.json"):
-            if file.name in generated:
-                raise SystemExit(f"build.sh: duplicate generated figure: {file.name}")
-            generated[file.name] = file
-required = {
-    "format-comparison-main.png", "format-comparison-mul-fma.png",
-    "format-comparison-div-sqrt.png", "format-comparison-low-width.png",
-    "flocq-matched.png", "ch10-external-ratios.png", "ch11-universal-preflight.png",
-    "ch11-conformance-evidence.png", "ch17-host-vs-software.png",
-    "public-binary-performance.png", "public-binary-low-precision.png",
+figure_scratch="$(mktemp -d "${FLOATLIB_BUILD_DIR}-site-figures.XXXXXX")"
+cleanup_figure_scratch() {
+  rm -rf -- "$figure_scratch"
 }
-missing = required - generated.keys()
-if missing:
-    raise SystemExit(f"build.sh: figures were not regenerated: {', '.join(sorted(missing))}")
-for name, file in generated.items():
-    if name.endswith("-series.json"):
-        for view in json.loads(file.read_text())["views"]:
-            if view["src"] not in generated:
-                raise SystemExit(f"build.sh: plot view was not regenerated: {view['src']}")
-    retained = assets / name
-    if not retained.is_file() or retained.read_bytes() != file.read_bytes():
-        raise SystemExit(f"build.sh: result-derived figure is stale: {retained}")
-print(f"verified {len(generated)} result-derived figures and view manifests")
-PY
-else
-  {
-    echo "build.sh: retained result trees are not all present:"
-    echo "  $benchmark_result"
-    echo "  $flocq_result"
-    echo "  $public_binary_result/measurements.csv"
-    echo "  $public_binary_result/metadata.json"
-    echo "  $external_result"
-    echo "  $ecosystem_result"
-    echo "Figure freshness cannot be checked until those trees exist."
-  } >&2
-  if [[ "$allow_missing_results" != "1" ]]; then
-    echo "build.sh: use --allow-missing-results only for reader development" >&2
-    exit 1
-  fi
-  echo "build.sh: continuing without result checks (--allow-missing-results)" >&2
-fi
+trap cleanup_figure_scratch EXIT
+python3 "$root/site/tooling/check_figures.py" --fresh --scratch "$figure_scratch"
 
 started=$SECONDS
 step() { printf '\n==> %s (%ds elapsed)\n' "$1" "$((SECONDS - started))"; }

@@ -1,18 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Pi.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Enclosure.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Pi.Runtime
 public import FloatLib.Numerics.Enclosure.Constants.Proof
 public import FloatLib.Numerics.Exact.Trigonometric.Proof
-public import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
 # Correct rounding of pi
@@ -48,7 +47,7 @@ theorem isFinite_round_of_lt_overflow (fmt : FloatFormat) (hfmt : fmt.isIEEE = t
           (fmt.maxNormalExponent - fmt.fracWidth - 1)) :
     isFinite (round fmt sign compare) = true := by
   have hemax := FloatFormat.maxNormalExponent_eq_ieee fmt hfmt
-  unfold round
+  rw [round_eq fmt sign hcompare]
   split
   · have hs := FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt
     cases sign <;> simp [zero, hs, isFinite_posZero, isFinite_negZero fmt hs]

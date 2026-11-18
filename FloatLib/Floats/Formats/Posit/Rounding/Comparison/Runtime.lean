@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
-public import Mathlib.Order.Compare
 
 /-!
 # Posit rounding from exact rational comparisons
@@ -28,7 +27,7 @@ namespace FloatLib.Floats.Formats.Posit.Model.ComparisonRounding
 
 /-- Locate the lower posit code using exact target-to-candidate comparisons. -/
 def lowerCode (format : Format) (compareTarget : Rat → Ordering) : Nat :=
-  lowerCodeByBisection
+  Numerics.bisect
     (fun code => decide (compareTarget (nonnegativeRatAt format code) ≠ .lt))
     format.bits 0 format.signMaskNat
 
@@ -58,7 +57,7 @@ def round (format : Format) (compareTarget : Rat → Ordering) : Model format :=
 /-- Signed rounding, using the comparator itself to determine the sign of the exact result. -/
 def roundSigned (format : Format) (compareTarget : Rat → Ordering) : Model format :=
   if compareTarget 0 = .lt then
-    neg (round format (fun q => (compareTarget (-q)).swap))
+    negate (round format (fun q => (compareTarget (-q)).swap))
   else round format compareTarget
 
 end FloatLib.Floats.Formats.Posit.Model.ComparisonRounding

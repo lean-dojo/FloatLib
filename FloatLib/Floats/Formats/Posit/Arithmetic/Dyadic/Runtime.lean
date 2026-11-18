@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Runtime
 
@@ -19,6 +18,8 @@ normalized rational operands. Addition, subtraction, multiplication, division, s
 fused multiply-add each round once, by the rule of the Posit Standard (2022).
 
 `Dyadic.Proof` proves them equal to the independent rational specification.
+
+Reference: Standard for Posit Arithmetic (2022), §§4.1 and 5.4–5.7.
 -/
 
 @[expose] public section
@@ -58,7 +59,8 @@ floating-point computation.
 /--
 Exact integer multiplication followed by standardized posit rounding.
 
-Where `Model.Spec.mul` works with rationals, this forms one integer product and hands that exact
+Where `Model.Spec.multiplication` works with rationals, this forms one integer product and hands
+    that exact
 result to the certified dyadic rounder. It allocates no rational operands.
 -/
 @[noinline] def mul (left right : Model format) : Model format :=

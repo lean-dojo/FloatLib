@@ -33,24 +33,37 @@ import re
 import sys
 
 # Native evaluation admits compiler results through axioms. Keep exact per-file counts so that
-# adding another use to an approved file still fails. These five entries total 48 sites.
+# adding another use to an approved file still fails. These five entries total 47 sites.
 allowed_native = {
     "tests/FloatLibTests/Conformance/Formats/Configured.lean": 2,
     "tests/FloatLibTests/Conformance/Formats/Conversion.lean": 10,
-    "tests/FloatLibTests/Conformance/Formats/LowBit.lean": 4,
+    "tests/FloatLibTests/Conformance/Formats/LowBit.lean": 3,
     "tests/FloatLibTests/Conformance/P3109/Projection.lean": 18,
     "tests/FloatLibTests/Conformance/Posit/ExecutionBoundaries.lean": 14,
 }
 # Replacements are invisible to collectAxioms. The sole approved implementation replaces
-# toDyadic?; its equality theorem follows it in the same file.
-allowed_replacements = {"FloatLib/Floats/Formats/Posit/Model/Decode.lean": 1}
+# toDyadic?; its equality theorem follows it in the same file and is registered with
+# `@[replacement_proof]`. The four test sites are the inputs of the registration check
+# (`Provenance.requireCompiled`): a wrong replacement that `@[compiler_optimize]` must refuse,
+# a correct one that it accepts with its registered proof, and two constructor indices written
+# by hand that it must refuse, where Lean's generated one is accepted.
+allowed_replacements = {
+    "FloatLib/Floats/Formats/Posit/Model/Decode.lean": 1,
+    "tests/FloatLibTests/Tactic/KernelOptimize.lean": 4,
+}
 # The inspection command evaluates a closed String in MetaM. The roundoff registry evaluates a
-# registered `Extension` declaration, as Lean's attribute registries do. The site exporter loads a
-# Lean environment with initializers enabled. None is a numerical implementation or a proof.
+# registered `Extension` declaration, as Lean's attribute registries do. `#roundoff_check` runs a
+# program at closed inputs to report its value beside a bound (one evaluation, whose safety
+# argument is the second occurrence of the word). The site exporter loads a Lean environment with
+# initializers enabled. The test site is a read of the constructor tag written by hand, the
+# input that the registration check must refuse under a definition that is not the constructor
+# index. None is a numerical implementation or a proof.
 allowed_unsafe = {
-    "FloatLib/Floats/ExecFloat/Info/Inspection.lean": 1,
-    "FloatLib/Floats/Formats/BinaryInterchange/Automation/Roundoff/Extension.lean": 1,
+    "FloatLib/Tactic/FloatInfo/Inspection.lean": 1,
+    "FloatLib/Tactic/Roundoff/Check.lean": 2,
+    "FloatLib/Tactic/Roundoff/Extension.lean": 1,
     "site/tooling/ExportNodes.lean": 1,
+    "tests/FloatLibTests/Tactic/KernelOptimize.lean": 1,
 }
 # The explicit host boundary is used by native conformance, code generation, and site export.
 allowed_imports = {
@@ -59,6 +72,13 @@ allowed_imports = {
     "site/tooling/ExportNodes.lean": 1,
 }
 unchecked_module = "FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked"
+# The separate native 16-bit carriers trust host IEEE binary32 and Figueroa's double-rounding
+# argument. Arithmetic remains unchecked; narrowing, widening and normalization are proved.
+allowed_carrier_imports = {
+    "FloatLib/Floats/Formats/IEEE754.lean": 1,
+    "tests/FloatLibTests/Regression/BinaryInterchange/NativeHalf.lean": 1,
+}
+carrier_module = "FloatLib.Floats.Formats.IEEE754.Native.Half"
 raw_pattern = re.compile(r'r(#*)"')
 char_pattern = re.compile(r"'(?:\\(?:u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|.)|[^'\\\n])'")
 word_pattern = re.compile(r"[\w'!?]+")
@@ -188,8 +208,8 @@ def aesop_rule_safety(words, index):
     )
 
 
-native_sites, replacement_sites, unsafe_sites, import_sites = (
-    defaultdict(list) for _ in range(4)
+native_sites, replacement_sites, unsafe_sites, import_sites, carrier_import_sites = (
+    defaultdict(list) for _ in range(5)
 )
 errors = []
 token_pattern = re.compile(r"«[^»]*»|[\w']+|:=|[^\s]", re.UNICODE)
@@ -240,8 +260,11 @@ for path in sys.argv[1:]:
                 end = after + 1
                 while end + 1 < len(words) and words[end] == ".":
                     end += 2
-                if "".join(words[after:end]) == unchecked_module:
+                imported_module = "".join(words[after:end])
+                if imported_module == unchecked_module:
                     import_sites[path].append(where)
+                if imported_module == carrier_module:
+                    carrier_import_sites[path].append(where)
     except ValueError as error:
         errors.append(f"{path}: lexical trust scan failed: {error}")
 
@@ -262,6 +285,7 @@ summaries = [
     check_counts("implemented_by/extern", replacement_sites, allowed_replacements),
     check_counts("unsafe", unsafe_sites, allowed_unsafe),
     check_counts("NativeFPU.Unchecked import", import_sites, allowed_imports),
+    check_counts("native 16-bit carrier import", carrier_import_sites, allowed_carrier_imports),
 ]
 if errors:
     print("\n".join(errors), file=sys.stderr)

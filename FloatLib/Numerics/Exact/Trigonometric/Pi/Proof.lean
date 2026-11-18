@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Trigonometric.Pi.Runtime
+
 import FloatLib.Numerics.Order.Comparison
 
 /-!
@@ -100,10 +101,11 @@ private theorem half_ratCast : ((1 / 2 : ℚ) : ℝ) = 1 / 2 := by norm_num
 private theorem arcsin_div_pi_mem (x : ℝ) :
     Real.arcsin x / Real.pi ∈ Set.Icc (-1 / 2 : ℝ) (1 / 2) := by
   constructor
-  · rw [le_div_iff₀ Real.pi_pos]
-    linarith [Real.neg_pi_div_two_le_arcsin x]
-  · rw [div_le_iff₀ Real.pi_pos]
-    linarith [Real.arcsin_le_pi_div_two x]
+  · apply (le_div_iff₀ Real.pi_pos).2
+    simpa only [neg_div, neg_mul, div_mul_eq_mul_div, one_mul] using
+      Real.neg_pi_div_two_le_arcsin x
+  · apply (div_le_iff₀ Real.pi_pos).2
+    simpa only [div_mul_eq_mul_div, one_mul] using Real.arcsin_le_pi_div_two x
 
 /-- Inverse cosine divided by pi lies in `[0, 1]`. -/
 private theorem arccos_div_pi_mem (x : ℝ) : Real.arccos x / Real.pi ∈ Set.Icc (0 : ℝ) 1 :=
@@ -114,20 +116,28 @@ private theorem arccos_div_pi_mem (x : ℝ) : Real.arccos x / Real.pi ∈ Set.Ic
 private theorem arctan_div_pi_mem (x : ℝ) :
     Real.arctan x / Real.pi ∈ Set.Ioo (-1 / 2 : ℝ) (1 / 2) := by
   constructor
-  · rw [lt_div_iff₀ Real.pi_pos]
-    linarith [Real.neg_pi_div_two_lt_arctan x]
-  · rw [div_lt_iff₀ Real.pi_pos]
-    linarith [Real.arctan_lt_pi_div_two x]
+  · apply (lt_div_iff₀ Real.pi_pos).2
+    simpa only [neg_div, neg_mul, div_mul_eq_mul_div, one_mul] using
+      Real.neg_pi_div_two_lt_arctan x
+  · apply (div_lt_iff₀ Real.pi_pos).2
+    simpa only [div_mul_eq_mul_div, one_mul] using Real.arctan_lt_pi_div_two x
 
 /-- Scaling by pi maps `[-1/2, 1/2]` into the principal branch `[-π/2, π/2]` of sine. -/
 private theorem mul_pi_mem_Icc {b : ℝ} (hb : b ∈ Set.Icc (-1 / 2 : ℝ) (1 / 2)) :
-    b * Real.pi ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) :=
-  ⟨by nlinarith [Real.pi_pos, hb.1], by nlinarith [Real.pi_pos, hb.2]⟩
+    b * Real.pi ∈ Set.Icc (-(Real.pi / 2)) (Real.pi / 2) := by
+  constructor
+  · simpa only [neg_div, neg_mul, div_mul_eq_mul_div, one_mul] using
+      mul_le_mul_of_nonneg_right hb.1 Real.pi_pos.le
+  · simpa only [div_mul_eq_mul_div, one_mul] using
+      mul_le_mul_of_nonneg_right hb.2 Real.pi_pos.le
 
 /-- Scaling by pi maps `(-1/2, 1/2)` into the principal branch `(-π/2, π/2)` of tangent. -/
 private theorem mul_pi_mem_Ioo {b : ℝ} (hb : b ∈ Set.Ioo (-1 / 2 : ℝ) (1 / 2)) :
-    b * Real.pi ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) :=
-  ⟨by nlinarith [Real.pi_pos, hb.1], by nlinarith [Real.pi_pos, hb.2]⟩
+    b * Real.pi ∈ Set.Ioo (-(Real.pi / 2)) (Real.pi / 2) := by
+  constructor
+  · simpa only [neg_div, neg_mul, div_mul_eq_mul_div, one_mul] using
+      mul_lt_mul_of_pos_right hb.1 Real.pi_pos
+  · simpa only [div_mul_eq_mul_div, one_mul] using mul_lt_mul_of_pos_right hb.2 Real.pi_pos
 
 /-- Inverse sine divided by pi has the exact principal-branch ordering throughout `[-1, 1]`. -/
 theorem prepareArcsinPi_eq_real (argument : ℚ) (levels : Nat) (boundary : ℚ)

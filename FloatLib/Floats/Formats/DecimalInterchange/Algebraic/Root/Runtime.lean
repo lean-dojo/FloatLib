@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -11,7 +11,7 @@ public import FloatLib.Kernels.IntegerRoot.Runtime
 /-!
 # Decimal integer-degree roots by exact power comparisons
 
-`Arithmetic.rootN` takes a root of any integer degree with one rounding. The integer root brackets
+`Arithmetic.rootn` takes a root of any integer degree with one rounding. The integer root brackets
 the scaled coefficient, and comparing the radicand with the power of the exact midpoint settles
 nearest rounding, ties included. Precision, degree, and the intermediate integers have no bound.
 
@@ -88,7 +88,7 @@ operand, including NaNs. Other degrees use the usual decimal NaN propagation. Fo
 result, the preferred quantum is `⌊q / n⌋` for the operand quantum `q` and the signed degree `n`:
 `⌊q / |n|⌋` for a positive degree and `⌊-q / |n|⌋` for a negative one, since the reciprocal
 negates the quantum. -/
-def Arithmetic.rootN (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
+def Arithmetic.rootn (f : Format) (mode : RoundingMode) : Datum → Int → Outcome
   | .nan s t p, n => if n = 0 then invalidResult else nanResult f s p t
   | .infinity s, n =>
       if n = 0 then invalidResult

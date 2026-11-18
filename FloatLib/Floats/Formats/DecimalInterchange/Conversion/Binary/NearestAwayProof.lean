@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Runtime
-public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
+public import FloatLib.Floats.Formats.DecimalInterchange.Conversion.Binary.Runtime
+public import FloatLib.Floats.Formats.DecimalInterchange.Rounding.Proof
 
 /-!
 # Nearest-away conversion to binary
@@ -31,7 +31,8 @@ theorem rat_eq_unsigned_div {x : ℚ} (hx : 0 ≤ x) :
     x = (x.num.natAbs : ℚ) / x.den := by
   rw [Nat.cast_natAbs, abs_of_nonneg (Rat.num_nonneg.mpr hx), Rat.num_div_den]
 
-/-- The real value of a nonnegative rational is its unsigned numerator divided by its denominator. -/
+/-- The real value of a nonnegative rational is its unsigned numerator divided by its
+denominator. -/
 theorem rat_cast_eq_unsigned_div {x : ℚ} (hx : 0 ≤ x) :
     (x : ℝ) = (x.num.natAbs : ℝ) / x.den := by
   simpa only [Rat.cast_div, Rat.cast_natCast] using
@@ -85,7 +86,7 @@ theorem binaryNearestAwayDyadic_significand_le (fmt : FloatFormat) (s : Bool)
 exponent bound. A carry only changes the exponent, so it is no second rounding. -/
 theorem binaryNearestAwayDyadic_genericFormat (fmt : FloatFormat) (s : Bool)
     {x : ℚ} (hx : 0 ≤ x) :
-    Flocq.genericFormat Numerics.binaryRadix (Model.fexpOf fmt)
+    Flocq.GenericRepresentable Numerics.binaryRadix (Model.fexpOf fmt)
       (binaryNearestAwayDyadic fmt s x).toReal := by
   have hm := binaryNearestAwayDyadic_significand_le fmt s hx
   have he := minSubnormalExponent_le_binaryQuantum fmt x

@@ -1,32 +1,33 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Backends
-public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan.Routes
-public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Table
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
+public import FloatLib.Tactic.DescriptorBackends
 
 /-!
 # Certified execution candidates for arbitrary binary descriptors
 
-Every binary `FloatFormat` has a proof-carrying candidate plan for addition, subtraction,
-multiplication, division, square root, and fused multiply-add. The public `ExecFloat` dispatcher
-makes the only selection. A plan offers it up to three kinds of candidate:
+Every binary `FloatFormat` has proof-carrying candidates for addition, subtraction,
+multiplication, division, square root, and fused multiply-add, each tagged
+`@[compiler_optimize]`. The public `ExecFloat` dispatcher makes the only selection. Three kinds
+of candidate are tagged here:
 
-* Every format of at most eight encoded bits can use a lazily generated exhaustive table.
+* Every format of at most eight encoded bits can use a lazily generated exhaustive table
+  (`addTable` and its siblings).
 * Each operation exposes at most one structural route, classified as fixed-format, native-word,
-  or fixed-limb in the same order as its executable dispatcher.
-* Every descriptor keeps a proved width-generic baseline.
+  or fixed-limb in the same order as its executable dispatcher (`addStructural` and its
+  siblings).
+* Every descriptor keeps a proved width-generic baseline (`addGeneric` and its siblings).
 
 Candidates are selected from descriptor data through the structural predicates that runtime
-dispatch uses. Layout-specific kernels stay specialized, but no plan depends on descriptor
+dispatch uses. Layout-specific kernels stay specialized, but no candidate depends on descriptor
 identity or a catalogued format name. So a new IEEE, finite-only, FNUZ, or otherwise custom
-descriptor gets table and structural candidates when eligible, together with the generic baseline.
+descriptor gets table and structural candidates when eligible, together with the generic
+baseline, and a candidate tagged in another module joins them.
 
 Cost estimates are in `Descriptor.Plan.Estimates`. This module handles candidate availability
 and proof-carrying construction.
@@ -215,117 +216,69 @@ def tableTernary? {format : FloatFormat}
   else
     none
 
-/-! ## Complete per-operation plans -/
+/-! ## Tagged candidates of each operation -/
 
-/-- Certified addition candidates derived from descriptor structure. -/
-def addCandidates (format : FloatFormat) :
-    CandidateSet (Certified (@Descriptor.Spec.add format)) where
-  alternatives :=
-    (show List (Certified (@Descriptor.Spec.add format)) from
-      (tableBinary? .add Model.Spec.add Model.AddBackend.generic
-        Model.AddBackend.generic_eq_spec).toList) ++
-    (structuralRoute? format .add).toList.map (fun route =>
-      Certified.binary (route.estimate format .add)
-        Descriptor.Spec.add Descriptor.Backend.wordAdd
-        Descriptor.Backend.wordAdd_eq_spec)
-  baseline :=
-    Certified.binary (genericEstimate format .add)
-      Descriptor.Spec.add Descriptor.Backend.genericAdd
-      Descriptor.Backend.genericAdd_eq_spec
+descriptor_backends add :=
+  tableBinary? .add Model.Spec.add Model.AddBackend.generic Model.AddBackend.generic_eq_spec,
+  fun route =>
+    Certified.binary (route.estimate format .add)
+      Descriptor.Spec.add Descriptor.Backend.wordAdd Descriptor.Backend.wordAdd_eq_spec,
+  Certified.binary (genericEstimate format .add)
+    Descriptor.Spec.add Descriptor.Backend.genericAdd Descriptor.Backend.genericAdd_eq_spec
 
-/-- Certified subtraction candidates derived from descriptor structure. -/
-def subCandidates (format : FloatFormat) :
-    CandidateSet (Certified (@Descriptor.Spec.sub format)) where
-  alternatives :=
-    (show List (Certified (@Descriptor.Spec.sub format)) from
-      (tableBinary? .sub Model.Spec.sub
-        (fun left right => Model.AddBackend.generic left (Model.neg right))
-        (fun left right => by
-          simpa [Model.Spec.sub] using
-            Model.AddBackend.generic_eq_spec left (Model.neg right))).toList) ++
-    (structuralRoute? format .sub).toList.map (fun route =>
-      Certified.binary (route.estimate format .sub)
-        Descriptor.Spec.sub Descriptor.Backend.wordSub
-        Descriptor.Backend.wordSub_eq_spec)
-  baseline :=
-    Certified.binary (genericEstimate format .sub)
-      Descriptor.Spec.sub Descriptor.Backend.genericSub
-      Descriptor.Backend.genericSub_eq_spec
+descriptor_backends sub :=
+  tableBinary? .sub Model.Spec.sub
+    (fun left right => Model.AddBackend.generic left (Model.neg right))
+    (fun left right => by
+      simpa [Model.Spec.sub] using Model.AddBackend.generic_eq_spec left (Model.neg right)),
+  fun route =>
+    Certified.binary (route.estimate format .sub)
+      Descriptor.Spec.sub Descriptor.Backend.wordSub Descriptor.Backend.wordSub_eq_spec,
+  Certified.binary (genericEstimate format .sub)
+    Descriptor.Spec.sub Descriptor.Backend.genericSub Descriptor.Backend.genericSub_eq_spec
 
-/-- Certified multiplication candidates derived from descriptor structure. -/
-def mulCandidates (format : FloatFormat) :
-    CandidateSet (Certified (@Descriptor.Spec.mul format)) where
-  alternatives :=
-    (show List (Certified (@Descriptor.Spec.mul format)) from
-      (tableBinary? .mul Model.Spec.mul Model.MulBackend.generic
-        Model.MulBackend.generic_eq_spec).toList) ++
-    (structuralRoute? format .mul).toList.map (fun route =>
-      Certified.binary (route.estimate format .mul)
-        Descriptor.Spec.mul Descriptor.Backend.wordMul
-        Descriptor.Backend.wordMul_eq_spec)
-  baseline :=
-    Certified.binary (genericEstimate format .mul)
-      Descriptor.Spec.mul Descriptor.Backend.genericMul
-      Descriptor.Backend.genericMul_eq_spec
+descriptor_backends mul :=
+  tableBinary? .mul Model.Spec.mul Model.MulBackend.generic Model.MulBackend.generic_eq_spec,
+  fun route =>
+    Certified.binary (route.estimate format .mul)
+      Descriptor.Spec.mul Descriptor.Backend.wordMul Descriptor.Backend.wordMul_eq_spec,
+  Certified.binary (genericEstimate format .mul)
+    Descriptor.Spec.mul Descriptor.Backend.genericMul Descriptor.Backend.genericMul_eq_spec
 
-/-- Certified division candidates derived from descriptor structure. -/
-def divCandidates (format : FloatFormat) :
-    CandidateSet (Certified (@Descriptor.Spec.div format)) where
-  alternatives :=
-    (show List (Certified (@Descriptor.Spec.div format)) from
-      (tableBinary? .div Model.Spec.div Model.DivBackend.generic
-        Model.DivBackend.generic_eq_spec).toList) ++
-    (structuralRoute? format .div).toList.map (fun route =>
-      Certified.binary (route.estimate format .div)
-        Descriptor.Spec.div Descriptor.Backend.wordDiv
-        Descriptor.Backend.wordDiv_eq_spec)
-  baseline :=
-    Certified.binary (genericEstimate format .div)
-      Descriptor.Spec.div Descriptor.Backend.genericDiv
-      Descriptor.Backend.genericDiv_eq_spec
+descriptor_backends div :=
+  tableBinary? .div Model.Spec.div Model.DivBackend.generic Model.DivBackend.generic_eq_spec,
+  fun route =>
+    Certified.binary (route.estimate format .div)
+      Descriptor.Spec.div Descriptor.Backend.wordDiv Descriptor.Backend.wordDiv_eq_spec,
+  Certified.binary (genericEstimate format .div)
+    Descriptor.Spec.div Descriptor.Backend.genericDiv Descriptor.Backend.genericDiv_eq_spec
 
-/-- Certified square-root candidates derived from descriptor structure. -/
-def sqrtCandidates (format : FloatFormat) :
-    CandidateSet (Certified (@Descriptor.Spec.sqrt format)) where
-  alternatives :=
-    (show List (Certified (@Descriptor.Spec.sqrt format)) from
-      (tableUnary? .sqrt Model.Spec.sqrt Model.SqrtBackend.generic
-        Model.SqrtBackend.generic_eq_spec).toList) ++
-    (structuralRoute? format .sqrt).toList.map (fun route =>
-      match route with
-      | .fixedLimbs =>
-          Certified.unary (route.estimate format .sqrt)
-            Descriptor.Spec.sqrt Descriptor.Backend.fixedLimbSqrt
-            Descriptor.Backend.fixedLimbSqrt_eq_spec
-      | .fixedFormat | .nativeWord =>
-          Certified.unary (route.estimate format .sqrt)
-            Descriptor.Spec.sqrt Descriptor.Backend.wordSqrt
-            Descriptor.Backend.wordSqrt_eq_spec)
-  baseline :=
-    Certified.unary (genericEstimate format .sqrt)
-      Descriptor.Spec.sqrt Descriptor.Backend.genericSqrt
-      Descriptor.Backend.genericSqrt_eq_spec
+descriptor_backends sqrt :=
+  tableUnary? .sqrt Model.Spec.sqrt Model.SqrtBackend.generic Model.SqrtBackend.generic_eq_spec,
+  fun route =>
+    match route with
+    | .fixedLimbs =>
+        Certified.unary (route.estimate format .sqrt)
+          Descriptor.Spec.sqrt Descriptor.Backend.fixedLimbSqrt
+          Descriptor.Backend.fixedLimbSqrt_eq_spec
+    | .fixedFormat | .nativeWord =>
+        Certified.unary (route.estimate format .sqrt)
+          Descriptor.Spec.sqrt Descriptor.Backend.wordSqrt Descriptor.Backend.wordSqrt_eq_spec,
+  Certified.unary (genericEstimate format .sqrt)
+    Descriptor.Spec.sqrt Descriptor.Backend.genericSqrt Descriptor.Backend.genericSqrt_eq_spec
 
-/-- Certified fused-multiply-add candidates derived from descriptor structure. -/
-def fmaCandidates (format : FloatFormat) :
-    CandidateSet (Certified (@Descriptor.Spec.fma format)) where
-  alternatives :=
-    (show List (Certified (@Descriptor.Spec.fma format)) from
-      (tableTernary? .fma Model.Spec.fma Model.FmaBackend.generic
-        Model.FmaBackend.generic_eq_spec).toList) ++
-    (structuralRoute? format .fma).toList.map (fun route =>
-      match route with
-      | .fixedLimbs =>
-          Certified.ternary (route.estimate format .fma)
-            Descriptor.Spec.fma Descriptor.Backend.fixedLimbFma
-            Descriptor.Backend.fixedLimbFma_eq_spec
-      | .fixedFormat | .nativeWord =>
-          Certified.ternary (route.estimate format .fma)
-            Descriptor.Spec.fma Descriptor.Backend.wordFma
-            Descriptor.Backend.wordFma_eq_spec)
-  baseline :=
-    Certified.ternary (genericEstimate format .fma)
-      Descriptor.Spec.fma Descriptor.Backend.genericFma
-      Descriptor.Backend.genericFma_eq_spec
+descriptor_backends fma :=
+  tableTernary? .fma Model.Spec.fma Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec,
+  fun route =>
+    match route with
+    | .fixedLimbs =>
+        Certified.ternary (route.estimate format .fma)
+          Descriptor.Spec.fma Descriptor.Backend.fixedLimbFma
+          Descriptor.Backend.fixedLimbFma_eq_spec
+    | .fixedFormat | .nativeWord =>
+        Certified.ternary (route.estimate format .fma)
+          Descriptor.Spec.fma Descriptor.Backend.wordFma Descriptor.Backend.wordFma_eq_spec,
+  Certified.ternary (genericEstimate format .fma)
+    Descriptor.Spec.fma Descriptor.Backend.genericFma Descriptor.Backend.genericFma_eq_spec
 
 end FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Plan

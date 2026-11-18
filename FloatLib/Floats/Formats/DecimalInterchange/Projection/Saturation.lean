@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -27,7 +27,6 @@ theorem projectMagnitude_of_overflow (f : Format) (mode : RoundingMode) (s : Boo
     projectMagnitude f mode s x preferred =
       { value := if mode.overflowToInfinity s then .infinity s else f.maxFinite s
         status := { overflow := true, inexact := true } } := by
-  have hx0 : 0 ≤ x := le_trans (zpow_pos (by norm_num) _).le hx
   have hq : f.maxQuantum < roundingQuantum f x := by
     by_contra h
     push Not at h
@@ -51,7 +50,7 @@ theorem roundMagnitude_eq_of_pos_of_lt_half (mode : RoundingMode) (s : Bool) {y 
     (hy0 : 0 < y) (hy : y < 1 / 2) :
     mode.roundMagnitude s y = mode.roundMagnitude s (1 / 4) := by
   have hf : ⌊y⌋₊ = 0 := Nat.floor_eq_zero.mpr (by linarith)
-  have hf' : ⌊(1 / 4 : ℚ)⌋₊ = 0 := Nat.floor_eq_zero.mpr (by norm_num)
+  have hf' : ⌊(1 / 4 : ℚ)⌋₊ = 0 := Nat.floor_eq_zero.mpr (by decide +kernel)
   have h1 : ¬ (1 < 2 * y) := by linarith
   have h2 : ¬ (2 * y = 1) := by intro h; linarith
   have h3 : ¬ (1 ≤ 2 * y) := by linarith
@@ -87,7 +86,7 @@ theorem projectMagnitude_of_tiny (f : Format) (mode : RoundingMode) (s : Bool) {
     have := f.one_lt_coefficientBound
     omega
   have hpair : roundedPair f mode s x = (mode.roundMagnitude s (1 / 4), f.minQuantum) := by
-    show Numerics.RadixText.carry 10 ⟨f.precision, f.precision_pos⟩
+    change Numerics.RadixText.carry 10 ⟨f.precision, f.precision_pos⟩
       (mode.roundAt s x (roundingQuantum f x)) (roundingQuantum f x) = _
     rw [hq, hc, f.carry_eq]
     simp only [hne, ↓reduceIte]
@@ -100,7 +99,7 @@ theorem projectMagnitude_of_tiny (f : Format) (mode : RoundingMode) (s : Bool) {
       linarith
   have hunder : x < f.minNormal := by
     unfold Format.minNormal
-    have : (1 : ℚ) ≤ (10 : ℚ) ^ (f.precision - 1) := one_le_pow₀ (by norm_num)
+    have : (1 : ℚ) ≤ (10 : ℚ) ^ (f.precision - 1) := one_le_pow₀ (by decide)
     nlinarith
   rw [projectMagnitude_eq, hpair]
   simp only [not_lt.mpr f.minQuantum_le_maxQuantum, ↓reduceIte, hinexact, hunder, ne_eq,
@@ -123,8 +122,8 @@ private theorem scaled_lt_half (m : Int) (c : Nat) (hc : c ≠ 0) {e : Int}
     have h' : 2 ^ (c.log2 + 1) ≤ 10 ^ (c.log2 + 1) := Nat.pow_le_pow_left (by norm_num) _
     exact_mod_cast lt_of_lt_of_le h h'
   have hpow : (10 : ℚ) ^ (c.log2 + 1) * (10 : ℚ) ^ e ≤ (10 : ℚ) ^ (m - 1) := by
-    rw [← zpow_natCast, ← zpow_add₀ (by norm_num)]
-    apply zpow_le_zpow_right₀ (by norm_num)
+    rw [← zpow_natCast, ← zpow_add₀ (by decide)]
+    apply zpow_le_zpow_right₀ (by decide)
     push_cast
     omega
   have hm : (10 : ℚ) ^ (m - 1) = (10 : ℚ) ^ m / 10 := by

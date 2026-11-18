@@ -9,11 +9,11 @@ source "$ROOT/tests/lib/lake.sh"
 
 floatlib_benchmark_lake build \
   FloatLibBenchmarks.Codegen.StaticLowBit:c \
-  FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Construction:c \
+  FloatLib.Floats.ExecFloat.Backends.Compiled.TinyTable.Generic.Construction:c \
   FloatLib.Floats.Formats.OCP.MX.E2M1:c \
   FloatLib.Floats.Formats.OCP.MX.E2M3:c \
   FloatLib.Floats.Formats.OCP.MX.E3M2:c \
-  FloatLib.Floats.Formats.OCP.FP8.E4M3FN:c \
+  FloatLib.Floats.Formats.OCP.FP8.E4M3:c \
   FloatLib.Floats.Formats.OCP.FP8.E5M2:c \
   FloatLib.Floats.Formats.FiniteOnly.E4M3FNUZ:c \
   FloatLib.Floats.Formats.FiniteOnly.E5M2FNUZ:c
@@ -29,7 +29,7 @@ fi
 prefix="lp_floatlibBenchmarks_FloatLibBenchmarks_Codegen_StaticLowBit"
 tiny_table_c="$(
   floatlib_build_path \
-    ir/FloatLib/Floats/ExecFloat/Backends/TinyTable/Generic/Construction.c
+    ir/FloatLib/Floats/ExecFloat/Backends/Compiled/TinyTable/Generic/Construction.c
 )"
 tiny_table_prefix="lp_floatlib_FloatLib_Floats_ExecFloat_Backend_TinyTable"
 
@@ -228,7 +228,7 @@ for family in e2m3 e3m2; do
   check_direct_table "ThroughputPlan_${family}Fma" 'uint8_t, uint8_t, uint8_t'
 done
 
-for family in e4m3fn e5m2 e4m3fnuz e5m2fnuz; do
+for family in e4m3 e5m2 e4m3fnuz e5m2fnuz; do
   for operation in Add Sub Mul Div; do
     check_direct_table "${family}${operation}" 'uint8_t, uint8_t'
   done
@@ -248,7 +248,7 @@ check_lazy_constructor Ternary ternary
 check_lazy_format_initialization FloatLib.Floats.Formats.OCP.MX.E2M1 6
 check_lazy_format_initialization FloatLib.Floats.Formats.OCP.MX.E2M3 6
 check_lazy_format_initialization FloatLib.Floats.Formats.OCP.MX.E3M2 6
-check_lazy_format_initialization FloatLib.Floats.Formats.OCP.FP8.E4M3FN 5
+check_lazy_format_initialization FloatLib.Floats.Formats.OCP.FP8.E4M3 5
 check_lazy_format_initialization FloatLib.Floats.Formats.OCP.FP8.E5M2 5
 check_lazy_format_initialization FloatLib.Floats.Formats.FiniteOnly.E4M3FNUZ 5
 check_lazy_format_initialization FloatLib.Floats.Formats.FiniteOnly.E5M2FNUZ 5

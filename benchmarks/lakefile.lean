@@ -81,9 +81,13 @@ lean_exe execFloatConfiguredBinaryBench where
 lean_exe execFloatPerformanceRegression where
   root := `FloatLibBenchmarks.Public.PerformanceRegression
 
-/-- Run certified binary `exp`, `log`, `expMinus1`, and `logPlus1` on encoded inputs. -/
+/-- Run certified binary `exp`, `log`, `expm1`, and `logp1` on encoded inputs. -/
 lean_exe execFloatCertifiedExpLog where
   root := `FloatLibBenchmarks.Public.CertifiedExpLog
+
+/-- Compiled time of the IEEE 754-2019 clause 9 operations and of the decimal additions. -/
+lean_exe execFloatIEEE2019 where
+  root := `FloatLibBenchmarks.Public.IEEE2019
 
 /-- Exhaustive 16-bit arithmetic and binary32 square root with IEEE flags. -/
 lean_exe execFloatExhaustive where
@@ -100,3 +104,39 @@ lean_exe execFloatTimeList where
 /-- Time the public operations beyond the six nearest-even kernels on mixed operands. -/
 lean_exe execFloatTimeOps where
   root := `FloatLibBenchmarks.Public.TimeOps
+
+/-- Compiled times of the exact-arithmetic operations, next to their kernel times. -/
+lean_exe exactCompiled where
+  root := `FloatLibBenchmarks.Exact.Compiled
+
+/-- Compare MX finite bisection with its exhaustive argmin specification. -/
+lean_exe mxCompiled where
+  root := `FloatLibBenchmarks.Standards.MXCompiled
+
+/-- Native complete-block NVFP4 observations with exact rational scale arithmetic. -/
+lean_exe nvfp4Compiled where
+  root := `FloatLibBenchmarks.Standards.NVFP4
+
+/-- Standard-spelled N1169 operations at eight arbitrary value widths. -/
+lean_exe fixedPointMatrix where
+  root := `FloatLibBenchmarks.Standards.FixedPointMatrix
+
+/-- Every Posit Standard operation at eight static widths, with full-word observations. -/
+lean_exe positMatrix where
+  root := `FloatLibBenchmarks.Standards.PositMatrix
+
+/-- P3109 scalar, block and scaled standard operations at eight static widths. -/
+lean_exe p3109Matrix where
+  root := `FloatLibBenchmarks.Standards.P3109Matrix
+
+/-- OFP8 SAT/NONSAT conversions with complete outcomes and exact-decoder observations. -/
+lean_exe ofp8Matrix where
+  root := `FloatLibBenchmarks.Standards.OFP8Matrix
+
+/-- Complete MX block outputs, stored dots and exponent-only scale operations. -/
+lean_exe mxMatrix where
+  root := `FloatLibBenchmarks.Standards.MXMatrix
+
+/-- Complete stored NVFP4 tensors with independent scale and reduction policies. -/
+lean_exe nvfp4Matrix where
+  root := `FloatLibBenchmarks.Standards.NVFP4Matrix

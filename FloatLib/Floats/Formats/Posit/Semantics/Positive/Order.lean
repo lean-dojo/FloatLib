@@ -1,19 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
-import Mathlib.Algebra.Order.Field.Basic
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
+public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
+
+import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -226,7 +227,7 @@ theorem nonnegativeRatAt_lt_of_lt
 theorem nonnegativeRatAt_strictMonoOn (format : Format) :
     StrictMonoOn (nonnegativeRatAt format)
       (Set.Iio format.signMaskNat) := by
-  intro left hleft right hright hlt
+  intro left _ right hright hlt
   exact nonnegativeRatAt_lt_of_lt format hlt hright
 
 /-- On nonnegative finite codes, comparing rational values is the same as comparing codes. -/

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Enclosure.Runtime
-public import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 
 /-!
@@ -32,30 +31,23 @@ theorem arg_of_pos (x y : ℝ) (hx : 0 < x) :
 /-- The upper left quadrant, including the negative real axis, adds π to the arctangent. -/
 theorem arg_of_neg_nonneg (x y : ℝ) (hx : x < 0) (hy : 0 ≤ y) :
     Complex.arg ⟨x, y⟩ = Real.arctan (y / x) + Real.pi := by
-  have hlo : Real.pi / 2 < Complex.arg ⟨x, y⟩ := by
-    apply lt_of_not_ge
-    simp only [Complex.arg_le_pi_div_two_iff, not_le_of_gt hx, not_lt_of_ge hy,
-      or_self, not_false_eq_true]
-  have hhi := Complex.arg_le_pi (⟨x, y⟩ : ℂ)
-  have h := Real.arctan_tan (x := Complex.arg ⟨x, y⟩ - Real.pi)
-    (by linarith) (by linarith [Real.pi_pos])
-  rw [Real.tan_sub_pi, Complex.tan_arg] at h
-  dsimp only [Complex.re, Complex.im] at h
-  linarith
+  have hneg : Complex.arg (-(⟨x, y⟩ : ℂ)) = Real.arctan (y / x) := by
+    change Complex.arg ⟨-x, -y⟩ = _
+    simpa only [neg_div_neg_eq] using arg_of_pos (-x) (-y) (neg_pos.mpr hx)
+  have hshift : Complex.arg (-(⟨x, y⟩ : ℂ)) = Complex.arg ⟨x, y⟩ - Real.pi :=
+    Complex.arg_neg_eq_arg_sub_pi_iff.mpr
+      (hy.eq_or_lt.elim (fun h => Or.inr ⟨h.symm, hx⟩) Or.inl)
+  exact eq_add_of_sub_eq (hshift.symm.trans hneg)
 
 /-- The lower left quadrant subtracts π from the arctangent. -/
 theorem arg_of_neg_neg (x y : ℝ) (hx : x < 0) (hy : y < 0) :
     Complex.arg ⟨x, y⟩ = Real.arctan (y / x) - Real.pi := by
-  have hhi : Complex.arg ⟨x, y⟩ < -(Real.pi / 2) := by
-    apply lt_of_not_ge
-    simp only [Complex.neg_pi_div_two_le_arg_iff, not_le_of_gt hx, not_le_of_gt hy,
-      or_self, not_false_eq_true]
-  have hlo := Complex.neg_pi_lt_arg (⟨x, y⟩ : ℂ)
-  have h := Real.arctan_tan (x := Complex.arg ⟨x, y⟩ + Real.pi)
-    (by linarith [Real.pi_pos]) (by linarith)
-  rw [Real.tan_add_pi, Complex.tan_arg] at h
-  dsimp only [Complex.re, Complex.im] at h
-  linarith
+  have hneg : Complex.arg (-(⟨x, y⟩ : ℂ)) = Real.arctan (y / x) := by
+    change Complex.arg ⟨-x, -y⟩ = _
+    simpa only [neg_div_neg_eq] using arg_of_pos (-x) (-y) (neg_pos.mpr hx)
+  have hshift : Complex.arg (-(⟨x, y⟩ : ℂ)) = Complex.arg ⟨x, y⟩ + Real.pi :=
+    Complex.arg_neg_eq_arg_add_pi_of_im_neg hy
+  exact eq_sub_of_add_eq (hshift.symm.trans hneg)
 
 /-- The arctangent formula for the principal argument, including both axes and the origin. -/
 theorem arg_formula (x y : ℝ) :

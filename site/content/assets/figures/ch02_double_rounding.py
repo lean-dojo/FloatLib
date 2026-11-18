@@ -135,6 +135,23 @@ def curved_arrow(ax, start, end, *, color, rad, linestyle="-", linewidth=1.4) ->
                                 connectionstyle=f"arc3,rad={rad}"))
 
 
+TWICE, ONCE = fs.ROLE["mark"], fs.ROLE["exact"]
+
+
+def key(second, direct):
+    """Legend handles shared by both arrangements."""
+    return [
+        Line2D([], [], color=TWICE, linestyle="--", marker="o", markersize=8,
+               linewidth=fs.LW_REF + 0.4, label=f"rounded twice: {float(second):g}"),
+        Line2D([], [], color=ONCE, linestyle="-", marker="D", markersize=7,
+               linewidth=fs.LW_REF + 0.4, label=f"rounded once: {float(direct):g}"),
+        Line2D([], [], color=fs.INK, marker="o", markersize=5, markerfacecolor="white",
+               linestyle="None", label="midpoint of the three-digit grid"),
+        Line2D([], [], color=fs.INK, marker="v", markersize=8, linestyle="None",
+               label="the exact $x$"),
+    ]
+
+
 def build_mobile(target, wide, x, direct, first, second):
     """Show the same exact example on three short local grids."""
     assert (target, wide) == (3, 5)
@@ -149,14 +166,8 @@ def build_mobile(target, wide, x, direct, first, second):
     assert direct - x < x - second
 
     height = 9.0
-    fig = plt.figure(figsize=(3.8, height))
-    ax = fs.diagram_axes(fig, (0, 3.8), (0, height))
-    ax.text(0.18, 8.78, "Rounding twice changes\nthe result", fontsize=15,
-            weight="bold", va="top", linespacing=1.2)
-    ax.text(0.18, 8.08, "Nearest, ties to even", fontsize=12, va="center")
-    ax.text(0.18, 7.73, f"x = 1 + 1/8 + 1/32 = {float(x):g}", fontsize=12, va="center")
-    ax.text(0.18, 7.40, "Significands below are in base 2.", fontsize=12,
-            va="center", color=fs.MUTED)
+    fig = plt.figure(figsize=(fs.MOBILE_WIDTH, height))
+    ax = fs.diagram_axes(fig, (0, fs.MOBILE_WIDTH), (0, height))
 
     def local_grid(y, lo, hi, value, result, prec, *, direct_route=False):
         left, right = 0.48, 3.28
@@ -164,46 +175,45 @@ def build_mobile(target, wide, x, direct, first, second):
         def place(v):
             return left + float((v - lo) / (hi - lo)) * (right - left)
 
-        colour = fs.GREEN if direct_route else fs.VERMILION
+        colour = ONCE if direct_route else TWICE
         ax.plot([left, right], [y, y], color=fs.INK, linewidth=1)
         for endpoint in (lo, hi):
             px = place(endpoint)
             tick(ax, px, y, 0.10, color=fs.INK, linewidth=1.2)
-            ax.text(px, y - 0.18, f"{float(endpoint):g}", fontsize=12,
+            ax.text(px, y - 0.18, f"{float(endpoint):g}", fontsize=fs.SIZE_TICK,
                     ha="center", va="top")
-            ax.text(px, y - 0.45, binary_mantissa(endpoint, prec), fontsize=12,
-                    ha="center", va="top", family="DejaVu Sans Mono")
+            ax.text(px, y - 0.45, f"${binary_mantissa(endpoint, prec)}_2$", fontsize=fs.SIZE_TICK,
+                    ha="center", va="top")
         midpoint = (lo + hi) / 2
         ax.plot([place(midpoint)], [y], marker="o", markersize=5.5,
                 markerfacecolor="white", markeredgecolor=fs.INK)
         if direct_route:
-            ax.text(place(midpoint), y - 0.18, f"{float(midpoint):g}", fontsize=12,
+            ax.text(place(midpoint), y - 0.18, f"{float(midpoint):g}", fontsize=fs.SIZE_TICK,
                     ha="center", va="top")
-        ax.plot([place(value)], [y + 0.15], marker="v", markersize=8, color=colour)
-        ax.text(place(value), y + 0.36, "x" if value == x else f"{float(value):g}",
-                fontsize=12, ha="center", va="bottom")
+        ax.plot([place(value)], [y + 0.15], marker="v", markersize=8,
+                color=fs.INK if value == x else colour)
+        ax.text(place(value), y + 0.36, "$x$" if value == x else f"{float(value):g}",
+                fontsize=fs.SIZE_TICK, ha="center", va="bottom")
         curved_arrow(ax, (place(value), y + 0.02), (place(result), y + 0.02),
                      color=colour, rad=-0.35 if direct_route else 0.35,
                      linestyle="-" if direct_route else "--")
         ax.plot([place(result)], [y], marker="D" if direct_route else "o",
                 markersize=7, color=colour)
 
-    ax.text(0.18, 6.93, "First: 5 binary digits", fontsize=13, weight="bold", va="center")
+    ax.text(0.18, 6.93, "first rounding, five binary digits", fontsize=fs.SIZE_LABEL,
+            va="center")
     local_grid(6.18, first, first + fine_step, x, first, wide)
-    ax.text(0.18, 5.37, "Halfway: even 1.0010 wins.", fontsize=12, va="center")
 
-    # The dotted connector carries the intermediate value into the second rounding.
-    ax.plot([0.48, 0.48], [5.11, 4.90], color=fs.VERMILION, linestyle=":", linewidth=1.4)
-    ax.text(0.67, 5.00, f"carry {float(first):g}", fontsize=12, va="center")
-    ax.text(0.18, 4.59, "Second: 3 binary digits", fontsize=13, weight="bold", va="center")
+    ax.text(0.18, 4.59, "second rounding, three binary digits", fontsize=fs.SIZE_LABEL,
+            va="center")
     local_grid(3.84, second, direct, first, second, target)
-    ax.text(0.18, 3.03, "Halfway again: even 1.00 wins.", fontsize=12, va="center")
 
-    ax.plot([0.18, 3.62], [2.70, 2.70], color=fs.LINE, linewidth=0.8)
-    ax.text(0.18, 2.42, "Direct: 3 binary digits", fontsize=13, weight="bold", va="center")
-    local_grid(1.67, second, direct, x, direct, target, direct_route=True)
-    ax.text(0.18, 0.86, "x is above the midpoint: choose 1.25.", fontsize=12, va="center")
-    ax.text(0.18, 0.33, "Twice: 1     Once: 1.25", fontsize=14, weight="bold", va="center")
+    ax.plot([0.18, 3.62], [2.90, 2.90], color=fs.LINE, linewidth=fs.LW_AXIS)
+    ax.text(0.18, 2.50, "one rounding, three binary digits", fontsize=fs.SIZE_LABEL,
+            va="center")
+    local_grid(1.75, second, direct, x, direct, target, direct_route=True)
+    fs.legend(ax, handles=key(second, direct), loc="center", bbox_to_anchor=(1.9, 0.55),
+              bbox_transform=ax.transData)
     return fig
 
 
@@ -244,7 +254,7 @@ def main() -> None:
         tick(ax, float(g), y_target, 0.42, color=fs.INK, linewidth=1.6)
         tick(ax, float(g), y_wide, 0.42, color=fs.INK, linewidth=1.6)
         ax.text(float(g), y_target - 0.6, f"{float(g):g} = ${binary_mantissa(g, target)}_2$",
-                ha="center", va="top", fontsize=9.5)
+                ha="center", va="top", fontsize=fs.SIZE_TICK)
         g += step_target
     # Midpoints of the coarse grid.
     m = LO + step_target / 2
@@ -259,48 +269,42 @@ def main() -> None:
     assert lower < x < upper and x - lower == upper - x, "x is a tie on the five-digit grid"
     for v, dy in ((lower, 0), (upper, 0)):
         ax.text(float(v), y_wide - 0.5 + dy, f"{float(v):g}\n${binary_mantissa(v, wide)}_2$",
-                ha="center", va="top", fontsize=9, color=fs.INK)
+                ha="center", va="top", fontsize=fs.SIZE_SMALL, color=fs.INK)
 
     # Row titles.
-    ax.text(float(LO) - 0.012, y_wide + 1.55, "five binary digits (the intermediate; binary64's part)",
-            ha="left", va="bottom", fontsize=10, color=fs.INK)
-    ax.text(float(LO) - 0.012, y_target + 1.55, "three binary digits (the target; binary32's part)",
-            ha="left", va="bottom", fontsize=10, color=fs.INK, zorder=5,
+    ax.text(float(LO) - 0.012, y_wide + 1.55, "five binary digits",
+            ha="left", va="bottom", fontsize=fs.SIZE_LABEL, color=fs.INK)
+    ax.text(float(LO) - 0.012, y_target + 1.55, "three binary digits",
+            ha="left", va="bottom", fontsize=fs.SIZE_LABEL, color=fs.INK, zorder=5,
             bbox=dict(facecolor="white", edgecolor="none", pad=0.2))
 
     # The exact value x on both lines.
-    x_style = dict(markersize=9, color=fs.VERMILION, markerfacecolor=fs.VERMILION,
+    x_style = dict(markersize=9, color=fs.INK, markerfacecolor=fs.INK,
                    linestyle="None", zorder=6)
     ax.plot([xf], [y_wide + 0.36], marker="v", **x_style)
     ax.plot([xf], [y_target - 0.36], marker="^", **x_style)
     ax.text(xf, y_wide + 0.95, r"$x = 1 + 2^{-3} + 2^{-5}$", ha="center", va="bottom",
-            fontsize=10, color=fs.VERMILION)
+            fontsize=fs.SIZE_TICK, color=fs.INK)
 
     # Route one: round twice. First to five digits (a tie, to even), then to three (a tie again).
-    twice = fs.VERMILION
+    twice = TWICE
     curved_arrow(ax, (xf, y_wide + 0.05), (float(first), y_wide + 0.05), color=twice, rad=0.55,
                  linestyle="--")
-    ax.text(xf + 0.075, y_wide + 0.4,
-            "first rounding: a tie between the two\nfive-digit neighbours, the even one wins",
-            ha="left", va="bottom", fontsize=9, color=twice)
+    ax.text(float(first) - 0.02, y_wide + 0.55, "first rounding",
+            ha="right", va="bottom", fontsize=fs.SIZE_TICK, color=fs.INK)
     ax.plot([float(first), float(first)], [y_wide - 1.3, y_target + 0.25], color=twice,
             linestyle=":", linewidth=1.2, zorder=3)
-    ax.text(float(first) + 0.006, y_wide - 1.75,
-            f"{float(first):g}: exactly a midpoint\nof the three-digit grid",
-            ha="left", va="top", fontsize=9, color=twice)
     curved_arrow(ax, (float(first), y_target - 0.05), (float(second), y_target - 0.05),
                  color=twice, rad=-0.55, linestyle="--")
-    ax.text((float(first) + float(second)) / 2, y_target - 1.35,
-            f"second rounding: a tie again,\nthe even neighbour is {float(second):g}",
-            ha="center", va="top", fontsize=9, color=twice)
+    ax.text((float(first) + float(second)) / 2, y_target - 1.45, "second rounding",
+            ha="center", va="top", fontsize=fs.SIZE_TICK, color=fs.INK)
 
     # Route two: round once, directly to three digits, drawn above the line.
-    once = fs.GREEN
+    once = ONCE
     curved_arrow(ax, (xf, y_target + 0.05), (float(direct), y_target + 0.05), color=once,
                  rad=-0.5)
-    ax.text((xf + float(direct)) / 2 + 0.012, y_target + 0.85,
-            f"one rounding: just above\nthe midpoint, so up to {float(direct):g}",
-            ha="left", va="bottom", fontsize=9, color=once)
+    ax.text((xf + float(direct)) / 2 + 0.03, y_target + 0.95, "one rounding",
+            ha="left", va="bottom", fontsize=fs.SIZE_TICK, color=fs.INK)
 
     # Results.
     ax.plot([float(second)], [y_target], marker="o", markersize=9, color=twice,
@@ -308,20 +312,11 @@ def main() -> None:
     ax.plot([float(direct)], [y_target], marker="D", markersize=8, color=once,
             markerfacecolor=once, linestyle="None", zorder=6)
 
-    handles = [
-        Line2D([], [], color=twice, linestyle="--", marker="o", markersize=8, linewidth=1.4,
-               label=f"rounded twice, through five digits: {float(second):g}"),
-        Line2D([], [], color=once, linestyle="-", marker="D", markersize=7, linewidth=1.4,
-               label=f"rounded once, straight to three digits: {float(direct):g}"),
-        Line2D([], [], color=fs.INK, marker="o", markersize=5, markerfacecolor="white",
-               linestyle="None", label="midpoint of the three-digit grid"),
-    ]
-    ax.legend(handles=handles, loc="lower right", bbox_to_anchor=(1.0, 0.0), ncol=1,
-              fontsize=9)
+    fs.legend(ax, handles=key(second, direct), loc="upper right", bbox_to_anchor=(1.0, 1.0))
 
     out = fs.save(fig, "ch02-double-rounding.png", args.out)
     print(f"wrote {out}")
-    mobile = out.with_name(f"{out.stem}-mobile{out.suffix}")
+    mobile = fs.mobile_path(out)
     print(f"wrote {fs.save(build_mobile(target, wide, x, direct, first, second), mobile.name, mobile)}")
 
 

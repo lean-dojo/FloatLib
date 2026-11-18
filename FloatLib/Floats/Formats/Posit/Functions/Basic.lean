@@ -1,22 +1,21 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Quantization.Deterministic.Rational
 public import FloatLib.Floats.Formats.Posit.Comparison
-public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
+public import FloatLib.Numerics.Quantization.Deterministic.Rational
 
 /-!
 # Basic posit functions
 
-Section 5.2 of the 2022 Posit Standard specifies the basic functions that this module
-defines them: absolute value, sign, integer rounding, and the representation successor and
+Section 5.2 of the 2022 Posit Standard specifies the basic functions defined here:
+absolute value, sign, integer rounding, and the representation successor and
 predecessor. Negation is defined with the model.
 
 As the standard asks, `next` and `prior` wrap over the complete bit vector, so they step through NaR
@@ -74,7 +73,7 @@ The encoded order places NaR below zero, but whole-word negation fixes NaR, so t
 has the required NaR propagation without assigning NaR a numerical sign.
 -/
 @[inline] def abs (value : Model format) : Model format :=
-  if compareLess value (zero format) then neg value else value
+  if compareLess value (zero format) then negate value else value
 
 /-- Absolute value fixes zero. -/
 @[simp] theorem abs_zero (format : Format) :

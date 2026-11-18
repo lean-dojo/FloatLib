@@ -1,10 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
+
+public import Mathlib.Init -- Standard source linters.
 
 
 /-!
@@ -30,11 +32,11 @@ universe u
 /-- A decidable predicate declaring which exact values checked arithmetic treats as zero. -/
 class ExactZero (Exact : Type u) [Zero Exact] where
   /-- Proposition saying that checked arithmetic should treat an exact value as zero. -/
-  isZero : Exact → Prop
+  IsZero : Exact → Prop
   /-- The domain's canonical `0` is included in the declared zero values. -/
-  zero_is_zero : isZero 0
+  zero_is_zero : IsZero 0
   /-- Executable decision procedure for the declared zero predicate. -/
-  decidableIsZero : DecidablePred isZero
+  decidableIsZero : DecidablePred IsZero
 
 namespace ExactZero
 
@@ -47,22 +49,22 @@ The low priority lets a domain with several zero representations install its own
 relation.
 -/
 instance (priority := low) ofLawfulBEq [BEq Exact] [LawfulBEq Exact] : ExactZero Exact where
-  isZero value := value = 0
+  IsZero value := value = 0
   zero_is_zero := rfl
   decidableIsZero value := instDecidableEqOfLawfulBEq value 0
 
 /-- Decide whether an exact value satisfies its domain's declared zero predicate. -/
 @[inline] def test [self : ExactZero Exact] (value : Exact) : Bool :=
-  @decide (self.isZero value) (self.decidableIsZero value)
+  @decide (self.IsZero value) (self.decidableIsZero value)
 
 /-- The executable zero test decides the exact domain's declared proposition. -/
 @[simp, grind =] theorem test_eq_true_iff [self : ExactZero Exact] (value : Exact) :
-    test value = true ↔ self.isZero value := by
+    test value = true ↔ self.IsZero value := by
   simp [test]
 
 /-- A failed executable zero test is the negation of the domain's declared zero proposition. -/
 @[simp, grind =] theorem test_eq_false_iff [self : ExactZero Exact] (value : Exact) :
-    test value = false ↔ ¬self.isZero value := by
+    test value = false ↔ ¬self.IsZero value := by
   simp [test]
 
 /-- Every exact domain's canonical zero passes its zero test. -/

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -14,9 +14,9 @@ public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Subtra
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Arithmetic
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.MinMax
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Order
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.SignedERealSemantics
 public import FloatLib.Floats.Interval.ERealCoercions
-public import FloatLib.Floats.Interval.RealBounds
+public import FloatLib.Numerics.Enclosure.Interval.Bounds
+import Mathlib.Tactic.Order
 
 /-!
 # Arithmetic enclosures for executable binary intervals
@@ -142,10 +142,10 @@ theorem eRealMem_ofBounds_corners
       isNaN (up a b) = false ∧
         ((f (toReal a) (toReal b) : ℝ) : EReal) ≤ toEReal (up a b))
     (hz : z ∈ Set.Icc
-      (FloatLib.Floats.Interval.minOfFour
+      (FloatLib.Numerics.Interval.minOfFour
         (f (toReal A.lo) (toReal B.lo)) (f (toReal A.lo) (toReal B.hi))
         (f (toReal A.hi) (toReal B.lo)) (f (toReal A.hi) (toReal B.hi)))
-      (FloatLib.Floats.Interval.maxOfFour
+      (FloatLib.Numerics.Interval.maxOfFour
         (f (toReal A.lo) (toReal B.lo)) (f (toReal A.lo) (toReal B.hi))
         (f (toReal A.hi) (toReal B.lo)) (f (toReal A.hi) (toReal B.hi)))) :
     ERealMem
@@ -166,13 +166,13 @@ theorem eRealMem_ofBounds_corners
         (z : EReal) := by
     apply (toEReal_minOfFour_le_of_le _ _ _ _ hp00.1 hp01.1 hp10.1 hp11.1
       hp00.2 hp01.2 hp10.2 hp11.2).trans
-    simpa [FloatLib.Floats.Interval.minOfFour, FloatLib.Floats.Interval.coe_min] using
+    simpa [FloatLib.Numerics.Interval.minOfFour, FloatLib.Floats.Interval.coe_min] using
       EReal.coe_le_coe_iff.2 hz.1
   have hupper : (z : EReal) ≤ toEReal
       (maxOfFour (up A.lo B.lo) (up A.lo B.hi) (up A.hi B.lo) (up A.hi B.hi)) := by
     apply le_trans ?_ (le_toEReal_maxOfFour_of_le _ _ _ _ hq00.1 hq01.1 hq10.1 hq11.1
       hq00.2 hq01.2 hq10.2 hq11.2)
-    simpa [FloatLib.Floats.Interval.maxOfFour, FloatLib.Floats.Interval.coe_max] using
+    simpa [FloatLib.Numerics.Interval.maxOfFour, FloatLib.Floats.Interval.coe_max] using
       EReal.coe_le_coe_iff.2 hz.2
   have hloNaN : isNaN
       (minOfFour (down A.lo B.lo) (down A.lo B.hi) (down A.hi B.lo) (down A.hi B.hi)) = false :=
@@ -203,7 +203,7 @@ theorem mul_sound
       ⟨isNaN_mul_down_eq_false_of_isFinite a b hfmt ha hb, toEReal_mul_down_le a b hfmt ha hb⟩)
     (fun a b ha hb _ =>
       ⟨isNaN_mul_up_eq_false_of_isFinite a b hfmt ha hb, le_toEReal_mul_up a b hfmt ha hb⟩)
-    (FloatLib.Floats.Interval.mul_bounds_Icc _ _ _ _ x y hx hy)
+    (FloatLib.Numerics.Interval.mul_bounds_Icc _ _ _ _ x y hx hy)
 
 /-- Outward-rounded multiplication always returns ordered bounds without NaNs, in every format. -/
 theorem mul_validExtended {fmt : FloatFormat} (A B : Interval fmt) :
@@ -236,7 +236,7 @@ private theorem isZero_eq_false_of_sign_stable
     isZero b = false := by
   refine Bool.eq_false_iff.mpr fun hzero => ?_
   have hreal := toReal_eq_zero_of_isZero b hzero
-  rcases hsign with h | h <;> linarith
+  rcases hsign with h | h <;> order
 
 /--
 Outward-rounded interval division encloses every represented real quotient.
@@ -269,7 +269,7 @@ theorem div_sound
       (fun a b ha hb hb' =>
         ⟨isNaN_div_up_eq_false_of_isFinite a b hfmt ha hb (hzero b hb'),
           le_toEReal_div_up a b hfmt ha hb (hzero b hb')⟩)
-      (FloatLib.Floats.Interval.div_bounds_Icc _ _ _ _ x y hx hy hsign)
+      (FloatLib.Numerics.Interval.div_bounds_Icc _ _ _ _ x y hx hy hsign)
 
 /-- Outward-rounded division always returns ordered bounds without NaNs, in every format. -/
 theorem div_validExtended {fmt : FloatFormat} (A B : Interval fmt) :

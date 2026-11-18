@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -410,6 +410,25 @@ theorem toReal_roundDyadicDown_nonneg (fmt : FloatFormat) (value : Numerics.Dyad
     | with_reducible exact toReal_roundDyadicMagnitudeDown_false_nonneg fmt _ _
     | exact toReal_nonneg_of_signBit_eq_false (by simp)
     | simp_all
+
+/-- Nearest-even rounding of a nonnegative scaled rational has nonnegative real interpretation. -/
+theorem toReal_roundRatScaled_false_nonneg (fmt : FloatFormat)
+    (numerator denominator : Nat) (exponent : Int) (hdenominator : denominator ≠ 0) :
+    0 ≤ toReal (roundRatScaled fmt false numerator denominator exponent) := by
+  unfold roundRatScaled
+  split
+  · apply toReal_nonneg_of_signBit_eq_false
+    unfold ieeeRoundRatScaled
+    simp only [beq_iff_eq, hdenominator, ite_false]
+    split_ifs <;> (try split) <;> simp_all
+  · unfold roundRatScaledGeneral
+    dsimp only
+    simp only [beq_iff_eq, hdenominator, ite_false]
+    split_ifs <;> first
+      | with_reducible exact toReal_nativeOverflow_false_nonneg fmt
+      | with_reducible exact toReal_packRoundedSubnormal_false_nonneg fmt _ _ (by simp)
+      | with_reducible exact toReal_packRoundedNormal_nativeOverflow_false_nonneg fmt _ _
+      | exact toReal_nonneg_of_signBit_eq_false (by simp)
 
 end
 

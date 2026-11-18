@@ -1,30 +1,31 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public meta import FloatLib.Floats.ExecFloat.Instances
+public meta import FloatLib.Kernels.Execution.Instances
 public import FloatLib.Floats.Formats.Posit.Configured.Functions.Basic
+public import FloatLib.Floats.Formats.Posit.Configured.Functions.BasicProof
 public import FloatLib.Floats.Formats.Posit.Configured.Functions.IntegerProof
 public import FloatLib.Floats.Formats.Posit.Configured.Algebraic.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Algebraic.RationalPower.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Integer.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Integer.Unsigned.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Precision
 public import FloatLib.Floats.Formats.Posit.Configured.Logarithm.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Elementary.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Hyperbolic.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Pi.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Atan2.Proof
-public import FloatLib.Floats.Formats.Posit.Formatting.Configured.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Plan.Dispatch
-public import FloatLib.Floats.Formats.Posit.Configured.Value.Proof
-public import FloatLib.Floats.Formats.Posit.Configured.Type
-public import FloatLib.Floats.Formats.Posit.Configured.Instances
 public import FloatLib.Floats.Formats.Posit.Configured.Interval
+public import FloatLib.Floats.Formats.Posit.Configured.KernelPath
+public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Atan2.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Pi.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Trigonometric.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Value.Proof
+public import FloatLib.Floats.Formats.Posit.Formatting.Configured.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Standard
 
 /-!
 # Configured posit `ExecFloat` values
@@ -58,4 +59,6 @@ literals or `.ofRat q`, import the certified capability you need, and use the op
   <https://posithub.org/docs/posit_standard-2.pdf>.
 * John L. Gustafson, *Standard Posit Arithmetic*, Supercomputing Frontiers and Innovations 9(1),
   2022, <https://doi.org/10.14529/jsfi220102>.
+
+Posit Standard (2022), §§3.1 and 5, gives the formats and operation families.
 -/

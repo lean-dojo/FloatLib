@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -38,7 +38,8 @@ instance quantizer :
   spec := spec
   correct := implements_run
 
-/-- Context-free conversion uses the Posit Standard (2022), §6.5 infinity and NaN mapping to `NaR`. -/
+/-- Context-free conversion uses the Posit Standard (2022), §6.5 infinity and NaN mapping to
+`NaR`. -/
 instance defaultQuantizer :
     FloatLib.Floats.ExecFloat.DefaultQuantizer
       (FloatLib.Floats.ExecFloat (Configured.Family format code plan)) Rat where

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Direct.PrefixProof
 public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Proof
+
 import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
@@ -44,13 +45,26 @@ private theorem lowerFraction_square_lt_succ_square
     ((root : Rat) + 1 / (cellDenominator root : Nat)) *
         ((root : Rat) + 1 / (cellDenominator root : Nat)) <
       (root : Rat) * root + 1 := by
-  have hroot : (0 : Rat) ≤ root := by positivity
-  have hdenominator : (0 : Rat) < cellDenominator root := by
-    exact_mod_cast cellDenominator_pos root
   unfold cellDenominator
-  field_simp
-  push_cast at *
-  nlinarith
+  push_cast
+  let r : Rat := root
+  have hr : 0 ≤ r := Nat.cast_nonneg root
+  let δ := 1 / (4 * (r + 1))
+  have hδ : 0 < δ := by dsimp [δ]; positivity
+  have hδ1 : δ ≤ 1 := by
+    apply (div_le_one (by positivity : (0 : Rat) < 4 * (r + 1))).2
+    linarith
+  have hcap : 2 * (r + 1) * δ = 1 / 2 := by
+    dsimp [δ]
+    rw [mul_one_div, mul_div_mul_right _ _ (by positivity : r + 1 ≠ 0)]
+    decide +kernel
+  change (r + δ) * (r + δ) < r * r + 1
+  rw [← sub_lt_iff_lt_add', mul_self_sub_mul_self, add_sub_cancel_left]
+  calc
+    (r + δ + r) * δ ≤ (2 * (r + 1)) * δ :=
+      mul_le_mul_of_nonneg_right (by linarith) hδ.le
+    _ = 1 / 2 := hcap
+    _ < 1 := by decide +kernel
 
 /-- The upper rational witness squares to more than `(root + 1)² - 1`. -/
 private theorem predFraction_square_gt_pred_square
@@ -60,20 +74,27 @@ private theorem predFraction_square_gt_pred_square
           (cellDenominator root : Nat)) *
         ((root : Rat) + (cellDenominator root - 1 : Nat) /
           (cellDenominator root : Nat)) := by
-  have hroot : (0 : Rat) ≤ root := by positivity
-  have hdenominatorNat := cellDenominator_pos root
-  have hdenominator : (0 : Rat) < cellDenominator root := by
-    exact_mod_cast hdenominatorNat
-  have hpred :
-      ((cellDenominator root - 1 : Nat) : Rat) =
-        (cellDenominator root : Rat) - 1 := by
-    rw [Nat.cast_sub (by omega)]
-    norm_num
-  rw [hpred]
-  unfold cellDenominator at *
-  field_simp
-  push_cast at *
-  nlinarith
+  have hden : (4 * (root + 1) : Rat) ≠ 0 := by positivity
+  unfold cellDenominator
+  rw [Nat.cast_sub (by omega)]
+  push_cast
+  rw [sub_div, div_self hden, ← add_sub_assoc]
+  let r : Rat := root
+  let δ := 1 / (4 * (r + 1))
+  have hδ : 0 < δ := by dsimp [δ]; positivity
+  have hcap : 2 * (r + 1) * δ = 1 / 2 := by
+    dsimp [δ]
+    rw [mul_one_div, mul_div_mul_right _ _ (by positivity : r + 1 ≠ 0)]
+    decide +kernel
+  have hdiff :
+      (r + 1) * (r + 1) - (r + 1 - δ) * (r + 1 - δ) ≤ 1 / 2 := by
+    rw [mul_self_sub_mul_self, sub_sub_cancel]
+    calc
+      (r + 1 + (r + 1 - δ)) * δ ≤ (2 * (r + 1)) * δ :=
+        mul_le_mul_of_nonneg_right (by linarith) hδ.le
+      _ = 1 / 2 := hcap
+  change r * r + 2 * r < (r + 1 - δ) * (r + 1 - δ)
+  nlinarith only [hdiff]
 
 /-- For an inexact integer root, the lower witness's square is below the scaled radicand. -/
 private theorem lowerFraction_square_lt_scaled
@@ -152,8 +173,6 @@ private theorem rootCellPoint_pos
     {remainder denominator : Nat}
     (hremainder : 0 < remainder) (hdenominator : 0 < denominator) :
     0 < rootCellPoint format radicand remainder denominator := by
-  have hremainderRat : (0 : Rat) < remainder := by exact_mod_cast hremainder
-  have hdenominatorRat : (0 : Rat) < denominator := by exact_mod_cast hdenominator
   have hscale :
       (0 : Rat) <
         (2 : Rat) ^ (radicand.exponent.ediv 2 - Int.ofNat (prefixPrecision format)) :=
@@ -247,7 +266,7 @@ private theorem exactRootCellPoint_eq_sqrt
         rootCellPoint format radicand 0 1 *
           rootCellPoint format radicand 0 1 := by
     rw [hsource, hpoint, hscaled, Nat.cast_mul]
-    ring
+    ac_rfl
   have hsourceNonnegative : (0 : Real) ≤ (radicand.toRat : Real) := by
     exact_mod_cast
       (FloatLib.Numerics.Dyadic.toRat_pos_of_significand_ne_zero
@@ -306,7 +325,7 @@ theorem roundCode_eq_dyadic
           (rootCellDenominator format radicand - 1)
           (rootCellDenominator format radicand) hsignificand hnegative
           (by omega)
-          (by unfold rootCellDenominator; simp [hremainder]; omega),
+          (by unfold rootCellDenominator; simp only [hremainder, false_iff]; omega),
         ← Model.RealRounding.roundPositiveCode_ratCast]
       exact Model.RealRounding.roundPositiveCode_mono format
         (sqrt_lt_upperRootCellPoint format radicand hnegative).le

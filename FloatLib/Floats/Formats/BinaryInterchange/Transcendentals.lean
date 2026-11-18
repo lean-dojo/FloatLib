@@ -1,22 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.FixedPoint
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Config
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.CorrectlyRounded.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.ExpLog
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Hyperbolic
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Pi.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Trig
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Power
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.PowerProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.CorrectlyRounded.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Recommended.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Trig
 public import FloatLib.Numerics.Capabilities.Elementary
 
 /-!
@@ -37,22 +30,32 @@ search settles (`Model.Power.pow_spec_of_certified`). A certified overflow gives
 overflow result. Most exact results on a rounding boundary and an exhausted budget fall back to
 `exp (y * log x)`.
 
-The certified kernels `Model.Transcendentals.Certified.exp`, `log`, `expMinus1`, `logPlus1` and
+The certified kernels `Model.Transcendentals.Certified.exp`, `log`, `expm1`, `logp1` and
 `pow` refine rational enclosures and return `Except Certified.Failure (Model fmt)`. Every
 accepted result is proved finite and equal to nearest-even rounding of the real function, and a
-failure names its reason. `expMinus1` and `logPlus1` keep small results near zero because they
-subtract or add one before any rounding. For `exp`, `log`, `expMinus1` and `logPlus1` the
+failure names its reason. `expm1` and `logp1` keep small results near zero because they
+subtract or add one before any rounding. For `exp`, `log`, `expm1` and `logp1` the
 `Contract` is instantiated on this executable success domain, while `pow` is covered by its own
 theorems, `Model.Transcendentals.Certified.toReal_of_pow_eq_ok` and
 `Model.Power.pow_spec_of_certified`. A `Certified.Budget` bounds the enclosure attempts. It does
 not bound the total work, and a search that did not settle gives `inconclusive`.
 
-`Model.Transcendentals.CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and the weighted
+`Model.Transcendentals.CorrectlyRounded.exp`, `log`, `expm1`, `logp1` and the weighted
 exponential `expMul` always return a value. That is the search result when the search settles,
 and otherwise the rounding decided by exact comparisons. For an IEEE descriptor and a finite input
 in the domain, every finite result is correctly rounded, with no premise on the budget. A
 non-finite input is outside that statement, since `exp (-∞)` is a finite zero. The
 `MathFunctions` instance keeps the approximation kernels.
+
+`Transcendentals.Recommended` adds the other functions that IEEE 754-2019 §9.2 recommends, in
+the same namespace: `exp2`, `exp2m1`, `exp10`, `exp10m1`, `log2`, `log10`, `log2p1`, `log10p1`,
+the trigonometric functions in radians and in half-turns with their inverses, the hyperbolic
+functions with their inverses, `atan2`, `atan2Pi`, `powr` and `compound`. They return the value
+with its exception flags, and round the exact result once by exact comparisons, so they are
+correctly rounded for every finite operand of an IEEE descriptor
+(`CorrectlyRounded.Function.toReal_apply`). They are slower than the approximation kernels
+`sin`, `cos`, `sinh`, `cosh` and `tanh` of this module, which have no error bound.
+
 `Model.Transcendentals.CorrectlyRounded.mathFunctions` is the same dictionary with the correctly
 rounded `exp` and `log` for an IEEE descriptor, and
 `open scoped FloatLib.Floats.Formats.BinaryInterchange.CorrectlyRoundedMath` makes it the
@@ -71,7 +74,8 @@ status flags.
 lazily evaluated cache of proved constants in `Numerics.Enclosure.Constants` supplies the
 `2 / pi` and `pi / 2` of sine and cosine reduction, the `log 2` of exponential reduction and of
 generated configurations, the `log 2` of the certified power and of the correctly rounded
-logarithm and weighted exponential searches, and the enclosure that `Model.pi` rounds. Two paths compute their own constants. The exact comparators, among them the fallback of
+logarithm and weighted exponential searches, and the enclosure that `Model.pi` rounds. Two paths
+compute their own constants. The exact comparators, among them the fallback of
 `Model.pi`, build `pi / 4`, and `Model.Transcendentals.Certified.log` builds `log 2` through
 `BinaryGrid.log`. For directed rounding through Arb/python-flint there is an optional adapter,
 `FloatLibTests.Arb.ModelTranscendentals`.

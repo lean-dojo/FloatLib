@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -28,21 +28,21 @@ open FloatLib
 open FloatLib.Floats
 open FloatLib.Floats.Formats.BinaryInterchange
 
--- E4M3FN has one NaN per sign and no diagnostic payload bits.
-example : (Model.add (Model.ofNatBits (fmt := .e4m3fn) 0xfe)
-    (Model.ofNatBits (fmt := .e4m3fn) 0xfe)).toNatBits = 0xff := by decide +kernel
+-- E4M3 has one NaN per sign and no diagnostic payload bits.
+example : (Model.add (Model.ofNatBits (fmt := .e4m3) 0xfe)
+    (Model.ofNatBits (fmt := .e4m3) 0xfe)).toNatBits = 0xff := by decide +kernel
 
-example : Model.nanPayload (Model.ofNatBits (fmt := .e4m3fn) 0x7f) = 0 := by decide +kernel
+example : Model.nanPayload (Model.ofNatBits (fmt := .e4m3) 0x7f) = 0 := by decide +kernel
 
-example : (Model.cast .e4m3fn .binary32
-    (Model.ofNatBits (fmt := .e4m3fn) 0x7f)).toNatBits = 0x7fc00000 := by decide +kernel
+example : (Model.cast .e4m3 .binary32
+    (Model.ofNatBits (fmt := .e4m3) 0x7f)).toNatBits = 0x7fc00000 := by decide +kernel
 
-example : (Model.cast .e4m3fn .binary32
-    (Model.ofNatBits (fmt := .e4m3fn) 0xff)).toNatBits = 0xffc00000 := by decide +kernel
+example : (Model.cast .e4m3 .binary32
+    (Model.ofNatBits (fmt := .e4m3) 0xff)).toNatBits = 0xffc00000 := by decide +kernel
 
-example (x : Model .e4m3fn)
-    (hout : Model.isFinite (Model.cast .e4m3fn .binary16 x) = true) :
-    |Model.toReal (Model.cast .e4m3fn .binary16 x) - Model.toReal x| ≤
+example (x : Model .e4m3)
+    (hout : Model.isFinite (Model.cast .e4m3 .binary16 x) = true) :
+    |Model.toReal (Model.cast .e4m3 .binary16 x) - Model.toReal x| ≤
       Model.halfUlpAt .binary16 (Model.toReal x) :=
   Model.abs_toReal_cast_sub_le x (by decide) hout
 
@@ -85,28 +85,28 @@ private abbrev NarrowFinite := ExecFloat.Binary 2 1 (encoding := .finite) (bias 
 
 -- The E5M2 subnormal code 2 is 2^(-15). Its integer exponent must remain -15,
 -- although that exponent cannot be represented exactly by an E5M2 floating result.
-example : Model.binaryExponentInt (Model.ofNatBits (fmt := .e5m2) 2) =
+example : Model.logBInt (Model.ofNatBits (fmt := .e5m2) 2) =
     ⟨-15, {}⟩ := by decide +kernel
 
 example :
-    (Model.binaryExponent (Model.ofNatBits (fmt := .e5m2) 2) (status := true)).status.inexact =
+    (Model.logB (Model.ofNatBits (fmt := .e5m2) 2) (status := true)).status.inexact =
       true := by decide +kernel
 
 -- The tie -15 rounds to the even -16, below the exact exponent.
 example :
-    (Model.binaryExponent (Model.ofNatBits (fmt := .e5m2) 2) (status := true)).ternary = .lt := by
+    (Model.logB (Model.ofNatBits (fmt := .e5m2) 2) (status := true)).ternary = .lt := by
   decide +kernel
 
-example : (Model.binaryExponentInt (Model.posZero .binary32)).status.invalid = true := by
+example : (Model.logBInt (Model.posZero .binary32)).status.invalid = true := by
   decide +kernel
 
-example : (Model.binaryExponentInt (Model.posZero .binary32)).value <
+example : (Model.logBInt (Model.posZero .binary32)).value <
     -2 * |Model.logBBound .binary32| := by decide +kernel
 
-example : (Model.binaryExponentInt (Model.posInf .binary32)).value >
+example : (Model.logBInt (Model.posInf .binary32)).value >
     2 * |Model.logBBound .binary32| := by decide +kernel
 
-example : (Model.binaryExponentInt (Model.canonicalNaN .binary32)).status.invalid = true := by
+example : (Model.logBInt (Model.canonicalNaN .binary32)).status.invalid = true := by
   decide +kernel
 
 -- The ceiling is two, outside these descriptors' finite range.
@@ -246,7 +246,7 @@ example : (Model.roundToIntegral
   Model.roundToIntegral_towardZero_overflow_eq_false (by decide) _
 
 -- Nearest rounding still overflows here, so its range guard cannot be dropped wholesale.
-example : Model.isInf (Model.roundToIntegral
+example : Model.isInfinite (Model.roundToIntegral
     (Model.ofNatBits (fmt := IntegralNarrow) 23) .nearest) = true := by
   decide +kernel
 
@@ -318,8 +318,8 @@ theorem cast_fnuz_source :
 example : (Model.cast FloatFormat.e4m3fnuz (FloatFormat.ieee 4 3)
     (Model.ofNatBits (fmt := .e4m3fnuz) 68)).toNatBits = 60 := by decide +kernel
 
-example : (Model.cast FloatFormat.e4m3fn (FloatFormat.ieee 4 3)
-    (Model.ofNatBits (fmt := .e4m3fn) 60)).toNatBits = 60 := by decide +kernel
+example : (Model.cast FloatFormat.e4m3 (FloatFormat.ieee 4 3)
+    (Model.ofNatBits (fmt := .e4m3) 60)).toNatBits = 60 := by decide +kernel
 
 /-- Opposite finite terms cancel through the common sum rounding bridge. -/
 theorem sum_cancellation_real :
@@ -337,8 +337,7 @@ theorem sum_cancellation_real :
   · intro value hvalue
     change value ∈ [Model.posOne FloatFormat.binary32, Model.negOne FloatFormat.binary32]
       at hvalue
-    simp at hvalue
-    rcases hvalue with rfl | rfl <;> decide +kernel
+    rcases List.mem_pair.mp hvalue with rfl | rfl <;> decide +kernel
   · decide +kernel
 
 /-- A cancelling product sum succeeds and uses the common real-rounding theorem at zero. -/
@@ -388,7 +387,7 @@ example :
     (Model.ofRat FloatFormat.binary16 (-(1 : Rat) / 2 ^ 25) (mode := .up)).toNatBits = 0x8000 := by
   decide +kernel
 
-example : Model.isInf (Model.ofRat FloatFormat.binary16 65536 (mode := .up)) = true := by
+example : Model.isInfinite (Model.ofRat FloatFormat.binary16 65536 (mode := .up)) = true := by
   decide +kernel
 
 end FloatLibTests.Conformance.BinaryInterchange.BoundaryCases

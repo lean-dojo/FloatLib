@@ -6,11 +6,11 @@ summary: "Why decimal numbers store 1.20 and 1.2 differently, and how FloatLib c
 phases: [ieee-formats, status-and-directed]
 ---
 
-A finite decimal floating-point value has the form $c\cdot10^q$, where the coefficient $c$ and exponent $q$ are integers. Different coefficient-exponent pairs can denote the same rational number. For example, $120\cdot10^{-2}$ and $12\cdot10^{-1}$ both denote $1.2$, but record different decimal scales. This chapter explains these representations and the arithmetic operations on them.
+In decimal32, adding $1.20$ and $0.30$ returns $1.50$. A proof that the sum equals $3/2$ explains its value, but leaves the last zero unexplained. IEEE 754 also specifies how to select the exponent of an exact sum. FloatLib models both decisions for decimal32, decimal64 and decimal128 [@ieee754_2019].
 
 ## Why use decimal numbers?
 
-Binary formats store a whole number times a power of two, and no finite binary fraction equals $1/10$. So binary can't store $0.1$, and ten cents is rounded before you add anything. A decimal format stores it exactly, the way prices are written, and keeps the trailing zeros you wrote.
+A finite binary fraction has a power of two in its denominator, so entering $0.10$ as a binary float already requires rounding. In a decimal format the coefficient $10$ and exponent $-2$ represent it exactly and preserve the two decimal places.
 
 ## What is a decimal number?
 
@@ -59,9 +59,11 @@ On finite operands the five rational operations, all but square root, round the 
 
 ## What does FloatLib prove about the results?
 
-The [arithmetic proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Proof.lean) and [square-root proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Sqrt/Proof.lean) show every result is a valid datum in the destination. With finite operands and no overflow, nearest-mode error is at most half the selected decimal grid step (the spacing of values near the exact result), provided division has a nonzero denominator and square root a nonnegative input. Directed modes land on the required side of the exact value. The midpoint theorems settle ties like the one we just met, and a representable rational rounds to itself. The inexact flag is honest. The inexactness theorems tie it to a change in value, so changing cohort member never raises inexact on its own.
+The [arithmetic proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Arithmetic/Proof.lean) and [square-root proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Sqrt/Proof.lean) show every result is a valid datum in the destination. With finite operands and no overflow, nearest-mode error is at most half the selected decimal grid step (the spacing of values near the exact result), provided division has a nonzero denominator and square root a nonnegative input. Directed modes land on the required side of the exact value. The midpoint theorems settle ties like the one we just met, and a representable rational rounds to itself. The inexact flag records a change in numerical value. Choosing a different member of the same cohort leaves it clear.
 
 The exponent you get back is proved too. An exact result like our $1.50$ gets the representation closest to the preferred exponent. An inexact finite one gets the smallest quantum exponent in its cohort, even for an irrational square root, as the [preferred-cohort proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Cohort.lean), the [minimal-quantum proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Projection/Minimal.lean) and their square-root counterparts show.
+
+We also compared decimal addition, subtraction and multiplication with Python's `decimal` module (libmpdec) across all three interchange widths and five rounding directions. Both the reference implementation in Lean and its kernel rewrites agreed with libmpdec on the values and flags in all 150,000 generated cases. [Recorded comparisons](https://github.com/lean-dojo/FloatLib/blob/main/tests/results/differential/ieee2019.csv)
 
 ### What happens with zeros, NaNs and tiny results?
 
@@ -77,13 +79,13 @@ What happens to the quantum if you cube $2.0$ and then take the cube root? Let's
 import FloatLib
 open FloatLib.Floats.Formats.DecimalInterchange
 
-#eval (Arithmetic.powInt Format.decimal32 .nearest 2.0 3).value
+#eval (Arithmetic.pown Format.decimal32 .nearest 2.0 3).value
 -- 8.000
-#eval (Arithmetic.rootN Format.decimal32 .nearest 8.000 3).value
+#eval (Arithmetic.rootn Format.decimal32 .nearest 8.000 3).value
 -- 2.0
 ```
 
-The decimal [algebraic API](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Algebraic/Runtime.lean) adds `square`, `rsqrt` (reciprocal square root), `hypot` ($\sqrt{x^2+y^2}$, named for the hypotenuse), `powInt` and `rootN` (integer powers and $n$th roots), with the same modes and exact intermediates, and an exact result keeps its preferred quantum where the format allows.
+The decimal [algebraic API](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Algebraic/Runtime.lean) adds `square`, `rSqrt` (reciprocal square root), `hypot` ($\sqrt{x^2+y^2}$, named for the hypotenuse), `pown` and `rootn` (integer powers and $n$th roots), with the same modes and exact intermediates, and an exact result keeps its preferred quantum where the format allows.
 
 How far off can a result be? Given finite operands and no reported overflow, the [numerical bounds](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Algebraic/Proof.lean) give a half-grid error bound in the nearest modes and a directed bound in the others, on custom layouts too. Reciprocal square root also needs a positive input, and an integer power with a negative exponent needs a nonzero base. The [general-root bounds](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/DecimalInterchange/Algebraic/Root/Semantics.lean) need a nonzero base and degree (the $n$ of the $n$th root), odd for a negative base, and are measured against a real root that carries a proof of its defining power equation. Other theorems cover validity and exceptional inputs.
 
@@ -117,7 +119,7 @@ Neighbours in decimal can be lopsided. In decimal32 the value just below $1.0000
 
 ## How to scale and take a remainder
 
-`scale` multiplies by $10^n$ by shifting the quantum, rounding once if the result no longer fits. `decimalExponent` reports the exponent of the leading digit. `remainder` uses the nearest-even integer quotient. Seven halves is a tie between three and four, nearest-even picks four, and so the remainder of $7/2$ is $7-4\cdot2=-1$. The remainder is negative because the selected integer quotient is four. FloatLib proves it's exactly representable and at most half the divisor in magnitude, and that ties take the even quotient.
+`scale` multiplies by $10^n$ by shifting the quantum, rounding once if the result no longer fits. `logB` reports the exponent of the leading digit. `remainder` uses the nearest-even integer quotient. Seven halves is a tie between three and four, nearest-even picks four, and so the remainder of $7/2$ is $7-4\cdot2=-1$. The remainder is negative because the selected integer quotient is four. FloatLib proves it's exactly representable and at most half the divisor in magnitude, and that ties take the even quotient.
 
 ## How decimal numbers are stored in bits
 
@@ -127,7 +129,7 @@ The bits themselves may not come back, because some patterns are redundant, othe
 
 ## How to print a decimal number
 
-The bits keep the quantum, and text can too, if you ask. Print $1.20$ as `1.2` and the number survives, but the quantum is gone. That's the twelve dimes again. `Formatting.formatExact` keeps the entire datum, zero signs and NaN metadata included, and reading that text back in any rounding mode provably gives the same datum and its canonical BID and DPD words.
+The bits keep the quantum, and text can too, if you ask. Print $1.20$ as `1.2` and the number survives, but the quantum is gone. `Formatting.formatExact` keeps the entire datum, zero signs and NaN metadata included, and reading that text back in any rounding mode provably gives the same datum and its canonical BID and DPD words.
 
 Ask for two significant digits and $1.25$ rounds to $1.2$ under nearest-even and to $1.3$ under nearest-away. The formatter takes any positive digit count, and the text exponent is unbounded. We prove the requested precision, the rounding direction, the midpoint behaviour and numerical inexactness. We also prove that if you print at least the source precision, the value survives the round trip in any pair of rounding modes, one to print and one to read.
 
@@ -135,4 +137,24 @@ Ask for two significant digits and $1.25$ rounds to $1.2$ under nearest-even and
 
 Decimal $0.1$ can't keep its value in binary, so the converter rounds that exact rational once. Coming back, it starts from the binary value actually stored, so you may not get the original spelling. Conversions between decimal formats and to posits, another kind of number format, also decode exactly and round once. An exact decimal-to-decimal conversion picks the available cohort exponent closest to the source's preferred one. Posit destinations follow their own appended-bit rounding rule, which saturates at the range limits, and encoding to BID or DPD adds no rounding.
 
-Conversion to an integer rounds first and checks the range after, so a small negative fraction can round to unsigned zero instead of being rejected. Each of the five rounding directions has a quiet and an `Exact` variant returning the same integer, and only the second reports inexactness. Exceptional sources (NaNs and infinities) and out-of-range results raise invalid and return integer zero, our choice for an invalid integer result. Integer-to-decimal conversion uses the same decimal projection as arithmetic, with rounding bounds and exception behaviour proved for each destination. Certified decimal `expMinus1` and `logPlus1` are in [Elementary functions](#/chapter/elementary-functions/how-to-use-these-functions-with-decimal-numbers), and return a value only when its rounding has been certified.
+Conversion to an integer rounds first and checks the range after, so a small negative fraction can round to unsigned zero instead of being rejected. Each of the five rounding directions has a quiet and an `Exact` variant returning the same integer, and only the second reports inexactness. Exceptional sources (NaNs and infinities) and out-of-range results raise invalid and return integer zero, our choice for an invalid integer result. Integer-to-decimal conversion uses the same decimal projection as arithmetic, with rounding bounds and exception behaviour proved for each destination. Certified decimal `expm1` and `logp1` are in [Elementary functions](#/chapter/elementary-functions/how-to-use-these-functions-with-decimal-numbers), and return a value only when its rounding has been certified.
+
+## Can Lean's kernel check a decimal computation?
+
+Yes. A statement about concrete decimal data is decided by evaluation, and `float_decide` makes that evaluation cheap. The reference definitions round exact rational numbers, which the kernel reduces in milliseconds. Before the kernel runs, `float_decide` rewrites `add`, `sub`, `mul`, `div`, `sqrt`, `rSqrt`, `hypot`, `pown`, `fma`, the reductions `sum`, `sumAbs`, `sumSquare` and `dot`, `scale`, `logB`, `nextUp`, `nextDown`, `quantize`, the integral roundings, the conversions between formats and to and from integers, the 22 comparisons, the total order, the classification and the minimum and maximum operations to forms that compute on the sign, the coefficient and the exponent as natural numbers. Each rewrite is a theorem that the form equals the operation for every format, rounding direction and datum, so the statement you prove is about the operation itself.
+
+```lean standalone
+import FloatLib
+
+open FloatLib.Floats.Formats.DecimalInterchange
+
+example :
+    (Arithmetic.add Format.decimal64 .nearest 1.20 0.30).value = 1.50 ∧
+      (Arithmetic.div Format.decimal64 .nearest 1e0 3e0).value = 0.3333333333333333 ∧
+      (Arithmetic.quantize Format.decimal64 .nearest 123.45 1e0).value = .finite false 123 0 ∧
+      (Datum.compareQuietLess 1.20 1.3).value = true ∧
+      (Arithmetic.nextUp Format.decimal32 1e0).value = 1.000001 := by
+  float_decide
+```
+
+With the rewrite a decimal64 operation costs a few tenths of a millisecond in the kernel; the table in `benchmarks/results/ieee2019` has the time of every operation. `remainder`, `rootn` and the encodings have no such form yet and are reduced as they are defined.

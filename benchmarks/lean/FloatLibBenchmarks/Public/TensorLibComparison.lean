@@ -9,7 +9,7 @@ public def main (args : List String) : IO Unit := do
   let format ← match args[0]?.getD "" with
     | "binary16" => pure FloatFormat.binary16
     | "bfloat16" => pure FloatFormat.bfloat16
-    | "e4m3fn" => pure FloatFormat.e4m3fn
+    | "e4m3" => pure FloatFormat.e4m3
     | "e5m2" => pure FloatFormat.e5m2
     | _ => throw <| IO.userError "unknown format"
   let (src, dst) ← match args[1]?.getD "" with

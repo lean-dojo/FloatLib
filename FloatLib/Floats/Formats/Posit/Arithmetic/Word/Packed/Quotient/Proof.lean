@@ -1,15 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Quotient.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Quotient.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Direct.Proof
 public import FloatLib.Kernels.FixedWord.Quotient.Restoring128Proof
+
 import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Proof
 
 /-!

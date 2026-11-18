@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -145,7 +145,7 @@ theorem aeval_ofCoeffList (z : ℂ) (xs : List ℤ) :
       rw [List.length_cons, Finset.sum_range_succ', aeval_cons, ih, Finset.mul_sum, add_comm]
       simp only [List.getD_cons_succ, List.getD_cons_zero, pow_zero, mul_one, pow_succ]
       congr 1
-      exact Finset.sum_congr rfl fun k _ => by ring
+      exact Finset.sum_congr rfl fun k _ => by ac_rfl
 
 /-! ### Values -/
 
@@ -163,7 +163,7 @@ theorem laurent_add (xs ys : List ℤ) (c : ℤ) (z : ℂ) :
 /-- `laurent` commutes with scaling. -/
 theorem laurent_smul (a : ℤ) (xs : List ℤ) (c : ℤ) (z : ℂ) :
     laurent (smul a xs) c z = a * laurent xs c z := by
-  simp [laurent, Packed.smul]; ring
+  simp [laurent, Packed.smul, mul_left_comm]
 
 /-- `laurent` takes differences to differences. -/
 theorem laurent_sub (xs ys : List ℤ) (c : ℤ) (z : ℂ) :
@@ -174,7 +174,7 @@ theorem laurent_sub (xs ys : List ℤ) (c : ℤ) (z : ℂ) :
 theorem laurent_conv {z : ℂ} (hz : z ≠ 0) (xs ys : List ℤ) (c d : ℤ) :
     laurent (conv xs ys) (c + d) z = laurent xs c z * laurent ys d z := by
   simp only [laurent, ofCoeffList_conv, map_mul, neg_add, zpow_add₀ hz]
-  ring
+  ac_rfl
 
 /-- A row whose only nonzero entry is `a`, in lane `c`, stands for the constant `a`. -/
 theorem laurent_single {z : ℂ} (hz : z ≠ 0) (c : ℕ) (a : ℤ) :
@@ -194,9 +194,8 @@ theorem norm_aeval_ofCoeffList_le {A : Type*} [NormedRing A] [NormOneClass A] {z
       rw [ofCoeffList_cons, map_add, map_mul, aeval_C, aeval_X, algebraMap_int_eq, eq_intCast,
         l1_cons, Nat.cast_add]
       have hx : ‖(x : A)‖ ≤ x.natAbs := by
-        obtain ⟨m, rfl | rfl⟩ := Int.eq_nat_or_neg x
-        · simpa using Nat.norm_cast_le (α := A) m
-        · simpa using Nat.norm_cast_le (α := A) m
+        simpa only [norm_natAbs, norm_one, mul_one] using
+          Nat.norm_cast_le (α := A) x.natAbs
       calc ‖(x : A) + z * aeval z (ofCoeffList xs)‖ ≤
             ‖(x : A)‖ + ‖z‖ * ‖aeval z (ofCoeffList xs)‖ :=
             (norm_add_le _ _).trans (by gcongr; exact norm_mul_le _ _)
@@ -215,15 +214,16 @@ theorem norm_laurent_le {z : ℂ} (hz : ‖z‖ = 1) (xs : List ℤ) (c : ℤ) :
 /-- The value of one row followed by another, which is centred `xs.length` lanes lower. -/
 theorem laurent_append {z : ℂ} (hz : z ≠ 0) (xs ys : List ℤ) (c : ℤ) :
     laurent (xs ++ ys) c z = laurent xs c z + laurent ys (c - xs.length) z := by
-  rw [laurent, laurent, laurent, aeval_append, show -(c - (xs.length : ℤ)) = -c + xs.length by ring,
+  rw [laurent, laurent, laurent, aeval_append,
+    show -(c - (xs.length : ℤ)) = -c + xs.length by omega,
     zpow_add₀ hz, zpow_natCast]
-  ring
+  rw [mul_add]; ac_rfl
 
 /-- The value of a row that starts with `x`. -/
 theorem laurent_cons {z : ℂ} (hz : z ≠ 0) (x : ℤ) (xs : List ℤ) (c : ℤ) :
     laurent (x :: xs) c z = x * z ^ (-c) + laurent xs (c - 1) z := by
-  rw [laurent, laurent, aeval_cons, show -(c - 1) = -c + 1 by ring, zpow_add₀ hz, zpow_one]
-  ring
+  rw [laurent, laurent, aeval_cons, show -(c - 1) = -c + 1 by omega, zpow_add₀ hz, zpow_one]
+  rw [mul_add]; ac_rfl
 
 /-- Reversing a row substitutes `z⁻¹` for `z` and reflects the centre. -/
 theorem laurent_reverse {z : ℂ} (hz : z ≠ 0) (xs : List ℤ) (c : ℤ) :
@@ -275,13 +275,13 @@ theorem laurent_reverse_conj {z : ℂ} (hz : ‖z‖ = 1) (P : List ℤ) :
     laurent P.reverse ((P.length : ℤ) - 1) z = conj (laurent P 0 z) := by
   have hz0 : z ≠ 0 := by rintro rfl; simp at hz
   rw [laurent_reverse hz0, conj_laurent hz, show (P.length : ℤ) - 1 - ((P.length : ℤ) - 1) = 0 by
-    ring]
+    omega]
 
 private theorem laurent_split {z : ℂ} (hz : z ≠ 0) (A B : List ℤ) (x : ℤ) :
     laurent (A ++ x :: B) A.length z = x + laurent (A ++ 0 :: B) A.length z := by
   rw [laurent_append hz, laurent_append hz, sub_self, laurent_cons hz, laurent_cons hz]
   simp only [neg_zero, zpow_zero, mul_one, Int.cast_zero, zero_add]
-  ring
+  ac_rfl
 
 /-- The real part of a row on the unit circle is at least twice its centre entry minus its `l1`
 norm: the centre counts once, every other entry at most its absolute value. -/
@@ -296,7 +296,7 @@ private theorem re_laurent_ge {z : ℂ} (hz : ‖z‖ = 1) (e : List ℤ) (c : �
     subst hA
     have hx : (A ++ x :: B).getD A.length 0 = x := by simp
     have hl1 : (l1 (A ++ x :: B) : ℤ) = l1 (A ++ 0 :: B) + |x| := by
-      simp [l1, List.map_append, List.sum_append]; ring
+      simp [l1, List.map_append, List.sum_append, add_comm, add_left_comm]
     have hb := norm_laurent_le hz (A ++ 0 :: B) A.length
     have hre := Complex.abs_re_le_norm (laurent (A ++ 0 :: B) A.length z)
     rw [hx, laurent_split hz0, add_re, intCast_re]
@@ -311,8 +311,7 @@ private theorem re_laurent_ge {z : ℂ} (hz : ‖z‖ = 1) (e : List ℤ) (c : �
     have hb := norm_laurent_le hz e c
     have hre := Complex.abs_re_le_norm (laurent e c z)
     rw [hx, Int.cast_zero, mul_zero, zero_sub]
-    have := abs_le.mp hre
-    linarith
+    exact (abs_le.mp (hre.trans hb)).1
 
 /-- The certificate for a nonnegative real part. The pair of rows `(e, f)` stands for
 `e - i f`; if the centre entry `e[c]` is at least the sum of the absolute values of all the other
@@ -387,7 +386,7 @@ theorem laurent_compose {z : ℂ} (hz : z ≠ 0) (a b : List ℤ) :
         refine Finset.sum_congr rfl fun k hk => ?_
         have hk' := Finset.mem_range.mp hk
         rw [show cs.length - (k + 1) = cs.length - 1 - k by omega, pow_succ]
-        ring
+        ac_rfl
       · rw [compose_cons, List.length_cons, Nat.cast_succ, laurent_conv hz, ih2, pow_succ]
 
 /-! ### Packed checks on the circle -/
@@ -437,7 +436,7 @@ theorem laurent_sosCheck {w gt gh n m m' kH t s p q : Nat} {kT kc : ℤ}
     (by rw [length_entries]; exact hm')] at h0
   simp only [sub_re, add_re, mul_re, intCast_re, intCast_im, zero_mul, sub_zero, natCast_re,
     natCast_im, ofReal_re, ofReal_im, mul_zero] at h0 ⊢
-  linarith
+  exact sub_nonneg.mp h0
 
 /-- The norm square of a Gaussian-integer polynomial from one sum-of-squares check: for guarded
 rows `A` and `B` with `((na + nb) 2 ^ g)² < 2 ^ (w - 1)`, a check on the target `|A + i B|²` that
@@ -466,6 +465,6 @@ theorem normSq_sosCheck {w g gt gh na nb n m m' kH A B p q : Nat} {kT kc : ℤ}
   have hp : (0 : ℝ) ≤
       kH * ‖laurent (entries w m p) 0 z + I * laurent (entries w m' q) 0 z‖ ^ 2 := by
     positivity
-  linarith
+  exact hp.trans h
 
 end FloatLib.Numerics.Coeff

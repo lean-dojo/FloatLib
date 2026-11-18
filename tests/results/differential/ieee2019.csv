@@ -1,0 +1,62 @@
+campaign,group,reference,cases,failures
+exhaustive,augmentedAddition,"brute force from the definition on ieee(3,2), 64 encodings",4096,0
+exhaustive,augmentedSubtraction,"brute force from the definition on ieee(3,2), 64 encodings",4096,0
+exhaustive,augmentedMultiplication,"brute force from the definition on ieee(3,2), 64 encodings",4096,0
+exhaustive,magnitude extrema,"brute force from the definition on ieee(3,2), 64 encodings",4096,0
+exhaustive,sumAbs and sumSquare,"brute force from the definition on ieee(3,2), 64 encodings",4096,0
+exhaustive,scaledProd,"brute force from the definition on ieee(3,2), 64 encodings",4096,0
+exhaustive,"getPayload, setPayload, setPayloadSignaling","brute force from the definition on ieee(4,5), 1024 encodings",1024,0
+differential,aug add,"exact rational arithmetic (Python fractions), roundTiesTowardZero by definition",49089,0
+differential,aug mul,"exact rational arithmetic (Python fractions), roundTiesTowardZero by definition",50187,0
+differential,aug sub,"exact rational arithmetic (Python fractions), roundTiesTowardZero by definition",48661,0
+differential,dec add,"Python decimal (libmpdec), specification and kernel path",50015,0
+differential,dec mul,"Python decimal (libmpdec), specification and kernel path",50163,0
+differential,dec sub,"Python decimal (libmpdec), specification and kernel path",49822,0
+differential,ext max,"Python decimal (libmpdec) max, min, max_mag, min_mag",37702,0
+differential,ext maxmag,"Python decimal (libmpdec) max, min, max_mag, min_mag",37321,0
+differential,ext min,"Python decimal (libmpdec) max, min, max_mag, min_mag",37539,0
+differential,ext minmag,"Python decimal (libmpdec) max, min, max_mag, min_mag",37438,0
+differential,pay get,"glibc 2.34 getpayload, setpayload, setpayloadsig",300000,0
+differential,pay set,"glibc 2.34 getpayload, setpayload, setpayloadsig",300000,0
+differential,pay setsig,"glibc 2.34 getpayload, setpayload, setpayloadsig",300000,0
+differential,red scaledprod,"exact rational arithmetic (Python fractions), math.fsum for sumAbs",50000,0
+differential,red sumabs,"exact rational arithmetic (Python fractions), math.fsum for sumAbs",50000,0
+differential,red sumsq,"exact rational arithmetic (Python fractions), math.fsum for sumAbs",50000,0
+exhaustive,"formatOf addition, subtraction, multiplication, division with one format","add, sub, mul, div, fma of one format on ieee(3,2), six directions",24576,0
+exhaustive,formatOf fusedMultiplyAdd with one format,"add, sub, mul, div, fma of one format on ieee(3,2), six directions",221184,0
+exhaustive,"formatOf addition, subtraction, multiplication, division across formats","rules of the standard and Model.ofRat of the exact rational; operands ieee(3,2) and ieee(4,3), three destinations",98304,0
+exhaustive,formatOf fusedMultiplyAdd across formats,"rules of the standard and Model.ofRat of the exact rational; operands ieee(3,2) and ieee(4,3), three destinations",884736,0
+differential,fun acos,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun acosPi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun acosh,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun asin,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun asinPi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun asinh,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun atan,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun atan2,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",20930,0
+differential,fun atan2Pi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",20930,0
+differential,fun atanPi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun atanh,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun compound,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",4610,0
+differential,fun cos,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1733,0
+differential,fun cosPi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun cosh,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun exp10,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun exp10m1,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun exp2,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun exp2m1,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun log10,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun log10p1,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun log2,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun log2p1,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun powr,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",20930,0
+differential,fun sin,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1733,0
+differential,fun sinPi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun sinh,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun tan,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1733,0
+differential,fun tanPi,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,fun tanh,"mpmath 1.4.1 at high precision, rounded with exact rationals in five directions; small formats exhaustively, binary16, binary32, binary64 pseudo-random",1730,0
+differential,dred dot,"Python decimal (libmpdec): exact sum in a context of 26,000 digits, rounded once",37646,0
+differential,dred sum,"Python decimal (libmpdec): exact sum in a context of 26,000 digits, rounded once",37451,0
+differential,dred sumabs,"Python decimal (libmpdec): exact sum in a context of 26,000 digits, rounded once",37443,0
+differential,dred sumsq,"Python decimal (libmpdec): exact sum in a context of 26,000 digits, rounded once",37460,0

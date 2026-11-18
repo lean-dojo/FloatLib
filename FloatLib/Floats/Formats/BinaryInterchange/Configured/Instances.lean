@@ -1,18 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
-public import FloatLib.Floats.ExecFloat.Comparison
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Family.Proof
+public import FloatLib.Kernels.Execution.Instances -- shake: keep
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Formatting
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
 
 /-!
 # Ordinary Lean instances for configured binary values
@@ -192,9 +190,9 @@ theorem lt_iff_compare_eq_lt :
   rw [lt_iff_compareLess, FloatLib.Floats.ExecFloat.compareLess, compare_eq_compare_toModel]
   exact beq_iff_eq
 
-/-- `<` on configured values is `Model.lt` on their models. -/
+/-- `<` on configured values is `Model.Lt` on their models. -/
 theorem lt_iff_lt_toModel :
-    left < right ↔ Model.lt (toModel left) (toModel right) :=
+    left < right ↔ Model.Lt (toModel left) (toModel right) :=
   lt_iff_compare_eq_lt
 
 /-- `≤` holds if and only if the model comparison returns `some .lt` or `some .eq`. -/
@@ -207,10 +205,10 @@ theorem le_iff_compare_eq_lt_or_eq :
   generalize Model.compare (toModel left) (toModel right) = order
   rcases order with _ | (_ | _ | _) <;> simp
 
-/-- `≤` on configured values is `Model.le` on their models. -/
+/-- `≤` on configured values is `Model.Le` on their models. -/
 theorem le_iff_le_toModel :
-    left ≤ right ↔ Model.le (toModel left) (toModel right) := by
-  rw [le_iff_compare_eq_lt_or_eq, Model.le]
+    left ≤ right ↔ Model.Le (toModel left) (toModel right) := by
+  rw [le_iff_compare_eq_lt_or_eq, Model.Le]
   generalize Model.compare (toModel left) (toModel right) = order
   rcases order with _ | (_ | _ | _) <;> simp
 

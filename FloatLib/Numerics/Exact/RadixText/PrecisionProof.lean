@@ -1,11 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Numerics.Exact.RadixText.Precision
+
 import Mathlib.Tactic.Positivity.Finset
 
 /-!
@@ -67,7 +68,8 @@ private theorem scaled_eq (radix : Nat) (hr : (0 : ℚ) < radix)
   rw [he, zpow_sub₀ hr.ne', zpow_add₀ hr.ne', zpow_natCast, zpow_natCast]
   field_simp
 
-/-- The coefficient before rounding is strictly smaller than the radix to the requested precision. -/
+/-- The coefficient before rounding is strictly smaller than the radix to the requested
+precision. -/
 theorem scaled_lt (radix : Nat) (hradix : 1 < radix)
     (coefficient : Nat) (quantum : Int) (digits : ℕ+) :
     (coefficient : ℚ) * (radix : ℚ) ^ quantum /
@@ -117,7 +119,8 @@ theorem significant_coefficient_bounds (radix : Nat) (hradix : 1 < radix)
   have hx : 0 ≤ x := div_nonneg
     (mul_nonneg (Nat.cast_nonneg _) (zpow_pos hr _).le) (zpow_pos hr _).le
   have hu : roundMagnitude negative x ≤ radix ^ (digits : Nat) :=
-    hupper negative x _ hx (by exact_mod_cast (scaled_lt radix hradix coefficient quantum digits).le)
+    hupper negative x _ hx (by exact_mod_cast (scaled_lt radix hradix coefficient quantum
+      digits).le)
   have hl : radix ^ ((digits : Nat) - 1) ≤ roundMagnitude negative x :=
     (Nat.le_floor (by exact_mod_cast scaled_lower radix hradix coefficient quantum digits hc)).trans
       (hlower negative x)

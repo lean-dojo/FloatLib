@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,11 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.CheckedSqrt.Runtime
-public import FloatLib.Kernels.FixedWord.Difference.Proof
-public import FloatLib.Kernels.FixedWord.Product.Proof
 public import FloatLib.Kernels.FixedWord.RestoringSqrt.Proof
-public import FloatLib.Kernels.FixedWord.LimbRound.Proof
-public import Mathlib.Data.Nat.Sqrt
 
 /-!
 # Correctness of checked square roots
@@ -77,7 +73,8 @@ theorem checkRoot?_spec {radicand : UInt128} {guess : UInt64}
               hzero
           · exact h0
         have hprev : (guess - 1).toNat = guess.toNat - 1 := by
-          rw [UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr (by simp; omega))]
+          rw [UInt64.toNat_sub_of_le _ _ (UInt64.le_iff_toNat_le.mpr (by
+            simp only [UInt64.reduceToNat]; omega))]
           simp
         split at h
         · simp at h

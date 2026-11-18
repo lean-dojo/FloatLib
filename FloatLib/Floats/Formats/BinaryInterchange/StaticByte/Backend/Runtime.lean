@@ -5,8 +5,8 @@ Authors: Robert Weller
 -/
 module
 
+public import FloatLib.Kernels.Selection.Metadata
 public import FloatLib.Floats.Formats.BinaryInterchange.StaticByte.Core.Runtime
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Metadata
 
 /-!
 # Default static-byte backend runtime

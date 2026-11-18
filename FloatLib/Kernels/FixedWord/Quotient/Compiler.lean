@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Kernels.FixedWord.Quotient.Runtime
+
 import FloatLib.Kernels.FixedWord.Quotient.Proof
 
 /-!
@@ -60,7 +61,8 @@ was imported.
     roundScaledQuotient = Internal.roundScaledQuotient := by
   funext num den shift
   have hloop : roundQuotientState den
-      (quotientStepsWords den shift (num / den) (num % den)) = roundScaledQuotient num den shift := by
+      (quotientStepsWords den shift (num / den) (num % den)) = roundScaledQuotient num den
+        shift := by
     simp only [roundScaledQuotient, quotientStepsWords_eq]
   unfold Internal.roundScaledQuotient
   split

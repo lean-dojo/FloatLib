@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Basic
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.RoundingKernel.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
 
 /-!
@@ -28,7 +27,8 @@ namespace Model
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 
-private theorem toReal_posMaxFinite_ieee
+/-- The largest finite IEEE value has an all-ones significand at its top exponent. -/
+theorem toReal_posMaxFinite_ieee
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
     toReal (posMaxFinite fmt) =
       ((pow2 (fmt.fracWidth + 1) - 1 : Nat) : ℝ) *

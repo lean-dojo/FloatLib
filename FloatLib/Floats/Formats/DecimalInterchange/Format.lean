@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -96,8 +96,11 @@ class HasQuantumZero (f : Format) : Prop where
   /-- Quantum zero is not above the largest representable quantum. -/
   bias_lt : f.bias < (f.exponentBound : Int)
 
+/-- Quantum zero is representable in decimal32. -/
 instance : decimal32.HasQuantumZero := ⟨by decide, by decide⟩
+/-- Quantum zero is representable in decimal64. -/
 instance : decimal64.HasQuantumZero := ⟨by decide, by decide⟩
+/-- Quantum zero is representable in decimal128. -/
 instance : decimal128.HasQuantumZero := ⟨by decide, by decide⟩
 
 /-- The coefficient bound is ten to the precision, so a finite coefficient has at most `precision`
@@ -109,8 +112,8 @@ theorem coefficientBound_eq (f : Format) : f.coefficientBound = 10 ^ f.precision
 /-- The sign bit is the most significant bit of the word: its place value is half of
 `2 ^ bitWidth`. -/
 theorem twice_signBase (f : Format) : 2 * f.signBase = 2 ^ f.bitWidth := by
-  simp [signBase, exponentBase, trailingBase, bitWidth, Nat.pow_add, Nat.pow_mul,
-    Nat.mul_assoc]
+  simp only [signBase, exponentBase, trailingBase, Nat.mul_assoc, bitWidth, Nat.pow_add,
+    Nat.reducePow, Nat.pow_mul]
   omega
 
 /-- The trailing-field radix is positive. -/

@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Trailing
 public import FloatLib.Floats.Formats.DecimalInterchange.DPD.DecletProof
+public import FloatLib.Floats.Formats.DecimalInterchange.DPD.Trailing
 
 /-!
 # DPD trailing-field bounds and round trips

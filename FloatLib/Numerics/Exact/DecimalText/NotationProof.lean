@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ module
 
 public import FloatLib.Numerics.Exact.DecimalText.Notation
 public import FloatLib.Numerics.Exact.DecimalText.Proof
+public import FloatLib.Numerics.Exact.DecimalText.Grammar
 
 /-!
 # Preservation laws for fixed and scientific decimal notation
@@ -29,52 +30,11 @@ their fuel is enough. A trimmed record with a negative exponent has no trailing 
 
 namespace FloatLib.Numerics.DecimalText
 
-private theorem scanDigits_append (front suffix : List Char)
-    (hdigits : ∀ c ∈ front, ∃ digit, digitValue? c = some digit) (accumulator : Nat) :
-    RadixText.scanDigits (front ++ suffix) accumulator 10 digitValue? =
-      let result := RadixText.scanDigits suffix
-        (RadixText.scanDigits front accumulator 10 digitValue?).1 10 digitValue?
-      (result.1, front.length + result.2.1, result.2.2) := by
-  induction front generalizing accumulator with
-  | nil => simp [RadixText.scanDigits]
-  | cons c front ih =>
-      obtain ⟨digit, hdigit⟩ := hdigits c (by simp)
-      simp only [List.cons_append, RadixText.scanDigits, hdigit]
-      rw [ih (fun c hc => hdigits c (by simp [hc]))]
-      simp [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
-
-private theorem scanDigits_digits (digits tail : List Char)
-    (hdigits : ∀ c ∈ digits, ∃ digit, digitValue? c = some digit)
-    (htail : ∀ c ∈ tail.head?, digitValue? c = none) (accumulator : Nat) :
-    RadixText.scanDigits (digits ++ tail) accumulator 10 digitValue? =
-      ((RadixText.scanDigits digits accumulator 10 digitValue?).1, digits.length, tail) := by
-  rw [scanDigits_append digits tail hdigits,
-    RadixText.scanDigits_stop 10 digitValue? tail htail]
-  simp
-
 private theorem naturalDigits_are_digits (coefficient : Nat) :
     ∀ c ∈ RadixText.naturalDigits coefficient 10, ∃ digit, digitValue? c = some digit := by
   intro c hc
   obtain ⟨digit, _, hdigit⟩ := digitValue?_mem_naturalDigits hc
   exact ⟨digit, hdigit⟩
-
-/-- An exponent suffix accepted by the decimal scanner is empty or starts with `e` or `E`. -/
-private theorem head_digitValue_eq_none_of_parseExponent {tail : List Char} {exponent : Int}
-    (hexponent : parseExponent tail = some exponent) :
-    ∀ c ∈ tail.head?, digitValue? c = none := by
-  intro c hc
-  cases tail with
-  | nil => simp at hc
-  | cons d rest =>
-      simp only [List.head?_cons, Option.mem_def, Option.some.injEq] at hc
-      subst hc
-      by_cases he : d = 'e'
-      · subst he
-        decide
-      by_cases hE : d = 'E'
-      · subst hE
-        decide
-      simp [parseExponent, he, hE] at hexponent
 
 /-- Inserting a point preserves the coefficient and subtracts the fractional digit count.
 The suffix may be empty or an exponent accepted by the decimal scanner. -/
@@ -90,29 +50,17 @@ theorem parseMagnitude_pointCharacters (whole fraction tail : List Char) (expone
     fun c hc => hdigits c (List.mem_append_left _ hc)
   have hf : ∀ c ∈ fraction, ∃ digit, digitValue? c = some digit :=
     fun c hc => hdigits c (List.mem_append_right _ hc)
-  have hcount : whole.length ≠ 0 := by simpa using hwhole
-  have htail := head_digitValue_eq_none_of_parseExponent hexponent
+  have htail := parseExponent_head tail (by simp [hexponent])
   by_cases hnil : fraction = []
   · subst fraction
     simp only [pointCharacters, ite_true, List.append_nil, List.length_nil,
       Nat.cast_zero, sub_zero]
-    rw [RadixText.parseMagnitude, scanDigits_digits whole tail hw htail]
-    cases tail with
-    | nil => simp_all
-    | cons c rest =>
-        have hc : c ≠ '.' := by
-          rintro rfl
-          simp [parseExponent] at hexponent
-        simp [hc, hcount, hexponent]
+    exact RadixText.parseMagnitude_digits 10 digitValue? parseExponent 1
+      whole tail exponent hwhole hw htail hexponent
   · simp only [pointCharacters, ite_eq_right hnil, List.append_assoc, List.cons_append]
-    rw [RadixText.parseMagnitude,
-      scanDigits_digits whole ('.' :: (fraction ++ tail)) hw (by simp [digitValue?])]
-    simp only
-    rw [scanDigits_digits fraction tail hf htail]
-    have htotal : whole.length + fraction.length ≠ 0 := by omega
-    simp only [htotal, ite_false, hexponent, mul_one]
-    rw [scanDigits_append whole fraction hw]
-    rfl
+    simpa only [mul_one] using RadixText.parseMagnitude_point 10 digitValue? parseExponent 1
+      whole fraction tail exponent (by decide) (by simp [hwhole]) hw hf
+      (fun c hc => (htail c hc).1) hexponent
 
 private theorem splitSign_digits (whole rest : List Char) (hwhole : whole ≠ [])
     (hdigits : ∀ c ∈ whole, ∃ digit, digitValue? c = some digit) :
@@ -120,7 +68,6 @@ private theorem splitSign_digits (whole rest : List Char) (hwhole : whole ≠ []
   cases whole with
   | nil => contradiction
   | cons c whole =>
-      obtain ⟨digit, hdigit⟩ := hdigits c (by simp)
       simp only [List.cons_append, splitSign]
       split <;> simp_all [digitValue?]
 
@@ -221,7 +168,6 @@ private theorem fractionalCharacters_parts (coefficient places : Nat) :
       fraction.length = places := by
   let digits := RadixText.naturalDigits coefficient 10
   have hdigits := naturalDigits_are_digits coefficient
-  have hlength : digits.length ≠ 0 := by simp [digits]
   by_cases hplaces : places < digits.length
   · refine ⟨digits.take (digits.length - places), digits.drop (digits.length - places),
       by simp [fractionalCharacters, digits, hplaces], ?_, ?_, ?_, ?_⟩
@@ -375,7 +321,9 @@ private theorem Decimal.toRat_divTen_of_mod_eq_zero (value : Decimal)
   rw [hdiv]
   have hpow : (10 : Rat) ^ (exponent + 1) = (10 : Rat) ^ exponent * 10 := by
     rw [zpow_add_one₀ (by norm_num)]
-  cases negative <;> simp [Decimal.toRat, hpow] <;> ring
+  cases negative <;>
+    simp only [toRat, Bool.false_eq_true, ↓reduceIte, hpow, Nat.cast_mul, Nat.cast_ofNat, neg_mul,
+    neg_inj] <;> ring
 
 /-- Removing trailing zeros with any amount of fuel preserves the exact rational value. -/
 theorem Decimal.trimTrailingZerosLoop_toRat (fuel : Nat) (value : Decimal) :

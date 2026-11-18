@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -32,7 +32,7 @@ The standard code interval is searched logarithmically. Squaring a decoded candi
 does not introduce a host floating-point or real-number oracle.
 -/
 @[inline] def lowerCode (format : Format) (radicand : FloatLib.Numerics.Dyadic) : Nat :=
-  Model.lowerCodeByBisection
+  Numerics.bisect
     (fun code =>
       let value := DyadicRounding.nonnegativeDyadicAt format code
       (value.mul value).isLessOrEqual radicand)

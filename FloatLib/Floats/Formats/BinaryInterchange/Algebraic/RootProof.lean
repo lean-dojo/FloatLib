@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.SqrtProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.PowerProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.SqrtProof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 
 /-!
@@ -19,7 +19,7 @@ magnitude before rounding. Negative odd roots restore the sign after choosing th
 Subnormal outputs and exact midpoint ties are included, and IEEE overflow is the one case left out.
 
 The real numbers have neither signed zero nor infinity, so the zero policies get their own
-theorems. In particular `rsqrt(-0)` has the negative overflow sign.
+theorems. In particular `rSqrt(-0)` has the negative overflow sign.
 -/
 
 @[expose] public section
@@ -27,32 +27,32 @@ theorems. In particular `rsqrt(-0)` has the negative overflow sign.
 namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 
 /-- Reciprocal square root preserves the sign of a zero pole, including negative zero. -/
-theorem rsqrt_of_isZero {fmt : FloatFormat} (value : Model fmt)
+theorem rSqrt_of_isZero {fmt : FloatFormat} (value : Model fmt)
     (hzero : isZero value = true) :
-    rsqrt value = nativeOverflow fmt (signBit value) := by
+    rSqrt value = nativeOverflow fmt (signBit value) := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true value hzero
-  simp [rsqrt, chooseNaN1_none_of_isFinite value hfinite, hzero]
+  simp [rSqrt, chooseNaN1_none_of_isFinite value hfinite, hzero]
 
 /-- A NaN input is quieted for every degree, keeping its payload. -/
-theorem rootN_of_isNaN {fmt : FloatFormat} (value : Model fmt) (degree : Int)
+theorem rootn_of_isNaN {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hnan : isNaN value = true) :
-    rootN value degree = quietNaN value := by
-  simp [rootN, chooseNaN1, hnan]
+    rootn value degree = quietNaN value := by
+  simp [rootn, chooseNaN1, hnan]
 
 /-- Degree zero is invalid for every other input, including infinities and signed zeros. -/
-@[simp] theorem rootN_zero {fmt : FloatFormat} (value : Model fmt)
+@[simp] theorem rootn_zero {fmt : FloatFormat} (value : Model fmt)
     (hnan : isNaN value = false) :
-    rootN value 0 = invalidResult fmt := by
-  simp [rootN, chooseNaN1, hnan]
+    rootn value 0 = invalidResult fmt := by
+  simp [rootn, chooseNaN1, hnan]
 
 /-- Odd roots retain the sign of zero, while even roots select a positive zero or positive pole. -/
-theorem rootN_of_isZero {fmt : FloatFormat} (value : Model fmt) (degree : Int)
+theorem rootn_of_isZero {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hzero : isZero value = true) (hdegree : degree ≠ 0) :
-    rootN value degree =
+    rootn value degree =
       if degree < 0 then nativeOverflow fmt (signBit value && degree % 2 != 0)
       else zero fmt (signBit value && degree % 2 != 0) := by
   have hfinite := isFinite_eq_true_of_isZero_eq_true value hzero
-  simp [rootN, hdegree, chooseNaN1_none_of_isFinite value hfinite, hzero]
+  simp [rootn, hdegree, chooseNaN1_none_of_isFinite value hfinite, hzero]
 
 /--
 Reciprocal square root of a finite operand is one nearest-even rounding of `1 / sqrt x`. A zero
@@ -60,19 +60,19 @@ operand overflows and a negative nonzero operand is invalid, so the finite-resul
 only positive operands. The reciprocal radicand is exact, so an intermediate rounded square root
 cannot affect the result.
 -/
-theorem toReal_rsqrt_eq_roundAt {fmt : FloatFormat} (value : Model fmt)
+theorem toReal_rSqrt_eq_roundAt {fmt : FloatFormat} (value : Model fmt)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)
-    (hfinite : isFinite (rsqrt value) = true) :
-    toReal (rsqrt value) = roundAt fmt (Real.sqrt (toReal value))⁻¹ := by
+    (hfinite : isFinite (rSqrt value) = true) :
+    toReal (rSqrt value) = roundAt fmt (Real.sqrt (toReal value))⁻¹ := by
   have hzero : isZero value = false := by
     cases h : isZero value
     · rfl
-    · simp [rsqrt_of_isZero value h,
+    · simp [rSqrt_of_isZero value h,
         isFinite_nativeOverflow hfmt] at hfinite
   have hsign : signBit value = false := by
     cases h : signBit value
     · rfl
-    · simp [rsqrt, chooseNaN1_none_of_isFinite value hvalue, hzero, h,
+    · simp [rSqrt, chooseNaN1_none_of_isFinite value hvalue, hzero, h,
         isFinite_invalidResult hfmt] at hfinite
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hvalue
   have hdsign : d.negative = false := (sign_eq_signBit_of_toDyadic?_some hd).trans hsign
@@ -84,9 +84,9 @@ theorem toReal_rsqrt_eq_roundAt {fmt : FloatFormat} (value : Model fmt)
         ite_false, one_mul]
       positivity
     exact_mod_cast hreal
-  have heq : rsqrt value = AlgebraicRounding.sqrtRat fmt false d.toRat⁻¹ := by
-    simp [rsqrt, chooseNaN1_none_of_isFinite value hvalue, hzero, hsign,
-      isInf_eq_false_of_toDyadic?_some hd, hq]
+  have heq : rSqrt value = AlgebraicRounding.sqrtRat fmt false d.toRat⁻¹ := by
+    simp [rSqrt, chooseNaN1_none_of_isFinite value hvalue, hzero, hsign,
+      isInfinite_eq_false_of_toDyadic?_some hd, hq]
   rw [heq] at hfinite ⊢
   rw [AlgebraicRounding.toReal_sqrtRat_eq_roundAt fmt hfmt false _ (inv_nonneg.mpr hrad)
     hfinite, Algebraic.toReal_of_toRat?_eq_some hq]
@@ -118,18 +118,18 @@ to a positive degree gives a zero, matching the zero real root. The absolute val
 select the negative odd real branch, so the statement does not rely on the convention for real
 exponentiation of negative bases.
 -/
-theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree : Int)
+theorem toReal_rootn_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree : Int)
     (hfmt : fmt.isIEEE = true) (hvalue : isFinite value = true)
-    (hfinite : isFinite (rootN value degree) = true) :
-    toReal (rootN value degree) =
+    (hfinite : isFinite (rootn value degree) = true) :
+    toReal (rootn value degree) =
       roundAt fmt (if signBit value then -(|toReal value| ^ (degree : ℝ)⁻¹)
         else |toReal value| ^ (degree : ℝ)⁻¹) := by
   have hdegree : degree ≠ 0 := by
     rintro rfl
-    simp [rootN_zero value (isNaN_eq_false_of_isFinite_eq_true value hvalue),
+    simp [rootn_zero value (isNaN_eq_false_of_isFinite_eq_true value hvalue),
       isFinite_invalidResult hfmt] at hfinite
   by_cases hzero : isZero value = true
-  · rw [rootN_of_isZero value degree hzero hdegree] at hfinite ⊢
+  · rw [rootn_of_isZero value degree hzero hdegree] at hfinite ⊢
     rcases lt_or_gt_of_ne hdegree with hnegative | hpositive
     · simp [hnegative, isFinite_nativeOverflow hfmt] at hfinite
     · have hexponent : (degree : ℝ)⁻¹ ≠ 0 := inv_ne_zero (by exact_mod_cast hdegree)
@@ -141,7 +141,7 @@ theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree 
     · exact Or.inl hsign
     by_cases hparity : degree % 2 = 0
     · rw [Bool.not_eq_false] at hsign
-      simp [rootN, hdegree, chooseNaN1_none_of_isFinite value hvalue, hzero, hsign, hparity,
+      simp [rootn, hdegree, chooseNaN1_none_of_isFinite value hvalue, hzero, hsign, hparity,
         isFinite_invalidResult hfmt] at hfinite
     · exact Or.inr hparity
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hvalue
@@ -158,12 +158,12 @@ theorem toReal_rootN_eq_roundAt {fmt : FloatFormat} (value : Model fmt) (degree 
   have hrad : 0 ≤ radicand := by
     dsimp [radicand]
     split_ifs <;> positivity
-  have heq : rootN value degree =
+  have heq : rootn value degree =
       AlgebraicRounding.root fmt (signBit value) radicand degree.natAbs := by
     calc
       _ = AlgebraicRounding.rootWithSqrt fmt (signBit value) radicand degree.natAbs := by
-        simp [rootN, hdegree, chooseNaN1_none_of_isFinite value hvalue, hzero, hbad,
-          isInf_eq_false_of_toDyadic?_some hd, hq, hsign, radicand]
+        simp [rootn, hdegree, chooseNaN1_none_of_isFinite value hvalue, hzero, hbad,
+          isInfinite_eq_false_of_toDyadic?_some hd, hq, hsign, radicand]
       _ = _ := AlgebraicRounding.rootWithSqrt_eq_root fmt _ _ _
   rw [heq] at hfinite ⊢
   rw [AlgebraicRounding.toReal_root_eq_roundAt_rpow fmt hfmt _ _ _

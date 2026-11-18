@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -30,9 +30,10 @@ its own field classification.
 ## Reference
 
 * IEEE Working Group P3109, *Interim Report on Arithmetic Formats for Machine Learning*,
-  version 4.0.3 (1 September 2026), Sections 3.1 and 4.7.2, repository revision `34f5964`,
-  <https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308>.
-  `tests/oracles/format-standards.sh` compares decoding with the published value tables.
+  version 4.1 (14 September 2026), Sections 3.1 and 4.7.2, repository revision `2d45cf2`,
+  <https://github.com/P3109/Public/tree/2d45cf2fe0314d32251f5439d9d3ed078f93fbb9>.
+  This is an unapproved draft. `tests/EXTERNAL.md` records the comparisons with v4.1, and
+  `tests/oracles/format-standards.sh` compares the decoder with the published value tables.
 -/
 
 @[expose] public section
@@ -41,15 +42,25 @@ open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109
 
-/-- Whether a P3109 format represents negative finite values. -/
+/-- Whether a P3109 format represents negative finite values.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 inductive Signedness where
+  /-- The format has negative values. -/
   | signed
+  /-- The format has no negative values. -/
   | unsigned
   deriving DecidableEq, Repr
 
-/-- Whether a P3109 format represents infinities as well as finite values and NaN. -/
+/-- Whether a P3109 format represents infinities as well as finite values and NaN.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 inductive Domain where
+  /-- Finite values and NaN only. -/
   | finite
+  /-- Finite values, NaN and the infinities. -/
   | extended
   deriving DecidableEq, Repr
 
@@ -59,6 +70,8 @@ A validated descriptor for the complete four-parameter P3109 format family.
 One value of this structure selects a profile, with no separate Lean type or decoder for each
 bit width. The proof fields rule out the report's invalid `(K, P, signedness)` combinations, and
 only those, before any value can be constructed.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
 -/
 structure Format where
   /-- Total number of encoded bits (`K` in the report). -/
@@ -69,9 +82,15 @@ structure Format where
   signedness : Signedness
   /-- Finite or extended datum set. -/
   domain : Domain
-  /-- P3109 requires more than two encoded bits. -/
+  /-- P3109 requires more than two encoded bits.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
   bitWidth_gt_two : 2 < bitWidth
-  /-- P3109 requires positive precision. -/
+  /-- P3109 requires positive precision.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
   precision_pos : 0 < precision
   /-- Signed formats require `P < K`, and unsigned formats allow `P = K`. -/
   precision_bound :
@@ -96,7 +115,10 @@ Unsigned formats gain the bit that a signed format uses to divide positive and n
   | .signed => format.bitWidth - format.precision
   | .unsigned => format.bitWidth - format.precision + 1
 
-/-- P3109 exponent bias, derived from the exponent-field width. -/
+/-- P3109 exponent bias, derived from the exponent-field width.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def exponentBias (format : Format) : Nat :=
   2 ^ (format.exponentBits - 1)
 
@@ -132,7 +154,10 @@ Unsigned formats gain the bit that a signed format uses to divide positive and n
 @[inline] def negativeInfinityBits (format : Format) : Nat :=
   format.modulus - 1
 
-/-- Construct a signed P3109 descriptor. -/
+/-- Construct a signed P3109 descriptor.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def signed
     (bitWidth precision : Nat)
     (domain : Domain)
@@ -148,7 +173,10 @@ Unsigned formats gain the bit that a signed format uses to divide positive and n
   precision_pos := precision_pos
   precision_bound := precision_lt_bitWidth
 
-/-- Construct an unsigned P3109 descriptor. -/
+/-- Construct an unsigned P3109 descriptor.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def unsigned
     (bitWidth precision : Nat)
     (domain : Domain)
@@ -170,6 +198,8 @@ Validate parameters supplied at runtime and construct the corresponding P3109 de
 Use `signed` or `unsigned` when the parameters are fixed in Lean code and their constraints can
 be discharged at elaboration time. This checked constructor is for parsers, generated format
 matrices, and other callers whose parameters are ordinary runtime values.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
 -/
 @[inline] def ofParameters?
     (bitWidth precision : Nat)
@@ -230,6 +260,11 @@ formula.
             1 - Int.ofNat format.precision
       }
 
+/-- Exponent of the gap after a positive code; zero uses the minimum quantum (§4.7.2). -/
+@[inline] def decodeQuantum (format : Format) (bits : Nat) : Int :=
+  if bits = 0 then format.minimumQuantumExponent
+  else (format.decodePositiveFinite bits).exponent
+
 /--
 Decode an in-range natural-number code point according to P3109 Section 4.7.2.
 
@@ -270,7 +305,10 @@ public `decode` and `ExecFloat.P3109.ofNatBits` functions do.
       else
         .finite (format.decodePositiveFinite bits)
 
-/-- Exact P3109 denotation of one width-bounded code point. -/
+/-- Exact P3109 denotation of one width-bounded code point.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def decode (format : Format) (code : BitVec format.bitWidth) :
     NumericalValue Numerics.Dyadic :=
   format.decodeNat code.toNat
@@ -282,12 +320,17 @@ The definition is irreducible. `#eval` fully reduces the type of a value while i
 `ToExpr` instance, and unfolding this codebook would expand the whole decoder of a concrete
 descriptor and exhaust the recursion limit. Proofs use `codebook_denote`, or unfold it with
 `unfold Format.codebook`. Compiled code still inlines it, so a decode reads no codebook record.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
 -/
 @[inline, irreducible] def codebook (format : Format) :
     Formats.Codebook format.bitWidth Numerics.Dyadic where
   denote := format.decode
 
-/-- P3109 as a family-independent exact numerical system. -/
+/-- P3109 as a family-independent exact numerical system.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 def numericalSystem (format : Format) : NumericalSystem :=
   format.codebook.numericalSystem
 
@@ -309,11 +352,17 @@ namespace P3109
 
 variable {format : Formats.P3109.Format}
 
-/-- Construct P3109's unique zero without exposing its stored word. -/
+/-- Construct P3109's unique zero without exposing its stored word.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def zero : ExecFloat.P3109 format :=
   ExecFloat.Codebook.ofNatBits 0
 
-/-- Construct P3109's sole NaN without exposing its descriptor-dependent code point. -/
+/-- Construct P3109's sole NaN without exposing its descriptor-dependent code point.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def nan : ExecFloat.P3109 format :=
   ExecFloat.Codebook.ofNatBits format.nanBits
 
@@ -345,6 +394,8 @@ Construct a finite P3109 value from named representation fields.
 rejects a negative request for an unsigned format and every field combination reserved for NaN or
 infinity. It is the structured alternative to `ofNatBits` when an application already has decoded
 P3109 fields. It does no numerical rounding.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
 -/
 @[inline] def ofFiniteFields? (negative : Bool)
     (biasedExponent trailing : Nat) : Option (ExecFloat.P3109 format) :=
@@ -365,15 +416,23 @@ P3109 fields. It does no numerical rounding.
 Construct a P3109 value from the low `K` bits of a serialized word.
 
 Prefer the named semantic constructors or `ofFiniteFields?` in ordinary code.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
 -/
 @[inline] def ofNatBits (bits : Nat) : ExecFloat.P3109 format :=
   ExecFloat.Codebook.ofNatBits bits
 
-/-- Read a P3109 value as its natural-number code point. -/
+/-- Read a P3109 value as its natural-number code point.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def toNatBits (value : ExecFloat.P3109 format) : Nat :=
   ExecFloat.Codebook.toNatBits value
 
-/-- Decode a P3109 value to its exact finite, infinity, or NaN semantics. -/
+/-- Decode a P3109 value to its exact finite, infinity, or NaN semantics.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
+-/
 @[inline] def decode (value : ExecFloat.P3109 format) :
     NumericalValue Numerics.Dyadic :=
   ExecFloat.Codebook.decode value
@@ -381,9 +440,25 @@ Prefer the named semantic constructors or `ofFiniteFields?` in ordinary code.
 /--
 Exact rational value of a finite P3109 value, or `none` for NaN and either infinity, as in
 `(.ofRat (3 / 16) : ExecFloat.P3109 .binary8p4se).toRat?`.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.7.2.
 -/
 @[inline] def toRat? (value : ExecFloat.P3109 format) : Option Rat :=
   (decode value).finite?.map Numerics.Dyadic.toRat
 
 end P3109
 end FloatLib.Floats.ExecFloat
+
+namespace FloatLib.Floats.Formats.P3109.Domain
+
+/-- Reconstruct a `Domain` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.P3109.Domain
+
+namespace FloatLib.Floats.Formats.P3109.Signedness
+
+/-- Reconstruct a `Signedness` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.P3109.Signedness

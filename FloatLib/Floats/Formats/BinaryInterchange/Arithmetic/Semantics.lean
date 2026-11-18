@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Finiteness
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Correctness of IEEE binary arithmetic
@@ -91,7 +91,7 @@ theorem isFinite_of_isFinite_add {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
       simp [isFinite_eq_false_of_isNaN (isNaN_of_chooseNaN2_eq_some hnan)] at h
     · split_ifs at h <;> first
         | simp [hinvalid] at h
-        | (have := isInf_eq_false_of_isFinite_eq_true _ h; simp_all)
+        | (have := isInfinite_eq_false_of_isFinite_eq_true _ h; simp_all)
 
 /--
 Finite operands whose exact real sum is within the destination's largest finite magnitude cannot
@@ -412,17 +412,17 @@ private theorem fma_eq_roundDyadic_of_isFinite
       exponent := dx.exponent + dy.exponent }
   have hencoding : fmt.encoding = .ieee :=
     ((FloatFormat.isIEEE_eq_true_iff fmt).mp hfmt).1
-  have hxSNaN : IEEE.isSNaN x = false := by
-    simpa [isSNaN, hencoding] using isSNaN_eq_false_of_toDyadic?_some hdx
-  have hySNaN : IEEE.isSNaN y = false := by
-    simpa [isSNaN, hencoding] using isSNaN_eq_false_of_toDyadic?_some hdy
-  have hzSNaN : IEEE.isSNaN z = false := by
-    simpa [isSNaN, hencoding] using isSNaN_eq_false_of_toDyadic?_some hdz
+  have hxSNaN : IEEE.isSignaling x = false := by
+    simpa [isSignaling, hencoding] using isSignaling_eq_false_of_toDyadic?_some hdx
+  have hySNaN : IEEE.isSignaling y = false := by
+    simpa [isSignaling, hencoding] using isSignaling_eq_false_of_toDyadic?_some hdy
+  have hzSNaN : IEEE.isSignaling z = false := by
+    simpa [isSignaling, hencoding] using isSignaling_eq_false_of_toDyadic?_some hdz
   refine ⟨addDyadic product dz, ?_, ?_⟩
-  · simp [Proof.fma_eq_spec, Spec.fma, chooseNaN3, isSNaN, hencoding, hdx, hdy, hdz,
+  · simp [Proof.fma_eq_spec, Spec.fma, chooseNaN3, isSignaling, hencoding, hdx, hdy, hdz,
       hxSNaN, hySNaN, hzSNaN,
       isNaN_eq_false_of_toDyadic?_some,
-      isInf_eq_false_of_toDyadic?_some, product]
+      isInfinite_eq_false_of_toDyadic?_some, product]
   · rw [Dyadic.toReal_addDyadic,
       show product.toReal = dx.toReal * dy.toReal by
         simpa [product] using Dyadic.toReal_mul dx dy]
@@ -442,8 +442,14 @@ theorem isFinite_of_isFinite_fma {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     simp [isFinite_eq_false_of_isNaN (isNaN_of_chooseNaN3_eq_some hnan)] at h
   · next hnan =>
     rw [chooseNaN3_eq_none_iff] at hnan
-    split_ifs at h <;> (try simp [hinvalid, isFinite_nativeOverflow hfmt] at h) <;>
-      (try (have := isInf_eq_false_of_isFinite_eq_true _ h; simp_all; done))
+    split_ifs at h <;>
+      (try simp only [hinvalid, Bool.false_eq_true, bne_iff_ne, ne_eq, ite_not,
+        isFinite_nativeOverflow hfmt] at h) <;>
+      try
+        have := isInfinite_eq_false_of_isFinite_eq_true _ h
+        simp_all only [invalidResult_eq_canonicalNaN_of_isIEEE, Bool.or_eq_true, not_or,
+          Bool.not_eq_true, Bool.false_eq_true]
+        done
     · split at h <;> simp [hinvalid, isFinite_nativeOverflow hfmt] at h
     · split at h
       · next dx dy dz hdx hdy hdz =>
@@ -475,12 +481,9 @@ theorem isFinite_fma_of_abs_mul_add_le_posMaxFinite
       |toReal x| * |toReal y| + |toReal z| ≤ toReal (posMaxFinite fmt)) :
     isFinite (fma x y z) = true := by
   apply isFinite_fma_of_abs_toReal_fma_le_posMaxFinite x y z hfmt hx hy hz
-  calc
-    |toReal x * toReal y + toReal z| ≤
-        |toReal x * toReal y| + |toReal z| :=
-      abs_add_le _ _
-    _ = |toReal x| * |toReal y| + |toReal z| := by rw [abs_mul]
-    _ ≤ toReal (posMaxFinite fmt) := hbound
+  exact (Numerics.Backward.abs_add_le_add
+    (Numerics.Backward.abs_mul_le_mul (le_refl |toReal x|) (le_refl |toReal y|))
+    (le_refl |toReal z|)).trans hbound
 
 /--
 Finite fused multiply-add is exact real multiplication and addition followed by one rounding.

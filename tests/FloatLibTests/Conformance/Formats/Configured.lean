@@ -1,13 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public meta import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Runtime
+public meta import FloatLib.Floats.Formats.FixedPoint.Configured.Runtime
+public meta import FloatLib.Numerics.Capabilities.Radix
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured
-public import FloatLib.Floats.Formats.Block.Configured.Proof
+public import FloatLib.Floats.Formats.Block.Configured
 public import FloatLib.Floats.Formats.Codebook.Catalog.Proof
 public import FloatLib.Floats.Formats.Codebook.Configured.Catalog
 public import FloatLib.Floats.Formats.Codebook.Configured.Proof
@@ -22,10 +26,6 @@ public import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Proof
 public import FloatLib.Floats.Formats.FixedPoint.Configured.Instances
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Instances
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Proof
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
-public meta import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Runtime
-public meta import FloatLib.Floats.Formats.FixedPoint.Configured.Runtime
-public meta import FloatLib.Numerics.Capabilities.Radix
 
 /-!
 # Configured format checks
@@ -479,9 +479,11 @@ example :
 def sharedInput : Vector Rat 3 :=
   Vector.ofFn fun lane => (lane.val : Rat) / 2
 
-def shared : ExecFloat.SharedScale 3 := ExecFloat.SharedScale.quantizeAt (-1) sharedInput
+def shared : ExecFloat.Block (Formats.Block.sharedScale (Fin 3)) :=
+  ExecFloat.Block.quantize _ (Formats.Block.sharedExponent (Fin 3) (-1)) fun lane =>
+    SignedRat.ofRat sharedInput[lane]
 
-example : ExecFloat.SharedScale.exponent shared = -1 := rfl
+example : shared.toCode.scales.1 () = -1 := Formats.Block.sharedScale_code (-1) _
 
 example :
     (ExecFloat.OCP.MX.E8M0.ofExponent? 0).map
@@ -531,7 +533,7 @@ example : (1.20 : Datum).toRat? = some (1.20 : ℚ) :=
 example :
     (add Format.decimal32 .nearest 1.20 0.30).value = 1.50 ∧
       (mul Format.decimal32 .nearest 1.2 3.0).value = 3.60 ∧
-      (powInt Format.decimal32 .nearest 2.0 3).value = 8.000 := by
+      (pown Format.decimal32 .nearest 2.0 3).value = 8.000 := by
   decide +kernel
 
 -- The directed modes have the binary names: one third rounds to its two decimal32 neighbours.
@@ -549,20 +551,20 @@ example :
     Encoding.encode? .bid Format.decimal32 1.23456749 = none := by
   decide +kernel
 
--- Classification uses the binary names: `isInf` for either infinity, `isSNaN` and `isQNaN` for the
--- two kinds of NaN.
+-- Classification uses the binary names: `isInfinite` for either infinity, `isSignaling` and
+-- `isQNaN` for the two kinds of NaN.
 example :
-    (Datum.infinity true).isInf = true ∧ (Datum.finite false 1 0).isInf = false ∧
-      (Datum.nan false true 0).isSNaN = true ∧ (Datum.nan false false 0).isSNaN = false ∧
+    (Datum.infinity true).isInfinite = true ∧ (Datum.finite false 1 0).isInfinite = false ∧
+      (Datum.nan false true 0).isSignaling = true ∧ (Datum.nan false false 0).isSignaling = false ∧
       (Datum.nan true false 3).isQNaN = true ∧ (Datum.nan false true 0).isQNaN = false ∧
       (Datum.infinity false).isQNaN = false := by
   decide
 
 -- Degree zero is invalid even for a quiet or signaling NaN input.
 example :
-    rootN oneDigit .nearest (.nan true false 3) 0 =
+    rootn oneDigit .nearest (.nan true false 3) 0 =
       { value := .nan false false 0, status := { invalid := true } } ∧
-    rootN oneDigit .nearest (.nan true true 3) 0 =
+    rootn oneDigit .nearest (.nan true true 3) 0 =
       { value := .nan false false 0, status := { invalid := true } } := by
   decide +kernel
 
@@ -579,7 +581,7 @@ example :
 
 -- Rounding the reciprocal first changes 1 / sqrt(7) from 0.4 to 0.3.
 example :
-    rsqrt oneDigit .nearest (.finite false 7 0) =
+    rSqrt oneDigit .nearest (.finite false 7 0) =
       { value := .finite false 4 (-1), status := { inexact := true } } ∧
     sqrt oneDigit .nearest
       (div oneDigit .nearest (.finite false 1 0) (.finite false 7 0)).value =
@@ -598,11 +600,11 @@ example :
   decide +kernel
 
 example :
-    rsqrt oneDigit .nearest (.finite true 0 0) =
+    rSqrt oneDigit .nearest (.finite true 0 0) =
       { value := .infinity true, status := { divideByZero := true } } ∧
-    rootN oneDigit .nearest (.finite true 0 0) 2 =
+    rootn oneDigit .nearest (.finite true 0 0) 2 =
       { value := .finite false 0 0 } ∧
-    rootN oneDigit .nearest (.finite true 0 0) 3 =
+    rootn oneDigit .nearest (.finite true 0 0) 3 =
       { value := .finite true 0 0 } := by
   decide +kernel
 
@@ -615,28 +617,28 @@ example :
 
 -- Exact powers and roots keep the preferred decimal cohort: 2.0³ = 8.000.
 example :
-    powInt fourDigits .nearest (.finite false 20 (-1)) 3 =
+    pown fourDigits .nearest (.finite false 20 (-1)) 3 =
       { value := .finite false 8000 (-3) } ∧
-    rootN fourDigits .nearest (.finite false 8000 (-3)) 3 =
+    rootn fourDigits .nearest (.finite false 8000 (-3)) 3 =
       { value := .finite false 20 (-1) } := by
   decide +kernel
 
 -- The smallest quantum here is +2, so root(100, 2) lies between zero and 100 on this grid.
 example :
-    rootN positiveQuantum .nearest (.finite false 1 2) 2 =
+    rootn positiveQuantum .nearest (.finite false 1 2) 2 =
       { value := .finite false 0 2, status := { underflow := true, inexact := true } } ∧
-    rootN positiveQuantum .up (.finite false 1 2) 2 =
+    rootn positiveQuantum .up (.finite false 1 2) 2 =
       { value := .finite false 1 2, status := { underflow := true, inexact := true } } := by
   decide +kernel
 
 -- Apply a real error theorem to the delivered cube root of two.
 example : |(1 : ℝ) - integerRoot 3 2| ≤ (1 : ℝ) / 2 := by
   obtain ⟨value, hv, herror⟩ :=
-    rootN_error_le_half oneDigit .nearest (Or.inl rfl)
+    rootn_error_le_half oneDigit .nearest (Or.inl rfl)
       (.finite false 2 0) 2 (by decide +kernel) (by decide) 3 (by decide)
       (by norm_num) (by decide +kernel)
   have hdelivered :
-      (rootN oneDigit .nearest (.finite false 2 0) 3).value.toRat? = some (1 : ℚ) := by
+      (rootn oneDigit .nearest (.finite false 2 0) 3).value.toRat? = some (1 : ℚ) := by
     decide +kernel
   rw [hdelivered] at hv
   have hvalue : value = (1 : ℚ) := (Option.some.inj hv).symm
@@ -649,12 +651,12 @@ example : |(1 : ℝ) - integerRoot 3 2| ≤ (1 : ℝ) / 2 := by
 -- The integer logB of zero, infinity, and NaN lies outside ±2(emax + p - 1), IEEE 754-2019
 -- §5.3.3. The bounds are 204, 798, and 12354.
 example :
-    (decimalExponent .decimal32 (.finite false 0 0)).value = -205 ∧
-    (decimalExponent .decimal32 (.infinity true)).value = 205 ∧
-    (decimalExponent .decimal64 (.finite true 0 3)).value = -799 ∧
-    (decimalExponent .decimal64 (.nan false true 1)).value = 799 ∧
-    (decimalExponent .decimal128 (.finite false 0 0)).value = -12355 ∧
-    (decimalExponent .decimal128 (.nan false false 0)).value = 12355 := by
+    (logB .decimal32 (.finite false 0 0)).value = -205 ∧
+    (logB .decimal32 (.infinity true)).value = 205 ∧
+    (logB .decimal64 (.finite true 0 3)).value = -799 ∧
+    (logB .decimal64 (.nan false true 1)).value = 799 ∧
+    (logB .decimal128 (.finite false 0 0)).value = -12355 ∧
+    (logB .decimal128 (.nan false false 0)).value = 12355 := by
   decide +kernel
 
 end Decimal

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -158,12 +158,12 @@ theorem negInf_eq_ofModel_infinity (fmt : FloatFormat) :
   cases sign <;> rfl
 
 /-- A model-packed infinity is classified as infinity by every infinity-bearing descriptor. -/
-@[simp] theorem isInf_ofModel_infinity
+@[simp] theorem isInfinite_ofModel_infinity
     (fmt : FloatFormat) (hfmt : fmt.supportsInfinity = true) (sign : Sign) :
-    isInf (ofModel fmt (.infinity sign)) = true := by
+    isInfinite (ofModel fmt (.infinity sign)) = true := by
   have hencoding : fmt.encoding = .ieee := by
     simpa [FloatFormat.supportsInfinity] using hfmt
-  simp [isInf, IEEE.isInf, hencoding]
+  simp [isInfinite, IEEE.isInfinite, hencoding]
 
 /-- A model-packed infinity is not finite under an infinity-bearing descriptor. -/
 @[simp] theorem isFinite_ofModel_infinity
@@ -192,18 +192,18 @@ theorem negInf_eq_ofModel_infinity (fmt : FloatFormat) :
   exact signBit_ofModel_infinity fmt .negative
 
 /-- Positive executable infinity is classified as infinity whenever the format supports it. -/
-@[simp] theorem isInf_posInf
+@[simp] theorem isInfinite_posInf
     (fmt : FloatFormat) (hfmt : fmt.supportsInfinity = true) :
-    isInf (posInf fmt) = true := by
+    isInfinite (posInf fmt) = true := by
   rw [posInf_eq_ofModel_infinity]
-  exact isInf_ofModel_infinity fmt hfmt .positive
+  exact isInfinite_ofModel_infinity fmt hfmt .positive
 
 /-- Negative executable infinity is classified as infinity whenever the format supports it. -/
-@[simp] theorem isInf_negInf
+@[simp] theorem isInfinite_negInf
     (fmt : FloatFormat) (hfmt : fmt.supportsInfinity = true) :
-    isInf (negInf fmt) = true := by
+    isInfinite (negInf fmt) = true := by
   rw [negInf_eq_ofModel_infinity]
-  exact isInf_ofModel_infinity fmt hfmt .negative
+  exact isInfinite_ofModel_infinity fmt hfmt .negative
 
 /-- Positive executable infinity is not finite whenever the format supports infinity. -/
 @[simp] theorem isFinite_posInf
@@ -280,10 +280,10 @@ theorem negInf_eq_ofModel_infinity (fmt : FloatFormat) :
   simp [isZero, IEEE.isZero, hencoding]
 
 /-- A model-packed signed zero is not infinity in any encoding. -/
-@[simp] theorem isInf_ofModel_zero (fmt : FloatFormat) (sign : Sign) :
-    isInf (ofModel fmt (.zero sign)) = false := by
+@[simp] theorem isInfinite_ofModel_zero (fmt : FloatFormat) (sign : Sign) :
+    isInfinite (ofModel fmt (.zero sign)) = false := by
   have hne := zero_ne_expAllOnesNat fmt
-  cases hencoding : fmt.encoding <;> simp [isInf, IEEE.isInf, hencoding, hne]
+  cases hencoding : fmt.encoding <;> simp [isInfinite, IEEE.isInfinite, hencoding, hne]
 
 /-- A model-packed signed zero is not NaN under a conventional IEEE descriptor. -/
 @[simp] theorem isNaN_ofModel_zero
@@ -455,16 +455,16 @@ cannot be dropped.
   · simp [isNaN, hencoding]
 
 /-- Positive executable zero is not infinity in any encoding. -/
-@[simp] theorem isInf_posZero (fmt : FloatFormat) :
-    isInf (posZero fmt) = false := by
+@[simp] theorem isInfinite_posZero (fmt : FloatFormat) :
+    isInfinite (posZero fmt) = false := by
   have hne := zero_ne_expAllOnesNat fmt
-  cases hencoding : fmt.encoding <;> simp [isInf, IEEE.isInf, hencoding, hne]
+  cases hencoding : fmt.encoding <;> simp [isInfinite, IEEE.isInfinite, hencoding, hne]
 
 /-- Negative executable zero is not infinity in any encoding. -/
-@[simp] theorem isInf_negZero (fmt : FloatFormat) :
-    isInf (negZero fmt) = false := by
+@[simp] theorem isInfinite_negZero (fmt : FloatFormat) :
+    isInfinite (negZero fmt) = false := by
   have hne := zero_ne_expAllOnesNat fmt
-  cases hencoding : fmt.encoding <;> simp [isInf, IEEE.isInf, hencoding, hne]
+  cases hencoding : fmt.encoding <;> simp [isInfinite, IEEE.isInfinite, hencoding, hne]
 
 /-- Positive executable zero is finite in any encoding. -/
 @[simp] theorem isFinite_posZero (fmt : FloatFormat) :
@@ -532,18 +532,18 @@ Without one, packing the negative zero gives the NaN word, as for `toReal_negZer
   · rw [← posZero_eq_ofModel_zero, toReal_posZero]
 
 /-- Finite values are not infinities. -/
-theorem isInf_eq_false_of_isFinite_eq_true {fmt : FloatFormat} (x : Model fmt)
+theorem isInfinite_eq_false_of_isFinite_eq_true {fmt : FloatFormat} (x : Model fmt)
     (hx : isFinite x = true) :
-    isInf x = false := by
+    isInfinite x = false := by
   cases hencoding : fmt.encoding with
   | ieee =>
       have hxIEEE : IEEE.isFinite x = true := by
         simpa [isFinite, hencoding] using hx
       have hexp : expField x ≠ FloatFormat.expAllOnesNat fmt :=
         (bne_iff_ne).1 hxIEEE
-      simp [isInf, hencoding, IEEE.isInf, hexp]
+      simp [isInfinite, hencoding, IEEE.isInfinite, hexp]
   | finiteMaxNaN | finiteUnsignedZero | finite =>
-      simp [isInf, hencoding]
+      simp [isInfinite, hencoding]
 
 /-! ## Quiet NaNs -/
 
@@ -560,11 +560,16 @@ theorem fracField_or_quietBit {fmt : FloatFormat} (b : FloatFormat.ExecWord fmt)
   simp only [Nat.testBit_and, Nat.testBit_or, Nat.testBit_mod_two_pow, Nat.testBit_two_pow_sub_one,
     Nat.testBit_two_pow]
   unfold FloatFormat.bitWidth
-  by_cases h1 : i < fmt.fracWidth <;> by_cases h2 : fmt.fracWidth - 1 = i <;> simp [h1, h2] <;> omega
+  by_cases h1 : i < fmt.fracWidth <;> by_cases h2 : fmt.fracWidth - 1 = i <;>
+    simp only [h2, decide_true, Bool.and_true, h1, Bool.or_true, Bool.and_eq_true, Bool.or_eq_true,
+    decide_eq_true_eq, decide_false, Bool.and_false, Bool.or_false, Bool.false_eq_true,
+    Bool.or_self] <;>
+    omega
 
 /-- Setting the quiet bit of a word leaves its exponent field unchanged. -/
 theorem expField_or_quietBit {fmt : FloatFormat} (b : FloatFormat.ExecWord fmt) :
-    expField (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) = expField (ofBits (fmt := fmt) b) := by
+    expField (ofBits (fmt := fmt) (b ||| FloatFormat.quietBit fmt)) = expField (ofBits (fmt :=
+      fmt) b) := by
   have hfw := fmt.fracWidth_pos
   unfold expField ofBits FloatFormat.quietBit FloatFormat.expAllOnes FloatFormat.ofWordNat
     FloatFormat.quietBitNat FloatFormat.expAllOnesNat
@@ -636,10 +641,10 @@ theorem isNaN_of_chooseNaN1_eq_some {fmt : FloatFormat} {x nan : Model fmt}
   · simp at h
 
 /-- Every signaling NaN is a NaN. Non-IEEE policies have no signaling NaNs. -/
-theorem isNaN_of_isSNaN {fmt : FloatFormat} {x : Model fmt} (hx : isSNaN x = true) :
+theorem isNaN_of_isSignaling {fmt : FloatFormat} {x : Model fmt} (hx : isSignaling x = true) :
     isNaN x = true := by
   cases hn : isNaN x
-  · have := isSNaN_eq_false_of_isNaN_eq_false x hn
+  · have := isSignaling_eq_false_of_isNaN_eq_false x hn
     simp [hx] at this
   · rfl
 
@@ -648,14 +653,14 @@ theorem isNaN_of_chooseNaN2_eq_some {fmt : FloatFormat} {x y nan : Model fmt}
     (h : chooseNaN2 x y = some nan) : isNaN nan = true := by
   unfold chooseNaN2 at h
   split_ifs at h with h₁ h₂ h₃ h₄ <;> simp only [Option.some.injEq] at h <;>
-    subst h <;> simp [isNaN_of_isSNaN, *]
+    subst h <;> simp [isNaN_of_isSignaling, *]
 
 /-- NaN selection for three operands returns only a quieted NaN operand. -/
 theorem isNaN_of_chooseNaN3_eq_some {fmt : FloatFormat} {x y z nan : Model fmt}
     (h : chooseNaN3 x y z = some nan) : isNaN nan = true := by
   unfold chooseNaN3 at h
   split_ifs at h <;> simp only [Option.some.injEq] at h <;>
-    subst h <;> simp [isNaN_of_isSNaN, *]
+    subst h <;> simp [isNaN_of_isSignaling, *]
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

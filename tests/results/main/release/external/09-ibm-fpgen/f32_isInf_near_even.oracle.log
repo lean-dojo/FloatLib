@@ -1,1 +1,0 @@
-RESULT format=f32 operation=isInf rounding=near_even cases=42 value_mismatches=0 flag_mismatches=0 parse_errors=0

@@ -1,13 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Exact.IntegerRoot.Runtime
+-- architecture: allow-proof-imports
+-- `IntegerRoot.newton` has a body for Lean's kernel, and compiled code replaces it by the seeded
+-- loop through the `@[csimp]` lemma `IntegerRoot.newton_eq_compiled`, which is proved in
+-- `IntegerRoot.Proof`. Without that import `perfectRoot?` would compile the kernel body.
 public import FloatLib.Numerics.Exact.Dyadic.Basic
+public import FloatLib.Numerics.Exact.IntegerRoot.Proof
 
 /-!
 # Exact roots of rational powers

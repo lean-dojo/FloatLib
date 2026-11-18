@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -35,16 +35,16 @@ variable {β : Numerics.Radix}
 /--
 An `FLX` value in the normal range is representable in the corresponding `FLT` format.
 
-This is the normal-range converse of `generic_format_FLT_to_FLX`.
+This is the normal-range converse of `genericRepresentable_flt_to_flx`.
 -/
-theorem generic_format_FLX_to_FLT_of_normal (emin prec : ℤ) (hprec : 0 < prec)
-    {x : ℝ} (hxFLX : @genericFormat β (flxExp prec) (flxValidExp prec hprec) x)
+theorem genericRepresentable_flx_to_flt_of_normal (emin prec : ℤ) (hprec : 0 < prec)
+    {x : ℝ} (hxFLX : @GenericRepresentable β (flxExp prec) (validExp_flx prec hprec) x)
     (hnorm : bpow β (emin + prec - 1) ≤ abs x) :
-    @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x := by
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
-  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
-  obtain ⟨_, f, hxf, hmant⟩ := (generic_format_FLX_iff (β := β) prec hprec x).mp hxFLX
-  refine (generic_format_FLT_iff (β := β) emin prec hprec x).mpr ⟨hprec, f, hxf, hmant, ?_⟩
+    @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) x := by
+  let : ValidExp (flxExp prec) := validExp_flx prec hprec
+  let : ValidExp (fltExp emin prec) := validExp_flt emin prec hprec
+  obtain ⟨_, f, hxf, hmant⟩ := (genericRepresentable_flx_iff (β := β) prec hprec x).mp hxFLX
+  refine (genericRepresentable_flt_iff (β := β) emin prec hprec x).mpr ⟨hprec, f, hxf, hmant, ?_⟩
   have habsx : abs x < bpow β (f.exponent + prec) := by
     rw [hxf]
     exact f.abs_toReal_lt_bpow prec hmant
@@ -52,31 +52,31 @@ theorem generic_format_FLX_to_FLT_of_normal (emin prec : ℤ) (hprec : 0 < prec)
     lt_of_le_of_lt hnorm habsx
   have hexp : emin + prec - 1 < f.exponent + prec :=
     (bpow_lt_bpow_iff β _ _).mp hlt
-  linarith
+  omega
 
 /--
 Directed Sterbenz lemma for `FLT`: if `y ≤ x ≤ 2y` and both operands are representable, then
 their exact difference is representable. The bounds force `0 ≤ y`.
 -/
-theorem generic_format_FLT_sub_of_le_two_mul (emin prec : ℤ) (hprec : 0 < prec)
+theorem genericRepresentable_flt_sub_of_le_two_mul (emin prec : ℤ) (hprec : 0 < prec)
     {x y : ℝ} (hyx : y ≤ x) (hx2y : x ≤ 2 * y)
-    (hxFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x)
-    (hyFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) y) :
-    @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) (x - y) := by
-  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+    (hxFmt : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) x)
+    (hyFmt : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) y) :
+    @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) (x - y) := by
+  let : ValidExp (fltExp emin prec) := validExp_flt emin prec hprec
+  let : ValidExp (flxExp prec) := validExp_flx prec hprec
   by_cases hsmall : abs (x - y) ≤ bpow β (emin + prec - 1)
-  · have hxFix := generic_format_FLT_to_FIX (β := β) emin prec hprec hxFmt
-    have hyFix := generic_format_FLT_to_FIX (β := β) emin prec hprec hyFmt
-    have hdFix := generic_format_FIX_sub (β := β) emin hxFix hyFix
-    apply generic_format_FIX_to_FLT_of_abs_le (β := β) emin prec hprec hdFix
-    exact hsmall.trans ((bpow_le_bpow_iff β _ _).2 (by linarith))
+  · have hxFix := genericRepresentable_flt_to_fix (β := β) emin prec hprec hxFmt
+    have hyFix := genericRepresentable_flt_to_fix (β := β) emin prec hprec hyFmt
+    have hdFix := genericRepresentable_fix_sub (β := β) emin hxFix hyFix
+    apply genericRepresentable_fix_to_flt_of_abs_le (β := β) emin prec hprec hdFix
+    exact hsmall.trans ((bpow_le_bpow_iff β _ _).2 (by omega))
   · rw [not_le] at hsmall
-    have hxFLX := generic_format_FLT_to_FLX (β := β) emin prec hprec hxFmt
-    have hyFLX := generic_format_FLT_to_FLX (β := β) emin prec hprec hyFmt
-    have hdFLX := generic_format_FLX_sub_of_le_two_mul (β := β) prec hprec
+    have hxFLX := genericRepresentable_flt_to_flx (β := β) emin prec hprec hxFmt
+    have hyFLX := genericRepresentable_flt_to_flx (β := β) emin prec hprec hyFmt
+    have hdFLX := genericRepresentable_flx_sub_of_le_two_mul (β := β) prec hprec
       hyx hx2y hxFLX hyFLX
-    exact generic_format_FLX_to_FLT_of_normal (β := β) emin prec hprec
+    exact genericRepresentable_flx_to_flt_of_normal (β := β) emin prec hprec
       hdFLX (le_of_lt hsmall)
 
 /--
@@ -84,17 +84,17 @@ Sterbenz's lemma for `FLT`: if two representable values are within a factor of t
 then their exact difference is representable, including across the subnormal boundary. The two
 bounds force both values to be nonnegative.
 -/
-theorem generic_format_FLT_sterbenz (emin prec : ℤ) (hprec : 0 < prec)
+theorem genericRepresentable_flt_sterbenz (emin prec : ℤ) (hprec : 0 < prec)
     {x y : ℝ} (hx2y : x ≤ 2 * y) (hy2x : y ≤ 2 * x)
-    (hxFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) x)
-    (hyFmt : @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) y) :
-    @genericFormat β (fltExp emin prec) (fltValidExp emin prec hprec) (x - y) := by
-  let : ValidExp (fltExp emin prec) := fltValidExp emin prec hprec
+    (hxFmt : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) x)
+    (hyFmt : @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) y) :
+    @GenericRepresentable β (fltExp emin prec) (validExp_flt emin prec hprec) (x - y) := by
+  let : ValidExp (fltExp emin prec) := validExp_flt emin prec hprec
   rcases le_total y x with hyx | hxy
-  · exact generic_format_FLT_sub_of_le_two_mul emin prec hprec hyx hx2y hxFmt hyFmt
+  · exact genericRepresentable_flt_sub_of_le_two_mul emin prec hprec hyx hx2y hxFmt hyFmt
   · have hdiff :=
-      generic_format_FLT_sub_of_le_two_mul emin prec hprec hxy hy2x hyFmt hxFmt
-    have hneg := generic_format_neg (β := β) (fexp := fltExp emin prec) (y - x) hdiff
+      genericRepresentable_flt_sub_of_le_two_mul emin prec hprec hxy hy2x hyFmt hxFmt
+    have hneg := genericRepresentable_neg (β := β) (fexp := fltExp emin prec) (y - x) hdiff
     simpa only [neg_sub] using hneg
 
 end FloatLib.Floats.Formats.Flocq

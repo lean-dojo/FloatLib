@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -32,7 +32,7 @@ def Datum.finiteValue (negative : Bool) (coefficient : Nat) (quantum : Int) : �
   (if negative then -1 else 1) * (coefficient : ℚ) * (10 : ℚ) ^ quantum
 
 /-- Test the signaling bit only on a NaN. -/
-def Datum.isSNaN : Datum → Bool
+def Datum.isSignaling : Datum → Bool
   | .nan _ signaling _ => signaling
   | _ => false
 
@@ -54,7 +54,7 @@ def zeroSumSign (mode : RoundingMode) (left right : Bool) : Bool :=
 
 /-- Addition, with preferred quantum the smaller operand quantum. -/
 def add (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
-  | .nan s t p, y => nanResult f s p (t || y.isSNaN)
+  | .nan s t p, y => nanResult f s p (t || y.isSignaling)
   | _, .nan s t p => nanResult f s p t
   | .infinity sx, .infinity sy =>
       if sx = sy then { value := .infinity sx } else invalidResult
@@ -66,13 +66,13 @@ def add (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
 
 /-- Subtraction preserves input NaN diagnostics before reversing the second numeric sign. -/
 def sub (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
-  | .nan s t p, y => nanResult f s p (t || y.isSNaN)
+  | .nan s t p, y => nanResult f s p (t || y.isSignaling)
   | _, .nan s t p => nanResult f s p t
   | x, y => add f mode x y.negate
 
 /-- Multiplication, with preferred quantum the sum of the operand quanta. -/
 def mul (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
-  | .nan s t p, y => nanResult f s p (t || y.isSNaN)
+  | .nan s t p, y => nanResult f s p (t || y.isSignaling)
   | _, .nan s t p => nanResult f s p t
   | .infinity sx, .infinity sy => { value := .infinity (sx ^^ sy) }
   | .infinity sx, .finite sy c _ | .finite sx c _, .infinity sy =>
@@ -85,7 +85,7 @@ def mul (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
 By §5.2 an infinity has quantum exponent `+∞`, so finite/infinity selects the smallest quantum in
 the signed-zero cohort. -/
 def div (f : Format) (mode : RoundingMode) : Datum → Datum → Outcome
-  | .nan s t p, y => nanResult f s p (t || y.isSNaN)
+  | .nan s t p, y => nanResult f s p (t || y.isSignaling)
   | _, .nan s t p => nanResult f s p t
   | .infinity _, .infinity _ => invalidResult
   | .infinity sx, .finite sy _ _ => { value := .infinity (sx ^^ sy) }
@@ -114,8 +114,8 @@ def invalidProduct : Datum → Datum → Bool
 /-- Fused multiply-add with unbounded intermediate range and a single rounding.
 Neither an overflowing nor an underflowing intermediate product raises a flag. -/
 def fma (f : Format) (mode : RoundingMode) : Datum → Datum → Datum → Outcome
-  | .nan s t p, y, z => nanResult f s p (t || y.isSNaN || z.isSNaN)
-  | _, .nan s t p, z => nanResult f s p (t || z.isSNaN)
+  | .nan s t p, y, z => nanResult f s p (t || y.isSignaling || z.isSignaling)
+  | _, .nan s t p, z => nanResult f s p (t || z.isSignaling)
   | x, y, .nan s t p => nanResult f s p (t || invalidProduct x y)
   | .finite sx cx qx, .finite sy cy qy, .finite sz cz qz =>
       project f mode

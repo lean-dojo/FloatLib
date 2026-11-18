@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -62,6 +62,6 @@ with negative degree produce NaR.
     else
       let radicand := if degree < 0 then |q|⁻¹ else |q|
       let root := RootRounding.round format radicand degree.natAbs
-      if q < 0 then neg root else root
+      if q < 0 then negate root else root
 
 end FloatLib.Floats.Formats.Posit.Model

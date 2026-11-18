@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -31,19 +31,19 @@ local notation "Value" =>
     format.exponentBias_le_maxFinite plan code
 
 /-- Reciprocal square root, with one final nearest-even rounding. -/
-@[inline] def rsqrt (value : Value) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.rsqrt value
+@[inline] def rSqrt (value : Value) : Value :=
+  ModelCodec.liftUnary (Model := Model format) (plan := plan) (fun x => Model.rSqrt x) value
 
 /-- Euclidean norm, rounded once from the exact sum of squares. -/
 @[inline] def hypot (left right : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan) Model.hypot left right
 
 /-- Exact integer-exponent power followed by one rounding. -/
-@[inline] def powInt (value : Value) (exponent : Int) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) (Model.powInt · exponent) value
+@[inline] def pown (value : Value) (exponent : Int) : Value :=
+  ModelCodec.liftUnary (Model := Model format) (plan := plan) (Model.pown · exponent) value
 
 /-- Signed integer root, including reciprocal roots for negative degrees. -/
-@[inline] def rootN (value : Value) (degree : Int) : Value :=
-  ModelCodec.liftUnary (Model := Model format) (plan := plan) (Model.rootN · degree) value
+@[inline] def rootn (value : Value) (degree : Int) : Value :=
+  ModelCodec.liftUnary (Model := Model format) (plan := plan) (Model.rootn · degree) value
 
 end FloatLib.Floats.ExecFloat.Binary

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -79,3 +79,10 @@ def roundAt (mode : RoundingMode) (negative : Bool) (x : ℚ) (q : Int) : Nat :=
 end RoundingMode
 
 end FloatLib.Floats.Formats.DecimalInterchange
+
+namespace FloatLib.Floats.Formats.DecimalInterchange.RoundingMode
+
+/-- Reconstruct a `RoundingMode` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.DecimalInterchange.RoundingMode

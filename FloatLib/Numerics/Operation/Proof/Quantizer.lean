@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Operation.Semantics
 public import FloatLib.Numerics.Core.Proof
+public import FloatLib.Numerics.Operation.Semantics
 
 /-!
 # Proof-indexed quantizers
@@ -53,7 +53,7 @@ theorem represents_eq {S : NumericalSystem} {quantize : S.Scalar → S.Code}
     (hrefines : QuantizerOn S quantize round pre) (value : S.Scalar)
     (hpre : pre value) :
     S.AtFinite (round value) :=
-  ⟨quantize value, hrefines value hpre⟩
+  NumericalSystem.AtFinite.ofRepresents (quantize value) (hrefines value hpre)
 
 end QuantizerOn
 end FloatLib.Numerics.Operation

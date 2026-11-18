@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -32,6 +32,7 @@ configured specification used by the structural portfolio.
 -/
 
 /-- Certified addition table for any configured descriptor that fits in one byte. -/
+@[compiler_optimize direct]
 def byteAdd (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     Certified (@Spec.add format (.byte width_le) (Code (.byte width_le)) inferInstance) :=
   let kernel := ByteTable.addTable width_le
@@ -40,6 +41,7 @@ def byteAdd (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     (ByteTable.runBinary_eq_lift width_le kernel)
 
 /-- Certified subtraction table for any configured descriptor that fits in one byte. -/
+@[compiler_optimize direct]
 def byteSub (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     Certified (@Spec.sub format (.byte width_le) (Code (.byte width_le)) inferInstance) :=
   let kernel := ByteTable.subTable width_le
@@ -48,6 +50,7 @@ def byteSub (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     (ByteTable.runBinary_eq_lift width_le kernel)
 
 /-- Certified multiplication table for any configured descriptor that fits in one byte. -/
+@[compiler_optimize direct]
 def byteMul (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     Certified (@Spec.mul format (.byte width_le) (Code (.byte width_le)) inferInstance) :=
   let kernel := ByteTable.mulTable width_le
@@ -56,6 +59,7 @@ def byteMul (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     (ByteTable.runBinary_eq_lift width_le kernel)
 
 /-- Certified division table for any configured descriptor that fits in one byte. -/
+@[compiler_optimize direct]
 def byteDiv (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     Certified (@Spec.div format (.byte width_le) (Code (.byte width_le)) inferInstance) :=
   let kernel := ByteTable.divTable width_le
@@ -64,6 +68,7 @@ def byteDiv (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     (ByteTable.runBinary_eq_lift width_le kernel)
 
 /-- Certified square-root table for any configured descriptor that fits in one byte. -/
+@[compiler_optimize direct]
 def byteSqrt (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     Certified (@Spec.sqrt format (.byte width_le) (Code (.byte width_le)) inferInstance) :=
   let kernel := ByteTable.sqrtTable width_le
@@ -72,6 +77,7 @@ def byteSqrt (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     (ByteTable.runUnary_eq_lift width_le kernel)
 
 /-- Certified fused-multiply-add table for any configured descriptor that fits in one byte. -/
+@[compiler_optimize direct]
 def byteFma (format : FloatFormat) (width_le : format.bitWidth ≤ 8) :
     Certified (@Spec.fma format (.byte width_le) (Code (.byte width_le)) inferInstance) :=
   let kernel := ByteTable.fmaTable width_le

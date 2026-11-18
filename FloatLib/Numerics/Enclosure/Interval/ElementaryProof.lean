@@ -1,16 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Enclosure.Elementary.Proof
 public import FloatLib.Numerics.Enclosure.Interval.Elementary
 public import FloatLib.Numerics.Enclosure.Interval.Real
-public import FloatLib.Numerics.Enclosure.Elementary.Proof
 public import FloatLib.Numerics.Enclosure.Trigonometric.Reduction.Proof
-public import Mathlib.Analysis.Real.Sqrt
 
 /-!
 # Real containment for interval elementary functions
@@ -48,6 +47,7 @@ theorem containsReal_monotoneBounds (enclose : ℚ → Interval ℚ) (f : ℝ �
 /-- The exponential bounds contain `exp x` for every real member of the input interval. -/
 theorem containsReal_expBounds (I : Interval ℚ) (terms : Nat) {x : ℝ}
     (hx : I.ContainsReal some x) : (expBounds I terms).ContainsReal some (Real.exp x) := by
+  rw [expBounds_def]
   apply containsReal_monotoneBounds _ Real.exp I
     (fun _ _ _ _ h => Real.exp_le_exp.mpr h) ?_ hx
   intro q _
@@ -90,7 +90,7 @@ theorem containsReal_lipschitzUnitBounds (enclose : ℚ → Interval ℚ) (f : �
     (lipschitzUnitBounds enclose I).ContainsReal some (f x) := by
   have hunit := abs_le.mp (hrange x)
   apply (containsReal_some_iff _ _).2
-  unfold lipschitzUnitBounds
+  rw [lipschitzUnitBounds_def]
   split
   · simpa using hunit
   · obtain ⟨hlo, hhi⟩ := (containsReal_some_iff I x).1 hx
@@ -115,24 +115,28 @@ theorem containsReal_lipschitzUnitBounds (enclose : ℚ → Interval ℚ) (f : �
 /-- Sine containment holds throughout the interval, including interior extrema. -/
 theorem containsReal_sinBounds (I : Interval ℚ) (terms : Nat) {x : ℝ}
     (hx : I.ContainsReal some x) : (sinBounds I terms).ContainsReal some (Real.sin x) := by
+  rw [sinBounds_def]
   apply containsReal_lipschitzUnitBounds _ Real.sin Real.lipschitzWith_sin
     Real.abs_sin_le_one ?_ I hx
   intro q
   apply (containsReal_some_iff _ _).2
   split
   · exact Enclosure.contains_sin q terms
-  · exact Enclosure.contains_sinReduced q terms
+  · rw [Internal.reducedTrigBounds_def]
+    exact Enclosure.contains_sinReduced q terms
 
 /-- Cosine containment holds throughout the interval, including interior extrema. -/
 theorem containsReal_cosBounds (I : Interval ℚ) (terms : Nat) {x : ℝ}
     (hx : I.ContainsReal some x) : (cosBounds I terms).ContainsReal some (Real.cos x) := by
+  rw [cosBounds_def]
   apply containsReal_lipschitzUnitBounds _ Real.cos Real.lipschitzWith_cos
     Real.abs_cos_le_one ?_ I hx
   intro q
   apply (containsReal_some_iff _ _).2
   split
   · exact Enclosure.contains_cos q terms
-  · exact Enclosure.contains_cosReduced q terms
+  · rw [Internal.reducedTrigBounds_def]
+    exact Enclosure.contains_cosReduced q terms
 
 /-- Integer square-root bounds enclose the real square root of every nonnegative rational. -/
 theorem containsReal_sqrtPointBounds (x : ℚ) (precision : Nat) (hx : 0 ≤ x) :
@@ -163,6 +167,7 @@ theorem containsReal_sqrtPointBounds (x : ℚ) (precision : Nat) (hx : 0 ≤ x) 
     exact (le_div_iff₀ (sq_pos_of_pos hscale)).mpr hnext.le
   have hlower_nonneg : (0 : ℝ) ≤ (lower : ℚ) := by
     exact_mod_cast (show (0 : ℚ) ≤ lower from div_nonneg (Nat.cast_nonneg _) hscale.le)
+  rw [sqrtPointBounds_def]
   apply (containsReal_some_iff _ _).2
   change (lower : ℝ) ≤ Real.sqrt (x : ℝ) ∧
     Real.sqrt (x : ℝ) ≤ ((if lower ^ 2 = x then lower else upper : ℚ) : ℝ)
@@ -180,7 +185,8 @@ theorem containsReal_sqrtPointBounds (x : ℚ) (precision : Nat) (hx : 0 ≤ x) 
 theorem sqrtPointBounds_width_le (x : ℚ) (precision : Nat) :
     (sqrtPointBounds x precision).hi - (sqrtPointBounds x precision).lo ≤
       1 / (2 : ℚ) ^ precision := by
-  dsimp [sqrtPointBounds]
+  rw [sqrtPointBounds_def]
+  dsimp only
   split_ifs
   · simp
   · simp only [add_div, add_sub_cancel_left, le_refl]

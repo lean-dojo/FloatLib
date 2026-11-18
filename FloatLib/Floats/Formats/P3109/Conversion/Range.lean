@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Conversion.Comparison
-public import FloatLib.Floats.Formats.P3109.Projection.Rational.Direction
 public import FloatLib.Floats.Formats.P3109.Projection.Range
+public import FloatLib.Floats.Formats.P3109.Projection.Rational.Direction
 
 /-!
 # Range preservation before P3109 saturation
@@ -94,12 +94,12 @@ theorem rationalQuantum_le_grid_exponent (format : Format) (value : Rat)
       |value| ≤ (significand : Rat) * (2 : Rat) ^ exponent := hv
       _ < (2 : Rat) ^ format.precision * (2 : Rat) ^ exponent :=
         mul_lt_mul_of_pos_right hs' (by positivity)
-      _ = _ := by rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0), zpow_natCast]; ring
+      _ = _ := by rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0), zpow_natCast]; ac_rfl
   have hlog : RationalBinary.floorLog2 value.num.natAbs value.den <
       exponent + (format.precision : Int) := by
     by_contra h
     have hp := zpow_le_zpow_right₀ (by norm_num : (1 : Rat) ≤ 2) (le_of_not_gt h)
-    linarith
+    exact (hp.trans hlead).not_gt hupper
   unfold RationalRounding.quantum
   unfold minimumQuantumExponent at he
   simp only [Int.ofNat_eq_natCast] at he

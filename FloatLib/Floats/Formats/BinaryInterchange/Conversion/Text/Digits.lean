@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -73,3 +73,10 @@ def roundTextMagnitude (mode : IEEERoundingMode) (negative : Bool) (x : Rat) : N
         status := { inexact := decide (result.toRat ≠ value.toRat) } }
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.TextRadix
+
+/-- Reconstruct a `TextRadix` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.TextRadix

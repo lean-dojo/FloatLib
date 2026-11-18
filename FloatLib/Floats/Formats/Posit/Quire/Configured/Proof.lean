@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Quire.Accumulation
-public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Proof
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Runtime
-public import FloatLib.Floats.Formats.Posit.Quire.Semantics.Proof
+public import FloatLib.Floats.Formats.Posit.KernelPath.QuireProof
+public meta import FloatLib.Tactic.CompilerOptimize
+
 public import FloatLib.Floats.Formats.Posit.Configured.Constants
+public import FloatLib.Floats.Formats.Posit.Quire.Accumulation
+public import FloatLib.Floats.Formats.Posit.Quire.Configured.Runtime
 
 /-!
 # Correctness of the configured posit quire interface
@@ -155,7 +156,8 @@ theorem exactProducts?_eq_model
       FloatLib.Floats.ExecFloat (Configured.Family format code plan))) :
     exactProducts? pairs =
       Formats.Posit.Quire.Model.exactProducts?
-        (pairs.map fun pair => (ExecFloat.Posit.toModel pair.1, ExecFloat.Posit.toModel pair.2)) := by
+        (pairs.map fun pair => (ExecFloat.Posit.toModel pair.1, ExecFloat.Posit.toModel
+          pair.2)) := by
   induction pairs with
   | nil => rfl
   | cons pair rest ih =>
@@ -201,7 +203,7 @@ theorem toRat?_foldl_qAddP_zero
   have hfold :=
     Formats.Posit.Quire.Model.toRat?_foldAddP_zero
       (addends.map ExecFloat.Posit.toModel) values hvalues (by simpa using hlength)
-  show Formats.Posit.Quire.Model.toRat?
+  change Formats.Posit.Quire.Model.toRat?
       (addends.foldl
         (fun quire addend =>
           Formats.Posit.Quire.Model.qAddP quire (ExecFloat.Posit.toModel addend))
@@ -211,3 +213,48 @@ theorem toRat?_foldl_qAddP_zero
 
 end ExecFloat.Posit.Quire
 end FloatLib.Floats
+
+/-!
+# The rounding of a quire for Lean's kernel
+
+Posit Standard (2022), §6.2. `ExecFloat.Posit.Quire.qToP` stores the posit that
+`Quire.Model.qToP` rounds a quire to, and `ofNatBits` and `toNatBits` are the model
+conversions. Their defining equations are tagged, so `float_decide` reaches the model
+operations, which `KernelPath.QuireProof` rewrites to functions of the natural-number words
+(`qToP_eq_kernel`, `qMulAdd_eq_kernel` and their siblings), for every posit format and carrier.
+-/
+
+namespace FloatLib.Floats.ExecFloat.Posit.Quire
+
+attribute [kernel_optimize] qToP.eq_def ofNatBits.eq_def toNatBits.eq_def
+
+end FloatLib.Floats.ExecFloat.Posit.Quire
+
+/-!
+# Execution certificates for the ten standard quire operations
+
+Posit Standard (2022), §§5.11 and 6.2. The existing exact integer-coefficient kernels
+serve every valid posit width and its associated 16n-bit quire. These
+certificates execute those definitions, including NaR and overflow handling.
+Defining-equation kernel fallbacks cover accumulation; `qToP` retains its
+separately proved direct packing rule. The arithmetic and configured proof modules establish
+exact refinement; these reference certificates add no speed claim.
+-/
+
+namespace FloatLib.Floats.ExecFloat.Posit.Quire
+
+attribute [compiler_optimize reference] pToQ
+attribute [compiler_optimize reference] qNegate
+attribute [compiler_optimize reference] qAbs
+attribute [compiler_optimize reference] qAddP
+attribute [compiler_optimize reference] qSubP
+attribute [compiler_optimize reference] qAddQ
+attribute [compiler_optimize reference] qSubQ
+attribute [compiler_optimize reference] qMulAdd
+attribute [compiler_optimize reference] qMulSub
+attribute [compiler_optimize reference] qToP
+
+attribute [kernel_optimize] pToQ.eq_def qNegate.eq_def qAbs.eq_def
+  qAddP.eq_def qSubP.eq_def qAddQ.eq_def qSubQ.eq_def qMulAdd.eq_def qMulSub.eq_def
+
+end FloatLib.Floats.ExecFloat.Posit.Quire

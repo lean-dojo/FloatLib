@@ -1,17 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.DyadicCompare.Proof
-public import FloatLib.Kernels.FixedWord.SignedMagnitude.UInt128.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Boundary.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.SignedSum.Runtime
+public import FloatLib.Kernels.FixedWord.SignedMagnitude.UInt128.Proof
 
 /-!
 # Correctness of packed two-limb Posit sums

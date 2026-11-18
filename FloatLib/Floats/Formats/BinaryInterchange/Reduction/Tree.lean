@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.StandardModel
+public import FloatLib.Numerics.ErrorBound.Algebra
 public import FloatLib.Numerics.Reduction.Error
 
 /-!
@@ -21,7 +21,9 @@ and rounds only once.
 
 Each finite addition also has relative error at most `unitRoundoffAt fmt` with no underflow
 term, because adding two grid points below the normal range is exact. That fact discharges the
-local premise of the mixed and geometric reduction bounds for `Model.add` trees.
+local premise of the mixed and geometric reduction bounds for `Model.add` trees, in the number of
+additions (`abs_toReal_eval_sub_sum_le_geometric`) and in the depth of the tree
+(`abs_toReal_eval_sub_sum_le_depth`).
 -/
 
 @[expose] public section
@@ -86,13 +88,7 @@ theorem abs_toReal_eval_sub_eval_le {a b : Numerics.ReductionTree (Model fmt)}
   have ea := abs_toReal_eval_sub_sum_le a hfmt ha
   have eb := abs_toReal_eval_sub_sum_le b hfmt hb
   have hs := (hperm.map toReal).sum_eq
-  calc
-    |toReal (a.eval add id) - toReal (b.eval add id)| =
-        |(toReal (a.eval add id) - (a.leaves.map toReal).sum) +
-          ((b.leaves.map toReal).sum - toReal (b.eval add id))| := by rw [hs]; congr 1; ring
-    _ ≤ |toReal (a.eval add id) - (a.leaves.map toReal).sum| +
-        |(b.leaves.map toReal).sum - toReal (b.eval add id)| := abs_add_le _ _
-    _ ≤ errorBudget a + errorBudget b := add_le_add ea (by rwa [abs_sub_comm])
+  simpa only [hs, sub_self, sub_zero] using Numerics.Backward.sub ea eb
 
 /--
 Every finite addition in the tree has relative error at most `unitRoundoffAt fmt`, measured
@@ -121,17 +117,29 @@ theorem abs_toReal_eval_sub_sum_le_mixedBudget (t : Numerics.ReductionTree (Mode
     (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
 
 /--
+A finite IEEE reduction tree of depth `d` has error at most `((1 + u)^d - 1) * Σ|xᵢ|` for
+`u = unitRoundoffAt fmt`, with no normal-range hypothesis. A schedule that pairs its `n` inputs
+has depth about `log₂ n`, where the loop has depth `n - 1`.
+-/
+theorem abs_toReal_eval_sub_sum_le_depth (t : Numerics.ReductionTree (Model fmt))
+    (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
+    |toReal (t.eval add id) - (t.leaves.map toReal).sum| ≤
+      ((1 + unitRoundoffAt fmt) ^ t.depth - 1) * t.sumAbs toReal := by
+  rw [← Numerics.ReductionTree.eval_add_eq_sum]
+  exact t.abs_eval_sub_exact_le_depth add id toReal (unitRoundoffAt fmt)
+    (unitRoundoffAt_pos fmt).le
+    (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
+
+/--
 A finite IEEE reduction tree with `n` additions has error at most
 `((1 + u)^n - 1) * Σ|xᵢ|` for `u = unitRoundoffAt fmt`, with no normal-range hypothesis.
 -/
 theorem abs_toReal_eval_sub_sum_le_geometric (t : Numerics.ReductionTree (Model fmt))
     (hfmt : fmt.isIEEE = true) (hfinite : FiniteEval t) :
     |toReal (t.eval add id) - (t.leaves.map toReal).sum| ≤
-      ((1 + unitRoundoffAt fmt) ^ t.nodeCount - 1) * t.sumAbs toReal := by
-  rw [← Numerics.ReductionTree.eval_add_eq_sum]
-  exact t.abs_eval_sub_exact_le_geometric add id toReal (unitRoundoffAt fmt)
-    (unitRoundoffAt_pos fmt).le
-    (allNodes_abs_toReal_add_sub_le t hfmt hfinite)
+      ((1 + unitRoundoffAt fmt) ^ t.nodeCount - 1) * t.sumAbs toReal :=
+  (abs_toReal_eval_sub_sum_le_depth t hfmt hfinite).trans
+    (t.depth_factor_le toReal (unitRoundoffAt fmt) (unitRoundoffAt_pos fmt).le)
 
 end ReductionTree
 end FloatLib.Floats.Formats.BinaryInterchange.Model

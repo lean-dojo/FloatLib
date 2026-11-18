@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -34,31 +34,38 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Lexicographic successor of the posit representation, with wrapping. -/
+/-- Posit Standard (2022), §5.2.
+Lexicographic successor of the posit representation, with wrapping. -/
 @[inline] def next (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.next value
 
-/-- Lexicographic predecessor of the posit representation, with wrapping. -/
+/-- Posit Standard (2022), §5.2.
+Lexicographic predecessor of the posit representation, with wrapping. -/
 @[inline] def prior (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.prior value
 
-/-- Standard posit absolute value. NaR stays NaR. -/
+/-- Posit Standard (2022), §5.2.
+Standard posit absolute value. NaR stays NaR. -/
 @[inline] def abs (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.abs value
 
-/-- Standard posit sign function, returning NaR when the input is NaR. -/
+/-- Posit Standard (2022), §5.2.
+Standard posit sign function, returning NaR when the input is NaR. -/
 @[inline] def sign (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.sign value
 
-/-- Standard nearest integer-valued posit, with ties to an even integer and NaR propagation. -/
+/-- Posit Standard (2022), §5.2.
+Standard nearest integer-valued posit, with ties to an even integer and NaR propagation. -/
 @[inline] def nearestInt (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.nearestInt value
 
-/-- Standard ceiling to an integer-valued posit, with NaR propagation. -/
+/-- Posit Standard (2022), §5.2.
+Standard ceiling to an integer-valued posit, with NaR propagation. -/
 @[inline] def ceil (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.ceil value
 
-/-- Standard floor to an integer-valued posit, with NaR propagation. -/
+/-- Posit Standard (2022), §5.2.
+Standard floor to an integer-valued posit, with NaR propagation. -/
 @[inline] def floor (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.floor value
 

@@ -1,16 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Analysis.Complex.Trigonometric
-public import Mathlib.Analysis.SpecialFunctions.Artanh
-public import Mathlib.Data.EReal.Basic
-public import FloatLib.Floats.Interval.RealBounds
+public import FloatLib.Numerics.Enclosure.Interval.Bounds
 public import FloatLib.Floats.Interval.Rounders
+public import Mathlib.Analysis.SpecialFunctions.Artanh
 
 /-!
 # Quantized real intervals and unbounded division enclosures
@@ -39,7 +37,6 @@ arithmetic](https://doi.org/10.1017/S096249291000005X), *Acta Numerica* 19 (2010
 
 @[expose] public section
 
-
 namespace FloatLib.Floats.Interval
 
 /-- A closed real interval $[\mathtt{lo},\mathtt{hi}]$, empty when `hi < lo`. -/
@@ -53,12 +50,12 @@ namespace RInterval
 
 /-- Membership predicate: $x\in I$ means
 $I.\mathtt{lo}\le x\le I.\mathtt{hi}$. -/
-def mem (I : RInterval) (x : ℝ) : Prop :=
+def Mem (I : RInterval) (x : ℝ) : Prop :=
   I.lo ≤ x ∧ x ≤ I.hi
 
 /-- Enable $x\in I$ notation for real intervals. -/
 instance : Membership ℝ RInterval where
-  mem I x := I.mem x
+  mem I x := I.Mem x
 
 /-- Unfold membership:
 $x\in I\iff I.\mathtt{lo}\le x\land x\le I.\mathtt{hi}$. -/
@@ -102,9 +99,9 @@ theorem abs_le_absMax {I : RInterval} {x : ℝ} (hx : x ∈ I) :
 
 /-- Outward-rounded multiplication using the four products of the endpoint pairs. -/
 noncomputable def mul (R : Rounder) (A B : RInterval) : RInterval :=
-  let lower := minOfFour
+  let lower := Numerics.Interval.minOfFour
     (A.lo * B.lo) (A.lo * B.hi) (A.hi * B.lo) (A.hi * B.hi)
-  let upper := maxOfFour
+  let upper := Numerics.Interval.maxOfFour
     (A.lo * B.lo) (A.lo * B.hi) (A.hi * B.lo) (A.hi * B.hi)
   ⟨R.down lower, R.up upper⟩
 
@@ -125,7 +122,7 @@ theorem mem_sub {R : Rounder} {A B : RInterval} {x y : ℝ}
 theorem mem_mul {R : Rounder} {A B : RInterval} {x y : ℝ}
     (hx : x ∈ A) (hy : y ∈ B) :
     x * y ∈ mul R A B := by
-  have hbounds := mul_bounds_Icc A.lo A.hi B.lo B.hi x y
+  have hbounds := Numerics.Interval.mul_bounds_Icc A.lo A.hi B.lo B.hi x y
     (show x ∈ Set.Icc A.lo A.hi from hx)
     (show y ∈ Set.Icc B.lo B.hi from hy)
   constructor
@@ -208,12 +205,12 @@ section
 namespace EInterval
 
 /-- Membership predicate: `x ∈ I` means `I.lo ≤ x ≤ I.hi` in `EReal`. -/
-def mem (I : EInterval) (x : EReal) : Prop :=
+def Mem (I : EInterval) (x : EReal) : Prop :=
   I.lo ≤ x ∧ x ≤ I.hi
 
 /-- Enable `x ∈ I` notation for `EReal` intervals. -/
 instance : Membership EReal EInterval where
-  mem I x := I.mem x
+  mem I x := I.Mem x
 
 /-- Unfold membership: `x ∈ I ↔ I.lo ≤ x ∧ x ≤ I.hi`. -/
 @[simp, grind =] theorem mem_iff (I : EInterval) (x : EReal) : x ∈ I ↔ I.lo ≤ x ∧ x ≤ I.hi :=
@@ -258,9 +255,9 @@ noncomputable def div (R : Rounder) (A B : RInterval) : EInterval :=
   if _h0 : (B.lo ≤ 0 ∧ 0 ≤ B.hi) then
     EInterval.top
   else
-    let lower := minOfFour
+    let lower := Numerics.Interval.minOfFour
       (A.lo / B.lo) (A.lo / B.hi) (A.hi / B.lo) (A.hi / B.hi)
-    let upper := maxOfFour
+    let upper := Numerics.Interval.maxOfFour
       (A.lo / B.lo) (A.lo / B.hi) (A.hi / B.lo) (A.hi / B.hi)
     EInterval.ofRInterval ⟨R.down lower, R.up upper⟩
 
@@ -274,7 +271,7 @@ private theorem mem_div_of_nozero {R : Rounder} {A B : RInterval} {x y : ℝ}
   have hside : B.hi < 0 ∨ 0 < B.lo := by
     by_contra h
     exact h0 ⟨not_lt.mp (not_or.mp h).2, not_lt.mp (not_or.mp h).1⟩
-  have hbounds := div_bounds_Icc A.lo A.hi B.lo B.hi x y
+  have hbounds := Numerics.Interval.div_bounds_Icc A.lo A.hi B.lo B.hi x y
     (show x ∈ Set.Icc A.lo A.hi from hx)
     (show y ∈ Set.Icc B.lo B.hi from hy)
     hside
@@ -303,4 +300,4 @@ end RInterval
 
 end
 
-end Interval
+end FloatLib.Floats.Interval

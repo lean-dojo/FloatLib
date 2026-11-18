@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Division.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Fma.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Multiplication.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Sqrt.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Candidates
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Codecs
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Multiplication.Proof
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Division.Proof
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Sqrt.Proof
-public import FloatLib.Floats.ExecFloat.Backends.WideLimb.Fma.Proof
 
 /-!
 # Certified wide-limb candidates for the limb carrier
@@ -38,6 +38,7 @@ def wideLimbEstimate (operation : Operation) : Candidate :=
   { Descriptor.Plan.wideLimbEstimate format operation with marshallingCost := 0 }
 
 /-- Certified wide-limb addition on the limb carrier. -/
+@[compiler_optimize direct]
 def wideLimbAdd (h : Model.WideLimb.Eligible format) :
     Certified (@Spec.add format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance) :=
   Certified.binary (wideLimbEstimate format .add) Spec.add
@@ -50,6 +51,7 @@ def wideLimbAdd (h : Model.WideLimb.Eligible format) :
       rw [← Model.WideLimb.toModel_add h, Model.WideLimb.ofModel_toModel]
 
 /-- Certified wide-limb subtraction on the limb carrier. -/
+@[compiler_optimize direct]
 def wideLimbSub (h : Model.WideLimb.Eligible format) :
     Certified (@Spec.sub format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance) :=
   Certified.binary (wideLimbEstimate format .sub) Spec.sub
@@ -62,6 +64,7 @@ def wideLimbSub (h : Model.WideLimb.Eligible format) :
       rw [← Model.WideLimb.toModel_sub h, Model.WideLimb.ofModel_toModel]
 
 /-- Certified wide-limb multiplication on the limb carrier. -/
+@[compiler_optimize direct]
 def wideLimbMul (h : Model.WideLimb.Eligible format) :
     Certified (@Spec.mul format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance) :=
   Certified.binary (wideLimbEstimate format .mul) Spec.mul
@@ -74,6 +77,7 @@ def wideLimbMul (h : Model.WideLimb.Eligible format) :
       rw [← Model.WideLimb.toModel_mul h, Model.WideLimb.ofModel_toModel]
 
 /-- Certified wide-limb division on the limb carrier. -/
+@[compiler_optimize direct]
 def wideLimbDiv (h : Model.WideLimb.Eligible format) :
     Certified (@Spec.div format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance) :=
   Certified.binary (wideLimbEstimate format .div) Spec.div
@@ -86,6 +90,7 @@ def wideLimbDiv (h : Model.WideLimb.Eligible format) :
       rw [← Model.WideLimb.toModel_div h, Model.WideLimb.ofModel_toModel]
 
 /-- Certified wide-limb square root on the limb carrier. -/
+@[compiler_optimize direct]
 def wideLimbSqrt (h : Model.WideLimb.Eligible format) :
     Certified (@Spec.sqrt format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance) :=
   Certified.unary (wideLimbEstimate format .sqrt) Spec.sqrt
@@ -97,6 +102,7 @@ def wideLimbSqrt (h : Model.WideLimb.Eligible format) :
       rw [← Model.WideLimb.toModel_sqrt h, Model.WideLimb.ofModel_toModel]
 
 /-- Certified wide-limb fused multiply-add on the limb carrier. -/
+@[compiler_optimize direct]
 def wideLimbFma (h : Model.WideLimb.Eligible format) :
     Certified (@Spec.fma format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance) :=
   Certified.ternary (wideLimbEstimate format .fma) Spec.fma
@@ -111,32 +117,38 @@ def wideLimbFma (h : Model.WideLimb.Eligible format) :
 
 /-- Wide-limb addition when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbAdd? :
-    Option (Certified (@Spec.add format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
+    Option (Certified (@Spec.add format (.limbs width_gt) (Code (.limbs width_gt))
+      inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbAdd format width_gt h) else none
 
 /-- Wide-limb subtraction when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbSub? :
-    Option (Certified (@Spec.sub format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
+    Option (Certified (@Spec.sub format (.limbs width_gt) (Code (.limbs width_gt))
+      inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbSub format width_gt h) else none
 
 /-- Wide-limb multiplication when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbMul? :
-    Option (Certified (@Spec.mul format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
+    Option (Certified (@Spec.mul format (.limbs width_gt) (Code (.limbs width_gt))
+      inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbMul format width_gt h) else none
 
 /-- Wide-limb division when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbDiv? :
-    Option (Certified (@Spec.div format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
+    Option (Certified (@Spec.div format (.limbs width_gt) (Code (.limbs width_gt))
+      inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbDiv format width_gt h) else none
 
 /-- Wide-limb square root when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbSqrt? :
-    Option (Certified (@Spec.sqrt format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
+    Option (Certified (@Spec.sqrt format (.limbs width_gt) (Code (.limbs width_gt))
+      inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbSqrt format width_gt h) else none
 
 /-- Wide-limb fused multiply-add when the descriptor is eligible, and `none` otherwise. -/
 def wideLimbFma? :
-    Option (Certified (@Spec.fma format (.limbs width_gt) (Code (.limbs width_gt)) inferInstance)) :=
+    Option (Certified (@Spec.fma format (.limbs width_gt) (Code (.limbs width_gt))
+      inferInstance)) :=
   if h : Model.WideLimb.Eligible format then some (wideLimbFma format width_gt h) else none
 
 end FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan

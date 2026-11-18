@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Format.Generic
-public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 public import FloatLib.Floats.Formats.Flocq.Theory.Analysis.Ulp
+public import FloatLib.Floats.Formats.Flocq.Theory.Format.Theorems
 
 /-!
 # Abrupt Underflow
@@ -37,18 +36,18 @@ theorem ftzExp_eq_threshold {emin prec e : ℤ} (h : e ≤ ftzThreshold emin pre
     ftzExp emin prec e = ftzThreshold emin prec := by
   rw [ftzExp, ite_eq_left]
   · rfl
-  · simp [ftzThreshold] at h ⊢
-    linarith
+  · simp only [ftzThreshold, Order.le_sub_one_iff] at h ⊢
+    omega
 
 /-- Above the threshold, `ftzExp` agrees with `e - prec`. -/
 theorem ftzExp_eq_sub {emin prec e : ℤ} (h : ftzThreshold emin prec < e) :
     ftzExp emin prec e = e - prec := by
   rw [ftzExp, ite_eq_right]
-  simp [ftzThreshold] at h ⊢
-  linarith
+  simp only [ftzThreshold, Order.sub_one_lt_iff, not_lt] at h ⊢
+  omega
 
 /-- Positive-precision abrupt-underflow exponent selection satisfies Flocq validity. -/
-abbrev ftzValidExp (emin prec : ℤ) (hprec : 0 < prec) :
+theorem validExp_ftz (emin prec : ℤ) (hprec : 0 < prec) :
     ValidExp (ftzExp emin prec) where
   flocq_valid := by
     intro k
@@ -62,48 +61,47 @@ abbrev ftzValidExp (emin prec : ℤ) (hprec : 0 < prec) :
       rw [ftzExp_eq_sub hlarge] at hk
       by_cases hnext : k + 1 ≤ ftzThreshold emin prec
       · rw [ftzExp_eq_threshold hnext]
-        linarith
+        omega
       · rw [ftzExp_eq_sub (lt_of_not_ge hnext)]
-        linarith
+        omega
     · intro hk
       have hsmall : k ≤ ftzThreshold emin prec := by
         by_contra hnot
         have hlarge := lt_of_not_ge hnot
         rw [ftzExp_eq_sub hlarge] at hk
-        linarith
+        omega
       have hkEq := ftzExp_eq_threshold hsmall
       rw [hkEq] at hk ⊢
       constructor
-      · have hnext : ftzThreshold emin prec < ftzThreshold emin prec + 1 := by linarith
+      · have hnext : ftzThreshold emin prec < ftzThreshold emin prec + 1 := by omega
         rw [ftzExp_eq_sub hnext]
-        simp [ftzThreshold]
-        linarith
+        simp only [ftzThreshold]
+        omega
       · intro l hl
         rw [ftzExp_eq_threshold hl]
 
 /-- `ftzExp emin prec` satisfies the exponent axioms if and only if the precision is positive. -/
-theorem validExp_FTZ_iff (emin prec : ℤ) : ValidExp (ftzExp emin prec) ↔ 0 < prec := by
+theorem validExp_ftz_iff (emin prec : ℤ) : ValidExp (ftzExp emin prec) ↔ 0 < prec := by
   constructor
   · intro hvalid
     by_contra hprec
-    have hnonpos : prec ≤ 0 := le_of_not_gt hprec
     have hlarge : ftzThreshold emin prec < emin + 1 := by
-      simp [ftzThreshold]
-      linarith
+      simp only [ftzThreshold, Order.lt_add_one_iff, tsub_le_iff_right, add_le_add_iff_left]
+      omega
     have hexp : ftzExp emin prec (emin + 1) = emin + 1 - prec :=
       ftzExp_eq_sub hlarge
     have hk : emin + 1 ≤ ftzExp emin prec (emin + 1) := by
       rw [hexp]
-      linarith
+      omega
     have hnext := ((hvalid.flocq_valid (emin + 1)).2 hk).1
     have hnextLarge :
         ftzThreshold emin prec < ftzExp emin prec (emin + 1) + 1 := by
       rw [hexp]
-      simp [ftzThreshold]
-      linarith
+      simp only [ftzThreshold, Order.lt_add_one_iff, tsub_le_iff_right]
+      omega
     rw [ftzExp_eq_sub hnextLarge, hexp] at hnext
-    linarith
-  · exact ftzValidExp emin prec
+    omega
+  · exact validExp_ftz emin prec
 
 namespace FormatPrecision
 
@@ -114,7 +112,7 @@ def ftzExp (precision : FormatPrecision) (emin : ℤ) : ℤ → ℤ :=
 /-- A checked precision automatically discharges the abrupt-underflow validity obligation. -/
 instance ftzExpValid (precision : FormatPrecision) (emin : ℤ) :
     ValidExp (precision.ftzExp emin) :=
-  ftzValidExp emin precision.toInt precision.toInt_pos
+  validExp_ftz emin precision.toInt precision.toInt_pos
 
 end FormatPrecision
 
@@ -125,10 +123,10 @@ theorem ftzThreshold_negligible (emin prec : ℤ) :
   rw [ftzExp_eq_threshold le_rfl]
 
 /-- The ULP at zero in the abrupt-underflow format is the smallest normal magnitude. -/
-theorem ulp_zero_FTZ (emin prec : ℤ) (hprec : 0 < prec) :
-    @ulp β (ftzExp emin prec) (ftzValidExp emin prec hprec) 0 =
+theorem ulp_zero_ftz (emin prec : ℤ) (hprec : 0 < prec) :
+    @ulp β (ftzExp emin prec) (validExp_ftz emin prec hprec) 0 =
       bpow β (ftzThreshold emin prec) := by
-  let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
+  let : ValidExp (ftzExp emin prec) := validExp_ftz emin prec hprec
   rw [ulp.zero_of_isNegligibleExp β (ftzExp emin prec) (ftzThreshold_negligible emin prec),
     ftzExp_eq_threshold le_rfl]
 
@@ -159,7 +157,7 @@ instance fTZRoundValid (rnd : ℝ → ℤ) [ValidRnd rnd] :
           have hypos : 0 < y := hxpos.trans_le hxy
           rw [abs_of_pos hxpos] at hx
           rw [abs_of_pos hypos] at hyAbs
-          linarith
+          exact hyAbs.not_ge (hx.trans hxy)
         have hrx : rnd x ≤ 0 := ValidRnd.nonpos rnd hx0
         simp [fTZRound, hx, hy, hrx]
     · by_cases hy : 1 ≤ abs y
@@ -176,12 +174,12 @@ instance fTZRoundValid (rnd : ℝ → ℤ) [ValidRnd rnd] :
       · simp [fTZRound, hx, hy]
 
 /-- Values below the smallest-normal threshold flush to zero. -/
-theorem round_FTZ_small (emin prec : ℤ) (hprec : 0 < prec)
+theorem round_ftz_small (emin prec : ℤ) (hprec : 0 < prec)
     (rnd : ℝ → ℤ) (x : ℝ)
     (hsmall : abs x < bpow β (ftzThreshold emin prec)) :
-    @round β (ftzExp emin prec) (ftzValidExp emin prec hprec)
+    @round β (ftzExp emin prec) (validExp_ftz emin prec hprec)
       (fTZRound rnd) x = 0 := by
-  let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
+  let : ValidExp (ftzExp emin prec) := validExp_ftz emin prec hprec
   by_cases hx : x = 0
   · subst x
     simp [round, scaledMantissa, fTZRound, toReal]
@@ -199,14 +197,14 @@ theorem round_FTZ_small (emin prec : ℤ) (hprec : 0 < prec)
   simp
 
 /-- At normal magnitudes, abrupt-underflow rounding agrees with FLX rounding. -/
-theorem round_FTZ_eq_FLX_of_normal (emin prec : ℤ) (hprec : 0 < prec)
+theorem round_ftz_eq_flx_of_normal (emin prec : ℤ) (hprec : 0 < prec)
     (rnd : ℝ → ℤ) (x : ℝ)
     (hnormal : bpow β (ftzThreshold emin prec) ≤ abs x) :
-    @round β (ftzExp emin prec) (ftzValidExp emin prec hprec)
+    @round β (ftzExp emin prec) (validExp_ftz emin prec hprec)
         (fTZRound rnd) x =
-      @round β (flxExp prec) (flxValidExp prec hprec) rnd x := by
-  let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+      @round β (flxExp prec) (validExp_flx prec hprec) rnd x := by
+  let : ValidExp (ftzExp emin prec) := validExp_ftz emin prec hprec
+  let : ValidExp (flxExp prec) := validExp_flx prec hprec
   have hx : x ≠ 0 := abs_pos.mp ((bpow.pos β _).trans_le hnormal)
   have hmag : ftzThreshold emin prec < magnitude β x :=
     (bpow_lt_bpow_iff β _ _).mp (hnormal.trans_lt (abs_lt_bpow_magnitude β x))
@@ -218,7 +216,7 @@ theorem round_FTZ_eq_FLX_of_normal (emin prec : ℤ) (hprec : 0 < prec)
     simp [scaledMantissa, hcexp]
   have hb : 0 < bpow β (magnitude β x - prec) := bpow.pos β _
   have hlower := bpow_magnitude_sub_one_le β x hx
-  have hp : 0 ≤ prec - 1 := by linarith
+  have hp : 0 ≤ prec - 1 := by omega
   have hone : (1 : ℝ) ≤ bpow β (prec - 1) := by
     change (1 : ℝ) ≤ β.toReal ^ (prec - 1)
     exact one_le_zpow₀ (Numerics.Radix.gt_one β).le hp
@@ -231,7 +229,7 @@ theorem round_FTZ_eq_FLX_of_normal (emin prec : ℤ) (hprec : 0 < prec)
       _ = bpow β ((magnitude β x - 1) -
           (magnitude β x - prec)) := by
         congr 1
-        linarith
+        omega
       _ = bpow β (magnitude β x - 1) /
           bpow β (magnitude β x - prec) :=
         bpow.sub_exp β _ _
@@ -256,18 +254,18 @@ theorem not_ftzFormat_of_nonpos (emin prec : ℤ) (hprec : prec ≤ 0) (x : ℝ)
 
 /-- Every value in the generic format generated by `ftzExp` satisfies `FTZFormat`. -/
 theorem ftzFormat_of_generic (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
-    (hx : @genericFormat β (ftzExp emin prec) (ftzValidExp emin prec hprec) x) :
+    (hx : @GenericRepresentable β (ftzExp emin prec) (validExp_ftz emin prec hprec) x) :
     FTZFormat (β := β) emin prec x := by
-  let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+  let : ValidExp (ftzExp emin prec) := validExp_ftz emin prec hprec
+  let : ValidExp (flxExp prec) := validExp_flx prec hprec
   constructor
-  · rw [← generic_format_FLX_iff prec hprec]
+  · rw [← genericRepresentable_flx_iff prec hprec]
     apply generic_inclusion (fexp₁ := ftzExp emin prec) (fexp₂ := flxExp prec)
     · intro e
       by_cases he : e ≤ ftzThreshold emin prec
       · rw [ftzExp_eq_threshold he]
         change e - prec ≤ ftzThreshold emin prec
-        linarith
+        omega
       · rw [ftzExp_eq_sub (lt_of_not_ge he)]
         rfl
     · exact hx
@@ -279,31 +277,29 @@ theorem ftzFormat_of_generic (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
           simp [cexp, ftzExp_eq_threshold hmag]
         rw [← hcexp]
         exact bpow_cexp_le_abs_of_generic hx0 hx
-      · have hmagLt : ftzThreshold emin prec < magnitude β x := lt_of_not_ge hmag
-        have hlower := bpow_magnitude_sub_one_le β x hx0
+      · have hlower := bpow_magnitude_sub_one_le β x hx0
         exact ((bpow_le_bpow_iff β _ _).2 (by linarith)).trans hlower
 
 /-- Every value satisfying `FTZFormat` belongs to the generic `ftzExp` format. -/
 theorem generic_of_ftzFormat (emin prec : ℤ) (hprec : 0 < prec) {x : ℝ}
     (hx : FTZFormat (β := β) emin prec x) :
-    @genericFormat β (ftzExp emin prec) (ftzValidExp emin prec hprec) x := by
-  let : ValidExp (ftzExp emin prec) := ftzValidExp emin prec hprec
-  let : ValidExp (flxExp prec) := flxValidExp prec hprec
+    @GenericRepresentable β (ftzExp emin prec) (validExp_ftz emin prec hprec) x := by
+  let : ValidExp (ftzExp emin prec) := validExp_ftz emin prec hprec
+  let : ValidExp (flxExp prec) := validExp_flx prec hprec
   rcases hx with ⟨hxFLX, hxRange⟩
   rcases hxRange with rfl | hnormal
-  · exact generic_format_zero
-  · have hx0 : x ≠ 0 := abs_pos.mp ((bpow.pos β _).trans_le hnormal)
-    have hmag : ftzThreshold emin prec < magnitude β x :=
+  · exact genericRepresentable_zero
+  · have hmag : ftzThreshold emin prec < magnitude β x :=
       (bpow_lt_bpow_iff β _ _).mp (hnormal.trans_lt (abs_lt_bpow_magnitude β x))
     apply generic_inclusion_mag (fexp₁ := flxExp prec) (fexp₂ := ftzExp emin prec)
     · intro _
       rw [ftzExp_eq_sub hmag]
       rfl
-    · exact (generic_format_FLX_iff prec hprec x).2 hxFLX
+    · exact (genericRepresentable_flx_iff prec hprec x).2 hxFLX
 
 /-- A real satisfies `FTZFormat` if and only if it lies in the generic format of `ftzExp`. -/
-theorem generic_format_FTZ_iff (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ) :
-    @genericFormat β (ftzExp emin prec) (ftzValidExp emin prec hprec) x ↔
+theorem genericRepresentable_ftz_iff (emin prec : ℤ) (hprec : 0 < prec) (x : ℝ) :
+    @GenericRepresentable β (ftzExp emin prec) (validExp_ftz emin prec hprec) x ↔
       FTZFormat (β := β) emin prec x :=
   ⟨ftzFormat_of_generic emin prec hprec, generic_of_ftzFormat emin prec hprec⟩
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -76,27 +76,28 @@ example :
   decide +kernel
 
 -- The sign option is called `negative` on the configured and the model constructors, and on the
--- overflow values: E4M3FN saturates in `infinityOrMaxFinite` but overflows to NaN natively.
+-- overflow values: E4M3 saturates in `infinityOrMaxFinite` but overflows to NaN natively.
 example :
     (.minNormal (negative := true) : Binary32).toNatBits = 0x80800000 ∧
       (Model.zero FloatFormat.binary32 (negative := true)).toNatBits = 0x80000000 ∧
-      (Model.infinityOrMaxFinite FloatFormat.e4m3fn (negative := true)).toNatBits = 0xfe ∧
-      (Model.nativeOverflow FloatFormat.e4m3fn (negative := true)).toNatBits = 0xff ∧
+      (Model.infinityOrMaxFinite FloatFormat.e4m3 (negative := true)).toNatBits = 0xfe ∧
+      (Model.nativeOverflow FloatFormat.e4m3 (negative := true)).toNatBits = 0xff ∧
       (Model.nativeOverflow FloatFormat.binary32 (negative := true)).toNatBits = 0xff800000 ∧
       (Model.directedOverflow FloatFormat.binary32 (negative := true)
         (roundMagnitudeUp := false)).toNatBits = 0xff7fffff := by
   decide +kernel
 
--- Classification uses the names of `Model` (and `Float.isInf`): `isInf`, `isSNaN`, `isQNaN`.
+-- Classification uses the names of `Model` (and `Float.isInf`): `isInfinite`, `isSignaling`,
+-- `isQNaN`.
 example :
-    (ExecFloat.Binary.infinity : Binary32).isInf = true ∧
-      (ExecFloat.Binary.maxFinite : Binary32).isInf = false ∧
+    (ExecFloat.Binary.infinity : Binary32).isInfinite = true ∧
+      (ExecFloat.Binary.maxFinite : Binary32).isInfinite = false ∧
       (ExecFloat.Binary.canonicalNaN : Binary32).isQNaN = true ∧
-      (ExecFloat.Binary.canonicalNaN : Binary32).isSNaN = false ∧
-      (ExecFloat.Binary.ofNatBits 0x7f800001 : Binary32).isSNaN = true := by
+      (ExecFloat.Binary.canonicalNaN : Binary32).isSignaling = false ∧
+      (ExecFloat.Binary.ofNatBits 0x7f800001 : Binary32).isSignaling = true := by
   decide +kernel
 
--- The constants of binary32, binary16, bfloat16, the OCP E4M3FN layout (no infinity, a NaN at the
+-- The constants of binary32, binary16, bfloat16, the OCP E4M3 layout (no infinity, a NaN at the
 -- top word), and a format whose fraction is wider than its bias, where epsilon is subnormal.
 example :
     (ExecFloat.Binary.minNormal : Binary32).toNatBits = 0x00800000 ∧

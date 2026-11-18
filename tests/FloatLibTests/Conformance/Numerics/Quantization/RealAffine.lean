@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -30,7 +30,7 @@ private def shifted : AffineQuantizer where
   qmin := -4
   qmax := 7
   scale_pos := by norm_num
-  codeRange := by norm_num
+  code_range := by norm_num
 
 example : shifted.quantize (1 / 4) = 3 := by decide +kernel
 example : shifted.quantize (3 / 4) = 5 := by decide +kernel
@@ -91,7 +91,7 @@ example : RoundOddPoint binaryRadix integerGrid 0 2 2 := by
 
 section AbruptUnderflow
 
-local instance : ValidExp (ftzExp 0 3) := ftzValidExp 0 3 (by norm_num)
+local instance : ValidExp (ftzExp 0 3) := validExp_ftz 0 3 (by norm_num)
 
 example : round (β := binaryRadix) (fexp := ftzExp 0 3) oddRound 1 = 4 := by
   have hmag : magnitude binaryRadix 1 = 1 := by

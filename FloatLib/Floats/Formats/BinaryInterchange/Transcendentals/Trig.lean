@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -254,7 +254,7 @@ def sinCosWithProvider {fmt : FloatFormat}
   if isNaN x then
     let quiet := quietNaN x
     (quiet, quiet)
-  else if isInf x then
+  else if isInfinite x then
     (invalidResult fmt, invalidResult fmt)
   else if isZero x then
     (x, posOne fmt)

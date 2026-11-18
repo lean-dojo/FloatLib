@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Family.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 
 /-!
 # Parameterized binary `ExecFloat` types
@@ -240,7 +239,7 @@ An executable binary format wider than 128 bits stored as an array of 32-bit lim
 
 This is the opt-in counterpart of `ExecFloat.Binary` for wide formats: same descriptor, same
 literals and reference semantics. For eligible descriptors, the planner can select the kernels
-of `ExecFloat/Backends/WideLimb` to run the six arithmetic operations on the stored limbs.
+of `ExecFloat/Backends/Compiled/WideLimb` to run the six arithmetic operations on the stored limbs.
 `ExecFloat.Binary` keeps the exact-width proof model, avoiding limb conversion for comparison and
 conversion.
 -/

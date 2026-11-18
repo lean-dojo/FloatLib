@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -17,17 +17,17 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.ExpLog
 The smallest IEEE descriptor `ieee 2 1` has the finite magnitudes `0`, `1/2`, `1`, `3/2`, `2` and
 `3`, and nearest-even rounding overflows from `7/2`. Its approximation kernel rounds
 `exp (3/2) ≈ 4.48` to `+∞`, so `exp x - 1` formed from it is `+∞` too. The correctly rounded
-`expMinus1` returns `3`, both from its enclosure search and, with an empty budget, from exact
+`expm1` returns `3`, both from its enclosure search and, with an empty budget, from exact
 comparisons alone, on the descriptor model and on the configured type `ExecFloat.Binary 2 1`.
-`toReal_expMinus1_eq_roundAt` states that `3` is the rounding of `exp (3/2) - 1`.
+`toReal_expm1_eq_roundAt` states that `3` is the rounding of `exp (3/2) - 1`.
 
 In binary32, `exp 89 ≈ 4.49e38` overflows while `exp 89 * 0.5` does not. Rounding the
 exponential first gives `+∞` for that product and a NaN for a zero weight. The weighted
 exponential returns the finite product and a signed zero. `exp_eq_nativeOverflow` states that the
 exponential itself returns `+∞` there.
 
-At the least subnormal of binary32 and bfloat16, the sign theorems show that `expMinus1` of the
-negative value is negative and `logPlus1` of the positive value is positive, so neither rounds to
+At the least subnormal of binary32 and bfloat16, the sign theorems show that `expm1` of the
+negative value is negative and `logp1` of the positive value is positive, so neither rounds to
 zero. The logarithm of `-1` is not finite, as for every finite input outside the domain.
 
 The `MathFunctions` instances keep the approximation kernels. A client opts in to the correctly
@@ -48,26 +48,26 @@ abbrev tinyThreeHalves : Model (.ieee 2 1) := Model.ofNatBits 3
 
 example : (Model.exp tinyThreeHalves).toNatBits = 6 := by decide +kernel
 
-example : (CorrectlyRounded.expMinus1 tinyThreeHalves).toNatBits = 5 := by decide +kernel
+example : (CorrectlyRounded.expm1 tinyThreeHalves).toNatBits = 5 := by decide +kernel
 
 example :
-    (CorrectlyRounded.expMinus1 tinyThreeHalves (budget := { maxAttempts := 0 })).toNatBits = 5 := by
+    (CorrectlyRounded.expm1 tinyThreeHalves (budget := { maxAttempts := 0 })).toNatBits = 5 := by
   decide +kernel
 
 /-- The configured type of `ieee 2 1`. -/
 abbrev Tiny := ExecFloat.Binary 2 1
 
 example : ExecFloat.Binary.toNatBits
-    (ExecFloat.Binary.CorrectlyRounded.expMinus1 (ExecFloat.Binary.ofNatBits 3 : Tiny)) = 5 := by
+    (ExecFloat.Binary.CorrectlyRounded.expm1 (ExecFloat.Binary.ofNatBits 3 : Tiny)) = 5 := by
   decide +kernel
 
-example : ExecFloat.Binary.toNatBits (ExecFloat.Binary.CorrectlyRounded.expMinus1
+example : ExecFloat.Binary.toNatBits (ExecFloat.Binary.CorrectlyRounded.expm1
     (ExecFloat.Binary.ofNatBits 3 : Tiny) (budget := { maxAttempts := 0 })) = 5 := by
   decide +kernel
 
 /-- The finite result `3` of `ieee 2 1` is the nearest-even rounding of `exp (3/2) - 1`. -/
-theorem toReal_expMinus1_tinyThreeHalves :
-    Model.toReal (CorrectlyRounded.expMinus1 tinyThreeHalves) =
+theorem toReal_expm1_tinyThreeHalves :
+    Model.toReal (CorrectlyRounded.expm1 tinyThreeHalves) =
       Model.roundAt (.ieee 2 1) (Real.exp (3 / 2) - 1) := by
   have hinput : Model.toReal tinyThreeHalves = 3 / 2 := by
     rw [Model.Algebraic.toReal_of_toRat?_eq_some (q := 3 / 2) (by decide +kernel)]
@@ -79,7 +79,7 @@ theorem toReal_expMinus1_tinyThreeHalves :
     exact (cmp_eq_lt_iff _ _).mp h.symm
   have hthreshold : Certified.overflowThreshold (.ieee 2 1) = 7 / 2 := by decide +kernel
   rw [← hinput]
-  apply CorrectlyRounded.toReal_expMinus1_eq_roundAt (by decide) (by decide +kernel)
+  apply CorrectlyRounded.toReal_expm1_eq_roundAt (by decide) (by decide +kernel)
   rw [hinput, hthreshold]
   push_cast at hexp ⊢
   linarith
@@ -140,36 +140,36 @@ abbrev negLeastSubnormal16 : Model .bfloat16 := Model.ofNatBits 0x8001
 /-- Bfloat16 `2⁻¹³³`, the least subnormal. -/
 abbrev leastSubnormal16 : Model .bfloat16 := Model.ofNatBits 0x0001
 
-/-- `expMinus1` of the negative least subnormal of binary32 is negative. -/
-theorem expMinus1_lt_zero_binary32 :
-    Model.toReal (CorrectlyRounded.expMinus1 negLeastSubnormal32) < 0 :=
-  CorrectlyRounded.toReal_expMinus1_lt_zero (by decide) (by decide) (by
+/-- `expm1` of the negative least subnormal of binary32 is negative. -/
+theorem expm1_lt_zero_binary32 :
+    Model.toReal (CorrectlyRounded.expm1 negLeastSubnormal32) < 0 :=
+  CorrectlyRounded.toReal_expm1_lt_zero (by decide) (by decide) (by
     rw [Model.Algebraic.toReal_of_toRat?_eq_some (q := -(2⁻¹ ^ 149)) (by decide +kernel)]
     norm_num)
 
-/-- `expMinus1` of the negative least subnormal of bfloat16 is negative. -/
-theorem expMinus1_lt_zero_bfloat16 :
-    Model.toReal (CorrectlyRounded.expMinus1 negLeastSubnormal16) < 0 :=
-  CorrectlyRounded.toReal_expMinus1_lt_zero (by decide) (by decide) (by
+/-- `expm1` of the negative least subnormal of bfloat16 is negative. -/
+theorem expm1_lt_zero_bfloat16 :
+    Model.toReal (CorrectlyRounded.expm1 negLeastSubnormal16) < 0 :=
+  CorrectlyRounded.toReal_expm1_lt_zero (by decide) (by decide) (by
     rw [Model.Algebraic.toReal_of_toRat?_eq_some (q := -(2⁻¹ ^ 133)) (by decide +kernel)]
     norm_num)
 
-/-- `logPlus1` of the least subnormal is positive in binary32 and bfloat16. -/
-theorem logPlus1_pos_leastSubnormal :
-    0 < Model.toReal (CorrectlyRounded.logPlus1 leastSubnormal32) ∧
-      0 < Model.toReal (CorrectlyRounded.logPlus1 leastSubnormal16) :=
-  ⟨CorrectlyRounded.toReal_logPlus1_pos (by decide) (by decide) (by
+/-- `logp1` of the least subnormal is positive in binary32 and bfloat16. -/
+theorem logp1_pos_leastSubnormal :
+    0 < Model.toReal (CorrectlyRounded.logp1 leastSubnormal32) ∧
+      0 < Model.toReal (CorrectlyRounded.logp1 leastSubnormal16) :=
+  ⟨CorrectlyRounded.toReal_logp1_pos (by decide) (by decide) (by
       rw [Model.Algebraic.toReal_of_toRat?_eq_some (q := 2⁻¹ ^ 149) (by decide +kernel)]
       norm_num),
-    CorrectlyRounded.toReal_logPlus1_pos (by decide) (by decide) (by
+    CorrectlyRounded.toReal_logp1_pos (by decide) (by decide) (by
       rw [Model.Algebraic.toReal_of_toRat?_eq_some (q := 2⁻¹ ^ 133) (by decide +kernel)]
       norm_num)⟩
 
 /-- Both functions return the least subnormal of the sign of their input. -/
-example : (CorrectlyRounded.expMinus1 negLeastSubnormal32).toNatBits = 0x80000001 ∧
-    (CorrectlyRounded.expMinus1 negLeastSubnormal16).toNatBits = 0x8001 ∧
-    (CorrectlyRounded.logPlus1 leastSubnormal32).toNatBits = 0x00000001 ∧
-    (CorrectlyRounded.logPlus1 leastSubnormal16).toNatBits = 0x0001 := by
+example : (CorrectlyRounded.expm1 negLeastSubnormal32).toNatBits = 0x80000001 ∧
+    (CorrectlyRounded.expm1 negLeastSubnormal16).toNatBits = 0x8001 ∧
+    (CorrectlyRounded.logp1 leastSubnormal32).toNatBits = 0x00000001 ∧
+    (CorrectlyRounded.logp1 leastSubnormal16).toNatBits = 0x0001 := by
   decide +kernel
 
 /-! ## The domain -/

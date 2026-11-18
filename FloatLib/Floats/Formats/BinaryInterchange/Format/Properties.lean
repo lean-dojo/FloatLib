@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -272,7 +272,7 @@ theorem maxFiniteExpField_pos (fmt : FloatFormat) :
     0 < fmt.maxFiniteExpField := by
   have hfour := fmt.four_le_two_pow_expWidth
   cases hencoding : fmt.encoding <;>
-    simp [maxFiniteExpField, Encoding.maxFiniteExponent, hencoding] <;>
+    simp only [maxFiniteExpField, Encoding.maxFiniteExponent, hencoding, gt_iff_lt] <;>
     omega
 
 /-- The largest finite exponent field fits in the stored exponent width. -/
@@ -280,7 +280,7 @@ theorem maxFiniteExpField_lt_two_pow (fmt : FloatFormat) :
     fmt.maxFiniteExpField < 2 ^ fmt.expWidth := by
   have hpow : 0 < 2 ^ fmt.expWidth := Nat.two_pow_pos _
   cases hencoding : fmt.encoding <;>
-    simp [maxFiniteExpField, Encoding.maxFiniteExponent, hencoding] <;>
+    simp only [maxFiniteExpField, Encoding.maxFiniteExponent, hencoding, gt_iff_lt] <;>
     omega
 
 /-- The largest finite fraction field fits in the stored fraction width. -/
@@ -288,7 +288,7 @@ theorem maxFiniteFracField_lt_two_pow (fmt : FloatFormat) :
     fmt.maxFiniteFracField < 2 ^ fmt.fracWidth := by
   have hpow : 0 < 2 ^ fmt.fracWidth := Nat.two_pow_pos _
   cases hencoding : fmt.encoding <;>
-    simp [maxFiniteFracField, fracMaskNat, hencoding] <;>
+    simp only [maxFiniteFracField, hencoding, fracMaskNat, gt_iff_lt] <;>
     omega
 
 /-- Largest unbiased exponent occurring among finite normal values. -/
@@ -327,34 +327,3 @@ theorem signMaskNat_eq_two_pow (fmt : FloatFormat) :
 
 end FloatFormat
 end FloatLib.Floats.Formats.BinaryInterchange
-
-public meta section
-
-namespace FloatLib.Floats.Formats.BinaryInterchange
-
-/--
-Prove `format.isIEEE = true` from a hypothesis in context that states it, or by `decide` for a
-concrete IEEE-encoded format such as `FloatFormat.binary32`.
-
-The hypothesis is tried first and matched up to reducible unfolding only. So other Boolean facts
-in context, such as the finiteness of a result, are never evaluated, and a format that only later
-arguments fix never reaches `decide` when its proof is in context.
-
-The configured binary theorems take their format proof `hformat` last, with this tactic as its
-default. A call on a concrete IEEE format passes no format proof, and a variable format passes
-`(hformat := h)` when no hypothesis is in context.
--/
-syntax (name := ieeeFormat) "ieee_format" : tactic
-
-macro_rules
-  | `(tactic| ieee_format) =>
-    `(tactic| first
-      | with_reducible assumption
-      | decide
-      | fail "this theorem needs an IEEE-encoded format. `decide` proves `format.isIEEE = true` \
-          for a concrete IEEE format such as binary32. For a variable format, pass the proof as \
-          `(hformat := h)`.")
-
-end FloatLib.Floats.Formats.BinaryInterchange
-
-end

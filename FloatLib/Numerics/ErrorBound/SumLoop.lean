@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -94,7 +94,7 @@ theorem sumFoldStep_reference (u : ℝ) (step : α → β → α) (p c : β → 
       input.foldl (fun reference value => reference + p value) reference := by
   induction input generalizing initial reference relative absolute with
   | nil => rfl
-  | cons value rest ih => exact ih _ _ _ _
+  | cons value _ ih => exact ih _ _ _ _
 
 /-- **A summation loop's generated mixed bound in closed form.** The mixed bound that `roundoff`
 generates for `s := s + t v`, where each addition has relative error `u` and the term `t v` has

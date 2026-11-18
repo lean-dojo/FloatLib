@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -52,12 +52,12 @@ local notation "Bounds" => Interval (format := format) (plan := plan) (code := c
   ⟨Binary.ofModel I.lo, Binary.ofModel I.hi⟩
 
 /-- Numerical membership. A NaN value or endpoint is unordered. -/
-def mem (I : Bounds) (x : Value) : Prop :=
+def Mem (I : Bounds) (x : Value) : Prop :=
   Binary.toModel x ∈ I.toModel
 
 /-- Membership of a configured scalar in configured bounds. -/
 instance : Membership (ExecFloat (Configured.Family format code plan)) Bounds where
-  mem := Interval.mem
+  mem := Interval.Mem
 
 /-- Both endpoints are finite and ordered. -/
 abbrev Valid (I : Bounds) : Prop := Model.Interval.Valid I.toModel

@@ -1,17 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Certified
-public import FloatLib.Floats.ExecFloat.Carrier
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.TinyTable.Generic.Certified
+public import FloatLib.Numerics.Executable.Carrier
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.NumericalSystem
-public import FloatLib.Numerics.Representations.StaticStorage
 public import FloatLib.Numerics.Bitwise
+public import FloatLib.Numerics.Representations.StaticStorage
 
 /-!
 # Static-byte runtime representation
@@ -34,7 +33,7 @@ policy.
 
 Lean represents a subtype the same way as its data carrier, so `Code F` has the runtime
 representation of `UInt8` and its bound is proof-only. See Lean `Init.Prelude`,
-<https://github.com/leanprover/lean4/blob/v4.35.0/src/Init/Prelude.lean#L697-L699>.
+<https://github.com/leanprover/lean4/blob/v4.36.0/src/Init/Prelude.lean#L697-L699>.
 
 `benchmarks/scripts/checks/static-lowbit-codegen.sh` checks the intended allocation and
 specialization properties.

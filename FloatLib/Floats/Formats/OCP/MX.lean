@@ -1,32 +1,36 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
+public meta import FloatLib.Tactic.FloatInfo.OCP.MX.Configured
+public meta import FloatLib.Tactic.FloatInfo.OCP.MX.E8M0
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Conversion.Runtime
-public meta import FloatLib.Floats.Formats.OCP.MX.Configured.Info
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Proof
 public import FloatLib.Floats.Formats.OCP.MX.E2M1
 public import FloatLib.Floats.Formats.OCP.MX.E2M3
 public import FloatLib.Floats.Formats.OCP.MX.E3M2
 public import FloatLib.Floats.Formats.OCP.MX.E8M0.Automation
-public meta import FloatLib.Floats.Formats.OCP.MX.E8M0.Info
-public import FloatLib.Floats.Formats.OCP.MX.Standard.Configured.DotProduct.Proof
-public import FloatLib.Floats.Formats.OCP.MX.Standard.Configured.Proof
+public import FloatLib.Floats.Formats.OCP.MX.Standard.Conversion
+public import FloatLib.Floats.Formats.OCP.MX.Standard.ErrorBounds
+public import FloatLib.Floats.Formats.OCP.MX.E8M0.Semantics
+public import FloatLib.Floats.Formats.OCP.MX.Standard.Format
+public import FloatLib.Floats.Formats.OCP.MX.Standard.Compiled
+public import FloatLib.Floats.Formats.OCP.MX.Standard.KernelPath
 
 /-!
 # OCP microscaling formats
 
 In OCP MX, a block of 32 narrow elements shares one scale. Here you'll find the one-byte element
-types `E2M1`, `E2M3`, and `E3M2`, the E8M0 shared scale, and the contextual semantics of a block,
-whose meaning depends on scale and elements together. `Standard` supplies the six concrete
-32-element MX profiles, exact decoding, and destination quantization with proved nearest-even
-rounding at the selected shared scale. Its dot products accumulate exact rational products across
-any number of blocks and round once, at the end, to binary32.
+types `E2M1`, `E2M3`, and `E3M2`, the E8M0 shared scale, and `Standard.format`, which makes the six
+concrete MX profiles instances of the general block-scaled format of
+`FloatLib.Floats.Formats.Block`.
+Quantization with proved nearest-even rounding at the selected scale, exact decoding, and dot
+products that accumulate exactly and round once are the general operations of that module.
 
 ## E8M0
 
@@ -36,12 +40,13 @@ their standard or family packages under `FloatLib.Floats.Formats`.
 This import collects the OCP microscaling concepts:
 
 * E8M0 exponent-only scales, which have no sign bit, zero, or fraction
-* block decoding with one shared E8M0 scale
-* concrete 32-element profiles, including fixed-point INT8 with six fractional bits
-* max-binade scale selection and the SAT/OVF element conversion policies
-* mixed-profile dot products with exact accumulation and one binary32 projection
+* the element codecs of the six profiles, including fixed-point INT8 with six fractional bits,
+  with the SAT and OVF element conversion policies
+* the E8M0 scale codec with max-binade scale selection
 * their exact numerical-system contracts and `numerics` automation
 * optional `#float_info` inspection metadata
+
+Reference: OCP Microscaling Formats (MX) Specification v1.0, §§5.1–5.4 and 6.3.
 -/
 
 @[expose] public section

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -91,7 +91,7 @@ def RoundAwayFromZeroPoint (F : ℝ → Prop) (x f : ℝ) : Prop :=
 /-- Generic away-from-zero rounding satisfies its semantic point specification. -/
 theorem round_away_point {β : Numerics.Radix} {fexp : ℤ → ℤ} [ValidExp fexp]
     (x : ℝ) :
-    RoundAwayFromZeroPoint (genericFormat β fexp) x
+    RoundAwayFromZeroPoint (GenericRepresentable β fexp) x
       (round (β := β) (fexp := fexp) awayRound x) := by
   constructor
   · intro hx

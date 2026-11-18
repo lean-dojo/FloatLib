@@ -1,18 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel.AddSub
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Representation
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
-public import FloatLib.Floats.ExecFloat.Instances
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
+
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 
 /-!
@@ -126,7 +126,9 @@ theorem toModel_neg {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (x : Model fm
     rw [signBit_toggleSign, ← modelSignBit_ofBitVec_unpackSign x] at htoggled
     revert htoggled
     cases Sign.ofBitVec (unpackSign (toModelBits (toggleSign x))) <;>
-      cases Sign.ofBitVec (unpackSign (toModelBits x)) <;> simp [modelSignBit] <;> rfl
+      cases Sign.ofBitVec (unpackSign (toModelBits x)) <;>
+        simp only [modelSignBit, Bool.not_true, Bool.true_eq_false, reduceCtorEq, imp_self,
+        Bool.not_false, forall_const, Bool.false_eq_true] <;> rfl
   unfold toModel unpack
   simp only [hexponent, hmantissa, hsign]
   split_ifs <;> rfl
@@ -155,16 +157,6 @@ end FloatLib.Floats.Formats.BinaryInterchange.Model
 namespace FloatLib.Floats.ExecFloat.Binary
 
 open Formats.BinaryInterchange
-
-/-- A finite native binary32 value imports to a finite unpacked model. -/
-private theorem isFinite_toModel_ofFloat32Model {x : Float32} (hx : x.isFinite = true) :
-    (Model.toModel (Model.ofFloat32Model x.toModel)).isFinite = true := by
-  simpa only [Model.toModel_ofFloat32Model, Float32.isFinite, Float32.Model.isFinite] using hx
-
-/-- A finite native binary64 value imports to a finite unpacked model. -/
-private theorem isFinite_toModel_ofFloatModel {x : Float} (hx : x.isFinite = true) :
-    (Model.toModel (Model.ofFloatModel x.toModel)).isFinite = true := by
-  simpa only [Model.toModel_ofFloatModel, Float.isFinite, Float.Model.isFinite] using hx
 
 /-- Native binary32 addition commutes with the import adapter on finite inputs. -/
 theorem toModel_ofFloat32_add_of_isFinite (x y : Float32)

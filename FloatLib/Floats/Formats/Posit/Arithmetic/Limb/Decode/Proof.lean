@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,13 +9,12 @@ module
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Core.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Decode.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Fields.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
-public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
+
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -91,8 +90,7 @@ theorem lowBits_toNat
           2 ^ width * (value.hi.toNat * 2 ^ (64 - width)) by
         ac_rfl]
       exact (Nat.add_mul_mod_self_left _ _ _).symm
-    · have hlarge : 64 ≤ width := Nat.le_of_not_gt hsmall
-      let highWidth := width - 64
+    · let highWidth := width - 64
       have hwidthEq : width = highWidth + 64 := by
         unfold highWidth
         omega
@@ -103,15 +101,12 @@ theorem lowBits_toNat
           (NativeWord.lowBits value.hi highWidth).toNat =
             value.hi.toNat % 2 ^ highWidth :=
         NativeWord.lowBits_toNat value.hi highWidth
-      have hhighBound :
-          value.hi.toNat % 2 ^ highWidth < 2 ^ highWidth :=
-        Nat.mod_lt _ (Nat.two_pow_pos highWidth)
       have hresultBound :
           value.lo.toNat +
               (value.hi.toNat % 2 ^ highWidth) * 2 ^ 64 <
             2 ^ highWidth * 2 ^ 64 := by
         have hlow := value.lo.toNat_lt
-        nlinarith
+        omega
       unfold lowBits FloatLib.Numerics.FixedWord.UInt128.toNat
       simp only [hsmall, ite_false, hwidth, ite_true]
       rw [hhighRemainder]
@@ -168,7 +163,7 @@ private theorem significand_toNat_of_lt
           (FloatLib.Numerics.FixedWord.UInt128.singleBit width).toNat =
         value.toNat % 2 ^ width + 2 ^ width := by rw [hlow, hbit]
       _ < 2 ^ width + 2 ^ width := Nat.add_lt_add_right hremainder _
-      _ = 2 ^ (width + 1) := by rw [pow_succ]; ring
+      _ = 2 ^ (width + 1) := by rw [pow_succ]; omega
       _ ≤ 2 ^ 128 :=
         Nat.pow_le_pow_right (by decide) (by omega)
 

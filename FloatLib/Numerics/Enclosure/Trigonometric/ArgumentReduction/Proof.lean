@@ -1,14 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Trigonometric.ArgumentReduction.Runtime
 public import FloatLib.Numerics.Enclosure.Constants.Proof
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
+public import FloatLib.Numerics.Enclosure.Trigonometric.ArgumentReduction.Runtime
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Correctness of Payne-Hanek reduction
@@ -76,14 +77,14 @@ theorem le_levelBits_windowLevel (e : ℤ) (window : ℕ) :
 /-- Every window of at least two bits reduces `m * 2 ^ e`, for `m > 0`. -/
 theorem reduceWindow_spec {m : ℕ} (hm : 0 < m) (e : ℤ) {window : ℕ} (hwindow : 2 ≤ window) :
     (reduceWindow m e window).Reduces (m * 2 ^ e) := by
-  set level := windowLevel e window with hlevel
-  set N := levelBits level with hN
+  set level := windowLevel e window
+  set N := levelBits level
   set T := (piLevelAt level).twoOverPi with hTdef
-  set D := ((N : ℤ) - e + 2).toNat - window with hDdef
+  set D := ((N : ℤ) - e + 2).toNat - window
   set piece := (T >>> D) % 2 ^ window with hpiecedef
-  set y := m * piece % 2 ^ window with hydef
+  set y := m * piece % 2 ^ window
   set unit := 2 ^ (window - 2) with hunitdef
-  set k := (y + unit / 2) / unit with hkdef
+  set k := (y + unit / 2) / unit
   have hq : reduceWindow m e window =
       { quadrant := ⟨k % 4, Nat.mod_lt _ (by decide)⟩
         fraction := (y : ℤ) - (k * unit : ℕ)
@@ -94,7 +95,6 @@ theorem reduceWindow_spec {m : ℕ} (hm : 0 < m) (e : ℤ) {window : ℕ} (hwind
   have hDW : (D : ℤ) + window = N - e + 2 := by
     have h0 : 0 ≤ (N : ℤ) - e + 2 := by omega
     have h1 := Int.toNat_of_nonneg h0
-    have h2 : window ≤ ((N : ℤ) - e + 2).toNat := by omega
     omega
   obtain ⟨hTlo, hThi⟩ : LowerApprox (2 / Real.pi) N T := by
     rw [hTdef, piLevelAt_eq]
@@ -113,17 +113,15 @@ theorem reduceWindow_spec {m : ℕ} (hm : 0 < m) (e : ℤ) {window : ℕ} (hwind
     norm_num
   have hk : (k : ℝ) = 4 * ((k / 4 : ℕ) : ℝ) + ((k % 4 : ℕ) : ℝ) := by
     exact_mod_cast (Nat.div_add_mod k 4).symm
-  set L := T % 2 ^ D with hLdef
+  set L := T % 2 ^ D
   set δ : ℝ := 2 / Real.pi * 2 ^ N - T with hδdef
   refine ⟨((m * (T / 2 ^ D / 2 ^ window) + m * piece / 2 ^ window + k / 4 : ℕ) : ℤ),
     m * (L + δ) / 2 ^ D, ?_, ?_, ?_⟩
-  · have : (0 : ℝ) ≤ δ := by rw [hδdef]; linarith
+  · have : (0 : ℝ) ≤ δ := by rw [hδdef]; positivity
     positivity
   · have hL : (L : ℝ) + 1 ≤ 2 ^ D := by
       have : L < 2 ^ D := Nat.mod_lt _ (Nat.two_pow_pos D)
       exact_mod_cast this
-    have hδ : δ < 2 := by rw [hδdef]; linarith
-    have hpowD : (1 : ℝ) ≤ 2 ^ D := one_le_pow₀ (by norm_num)
     have hmReal : (0 : ℝ) < m := by exact_mod_cast hm
     rw [div_lt_iff₀ (by positivity)]
     push_cast
@@ -182,7 +180,7 @@ theorem abs_fraction_reduceWindow_le (m : ℕ) (e : ℤ) {window : ℕ} (hwindow
   rw [hq]
   have hunit : unit = 2 * 2 ^ (window - 3) := by
     rw [hunitdef, show window - 2 = (window - 3) + 1 by omega, pow_succ]
-    ring
+    ac_rfl
   have hpos : 0 < unit := by rw [hunitdef]; exact Nat.two_pow_pos _
   have hlow : k * unit ≤ y + unit / 2 := Nat.div_mul_le_self _ _
   have hhigh : y + unit / 2 < (k + 1) * unit := by
@@ -223,7 +221,7 @@ theorem QuarterTurns.accepts_spec {q : QuarterTurns} {bits : ℕ} (h : q.accepts
   · constructor
     · intro hpos
       have : (0 : ℝ) < q.fraction := by exact_mod_cast hpos
-      linarith
+      exact add_pos_of_pos_of_nonneg this hη
     · intro hsum
       by_contra hnot
       have hneg : (q.fraction : ℝ) ≤ 0 := by exact_mod_cast not_lt.mp hnot
@@ -235,7 +233,7 @@ theorem QuarterTurns.accepts_spec {q : QuarterTurns} {bits : ℕ} (h : q.accepts
       rw [abs_of_neg hsum]
       nlinarith
     · rw [abs_of_pos hpos] at hacc'
-      rw [abs_of_pos (by linarith)]
+      rw [abs_of_pos (by positivity)]
       nlinarith
 
 /--
@@ -294,7 +292,7 @@ theorem QuarterTurns.Reduces.exists_sin_cos_eq_rotate {q : QuarterTurns} {x : �
   have hxeq : x = (q.fraction + η) / 2 ^ q.scale * (Real.pi / 2) +
       (4 * j + q.quadrant.val) * (Real.pi / 2) := by
     calc x = x * (2 / Real.pi) * (Real.pi / 2) := by field_simp
-      _ = _ := by rw [hx]; ring
+      _ = _ := by rw [hx]; rw [add_mul]; ac_rfl
   rw [← hxeq]
 
 /--
@@ -354,23 +352,21 @@ theorem QuarterTurns.abs_argument_sub_le (q : QuarterTurns) (precision : ℕ) {�
   rw [hsplit]
   have hgap0 : 0 ≤ Real.pi / 2 - H / 2 ^ precision := by
     rw [sub_nonneg, div_le_iff₀ hp]
-    linarith
+    exact hlo
   have hgap : Real.pi / 2 - H / 2 ^ precision ≤ 2 / 2 ^ precision := by
     rw [sub_le_iff_le_add, ← add_div, le_div_iff₀ hp]
     linarith
   have hηterm : 0 ≤ η / 2 ^ q.scale * (Real.pi / 2) :=
     mul_nonneg (div_nonneg hη hs.le) (by positivity)
-  have h1 : |(q.fraction : ℝ)| / 2 ^ q.scale * (Real.pi / 2 - H / 2 ^ precision) ≤
+  have h1 : |(q.fraction : ℝ) / 2 ^ q.scale * (Real.pi / 2 - H / 2 ^ precision)| ≤
       |(q.fraction : ℝ)| / 2 ^ q.scale * (2 / 2 ^ precision) :=
-    mul_le_mul_of_nonneg_left hgap (by positivity)
+    Backward.abs_mul_le_mul (by rw [abs_div, abs_of_pos hs])
+      (by rwa [abs_of_nonneg hgap0])
   have h2 : η / 2 ^ q.scale * (Real.pi / 2) ≤ q.error / 2 ^ q.scale * (Real.pi / 2) := by
     gcongr
-  calc _ ≤ |(q.fraction : ℝ) / 2 ^ q.scale * (Real.pi / 2 - H / 2 ^ precision)| +
-        |η / 2 ^ q.scale * (Real.pi / 2)| := abs_add_le _ _
-    _ = |(q.fraction : ℝ)| / 2 ^ q.scale * (Real.pi / 2 - H / 2 ^ precision) +
-        η / 2 ^ q.scale * (Real.pi / 2) := by
-      rw [abs_mul, abs_div, abs_of_pos hs, abs_of_nonneg hgap0, abs_of_nonneg hηterm]
-    _ ≤ _ := by linarith
+  simpa only [add_comm] using Backward.abs_add_le_add h1
+    (by rwa [abs_of_nonneg hηterm] : |η / 2 ^ q.scale * (Real.pi / 2)| ≤
+      q.error / 2 ^ q.scale * (Real.pi / 2))
 
 /--
 The sine of a reduced `x` is within `error / 2 ^ scale * π/2 + |fraction| / 2 ^ scale * 2 / 2 ^

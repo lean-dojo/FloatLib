@@ -31,12 +31,22 @@ sources:
     type: standard
     relationship: formalizes
     note: Posit encodings, arithmetic, elementary functions, and quire accumulation.
-  - title: IEEE P3109 Interim Report on Arithmetic Formats for Machine Learning, v4.0.3
+  - title: IEEE P3109 Interim Report on Arithmetic Formats for Machine Learning, v4.1
     authors: [IEEE SA P3109 Working Group]
-    id: "https://github.com/P3109/Public/tree/34f5964d9bb2382b2665d15467fc3517b990b308"
+    id: "https://github.com/P3109/Public/tree/2d45cf2fe0314d32251f5439d9d3ed078f93fbb9"
     type: technical-report
     relationship: formalizes
-    note: Implements the identified working-group report, not a published IEEE standard.
+    note: >-
+      Implements the identified working-group draft of 14 September 2026, not a published IEEE
+      standard.
+  - title: "Programming languages, C: Extensions to support embedded processors (ISO/IEC TR 18037), committee draft N1169"
+    authors: [ISO/IEC JTC 1/SC 22/WG 14]
+    id: "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1169.pdf"
+    type: technical-report
+    relationship: formalizes
+    note: >-
+      The fixed-point types, conversions, operators, stdfix.h functions and text conversions, as
+      values. The C ABI, memory and locales other than the C locale are not modelled.
   - title: OCP 8-bit Floating Point Specification, Revision 1.0
     authors: [Open Compute Project]
     id: "https://www.opencompute.org/documents/ocp-8-bit-floating-point-specification-ofp8-revision-1-0-2023-12-01-pdf-1"
@@ -48,7 +58,24 @@ sources:
     id: "https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf"
     type: specification
     relationship: formalizes
-    note: Shared-scale block quantization and the six implemented element profiles.
+    note: >-
+      The six element profiles and the scale rule of section 6.3, as instances of the general
+      block-scaled format.
+  - title: Pretraining Large Language Models with NVFP4
+    authors: [NVIDIA]
+    id: "https://arxiv.org/abs/2509.25149"
+    type: article
+    relationship: formalizes
+    note: >-
+      The NVFP4 encoding and its two-level scaling (section 2 and appendix B): E2M1 elements, an
+      E4M3 scale per block of 16 and a binary32 scale per tensor. The training method is not
+      formalized.
+  - title: "Four Over Six: More Accurate NVFP4 Quantization with Adaptive Block Scaling"
+    authors: [Jack Cook and coauthors]
+    id: "https://arxiv.org/abs/2512.02010"
+    type: article
+    relationship: formalizes
+    note: The scale selection between the targets 6 and 4 (section 3.1).
   - title: "Flocq: A Unified Library for Proving Floating-Point Algorithms in Coq"
     authors: [Sylvie Boldo, Guillaume Melquiond]
     id: "https://doi.org/10.1109/ARITH.2011.40"
@@ -75,11 +102,11 @@ status:
   sorry_in_definitions: 0
   main_results:
     - declaration: FloatLib.Floats.ExecFloat.Proof.add_eq_spec
-      file: FloatLib/Floats/ExecFloat/Proof/Arithmetic.lean
+      file: FloatLib/Kernels/Execution/Proof.lean
       sorry_count: 0
       axioms: []
     - declaration: FloatLib.Floats.ExecFloat.Proof.sqrt_eq_spec
-      file: FloatLib/Floats/ExecFloat/Proof/Arithmetic.lean
+      file: FloatLib/Kernels/Execution/Proof.lean
       sorry_count: 0
       axioms: []
     - declaration: FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_sub_eq_of_sterbenz

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Formatting
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
+public import FloatLib.Floats.Formats.Posit.Formatting
 
 /-!
 # Decimal conversion for configured posits
@@ -30,11 +30,11 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 
 local notation "Value" => FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Exact decimal display through the selected posit storage codec. -/
+/-- Posit Standard (2022), §6.3: exact decimal display through the selected storage codec. -/
 def display (value : Value) : String :=
   Model.display (toModel value)
 
-/-- Exact decimal input, rounded once and packed into the selected posit storage carrier. -/
+/-- Posit Standard (2022), §6.3: exact decimal input, rounded once through the selected codec. -/
 def parse (input : String) : Except Model.ParseError Value :=
   (Model.parse format input).map ofModel
 

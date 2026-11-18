@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Form
+public import FloatLib.Kernels.Execution.Instances -- shake: keep
 public import FloatLib.Floats.Formats.Codebook.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.Codebook.Catalog.Proof
 public import FloatLib.Floats.Formats.Codebook.Configured.Runtime
-public import FloatLib.Floats.ExecFloat.Core.Capability
+
 import FloatLib.Floats.Formats.Codebook.Arithmetic.Proof
 
 /-!
@@ -85,19 +86,30 @@ def mulEstimate : Backend.Candidate where
 /-- Bipolar multiplication candidate for common `ExecFloat` dispatch. Its reference is the kernel
 `bipolar1.mul` itself, so the certificate records only that the planner runs that kernel. The
 kernel's semantic correctness is `decode_mul`. -/
+@[compiler_optimize baseline]
 def mulCertified : Backend.Certified bipolar1.mul :=
   Backend.Certified.reference mulEstimate bipolar1.mul
 
 end Plan
 
-/-- Bipolar multiplication joins common `ExecFloat` dispatch with the kernel `bipolar1.mul` as both
-implementation and specification. `decode_mul` gives its exact integer meaning. -/
-@[always_inline] instance
-    [planning : Backend.PolicyFor
-      (Codebook.Family Formats.Codebook.Catalog.bipolar1)] :
-    ExecFloat.Mul (Codebook.Family Formats.Codebook.Catalog.bipolar1) :=
-  ExecFloat.Capability.ofDirectKernel
-    .mul bipolar1.mul Plan.mulCertified bipolar1.mul rfl
+/--
+Bipolar multiplication joins common `ExecFloat` dispatch as a static capability: the kernel
+`bipolar1.mul` is both its implementation and its specification. `Capability.ofStatic` adds every
+candidate tagged `@[compiler_optimize]` for `bipolar1.mul` where one is in scope, as it does for
+the other fixed formats. `decode_mul` gives the exact integer meaning.
+-/
+@[always_inline, instance_reducible] instance
+    {_ : Backend.PolicyFor (Codebook.Family Formats.Codebook.Catalog.bipolar1)} :
+    ExecFloat.Capability.Static (F := Codebook.Family Formats.Codebook.Catalog.bipolar1) .mul
+      bipolar1.mul where
+  spec_eq := rfl
+  capability := ExecFloat.Capability.ofCertified .mul Plan.mulCertified
+
+/-- Lean's kernel evaluates one-bit bipolar multiplication on the two code bits: the reference
+operation is the kernel operation, for the capability in the statement. -/
+instance {_ : Backend.PolicyFor (Codebook.Family Formats.Codebook.Catalog.bipolar1)}
+    {_ : ExecFloat.Mul (Codebook.Family Formats.Codebook.Catalog.bipolar1)} :
+    KernelPath.DirectReference (Codebook.Family Formats.Codebook.Catalog.bipolar1) .mul where
 
 end bipolar1
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,12 +8,13 @@ module
 
 public import FloatLib.Kernels.FixedWord.Core.Proof.Word
 public import FloatLib.Numerics.ShiftRightJam
+
 import FloatLib.Numerics.ShiftRightJam.Proof
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.NormNum.Pow
 import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Verified native-word rounding
@@ -43,7 +44,7 @@ namespace FloatLib.Numerics.FixedWord
         apply hexponent
         apply UInt64.toNat_inj.mp
         simpa using h
-      simp
+      simp only [UInt64.reduceToNat, ge_iff_le]
       omega
 
 private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
@@ -83,9 +84,6 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
         (shift - 1) (by omega)
     have hincrement :=
       uint64_rounding_increment_toNat value shift hpositive hsmall
-    have hincrementBound : value.toNat >>> shift + 1 < 2 ^ 64 := by
-      rw [← hincrement]
-      exact UInt64.toNat_lt _
     have heven := lowBitIsZero_eq_even (value >>> UInt64.ofNat shift)
     rw [hquotient] at heven
     have hremainderNat :
@@ -97,7 +95,13 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
     rw [Numerics.roundShiftRightEven_def]
     simp only [beq_iff_eq, hzero, hsmall, ite_false, ite_true]
     simp only [UInt64.lt_iff_toNat_lt, hremainder, hhalf]
-    split_ifs <;> simp_all <;> omega
+    split_ifs <;>
+      simp_all only [UInt64.toNat_shiftRight, UInt64.toNat_ofNat', Nat.reducePow, Nat.reduceDvd,
+      Nat.mod_mod_of_dvd, UInt64.toNat_and, UInt64.toNat_shiftLeft, UInt64.reduceToNat,
+      UInt64.toNat_add, Nat.mod_succ_eq_iff_lt, Nat.succ_eq_add_one, Nat.reduceAdd,
+      Nat.shiftRight_eq', Nat.shiftLeft_eq', not_true_eq_false, not_lt, BEq.rfl,
+      true_eq_decide_iff, Nat.left_eq_add, one_ne_zero, decide_true, beq_iff_eq,
+      Nat.mod_two_not_eq_zero] <;> omega
   · have hlarge : 64 ≤ shift := Nat.le_of_not_gt hsmall
     by_cases heq : shift = 64
     · subst shift
@@ -105,7 +109,8 @@ private theorem uint64_rounding_increment_toNat (value : UInt64) (shift : Nat)
         decide
       rw [Numerics.roundShiftRightEven_of_lt_two_pow _ _ (by decide) value.toNat_lt]
       unfold roundShiftRightEven
-      simp [UInt64.lt_iff_toNat_lt, hhalf]
+      simp only [Nat.reduceBEq, Bool.false_eq_true, ↓reduceIte, lt_self_iff_false, BEq.rfl,
+        gt_iff_lt, UInt64.lt_iff_toNat_lt, hhalf, Nat.reducePow, Nat.add_one_sub_one]
       split_ifs <;> rfl
     · have hgt : 64 < shift := lt_of_le_of_ne hlarge (Ne.symm heq)
       have hvaluePow : value.toNat < 2 ^ shift := by
@@ -183,11 +188,6 @@ theorem roundQuotientEven_toNat (num den : UInt64)
   have hquotient :
       (num / den).toNat = num.toNat / den.toNat :=
     UInt64.toNat_div num den
-  have hincrement :
-      (num / den + 1).toNat =
-        num.toNat / den.toNat + 1 := by
-    rw [UInt64.toNat_add, hquotient]
-    exact Nat.mod_eq_of_lt hquotientFit
   unfold roundQuotientEven Numerics.roundQuotientEven
   simp only [beq_iff_eq, hden, ite_false]
   have heven :
@@ -195,7 +195,11 @@ theorem roundQuotientEven_toNat (num den : UInt64)
         (num.toNat / den.toNat) % 2 == 0 := by
     simp [← UInt64.toNat_inj, hquotient]
   simp only [UInt64.lt_iff_toNat_lt, hremainder, hcomplement]
-  split_ifs <;> simp_all <;> omega
+  split_ifs <;>
+    simp_all only [ne_eq, Nat.reducePow, UInt64.toNat_mod, UInt64.toNat_sub_of_le, UInt64.toNat_div,
+    UInt64.toNat_add, UInt64.reduceToNat, Nat.mod_succ_eq_iff_lt, Nat.succ_eq_add_one,
+    Nat.reduceAdd, beq_iff_eq, not_lt, Nat.left_eq_add, one_ne_zero, BEq.rfl, iff_true, iff_false,
+    Nat.mod_two_not_eq_zero, tsub_le_iff_right, true_iff, not_true_eq_false, false_iff] <;> omega
 
 /--
 The native and arbitrary-precision branches compute the same nearest-even natural-number

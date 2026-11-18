@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -35,12 +35,14 @@ def foldBudget (step : α → β → α) (reference : ρ → β → ρ) (budget 
     (initial : α) (shadow : ρ) (budgets : κ) (input : List β) : κ :=
   (input.foldl (relationFoldStep step reference budget) (initial, shadow, budgets)).2.2
 
+/-- The budgets of an empty traversal are the budgets it starts with. -/
 @[simp]
 theorem foldBudget_nil (step : α → β → α) (reference : ρ → β → ρ)
     (budget : α → ρ → κ → β → κ) (initial : α) (shadow : ρ) (budgets : κ) :
     foldBudget step reference budget initial shadow budgets [] = budgets :=
   rfl
 
+/-- The budgets of a traversal are those of its tail after the first step. -/
 @[simp]
 theorem foldBudget_cons (step : α → β → α) (reference : ρ → β → ρ)
     (budget : α → ρ → κ → β → κ) (initial : α) (shadow : ρ) (budgets : κ) (value : β)
@@ -60,7 +62,7 @@ theorem foldl_relationFoldStep (step : α → β → α) (reference : ρ → β 
   unfold foldBudget
   induction input generalizing initial shadow budgets with
   | nil => rfl
-  | cons value rest ih => exact ih _ _ _
+  | cons value _ ih => exact ih _ _ _
 
 /-- A relation between a loop's state, its shadow state and its budgets that one step preserves
 holds after the loop when the condition holds at every visited state. -/

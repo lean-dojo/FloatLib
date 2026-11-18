@@ -1,14 +1,12 @@
 ---
 number: "03"
 slug: "the-numerical-models"
-title: "How running code and proofs fit together"
+title: "Executable arithmetic and its proofs"
 summary: "FloatLib's certified operations run fast code that is proved equal to a short reference definition, and you can read every stored value as bits, as an exact value or as a real number."
 phases: [execution, trust, numerical-models, binary-format, binary-arithmetic, status-and-directed, planner-and-configured, ieee-formats]
 ---
 
-FloatLib distinguishes an executable operation from its reference specification. The implementation computes with packed words, carries and specialized rounding routines. The reference operation decodes the operands, computes the exact result and rounds once. A refinement theorem states that the two return the same stored word. Later proofs can therefore use the reference operation without repeating the proof about its implementation.
-
-**Note:** Lean's kernel is the trusted checker that accepts or rejects proofs. An arithmetic kernel is a routine implementing a numerical operation. Lean's kernel checks the proofs about arithmetic kernels, and the compiler compiles their definitions into executable code.
+We should be able to replace a binary32 addition routine with a faster one and keep the theorems we proved about it. For finite operands the reference operation adds their exact values and rounds once. Each certified implementation, or *arithmetic kernel*, comes with a proof that it returns the same word as the reference. Lean's kernel checks that proof. The compiled program can then add the packed words directly.
 
 ## What happens when you add two numbers?
 
@@ -30,7 +28,7 @@ example (x y : Binary32) : x + y = ExecFloat.Spec.add x y :=
   ExecFloat.Proof.add_eq_spec x y
 ```
 
-you get the bits $1050253722$, `0x3e99999a` in hex, and `0.3`, the shortest decimal that reads back as that word. Each `#eval` compiles and runs the binary32 implementation. The literal `0.3` rounds to the same word, so here, unlike in binary64, the sum really does equal 0.3, though none of these words is three tenths ([Chapter 02](#/chapter/from-reals-to-machine-numbers) explains why).
+the first command returns the word `0x3e99999a` ($1050253722$ in decimal). Both strings are `0.3` because the sum and the binary32 literal `0.3` have that same encoding. [Chapter 02](#/chapter/from-reals-to-machine-numbers) works out how the result changes in binary64.
 
 The `example` is the refinement theorem. `x + y` calls [[FloatLib.Floats.ExecFloat.add]], which runs the implementation selected for the format, and [[FloatLib.Floats.ExecFloat.Proof.add_eq_spec]] says that call equals the reference operation [[FloatLib.Floats.ExecFloat.Spec.add]], a short Lean function with no floating point inside. It decodes both operands to exact dyadics, fractions whose denominator is a power of two, adds them exactly, rounds once and packs the result.
 
@@ -52,8 +50,8 @@ An implementation, also called a backend, only becomes a candidate with its proo
 
 ```lean
 open FloatLib.Floats.ExecFloat in
-example {α : Type} (spec : α) (certified : Backend.Certified spec) :
-    certified.run = spec :=
+example {α : Type} (specification : α) (certified : Backend.Certified specification) :
+    certified.run = specification :=
   certified.run_eq_spec
 ```
 
@@ -65,9 +63,9 @@ Each format registers a [[FloatLib.Floats.ExecFloat.Capability]] for each of its
 
 ```lean
 open FloatLib.Floats.ExecFloat in
-example {α : Type} (spec : α) (policy : Backend.Policy)
-    (candidates : Backend.CandidateSet (Backend.Certified spec)) :
-    (Backend.selectCertified policy candidates).run = spec :=
+example {α : Type} (specification : α) (policy : Backend.Policy)
+    (candidates : Backend.CandidateSet (Backend.Certified specification)) :
+    (Backend.selectCertified policy candidates).run = specification :=
   Backend.selectCertified_run_eq_spec policy candidates
 ```
 
@@ -82,13 +80,13 @@ example : ExecFloat.Proof.FullArithmeticCertificate (ExecFloat.Binary.Family 8 2
 
 On disk the split is usually two files, executable definitions in `Runtime.lean` and refinement theorems in a sibling `Proof.lean`, as in [Figure 3.1](#/chapter/the-numerical-models/figure-ch05-runtime-proof-split). Only the proof file imports the lemmas and the theories from Mathlib, Lean's mathematics library, that justify the result. The packed posit backend is the one exception: its runtime module imports range lemmas to build valid stored codes, and compilation erases those proofs.
 
-![Runtime.lean supplies executable definitions; Proof.lean establishes their equality with the reference operation](assets/ch05-runtime-proof-split.png "An executable definition and its refinement theorem have different jobs. The proof connects the runtime result to the reference operation.")
+![Two boxes joined by an equals sign: run x y, word and limb arithmetic, on the left and spec x y, reference addition, on the right. Under the equals sign is the theorem run_eq_spec : run = spec](assets/ch05-runtime-proof-split.png "An executable addition and its specification, joined by the theorem that proves them equal. The executable definition is in a Runtime.lean file and the theorem run_eq_spec in its sibling Proof.lean, where Lean checks it. The two return the same encoded result for every input, exceptional words included, and the equals sign does not mean that the reference runs after run.")
 
 The [runtime module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Runtime.lean), `FloatLib.Floats.ExecFloat.Runtime`, gives you arithmetic and conversion, and building them still requires their certificates. The [full module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat.lean) adds the specification equations, proof automation and inspection commands. Lean's module system keeps an interface apart from the dependencies behind it, so you can use an operation without importing every lemma we needed to prove it correct.
 
 ## What if a fast kernel can't handle an input?
 
-Let's look at the one-word multiplication kernel. Its gate, the decidable predicate [[FloatLib.Floats.Formats.BinaryInterchange.Model.NativeSmallWordMul.Eligible]] (a yes-or-no test Lean can compute), asks for an IEEE encoding, at most 64 encoded bits, at most 30 exponent bits and at most 31 fraction bits, the last so that the exact product of two significands fits below $2^{64}$. The kernel, `mulNormal?`, multiplies normal operands in `UInt64` arithmetic and returns `none` outside the normal range it handles. Its [proof module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Word/Small/Mul/Proof.lean) proves `mulNormal_refines`: whenever the kernel accepts, its answer is the format-generic finite kernel's.
+Let's look at the one-word multiplication kernel. Its gate, the decidable predicate [[FloatLib.Floats.Formats.BinaryInterchange.Model.NativeSmallWordMul.Eligible]] (a yes-or-no test Lean can compute), asks for an IEEE encoding, at most 64 encoded bits, at most 30 exponent bits and at most 31 fraction bits, the last so that the exact product of two significands fits below $2^{64}$. The kernel, `mulNormal?`, multiplies normal operands in `UInt64` arithmetic and returns `none` outside the normal range it handles. Its [proof module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/Compiled/Word/Small/Mul/Proof.lean) proves `mulNormal_refines`: whenever the kernel accepts, its answer is the format-generic finite kernel's.
 
 ```lean
 open FloatLib.Floats.Formats.BinaryInterchange in
@@ -111,7 +109,7 @@ The dispatcher never compares its answer with the reference. The proof covers bo
 
 ## How does the compiler swap in faster code?
 
-Reference definitions often compute on `Nat` and `Int` and allocate wide integers, so you'd want the compiler to run something faster. A `@[csimp]` equation proves two Lean definitions equal and tells the compiler to use the second in generated code, once Lean's kernel has checked it. Here are two examples. [[FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteKernel.add_eq_addRuntime]] states `@add? = @addRuntime?` ([the kernel source tour](#/chapter/performance/how-slow-definitions-get-swapped-for-fast-ones) goes through such replacements), and [[FloatLib.Numerics.FixedWord.IntegerSquareRoot.natSqrt_eq_sqrtNat]] states `Nat.sqrt = sqrtNat`, so every compiled `Nat.sqrt` in a module that imports `FloatLib.Kernels`, yours included, takes FloatLib's machine-word path for inputs below $2^{64}$ and a checked Newton iteration above that, as the [module docstring](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels.lean) records.
+Reference definitions often compute on `Nat` and `Int` and allocate wide integers, so you'd want the compiler to run something faster. A `@[csimp]` equation proves two Lean definitions equal and tells the compiler to use the second in generated code, once Lean's kernel has checked it. Here are two examples. [[FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteKernel.add_eq_addRuntime]] states `@add? = @addRuntime?`, and [[FloatLib.Numerics.FixedWord.IntegerSquareRoot.natSqrt_eq_sqrtNat]] states `Nat.sqrt = sqrtNat`, so every compiled `Nat.sqrt` in a module that imports `FloatLib.Kernels`, yours included, takes FloatLib's machine-word path for inputs below $2^{64}$ and a checked Newton iteration above that, as the [module docstring](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Kernels.lean) records.
 
 ```lean
 #check @FloatLib.Floats.Formats.BinaryInterchange.Model.FiniteKernel.add_eq_addRuntime
@@ -151,7 +149,7 @@ Lean proofs rest on axioms, statements accepted without proof, and `#print axiom
 
 `add_eq_spec` is assembled from two fields of whatever capability the format supplies, `execute_eq_implementation` and the selected certificate's `run_eq_spec`, so its own proof uses no axioms. A format's assumptions live in its certificate, and the binary addition dispatcher's are `propext`, `Classical.choice` and `Quot.sound` (propositional extensionality, the axiom of choice and the soundness of quotients), the usual axioms of classical mathematics in Lean.
 
-Tests sit outside these proofs. Some finite checks use `native_decide`, which runs a check as compiled code. That saves build time over reduction in Lean's kernel at the price of trusting the compiler and evaluator for that check, as the [testing guide](https://github.com/lean-dojo/FloatLib/blob/main/tests/README.md#trust-surface) lists, and the general arithmetic proofs don't use native evaluation. The functions of the [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean), such as `NativeFPU.Unchecked.add32`, call the machine's own `Float32` or `Float` operation behind a guard, so they rest on host assumptions in place of a refinement theorem, and no policy can select them. Comparing their outputs with the proved kernels can find disagreements, as [Chapter 13](#/chapter/lean-native-floats/how-to-use-the-processors-own-arithmetic) shows, but can't supply the missing theorem.
+Tests sit outside these proofs. Some finite checks use `native_decide`, which runs a check as compiled code. That saves build time over reduction in Lean's kernel at the price of trusting the compiler and evaluator for that check, as the [testing guide](https://github.com/lean-dojo/FloatLib/blob/main/tests/README.md#trust-surface) lists, and the general arithmetic proofs don't use native evaluation. The functions of the [unchecked host-arithmetic module](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/BinaryInterchange/Configured/NativeFPU/Unchecked.lean), such as `NativeFPU.Unchecked.add32`, call the machine's own `Float32` or `Float` operation behind a guard, so they rest on host assumptions in place of a refinement theorem, and no policy can select them. Comparing their outputs with the proved kernels can find disagreements, as [Chapter 14](#/chapter/lean-native-floats/how-to-use-the-processors-own-arithmetic) shows, but can't supply the missing theorem.
 
 ## One stored value, three readings
 
@@ -215,7 +213,7 @@ Negative zero keeps `negative := true`. The canonical NaN is positive and quiet,
 
 [[FloatLib.Floats.Formats.BinaryInterchange.Model.toReal]] decodes and applies [[FloatLib.Numerics.Dyadic.toReal]], giving $m \cdot 2^{e}$ with the sign applied. It's total, defined for every word, sending a NaN or an infinity to $0$, the way a spreadsheet fills empty cells with 0, so a 0 no longer tells you whether a value was zero or missing. A total function is easier in algebra than the partial `toReal?`, so an arithmetic theorem establishes finiteness before it treats `toReal` as a result's value. `represents_iff` says `Represents x r` holds exactly when `isFinite x = true` and `toReal x = r`. Both zeros still represent $0$, so `Represents x 0` is enough for real algebra but not for a bit-for-bit conformance claim. [Figure 3.2](#/chapter/the-numerical-models/figure-ch06-three-readings) follows `tiny32` through all three readings, with nothing rounded along the way.
 
-![Three cards read tiny32 as stored fields (sign 0, exponent 100, fraction 2870391), an exact dyadic (significand 11258999, exponent -50), and the real value 11258999 times 2^-50; the arrows decode and interpret without rounding](assets/ch06-three-readings.png "One finite word, read as stored fields, an exact dyadic, and a real value.")
+![Three boxes in a row. The first, stored bits, holds 0x322bcc77 with a strip of sign, exponent and fraction fields and the values sign 0, exponent 100, fraction 2870391. An arrow labelled decode leads to the second, exact dyadic: positive, significand 11258999, exponent −50. An arrow labelled interpret leads to the third, real value: 11258999 × 2^-50, about 9.99999993922 × 10^-9](assets/ch06-three-readings.png "One word read three ways: as stored bits, as an exact dyadic and as a real number. The word is tiny32, the binary32 value nearest to 10^-8. Neither step rounds, so all three readings denote the same finite value.")
 
 ## Why does adding a tiny number to one give back one?
 
@@ -264,7 +262,7 @@ $$\operatorname{toReal}(\operatorname{add}(x, y)) = \operatorname{roundAt}_{f}\b
 
 under two hypotheses, `fmt.isIEEE = true` and `isFinite (add x y) = true`. Finite operands come for free, since a NaN or infinite operand makes the sum a NaN or an infinity. It's an equation, not a bound, and for `one32` and `tiny32` both sides are $1$, because the exact sum is closer to $1$ than to its upper neighbour, as [Figure 3.3](#/chapter/the-numerical-models/figure-ch06-one-rounding) shows.
 
-![Binary32 number line near 1, with neighbours 1 - 2^-24 and 1 + 2^-23; the exact sum 1 + 11258999 · 2^-50 lies about 0.084 of the gap above 1, before the midpoint, and rounds to 1 with inexact set](assets/ch06-one-rounding.png "The exact sum rounds back to one, setting the inexact flag.")
+![A number line with three binary32 values, 1 − 2^-24, 1 and 1 + 2^-23, the midpoint between the last two, and a bracket for the gap 2^-23. An open diamond labelled exact sum sits just to the right of 1, well short of the midpoint, and an arrow takes it back to 1](assets/ch06-one-rounding.png "The exact sum 1 + y, for y the binary32 value nearest to 10^-8, among the binary32 values around 1. The sum lies 0.084 of a gap above 1, short of the midpoint, so rounding to nearest returns 1 and raises the inexact flag.")
 
 ### How to apply the theorem in Lean
 
@@ -371,7 +369,7 @@ example {fmt : FloatFormat} {r s : Real}
   numerics
 ```
 
-In the second example `Model.At.add` carries $\mathrm{roundAt}(r + s)$ as its index, the real number in its type, and `numerics` closes the proof with the rule, registered under `numerics_simps`, that an `At` value denotes its index. `u` and `v` carry their finite denotations in their `.2` fields, so there's no `ha` or `hb`, but you supply `hout`, because two finite inputs can have a sum that doesn't fit. All of these theorems are about FloatLib's software arithmetic. Relating it to Lean's native `Float32`, to C operations or to GPU instructions takes another argument, which [chapter 13](#/chapter/lean-native-floats) makes for Lean's native floats.
+In the second example `Model.At.add` carries $\mathrm{roundAt}(r + s)$ as its index, the real number in its type, and `numerics` closes the proof with the rule, registered under `numerics_simps`, that an `At` value denotes its index. `u` and `v` carry their finite denotations in their `.2` fields, so there's no `ha` or `hb`, but you supply `hout`, because two finite inputs can have a sum that doesn't fit. All of these theorems are about FloatLib's software arithmetic. Relating it to Lean's native `Float32`, to C operations or to GPU instructions takes another argument, which [chapter 14](#/chapter/lean-native-floats) makes for Lean's native floats.
 
 ## What about formats that aren't binary floats?
 
@@ -429,8 +427,8 @@ $$
 s_2-(x+y+z) = \bigl(s_2-(s_1+z)\bigr) + \bigl(s_1-(x+y)\bigr).
 $$
 
-The triangle inequality combines the two local bounds, and both errors stay, because applying the theorem twice doesn't give one rounding of the three-input sum. For configured binary programs the [`roundoff` tactic](#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code), which needs `import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff`, composes the per-operation theorems and their range conditions into an error bound from the code. [Chapter 04](#/chapter/the-mathematics-of-rounding) goes further.
+The triangle inequality combines the two local bounds, and both errors stay, because applying the theorem twice doesn't give one rounding of the three-input sum. For configured binary programs the [`roundoff` tactic](#/chapter/proving-numerical-bounds/how-to-get-an-error-bound-for-floating-point-code), which needs `import FloatLib.Tactic.Roundoff`, composes the per-operation theorems and their range conditions into an error bound from the code. [Chapter 04](#/chapter/the-mathematics-of-rounding) goes further.
 
 ## How to add your own format or backend
 
-You don't always need a new format family: the [custom-format examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/CustomFormats.lean) configure a 16-bit binary telemetry type with its own bias and NaN encoding without one. A new backend for an existing format has to compute the same reference operation, and the [backend guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/README.md) gives the registration procedure and its proof obligations, which the [one-word kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/ExecFloat/Backends/Word/Small) discharge. A new format family also needs a meaning for its stored values, and the [numerical interfaces](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Core) define those contracts, where `EncodedFormat` and `FormatSemantics` keep the computable code type apart from its possibly noncomputable meaning. A new rounder states its rounding, saturation and flush-to-zero choices in [[FloatLib.Numerics.QuantizationPolicy]] and proves the obligation [[FloatLib.Numerics.Quantization.Spec.Implements]] against [[FloatLib.Numerics.Quantization.Spec]], and the [endpoint-adapter example](#/chapter/proving-numerical-bounds/how-to-choose-a-different-endpoint-format) uses one shared contract with different representations. The [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) is a compact example to read, from encoding through arithmetic and its proofs.
+You don't always need a new format family: the [custom-format examples](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Examples/CustomFormats.lean) configure a 16-bit binary telemetry type with its own bias and NaN encoding without one. A new backend for an existing format has to compute the same reference operation, and the [backend guide](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/ExecFloat/Backends/README.md) gives the registration procedure, [a tag on the proof](#/chapter/proof-by-computation/what-about-compiled-code), and its proof obligations, which the [one-word kernels](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/ExecFloat/Backends/Compiled/Word/Small) discharge. A new format family also needs a meaning for its stored values, and the [numerical interfaces](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Numerics/Core) define those contracts, where `EncodedFormat` and `FormatSemantics` keep the computable code type apart from its possibly noncomputable meaning. A new rounder states its rounding, saturation and flush-to-zero choices in [[FloatLib.Numerics.QuantizationPolicy]] and proves the obligation [[FloatLib.Numerics.Quantization.Spec.Implements]] against [[FloatLib.Numerics.Quantization.Spec]], and the [endpoint-adapter example](#/chapter/proving-numerical-bounds/how-to-choose-a-different-endpoint-format) uses one shared contract with different representations. The [fixed-point family](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/FixedPoint) is a compact example to read, from encoding through arithmetic and its proofs.

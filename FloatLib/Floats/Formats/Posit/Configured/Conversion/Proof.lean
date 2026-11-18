@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Real
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
-import FloatLib.Floats.Formats.Posit.Cast.Widening
+
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Layout
+import FloatLib.Floats.Formats.Posit.Cast.Widening
 import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
 
 /-!
@@ -21,6 +22,7 @@ pins down finite results through real posit rounding and the complete decoded mo
 status flags are `finiteStatus`, which `finiteStatus_eq` gives in closed form against maxPos and
 minPos. For a 16-bit posit, for example, maxPos is `2 ^ 56`. The implementation proof goes through
 the rational-to-real rounding bridge and the codec inverse laws. Since the Posit Standard (2022)
+§3.1
 fixes the exponent size at two bits, width is the only descriptor parameter.
 
 Converting to a descriptor at least as wide appends zero bits to the source word, which follows
@@ -194,7 +196,7 @@ A signaling NaN source also raises invalid, as IEEE 754-2019 §7.2 requires. -/
     run (format := format) (plan := plan) (code := code)
         Context.default (.exceptional exceptional) =
       .success ExecFloat.Posit.nar
-        { mappedSpecial := true, invalid := exceptional.isSNaN } :=
+        { mappedSpecial := true, invalid := exceptional.isSignaling } :=
   rfl
 
 /-- Quantizing a decoded finite source into a wider codec appends the additional zero bits to its

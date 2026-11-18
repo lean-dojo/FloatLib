@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -63,7 +63,7 @@ private theorem sqrt_ratCast_eq_of_eq_mul_self
 private theorem lowerSqrtCode_lt_signMask
     (format : Format) (radicand : Rat) :
     lowerSqrtCode format radicand < format.signMaskNat := by
-  apply lowerCodeByBisection_lt_upper
+  apply Numerics.bisect_lt_upper
   exact format.signMaskNat_pos
 
 private theorem minPositiveRat_pos (format : Format) :
@@ -81,7 +81,7 @@ theorem lowerSqrtCode_eq_realRounding_lowerCode
     lowerSqrtCode format radicand =
       RealRounding.lowerCode format (Real.sqrt (radicand : ℝ)) := by
   unfold lowerSqrtCode RealRounding.lowerCode
-  apply lowerCodeByBisection_congr
+  apply Numerics.bisect_congr
   intro code _ hcode
   simp only [RealRounding.nonnegativeRealAt,
     rat_mul_self_le_iff_le_sqrt

@@ -35,7 +35,8 @@ site/tooling/export.sh --skip-lean  # reuse last raw export while editing the re
 
 First the exporter runs `lake -KbuildDir="$FLOATLIB_BUILD_DIR" build` on the modules in
 `site/content/phases.json`: `FloatLib`, the opt-in `NativeFPU.Unchecked`,
-`Configured.Transcendentals`, `Configured.CorrectlyRounded`, `Automation.Roundoff`, and
+`Configured.Transcendentals`, `Configured.CorrectlyRounded`, the complex elementary functions
+(`Complex.Elementary.PowerProof` and `ValueProof`), `Tactic.Roundoff`, `Block.Roundoff`, and
 `DecimalInterchange.Transcendentals.Certified.Proof`. (A default `lake build` skips those optional
 modules.) Next,
 `ExportNodes.lean` imports them, resolves every listed constant, and writes out each declaration's
@@ -85,17 +86,37 @@ with Lean's output. ` ```lean standalone ` compiles as its own file, and `nochec
 with a warning. `site/build.sh` turns on strict checks and fails on warnings unless
 `FLOATLIB_SITE_STRICT=0`.
 
+## Figure checks
+
+`check_figures.py` needs neither Lean nor the reader. On its own it reads the image lines of the
+chapters: each needs an alt text and a caption of at most four sentences, each `[Figure N.M](...)`
+link in the prose has to carry the number the reader will give that figure, each figure has to be
+referred to, and a chapter has to refer to its figures first in the order in which it shows them.
+With `--fresh` it also runs every generator under `site/content/assets/figures/` into a scratch
+directory and compares the PNG, SVG and view manifest files byte for byte with
+`site/content/assets/`, so a figure can't go stale unnoticed. A benchmark figure that a chapter
+shows is compared with its source in `benchmarks/results/figures/`.
+
+```bash
+python3 site/tooling/check_figures.py           # captions, numbers and references
+python3 site/tooling/check_figures.py --fresh   # also regenerate and compare every figure
+python3 site/tooling/check_figures.py --list    # chapter, number, file and caption of each figure
+```
+
+The generators draw with `site/content/assets/figures/figstyle.py`, and its `save` stops with an
+error if a figure draws a title or a sentence, so that text goes into the caption. To change a
+figure, edit its generator, run it, look at the PNG, and rerun the check.
+
 ## Build options
 
 The full build accepts these flags:
 
 | Flag | Effect |
 | --- | --- |
-| `--skip-lean` | Reuse the raw declaration export; still check chapters and result-derived figures. Use after prose edits, not changes to the selected declarations or library. |
+| `--skip-lean` | Reuse the raw declaration export; still check chapters and figures. Use after prose edits, not changes to the selected declarations or library. |
 | `--skip-check` | Skip the chapter checker for a quick reader iteration. |
 | `--no-compile` | Check chapter structure and links without compiling Lean examples or verifying their printed results. |
-| `--allow-missing-results` | Allow a development build when retained result directories are absent. If they are present, their verification still runs and must pass. |
-| `--require-clean` | Reject an export from an uncommitted library or an unborn `HEAD`. Cannot be combined with `--allow-missing-results`. |
+| `--require-clean` | Reject an export from an uncommitted library or an unborn `HEAD`. |
 
 `FLOATLIB_SITE_REQUIRE_CLEAN=1` does the same as `--require-clean`. During development,
 `FLOATLIB_SITE_STRICT=0` lets chapter warnings through, though errors fail the build either way. (The

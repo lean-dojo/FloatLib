@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,7 @@ module
 public import FloatLib.Floats.Formats.Codebook.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Codebook.Catalog.Proof
 public import FloatLib.Floats.Formats.Codebook.Core.Proof
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
+public import FloatLib.Tactic.Numerics -- shake: keep
 public import Mathlib.Tactic.NormNum
 
 /-!
@@ -20,6 +20,9 @@ lookup semantics and their proved arithmetic. We keep closed bit-pattern evaluat
 symbolic refinement on purpose. The definitions that evaluation unfolds carry
 `numerics_reduction`, and the refinement theorems are Aesop rules in the `Numerics` rule set.
 -/
+
+-- The exported attribute registrations are this module's public effect.
+set_option linter.privateModule false
 
 public meta section
 

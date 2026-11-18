@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -44,7 +44,7 @@ inductive ExceptionalValue where
   deriving DecidableEq
 
 /-- Whether an exceptional observation is a signaling NaN. -/
-@[inline] def ExceptionalValue.isSNaN : ExceptionalValue → Bool
+@[inline] def ExceptionalValue.isSignaling : ExceptionalValue → Bool
   | .nan _ _ signaling => signaling
   | .notAReal | .reserved _ | .undefined => false
 
@@ -75,8 +75,11 @@ distinguishes it, belongs to the finite semantic type: FloatLib's exact `Dyadic`
 for example, stores the sign of a zero mantissa.
 -/
 inductive NumericalValue (α : Type u) where
+  /-- A finite value of the format's exact type. -/
   | finite (value : α)
+  /-- An infinity, negative when `negative` is true. -/
   | infinity (negative : Bool)
+  /-- A word with no numerical value, such as a NaN. -/
   | exceptional (value : ExceptionalValue)
   deriving DecidableEq, Repr
 

@@ -1,16 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Family.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Proof
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Proof
 
 /-!
 # Configured binary-interchange conversion proofs
@@ -177,15 +174,15 @@ theorem decode_of_isNaN {source : FloatFormat}
     (hnan : Model.isNaN (toModel value) = true) :
     ExecFloat.Binary.decode value =
       .exceptional (.nan (some (Model.nanPayload (toModel value)))
-        (Model.signBit (toModel value)) (Model.isSNaN (toModel value))) := by
+        (Model.signBit (toModel value)) (Model.isSignaling (toModel value))) := by
   have hdyadic : Model.toDyadic? (toModel value) = none := by
     cases h : Model.toDyadic? (toModel value) with
     | none => rfl
     | some d => simp [Model.isNaN_eq_false_of_toDyadic?_some h] at hnan
-  have hinf : Model.isInf (toModel value) = false := by
-    cases h : Model.isInf (toModel value) with
+  have hinf : Model.isInfinite (toModel value) = false := by
+    cases h : Model.isInfinite (toModel value) with
     | false => rfl
-    | true => simp [Model.isNaN_eq_false_of_isInf_eq_true _ h] at hnan
+    | true => simp [Model.isNaN_eq_false_of_isInfinite_eq_true _ h] at hnan
   simp [ExecFloat.Binary.decode, Model.exactNumericalSystem, hdyadic, hinf, NumericalValue.map]
 
 /--
@@ -229,7 +226,7 @@ theorem run_default_decode_of_isNaN_of_encoding_finite {source : FloatFormat}
         (ExecFloat.Binary.decode value) =
       .failure (.exceptional .source
         (.nan (some (Model.nanPayload (toModel value)))
-          (Model.signBit (toModel value)) (Model.isSNaN (toModel value)))) ∧
+          (Model.signBit (toModel value)) (Model.isSignaling (toModel value)))) ∧
       (Model.cast source format (toModel value) mode (status := true)).status.invalid = true := by
   rw [decode_of_isNaN value hnan]
   exact runWith_default_nan_of_encoding_finite configuredPack (toModel value) mode hnan hformat

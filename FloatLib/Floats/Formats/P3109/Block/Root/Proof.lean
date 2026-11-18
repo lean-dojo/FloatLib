@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Block.Root.Runtime
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
+public import FloatLib.Floats.Formats.P3109.Block.Root.Runtime
 
 /-!
 # Refinement of P3109 block roots
@@ -15,6 +15,8 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Proof
 With a finite nonzero result scale, the exact real root is normalized before precision rounding.
 We prove that the executable square comparisons agree with the real-root reference in every
 rounding mode, and that the final encoder preserves the signed, rounded, and saturated datum.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§5.4.2 and 5.7.
 -/
 
 @[expose] public section
@@ -32,7 +34,7 @@ namespace BlockRoot
       ⟨decide (scale < 0), .finite (radicand / (scale * scale))⟩ := by
   simp [normalize, not_lt.mpr hrad, hscale]
 
-/-- The exact normalized root denotes `sqrt(q) / s`, including negative scales. -/
+/-- The exact normalized root denotes `BlockSqrt(q) / s`, including negative scales. -/
 theorem normalize_finite_real (scale radicand : Rat) (hscale : scale ≠ 0)
     (hrad : 0 ≤ radicand) :
     (if scale < 0 then (-1 : Real) else 1) *
@@ -92,7 +94,10 @@ theorem rounded_fitsPrecisionGrid (format : Format) (mode : RoundingMode) (root 
   | infinity negative => cases negative <;> simp [rounded, Arithmetic.sqrtRounded, hrad, applySign]
   | exceptional _ => simp [rounded, Arithmetic.sqrtRounded, hrad, applySign]
 
-/-- Final P3109 encoding preserves the root's single rounded and saturated result. -/
+/-- Final P3109 encoding preserves the root's single rounded and saturated result.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.10.8, 4.10.14, 5.4.2 and 5.7.
+-/
 theorem decode_project (format : Format) (policy : ProjectionPolicy) (root : BlockRoot) :
     Format.SameDatum (ExecFloat.P3109.decode (project format policy root))
       (value format policy root) := by

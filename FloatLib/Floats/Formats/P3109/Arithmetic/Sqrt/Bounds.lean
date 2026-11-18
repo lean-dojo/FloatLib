@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rounding
 public import Mathlib.Analysis.Real.Sqrt
+
 import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
 import Mathlib.Tactic.Positivity.Finset
 

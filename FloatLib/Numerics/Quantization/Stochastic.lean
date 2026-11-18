@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Numerics.Operation.Entropy
 public import FloatLib.Numerics.Quantization.Spec
+public import FloatLib.Numerics.Quantization.Stochastic.Bits
+public import FloatLib.Numerics.Quantization.Stochastic.Grid
 
 /-!
 # Explicit-entropy stochastic quantization
@@ -16,9 +18,9 @@ A stochastic quantizer is an ordinary relational specification whose context con
 entropy and whose result contains the updated entropy. No hidden random source is available to the
 kernel, so executions can be replayed and proofs can say which entropy transition was used.
 
-Probability laws stay family-specific. Some kernels consume a random bit, others a fixed-width word
-or a splittable generator, and those distributional guarantees are kept apart from the shared
-state-transition interface here.
+The common grid and finite-entropy laws are imported here. An executable kernel's
+distribution is a separate refinement obligation: explicit entropy threading alone
+does not imply either uniformity or fresh randomness at subsequent calls.
 -/
 
 @[expose] public section

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Runtime
+public import FloatLib.Floats.Formats.P3109.Projection.Comparison.Decision
 public import Mathlib.Data.Nat.Sqrt
 
 /-!
@@ -19,7 +20,8 @@ irrational.
 
 Stochastic A and B pick the upper candidate at their supplied random threshold. Stochastic C uses
 the half-integer threshold of its nearest-even integer rounding, tie parity included. As in §4.7.4
-of the P3109 4.0.3 working-group report, the caller supplies the random word.
+of the P3109 interim report v4.1 working-group report (14 September 2026), the caller supplies
+    the random word.
 
 Square root, reciprocal square root, and hypotenuse follow §§4.10.8 and 4.10.14 of that unapproved
 report. Each one evaluates its exact radicand before the single rounding and saturation step.
@@ -42,50 +44,10 @@ The denominator and threshold scale are positive at every arithmetic call site.
 @[inline] def compareSqrt (numerator denominator scale threshold : Nat) : Ordering :=
   compare (numerator * scale ^ 2) (denominator * threshold ^ 2)
 
-/--
-Select the upper candidate from exact threshold comparisons.
-
-For stochastic A and B the threshold is the first fraction whose scaled floor reaches the
-required integer. For C it is the midpoint below that integer, with the integer's tie parity.
-The comparison argument lets the executable square comparisons and the real semantics share
-these policy rules.
--/
-def sqrtRoundDecision (format : Format) (mode : RoundingMode)
-    (quantum : Int) (lower : Nat) (exact : Bool)
-    (compareThreshold : Nat → Nat → Ordering) : Bool :=
-  if exact then
-    false
-  else
-    match mode with
-    | .towardZero | .down => false
-    | .up => true
-    | .nearestAway =>
-        compareThreshold 2 (2 * lower + 1) != .lt
-    | .nearest =>
-        let ordering := compareThreshold 2 (2 * lower + 1)
-        ordering == .gt ||
-          (ordering == .eq && !format.lowerCodeIsEven quantum lower)
-    | .toOdd => format.lowerCodeIsEven quantum lower
-    | .stochasticA random =>
-        let scale := 2 ^ random.width
-        let threshold := lower * scale + (scale - random.toNat)
-        compareThreshold scale threshold != .lt
-    | .stochasticB random =>
-        let scale := 2 ^ (random.width + 1)
-        let threshold := lower * scale + (scale - (2 * random.toNat + 1))
-        compareThreshold scale threshold != .lt
-    | .stochasticC random =>
-        let unit := 2 ^ random.width
-        let boundary := unit - random.toNat
-        let scale := 2 * unit
-        let threshold := lower * scale + (2 * boundary - 1)
-        let ordering := compareThreshold scale threshold
-        ordering == .gt || (ordering == .eq && boundary % 2 == 0)
-
 /-- The executable square-root boundary test for one report rounding mode. -/
 def sqrtRoundAway (format : Format) (mode : RoundingMode)
     (quantum : Int) (numerator denominator lower : Nat) : Bool :=
-  sqrtRoundDecision format mode quantum lower
+  Format.roundMagnitudeUp format mode quantum lower
     (numerator == denominator * lower ^ 2) (compareSqrt numerator denominator)
 
 /-- The report's quantum for the square root of a positive rational. -/
@@ -155,7 +117,7 @@ namespace FloatLib.Floats.ExecFloat.P3109
 
 open Formats.P3109
 
-variable {format : Format}
+variable {format rightFormat thirdFormat : Format}
 
 /-- Project the exact square root of a closed rational datum, rounding before saturation. -/
 @[inline] def projectSqrt {format : Format} (value : NumericalValue Rat)
@@ -166,20 +128,29 @@ variable {format : Format}
 /--
 Square root of the exact operand, projected once into `target`, by default the operand's format.
 Negative inputs give NaN.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.8; unapproved draft.
 -/
-@[inline] def sqrt (value : ExecFloat.P3109 format) (target : Format := format)
+@[inline] def Sqrt (value : ExecFloat.P3109 format) (target : Format := format)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
     ExecFloat.P3109 target :=
   projectSqrt value.toClosedRat mode saturation
 
-/-- Reciprocal square root with one final projection. Zero and negative inputs give NaN. -/
-@[inline] def rsqrt (value : ExecFloat.P3109 format) (target : Format := format)
+/-- Reciprocal square root with one final projection. Zero and negative inputs give NaN.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.8; unapproved draft.
+-/
+@[inline] def RSqrt (value : ExecFloat.P3109 format) (target : Format := format)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
     ExecFloat.P3109 target :=
   projectSqrt (Arithmetic.rsqrtRadicand value.toClosedRat) mode saturation
 
-/-- Hypotenuse from the exact sum of squares, with no intermediate overflow or rounding. -/
-@[inline] def hypot (left right : ExecFloat.P3109 format) (target : Format := format)
+/-- Hypotenuse from the exact sum of squares, with no intermediate overflow or rounding.
+
+P3109 interim report v4.1 (14 September 2026), §4.10.14; unapproved draft.
+-/
+@[inline] def Hypot (left : ExecFloat.P3109 format) (right : ExecFloat.P3109 rightFormat)
+    (target : Format := format)
     (mode : RoundingMode := .nearest) (saturation : SaturationMode := .none) :
     ExecFloat.P3109 target :=
   projectSqrt (Arithmetic.hypotRadicand left.toClosedRat right.toClosedRat) mode saturation

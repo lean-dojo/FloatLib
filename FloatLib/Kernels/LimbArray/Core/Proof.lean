@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,9 @@ module
 
 public import FloatLib.Kernels.LimbArray.Core.Runtime
 public import Mathlib.Data.Nat.Digits.Defs
+
 import FloatLib.Kernels.FixedWord.Core.Proof.Word
+
 import all Init.Data.Fin.Log2
 import all Init.Data.UInt.Log2
 
@@ -368,7 +370,8 @@ theorem getElem_ofNatLoop (count n : Nat) (acc : Array UInt32) (j : Nat)
             omega
           rw [dite_eq_right hge', dite_eq_right hlt, Nat.shiftRight_eq_div_pow,
             Array.size_push, ← radix_eq,
-            Nat.div_div_eq_div_mul, ← pow_succ', show j - acc.size = j - (acc.size + 1) + 1 by omega]
+            Nat.div_div_eq_div_mul, ← pow_succ', show j - acc.size = j - (acc.size + 1) + 1 by
+              omega]
 
 /-- `ofNat n count` has exactly `count` limbs. -/
 @[simp] theorem size_ofNat (n count : Nat) : (ofNat n count).size = count := by
@@ -585,7 +588,6 @@ theorem testBit_and_lowMask32 (x : UInt32) (r j : Nat) (hr : r < 32) :
   intro n
   rw [Nat.testBit_mod_two_pow, Nat.testBit_div_two_pow]
   have hr : lo % 32 < 32 := Nat.mod_lt _ (by decide)
-  have hlo : lo = 32 * (lo / 32) + lo % 32 := (Nat.div_add_mod lo 32).symm
   unfold bitsAt32
   by_cases hr0 : lo % 32 = 0
   · simp only [hr0, beq_self_eq_true, ite_true]
@@ -653,7 +655,8 @@ theorem limb_lowBits (v : LimbArray) (k i : Nat) :
       · rfl
 
 /-- Masking keeps the value modulo `2^k`. -/
-@[simp, grind =] theorem toNat_lowBits (v : LimbArray) (k : Nat) : toNat (lowBits v k) = toNat v % 2 ^ k := by
+@[simp, grind =] theorem toNat_lowBits (v : LimbArray) (k : Nat) : toNat (lowBits v k) = toNat v
+    % 2 ^ k := by
   refine toNat_eq_of_limb_testBit _ _ fun i j hj => ?_
   rw [Nat.testBit_mod_two_pow, ← limb_testBit _ _ _ hj, limb_lowBits]
   by_cases hlt : i < k / 32
@@ -811,7 +814,6 @@ theorem compareFrom_eq (a b : LimbArray) (n : Nat) :
       simp only [segment_succ_back, Nat.zero_add]
       have ha := segment_lt a 0 n
       have hb := segment_lt b 0 n
-      have hpos : 0 < radix ^ n := Nat.pow_pos (by decide)
       by_cases hlt : a.limb n < b.limb n
       · rw [ite_eq_left hlt]
         rw [UInt32.lt_iff_toNat_lt] at hlt

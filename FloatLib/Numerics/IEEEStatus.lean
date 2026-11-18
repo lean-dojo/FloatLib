@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,10 +36,15 @@ structure IEEEStatus where
 
 /-- The five IEEE floating-point exceptions, individually addressable as flags. -/
 inductive IEEEException where
+  /-- Invalid operation: the operands have no usefully definable result. -/
   | invalid
+  /-- An exact infinite result of finite operands. -/
   | divideByZero
+  /-- The rounded result is beyond the largest finite magnitude. -/
   | overflow
+  /-- A nonzero result is tiny. -/
   | underflow
+  /-- The delivered result differs from the exact one. -/
   | inexact
   deriving DecidableEq, Repr
 
@@ -115,3 +120,10 @@ def restoreFlags (flags saved group : IEEEStatus) : IEEEStatus :=
 
 end IEEEStatus
 end FloatLib.Numerics
+
+namespace FloatLib.Numerics.IEEEException
+
+/-- Reconstruct a `IEEEException` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.IEEEException

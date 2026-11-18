@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Runtime
+public import FloatLib.Floats.Formats.P3109.Projection.Formula
 public import Mathlib.Data.Rat.Floor
 
 /-!
@@ -17,7 +18,7 @@ floor, and comparing quotient and remainder gives nearest-even integer rounding.
 every executable rounding decision matches §4.7.4, for each possible supplied stochastic word. We
 assume nothing about the distribution or quality of the random bits.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
+Reference: P3109 unapproved interim report v4.1, 14 September 2026, §4.7.4.
 -/
 
 @[expose] public section
@@ -25,30 +26,6 @@ Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
 open FloatLib.Numerics
 
 namespace FloatLib.Floats.Formats.P3109.RationalRounding
-
-/-- Nearest integer to a nonnegative rational, with ties sent to the even integer. -/
-def nearestEven (value : Rat) : Nat :=
-  let lower : Nat := ⌊value⌋₊
-  if value < lower + 1 / 2 ∨ (value = lower + 1 / 2 ∧ lower % 2 = 0) then lower
-  else lower + 1
-
-/-- The report's rounding decision in terms of the exact fractional part. -/
-def roundAway (mode : RoundingMode) (negative lowerEven : Bool) (fraction : Rat) : Bool :=
-  match mode with
-  | .towardZero => false
-  | .up => decide (0 < fraction) && !negative
-  | .down => decide (0 < fraction) && negative
-  | .nearestAway => decide (1 / 2 ≤ fraction)
-  | .nearest =>
-      decide (1 / 2 < fraction) || (decide (fraction = 1 / 2) && !lowerEven)
-  | .toOdd => decide (0 < fraction) && lowerEven
-  | .stochasticA random =>
-      decide (2 ^ random.width ≤ ⌊fraction * 2 ^ random.width⌋₊ + random.toNat)
-  | .stochasticB random =>
-      decide (2 ^ (random.width + 1) ≤
-        ⌊fraction * 2 ^ (random.width + 1)⌋₊ + (2 * random.toNat + 1))
-  | .stochasticC random =>
-      decide (2 ^ random.width ≤ nearestEven (fraction * 2 ^ random.width) + random.toNat)
 
 /-- Division splits a nonnegative rational into its integer part and exact remainder. -/
 theorem div_eq_quotient_add_fraction (numerator denominator : Nat) (hd : 0 < denominator) :
@@ -83,7 +60,8 @@ theorem fraction_eq_half (remainder denominator : Nat) (hd : 0 < denominator) :
 
 /-- Quotient/remainder nearest-even rounding implements the report's mathematical RNITE. -/
 theorem roundQuotientEven_eq_nearestEven (numerator denominator : Nat) (hd : 0 < denominator) :
-    roundQuotientEven numerator denominator = nearestEven ((numerator : Rat) / denominator) := by
+    roundQuotientEven numerator denominator = RoundingFormula.nearestEven ((numerator : Rat) /
+      denominator) := by
   have hbelow :
       (numerator : Rat) / denominator < (numerator / denominator : Nat) + 1 / 2 ↔
         2 * (numerator % denominator) < denominator := by
@@ -94,7 +72,8 @@ theorem roundQuotientEven_eq_nearestEven (numerator denominator : Nat) (hd : 0 <
         denominator = 2 * (numerator % denominator) := by
     rw [div_eq_quotient_add_fraction numerator denominator hd, add_right_inj]
     exact fraction_eq_half _ _ hd
-  simp only [nearestEven, Rat.natFloor_natCast_div_natCast, hbelow, htie, roundQuotientEven,
+  simp only [RoundingFormula.nearestEven, Rat.natFloor_natCast_div_natCast, hbelow, htie,
+    roundQuotientEven,
     beq_iff_eq]
   split_ifs <;> omega
 
@@ -110,7 +89,7 @@ theorem scaleRationalFractionFloor_eq (remainder denominator bits : Nat) :
 theorem scaleRationalFractionNearestEven_eq (remainder denominator bits : Nat)
     (hd : 0 < denominator) :
     Format.Internal.scaleRationalFractionNearestEven remainder denominator bits =
-      nearestEven (((remainder : Rat) / denominator) * 2 ^ bits) := by
+      RoundingFormula.nearestEven (((remainder : Rat) / denominator) * 2 ^ bits) := by
   rw [Format.Internal.scaleRationalFractionNearestEven,
     roundQuotientEven_eq_nearestEven _ _ hd, Nat.shiftLeft_eq', Nat.shiftLeft_eq]
   congr 1
@@ -123,8 +102,13 @@ theorem random_lt_modulus (random : RandomBits) : random.toNat < 2 ^ random.widt
 
 /-- An exact integer is unchanged even by stochastic rounding, for every supplied word. -/
 @[simp] theorem roundAway_zero (mode : RoundingMode) (negative lowerEven : Bool) :
-    roundAway mode negative lowerEven 0 = false := by
-  cases mode <;> simp [roundAway, nearestEven]
+    RoundingFormula.roundAway mode negative lowerEven (0 : Rat) = false := by
+  cases mode <;>
+    simp only [RoundingFormula.roundAway, RoundingFormula.nearestEven, lt_self_iff_false,
+      decide_false, Bool.false_and, one_div, inv_nonpos, decide_eq_false_iff_not, not_le,
+      Nat.ofNat_pos, inv_neg'', zero_eq_inv, OfNat.zero_ne_ofNat, Bool.or_false, not_lt,
+      Nat.ofNat_nonneg, zero_mul, Nat.floor_zero, zero_add, Nat.cast_zero, inv_pos,
+      Nat.zero_mod, and_true, or_false, ite_true]
   all_goals
     rename_i random
     have h := random_lt_modulus random
@@ -137,7 +121,7 @@ theorem random_lt_modulus (random : RandomBits) : random.toNat < 2 ^ random.widt
 theorem roundRationalAwayWithParity_eq (mode : RoundingMode) (negative lowerEven : Bool)
     (remainder denominator : Nat) (hd : 0 < denominator) :
     Format.Internal.roundRationalAwayWithParity mode negative lowerEven remainder denominator =
-      roundAway mode negative lowerEven ((remainder : Rat) / denominator) := by
+      RoundingFormula.roundAway mode negative lowerEven ((remainder : Rat) / denominator) := by
   by_cases hr : remainder = 0
   · simp [Format.Internal.roundRationalAwayWithParity, hr]
   have hd' : (0 : Rat) < denominator := by exact_mod_cast hd
@@ -155,7 +139,8 @@ theorem roundRationalAwayWithParity_eq (mode : RoundingMode) (negative lowerEven
     omega
   simp only [one_div] at habove hatleast hhalf
   cases mode <;>
-    simp [Format.Internal.roundRationalAwayWithParity, roundAway, hr, hr', habove, hatleast,
+    simp [Format.Internal.roundRationalAwayWithParity, RoundingFormula.roundAway, hr, hr',
+      habove, hatleast,
       hhalf, scaleRationalFractionFloor_eq, scaleRationalFractionNearestEven_eq _ _ _ hd]
   rfl
 

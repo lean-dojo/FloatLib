@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -34,14 +34,14 @@ theorem round_floor_le (x : ℝ) :
           bpow β (cexp β fexp x) := rfl
     _ ≤ scaledMantissa β fexp x * bpow β (cexp β fexp x) :=
       mul_le_mul_of_nonneg_right (Int.floor_le _) (bpow.nonneg β _)
-    _ = x := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
+    _ = x := scaledMantissa_mul_bpow (β := β) (fexp := fexp) x
 
 /-- Rounding toward positive infinity never falls below the exact value. -/
 theorem le_round_ceil (x : ℝ) :
     x ≤ round (β := β) (fexp := fexp) ceilRound x := by
   calc
     x = scaledMantissa β fexp x * bpow β (cexp β fexp x) :=
-      (scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x).symm
+      (scaledMantissa_mul_bpow (β := β) (fexp := fexp) x).symm
     _ ≤ (⌈scaledMantissa β fexp x⌉ : ℝ) *
           bpow β (cexp β fexp x) :=
       mul_le_mul_of_nonneg_right (Int.le_ceil _) (bpow.nonneg β _)

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -28,7 +28,8 @@ theorem projectMagnitude_zero (f : Format) (mode : RoundingMode) (s : Bool)
     (preferred : Int) :
     projectMagnitude f mode s 0 preferred =
       { value := .finite s 0 (max f.minQuantum (min preferred f.maxQuantum)) } := by
-  simp [projectMagnitude, preferredCohort, stripTrailing_zero]
+  simp only [projectMagnitude, ↓reduceIte, preferredCohort, stripTrailing_zero, Int.ofNat_toNat,
+    Outcome.mk.injEq, Datum.finite.injEq, true_and, and_true]
   omega
 
 /-- An exact zero projects to a zero with the requested sign and no flags, at the preferred quantum

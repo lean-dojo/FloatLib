@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -10,11 +10,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Constants
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certified.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Contract
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Enclosure.Proof
-public import FloatLib.Numerics.Exact.Elementary.Proof
 public import FloatLib.Numerics.Enclosure.Constants.Proof
-public import FloatLib.Numerics.Enclosure.Elementary.BinaryGridProof
 public import FloatLib.Numerics.Enclosure.Elementary.LogTable.Proof
-public import Mathlib.Analysis.Complex.ExponentialBounds
+public import FloatLib.Numerics.Exact.Elementary.Proof
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Correct rounding of accepted binary exponential, logarithm, and power results
@@ -30,7 +30,7 @@ enclosure, and the scaled endpoint check `Enclosure.roundScaled?` then give
 
 These are partial-correctness theorems. They describe a result whenever the kernel returns `.ok`,
 and few theorems say which inputs succeed. Proved successes are the signed-zero passthrough of
-`expMinus1` and `logPlus1` and the power of one, `pow_posOne`. `exp`, `log`, and the other
+`expm1` and `logp1` and the power of one, `pow_posOne`. `exp`, `log`, and the other
 powers have no proved success case.
 -/
 
@@ -139,9 +139,9 @@ theorem expRat_eq_guarded (fmt : FloatFormat) (argument : ℚ) (budget : Budget)
       expUpper_guard_iff hfmt argument (expUpperBound fmt) le_rfl]
   · simp [expRat, hfmt]
 
-/-- Skipping impossible guards preserves both accepted encodings and failures of `expMinus1Rat`. -/
-theorem expMinus1Rat_eq_guarded (fmt : FloatFormat) (argument : ℚ) (budget : Budget) :
-    expMinus1Rat fmt argument budget =
+/-- Skipping impossible guards preserves both accepted encodings and failures of `expm1Rat`. -/
+theorem expm1Rat_eq_guarded (fmt : FloatFormat) (argument : ℚ) (budget : Budget) :
+    expm1Rat fmt argument budget =
       if !fmt.isIEEE then .error .unsupportedFormat
       else if argument = 0 then
         accept (Enclosure.round? fmt (RationalInterval.point 0)) .inconclusive
@@ -162,9 +162,9 @@ theorem expMinus1Rat_eq_guarded (fmt : FloatFormat) (argument : ℚ) (budget : B
         accept search
           (if search.isSome then .inconclusive else expSearchFailure fmt argument 1) := by
   by_cases hfmt : fmt.isIEEE = true
-  · simp only [expMinus1Rat, expUnderflow_guard_iff,
+  · simp only [expm1Rat, expUnderflow_guard_iff,
       expUpper_guard_iff hfmt argument (expUpperBound fmt + 1) (le_add_of_nonneg_right (by decide))]
-  · simp [expMinus1Rat, hfmt]
+  · simp [expm1Rat, hfmt]
 
 private theorem exists_enclosure_of_refine_eq_some {fmt : FloatFormat}
     {enclose : Nat → Nat → RationalInterval} {target : ℝ}
@@ -226,12 +226,12 @@ private theorem exists_enclosure_of_logRat_eq_ok {fmt : FloatFormat}
           (fun degree precision => FloatLib.Numerics.Enclosure.BinaryGrid.contains_log
             argument degree precision (lt_of_not_ge hpositive)) (accept_eq_ok.mp hresult)
 
-private theorem exists_enclosure_of_expMinus1Rat_eq_ok {fmt : FloatFormat}
+private theorem exists_enclosure_of_expm1Rat_eq_ok {fmt : FloatFormat}
     {argument : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : expMinus1Rat fmt argument budget = .ok result) :
+    (hresult : expm1Rat fmt argument budget = .ok result) :
     ∃ interval : RationalInterval, interval.Contains (Real.exp (argument : ℝ) - 1) ∧
       Enclosure.round? fmt interval = some result := by
-  rw [expMinus1Rat_eq_guarded] at hresult
+  rw [expm1Rat_eq_guarded] at hresult
   split at hresult
   · simp at hresult
   · split at hresult
@@ -282,31 +282,31 @@ theorem toReal_of_logRat_eq_ok {fmt : FloatFormat}
   obtain ⟨_, hcontains, haccept⟩ := exists_enclosure_of_logRat_eq_ok hresult
   exact Enclosure.toReal_eq_roundAt_of_round?_eq_some hcontains haccept
 
-/-- Successful rational-input `expMinus1` results are finite. -/
-theorem isFinite_of_expMinus1Rat_eq_ok {fmt : FloatFormat}
+/-- Successful rational-input `expm1` results are finite. -/
+theorem isFinite_of_expm1Rat_eq_ok {fmt : FloatFormat}
     {argument : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : expMinus1Rat fmt argument budget = .ok result) : isFinite result = true := by
-  obtain ⟨_, _, haccept⟩ := exists_enclosure_of_expMinus1Rat_eq_ok hresult
+    (hresult : expm1Rat fmt argument budget = .ok result) : isFinite result = true := by
+  obtain ⟨_, _, haccept⟩ := exists_enclosure_of_expm1Rat_eq_ok hresult
   exact Enclosure.isFinite_of_round?_eq_some haccept
 
 /-- The subtraction takes place in the exact real expression, before its only rounding. -/
-theorem toReal_of_expMinus1Rat_eq_ok {fmt : FloatFormat}
+theorem toReal_of_expm1Rat_eq_ok {fmt : FloatFormat}
     {argument : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : expMinus1Rat fmt argument budget = .ok result) :
+    (hresult : expm1Rat fmt argument budget = .ok result) :
     toReal result = roundAt fmt (Real.exp (argument : ℝ) - 1) := by
-  obtain ⟨_, hcontains, haccept⟩ := exists_enclosure_of_expMinus1Rat_eq_ok hresult
+  obtain ⟨_, hcontains, haccept⟩ := exists_enclosure_of_expm1Rat_eq_ok hresult
   exact Enclosure.toReal_eq_roundAt_of_round?_eq_some hcontains haccept
 
-/-- Successful rational-input `logPlus1` results are finite. -/
-theorem isFinite_of_logPlus1Rat_eq_ok {fmt : FloatFormat}
+/-- Successful rational-input `logp1` results are finite. -/
+theorem isFinite_of_logp1Rat_eq_ok {fmt : FloatFormat}
     {argument : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : logPlus1Rat fmt argument budget = .ok result) : isFinite result = true :=
+    (hresult : logp1Rat fmt argument budget = .ok result) : isFinite result = true :=
   isFinite_of_logRat_eq_ok hresult
 
 /-- Forming the exact sum `1 + argument` avoids an intermediate floating-point rounding. -/
-theorem toReal_of_logPlus1Rat_eq_ok {fmt : FloatFormat}
+theorem toReal_of_logp1Rat_eq_ok {fmt : FloatFormat}
     {argument : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : logPlus1Rat fmt argument budget = .ok result) :
+    (hresult : logp1Rat fmt argument budget = .ok result) :
     toReal result = roundAt fmt (Real.log (1 + (argument : ℝ))) := by
   simpa only [Rat.cast_add, Rat.cast_one] using toReal_of_logRat_eq_ok hresult
 
@@ -348,16 +348,21 @@ private theorem exists_rat_of_log_eq_ok {fmt : FloatFormat}
       exact ⟨argument, rfl, hresult⟩
 
 /--
-An accepted `expMinus1` is either a signed zero passed through unchanged or the rational kernel's
-result at the decoded input.
+A function that returns a zero operand unchanged and otherwise applies a rational kernel at the
+decoded input: an accepted result is that zero or the kernel's result. `expm1` and `logp1`
+have this shape.
 -/
-private theorem exists_rat_of_expMinus1_eq_ok {fmt : FloatFormat}
-    {input result : Model fmt} {budget : Budget}
-    (hresult : expMinus1 input budget = .ok result) :
+private theorem exists_rat_of_zero_or_kernel_eq_ok {fmt : FloatFormat}
+    {input result : Model fmt} {kernel : ℚ → Except Failure (Model fmt)}
+    (hresult :
+      (if !fmt.isIEEE then Except.error Failure.unsupportedFormat
+        else if isZero input then .ok input
+        else
+          match toRat? input with
+          | none => .error .nonfiniteInput
+          | some argument => kernel argument) = .ok result) :
     (isZero input = true ∧ result = input) ∨
-      ∃ argument, toRat? input = some argument ∧
-        expMinus1Rat fmt argument budget = .ok result := by
-  unfold expMinus1 at hresult
+      ∃ argument, toRat? input = some argument ∧ kernel argument = .ok result := by
   split at hresult
   · simp at hresult
   split at hresult
@@ -371,27 +376,27 @@ private theorem exists_rat_of_expMinus1_eq_ok {fmt : FloatFormat}
         exact ⟨argument, rfl, hresult⟩
 
 /--
-An accepted `logPlus1` is either a signed zero passed through unchanged or the rational kernel's
+An accepted `expm1` is either a signed zero passed through unchanged or the rational kernel's
 result at the decoded input.
 -/
-private theorem exists_rat_of_logPlus1_eq_ok {fmt : FloatFormat}
+private theorem exists_rat_of_expm1_eq_ok {fmt : FloatFormat}
     {input result : Model fmt} {budget : Budget}
-    (hresult : logPlus1 input budget = .ok result) :
+    (hresult : expm1 input budget = .ok result) :
     (isZero input = true ∧ result = input) ∨
       ∃ argument, toRat? input = some argument ∧
-        logPlus1Rat fmt argument budget = .ok result := by
-  unfold logPlus1 at hresult
-  split at hresult
-  · simp at hresult
-  split at hresult
-  · rename_i hzero
-    exact Or.inl ⟨hzero, (Except.ok.inj hresult).symm⟩
-  · right
-    cases hinput : toRat? input with
-    | none => simp [hinput] at hresult
-    | some argument =>
-        rw [hinput] at hresult
-        exact ⟨argument, rfl, hresult⟩
+        expm1Rat fmt argument budget = .ok result :=
+  exists_rat_of_zero_or_kernel_eq_ok (kernel := fun argument => expm1Rat fmt argument budget)
+    hresult
+
+/-- The same for an accepted `logp1`. -/
+private theorem exists_rat_of_logp1_eq_ok {fmt : FloatFormat}
+    {input result : Model fmt} {budget : Budget}
+    (hresult : logp1 input budget = .ok result) :
+    (isZero input = true ∧ result = input) ∨
+      ∃ argument, toRat? input = some argument ∧
+        logp1Rat fmt argument budget = .ok result :=
+  exists_rat_of_zero_or_kernel_eq_ok (kernel := fun argument => logp1Rat fmt argument budget)
+    hresult
 
 /-- Every exponential result returned by the concrete refinement algorithm is finite. -/
 theorem isFinite_of_exp_eq_ok {fmt : FloatFormat}
@@ -425,53 +430,53 @@ theorem toReal_of_log_eq_ok {fmt : FloatFormat}
   rw [toReal_of_toRat?_eq_some hinput]
   exact toReal_of_logRat_eq_ok hrat
 
-/-- Each accepted `expMinus1` result is finite, including the signed-zero branch. -/
-theorem isFinite_of_expMinus1_eq_ok {fmt : FloatFormat}
+/-- Each accepted `expm1` result is finite, including the signed-zero branch. -/
+theorem isFinite_of_expm1_eq_ok {fmt : FloatFormat}
     {input result : Model fmt} {budget : Budget}
-    (hresult : expMinus1 input budget = .ok result) : isFinite result = true := by
-  rcases exists_rat_of_expMinus1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, _, hrat⟩
+    (hresult : expm1 input budget = .ok result) : isFinite result = true := by
+  rcases exists_rat_of_expm1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, _, hrat⟩
   · exact isFinite_eq_true_of_isZero_eq_true _ hzero
-  · exact isFinite_of_expMinus1Rat_eq_ok hrat
+  · exact isFinite_of_expm1Rat_eq_ok hrat
 
-/-- An accepted `expMinus1` equals nearest-even rounding of `Real.exp x - 1`. -/
-theorem toReal_of_expMinus1_eq_ok {fmt : FloatFormat}
+/-- An accepted `expm1` equals nearest-even rounding of `Real.exp x - 1`. -/
+theorem toReal_of_expm1_eq_ok {fmt : FloatFormat}
     {input result : Model fmt} {budget : Budget}
-    (hresult : expMinus1 input budget = .ok result) :
+    (hresult : expm1 input budget = .ok result) :
     toReal result = roundAt fmt (Real.exp (toReal input) - 1) := by
-  rcases exists_rat_of_expMinus1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, hinput, hrat⟩
+  rcases exists_rat_of_expm1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, hinput, hrat⟩
   · simp [toReal_eq_zero_of_isZero _ hzero]
   · rw [toReal_of_toRat?_eq_some hinput]
-    exact toReal_of_expMinus1Rat_eq_ok hrat
+    exact toReal_of_expm1Rat_eq_ok hrat
 
-/-- Each accepted `logPlus1` result is finite, including the signed-zero branch. -/
-theorem isFinite_of_logPlus1_eq_ok {fmt : FloatFormat}
+/-- Each accepted `logp1` result is finite, including the signed-zero branch. -/
+theorem isFinite_of_logp1_eq_ok {fmt : FloatFormat}
     {input result : Model fmt} {budget : Budget}
-    (hresult : logPlus1 input budget = .ok result) : isFinite result = true := by
-  rcases exists_rat_of_logPlus1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, _, hrat⟩
+    (hresult : logp1 input budget = .ok result) : isFinite result = true := by
+  rcases exists_rat_of_logp1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, _, hrat⟩
   · exact isFinite_eq_true_of_isZero_eq_true _ hzero
-  · exact isFinite_of_logPlus1Rat_eq_ok hrat
+  · exact isFinite_of_logp1Rat_eq_ok hrat
 
-/-- An accepted `logPlus1` equals nearest-even rounding of `Real.log (1 + x)`. -/
-theorem toReal_of_logPlus1_eq_ok {fmt : FloatFormat}
+/-- An accepted `logp1` equals nearest-even rounding of `Real.log (1 + x)`. -/
+theorem toReal_of_logp1_eq_ok {fmt : FloatFormat}
     {input result : Model fmt} {budget : Budget}
-    (hresult : logPlus1 input budget = .ok result) :
+    (hresult : logp1 input budget = .ok result) :
     toReal result = roundAt fmt (Real.log (1 + toReal input)) := by
-  rcases exists_rat_of_logPlus1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, hinput, hrat⟩
+  rcases exists_rat_of_logp1_eq_ok hresult with ⟨hzero, rfl⟩ | ⟨_, hinput, hrat⟩
   · simp [toReal_eq_zero_of_isZero _ hzero]
   · rw [toReal_of_toRat?_eq_some hinput]
-    exact toReal_of_logPlus1Rat_eq_ok hrat
+    exact toReal_of_logp1Rat_eq_ok hrat
 
-/-- The IEEE input's zero encoding passes through `expMinus1` unchanged. -/
-@[simp] theorem expMinus1_of_isZero {fmt : FloatFormat} {input : Model fmt}
+/-- The IEEE input's zero encoding passes through `expm1` unchanged. -/
+@[simp] theorem expm1_of_isZero {fmt : FloatFormat} {input : Model fmt}
     (hfmt : fmt.isIEEE = true) (hzero : isZero input = true) (budget : Budget) :
-    expMinus1 input budget = .ok input := by
-  simp [expMinus1, hfmt, hzero]
+    expm1 input budget = .ok input := by
+  simp [expm1, hfmt, hzero]
 
-/-- The IEEE input's zero encoding passes through `logPlus1` unchanged. -/
-@[simp] theorem logPlus1_of_isZero {fmt : FloatFormat} {input : Model fmt}
+/-- The IEEE input's zero encoding passes through `logp1` unchanged. -/
+@[simp] theorem logp1_of_isZero {fmt : FloatFormat} {input : Model fmt}
     (hfmt : fmt.isIEEE = true) (hzero : isZero input = true) (budget : Budget) :
-    logPlus1 input budget = .ok input := by
-  simp [logPlus1, hfmt, hzero]
+    logp1 input budget = .ok input := by
+  simp [logp1, hfmt, hzero]
 
 /--
 A kernel whose accepted results are finite and correctly rounded meets the finite-real contract on
@@ -515,20 +520,20 @@ theorem log_correctlyRoundedCertificateOn (fmt : FloatFormat) (budget : Budget) 
     isFinite_of_log_eq_ok toReal_of_log_eq_ok
 
 /-- Correct rounding of `exp x - 1` on the executable acceptance domain. -/
-theorem expMinus1_correctlyRoundedCertificateOn (fmt : FloatFormat) (budget : Budget) :
+theorem expm1_correctlyRoundedCertificateOn (fmt : FloatFormat) (budget : Budget) :
     Contract.CorrectlyRoundedCertificateOn fmt (fun x => Real.exp x - 1)
-      (fun input => (expMinus1 input budget).toOption.getD (zero fmt false))
-      (fun input => (expMinus1 input budget).isOk = true) :=
-  correctlyRoundedCertificateOn_of_ok (kernel := fun input => expMinus1 input budget)
-    isFinite_of_expMinus1_eq_ok toReal_of_expMinus1_eq_ok
+      (fun input => (expm1 input budget).toOption.getD (zero fmt false))
+      (fun input => (expm1 input budget).isOk = true) :=
+  correctlyRoundedCertificateOn_of_ok (kernel := fun input => expm1 input budget)
+    isFinite_of_expm1_eq_ok toReal_of_expm1_eq_ok
 
 /-- Correct rounding of `log (1 + x)` on the executable acceptance domain. -/
-theorem logPlus1_correctlyRoundedCertificateOn (fmt : FloatFormat) (budget : Budget) :
+theorem logp1_correctlyRoundedCertificateOn (fmt : FloatFormat) (budget : Budget) :
     Contract.CorrectlyRoundedCertificateOn fmt (fun x => Real.log (1 + x))
-      (fun input => (logPlus1 input budget).toOption.getD (zero fmt false))
-      (fun input => (logPlus1 input budget).isOk = true) :=
-  correctlyRoundedCertificateOn_of_ok (kernel := fun input => logPlus1 input budget)
-    isFinite_of_logPlus1_eq_ok toReal_of_logPlus1_eq_ok
+      (fun input => (logp1 input budget).toOption.getD (zero fmt false))
+      (fun input => (logp1 input budget).isOk = true) :=
+  correctlyRoundedCertificateOn_of_ok (kernel := fun input => logp1 input budget)
+    isFinite_of_logp1_eq_ok toReal_of_logp1_eq_ok
 
 /-! ## Real powers -/
 
@@ -540,7 +545,6 @@ private theorem log_reduction_split {value : ℚ} (hvalue : 0 < value) (j : Nat)
     Real.log (((j : ℚ) / 32 : ℚ) : ℝ) +
         Real.log ((mkRat (32 * value.num.natAbs) (value.den * j) : ℚ) : ℝ) =
       Real.log (value : ℝ) := by
-  have hden : (0 : ℚ) < value.den := by exact_mod_cast value.den_pos
   have hnum : |(value.num : ℚ)| = value.num :=
     abs_of_nonneg (by exact_mod_cast Rat.num_nonneg.mpr hvalue.le)
   have hreduced : (mkRat (32 * value.num.natAbs) (value.den * j) : ℚ) = 32 * value / j := by
@@ -549,7 +553,6 @@ private theorem log_reduction_split {value : ℚ} (hvalue : 0 < value) (j : Nat)
     rw [hnum]
     conv_rhs => rw [← Rat.num_div_den value]
     field_simp
-  have hjq : (0 : ℚ) < j := by exact_mod_cast hj
   rw [← Real.log_mul (by positivity) (by rw [hreduced]; positivity), hreduced]
   congr 1
   push_cast
@@ -630,11 +633,11 @@ theorem contains_expReduced {reduced : Nat → Interval Int} {r : ℝ}
 The real power of a positive scaled rational is the exponential of the reduced argument times the
 removed power of two, for every integer scale.
 -/
-theorem rpow_eq_exp_reduced {scaled : ℚ} (hscaled : 0 < scaled) (binaryExponent scale : ℤ)
+theorem rpow_eq_exp_reduced {scaled : ℚ} (hscaled : 0 < scaled) (logB scale : ℤ)
     (exponent : ℚ) :
-    ((scaled : ℝ) * 2 ^ binaryExponent) ^ (exponent : ℝ) =
+    ((scaled : ℝ) * 2 ^ logB) ^ (exponent : ℝ) =
       Real.exp ((exponent : ℝ) * Real.log scaled +
-        ((exponent * binaryExponent - scale : ℚ) : ℝ) * Real.log 2) * 2 ^ scale := by
+        ((exponent * logB - scale : ℚ) : ℝ) * Real.log 2) * 2 ^ scale := by
   have hs : (0 : ℝ) < scaled := by exact_mod_cast hscaled
   have hpow : (2 : ℝ) ^ scale = Real.exp (scale * Real.log 2) := by
     rw [← Real.log_zpow, Real.exp_log (zpow_pos (by norm_num) scale)]
@@ -681,10 +684,10 @@ The refinement stage of `powRatScaled` is sound for every integer scale: an acce
 finite and the correctly rounded real power.
 -/
 private theorem toReal_of_powSearch_eq_some {fmt : FloatFormat} {scaled : ℚ} (hs : 0 < scaled)
-    {binaryExponent : ℤ} {exponent : ℚ} {firstGrid : Nat} {argument : Interval Int}
+    {logB : ℤ} {exponent : ℚ} {firstGrid : Nat} {argument : Interval Int}
     (hargument : argument.ContainsReal (decode firstGrid)
       ((exponent : ℝ) * Real.log scaled +
-        ((exponent * binaryExponent : ℚ) : ℝ) * Real.log 2))
+        ((exponent * logB : ℚ) : ℝ) * Real.log 2))
     (scale : ℤ) (extraBits degree precision steps : Nat) {result : Model fmt}
     (hresult : RationalInterval.refine
       (expReduced (fun grid =>
@@ -694,12 +697,12 @@ private theorem toReal_of_powSearch_eq_some {fmt : FloatFormat} {scaled : ℚ} (
               (Numerics.Enclosure.Constants.ln2Grid firstGrid) scale)
         else powArgument (logReduced scaled grid) (Numerics.Enclosure.Constants.ln2Grid grid)
           exponent
-          (exponent * binaryExponent - scale)) extraBits)
+          (exponent * logB - scale)) extraBits)
       (fun interval => Enclosure.roundScaled? fmt interval scale) degree precision steps =
         some result) :
     isFinite result = true ∧
       toReal result =
-        roundAt fmt (((scaled : ℝ) * 2 ^ binaryExponent) ^ (exponent : ℝ)) := by
+        roundAt fmt (((scaled : ℝ) * 2 ^ logB) ^ (exponent : ℝ)) := by
   obtain ⟨degree, precision, haccept⟩ := RationalInterval.exists_of_refine_eq_some hresult
   refine ⟨Enclosure.isFinite_of_roundScaled?_eq_some haccept, ?_⟩
   rw [Enclosure.toReal_eq_roundAt_of_roundScaled?_eq_some (contains_expReduced ?_ _ _ _)
@@ -719,11 +722,11 @@ private theorem toReal_of_powSearch_eq_some {fmt : FloatFormat} {scaled : ℚ} (
       exponent _
 
 private theorem rounded_of_powRatScaled_eq_ok {fmt : FloatFormat} {scaled : ℚ}
-    {binaryExponent : ℤ} {exponent : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : powRatScaled fmt scaled binaryExponent exponent budget = .ok result) :
+    {logB : ℤ} {exponent : ℚ} {budget : Budget} {result : Model fmt}
+    (hresult : powRatScaled fmt scaled logB exponent budget = .ok result) :
     isFinite result = true ∧
       toReal result =
-        roundAt fmt (((scaled : ℝ) * 2 ^ binaryExponent) ^ (exponent : ℝ)) := by
+        roundAt fmt (((scaled : ℝ) * 2 ^ logB) ^ (exponent : ℝ)) := by
   unfold powRatScaled at hresult
   split at hresult
   · simp at hresult
@@ -742,14 +745,14 @@ private theorem rounded_of_powRatScaled_eq_ok {fmt : FloatFormat} {scaled : ℚ}
   dsimp only at hresult
   split at hresult
   · simp at hresult
-  -- The argument encloses `t = exponent * log scaled + exponent * binaryExponent * log 2`.
+  -- The argument encloses `t = exponent * log scaled + exponent * logB * log 2`.
   have hargument := containsReal_powArgument
     (containsReal_logReduced hs
       (FloatLib.Numerics.Enclosure.BinaryGrid.workingPrecision (fmt.fracWidth + 1)
         (max 1 budget.initialDegree) +
-      (max (magnitudeBits exponent) (magnitudeBits (exponent * binaryExponent)) + 1)))
-    (Numerics.Enclosure.Constants.containsReal_ln2Grid _) exponent (exponent * binaryExponent)
-  have hpower := rpow_eq_exp_reduced hs binaryExponent 0 exponent
+      (max (magnitudeBits exponent) (magnitudeBits (exponent * logB)) + 1)))
+    (Numerics.Enclosure.Constants.containsReal_ln2Grid _) exponent (exponent * logB)
+  have hpower := rpow_eq_exp_reduced hs logB 0 exponent
   simp only [Int.cast_zero, sub_zero, zpow_zero, mul_one] at hpower
   split at hresult
   · rename_i hscreen
@@ -757,7 +760,7 @@ private theorem rounded_of_powRatScaled_eq_ok {fmt : FloatFormat} {scaled : ℚ}
     refine ⟨Enclosure.isFinite_of_roundScaled?_eq_some hresult, ?_⟩
     have hrounded := Enclosure.toReal_eq_roundAt_of_roundScaled?_eq_some
       (contains_exp_underflow (t := (exponent : ℝ) * Real.log scaled +
-          ((exponent * binaryExponent : ℚ) : ℝ) * Real.log 2)
+          ((exponent * logB : ℚ) : ℝ) * Real.log 2)
         (by simpa using ((containsReal_iff _ _ _).mp hargument).2) hscreen) hresult
     rw [hpower, hrounded, mul_assoc, ← zpow_add₀ (by norm_num), neg_add_cancel, zpow_zero,
       mul_one]
@@ -767,16 +770,16 @@ private theorem rounded_of_powRatScaled_eq_ok {fmt : FloatFormat} {scaled : ℚ}
 
 /-- Successful scaled powers are finite. -/
 theorem isFinite_of_powRatScaled_eq_ok {fmt : FloatFormat} {scaled : ℚ}
-    {binaryExponent : ℤ} {exponent : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : powRatScaled fmt scaled binaryExponent exponent budget = .ok result) :
+    {logB : ℤ} {exponent : ℚ} {budget : Budget} {result : Model fmt}
+    (hresult : powRatScaled fmt scaled logB exponent budget = .ok result) :
     isFinite result = true :=
   (rounded_of_powRatScaled_eq_ok hresult).1
 
-/-- An accepted scaled power equals rounding of the real power of `scaled * 2 ^ binaryExponent`. -/
+/-- An accepted scaled power equals rounding of the real power of `scaled * 2 ^ logB`. -/
 theorem toReal_of_powRatScaled_eq_ok {fmt : FloatFormat} {scaled : ℚ}
-    {binaryExponent : ℤ} {exponent : ℚ} {budget : Budget} {result : Model fmt}
-    (hresult : powRatScaled fmt scaled binaryExponent exponent budget = .ok result) :
-    toReal result = roundAt fmt (((scaled : ℝ) * 2 ^ binaryExponent) ^ (exponent : ℝ)) :=
+    {logB : ℤ} {exponent : ℚ} {budget : Budget} {result : Model fmt}
+    (hresult : powRatScaled fmt scaled logB exponent budget = .ok result) :
+    toReal result = roundAt fmt (((scaled : ℝ) * 2 ^ logB) ^ (exponent : ℝ)) :=
   (rounded_of_powRatScaled_eq_ok hresult).2
 
 /-- The binary split of a positive rational is positive and recombines to its value. -/
@@ -852,13 +855,15 @@ theorem abs_mul_log_lt_two_pow_powArgumentExponent {base exponent : Numerics.Dya
   have hlogm0 : 0 ≤ Real.log m := Real.log_nonneg hm
   have hlogbase : |Real.log base.toReal| < 2 ^ ((total.log2 + 1 : ℕ) : ℤ) := by
     rw [hbase, Real.log_mul (by positivity) (zpow_ne_zero _ (by norm_num)), Real.log_zpow]
-    calc |Real.log m + e * Real.log 2| ≤ |Real.log m| + |(e : ℝ) * Real.log 2| := abs_add_le _ _
-      _ = Real.log m + (e.natAbs : ℝ) * Real.log 2 := by
-        rw [abs_of_nonneg hlogm0, abs_mul, abs_of_pos hlog2, Nat.cast_natAbs, Int.cast_abs]
-      _ ≤ (total : ℝ) * Real.log 2 := by
+    calc |Real.log m + e * Real.log 2| ≤
+        ((m.log2 + 1 : ℕ) : ℝ) * Real.log 2 + (e.natAbs : ℝ) * Real.log 2 :=
+          Numerics.Backward.abs_add_le_add (by rwa [abs_of_nonneg hlogm0])
+            (Numerics.Backward.abs_mul_le_mul (by rw [Nat.cast_natAbs, Int.cast_abs])
+              (abs_of_pos hlog2).le)
+      _ = (total : ℝ) * Real.log 2 := by
         simp only [total]
-        push_cast at hlogm ⊢
-        nlinarith
+        push_cast
+        ring
       _ < total := by nlinarith
       _ < 2 ^ ((total.log2 + 1 : ℕ) : ℤ) := by
         rw [zpow_natCast]

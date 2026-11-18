@@ -1,17 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.DivisionSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Subtraction
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
-public import Mathlib.Basic.Complex.Basic
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
 
 /-!
 # Real and complex semantics of `ExecComplex`
@@ -22,10 +21,12 @@ subtraction round each component once. Multiplication has six rounding sites: fo
 products, the subtraction forming the real component, and the addition forming the imaginary
 component. Every intermediate rounding appears in the theorem for its operation.
 
+The product with fused multiply-adds has four: two products and the two components.
+
 Division records the chosen component ratio and every rounding after it. Squared magnitude
 records two rounded squares and their rounded sum, and magnitude applies the same to scaled
-components. None of these theorems asserts an exact field operation or an error bound for the
-whole operation.
+components. None of these theorems asserts an exact field operation; the error bounds of the
+whole operations are in `Complex.ErrorBounds`.
 
 Finiteness assumptions rule out overflow to infinity and NaN. They are stated as hypotheses
 because the real-number semantics gives infinities and NaNs no real value. The scalar rounding
@@ -136,9 +137,7 @@ theorem toComplex_mul_eq_roundedMul {fmt : FloatFormat} (x y : ExecComplex fmt)
     (hfmt : fmt.isIEEE = true)
     (h : MulFinite x y) :
     toComplex (x * y) = roundedMul fmt (toComplex x) (toComplex y) := by
-  rcases h with ⟨hx, hy, hac, hbd, had, hbc, hout⟩
-  obtain ⟨hxre, hxim⟩ := (isFinite_eq_true_iff x).1 hx
-  obtain ⟨hyre, hyim⟩ := (isFinite_eq_true_iff y).1 hy
+  rcases h with ⟨_, _, hac, hbd, had, hbc, hout⟩
   obtain ⟨hore, hoim⟩ := (isFinite_eq_true_iff (x * y)).1 hout
   apply Complex.ext
   · change
@@ -162,6 +161,37 @@ theorem toComplex_mul_eq_roundedMul {fmt : FloatFormat} (x y : ExecComplex fmt)
     rw [Model.toReal_mul_eq_roundAt x.re y.im hfmt had]
     rw [Model.toReal_mul_eq_roundAt x.im y.re hfmt hbc]
 
+/--
+The rounded real semantics of `ExecComplex.mulFma`: two rounded products, and one rounding of each
+component.
+-/
+noncomputable def roundedMulFma (fmt : FloatFormat) (x y : ℂ) : ℂ :=
+  ⟨Model.roundAt fmt (x.re * y.re - Model.roundAt fmt (x.im * y.im)),
+    Model.roundAt fmt (x.re * y.im + Model.roundAt fmt (x.im * y.re))⟩
+
+/--
+For an IEEE descriptor and a finite result, the product with fused multiply-adds agrees with
+`roundedMulFma`. A finite fused multiply-add forces finite operands, so the two inner products
+and the inputs they read are finite.
+-/
+theorem toComplex_mulFma_eq_roundedMulFma {fmt : FloatFormat} (x y : ExecComplex fmt)
+    (hfmt : fmt.isIEEE = true) (hout : isFinite (mulFma x y) = true) :
+    toComplex (mulFma x y) = roundedMulFma fmt (toComplex x) (toComplex y) := by
+  obtain ⟨hore, hoim⟩ := (isFinite_eq_true_iff (mulFma x y)).1 hout
+  apply Complex.ext
+  · change Model.toReal (Model.fma x.re y.re (Model.neg (Model.mul x.im y.im))) = _
+    have hneg := (Model.isFinite_of_isFinite_fma hfmt hore).2.2
+    have hprod : Model.isFinite (Model.mul x.im y.im) = true := by
+      rwa [Model.isFinite_neg] at hneg
+    rw [Model.toReal_fma_eq_roundAt _ _ _ hfmt hore, Model.toReal_neg _ hprod,
+      Model.toReal_mul_eq_roundAt _ _ hfmt hprod]
+    rfl
+  · change Model.toReal (Model.fma x.re y.im (Model.mul x.im y.re)) = _
+    have hprod := (Model.isFinite_of_isFinite_fma hfmt hoim).2.2
+    rw [Model.toReal_fma_eq_roundAt _ _ _ hfmt hoim,
+      Model.toReal_mul_eq_roundAt _ _ hfmt hprod]
+    rfl
+
 /-- Squared magnitude as two rounded squares followed by a rounded sum. -/
 noncomputable def roundedNormSq (fmt : FloatFormat) (z : ℂ) : ℝ :=
   Model.roundAt fmt (Model.roundAt fmt (z.re * z.re) + Model.roundAt fmt (z.im * z.im))
@@ -181,7 +211,6 @@ structure NormSqFinite {fmt : FloatFormat} (z : ExecComplex fmt) : Prop where
 theorem toReal_normSq_eq_roundedNormSq {fmt : FloatFormat} (z : ExecComplex fmt)
     (hfmt : fmt.isIEEE = true) (h : NormSqFinite z) :
     Model.toReal (normSq z) = roundedNormSq fmt (toComplex z) := by
-  obtain ⟨hre, him⟩ := (isFinite_eq_true_iff z).1 h.input
   unfold normSq roundedNormSq toComplex
   rw [Model.toReal_add_eq_roundAt _ _ hfmt h.result,
     Model.toReal_mul_eq_roundAt _ _ hfmt h.re_square,
@@ -378,18 +407,18 @@ theorem toComplex_div_eq_roundedDiv {fmt : FloatFormat} (x y : ExecComplex fmt)
     exact Internal.toComplex_divRealDominant x y hfmt hbranch
 
 /-- Infinity determines magnitude when neither component is a signaling NaN. -/
-theorem magnitude_eq_posInf_of_isInf {fmt : FloatFormat} (z : ExecComplex fmt)
-    (hre : Model.isSNaN z.re = false) (him : Model.isSNaN z.im = false)
-    (hinf : Model.isInf z.re = true ∨ Model.isInf z.im = true) :
+theorem magnitude_eq_posInf_of_isInfinite {fmt : FloatFormat} (z : ExecComplex fmt)
+    (hre : Model.isSignaling z.re = false) (him : Model.isSignaling z.im = false)
+    (hinf : Model.isInfinite z.re = true ∨ Model.isInfinite z.im = true) :
     magnitude z = Model.posInf fmt := by
   have hfinite : isFinite z = false := by
     apply Bool.eq_false_of_not_eq_true
     intro hz
     obtain ⟨hzre, hzim⟩ := (isFinite_eq_true_iff z).1 hz
     rcases hinf with hr | hi
-    · have := Model.isInf_eq_false_of_isFinite_eq_true z.re hzre
+    · have := Model.isInfinite_eq_false_of_isFinite_eq_true z.re hzre
       simp [hr] at this
-    · have := Model.isInf_eq_false_of_isFinite_eq_true z.im hzim
+    · have := Model.isInfinite_eq_false_of_isFinite_eq_true z.im hzim
       simp [hi] at this
   rcases hinf with hr | hi
   · simp [magnitude, hfinite, hr, hre, him]
@@ -448,7 +477,6 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
   next hz =>
     rw [ite_eq_right (mt hszero.2 hz)]
     obtain ⟨hnorm, hdomain⟩ := h.scaled (Bool.eq_false_of_not_eq_true hz)
-    have hsqrt := Model.isFinite_sqrt_of_isFinite _ hfmt hnorm.result hdomain
     have hout : Model.isFinite
         (Model.mul (Internal.magnitudeScale z)
           (Model.sqrt (normSq (Internal.magnitudeRatios z)))) = true := by
@@ -456,7 +484,6 @@ theorem toReal_magnitude_eq_roundedMagnitude {fmt : FloatFormat} (z : ExecComple
     rw [Model.toReal_mul_eq_roundAt _ _ hfmt hout,
       Model.toReal_sqrt_eq_roundAt _ hfmt hnorm.result hdomain,
       toReal_normSq_eq_roundedNormSq _ hfmt hnorm, hsreal]
-    obtain ⟨hre, him⟩ := (isFinite_eq_true_iff z).1 h.input
     obtain ⟨hrre, hrim⟩ := (isFinite_eq_true_iff _).1 hnorm.input
     have hratios : toComplex (Internal.magnitudeRatios z) =
         (⟨Model.roundAt fmt ((toComplex z).re /

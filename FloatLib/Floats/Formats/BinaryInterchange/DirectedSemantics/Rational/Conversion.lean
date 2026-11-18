@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Data.Rat.Floor
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Bounds
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 

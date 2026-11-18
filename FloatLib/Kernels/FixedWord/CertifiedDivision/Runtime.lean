@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -322,3 +322,10 @@ two-word backends satisfy these for their normalized operands.
     quotient
 
 end FloatLib.Numerics.FixedWord.CertifiedDivision
+
+namespace FloatLib.Numerics.FixedWord.CertifiedDivision.CandidateShift
+
+/-- Reconstruct a `CandidateShift` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.FixedWord.CertifiedDivision.CandidateShift

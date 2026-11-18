@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -167,13 +167,13 @@ private theorem mixedError_tenthsFin (i : Fin 3) :
     MixedError (toReal (tenthsFin i)) (decimals i) (2 ^ (-24 : ℤ)) 0 := by
   refine MixedError.of_abs_sub_le_mul (by positivity) ?_
   fin_cases i
-  · show |toReal tenth - 1 / 10| ≤ _ * |1 / 10|
+  · change |toReal tenth - 1 / 10| ≤ _ * |1 / 10|
     rw [Algebraic.toReal_of_toRat?_eq_some (q := 13421773 / 134217728) (by decide +kernel)]
     norm_num
-  · show |toReal fifth - 1 / 5| ≤ _ * |1 / 5|
+  · change |toReal fifth - 1 / 5| ≤ _ * |1 / 5|
     rw [Algebraic.toReal_of_toRat?_eq_some (q := 13421773 / 67108864) (by decide +kernel)]
     norm_num
-  · show |toReal threeTenths - 3 / 10| ≤ _ * |3 / 10|
+  · change |toReal threeTenths - 3 / 10| ≤ _ * |3 / 10|
     rw [Algebraic.toReal_of_toRat?_eq_some (q := 5033165 / 16777216) (by decide +kernel)]
     norm_num
 

@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 public import FloatLib.Numerics.Exact.Dyadic.Real
+
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Classification.Predicates
@@ -425,7 +425,9 @@ theorem roundDyadicGeneral_nearestAway_eq_roundDyadicNearestAway (fmt : FloatFor
         (hnumerator : (Numerics.RationalBinary.scaleByPowerOfTwo mantissa 1 exponent).1 ≠ 0) :
         mantissa ≠ 0 := by
       rintro rfl
-      exact hnumerator (by simp [Numerics.RationalBinary.scaleByPowerOfTwo]; split <;> rfl)
+      exact hnumerator (by
+        simp only [RationalBinary.scaleByPowerOfTwo, Nat.shiftLeft_eq',
+          Nat.zero_shiftLeft]; split <;> rfl)
     have heven :
         roundRatGeneralOfDenNeZero fmt
             { rounding := .nearestAway, overflow := .native, underflow := .gradual }
@@ -640,7 +642,7 @@ theorem isTinyAfterRounding_roundRatGeneralOfDenNeZero_nearestAway_eq_false (fmt
     exact mul_pos (by linarith) (zpow_pos (by norm_num) _)
   have hnumerator : numerator ≠ 0 := by
     rintro rfl
-    simp at hbound
+    simp only [CharP.cast_eq_zero, zero_div] at hbound
     linarith
   have hbounds := floorLog2_bounds numerator denominator hnumerator hdenominator
   dsimp only at hbounds
@@ -712,8 +714,6 @@ theorem isTinyAfterRounding_roundRatGeneralOfDenNeZero_nearestAway_eq_false (fmt
     have hscaled : (4 * (2 : ℝ) ^ fmt.fracWidth - 1) * denominator ≤
         4 * (numerator * (2 : ℝ) ^ (fmt.exponentBias + fmt.fracWidth - 1)) := by
       rw [toReal_underflowMidpoint, le_div_iff₀ hdenominatorReal] at hbound
-      have hpowPos : (0 : ℝ) < (2 : ℝ) ^ (fmt.exponentBias + fmt.fracWidth - 1) := by
-        positivity
       have hcancel : (2 : ℝ) ^ (fmt.minSubnormalExponent - 2) *
           (2 : ℝ) ^ (fmt.exponentBias + fmt.fracWidth - 1) * 4 = 1 := by
         rw [← zpow_natCast, ← zpow_add₀ (by norm_num), halign]

@@ -1,13 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
+public import FloatLib.Floats.Formats.DecimalInterchange.Basic
 public import FloatLib.Floats.Formats.DecimalInterchange.Queries.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Sign.Proof
-public import FloatLib.Floats.Formats.DecimalInterchange.Basic
+
 import Mathlib.Algebra.Order.Field.Power
 import Mathlib.Tactic.Positivity.Finset
 
@@ -154,14 +155,14 @@ theorem classify_subnormal_iff (f : Format) (d : Datum) :
 
 /-- The class of a datum is `signalingNaN` if and only if the datum is a signaling NaN. -/
 theorem classify_signalingNaN_iff (f : Format) (d : Datum) :
-    d.classify f = .signalingNaN ↔ d.isSNaN = true := by
+    d.classify f = .signalingNaN ↔ d.isSignaling = true := by
   cases d with
   | finite s c q =>
       cases s <;> by_cases hc : c = 0 <;>
         by_cases hm : (c : ℚ) * (10 : ℚ) ^ q < f.minNormal <;>
-          simp [classify, isSNaN, hc, hm]
-  | infinity s => cases s <;> simp [classify, isSNaN]
-  | nan s t p => cases t <;> simp [classify, isSNaN]
+          simp [classify, isSignaling, hc, hm]
+  | infinity s => cases s <;> simp [classify, isSignaling]
+  | nan s t p => cases t <;> simp [classify, isSignaling]
 
 /-- The class of a datum is `quietNaN` if and only if the datum is a quiet NaN. -/
 theorem classify_quietNaN_iff (f : Format) (d : Datum) :
@@ -177,14 +178,14 @@ theorem classify_quietNaN_iff (f : Format) (d : Datum) :
 /-- The class of a datum is a signed infinity if and only if the datum is infinite. -/
 theorem classify_infinite_iff (f : Format) (d : Datum) :
     (d.classify f = .negativeInfinity ∨ d.classify f = .positiveInfinity) ↔
-      d.isInf = true := by
+      d.isInfinite = true := by
   cases d with
   | finite s c q =>
       cases s <;> by_cases hc : c = 0 <;>
         by_cases hm : (c : ℚ) * (10 : ℚ) ^ q < f.minNormal <;>
-          simp [classify, isInf, hc, hm]
-  | infinity s => cases s <;> simp [classify, isInf]
-  | nan s t p => cases t <;> simp [classify, isInf]
+          simp [classify, isInfinite, hc, hm]
+  | infinity s => cases s <;> simp [classify, isInfinite]
+  | nan s t p => cases t <;> simp [classify, isInfinite]
 
 /-- The class of a datum is one of the two NaN classes if and only if the datum is a NaN,
 signaling or quiet. -/

@@ -1,15 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Trigonometric.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Comparison.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
+public import FloatLib.Floats.Formats.Posit.Trigonometric.Runtime
 public import FloatLib.Numerics.Exact.Trigonometric.Proof
+import Mathlib.Tactic.Order
 
 /-!
 # Real semantics of posit trigonometric operations
@@ -65,7 +66,7 @@ theorem evaluateUnit_eq_nar (prepare : Rat → Nat → Prepared) {format : Forma
     (houtside : q < -1 ∨ 1 < q) : evaluateUnit prepare value = nar format := by
   have hdomain : ¬ (-1 ≤ q ∧ q ≤ 1) := by
     rintro ⟨hlower, hupper⟩
-    rcases houtside with h | h <;> linarith
+    rcases houtside with h | h <;> order
   simp [evaluateUnit, hvalue, hdomain]
 
 end Trigonometric

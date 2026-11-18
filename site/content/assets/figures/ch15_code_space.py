@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch15-code-space.png: the code space of four P3109 descriptors.
 
-Chapter 10 explains where a P3109 format keeps its zero, its subnormals, its one NaN and its
+The chapter on machine-learning formats explains where a P3109 format keeps its zero, its subnormals, its one NaN and its
 infinities: in a signed format the top bit splits the codes at 2^(K-1), codes below are positive,
 codes above are the same magnitudes negated, the boundary itself is the NaN, positive infinity
 (extended domain only) takes the code just below the NaN and negative infinity the top code; in
-an unsigned format the NaN is the last code. This figure draws one complete strip for b8p4se,
-with code 0 at the left and code 255 at the right. A key names every contiguous code class.
-Three compact comparisons then show what changes in the finite, unsigned and precision-one
-descriptors. The phone version stacks the key and comparisons without shrinking a wide strip.
+an unsigned format the NaN is the last code. This figure draws one complete strip per
+descriptor, code 0 at the left, each scaled to its own number of codes, with ticks at code 0,
+at the NaN and at the last code. One legend names the classes of all four strips, so the finite,
+unsigned and precision-one descriptors can be compared with b8p4se class by class.
 
 The four descriptors are the ones the chapter defines: b8p4se, b8p4sf, b8p8uf and b6p1sf. Every
 number is arithmetic on their parameters following FloatLib/Floats/Formats/P3109/Runtime.lean:
@@ -32,7 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
+from matplotlib.patches import Patch, Rectangle  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -109,10 +109,16 @@ FORMATS = (
 )
 
 CLASS_COLOUR = {
-    "+subnormal": fs.SKY, "+normal": fs.BLUE,
-    "-subnormal": fs.YELLOW, "-normal": fs.ORANGE,
-    "+inf": fs.GREEN, "-inf": fs.GREEN, "nan": fs.VERMILION, "zero": fs.PAPER_2,
+    "zero": "white", "+subnormal": fs.SKY, "+normal": fs.BLUE, "+inf": fs.GREEN,
+    "nan": fs.VERMILION, "-subnormal": fs.YELLOW, "-normal": fs.ORANGE, "-inf": fs.GREEN,
 }
+CLASS_LABEL = {
+    "zero": "zero", "+subnormal": "positive subnormal", "+normal": "positive normal",
+    "+inf": "+∞ and −∞", "nan": "NaN", "-subnormal": "negative subnormal",
+    "-normal": "negative normal",
+}
+
+
 def runs(fmt: Format) -> list[tuple[int, int, str]]:
     out: list[tuple[int, int, str]] = []
     for code in range(fmt.modulus):
@@ -125,59 +131,39 @@ def runs(fmt: Format) -> list[tuple[int, int, str]]:
 
 
 def draw(mobile: bool):
-    fig = plt.figure(figsize=(3.8, 8.9) if mobile else (9, 5.5))
-    fig.text(0.035, 0.98, "Where P3109 keeps special values", fontsize=13.5, weight="bold", va="top")
-    fig.text(0.035, 0.925 if mobile else 0.90,
-             "b8p4se: 8 bits, precision 4\nSigned, with infinities" if mobile else
-             "b8p4se: 8 bits, precision 4; signed, with infinities",
-             fontsize=11.5, linespacing=1.4, va="top" if mobile else "baseline")
-    ax = fig.add_axes([0.065, 0.78, 0.87, 0.075] if mobile else [0.06, 0.72, 0.88, 0.11])
-    ax.set(xlim=(0, 256), ylim=(-0.25, 1.4))
-    ax.axis("off")
-    for lo, hi, cls in runs(FORMATS[0]):
-        ax.add_patch(Rectangle((lo, 0.1), hi - lo + 1, 0.65,
-                               facecolor=CLASS_COLOUR[cls], edgecolor="none"))
-    # Boundaries denote encoded integers, not numerical order of the decoded values.
-    for x, label in [(0.5, "0"), (128.5, "128"), (255.5, "255")]:
-        ax.plot([x, x], [0, 0.1], color=fs.INK, lw=0.8)
-        ax.text(x, -0.18, label, ha="center", va="top", fontsize=11.5)
-    ax.text(64, 0.93, "positive", ha="center", fontsize=11.5, color=fs.BLUE)
-    ax.text(195, 0.93, "negative", ha="center", fontsize=11.5, color=fs.INK)
-    cells = [
-        ("0", "zero", "zero"),
-        ("1 to 7", "+subnormal", "positive subnormal"),
-        ("8 to 126", "+normal", "positive normal"),
-        ("127", "+inf", "+infinity"),
-        ("128", "nan", "NaN"),
-        ("129 to 135", "-subnormal", "negative subnormal"),
-        ("136 to 254", "-normal", "negative normal"),
-        ("255", "-inf", "−infinity"),
-    ]
-    legend = fig.add_axes([0.04, 0.425, 0.92, 0.30] if mobile else [0.06, 0.38, 0.88, 0.25])
-    legend.axis("off")
-    legend.set(xlim=(0, 1), ylim=(0, 1))
-    for i, (codes, cls, label) in enumerate(cells):
-        col, row = (0, i) if mobile else divmod(i, 4)
-        x = col * 0.51
-        y = 0.93 - row * (0.126 if mobile else 0.27)
-        legend.add_patch(Rectangle((x, y - 0.025), 0.025, 0.045 if mobile else 0.07,
-                                   facecolor=CLASS_COLOUR[cls], edgecolor=fs.LINE, lw=0.6))
-        legend.text(x + 0.055, y, codes, fontsize=11.5, va="center")
-        legend.text(x + (0.43 if mobile else 0.20), y, label, fontsize=11.5, va="center")
-    fig.text(0.035, 0.377 if mobile else 0.295,
-             "Change the descriptor, change the limits", fontsize=12, weight="bold")
-    comparisons = [
-        ("b8p4sf", "Signed, finite", "NaN: 128; no infinities", "Largest finite magnitude: 240"),
-        ("b8p8uf", "Unsigned, finite", "NaN: 255; no infinities", "Grid c/128, from 0 to 127/64"),
-        ("b6p1sf", "Signed, precision 1", "NaN: 32; no subnormals", "±2ᵉ, for e = −15 to 15"),
-    ]
-    for i, (name, kind, special, value) in enumerate(comparisons):
-        x, y = (0.035, 0.325 - i * 0.12) if mobile else (0.035 + i * 0.325, 0.23)
-        fig.text(x, y, name, fontsize=12, weight="bold")
-        dy = 0.026 if mobile else 0.049
-        fig.text(x, y - dy, kind, fontsize=11.5)
-        fig.text(x, y - 2 * dy, special, fontsize=11)
-        fig.text(x, y - 3 * dy, value, fontsize=11)
+    """One strip per format: every code, in code order, coloured by the class it decodes to."""
+    width = fs.MOBILE_WIDTH if mobile else fs.WIDTH
+    pitch = 0.95
+    legend_height = 1.5 if mobile else 0.75
+    height = pitch * len(FORMATS) + legend_height + 0.1
+    fig = plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    left = 0.2 if mobile else 1.15
+    span = width - left - 0.25
+    for row, fmt in enumerate(FORMATS):
+        y = height - 0.5 - row * pitch - (0.3 if mobile else 0.0)
+        if mobile:
+            ax.text(left, y + 0.42, fmt.name, fontsize=fs.SIZE_LABEL, va="bottom")
+        else:
+            ax.text(left - 0.15, y + 0.16, fmt.name, fontsize=fs.SIZE_LABEL, ha="right",
+                    va="center")
+        unit = span / fmt.modulus
+        for lo, hi, cls in runs(fmt):
+            ax.add_patch(Rectangle((left + lo * unit, y), (hi - lo + 1) * unit, 0.32,
+                                   facecolor=CLASS_COLOUR[cls], edgecolor="none"))
+        ax.add_patch(Rectangle((left, y), span, 0.32, facecolor="none", edgecolor=fs.INK,
+                               lw=fs.LW_AXIS))
+        # Ticks name encoded integers; code order is not the numerical order of the values.
+        ticks = sorted({0, fmt.nan, fmt.modulus - 1})
+        for code in ticks:
+            x = left + (code + 0.5) * unit
+            ax.plot([x, x], [y - 0.07, y], color=fs.INK, lw=fs.LW_AXIS)
+            ax.text(x, y - 0.11, str(code), ha="center", va="top", fontsize=fs.SIZE_SMALL)
+    handles = [Patch(facecolor=CLASS_COLOUR[cls], edgecolor=fs.INK, linewidth=fs.LW_GRID,
+                     label=label) for cls, label in CLASS_LABEL.items()]
+    fs.legend(ax, handles=handles, loc="lower center", bbox_to_anchor=(width / 2, 0.05),
+              bbox_transform=ax.transData, ncols=2 if mobile else 4, handlelength=1.4,
+              columnspacing=1.2)
     return fig
 
 
@@ -195,7 +181,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch15-code-space.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile), target.name, target)}")
 
 

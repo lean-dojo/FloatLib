@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -49,6 +49,13 @@ structure Carrier (α : Type) (capacity : Nat) where
   toNat_ofNat : ∀ value, toNat (ofNat value) = value % 2 ^ capacity
   /-- Fixed-word carriers fit in the packed `UInt64` arithmetic word. -/
   capacity_le : capacity ≤ 64
+
+/-- Narrowing a packed word cannot increase its natural-number observation. -/
+theorem Carrier.toNat_narrow_le {α : Type} {capacity : Nat}
+    (carrier : Carrier α capacity) (word : UInt64) :
+    carrier.toNat (carrier.narrow word) ≤ word.toNat := by
+  rw [carrier.toNat_narrow]
+  exact Nat.mod_le _ _
 
 /--
 `UInt8` as a packed posit carrier.

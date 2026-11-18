@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.TotalOrder.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Comparison.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.TotalOrder.Runtime
 
 /-!
 # Total-order laws and IEEE decimal tie rules
@@ -35,7 +35,9 @@ theorem orderKey_injective : Function.Injective orderKey := by
   | finite s c q =>
       cases y with
       | finite t d r =>
-          cases s <;> cases t <;> simp [orderKey, Prod.mk.injEq] at h
+          cases s <;> cases t <;> simp only [orderKey, Bool.false_eq_true, ↓reduceIte,
+            EmbeddingLike.apply_eq_iff_eq,
+            Prod.mk.injEq, true_and, Nat.succ_ne_self, false_and, Nat.reduceEqDiff, neg_inj] at h
           all_goals
             rcases h with ⟨hv, rfl⟩
             congr 1

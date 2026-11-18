@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Configured.Backend.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Arithmetic.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Backend.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Core
 public import FloatLib.Floats.Formats.Posit.Configured.Storage.Native.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Storage.Pair.Proof
@@ -38,32 +37,32 @@ variable {format : Format} {plan : StoragePlan format} {code : Type}
 /-- Exact-dyadic addition refines configured posit addition. -/
 theorem dyadicAdd_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    dyadicAdd left right = Spec.add left right := by
-  unfold dyadicAdd Spec.add
+    dyadicAdd left right = Spec.addition left right := by
+  unfold dyadicAdd Spec.addition
   exact ModelCodec.liftBinary_congr
     Model.DirectDyadicArithmetic.add_eq_spec left right
 
 /-- Exact-dyadic subtraction refines configured posit subtraction. -/
 theorem dyadicSub_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    dyadicSub left right = Spec.sub left right := by
-  unfold dyadicSub Spec.sub
+    dyadicSub left right = Spec.subtraction left right := by
+  unfold dyadicSub Spec.subtraction
   exact ModelCodec.liftBinary_congr
     Model.DirectDyadicArithmetic.sub_eq_spec left right
 
 /-- Exact-dyadic multiplication refines configured posit multiplication. -/
 theorem dyadicMul_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    dyadicMul left right = Spec.mul left right := by
-  unfold dyadicMul Spec.mul
+    dyadicMul left right = Spec.multiplication left right := by
+  unfold dyadicMul Spec.multiplication
   exact ModelCodec.liftBinary_congr
     Model.DirectDyadicArithmetic.mul_eq_spec left right
 
 /-- Rational-free dyadic division refines configured posit division. -/
 theorem dyadicDiv_eq_spec
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    dyadicDiv left right = Spec.div left right := by
-  unfold dyadicDiv Spec.div
+    dyadicDiv left right = Spec.division left right := by
+  unfold dyadicDiv Spec.division
   exact ModelCodec.liftBinary_congr
     Model.DirectDyadicArithmetic.div_eq_spec left right
 
@@ -87,8 +86,8 @@ theorem dyadicFma_eq_spec
 theorem nativeLimbAdd_eq_spec
     (heligible : Model.NativeLimb.Eligible format)
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    nativeLimbAdd heligible left right = Spec.add left right := by
-  unfold nativeLimbAdd Spec.add
+    nativeLimbAdd heligible left right = Spec.addition left right := by
+  unfold nativeLimbAdd Spec.addition
   exact ModelCodec.liftBinary_congr
     (Model.NativeLimbArithmetic.add_eq_spec heligible) left right
 
@@ -96,8 +95,8 @@ theorem nativeLimbAdd_eq_spec
 theorem nativeLimbSub_eq_spec
     (heligible : Model.NativeLimb.Eligible format)
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    nativeLimbSub heligible left right = Spec.sub left right := by
-  unfold nativeLimbSub Spec.sub
+    nativeLimbSub heligible left right = Spec.subtraction left right := by
+  unfold nativeLimbSub Spec.subtraction
   exact ModelCodec.liftBinary_congr
     (Model.NativeLimbArithmetic.sub_eq_spec heligible) left right
 
@@ -105,8 +104,8 @@ theorem nativeLimbSub_eq_spec
 theorem nativeLimbMul_eq_spec
     (heligible : Model.NativeLimb.Eligible format)
     (left right : FloatLib.Floats.ExecFloat (Family format code plan)) :
-    nativeLimbMul heligible left right = Spec.mul left right := by
-  unfold nativeLimbMul Spec.mul
+    nativeLimbMul heligible left right = Spec.multiplication left right := by
+  unfold nativeLimbMul Spec.multiplication
   exact ModelCodec.liftBinary_congr
     (Model.NativeLimbArithmetic.mul_eq_spec heligible) left right
 
@@ -154,11 +153,11 @@ theorem storedNativeWordAdd_eq_spec
     (heligible : Model.NativeWord.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :
-    storedNativeWordAdd heligible left right = Spec.add left right := by
+    storedNativeWordAdd heligible left right = Spec.addition left right := by
   apply ModelCodec.decode_injective
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
-  unfold storedNativeWordAdd Spec.add
+  unfold storedNativeWordAdd Spec.addition
   rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.addWordsCodeFlatValid_eq,
     Model.NativeWordArithmetic.addWordsCodeFlat_eq]
@@ -177,11 +176,11 @@ theorem storedNativeWordSub_eq_spec
     (heligible : Model.NativeWord.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :
-    storedNativeWordSub heligible left right = Spec.sub left right := by
+    storedNativeWordSub heligible left right = Spec.subtraction left right := by
   apply ModelCodec.decode_injective
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
-  unfold storedNativeWordSub Spec.sub
+  unfold storedNativeWordSub Spec.subtraction
   rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.subWordsCodeFlatValid_eq,
     Model.NativeWordArithmetic.subWordsCodeFlat_eq]
@@ -200,11 +199,11 @@ theorem storedNativeWordMul_eq_spec
     (heligible : Model.NativeWord.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :
-    storedNativeWordMul heligible left right = Spec.mul left right := by
+    storedNativeWordMul heligible left right = Spec.multiplication left right := by
   apply ModelCodec.decode_injective
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
-  unfold storedNativeWordMul Spec.mul
+  unfold storedNativeWordMul Spec.multiplication
   rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.PackedProduct.mulWordsCodeValid_eq,
     Model.NativeWordArithmetic.mulWordsCodeFlatValid_eq,
@@ -224,18 +223,18 @@ theorem storedNativeWordDiv_eq_spec
     (heligible : Model.NativeWord.Eligible format)
     (left right :
       FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :
-    storedNativeWordDiv heligible left right = Spec.div left right := by
+    storedNativeWordDiv heligible left right = Spec.division left right := by
   apply ModelCodec.decode_injective
     (F := Family format (Code plan) plan)
     (Model := Model format) (plan := plan)
-  unfold storedNativeWordDiv Spec.div
+  unfold storedNativeWordDiv Spec.division
   rw [decode_ofRaw_pack, ModelCodec.decode_liftBinary]
   rw [Model.NativeWordArithmetic.PackedQuotient.divWordsCodeValid_eq]
   change
     Model.ofNatBits
         (Model.NativeWordArithmetic.divWordsCode heligible
           (NativeCode.word left.raw) (NativeCode.word right.raw)) =
-      Model.Spec.div
+      Model.Spec.division
         (ModelCodec.decode
           (F := Family format (Code plan) plan)
           (Model := Model format) (plan := plan) left)
@@ -331,13 +330,13 @@ theorem storedNativeLimbAdd_eq_spec
       FloatLib.Floats.ExecFloat
         (Family format (Code (.pair width_le)) (.pair width_le))) :
     storedNativeLimbAdd width_le heligible left right =
-      Spec.add left right := by
+      Spec.addition left right := by
   apply ModelCodec.decode_injective
     (F := Family format
       (Code (StoragePlan.pair width_le))
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
-  unfold storedNativeLimbAdd Spec.add
+  unfold storedNativeLimbAdd Spec.addition
   rw [decode_ofRaw_packWord, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbPacked.ofNatBits_addCode_eq_add heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
@@ -353,13 +352,13 @@ theorem storedNativeLimbSub_eq_spec
       FloatLib.Floats.ExecFloat
         (Family format (Code (.pair width_le)) (.pair width_le))) :
     storedNativeLimbSub width_le heligible left right =
-      Spec.sub left right := by
+      Spec.subtraction left right := by
   apply ModelCodec.decode_injective
     (F := Family format
       (Code (StoragePlan.pair width_le))
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
-  unfold storedNativeLimbSub Spec.sub
+  unfold storedNativeLimbSub Spec.subtraction
   rw [decode_ofRaw_packWord, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbPacked.ofNatBits_subCode_eq_sub heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
@@ -375,13 +374,13 @@ theorem storedNativeLimbMul_eq_spec
       FloatLib.Floats.ExecFloat
         (Family format (Code (.pair width_le)) (.pair width_le))) :
     storedNativeLimbMul width_le heligible left right =
-      Spec.mul left right := by
+      Spec.multiplication left right := by
   apply ModelCodec.decode_injective
     (F := Family format
       (Code (StoragePlan.pair width_le))
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
-  unfold storedNativeLimbMul Spec.mul
+  unfold storedNativeLimbMul Spec.multiplication
   rw [decode_ofRaw_packWord, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbPacked.ofNatBits_mulCode_eq_mul heligible
     (PairCode.word left.raw) (PairCode.word right.raw)
@@ -398,13 +397,13 @@ theorem storedNativeLimbDiv_eq_spec
       FloatLib.Floats.ExecFloat
         (Family format (Code (.pair width_le)) (.pair width_le))) :
     storedNativeLimbDiv width_le left right =
-      Spec.div left right := by
+      Spec.division left right := by
   apply ModelCodec.decode_injective
     (F := Family format
       (Code (StoragePlan.pair width_le))
       (StoragePlan.pair width_le))
     (Model := Model format) (plan := StoragePlan.pair width_le)
-  unfold storedNativeLimbDiv Spec.div
+  unfold storedNativeLimbDiv Spec.division
   rw [decode_ofRaw_pairPack, Model.ofNatBits_toNatBits, ModelCodec.decode_liftBinary]
   rw [Model.NativeLimbArithmetic.divWords_eq_div format
     (PairCode.word left.raw) (PairCode.word right.raw)

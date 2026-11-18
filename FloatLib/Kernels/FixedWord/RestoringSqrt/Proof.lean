@@ -1,19 +1,19 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
-public import FloatLib.Kernels.FixedWord.Difference.Proof
 public import FloatLib.Kernels.FixedWord.LimbRound.Proof
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Ring.RingNF
+public import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
+
 import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Restoring square-root refinement
@@ -156,14 +156,10 @@ private theorem rootStep_spec
     · rw [hdoubledRoot, hexpanded]
       omega
   · have hnativeBelow : UInt128.less expanded trial = false := by
-      apply Bool.eq_false_iff.mpr
-      intro htrue
-      have hlt := (UInt128.less_eq_true_iff expanded trial).1 htrue
-      rw [hexpanded, htrial] at hlt
-      exact hbelow hlt
+      apply (UInt128.less_eq_false_iff _ _).2
+      simpa only [hexpanded, htrial] using Nat.le_of_not_lt hbelow
     have hordered : trial.toNat ≤ expanded.toNat := by
-      rw [hexpanded, htrial]
-      omega
+      exact (UInt128.less_eq_false_iff _ _).1 hnativeBelow
     have hrootOdd :
         doubledRoot.setLowBit.toNat =
           state.root.toNat * 2 + 1 := by
@@ -353,15 +349,6 @@ private theorem digitsValue_eq_toNat
     (hupper : steps ≤ 128)
     (hfit : radicand.toNat < 2 ^ (2 * steps)) :
     digitsValue digitAt radicand steps = radicand.toNat := by
-  have h0 := radicand.limb0.toNat_lt
-  have h1 := radicand.limb1.toNat_lt
-  have h2 := radicand.limb2.toNat_lt
-  have hlimb0 : radicand.limb0.toNat % place 32 = radicand.limb0.toNat := by
-    apply Nat.mod_eq_of_lt
-    simpa [place] using h0
-  have hlimb1 : radicand.limb1.toNat % place 32 = radicand.limb1.toNat := by
-    apply Nat.mod_eq_of_lt
-    simpa [place] using h1
   have hvalue :
       radicand.toNat =
         radicand.limb0.toNat + radicand.limb1.toNat * 2 ^ 64 +
@@ -388,7 +375,7 @@ private theorem digitsValue_eq_toNat
         (by rw [← hsplit]; exact hfit)
     rw [hsplit, digitsValue_limb1 radicand (steps - 32) (by omega),
       wordDigits_eq_mod radicand.limb1 (steps - 32) (by omega),
-      wordDigits_eq_mod radicand.limb0 32 (by omega), hlimb0, hlimb1Steps]
+      wordDigits_full, hlimb1Steps]
     unfold place
     omega
   by_cases hmiddle : steps ≤ 96
@@ -407,25 +394,19 @@ private theorem digitsValue_eq_toNat
         (by rw [← hsplit]; exact hfit)
     rw [hsplit, digitsValue_limb2 radicand (steps - 64) (by omega),
       wordDigits_eq_mod radicand.limb2 (steps - 64) (by omega),
-      wordDigits_eq_mod radicand.limb1 32 (by omega),
-      wordDigits_eq_mod radicand.limb0 32 (by omega), hlimb0, hlimb1, hlimb2, hvalue, hlimb3]
-    simp [place]
+      wordDigits_full, wordDigits_full, hlimb2, hvalue, hlimb3]
+    simp only [place, Nat.reduceMul, Nat.reducePow, zero_mul, add_zero]
     ring
   · -- The top limb has at most `2 * steps - 192` significant bits.
     have hsplit : steps = 96 + (steps - 96) := by omega
-    have hlimb2 : radicand.limb2.toNat % place 32 = radicand.limb2.toNat := by
-      apply Nat.mod_eq_of_lt
-      simpa [place] using h2
     have hlimb3 :=
       mod_place_eq_of_mul_place_le radicand.limb3.toNat radicand.toNat 96 (steps - 96)
         (by unfold place; rw [hvalue]; omega)
         (by rw [← hsplit]; exact hfit)
     rw [hsplit, digitsValue_limb3 radicand (steps - 96),
       wordDigits_eq_mod radicand.limb3 (steps - 96) (by omega),
-      wordDigits_eq_mod radicand.limb2 32 (by omega),
-      wordDigits_eq_mod radicand.limb1 32 (by omega),
-      wordDigits_eq_mod radicand.limb0 32 (by omega), hlimb0, hlimb1, hlimb2, hlimb3, hvalue]
-    simp [place]
+      wordDigits_full, wordDigits_full, wordDigits_full, hlimb3, hvalue]
+    simp only [place, Nat.reduceMul, Nat.reducePow]
     ring
 
 /--
@@ -491,11 +472,8 @@ theorem roundRoot_toNat
     FloatLib.Numerics.FixedWord.UInt128.increment_toNat state.root hincrementFit
   by_cases hle : state.remainder.toNat ≤ state.root.toNat
   · have hnative :
-        FloatLib.Numerics.FixedWord.UInt128.less state.root state.remainder = false := by
-      apply Bool.eq_false_iff.mpr
-      intro htrue
-      exact (Nat.not_lt_of_ge hle)
-        ((FloatLib.Numerics.FixedWord.UInt128.less_eq_true_iff _ _).1 htrue)
+        UInt128.less state.root state.remainder = false :=
+      (UInt128.less_eq_false_iff _ _).2 hle
     have hsemantic :
         radicand.toNat - Nat.sqrt radicand.toNat * Nat.sqrt radicand.toNat ≤
           Nat.sqrt radicand.toNat := by

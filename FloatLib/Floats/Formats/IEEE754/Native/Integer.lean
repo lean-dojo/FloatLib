@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -19,13 +19,14 @@ definitions we can connect native conversion to FloatLib's specifications throug
 proof shared by binary32 and binary64.
 
 From integers to floats, the theorems identify the imported native word with
-`ExecDType.intToFloat` at nearest-even rounding. `Model.ofInt_conversion_spec` proves that the
+`ExecDType.convertFromInt` at nearest-even rounding. `Model.ofInt_conversion_spec` proves that the
 underlying arbitrary-integer model gives the word and status of the reference conversion
 `runWith`, and `Model.toReal_ofModel_ofInt_eq_roundAt` gives its finite value as nearest-even
 rounding. Native casts return only a value, so the word equalities make no claim about native
 exception flags.
 
-In the reverse direction, `ExecDType.floatToIntSaturating` uses the checked conversion's exact
+In the reverse direction, `ExecDType.convertToIntegerExactSaturating` uses the checked
+conversion's exact
 decoder and toward-zero integral rounder. Native casts saturate overflow and infinities and send
 NaN to zero. The checked API agrees whenever the truncated integer is in range and reports errors
 for the exceptional cases, so `127.75` truncates to `127` and fits in `Int8`, while `128.5` is an

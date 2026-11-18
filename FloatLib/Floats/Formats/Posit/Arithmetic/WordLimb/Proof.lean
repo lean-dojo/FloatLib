@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Rounding.GuardSticky.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.WordLimb.Runtime
 
 /-!
 # Correctness of one-word to two-limb Posit adapters

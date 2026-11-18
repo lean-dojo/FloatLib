@@ -7,8 +7,7 @@ The storage widths are 6, 8, 16, 32, 64, 128, 256, 512, 1,024, 2,048, and 4,096 
 The custom 4-, 5-, and 7-bit layouts do not satisfy Flocq's `0 < precision < emax`
 requirement and are excluded from all three curves.
 
-The measured code is FloatLib 2.0.0 (commit `8c88715`). FloatLib 3.0.0 was not timed,
-and comparing the code Lean generates for both, we found the same arithmetic on these paths. FloatLib uses
+The measured code is FloatLib at commit `8c88715`. FloatLib uses
 explicit proved word kernels at binary32/64 and public operations under
 `PlanningThroughput` at the other widths. The comparison uses Lean 4.35.0 with Mathlib
 `56a00585`, Flocq 4.2.2 extracted with Coq 8.20.1 and compiled with OCaml 4.13.1 and
@@ -28,9 +27,7 @@ Both the main loop and the square-root supplement ran nine trials.
 `matched-benchmark-summary.csv` gives, per cell, the median, minimum, and maximum time
 per operation over those trials, and its `source` and `measurementMethod` columns
 name the raw trials behind each row. The archive's `summary/` directory adds the 5th
-and 95th percentiles, the one-trial selection rule of the earlier campaign applied
-to this run, and a cell-by-cell comparison with that campaign. These results are a
-separate experiment from the nine-trial [main comparison](../main/README.md).
+and 95th percentiles.
 
 Before timing, the adapters agree on the result and input-selection checksums
 of 256 operations per main-loop group and sixteen per square-root block.

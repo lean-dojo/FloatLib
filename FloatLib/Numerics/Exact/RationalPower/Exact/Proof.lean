@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.RationalPower.Exact.Runtime
-public import FloatLib.Numerics.Exact.IntegerRoot.Proof
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-public import Mathlib.Data.Nat.Factorization.Basic
 public import Mathlib.NumberTheory.Real.Irrational
 
 /-!
@@ -230,7 +228,7 @@ theorem exactRoot?_spec (base exponent : ℚ) (hbase : 0 < base) :
     | none => Irrational ((base : ℝ) ^ (exponent : ℝ)) := by
   cases h : exactRoot? base exponent with
   | some exact =>
-    show (base : ℝ) ^ (exponent : ℝ) = (exact.root : ℝ) ^ exact.numerator
+    change (base : ℝ) ^ (exponent : ℝ) = (exact.root : ℝ) ^ exact.numerator
     obtain ⟨hroot, hnonneg, hnumerator⟩ := root_of_exactRoot? hbase.le h
     have hrootReal : 0 ≤ (exact.root : ℝ) := by exact_mod_cast hnonneg
     have hden : (exponent.den : ℝ) ≠ 0 := by exact_mod_cast exponent.den_ne_zero
@@ -240,7 +238,7 @@ theorem exactRoot?_spec (base exponent : ℚ) (hbase : 0 < base) :
       rw [mul_comm, Rat.cast_def, div_mul_cancel₀ _ hden]
     rw [hbaseReal, ← Real.rpow_natCast_mul hrootReal, hexponent, Real.rpow_intCast, hnumerator]
   | none =>
-    show Irrational ((base : ℝ) ^ (exponent : ℝ))
+    change Irrational ((base : ℝ) ^ (exponent : ℝ))
     rintro ⟨q, hq⟩
     have hpower : q ^ exponent.den = base ^ exponent.num := by
       have := rpow_pow_den base exponent hbase
@@ -438,7 +436,7 @@ theorem toDyadic?_spec (exact : ExactRoot) (precision : Nat) {value : Dyadic}
         by_contra hne
         exact hdenominatorTest ⟨hzero, hne⟩
       rw [powerBase_pow_eq_odd exact hroot hden]
-    · show _ ^ exact.numerator.natAbs < 2 ^ (precision + 3)
+    · change _ ^ exact.numerator.natAbs < 2 ^ (precision + 3)
       have := Nat.one_le_two_pow (n := precision + 3)
       omega
   · simp at hpower

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch14-posit-layout.png: four 8-bit posit words with their fields marked.
 
-Chapter 11 decodes the 8-bit words 0x6C, 0x01 and 0x7F by hand and with `decodeExact`. This
+The chapter on posits decodes the 8-bit words 0x6C, 0x01 and 0x7F by hand and with `decodeExact`. This
 figure draws those three words and the encoding of one, 0x40, most significant bit on the left,
 with the sign, the regime run, the terminating bit, the exponent bits and the fraction bits
 coloured and named. The rows are ordered by value, so reading downwards the regime run lengthens
@@ -30,7 +30,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
+from matplotlib.colors import to_rgba  # noqa: E402
+from matplotlib.patches import Patch, Rectangle  # noqa: E402
 
 BITS = 8                       # the width the chapter decodes by hand
 PAYLOAD_BITS = BITS - 1        # Format.payloadBits
@@ -38,14 +39,9 @@ EXPONENT_BITS = 2              # Format.exponentBits
 REGIME_STEP = 4                # Format.regimeExponentStep = 2 ^ exponentBits
 WORDS = (0x01, 0x40, 0x6C, 0x7F)
 
-FIELD_COLOURS = {
-    "sign": fs.PAPER_2,
-    "regime": fs.BLUE,
-    "terminator": fs.SKY,
-    "exponent": fs.GREEN,
-    "fraction": fs.ORANGE,
-}
-DIGIT_ON_DARK = {"regime", "exponent"}
+# The field colours of every layout in the guide, lightened so that the digits stay ink.
+FIELD_COLOURS = {name: to_rgba(fs.FIELD[name], 0.45)
+                 for name in ("sign", "regime", "terminator", "exponent", "fraction")}
 
 
 @dataclass
@@ -117,7 +113,7 @@ def value_label(d: Decoded) -> str:
 def field_note(name: str, d: Decoded) -> str:
     if name == "regime":
         kind = ("one" if d.run == 1 else "ones") if d.regime_bit else "zeros"
-        return f"regime: {d.run} {kind}, k = {d.regime_value}"
+        return f"regime: {d.run} {kind}, k = {d.regime_value}".replace("-", "−")
     if name == "exponent":
         return f"exponent, e = {d.exponent}"
     if name == "fraction":
@@ -133,25 +129,25 @@ def draw_row(ax, d: Decoded, y: float) -> None:
         for _ in range(width):
             ax.add_patch(Rectangle((x, y), 1, 1, facecolor=colour, edgecolor=fs.INK, linewidth=0.9))
             digit = (d.word >> bit_index) & 1
-            ax.text(x + 0.5, y + 0.5, str(digit), ha="center", va="center", fontsize=12,
-                    color="white" if name in DIGIT_ON_DARK else fs.INK)
+            ax.text(x + 0.5, y + 0.5, str(digit), ha="center", va="center", fontsize=fs.SIZE_LABEL,
+                    color=fs.INK)
             x += 1
             bit_index -= 1
         start, end = x - width, x
         if name in ("sign", "terminator"):
             # The two one-bit fields are named above the row so that they never collide with
             # the field notes below it.
-            ax.text((start + end) / 2, y + 1.1, name, ha="center", va="bottom", fontsize=9,
+            ax.text((start + end) / 2, y + 1.1, name, ha="center", va="bottom", fontsize=fs.SIZE_SMALL,
                     color=fs.INK)
         else:
             ax.plot([start + 0.08, start + 0.08, end - 0.08, end - 0.08],
                     [y - 0.1, y - 0.22, y - 0.22, y - 0.1], color=fs.INK, linewidth=0.8)
             ax.text((start + end) / 2, y - 0.3, field_note(name, d), ha="center", va="top",
-                    fontsize=9, color=fs.INK)
+                    fontsize=fs.SIZE_SMALL, color=fs.INK)
     hexword = f"0x{d.word:02X}"
-    ax.text(BITS + 0.8, y + 0.5, hexword, ha="left", va="center", fontsize=11,
-            family="DejaVu Sans Mono", color=fs.INK)
-    ax.text(BITS + 2.6, y + 0.5, value_label(d), ha="left", va="center", fontsize=11, color=fs.INK)
+    ax.text(BITS + 0.8, y + 0.5, hexword, ha="left", va="center", fontsize=fs.SIZE_LABEL,
+            family=fs.MONO, color=fs.INK)
+    ax.text(BITS + 2.6, y + 0.5, value_label(d), ha="left", va="center", fontsize=fs.SIZE_LABEL, color=fs.INK)
 
 
 def build_mobile(rows):
@@ -166,23 +162,19 @@ def build_mobile(rows):
     assert all(not d.negative and d.fraction == 0 for d in rows)
     assert [d.has_terminator for d in rows] == [True, True, True, False]
 
-    height = 8.6
-    fig = fs.plt.figure(figsize=(3.8, height))
-    ax = fs.diagram_axes(fig, (0, 3.8), (0, height))
-    ax.text(0.18, 8.37, "Reading four posit8 words", fontsize=15, weight="bold", va="top")
-    ax.text(0.18, 7.96, "Most significant bit at left", fontsize=12, va="center")
-    key = (("sign", 0.18, 7.56), ("regime", 0.18, 7.24), ("terminator", 0.18, 6.92),
-           ("exponent", 2.04, 7.56), ("fraction", 2.04, 7.24))
-    for name, x, y in key:
-        ax.add_patch(Rectangle((x, y - 0.08), 0.17, 0.17, facecolor=FIELD_COLOURS[name],
-                               edgecolor=fs.INK, linewidth=0.6))
-        ax.text(x + 0.25, y, name.capitalize(), fontsize=12, va="center")
+    height = 7.9
+    fig = fs.plt.figure(figsize=(fs.MOBILE_WIDTH, height))
+    ax = fs.diagram_axes(fig, (0, fs.MOBILE_WIDTH), (0, height))
+    handles = [Patch(facecolor=colour, edgecolor=fs.INK, linewidth=fs.LW_GRID, label=name)
+               for name, colour in FIELD_COLOURS.items()]
+    fs.legend(ax, handles=handles, loc="center", bbox_to_anchor=(1.9, 7.05),
+              bbox_transform=ax.transData, ncols=3, columnspacing=1.0, handlelength=1.2)
 
     for row, d in enumerate(rows):
         y = 6.37 - row * 1.61
-        ax.text(0.18, y, f"0x{d.word:02X}", fontsize=13, family="DejaVu Sans Mono",
-                va="center", weight="bold")
-        ax.text(3.62, y, value_label(d), fontsize=15, ha="right", va="center")
+        ax.text(0.18, y, f"0x{d.word:02X}", fontsize=fs.SIZE_LABEL, family=fs.MONO,
+                va="center")
+        ax.text(3.62, y, value_label(d), fontsize=fs.SIZE_LABEL, ha="right", va="center")
         bit_y = y - 0.64
         bit_index = BITS - 1
         x = 0.18
@@ -192,22 +184,16 @@ def build_mobile(rows):
                 ax.add_patch(Rectangle((x, bit_y), cell, 0.42, facecolor=FIELD_COLOURS[name],
                                        edgecolor=fs.INK, linewidth=0.8))
                 ax.text(x + cell / 2, bit_y + 0.21, str((d.word >> bit_index) & 1),
-                        fontsize=13, ha="center", va="center",
-                        color="white" if name in DIGIT_ON_DARK else fs.INK)
+                        fontsize=fs.SIZE_LABEL, ha="center", va="center", color=fs.INK)
                 x += cell
                 bit_index -= 1
         assert bit_index == -1
-        ax.text(0.18, y - 0.89, field_note("regime", d).capitalize().replace(", ", " · "),
-                fontsize=12, va="center")
+        note = field_note("regime", d)
         if d.fraction_bits:
-            note = f"e = {d.exponent} · F = {d.fraction} · {d.fraction_bits} fraction bits"
-        elif d.has_terminator:
-            note = "No exponent or fraction bits"
-        else:
-            note = "No terminator or trailing fields"
-        ax.text(0.18, y - 1.18, note, fontsize=12, va="center")
+            note += f"\ne = {d.exponent}, F = {d.fraction}"
+        ax.text(0.18, y - 0.80, note, fontsize=fs.SIZE_TICK, va="top", linespacing=1.4)
         if row < len(rows) - 1:
-            ax.plot([0.18, 3.62], [y - 1.41, y - 1.41], color=fs.LINE, linewidth=0.8)
+            ax.plot([0.18, 3.62], [y - 1.41, y - 1.41], color=fs.LINE, linewidth=fs.LW_AXIS)
     return fig
 
 
@@ -225,15 +211,12 @@ def main() -> None:
     fig = fs.plt.figure(figsize=(fs.WIDTH, fs.WIDTH * height_units / (xlim[1] - xlim[0])))
     ax = fs.diagram_axes(fig, xlim, (-0.75, height_units - 0.75))
 
-    ax.text(0, height_units - 0.6,
-            r"8-bit posit words, most significant bit on the left; value $= (2^{f} + F) \cdot 2^{4k + e - f}$",
-            ha="left", va="center", fontsize=10.5, color=fs.INK)
     for row, d in enumerate(reversed(rows)):
         draw_row(ax, d, row * pitch)
 
     out = fs.save(fig, "ch14-posit-layout.png", args.out)
     print(f"wrote {out}")
-    mobile = out.with_name(f"{out.stem}-mobile{out.suffix}")
+    mobile = fs.mobile_path(out)
     print(f"wrote {fs.save(build_mobile(rows), mobile.name, mobile)}")
 
 

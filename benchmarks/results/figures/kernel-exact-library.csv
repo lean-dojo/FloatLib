@@ -1,0 +1,13 @@
+row,ms
+"grid interval product, 64 bits",0.147
+"grid interval quotient, 64 bits",0.446
+"exp enclosure, degree 20",5.18
+"log enclosure, degree 20",11.1
+"sin enclosure, degree 20",1.16
+"integer cube root, 4,096 bits",0.423
+"interval checker, 35 boxes",32.9
+interval: x (1 - x) ≤ 13/50,80.1
+interval: exp x ≤ 11/4,24.9
+interval: x exp (-x) ≤ 2/5,283.00000000000006
+interval: log x ≤ 7/10,35.3
+interval: sin x ≤ x,437.0

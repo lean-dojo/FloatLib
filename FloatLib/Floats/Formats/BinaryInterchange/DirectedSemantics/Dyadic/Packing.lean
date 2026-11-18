@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -31,6 +31,29 @@ section
 
 /-! ## Field-packing semantics -/
 
+/-- Signed normalized field packing preserves its dyadic value for every finite encoding. -/
+theorem toReal_ofFields_normalized_signed
+    (fmt : FloatFormat) (sign : Bool) (mantissa : Nat) (exponent : Int)
+    (hlow : pow2 fmt.fracWidth ≤ mantissa)
+    (hhigh : mantissa < pow2 (fmt.fracWidth + 1))
+    (hmin : fmt.minNormalExponent ≤ exponent)
+    (hmax : exponent ≤ fmt.maxNormalExponent)
+    (hfinite : isFinite (ofFields fmt sign
+      (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
+      (mantissa - pow2 fmt.fracWidth)) = true) :
+    toReal (ofFields fmt sign
+      (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
+      (mantissa - pow2 fmt.fracWidth)) =
+      (if sign then (-1 : ℝ) else 1) * (mantissa : ℝ) *
+        bpow (exponent - Int.ofNat fmt.fracWidth) := by
+  rw [toReal_ofFields_normal_of_isFinite fmt sign _ _
+    (encodedExponent_ne_zero fmt exponent hmin)
+    ((encodedExponent_le_maxFiniteExpField fmt exponent hmax).trans_lt
+      fmt.maxFiniteExpField_lt_two_pow)
+    (normalizedMantissa_sub_pow2_lt fmt mantissa hhigh) hfinite,
+    pow2_add_normalizedMantissa_sub fmt mantissa hlow,
+    decode_encodedExponent fmt exponent hmin]
+
 /--
 Packing a normalized mantissa at an in-range exponent preserves its exact value when the packed
 word is finite.
@@ -52,17 +75,9 @@ theorem toReal_ofFields_normalized
           (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
           (mantissa - pow2 fmt.fracWidth)) =
       (mantissa : ℝ) * bpow (exponent - Int.ofNat fmt.fracWidth) := by
-  rw [toReal_ofFields_normal_of_isFinite fmt false
-    (Int.toNat (exponent + Int.ofNat fmt.exponentBias))
-    (mantissa - pow2 fmt.fracWidth)
-    (encodedExponent_ne_zero fmt exponent hmin)
-    ((encodedExponent_le_maxFiniteExpField fmt exponent hmax).trans_lt
-      fmt.maxFiniteExpField_lt_two_pow)
-    (normalizedMantissa_sub_pow2_lt fmt mantissa hhigh)
-    hfinite]
-  simp only [Bool.false_eq_true, ite_false, one_mul]
-  rw [pow2_add_normalizedMantissa_sub fmt mantissa hlow]
-  rw [decode_encodedExponent fmt exponent hmin]
+  simpa only [Bool.false_eq_true, ite_false, one_mul] using
+    toReal_ofFields_normalized_signed fmt false mantissa exponent
+      hlow hhigh hmin hmax hfinite
 
 /-- The downward zero-or-subnormal branch denotes its mantissa on the subnormal grid. -/
 theorem toReal_roundSubnormalDown

@@ -1,4 +1,0 @@
-binary32	sincosf	PASS
-binary64	sinh	PASS
-binaryb16	exp2_bf16	PASS
-binaryb16	pow_bf16	PASS

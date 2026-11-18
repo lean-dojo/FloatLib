@@ -1,0 +1,26 @@
+family,checker,verdict,seconds,net_seconds
+exact-layer,leanchecker,accepted,126.77,-1.47
+exact-layer,leanchecker-paranoid,accepted,122.44,3.16
+exact-layer,nanoda,accepted,0.64,0.27
+exact-layer,con-ron,accepted,5.44,-1.39
+exact-layer,lean-export,accepted,0.92,0.12
+exact-checks,leanchecker,accepted,13.64,3.56
+exact-checks,leanchecker-paranoid,accepted,15.16,4.04
+exact-checks,nanoda,accepted,8.52,2.34
+exact-checks,con-ron,accepted,11.1,1.03
+exact-checks,lean-export,accepted,13.53,2.63
+loops-kernel,leanchecker,accepted,12.15,1.32
+loops-kernel,leanchecker-paranoid,accepted,12.82,-0.01
+loops-kernel,nanoda,accepted,33.25,2.19
+loops-kernel,con-ron,accepted,24.56,1.23
+loops-kernel,lean-export,accepted,43.78,2.34
+loops-public,leanchecker,accepted,29.0,18.73
+loops-public,leanchecker-paranoid,accepted,37.18,27.13
+loops-public,nanoda,accepted,36.99,23.45
+loops-public,con-ron,accepted,37.42,19.58
+loops-public,lean-export,accepted,37.15,6.48
+exhaustive,leanchecker,accepted,54.6,44.9
+exhaustive,leanchecker-paranoid,accepted,70.58,55.69
+exhaustive,nanoda,no verdict,315.0,2.51
+exhaustive,con-ron,accepted,74.79,51.77
+exhaustive,lean-export,no verdict,861.33,577.41

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,11 +8,8 @@ module
 
 public import FloatLib.Numerics.Enclosure.Rational.Runtime
 public import Mathlib.Basic.Real.Basic
+
 import Mathlib.Data.Rat.Cast.Lemmas
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Linarith.Frontend
 
 /-!
 # Soundness of rational interval operations
@@ -44,7 +41,7 @@ theorem contains_around {x : ℝ} {midpoint radius : ℚ}
     (herror : |x - (midpoint : ℝ)| ≤ (radius : ℝ)) :
     (around midpoint radius).Contains x := by
   rcases abs_le.mp herror with ⟨hlower, hupper⟩
-  constructor <;> simp only [around, Rat.cast_sub, Rat.cast_add] <;> linarith
+  constructor <;> simp only [around_def, Rat.cast_sub, Rat.cast_add] <;> linarith
 
 /-- Negating an enclosed real value reverses the endpoint inequalities. -/
 theorem contains_neg {interval : RationalInterval} {x : ℝ} (hx : interval.Contains x) :
@@ -94,9 +91,9 @@ theorem contains_squareNonnegative {interval : RationalInterval} {x : ℝ}
     interval.squareNonnegative.Contains (x ^ 2) := by
   have hlower : max 0 (interval.lo : ℝ) ≤ x := max_le hnonnegative hx.1
   constructor
-  · simp only [squareNonnegative, Rat.cast_pow, Rat.cast_max, Rat.cast_zero]
+  · simp only [squareNonnegative_def, Rat.cast_pow, Rat.cast_max, Rat.cast_zero]
     exact pow_le_pow_left₀ (le_max_left _ _) hlower _
-  · simp only [squareNonnegative, Rat.cast_pow]
+  · simp only [squareNonnegative_def, Rat.cast_pow]
     exact pow_le_pow_left₀ hnonnegative hx.2 _
 
 /-- Repeated squaring encloses the corresponding power of a nonnegative real value. -/

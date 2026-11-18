@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -36,7 +36,7 @@ turns the comparison into a closed exact-dyadic operation.
 -/
 @[inline] def lowerCode
     (format : Format) (numerator denominator : FloatLib.Numerics.Dyadic) : Nat :=
-  Model.lowerCodeByBisection
+  Numerics.bisect
     (fun code =>
       let value := DyadicRounding.nonnegativeDyadicAt format code
       (value.mul denominator).isLessOrEqual numerator)
@@ -110,7 +110,7 @@ definition of division by zero, zero numerators, magnitude extraction, and sign 
     let denominatorMagnitude := DyadicRounding.magnitude denominator
     let result := roundMagnitude numeratorMagnitude denominatorMagnitude
     if Bool.xor numerator.negative denominator.negative then
-      Model.neg result
+      Model.negate result
     else
       result
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -29,7 +29,7 @@ open FloatLibTests.Fixtures.NativeIEEE
 
 namespace FloatLibTests.Oracle.Primitives
 
-private inductive Operation where
+inductive Operation where
   | add
   | sub
   | mul
@@ -38,7 +38,7 @@ private inductive Operation where
   | fma
   deriving BEq
 
-private def Operation.label : Operation → String
+def Operation.label : Operation → String
   | .add => "add"
   | .sub => "sub"
   | .mul => "mul"
@@ -46,12 +46,12 @@ private def Operation.label : Operation → String
   | .sqrt => "sqrt"
   | .fma => "fma"
 
-private structure RawCase where
+structure RawCase where
   name : String
   operation : Operation
   operands : Array Nat
 
-private def exceptionalCases {Word : Type}
+def exceptionalCases {Word : Type}
     (cases : EdgeCases Word) (toNat : Word → Nat) : Array RawCase :=
   let bits (values : List Word) := values.toArray.map toNat
   #[
@@ -114,7 +114,7 @@ Bit patterns below the smallest normal encode `k` times the smallest subnormal a
 `k`, and a normal power of two encodes as its biased exponent shifted into the exponent field. For
 binary32 the multiplication is `2^-100 * 2^-40 = 2^-140` and the division is `2^-140 / 2`.
 -/
-private def exactSubnormalCases (format : FloatFormat) : Array RawCase :=
+def exactSubnormalCases (format : FloatFormat) : Array RawCase :=
   let powerOfTwo (exponent : Int) : Nat :=
     (exponent + format.exponentBias).toNat <<< format.fracWidth
   let smallestNormalExponent : Int := 1 - format.exponentBias
@@ -126,10 +126,10 @@ private def exactSubnormalCases (format : FloatFormat) : Array RawCase :=
       operands := #[512, powerOfTwo 1] }
   ]
 
-private def nextState (state : UInt64) : UInt64 :=
+def nextState (state : UInt64) : UInt64 :=
   state * 6364136223846793005 + 1442695040888963407
 
-private def operationAt (index : Nat) : Operation :=
+def operationAt (index : Nat) : Operation :=
   match index % 6 with
   | 0 => .add
   | 1 => .sub
@@ -138,7 +138,7 @@ private def operationAt (index : Nat) : Operation :=
   | 4 => .sqrt
   | _ => .fma
 
-private def randomCases (seed : UInt64) (width count : Nat) : Array RawCase := Id.run do
+def randomCases (seed : UInt64) (width count : Nat) : Array RawCase := Id.run do
   let modulus := 2 ^ width
   let mut state := seed
   let mut result := #[]
@@ -156,7 +156,7 @@ private def randomCases (seed : UInt64) (width count : Nat) : Array RawCase := I
     }
   return result
 
-private def applyOperation {format : FloatFormat}
+def applyOperation {format : FloatFormat}
     (operation : Operation) (operands : Array (Model format))
     (mode : Model.IEEERoundingMode) : IO (Model.IEEEOutcome format) :=
   match operation, operands.toList with
@@ -165,10 +165,11 @@ private def applyOperation {format : FloatFormat}
   | .mul, [left, right] => pure <| Model.mul left right (mode := mode) (status := true)
   | .div, [left, right] => pure <| Model.div left right (mode := mode) (status := true)
   | .sqrt, [value] => pure <| Model.sqrt value (mode := mode) (status := true)
-  | .fma, [left, right, addend] => pure <| Model.fma left right addend (mode := mode) (status := true)
+  | .fma, [left, right, addend] => pure <|
+      Model.fma left right addend (mode := mode) (status := true)
   | _, _ => throw <| IO.userError s!"invalid arity for {operation.label}"
 
-private def emitCase (format : FloatFormat) (test : RawCase)
+def emitCase (format : FloatFormat) (test : RawCase)
     (mode : Model.IEEERoundingMode) (modeLabel : String) : IO Unit := do
   let operands := test.operands.map (Model.ofNatBits (fmt := format))
   let outcome ← applyOperation test.operation operands mode
@@ -190,7 +191,7 @@ private def emitCase (format : FloatFormat) (test : RawCase)
   ] ++ test.operands.map toString
   IO.println <| String.intercalate "\t" fields.toList
 
-private def emitFormat (format : FloatFormat) (tests : Array RawCase) : IO Unit := do
+def emitFormat (format : FloatFormat) (tests : Array RawCase) : IO Unit := do
   for test in tests do
     for mode in Model.IEEERoundingMode.all do
       emitCase format test mode mode.name

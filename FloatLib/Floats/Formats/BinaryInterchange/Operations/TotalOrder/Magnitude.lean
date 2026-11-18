@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -189,16 +189,16 @@ theorem totalOrderMag_zero {fmt : FloatFormat} {x y : Model fmt}
     (hx : isZero x = true) : totalOrderMag x y = true := by
   have hxd := toDyadic?_eq_zero_of_isZero_eq_true x hx
   cases hynan : isNaN y
-  · cases hyinf : isInf y
+  · cases hyinf : isInfinite y
     · by_cases hy : isZero y = true
       · rw [totalOrderMag_iff_of_toDyadic? hxd (toDyadic?_eq_zero_of_isZero_eq_true y hy)]
         simp
-      · have hfin := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hynan hyinf
+      · have hfin := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hynan hyinf
         apply totalOrderMag_of_abs_toReal_lt (isFinite_eq_true_of_isZero_eq_true x hx)
         rw [toReal_eq_zero_of_isZero x hx, abs_zero, abs_pos]
         exact fun h => hy ((isZero_eq_true_iff_toReal_eq_zero y hfin).2 h)
     · rw [totalOrderMag, exactValue_eq_finite_of_toDyadic?_eq_some hxd,
-        exactValue_eq_infinity_of_isInf hyinf]
+        exactValue_eq_infinity_of_isInfinite hyinf]
       simp [ExactValue.totalOrderMag, ExactValue.abs, ExactValue.totalOrder]
   · exact totalOrderMag_number_nan
       (isNaN_eq_false_of_isFinite_eq_true x (isFinite_eq_true_of_isZero_eq_true x hx)) hynan
@@ -208,8 +208,8 @@ theorem totalOrderMag_zero {fmt : FloatFormat} {x y : Model fmt}
 theorem totalOrderMag_nan_iff {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = true) (hy : isNaN y = true) :
     totalOrderMag x y = true ↔
-      (isSNaN x = true ∧ isSNaN y = false) ∨
-        isSNaN x = isSNaN y ∧ fracField x ≤ fracField y := by
+      (isSignaling x = true ∧ isSignaling y = false) ∨
+        isSignaling x = isSignaling y ∧ fracField x ≤ fracField y := by
   rw [totalOrderMag, exactValue_eq_nan_of_isNaN hx, exactValue_eq_nan_of_isNaN hy,
     ExactValue.totalOrderMag_nan_iff]
 
@@ -217,7 +217,7 @@ theorem totalOrderMag_nan_iff {fmt : FloatFormat} {x y : Model fmt}
 theorem totalOrderMag_nan_both_iff {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = true) (hy : isNaN y = true) :
     totalOrderMag x y = true ∧ totalOrderMag y x = true ↔
-      isSNaN x = isSNaN y ∧ fracField x = fracField y := by
+      isSignaling x = isSignaling y ∧ fracField x = fracField y := by
   rw [totalOrderMag_both_iff_exactValue_abs_eq,
     exactValue_eq_nan_of_isNaN hx, exactValue_eq_nan_of_isNaN hy]
   simp [ExactValue.abs]

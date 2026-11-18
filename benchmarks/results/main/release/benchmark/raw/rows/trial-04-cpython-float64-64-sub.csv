@@ -1,2 +1,0 @@
-implementation,family,format,totalBits,operation,executionClass,backend,measurementMethod,iterations,totalNanos,sink,fixtureTraceDigest,agreementIterations,agreementSink,agreementFixtureTraceDigest
-CPython,python-runtime,python-float64,64,sub,dynamic-runtime,CPython 3.12.13 float expression; interpreter and object overhead included,result-dependent-fixture-chain,133113,196254398,18129724357864125925,12076226161022090821,256,747626906282276811,11425145581293654401

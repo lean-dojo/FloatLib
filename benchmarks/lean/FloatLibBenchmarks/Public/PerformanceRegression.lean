@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -478,6 +478,9 @@ private def runFormat
         timeRow filters format operation inputClass backends[index]! totalBits
           (prepare operation inputClass) workloads[index]!
 
+-- The compiler specializes the six kernels of eleven formats into this one definition, which
+-- takes more than the default heartbeats since capability inspection got slower to compile.
+set_option maxHeartbeats 800000 in
 def run : IO Unit := do
   let filters ← readFilters
   IO.println <|

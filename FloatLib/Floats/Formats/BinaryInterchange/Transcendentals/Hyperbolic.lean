@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.ExpLog
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 
 /-!
 # Format-generic executable hyperbolic functions
@@ -261,7 +261,7 @@ def sinhWithProvider {fmt : FloatFormat}
   match chooseNaN1 x with
   | some nan => nan
   | none =>
-      if isInf x then
+      if isInfinite x then
         x
       else if isZero x then
         x
@@ -295,7 +295,7 @@ def coshWithProvider {fmt : FloatFormat}
   match chooseNaN1 x with
   | some nan => nan
   | none =>
-      if isInf x then
+      if isInfinite x then
         nativeOverflow fmt false
       else if isZero x then
         roundDyadic fmt Transcendentals.oneDyadic
@@ -329,7 +329,7 @@ def tanhWithProvider {fmt : FloatFormat}
   match chooseNaN1 x with
   | some nan => nan
   | none =>
-      if isInf x then
+      if isInfinite x then
         if signBit x then negOne fmt else posOne fmt
       else if isZero x then
         x

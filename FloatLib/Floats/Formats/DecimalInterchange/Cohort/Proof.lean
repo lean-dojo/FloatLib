@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -83,7 +83,7 @@ theorem preferredCohort_sameCohort (f : Format) (s : Bool) (c : Nat) (q preferre
         (10 : ℚ) ^ (stripTrailing (min preferred f.maxQuantum - q).toNat c).2 := by
     exact_mod_cast h
   rw [hc, zpow_add₀ (by norm_num), zpow_natCast]
-  ring
+  ac_rfl
 
 /-- The selected cohort member has the original signed rational value. -/
 theorem preferredCohort_toRat? (f : Format) (s : Bool) (c : Nat) (q preferred : Int) :

@@ -1,0 +1,165 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.FixedLimb.Pair.Addition.Runtime
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Full.Addition.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Narrow.Addition.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Small.Add.Runtime
+/-!
+# Executable addition and subtraction backends
+
+A generic path handles exact finite arithmetic and the descriptor's exceptional-value policy. Before
+falling back to it, the word dispatcher tries a kernel that the format's structural capabilities
+justify:
+
+- native binary32 or binary64,
+- a fixed pair of limbs,
+- the one-word `UInt64` kernel for small IEEE formats,
+- reusable small-word storage for the remaining one-word formats.
+
+When the specialization declines, it goes back to the generic path.
+
+The `@[specialize fmt]` annotation exposes the descriptor-dependent tests to specialization at
+closed-format call sites. Which kernel runs depends only on the descriptor, the operand-dependent
+acceptance checks stay in the selected kernels, and a runtime descriptor is checked on each call. We
+keep the refinement theorems in `Add.Proof`, so a program can import this module without them.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange
+namespace Model
+namespace AddBackend
+
+/--
+Width-generic compiled addition.
+
+Finite operands use the compact component decoder, and exceptional operands keep the public NaN
+and infinity policy.
+-/
+@[specialize fmt] def generic {fmt : FloatFormat}
+    (x y : Model fmt) : Model fmt :=
+  match FiniteKernel.addRuntime? x y with
+  | some sum => sum
+  | none =>
+      match chooseNaN2 x y with
+      | some nan => nan
+      | none =>
+          if isInfinite x then
+            if isInfinite y then
+              if signBit x == signBit y then x else invalidResult fmt
+            else
+              x
+          else if isInfinite y then
+            y
+          else
+            invalidResult fmt
+
+/--
+The non-table implementation of addition, with the kernel picked by the format's structural
+capabilities:
+
+* Binary32 finite operands use the checked native-word backend.
+* Binary64 first tries the one-word `UInt64` kernel of `NativeSmallWordAdd`, whose capacity contract
+  admits its 53-bit significands, and falls back to its fixed-format chain for wide alignment shifts
+  and boundary results.
+* Eligible two-word layouts use their fixed-limb and width-generic finite chain.
+* Every other IEEE format with at most 30 exponent and 61 fraction bits adds entirely in `UInt64`
+  through `NativeSmallWordAdd`.
+* The remaining one-word IEEE formats use the shared native-storage decoder before the compiled
+  component kernel.
+
+Every decline and every exceptional case falls back to `generic`.
+-/
+@[specialize fmt] def word {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
+  if h32 : FloatFormat.IsBinary32 fmt then
+    let hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+    let hcarrier := congrArg Model hfmt
+    let x32 : NativeBinary32.Value := Eq.mp hcarrier x
+    let y32 : NativeBinary32.Value := Eq.mp hcarrier y
+    match NativeBinary32.addFiniteWord? x32 y32 with
+    | some sum => Eq.mpr hcarrier sum
+    | none => generic x y
+  else if h64 : FloatFormat.IsBinary64 fmt then
+    match NativeSmallWordAdd.addFinite? x y false with
+    | some sum => sum
+    | none =>
+        let hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
+        let hcarrier := congrArg Model hfmt
+        let x64 : NativeBinary64.Value := Eq.mp hcarrier x
+        let y64 : NativeBinary64.Value := Eq.mp hcarrier y
+        match NativeBinary64.addFinite? x64 y64 with
+        | some sum => Eq.mpr hcarrier sum
+        | none => generic x y
+  else if _hpair : NativePair.Eligible fmt then
+    match NativePair.addFinite? x y with
+    | some sum => sum
+    | none => generic x y
+  else if _heligible : NativeSmallWordAdd.Eligible fmt then
+    match NativeSmallWordAdd.addFinite? x y false with
+    | some sum => sum
+    | none => generic x y
+  else if _hstorage : NativeSmallWord.StorageEligible fmt then
+    match NativeSmallWordFinite.addFinite? x y with
+    | some sum => sum
+    | none => generic x y
+  else
+    generic x y
+
+/--
+The non-table implementation of subtraction:
+
+* Binary32 adds the negated right operand in its checked native backend.
+* Binary64 first tries the one-word `UInt64` kernel with the right sign toggled in the storage word,
+  then its fixed-format chain.
+* Eligible two-word layouts use their fixed-limb and width-generic finite subtraction chain.
+* Every other one-word IEEE format with at most 30 exponent and 61 fraction bits subtracts through
+  `NativeSmallWordAdd`.
+* The remaining one-word formats use the shared native decoder on the negated operand.
+
+Exceptional cases enter exact generic addition with the negated right operand.
+-/
+@[specialize fmt] def subWord {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
+  if h32 : FloatFormat.IsBinary32 fmt then
+    let hfmt := FloatFormat.eq_binary32_of_isBinary32 h32
+    let hcarrier := congrArg Model hfmt
+    let x32 : NativeBinary32.Value := Eq.mp hcarrier x
+    let y32 : NativeBinary32.Value := Eq.mp hcarrier y
+    match NativeBinary32.addFiniteWord? x32 (NativeBinary32.negate y32) with
+    | some difference => Eq.mpr hcarrier difference
+    | none => generic x (neg y)
+  else if h64 : FloatFormat.IsBinary64 fmt then
+    match NativeSmallWordAdd.addFinite? x y true with
+    | some difference => difference
+    | none =>
+        let hfmt := FloatFormat.eq_binary64_of_isBinary64 h64
+        let hcarrier := congrArg Model hfmt
+        let x64 : NativeBinary64.Value := Eq.mp hcarrier x
+        let y64 : NativeBinary64.Value := Eq.mp hcarrier y
+        match NativeBinary64.subFinite? x64 y64 with
+        | some difference => Eq.mpr hcarrier difference
+        | none => generic x (neg y)
+  else if _hpair : NativePair.Eligible fmt then
+    match NativePair.subFinite? x y with
+    | some difference => difference
+    | none => generic x (neg y)
+  else if _heligible : NativeSmallWordAdd.Eligible fmt then
+    match NativeSmallWordAdd.addFinite? x y true with
+    | some difference => difference
+    | none => generic x (neg y)
+  else if _hstorage : NativeSmallWord.StorageEligible fmt then
+    match NativeSmallWordFinite.addFinite? x (neg y) with
+    | some difference => difference
+    | none => generic x (neg y)
+  else
+    generic x (neg y)
+
+end AddBackend
+end Model
+end FloatLib.Floats.Formats.BinaryInterchange

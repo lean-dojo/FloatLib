@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
+public meta import FloatLib.Numerics.Capabilities.Radix
+public meta import FloatLib.Tactic.FloatInfo.Logarithmic.Configured
+public meta import FloatLib.Tactic.FloatInfo.Logarithmic.Exact
 public import FloatLib.Floats.Formats.Logarithmic.Automation
+public import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Proof
+public import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Display
 public import FloatLib.Floats.Formats.Logarithmic.Configured.Instances
-public import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.Logarithmic.Exact.Proof
-public meta import FloatLib.Floats.Formats.Logarithmic.Configured.Info
-public meta import FloatLib.Floats.Formats.Logarithmic.Exact.Info
-public meta import FloatLib.Numerics.Capabilities.Radix
 
 /-!
 # Exact logarithmic numbers

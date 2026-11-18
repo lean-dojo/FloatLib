@@ -1,19 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.Posit.Model.Fields
+
 import Mathlib.Algebra.Order.Field.Basic
 import Mathlib.Tactic.FieldSimp
-public import FloatLib.Floats.Formats.Posit.Model.Fields
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Positivity.Finset
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -115,7 +116,7 @@ theorem zpow_add_le_mul_zpow {fraction : Rat} (targetExponent : Int) (leading : 
     (hlower : (2 : Rat) ^ Int.ofNat leading ≤ fraction) :
     (2 : Rat) ^ (targetExponent + Int.ofNat leading) ≤
       fraction * (2 : Rat) ^ targetExponent := by
-  rw [add_comm, zpow_add₀ (by norm_num)]
+  rw [add_comm, zpow_add₀ (by decide)]
   exact mul_le_mul_of_nonneg_right hlower (zpow_nonneg (by norm_num) _)
 
 /--
@@ -127,8 +128,8 @@ theorem mul_zpow_lt_zpow_add_succ {fraction : Rat} (targetExponent : Int) (leadi
     fraction * (2 : Rat) ^ targetExponent <
       (2 : Rat) ^ (targetExponent + Int.ofNat leading + 1) := by
   rw [show targetExponent + Int.ofNat leading + 1 = Int.ofNat (leading + 1) + targetExponent by
-      simp only [Int.ofNat_eq_natCast]; push_cast; ring,
-    zpow_add₀ (by norm_num)]
+      simp only [Int.ofNat_eq_natCast]; push_cast; ac_rfl,
+    zpow_add₀ (by decide)]
   exact mul_lt_mul_of_pos_right hupper (zpow_pos (by norm_num) _)
 
 /--
@@ -159,7 +160,7 @@ private theorem bucketRat_strictMono
         (div_lt_div_iff_of_pos_right
           (natToRat_pos hdenominator)).2
           (natToRat_lt hremainder)
-      linarith
+      exact add_lt_add_right hdivision 1
     have hquotientEqInt :
         Int.ofNat (left / denominator) =
           Int.ofNat (right / denominator) :=
@@ -211,14 +212,14 @@ theorem trailingRat_lt_of_lt
             omega
           subst left
           subst right
-          norm_num [trailingRat, natToRat]
+          decide +kernel
       | succ fractionBits =>
           have hfield (value : Nat) (hvalue : value < 2 ^ (fractionBits + 1 + 1)) :
               value / 2 ^ fractionBits % 4 = value / 2 ^ fractionBits := by
             apply Nat.mod_eq_of_lt
             rw [Nat.div_lt_iff_lt_mul (Nat.two_pow_pos fractionBits)]
             convert hvalue using 1
-            ring
+            omega
           simpa [trailingRat, bucketRat, hfield left hleft, hfield right hright] using
             bucketRat_strictMono
               (2 ^ fractionBits) (Nat.two_pow_pos _) hlt
@@ -275,7 +276,11 @@ theorem trailingRat_succ_two_mul (trailing raw : Nat) :
       trailingRat trailing raw := by
   rcases trailing with _ | _ | fraction
   · simp [trailingRat, natToRat_eq_cast, Nat.mod_one]
-  · simp [trailingRat, natToRat_eq_cast, Nat.mod_one]
+  · simp only [trailingRat, zero_add, Nat.reduceAdd, min_self, tsub_self, pow_zero, Nat.mod_one,
+    natToRat_eq_cast, Nat.cast_zero, Nat.cast_one, div_one, add_zero, Nat.div_one, Nat.reducePow,
+    mul_one, Int.ofNat_eq_natCast, Int.natCast_emod, Nat.cast_mul, Nat.cast_ofNat, one_mul,
+    Nat.one_le_ofNat, inf_of_le_right, pow_one, Nat.add_one_sub_one, Nat.ofNat_pos, ne_eq,
+    OfNat.ofNat_ne_one, not_false_eq_true, zpow_right_inj₀]
     omega
   · have hdiv : 2 * raw / 2 ^ (fraction + 1) = raw / 2 ^ fraction := by
       rw [Nat.pow_succ, Nat.mul_comm (2 ^ fraction), Nat.mul_div_mul_left _ _ two_pos]
@@ -317,7 +322,7 @@ theorem trailingRat_bounds (trailing raw : Nat) :
   · refine hupper.trans_le ?_
     calc (2 : Rat) ^ (Int.ofNat _ + 1) ≤ (2 : Rat) ^ (4 : Int) :=
           zpow_le_zpow_right₀ (by norm_num) (by simp only [Int.ofNat_eq_natCast]; omega)
-      _ = 16 := by norm_num
+      _ = 16 := by decide
 
 /--
 For decoded fields with a clear sign bit, the rational field value factors into the trailing
@@ -376,7 +381,7 @@ theorem decodeFields_toRat_eq_trailingRat_mul_regime
       regimeScale + Int.ofNat exponent -
           Int.ofNat value.fractionBits =
         (Int.ofNat exponent - Int.ofNat value.fractionBits) +
-          regimeScale by ring]
+          regimeScale by omega]
   rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
   rw [zpow_sub₀ (by norm_num : (2 : Rat) ≠ 0)]
   simp only [Int.ofNat_eq_natCast, zpow_natCast]
@@ -393,7 +398,7 @@ theorem decodeFields_toRat_eq_trailingRat_mul_regime
         (2 : Rat) ^ regimeScale
   field_simp
   push_cast
-  ring
+  ac_rfl
 
 
 end FloatLib.Floats.Formats.Posit.Model

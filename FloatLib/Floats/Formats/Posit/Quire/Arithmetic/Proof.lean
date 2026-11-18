@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -47,6 +47,7 @@ graph.
 namespace FloatLib.Floats.Formats.Posit.Quire.Model
 
 open FloatLib.Numerics
+open FloatLib.Floats.Formats
 
 variable {format : Format}
 
@@ -117,7 +118,7 @@ private theorem ordinaryCoefficient_zero : OrdinaryCoefficient format 0 :=
 @[simp] theorem qToP_zero (format : Format) :
     qToP (zero format) = FloatLib.Floats.Formats.Posit.Model.zero format := by
   simp [qToP, FloatLib.Numerics.Dyadic.ofScaledInt,
-    FloatLib.Floats.Formats.Posit.Model.DyadicRounding.round]
+    Posit.Model.DyadicRounding.round]
 
 /-! ## Exact coefficient and rational refinement theorems -/
 
@@ -138,11 +139,6 @@ theorem scaleExponent_le_scale_of_not_special
       simpa only [Format.payloadBits] using
         Nat.sub_add_cancel
           (Nat.le_trans (by decide : 1 ≤ 2) format.bits_ge_two)
-    have hpayloadInt :
-        (format.payloadBits : Int) + 1 = format.bits := by
-      exact_mod_cast hpayload
-    have hthreeInt : (3 : Int) ≤ format.bits := by
-      exact_mod_cast hthree
     apply le_trans ?_
       (FloatLib.Floats.Formats.Posit.Model.neg_four_payloadBits_le_scale value)
     unfold scaleExponent
@@ -870,25 +866,25 @@ theorem minPositive_exponent_le_exponent_of_toDyadic?_eq_some
     (value : FloatLib.Floats.Formats.Posit.Model format)
     (dyadic : FloatLib.Numerics.Dyadic)
     (hvalue : value.toDyadic? = some dyadic) :
-    (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent ≤
+    (Posit.Model.DyadicRounding.minPositive format).exponent ≤
       dyadic.exponent := by
   rcases toDyadic?_eq_some_cases hvalue with rfl | ⟨hnar, hzero, rfl⟩
-  · rw [FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_eq_fields]
+  · rw [Posit.Model.DyadicRounding.minPositive_eq_fields]
     simp only [FloatLib.Numerics.Dyadic.zero]
     apply neg_nonpos.mpr
     exact
       mul_nonneg (by norm_num)
         (Int.natCast_nonneg (format.payloadBits - 1))
   · exact
-      FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_exponent_le_scale_of_not_special
+      Posit.Model.DyadicRounding.minPositive_exponent_le_scale_of_not_special
         value hzero hnar
 
 /-- The associated quire scale is twice the smallest positive posit exponent. -/
 theorem scaleExponent_eq_two_mul_minPositive_exponent (format : Format) :
     scaleExponent format =
       2 *
-        (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent := by
-  rw [FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_eq_fields]
+        (Posit.Model.DyadicRounding.minPositive format).exponent := by
+  rw [Posit.Model.DyadicRounding.minPositive_eq_fields]
   unfold scaleExponent Format.payloadBits
   have hbits := format.bits_ge_two
   simp only [Int.ofNat_eq_natCast]
@@ -1121,6 +1117,6 @@ theorem qToP_eq_roundRat (value : Model format) :
       simp [qToP, hvalue]
   | some dyadic =>
       simp [qToP, hvalue,
-        FloatLib.Floats.Formats.Posit.Model.DyadicRounding.round_eq_roundRat]
+        Posit.Model.DyadicRounding.round_eq_roundRat]
 
 end FloatLib.Floats.Formats.Posit.Quire.Model

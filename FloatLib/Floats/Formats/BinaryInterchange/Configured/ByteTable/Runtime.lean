@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.TinyTable.Generic.Certified
-public import FloatLib.Floats.ExecFloat.Carrier
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.TinyTable.Generic.Certified
+public import FloatLib.Numerics.Executable.Carrier
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics -- shake: keep
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Storage.Core
 public import Mathlib.Algebra.Order.Algebra
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics -- shake: keep
 
 /-!
 # Direct exhaustive runtime kernels for configured byte formats

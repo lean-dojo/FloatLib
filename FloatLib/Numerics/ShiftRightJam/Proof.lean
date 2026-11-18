@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Numerics.Quantization.Deterministic
 public import FloatLib.Numerics.ShiftRightJam
+
 import Mathlib.Tactic.NormNum.Inv
 import Mathlib.Tactic.NormNum.Pow
 
@@ -164,14 +165,8 @@ theorem shiftRightJam_mul_two_pow_sub (A B j : Nat) (hB : B ≤ A * 2 ^ j) :
   simp only [beq_iff_eq]
   have hpos : 0 < 2 ^ j := Nat.two_pow_pos j
   have hBdecomp := Nat.div_add_mod' B (2 ^ j)
-  have hBmod : B % 2 ^ j < 2 ^ j := Nat.mod_lt _ hpos
   by_cases hexact : B % 2 ^ j = 0
   · have hB' : B = B / 2 ^ j * 2 ^ j := by omega
-    have hle : B / 2 ^ j ≤ A := by
-      have hmul : B / 2 ^ j * 2 ^ j ≤ A * 2 ^ j := by
-        rw [← hB']
-        exact hB
-      exact Nat.le_of_mul_le_mul_right hmul hpos
     have hdiff : A * 2 ^ j - B = (A - B / 2 ^ j) * 2 ^ j := by
       rw [Nat.sub_mul, ← hB']
     rw [hdiff, Nat.mul_div_cancel _ hpos, Nat.mul_mod_left]

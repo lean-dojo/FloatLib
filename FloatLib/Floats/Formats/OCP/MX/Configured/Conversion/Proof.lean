@@ -1,20 +1,19 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Runtime
 public import FloatLib.Floats.Formats.OCP.MX.Configured.Conversion.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Runtime
 
 /-!
-# Proof contracts for configured OCP MX decoding
+# Proof contract for configured E8M0 decoding
 
-Generic algorithms see OCP MX values through the shared `ExactDecoder` capability. The bridge
-lemmas below show that decoding an E8M0 scale or a shared-scale block gives the same result as its
-numerical-system denotation.
+Generic algorithms see an E8M0 scale through the shared `ExactDecoder` capability. The bridge lemma
+below shows that decoding it gives the same result as its numerical-system denotation.
 -/
 
 @[expose] public section
@@ -34,18 +33,6 @@ namespace E8M0.Conversion
   rfl
 
 end E8M0.Conversion
-
-namespace Block.Conversion
-
-variable {format : FloatFormat}
-
-/-- The installed block decoder is the joint block denotation. -/
-@[simp, grind =] theorem exactDecoder_run (value : ExecFloat.OCP.MX.Block format) :
-    FloatLib.Floats.ExecFloat.ExactDecoder.run value =
-      (Formats.OCP.MX.blockSystem format).denote value.toCode :=
-  rfl
-
-end Block.Conversion
 
 end ExecFloat.OCP.MX
 end FloatLib.Floats

@@ -1,23 +1,23 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-import Mathlib.Algebra.Order.Ring.Abs
-public import Mathlib.Order.Interval.Set.Defs
-import Mathlib.Tactic.FieldSimp
 public import FloatLib.Numerics.Core.Proof
 public import FloatLib.Numerics.Operation.Semantics
 public import FloatLib.Numerics.Quantization.Deterministic
 public import FloatLib.Numerics.Quantization.Saturating
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Ring.RingNF
+
+import Mathlib.Algebra.Order.Ring.Abs
 import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Executable affine rational quantization
@@ -62,7 +62,7 @@ structure AffineQuantizer where
   /-- A quantization scale is strictly positive. -/
   scale_pos : 0 < scale
   /-- The code interval is nonempty. -/
-  codeRange : qmin ≤ qmax
+  code_range : qmin ≤ qmax
 
 namespace AffineQuantizer
 
@@ -89,7 +89,7 @@ namespace AffineQuantizer
 /-- Saturation always returns a valid code. -/
 theorem clampCode_mem (q : AffineQuantizer) (code : ℤ) :
     q.qmin ≤ q.clampCode code ∧ q.clampCode code ≤ q.qmax :=
-  ⟨Saturating.lower_le_clamp _ _ _, Saturating.clamp_le_upper q.codeRange⟩
+  ⟨Saturating.lower_le_clamp _ _ _, Saturating.clamp_le_upper q.code_range⟩
 
 /-- Saturation fixes a code already inside the representable interval. -/
 @[simp, grind =] theorem clampCode_eq_self (q : AffineQuantizer) {code : ℤ}
@@ -152,18 +152,18 @@ An integer code in the quantizer's closed storage interval.
 Using Mathlib's interval subtype keeps range reasoning interoperable and avoids a project-local
 proof-carrying record for the standard `qmin ≤ value ≤ qmax` invariant.
 -/
-abbrev StoredCode (q : AffineQuantizer) :=
+abbrev storedCode (q : AffineQuantizer) :=
   Set.Icc q.qmin q.qmax
 
 /-- Store the executable quantization result together with its erased range proof. -/
-@[inline] def quantizeCode (q : AffineQuantizer) (x : ℚ) : StoredCode q :=
+@[inline] def quantizeCode (q : AffineQuantizer) (x : ℚ) : storedCode q :=
   let bounds := q.quantize_mem x
   ⟨q.quantize x, bounds⟩
 
 /-- Numerical system whose codes denote their exact affine reconstruction. -/
 def numericalSystem (q : AffineQuantizer) : NumericalSystem :=
   NumericalSystem.ofFinite
-    (fun code : StoredCode q ↦ q.dequantize code.1)
+    (fun code : storedCode q ↦ q.dequantize code.1)
 
 /-- An affine-quantized code with an erased proof of its complete denotation. -/
 abbrev At (q : AffineQuantizer) (value : NumericalValue ℚ) :=
@@ -174,7 +174,7 @@ abbrev AtFinite (q : AffineQuantizer) (value : ℚ) :=
   (numericalSystem q).AtFinite value
 
 /-- Representation in the affine system is equality with exact dequantization. -/
-@[simp, grind =] theorem numericalSystem_represents_iff (q : AffineQuantizer) (code : StoredCode q)
+@[simp, grind =] theorem numericalSystem_represents_iff (q : AffineQuantizer) (code : storedCode q)
     (x : ℚ) :
     (numericalSystem q).Represents code x ↔ q.dequantize code.1 = x := by
   simp [numericalSystem]

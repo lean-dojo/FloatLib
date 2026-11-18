@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -11,6 +11,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Core
 public import FloatLibTests.Regression.BinaryInterchange.Harness
 public import FloatLibTests.Regression.BinaryInterchange.NativeBinary64
 public import FloatLibTests.Regression.BinaryInterchange.NativePair
+
 import FloatLib.Kernels.FixedWord.Product.Runtime
 
 /-!
@@ -247,7 +248,7 @@ def formatMatches (fmt : FloatFormat) : Bool :=
   fmaMatches fmt QuantizationPolicy.flushToZero left right addend
 
 def mixedAccumulationMatches : Thunk Bool := ⟨fun _ =>
-  let storage := FloatFormat.e4m3fn
+  let storage := FloatFormat.e4m3
   let accumulator := FloatFormat.binary128
   let policy := QuantizationPolicy.nearest
   let x := Model.Policy.roundDyadic storage policy 0
@@ -294,7 +295,7 @@ def cancellationMatches (fmt : FloatFormat) (policy : QuantizationPolicy) : Bool
   Model.fmaFinite? fmt policy 5 one one minusOne == some cancelled &&
   Model.fmaFinite? fmt policy 5 minusOne one one == some cancelled &&
   Model.fmaFinite? fmt policy 5 negativeZero one negativeZero == some negativeZero &&
-  Model.mulAddFinite? FloatFormat.e4m3fn fmt policy 5
+  Model.mulAddFinite? FloatFormat.e4m3 fmt policy 5
     (Model.posOne _) (Model.negOne _) one == some cancelled
 
 /--
@@ -313,7 +314,7 @@ def cancellationDirectedMatches (fmt : FloatFormat) (mode : IEEERoundingMode) : 
       Model.fmaFinite? fmt policy 0 x y z == some (Model.fma x y z (mode := mode))
 
 def cancellationFailures : Thunk Nat := ⟨fun _ =>
-  let formats := [FloatFormat.e2m1, .e2m3, .e3m2, .e4m3fn, .e4m3fnuz, .e5m2, .e5m2fnuz, .binary32,
+  let formats := [FloatFormat.e2m1, .e2m3, .e3m2, .e4m3, .e4m3fnuz, .e5m2, .e5m2fnuz, .binary32,
     .binary64]
   formats.foldl (fun total fmt =>
     total + countWhereFailures cancellationPolicies (cancellationMatches fmt) +
@@ -323,7 +324,7 @@ def failures : Thunk Nat := ⟨fun _ =>
   failureCount (formatMatches FloatFormat.e2m1) +
   failureCount (formatMatches FloatFormat.e2m3) +
   failureCount (formatMatches FloatFormat.e3m2) +
-  failureCount (formatMatches FloatFormat.e4m3fn) +
+  failureCount (formatMatches FloatFormat.e4m3) +
   failureCount (formatMatches FloatFormat.e4m3fnuz) +
   failureCount (formatMatches FloatFormat.e5m2) +
   failureCount (formatMatches FloatFormat.e5m2fnuz) +

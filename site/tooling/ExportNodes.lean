@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,8 @@ import FloatLib
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
-import FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff
+import FloatLib.Tactic.Roundoff
+import FloatLib.Floats.Formats.Block.Roundoff
 import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
 import Lean
 
@@ -230,9 +231,9 @@ def namesJson (names : NameSet) : Json :=
   .arr <| (names.toArray.qsort Name.lt).map fun n => .str n.toString
 
 /-- Export one node. Fails only if the constant vanished between the existence check and here. -/
-def nodeJson (spec : NodeSpec) (selected : NameSet) (state : IO.Ref ReachState) : MetaM Json := do
+def nodeJson (node : NodeSpec) (selected : NameSet) (state : IO.Ref ReachState) : MetaM Json := do
   let env ← getEnv
-  let n := spec.name.toName
+  let n := node.name.toName
   let some ci := env.find? n | throwError "constant {n} disappeared"
   let statement ← prettySignature n
   let doc := (← findDocString? env n).getD ""
@@ -266,8 +267,8 @@ def nodeJson (spec : NodeSpec) (selected : NameSet) (state : IO.Ref ReachState) 
     (valueDeps.erase n).toList.filter fun d => !typeDeps.contains d
   return Json.mkObj [
     ("name", n.toString),
-    ("phase", spec.phase),
-    ("title", match spec.title with | some t => .str t | none => .null),
+    ("phase", node.phase),
+    ("title", match node.title with | some t => .str t | none => .null),
     ("kind", kindOf env n ci),
     ("statement", statement),
     ("docstring", doc),
@@ -311,21 +312,21 @@ unsafe def main (args : List String) : IO UInt32 := do
         IO.eprintln "usage: lean --run site/tooling/ExportNodes.lean <phases.json> <out.json>"
         return 2
   let text ← IO.FS.readFile specPath
-  let spec ← match parseSpec text with
+  let config ← match parseSpec text with
     | .ok s => pure s
     | .error e => throw <| IO.userError s!"{specPath}: {e}"
   Lean.enableInitializersExecution
   let env ← importModules (loadExts := true)
-    (spec.imports.map fun m => { module := m }) {} 0
-  checkNames env spec.nodes
-  let selected : NameSet := spec.nodes.foldl (init := {}) fun s node => s.insert node.name.toName
+    (config.imports.map fun m => { module := m }) {} 0
+  checkNames env config.nodes
+  let selected : NameSet := config.nodes.foldl (init := {}) fun s node => s.insert node.name.toName
   let opts := (Options.empty.setBool `pp.unicode.fun true).set `maxHeartbeats (0 : Nat)
   let ctx : Core.Context := { fileName := "<site-export>", fileMap := default, options := opts }
   let state ← IO.mkRef ({} : ReachState)
-  let (records, _) ← (spec.nodes.mapM fun node => nodeJson node selected state).run' {}
+  let (records, _) ← (config.nodes.mapM fun node => nodeJson node selected state).run' {}
     |>.toIO ctx { env := env }
   let output := Json.mkObj [
-    ("imports", .arr <| spec.imports.map fun m => .str m.toString),
+    ("imports", .arr <| config.imports.map fun m => .str m.toString),
     ("nodes", .arr records)
   ]
   if let some dir := (System.FilePath.mk outPath).parent then

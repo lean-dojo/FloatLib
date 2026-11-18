@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.Core
 public import FloatLib.Floats.Formats.Posit.Model.Basic
-public import FloatLib.Numerics.Representations.StaticStorage
+public import FloatLib.Kernels.FixedWord.Core
 public import FloatLib.Numerics.Core.Representation
+public import FloatLib.Numerics.Representations.StaticStorage
 
 /-!
 # Static carriers for configured posits
@@ -32,11 +32,17 @@ open FloatLib.Numerics
 
 /-- Certified persistent storage for one static posit width. -/
 inductive StoragePlan (format : Format) where
+  /-- One byte, for a format of at most 8 bits. -/
   | byte (width_le : format.bits ≤ 8)
+  /-- One 16-bit word, for a format of at most 16 bits. -/
   | word16 (width_le : format.bits ≤ 16)
+  /-- One 32-bit word, for a format of at most 32 bits. -/
   | word32 (width_le : format.bits ≤ 32)
+  /-- One 64-bit word, for a format of at most 64 bits. -/
   | word64 (width_le : format.bits ≤ 64)
+  /-- Two 64-bit limbs, for a format of at most 128 bits. -/
   | pair (width_le : format.bits ≤ 128)
+  /-- The exact-width model, for a format of any width. -/
   | wide
 
 namespace StoragePlan

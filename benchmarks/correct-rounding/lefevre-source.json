@@ -1,0 +1,19 @@
+{
+  "name": "lefevre",
+  "version": "testlibm data dated 2020-11-27; hrcases-explog dated 2015-12-25",
+  "license": "Inspect source notices; fetch only, no redistributed data",
+  "files": {
+    "testlibm-data.xz": {
+      "url": "https://www.vinc17.net/research/testlibm/testlibm-data.xz",
+      "sha256": "19ed0e6d6ec8e836a1d76818ff868bcc4fa47719ce713a342bfd8877c52a6861"
+    },
+    "hrcases-explog.xz": {
+      "url": "https://www.vinc17.net/research/testlibm/hrcases/hrcases-explog.xz",
+      "sha256": "1077407fa61e89a1fa491b563713af22453114fd49f3259f077977cd0da480fd"
+    },
+    "hrtests.tar.xz": {
+      "url": "https://www.vinc17.net/software/hrtests.tar.xz",
+      "sha256": "b408894e71b623db1f27267e7f7c5c23b25f1158052417435d30822aab4c592b"
+    }
+  }
+}

@@ -1,0 +1,189 @@
+/-
+Copyright (c) 2026 FloatLib. All rights reserved.
+Released under MIT license as described in the file LICENSE.
+Authors: FloatLib Team
+-/
+
+module
+
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.SqrtNormalRounding
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Core.Proof
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.WideLimb.Sqrt.Runtime
+
+/-!
+# Correctness of wide-limb square root
+
+Square inequalities certify the integer candidate. For positive normal inputs its exact root and
+remainder meet the hypotheses of the shared square-root rounding theorem, and all other inputs use
+the reference operation, signed-zero and NaN payload behavior included.
+-/
+
+@[expose] public section
+
+namespace FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb
+
+open FloatLib.Numerics
+
+variable {fmt : FloatFormat}
+
+/-- The significand read of `sqrtMantissa` agrees with the stored normal significand. -/
+theorem sqrtMantissa_eq_normalMantissa (x : Value fmt) :
+    sqrtMantissa x = (normalMantissa x).toNat := by
+  unfold sqrtMantissa
+  rw [normalMantissa_toNat, LimbArray.Internal.toNat_eq, Nat.shiftLeft_eq, Nat.one_mul,
+    Model.fracField_eq_internal_apply, Model.Internal.fracField, toNatBits_toModel,
+    FloatFormat.fracMaskNat]
+
+private theorem toModel_pack_sqrt_fields (h : fmt.expWidth ≤ 32) (exponent fraction : Nat) :
+    toModel (pack fmt false (UInt32.ofNat exponent)
+      (LimbArray.ofNat fraction (limbCount fmt))) =
+      Model.ofFields fmt false exponent fraction := by
+  have hfrac : fmt.fracWidth ≤ 32 * limbCount fmt := by
+    have := bitWidth_le_limbBits fmt
+    have := bitWidth_eq fmt
+    omega
+  rw [toModel_pack _ _ _ h, UInt32.toNat_ofNat', LimbArray.toNat_ofNat, LimbArray.radix_eq]
+  rw [Nat.mod_mod_of_dvd _ (Nat.pow_dvd_pow 2 h), ← pow_mul,
+    Nat.mod_mod_of_dvd _ (Nat.pow_dvd_pow 2 hfrac)]
+  simpa only [Model.signBit_ofFields, Model.expField_ofFields, Model.fracField_ofFields] using
+    Model.ofFields_signBit_expField_fracField (Model.ofFields fmt false exponent fraction)
+
+private theorem sqrt_normal_target (fmt : FloatFormat) (m e : Nat)
+    (he : 0 < e) (hm : m.log2 = fmt.fracWidth) :
+    min (((e : Int) - (fmt.bias + fmt.fracWidth : Nat)).ediv 2)
+      ((FloatFormat.toModel fmt).targetExponent
+        ((Float.Model.totalExponent m ((e : Int) - (fmt.bias + fmt.fracWidth : Nat)) + 1).ediv
+          2)) =
+      ((e + fmt.bias) / 2 : Nat) - (fmt.bias : Int) - fmt.fracWidth := by
+  have hbias := fmt.bias_pos
+  have hfrac := fmt.fracWidth_pos
+  unfold Float.Model.Format.targetExponent Float.Model.totalExponent
+  rw [hm, toModel_minExponent, FloatFormat.ieeeMinSubnormalExponent]
+  simp only [Float.Model.Format.mantissaBits, FloatFormat.toModel]
+  push_cast
+  change min (((e : Int) - (fmt.bias + fmt.fracWidth)) / 2)
+      (max
+        ((((fmt.fracWidth : Int) + 1 + ((e : Int) - (fmt.bias + fmt.fracWidth)) + 1) / 2) -
+          (1 + fmt.fracWidth))
+        (1 - fmt.bias - fmt.fracWidth)) =
+    ((e : Int) + fmt.bias) / 2 - fmt.bias - fmt.fracWidth
+  have htotal :
+      ((fmt.fracWidth : Int) + 1 + ((e : Int) - (fmt.bias + fmt.fracWidth)) + 1) / 2 -
+        (1 + fmt.fracWidth) =
+      ((e : Int) + fmt.bias) / 2 - fmt.bias - fmt.fracWidth := by omega
+  have hnormal :
+      1 - (fmt.bias : Int) - fmt.fracWidth ≤
+        ((e : Int) + fmt.bias) / 2 - fmt.bias - fmt.fracWidth := by omega
+  have htarget :
+      ((e : Int) + fmt.bias) / 2 - fmt.bias - fmt.fracWidth ≤
+        ((e : Int) - (fmt.bias + fmt.fracWidth)) / 2 := by omega
+  rw [htotal, max_eq_left hnormal, min_eq_right htarget]
+
+private theorem sqrt_normal_shift (fmt : FloatFormat) (e : Nat) :
+    (((e : Int) - (fmt.bias + fmt.fracWidth : Nat)) -
+      2 * (((e + fmt.bias) / 2 : Nat) - (fmt.bias : Int) - fmt.fracWidth)).toNat =
+      fmt.fracWidth + (e + fmt.bias) % 2 := by
+  push_cast
+  omega
+
+private theorem sqrtNormalValue_eq_model (h : Eligible fmt) (exponent mantissa : Nat)
+    (he : 0 < exponent) (hefinite : exponent < fmt.expAllOnesNat)
+    (hlower : 2 ^ fmt.fracWidth ≤ mantissa)
+    (hupper : mantissa < 2 ^ (fmt.fracWidth + 1)) :
+    toModel (sqrtNormalValue fmt exponent mantissa) =
+      Model.ofModel fmt
+        (Float.Model.UnpackedFloat.sqrt (FloatFormat.toModel fmt)
+          (.finite .positive mantissa
+            ((exponent : Int) - (fmt.bias + fmt.fracWidth : Nat))
+            ((Nat.two_pow_pos _).trans_le hlower))) := by
+  have hm : 0 < mantissa := (Nat.two_pow_pos _).trans_le hlower
+  have hleading : mantissa.log2 = fmt.fracWidth :=
+    (Nat.log2_eq_iff hm.ne').2 ⟨hlower, hupper⟩
+  have hbias := fmt.bias_pos
+  have hallOnes := fmt.expAllOnesNat_eq_two_mul_bias_add_one
+  have hround := Model.ofModel_sqrt_finite_positive_eq_ofFields fmt mantissa
+    (fmt.fracWidth + (exponent + fmt.bias) % 2) ((exponent + fmt.bias) / 2)
+    ((exponent : Int) - (fmt.bias + fmt.fracWidth : Nat)) hm
+    (by omega) (by omega) (by omega) (by omega)
+    (sqrt_normal_target fmt mantissa exponent he hleading)
+    (sqrt_normal_shift fmt exponent)
+  rw [hround]
+  unfold sqrtNormalValue
+  dsimp only
+  rw [FixedWord.IntegerSquareRoot.sqrtRem_eq]
+  dsimp only
+  rw [toModel_pack_sqrt_fields h.exp_le]
+  simp only [Nat.shiftLeft_eq, Nat.one_mul, pow2_eq_two_pow, beq_iff_eq, ← pow_succ]
+  simp only [ite_sub, Nat.sub_self]
+
+private theorem sqrt_toModel_positive_normal (h : Eligible fmt) (x : Value fmt)
+    (hsign : signBit x = false) (hezero : expField x ≠ 0)
+    (hefinite : expField x ≠ fmt.expAllOnesNat) (hm : 0 < sqrtMantissa x) :
+    Model.toModel (toModel x) =
+      .finite .positive (sqrtMantissa x)
+        ((expField x : Int) - (fmt.bias + fmt.fracWidth : Nat)) hm := by
+  have hdyadic :
+      Model.toDyadic? (toModel x) =
+        some ({ negative := false
+                significand := sqrtMantissa x
+                exponent := (expField x : Int) - (fmt.bias + fmt.fracWidth : Nat) } :
+          Numerics.Dyadic) := by
+    rw [FiniteKernel.toDyadic_eq_decode, decode?_toModel x h.isIEEE h.exp_le hefinite,
+      decodeMantissa_eq_normalMantissa x hezero, ← sqrtMantissa_eq_normalMantissa]
+    simp only [hsign, Option.map_some, FiniteKernel.Components.toDyadic, beq_iff_eq, hm.ne',
+      ↓reduceIte, FiniteKernel.dyadicExponent, hezero, Int.ofNat_eq_natCast,
+      FloatFormat.exponentBias_eq_bias_of_isIEEE fmt h.isIEEE, Nat.cast_add, Option.some.injEq,
+      Dyadic.mk.injEq, true_and]
+    omega
+  exact Model.toModel_eq_finite_positive_of_toDyadic?_eq_some h.isIEEE (toModel x)
+    (sqrtMantissa x) _ hm.ne' hdyadic
+
+/-- Every accepted normal candidate has the reference square-root encoding. -/
+theorem sqrtNormal?_refines (h : Eligible fmt) (x result : Value fmt)
+    (hresult : sqrtNormal? fmt x = some result) :
+    toModel result = Spec.sqrt (toModel x) := by
+  have hsign : signBit x = false := by
+    by_contra hs
+    have hs' : signBit x = true := Bool.eq_true_of_not_eq_false hs
+    simp [sqrtNormal?, hs'] at hresult
+  have hezero : expWord x ≠ 0 := by
+    intro he
+    simp [sqrtNormal?, hsign, he] at hresult
+  have hefinite : expWord x ≠ expAllOnes fmt := by
+    intro he
+    simp [sqrtNormal?, hsign, he] at hresult
+  have hvalue : result = sqrtNormalValue fmt (expField x) (sqrtMantissa x) := by
+    simpa [sqrtNormal?, hsign, hezero, hefinite, expField] using hresult.symm
+  have hexp := normalExponent_of_expWord h x hezero hefinite
+  have hexpLt : expField x < fmt.expAllOnesNat := by
+    have := expField_lt x
+    unfold FloatFormat.expAllOnesNat at *
+    omega
+  have hbounds : 2 ^ fmt.fracWidth ≤ sqrtMantissa x ∧
+      sqrtMantissa x < 2 ^ (fmt.fracWidth + 1) := by
+    rw [sqrtMantissa_eq_normalMantissa]
+    exact normalMantissa_bounds x
+  have hm : 0 < sqrtMantissa x := (Nat.two_pow_pos _).trans_le hbounds.1
+  have hfinite : Model.isFinite (toModel x) = true := by
+    rw [isFinite_toModel x h.isIEEE h.exp_le]
+    simpa using hexp.2
+  have hmodelSign : Model.signBit (toModel x) = false := by
+    rw [← signBit_eq]
+    exact hsign
+  rw [hvalue, Spec.sqrt_eq_model h.isIEEE (toModel x) hfinite hmodelSign,
+    sqrt_toModel_positive_normal h x hsign hexp.1 hexp.2 hm]
+  exact sqrtNormalValue_eq_model h (expField x) (sqrtMantissa x)
+    (Nat.pos_of_ne_zero hexp.1) hexpLt hbounds.1 hbounds.2
+
+/--
+Wide-limb square root agrees with `Spec.sqrt` on every eligible value, including rounding,
+special values, signed zeros, and NaN payloads.
+-/
+theorem toModel_sqrt (h : Eligible fmt) (x : Value fmt) :
+    toModel (sqrt fmt x) = Spec.sqrt (toModel x) := by
+  unfold sqrt
+  cases hc : sqrtNormal? fmt x with
+  | none => exact toModel_ofModel _
+  | some result => exact sqrtNormal?_refines h x result hc
+
+end FloatLib.Floats.Formats.BinaryInterchange.Model.WideLimb

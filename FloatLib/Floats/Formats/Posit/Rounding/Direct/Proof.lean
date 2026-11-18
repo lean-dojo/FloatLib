@@ -1,15 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
-public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Semantics.Interior
+public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Runtime
 public import FloatLib.Numerics.ShiftRightJam
 
 import FloatLib.Numerics.Exact.Dyadic.Order
@@ -479,7 +477,7 @@ theorem roundPositiveCode_lt_signMask
           DyadicRounding.lowerCodeForPositive format target <
             format.signMaskNat := by
         unfold DyadicRounding.lowerCodeForPositive
-        apply Model.lowerCodeByBisection_lt_upper
+        apply Numerics.bisect_lt_upper
         exact format.signMaskNat_pos
       split
       · rename_i hupper
@@ -541,7 +539,10 @@ theorem round_eq_dyadic
   · dsimp only
     split <;> rw [roundPositive_eq_dyadic]
 
-/-- Complete direct rounding therefore equals exact rational Posit Standard rounding. -/
+/-- Complete direct rounding therefore equals exact rational Posit Standard rounding.
+
+Reference: Standard for Posit Arithmetic (2022), §§3.3 and 4.1.
+-/
 theorem round_eq_roundRat
     (format : Format) (value : FloatLib.Numerics.Dyadic) :
     round format value = Model.roundRat format value.toRat := by

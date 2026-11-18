@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,7 @@ module
 
 public import FloatLib.Floats.ExecFloat
 public import FloatLib.Floats.Formats
-public meta import FloatLib.Floats.ExecFloat.Conversion.Proof
+public meta import FloatLib.Numerics.Executable.Conversion.Proof
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Proof
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Instances
@@ -16,9 +16,7 @@ public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Instance
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Configured.Parsing
 public meta import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.BoundedParsing
 public meta import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
-public meta import FloatLib.Floats.Formats.Block.Configured.Conversion.Runtime
-public meta import FloatLib.Floats.Formats.Block.Configured.Conversion.Proof
-public meta import FloatLib.Floats.Formats.Block.Configured.Conversion.Instances
+public meta import FloatLib.Floats.Formats.Block.Configured
 public meta import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.Codebook.Configured.Conversion.Proof
 public meta import FloatLib.Floats.Formats.FixedPoint.Bounded.Configured.Conversion.Runtime
@@ -30,7 +28,7 @@ public meta import FloatLib.Floats.Formats.FixedPoint.Configured.Conversion.Inst
 public meta import FloatLib.Floats.Formats.IEEE754.Native
 public meta import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.Logarithmic.Configured.Conversion.Proof
-public meta import FloatLib.Floats.Formats.OCP.FP8.E4M3FN
+public meta import FloatLib.Floats.Formats.OCP.FP8.E4M3
 public meta import FloatLib.Floats.Formats.OCP.MX.Configured.Conversion.Runtime
 public meta import FloatLib.Floats.Formats.OCP.MX.Configured.Conversion.Proof
 public meta import FloatLib.Floats.Formats.Posit.Configured.Conversion.Runtime
@@ -67,7 +65,7 @@ open FloatLib.Floats
 open FloatLib.Numerics
 
 private abbrev OCPFloat8 :=
-  E4M3FN
+  E4M3
 
 private abbrev ExactCents :=
   ExecFloat.FixedPoint decimalRadix 2
@@ -85,7 +83,7 @@ private abbrev MXScale :=
   ExecFloat.OCP.MX.E8M0
 
 private abbrev Block4 :=
-  ExecFloat.SharedScale 4
+  ExecFloat.Block (Formats.Block.sharedScale (Fin 4))
 
 /-! ## No implicit promotion -/
 
@@ -120,7 +118,7 @@ but is expected to have type
 private def mixedLeft : Binary32 := 6
 private def mixedRight : Posit32 := 4
 private def mixedAddend : OCPFloat8 :=
-  E4M3FN.ofNatBits 0x3c
+  E4M3.ofNatBits 0x3c
 
 /-- Decode a successful binary64 destination without hiding conversion failure. -/
 private def binary64Rat? (outcome : ExecFloat.ConversionOutcome Binary64) : Option Rat :=
@@ -190,7 +188,7 @@ example :
     [ binary64Rat? ((1.5 : Binary32).cast (target := Binary64))
     , binary64Rat? ((2.25 : Posit32).cast (target := Binary64))
     , binary64Rat?
-        ((E4M3FN.ofNatBits 0x3c : OCPFloat8).cast
+        ((E4M3.ofNatBits 0x3c : OCPFloat8).cast
           (target := Binary64))
     , binary64Rat? (exactCents.cast (target := Binary64))
     , binary64Rat? (boundedCents.cast (target := Binary64))
@@ -251,15 +249,17 @@ private def blockInput : Vector Rat 4 :=
   ⟨#[1, 3 / 2, -2, 3 / 8], by decide⟩
 
 private def fineBlock : Block4 :=
-  ExecFloat.SharedScale.quantizeAt (-2) blockInput
+  ExecFloat.Block.quantize _ (Formats.Block.sharedExponent (Fin 4) (-2)) fun lane =>
+    SignedRat.ofRat blockInput[lane]
 
 /--
-Shared-scale destinations have no context-free default. Their context is the common exponent
-that the caller selects.
+Block destinations have no context-free default. Their context is the scale-selection policy, here
+the common exponent that the caller selects.
 -/
 example :
-    (fineBlock.cast (target := Block4) (context := (-1 : Int))).value?.map
-        ExecFloat.SharedScale.exponent =
+    (fineBlock.cast (target := Block4)
+        (context := Formats.Block.sharedExponent (Fin 4) (-1))).value?.map
+        (fun block => block.toCode.scales.1 ()) =
       some (-1) := by
   native_decide
 
@@ -441,8 +441,8 @@ private def binary32Cast (format : FloatFormat) (bits : Nat)
 example :
     Model.IEEERoundingMode.all.map
       (fun mode =>
-        [ binary32Cast FloatFormat.e4m3fn 0x7f800000 mode
-        , binary32Cast FloatFormat.e4m3fn 0xff800000 mode
+        [ binary32Cast FloatFormat.e4m3 0x7f800000 mode
+        , binary32Cast FloatFormat.e4m3 0xff800000 mode
         , binary32Cast FloatFormat.e4m3fnuz 0x7f800000 mode
         , binary32Cast FloatFormat.e4m3fnuz 0xff800000 mode
         ]) =
@@ -456,8 +456,8 @@ example :
 
 -- Finite overflow, here from binary32's representations of ±10^10, selects the same NaNs.
 example :
-    [ binary32Cast FloatFormat.e4m3fn 0x501502f9
-    , binary32Cast FloatFormat.e4m3fn 0xd01502f9
+    [ binary32Cast FloatFormat.e4m3 0x501502f9
+    , binary32Cast FloatFormat.e4m3 0xd01502f9
     , binary32Cast FloatFormat.e4m3fnuz 0x501502f9
     , binary32Cast FloatFormat.e4m3fnuz 0xd01502f9
     ] =
@@ -692,7 +692,7 @@ example :
 
 /--
 Nominal FP8 destinations combine the two options the same way. Rounding 500 upward overflows
-E4M3FN to its NaN, and a saturating context clamps it to 448.
+E4M3 to its NaN, and a saturating context clamps it to 448.
 -/
 example :
     [ ((500 : Binary32).cast (target := OCPFloat8) (mode := .up)).value?.map

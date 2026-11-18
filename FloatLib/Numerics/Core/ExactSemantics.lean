@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -34,6 +34,18 @@ structure ExactSemantics (S : NumericalSystem) where
   forget_decode : ∀ code, forget (decode code) = S.denote code
 
 namespace ExactSemantics
+
+/--
+Retain the complete stored representation as the exact observation.
+
+Unlike the numerical denotation, this observation distinguishes different codes
+of the same value. Forgetting the code applies the system's denotation.
+-/
+def ofRepresentation (S : NumericalSystem) : ExactSemantics S where
+  Exact := S.Code
+  decode := id
+  forget := S.denote
+  forget_decode _ := rfl
 
 variable {S : NumericalSystem} (E : ExactSemantics S)
 

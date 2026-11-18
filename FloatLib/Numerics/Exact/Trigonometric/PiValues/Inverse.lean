@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Trigonometric.PiValues.Tangent
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 
 /-!
 # Exact inverse trigonometric values divided by pi
@@ -116,22 +115,22 @@ theorem irrational_arcsinPi_of_exact_none (argument : ℚ)
   · have hq : argument = -1 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
-      linarith
+      assumption
     norm_num [arcsinPiExact, hq] at hnone
   · have hq : argument = -1 / 2 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
-      linarith
+      assumption
     norm_num [arcsinPiExact, hq] at hnone
   · have hq : argument = 0 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
-      linarith
+      assumption
     norm_num [arcsinPiExact, hq] at hnone
   · have hq : argument = 1 / 2 := by
       apply Rat.cast_injective (α := ℝ)
       push_cast
-      linarith
+      assumption
     norm_num [arcsinPiExact, hq] at hnone
   · have hq : argument = 1 := by
       apply Rat.cast_injective (α := ℝ)
@@ -162,6 +161,6 @@ theorem irrational_arccosPi_of_exact_none (argument : ℚ)
   push_cast
   rw [hangle, Real.arccos, sub_div]
   field_simp
-  ring
+  simp_all
 
 end FloatLib.Numerics.TrigonometricComparison

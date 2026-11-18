@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -30,12 +30,43 @@ open FloatLib.Numerics
 
 /-! ## Complete-format decoding theorems -/
 
+/-- A propagated NaN is a NaN in every destination that has a NaN encoding. -/
+theorem isNaN_propagatedNaN (fmt : FloatFormat) (negative : Bool) (payload : Nat)
+    (h : fmt.encoding ≠ .finite) :
+    isNaN (propagatedNaN fmt negative payload) = true := by
+  have hexp : FloatFormat.expAllOnesNat fmt % 2 ^ fmt.expWidth = FloatFormat.expAllOnesNat fmt :=
+    Nat.mod_eq_of_lt (by
+      unfold FloatFormat.expAllOnesNat
+      have := Nat.one_le_two_pow (n := fmt.expWidth)
+      omega)
+  have hfw := fmt.fracWidth_pos
+  unfold propagatedNaN isNaN
+  cases henc : fmt.encoding with
+  | finite => exact absurd henc h
+  | finiteUnsignedZero => simp [negZero, ofBits]
+  | finiteMaxNaN =>
+      have hm : FloatFormat.fracMaskNat fmt % 2 ^ fmt.fracWidth = FloatFormat.fracMaskNat fmt :=
+        Nat.mod_eq_of_lt (by
+          unfold FloatFormat.fracMaskNat
+          have := Nat.one_le_two_pow (n := fmt.fracWidth)
+          omega)
+      simp [hexp, hm]
+  | ieee =>
+      have hq : 2 ^ fmt.fracWidth = 2 * 2 ^ (fmt.fracWidth - 1) := by
+        rw [← Nat.pow_succ']; congr 1; omega
+      have hpos := Nat.one_le_two_pow (n := fmt.fracWidth - 1)
+      have hlt : 2 ^ (fmt.fracWidth - 1) + (if payload < 2 ^ (fmt.fracWidth - 1) then payload
+        else 0)
+          < 2 ^ fmt.fracWidth := by split <;> omega
+      simp only [IEEE.isNaN, expField_ofFields, fracField_ofFields, hexp, Nat.mod_eq_of_lt hlt]
+      simp
+
 /-- Exact decoding succeeds if and only if the value is finite under the complete format. -/
 theorem toDyadic?_isSome_eq_isFinite {fmt : FloatFormat} (x : Model fmt) :
     (toDyadic? x).isSome = isFinite x := by
   by_cases hieee : fmt.isIEEE = true
   · have hencoding : fmt.encoding = .ieee := by
-      simp [FloatFormat.isIEEE] at hieee
+      simp only [FloatFormat.isIEEE, Bool.and_eq_true, beq_iff_eq] at hieee
       exact hieee.1
     simpa [toDyadic?, hieee, isFinite, hencoding] using
       ieeeToDyadic?_isSome_eq_isFinite x
@@ -130,19 +161,19 @@ theorem isNaN_eq_false_of_isFinite_eq_true {fmt : FloatFormat} (x : Model fmt)
       simp [isNaN, hencoding]
 
 /-- A non-NaN, non-infinite bit pattern is finite. -/
-theorem isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false
+theorem isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false
     {fmt : FloatFormat} (x : Model fmt)
-    (hnan : isNaN x = false) (hinf : isInf x = false) :
+    (hnan : isNaN x = false) (hinf : isInfinite x = false) :
     isFinite x = true := by
   cases hencoding : fmt.encoding with
   | ieee =>
       have hnanIEEE : IEEE.isNaN x = false := by
         simpa [isNaN, hencoding] using hnan
-      have hinfIEEE : IEEE.isInf x = false := by
-        simpa [isInf, hencoding] using hinf
+      have hinfIEEE : IEEE.isInfinite x = false := by
+        simpa [isInfinite, hencoding] using hinf
       by_cases hexp : expField x = FloatFormat.expAllOnesNat fmt
       · by_cases hfrac : fracField x = 0
-        · have : IEEE.isInf x = true := by simp [IEEE.isInf, hexp, hfrac]
+        · have : IEEE.isInfinite x = true := by simp [IEEE.isInfinite, hexp, hfrac]
           simp [hinfIEEE] at this
         · have : IEEE.isNaN x = true := by simp [IEEE.isNaN, hexp, hfrac]
           simp [hnanIEEE] at this
@@ -168,8 +199,8 @@ theorem chooseNaN2_eq_none_iff {fmt : FloatFormat} (x y : Model fmt) :
     split_ifs at hnone with _ _ hx hy
     exact ⟨Bool.eq_false_iff.mpr hx, Bool.eq_false_iff.mpr hy⟩
   · rintro ⟨hxNaN, hyNaN⟩
-    have hxSNaN := isSNaN_eq_false_of_isNaN_eq_false x hxNaN
-    have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
+    have hxSNaN := isSignaling_eq_false_of_isNaN_eq_false x hxNaN
+    have hySNaN := isSignaling_eq_false_of_isNaN_eq_false y hyNaN
     simp [chooseNaN2, hxSNaN, hySNaN, hxNaN, hyNaN]
 
 /-- Ternary NaN selection returns `none` if and only if none of its operands is a NaN. -/
@@ -182,9 +213,9 @@ theorem chooseNaN3_eq_none_iff {fmt : FloatFormat} (x y z : Model fmt) :
     split_ifs at hnone with _ _ _ hx hy hz
     exact ⟨Bool.eq_false_iff.mpr hx, Bool.eq_false_iff.mpr hy, Bool.eq_false_iff.mpr hz⟩
   · rintro ⟨hxNaN, hyNaN, hzNaN⟩
-    have hxSNaN := isSNaN_eq_false_of_isNaN_eq_false x hxNaN
-    have hySNaN := isSNaN_eq_false_of_isNaN_eq_false y hyNaN
-    have hzSNaN := isSNaN_eq_false_of_isNaN_eq_false z hzNaN
+    have hxSNaN := isSignaling_eq_false_of_isNaN_eq_false x hxNaN
+    have hySNaN := isSignaling_eq_false_of_isNaN_eq_false y hyNaN
+    have hzSNaN := isSignaling_eq_false_of_isNaN_eq_false z hzNaN
     simp [chooseNaN3, hxSNaN, hySNaN, hzSNaN, hxNaN, hyNaN, hzNaN]
 
 /-- A finite-only encoding contains no NaN bit pattern. -/
@@ -200,10 +231,10 @@ theorem isFinite_eq_true_of_encoding_finite {fmt : FloatFormat}
   simp [isFinite, hfmt]
 
 /-- Every non-IEEE encoding in this library excludes infinity. -/
-theorem isInf_eq_false_of_encoding_ne_ieee {fmt : FloatFormat}
+theorem isInfinite_eq_false_of_encoding_ne_ieee {fmt : FloatFormat}
     (hfmt : fmt.encoding ≠ .ieee) (x : Model fmt) :
-    isInf x = false := by
-  cases h : fmt.encoding <;> simp_all [isInf]
+    isInfinite x = false := by
+  cases h : fmt.encoding <;> simp_all [isInfinite]
 
 /-- In FNUZ, a value is zero if and only if all stored bits are zero. -/
 theorem isZero_eq_true_iff_of_encoding_finiteUnsignedZero {fmt : FloatFormat}
@@ -253,25 +284,26 @@ theorem isFinite_eq_true_of_toDyadic?_some {fmt : FloatFormat}
   simpa using hsome
 
 /-- Successful exact decoding excludes signaling NaNs. -/
-theorem isSNaN_eq_false_of_toDyadic?_some {fmt : FloatFormat}
+theorem isSignaling_eq_false_of_toDyadic?_some {fmt : FloatFormat}
     {x : Model fmt} {d : Numerics.Dyadic} (hx : toDyadic? x = some d) :
-    isSNaN x = false :=
-  isSNaN_eq_false_of_isNaN_eq_false x
+    isSignaling x = false :=
+  isSignaling_eq_false_of_isNaN_eq_false x
     (isNaN_eq_false_of_toDyadic?_some hx)
 
 /-- Successful exact decoding excludes infinity. -/
-theorem isInf_eq_false_of_toDyadic?_some {fmt : FloatFormat}
+theorem isInfinite_eq_false_of_toDyadic?_some {fmt : FloatFormat}
     {x : Model fmt} {d : Numerics.Dyadic} (hx : toDyadic? x = some d) :
-    isInf x = false := by
+    isInfinite x = false := by
   have hfinite := isFinite_eq_true_of_toDyadic?_some hx
   cases hencoding : fmt.encoding
   · simp only [isFinite, hencoding] at hfinite
-    simp only [isInf, hencoding]
-    simp [IEEE.isFinite, IEEE.isInf] at hfinite ⊢
+    simp only [isInfinite, hencoding]
+    simp only [IEEE.isFinite, bne_iff_ne, ne_eq, IEEE.isInfinite, Bool.and_eq_false_imp, beq_iff_eq,
+      beq_eq_false_iff_ne] at hfinite ⊢
     exact fun hinf _ => hfinite hinf
-  · simp [isInf, hencoding]
-  · simp [isInf, hencoding]
-  · simp [isInf, hencoding]
+  · simp [isInfinite, hencoding]
+  · simp [isInfinite, hencoding]
+  · simp [isInfinite, hencoding]
 
 /--
 Outside the IEEE descriptors a successful decode comes from a finite value and is the policy zero,
@@ -368,7 +400,7 @@ theorem toDyadic?_eq_zero_of_isZero_eq_true {fmt : FloatFormat}
       simpa [isZero, hencoding, IEEE.isZero, Bool.and_eq_true] using hx
     have hzeroNotAll : (0 : Nat) ≠ fmt.expAllOnesNat :=
       fun hzero => (FloatFormat.expAllOnesNat_pos fmt).ne' hzero.symm
-    simp [toDyadic?, hieee, ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, hfields,
+    simp [toDyadic?, hieee, ieeeToDyadic?, IEEE.isNaN, IEEE.isInfinite, hfields,
       hzeroNotAll]
   · simp [toDyadic?, hieee, hfinite, hx]
 

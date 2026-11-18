@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Predicates.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
 
 /-!
 # Binary predicate semantics
@@ -58,7 +58,7 @@ theorem compareQuiet_value_eq_compareSignaling {fmt : FloatFormat}
 theorem compareQuiet_invalid_iff {fmt : FloatFormat}
     (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
     (compareQuiet predicate x y).status.invalid = true ↔
-      isSNaN x = true ∨ isSNaN y = true := by
+      isSignaling x = true ∨ isSignaling y = true := by
   simp [compareQuiet]
 
 /-- A signaling comparison raises invalid if and only if an operand is a NaN. -/
@@ -71,7 +71,7 @@ theorem compareSignaling_invalid_iff {fmt : FloatFormat}
 /-- Quiet comparison raises no range, division, or inexact exception. -/
 theorem compareQuiet_status {fmt : FloatFormat}
     (predicate : Numerics.IEEEComparison.Predicate) (x y : Model fmt) :
-    (compareQuiet predicate x y).status = { invalid := isSNaN x || isSNaN y } := rfl
+    (compareQuiet predicate x y).status = { invalid := isSignaling x || isSignaling y } := rfl
 
 /-- Signaling comparison raises no range, division, or inexact exception. -/
 theorem compareSignaling_status {fmt : FloatFormat}

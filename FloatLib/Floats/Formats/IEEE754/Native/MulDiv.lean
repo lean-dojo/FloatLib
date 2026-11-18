@@ -1,20 +1,20 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.LeanModel.MulDiv
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeDispatch
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.Instances
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Representation
 public import FloatLib.Floats.Formats.IEEE754.Native.Representation
-public import FloatLib.Floats.ExecFloat.Instances
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
+
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.Executable
 
 /-!
@@ -106,7 +106,8 @@ private theorem invalidResult_eq_ofModel_notANumber {fmt : FloatFormat}
     rw [hw, pow_add, pow_add]
     have := Nat.two_pow_pos fmt.expWidth
     have : 2 ^ fmt.expWidth - 1 < 2 * 2 ^ fmt.expWidth := by omega
-    nlinarith [Nat.two_pow_pos fmt.fracWidth]
+    gcongr
+    assumption
   have hquiet : 2 ^ (fmt.fracWidth - 1) < 2 ^ fmt.fracWidth :=
     Nat.pow_lt_pow_right (by decide) (by omega)
   have hquietw : 2 ^ (fmt.fracWidth - 1) < 2 ^ FloatFormat.bitWidth fmt :=
@@ -195,7 +196,7 @@ private theorem roundRatScaled_false_isFinite_or
     have hgeneric : roundAt fmt (bpow (fmt.maxNormalExponent + 1)) =
         bpow (fmt.maxNormalExponent + 1) := by
       apply roundAt_of_genericFormat fmt
-      apply FloatLib.Floats.Formats.Flocq.generic_format_bpow
+      apply FloatLib.Floats.Formats.Flocq.genericRepresentable_bpow
       have := minNormalExponent_le_maxNormalExponent fmt
       simp only [fexpOf, FloatLib.Floats.Formats.Flocq.fltExp]
       refine max_le (by omega) ?_
@@ -233,7 +234,7 @@ private theorem roundRatScaled_false_isFinite_or
     rw [← bpow_ofNat (fmt.fracWidth + 1), ← bpow_add]
     congr 1
     simp only [Int.ofNat_eq_natCast, Int.natCast_add]
-    ring
+    omega
   · exact Or.inl (isFinite_ofFields_ieee fmt hfmt false _ 0
       (Directed.Internal.encodedExponent_lt_expAllOnes_ieee fmt hfmt _ (by omega)))
   · exact Or.inl (isFinite_ofFields_ieee fmt hfmt false _ _
@@ -265,11 +266,11 @@ private theorem roundRatScaled_false_eq_posInf_of_le
   by_cases hover : fmt.maxNormalExponent < Numerics.RationalBinary.floorLog2 num den + exponent
   · exact roundRatScaled_false_eq_posInf_of_maxNormal_lt fmt num den exponent hfmt hnum hden hover
   have hf := fmt.fracWidth_pos
-  set E := fmt.maxNormalExponent with hE
-  set f := fmt.fracWidth with hfdef
+  set E := fmt.maxNormalExponent
+  set f := fmt.fracWidth
   have hsmall : bpow (E - f - 1) < bpow E :=
     (FloatLib.Floats.Formats.Flocq.bpow_lt_bpow_iff Numerics.binaryRadix _ _).2 (by omega)
-  have hsplit : bpow (E + 1) = 2 * bpow E := by rw [bpow_add, bpow_one]; ring
+  have hsplit : bpow (E + 1) = 2 * bpow E := by rw [bpow_add, bpow_one]; ac_rfl
   have hk : Numerics.RationalBinary.floorLog2 num den + exponent = E := by
     have hlt : bpow E < bpow (Numerics.RationalBinary.floorLog2 num den + exponent + 1) := by
       linarith [hbounds.2]
@@ -288,7 +289,7 @@ private theorem roundRatScaled_false_eq_posInf_of_le
   have hscale : bpow (E + 1) * bpow (f - E) = 2 ^ (f + 1) := by
     rw [← bpow_add, show E + 1 + (f - E) = ((f + 1 : Nat) : Int) by push_cast; ring, bpow_natCast]
   have hhalf : bpow (E - f - 1) * bpow (f - E) = 1 / 2 := by
-    rw [← bpow_add, show E - f - 1 + (f - E) = -1 by ring]
+    rw [← bpow_add, show E - f - 1 + (f - E) = -1 by omega]
     change FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix (-1) = 1 / 2
     rw [FloatLib.Floats.Formats.Flocq.bpow_binaryRadix]
     norm_num
@@ -313,7 +314,8 @@ private theorem roundRatScaled_false_eq_posInf_of_le
     simpa using hround
   exact_mod_cast h
 
-/-- At or above the overflow threshold, nearest-even rounding of a rational is the signed infinity. -/
+/-- At or above the overflow threshold, nearest-even rounding of a rational is the signed
+infinity. -/
 private theorem roundRatScaled_eq_nativeOverflow_of_le {fmt : FloatFormat}
     (hfmt : fmt.isIEEE = true) (sign : Bool) (num den : Nat) (exponent : Int) (hden : den ≠ 0)
     (hbound : bpow (fmt.maxNormalExponent + 1) - bpow (fmt.maxNormalExponent - fmt.fracWidth - 1) ≤
@@ -399,7 +401,7 @@ private theorem roundRatScaled_eq_ofModel_div {fmt : FloatFormat} (hfmt : fmt.is
       (.finite s₁ m₁ e₁ hm₁) (.finite s₂ m₂ e₂ hm₂)) =
       ofModel fmt (Float.Model.UnpackedFloat.roundWithAccuracy (FloatFormat.toModel fmt)
         (s₁ / s₂) (numerator / m₂) target (accuracyOfFraction (numerator % m₂) m₂)) := rfl
-  have haccuracy : accuracyRepresents (numerator / m₂) (accuracyOfFraction (numerator % m₂) m₂)
+  have haccuracy : AccuracyRepresents (numerator / m₂) (accuracyOfFraction (numerator % m₂) m₂)
       ((numerator : ℝ) / m₂) := accuracyRepresents_accuracyOfFraction numerator m₂ hden
   have hle : target ≤ (FloatFormat.toModel fmt).targetExponent
       (Float.Model.totalExponent (numerator / m₂) target) :=
@@ -495,16 +497,6 @@ end FloatLib.Floats.Formats.BinaryInterchange.Model
 namespace FloatLib.Floats.ExecFloat.Binary
 
 open Formats.BinaryInterchange
-
-/-- A finite native binary32 value imports to a finite unpacked model. -/
-private theorem isFinite_toModel_ofFloat32Model {x : Float32} (hx : x.isFinite = true) :
-    (Model.toModel (Model.ofFloat32Model x.toModel)).isFinite = true := by
-  simpa only [Model.toModel_ofFloat32Model, Float32.isFinite, Float32.Model.isFinite] using hx
-
-/-- A finite native binary64 value imports to a finite unpacked model. -/
-private theorem isFinite_toModel_ofFloatModel {x : Float} (hx : x.isFinite = true) :
-    (Model.toModel (Model.ofFloatModel x.toModel)).isFinite = true := by
-  simpa only [Model.toModel_ofFloatModel, Float.isFinite, Float.Model.isFinite] using hx
 
 /-- Native binary32 multiplication commutes with the import adapter on finite inputs. -/
 theorem toModel_ofFloat32_mul_of_isFinite (x y : Float32)

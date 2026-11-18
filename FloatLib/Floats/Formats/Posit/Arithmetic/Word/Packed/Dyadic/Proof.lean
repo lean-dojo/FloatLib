@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -10,6 +10,7 @@ public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Arithmetic.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.DyadicTarget.Proof
+
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 
 /-!

@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch07-sterbenz.png: the region where subtraction is exact.
 
-Chapter 07 ("Exact subtraction") states Sterbenz's lemma: if y <= x <= 2y and both are
+The chapter on rounding states Sterbenz's lemma: if y <= x <= 2y and both are
 representable then x - y is representable, and in its order symmetric form
-(`generic_format_FLX_sterbenz`) the hypothesis is y/2 <= x <= 2y. This figure shades that wedge
+(`genericRepresentable_flx_sterbenz`) the hypothesis is y/2 <= x <= 2y. This figure shades that wedge
 in the (x, y) plane and then checks the conclusion on a grid small enough to see: every pair of
 grid points with three binary digits in [1/2, 4] is drawn, filled when x - y is on the grid and
 open when it is not. Inside the wedge every marker is filled; the script asserts it. Outside, the
 lemma promises nothing, and the picture shows both outcomes.
 
-Sources: the wedge is the hypothesis of `generic_format_FLX_sterbenz` in
+Sources: the wedge is the hypothesis of `genericRepresentable_flx_sterbenz` in
 FloatLib/Floats/Formats/Flocq/Theory/Analysis/Sterbenz.lean (x <= 2y and y <= 2x); the grid is
 `flxExp 3` in radix 2 from FloatLib/Floats/Formats/Flocq/Theory/Format/Formats.lean, and
-representability is `genericFormat` (the scaled mantissa x * 2^-cexp(x) is an integer) with
+representability is `GenericRepresentable` (the scaled mantissa x * 2^-cexp(x) is an integer) with
 `magnitude` and `cexp` from FloatLib/Floats/Formats/Flocq/Theory/Core.lean, re-implemented on
 exact rationals below. Three binary digits is the precision the chapter uses for its own small
 example.
 
-The phone companion keeps all 169 pairs, moves the key and counts below the plot and uses
-shorter axis labels. --out writes both images beside the supplied path.
+The phone companion keeps all 169 pairs and moves the key below the plot. The counts (97 pairs
+inside the wedge, 38 exact and 34 not outside it) are asserted here and stated in the caption.
+--out writes both images beside the supplied path.
 
 Run from anywhere: python3 ch07_sterbenz.py [--out PNG]
 """
@@ -59,7 +60,7 @@ def fexp(e: int) -> int:
 
 
 def representable(v: Fraction) -> bool:
-    """`genericFormat`: the scaled mantissa v * 2^-cexp(v) is an integer (zero included)."""
+    """`GenericRepresentable`: the scaled mantissa v * 2^-cexp(v) is an integer (zero included)."""
     if v == 0:
         return True
     scaled = v / TWO ** fexp(magnitude(v))
@@ -80,44 +81,44 @@ def in_wedge(x: Fraction, y: Fraction) -> bool:
     return x <= 2 * y and y <= 2 * x
 
 
+EXACT = dict(marker="o", color=fs.ROLE["exact"], markerfacecolor=fs.ROLE["exact"],
+             linestyle="None")
+INEXACT = dict(marker="s", color=fs.ROLE["mark"], markerfacecolor="white",
+               markeredgewidth=1.1, linestyle="None")
+
+
+def key(size: float) -> list:
+    """Legend handles shared by both arrangements."""
+    return [
+        Patch(facecolor=fs.SKY, alpha=0.28, edgecolor=fs.BLUE, label=r"$y/2 \leq x \leq 2y$"),
+        Line2D([], [], label="$x - y$ is on the grid", markersize=size, **EXACT),
+        Line2D([], [], label="$x - y$ is not on the grid", markersize=size, **INEXACT),
+    ]
+
+
 def draw_mobile(exact_in, exact_out, inexact_out):
-    fig = plt.figure(figsize=(3.8, 7.4))
-    fig.text(0.04, 0.98, "Where subtraction is exact", fontsize=14, weight="bold", va="top")
-    fig.text(0.04, 0.922, "Both inputs have three binary digits,\nfrom 0.5 to 4.",
-             fontsize=12, va="top", linespacing=1.45)
-    ax = fig.add_axes([0.19, 0.365, 0.78, 0.40])
+    fig = plt.figure(figsize=(fs.MOBILE_WIDTH, 5.3))
+    ax = fig.add_axes([0.19, 0.33, 0.78, 0.60])
+    fs.value_grid(ax, "both")
     top = 4.6
     ax.set(xlim=(0, top), ylim=(0, top), aspect="equal")
     ax.fill_between([0, top], [0, top / 2], [0, 2 * top], color=fs.SKY,
                     alpha=0.28, linewidth=0, zorder=0)
     ax.plot([0, top], [0, top / 2], color=fs.BLUE, linewidth=1.2, zorder=1)
     ax.plot([0, top / 2], [0, top], color=fs.BLUE, linewidth=1.2, zorder=1)
-    ax.text(2.48, 4.45, "$y=2x$", fontsize=11.5, va="top", color=fs.BLUE)
-    ax.text(4.51, 2.66, "$x=2y$", fontsize=11.5, ha="right", color=fs.BLUE)
-    exact_style = dict(marker="o", markersize=4.0, color=fs.GREEN, markerfacecolor=fs.GREEN,
-                       linestyle="None")
-    inexact_style = dict(marker="s", markersize=4.0, color=fs.VERMILION, markerfacecolor="white",
-                         markeredgewidth=1.0, linestyle="None")
+    ax.text(2.48, 4.45, "$y=2x$", fontsize=fs.SIZE_TICK, va="top", color=fs.INK)
+    ax.text(4.51, 2.66, "$x=2y$", fontsize=fs.SIZE_TICK, ha="right", color=fs.INK)
+    exact_style = dict(EXACT, markersize=4.0)
+    inexact_style = dict(INEXACT, markersize=4.0)
     for pairs in (exact_in, exact_out):
         ax.plot([x for x, _ in pairs], [y for _, y in pairs], zorder=3, **exact_style)
     ax.plot([x for x, _ in inexact_out], [y for _, y in inexact_out], zorder=3, **inexact_style)
     ticks = [0, 0.5, 1, 2, 3, 4]
-    ax.set_xticks(ticks, labels=[f"{x:g}" for x in ticks], fontsize=11.5)
-    ax.set_yticks(ticks, labels=[f"{y:g}" for y in ticks], fontsize=11.5)
-    ax.set_xlabel("input $x$", fontsize=12)
-    ax.set_ylabel("input $y$", fontsize=12)
-    handles = [
-        Patch(facecolor=fs.SKY, alpha=0.28, edgecolor=fs.BLUE, label=r"$y/2 \leq x \leq 2y$ (Sterbenz band)"),
-        Line2D([], [], label="$x-y$ is representable", **exact_style),
-        Line2D([], [], label="$x-y$ needs rounding", **inexact_style),
-    ]
-    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.035, 0.282),
-               fontsize=11.5, labelspacing=0.65, handlelength=1.7, borderaxespad=0)
-    fig.text(0.04, 0.127,
-             f"Inside: {len(exact_in)} pairs, all exact.\n"
-             f"Outside: {len(exact_out)} exact; {len(inexact_out)} need rounding.\n"
-             "The lemma makes no promise outside.",
-             fontsize=11.5, va="top", linespacing=1.5)
+    ax.set_xticks(ticks, labels=[f"{x:g}" for x in ticks])
+    ax.set_yticks(ticks, labels=[f"{y:g}" for y in ticks])
+    ax.set_xlabel("$x$")
+    ax.set_ylabel("$y$")
+    fs.legend(fig, handles=key(4.0), loc="upper left", bbox_to_anchor=(0.06, 0.2))
     return fig
 
 
@@ -150,8 +151,9 @@ def main() -> None:
     assert (len(points), len(exact_in), len(exact_out), len(inexact_out)) == (13, 97, 38, 34)
 
     fs.setup()
-    fig, ax = fs.figure(6.9)
-    fig.subplots_adjust(left=0.09, right=0.98, bottom=0.085, top=0.92)
+    fig = plt.figure(figsize=(fs.WIDTH, 5.6))
+    ax = fig.add_axes([0.08, 0.11, 0.58, 0.87])
+    fs.value_grid(ax, "both")
     top = float(hi) + 0.6                     # room beyond the grid for the two line labels
     ax.set_xlim(0, top)
     ax.set_ylim(0, top)
@@ -164,40 +166,27 @@ def main() -> None:
     ax.plot([0, top / 2], [0, top], color=fs.BLUE, linewidth=1.2, zorder=1)
     ax.annotate("$x = 2y$", (top - 0.06, (top - 0.06) / 2),
                 xytext=(0, -22), textcoords="offset points",
-                ha="right", va="top", fontsize=10, color=fs.BLUE,
+                ha="right", va="top", fontsize=fs.SIZE_TICK, color=fs.INK,
                 bbox=dict(facecolor="white", edgecolor="none", pad=0.2))
-    ax.text(top / 2 + 0.1, top - 0.06, "$y = 2x$", ha="left", va="top", fontsize=10,
-            color=fs.BLUE)
+    ax.text(top / 2 + 0.1, top - 0.06, "$y = 2x$", ha="left", va="top", fontsize=fs.SIZE_TICK,
+            color=fs.INK)
 
-    exact_style = dict(marker="o", markersize=4.5, color=fs.GREEN, markerfacecolor=fs.GREEN,
-                       linestyle="None")
-    inexact_style = dict(marker="s", markersize=4.5, color=fs.VERMILION, markerfacecolor="white",
-                         markeredgewidth=1.1, linestyle="None")
+    exact_style = dict(EXACT, markersize=4.5)
+    inexact_style = dict(INEXACT, markersize=4.5)
     for pairs in (exact_in, exact_out):
         ax.plot([p[0] for p in pairs], [p[1] for p in pairs], zorder=3, **exact_style)
     ax.plot([p[0] for p in inexact_out], [p[1] for p in inexact_out], zorder=3, **inexact_style)
 
-    ax.set_xlabel("$x$ (grid points with three binary digits)")
-    ax.set_ylabel("$y$ (grid points with three binary digits)")
+    ax.set_xlabel("$x$")
+    ax.set_ylabel("$y$")
     ax.set_xticks([0, 0.5, 1, 2, 3, 4])
     ax.set_yticks([0, 0.5, 1, 2, 3, 4])
 
-    handles = [
-        Patch(facecolor=fs.SKY, alpha=0.28, edgecolor=fs.BLUE,
-              label="$y/2 \\leq x \\leq 2y$: Sterbenz's hypothesis"),
-        Line2D([], [], label="$x - y$ is on the grid", **exact_style),
-        Line2D([], [], label="$x - y$ needs rounding", **inexact_style),
-    ]
-    fig.legend(handles=handles, loc="upper center", ncol=3, bbox_to_anchor=(0.53, 0.985),
-               fontsize=9, columnspacing=1.6)
-    ax.text(top - 0.08, 0.12,
-            f"{len(exact_in)} pairs inside the wedge, all exact;\n"
-            f"{len(exact_out)} exact and {len(inexact_out)} not, outside it",
-            ha="right", va="bottom", fontsize=9, color=fs.INK)
+    fs.legend(fig, handles=key(4.5), loc="center left", bbox_to_anchor=(0.67, 0.55))
 
     out = fs.save(fig, "ch07-sterbenz.png", args.out)
     print(f"wrote {out}")
-    mobile = out.with_name(out.stem + "-mobile.png")
+    mobile = fs.mobile_path(out)
     print(f"wrote {fs.save(draw_mobile(exact_in, exact_out, inexact_out), mobile.name, mobile)}")
 
 

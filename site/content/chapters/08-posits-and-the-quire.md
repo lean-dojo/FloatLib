@@ -6,15 +6,13 @@ summary: A posit is a number format that keeps the most digits for numbers near 
 phases: [posits]
 ---
 
-A posit stores a real number in a fixed number of bits, as an IEEE float does, but it splits them differently between the number's size and its digits, the significand bits. In binary32, the usual 32-bit float, a number near one and a number near $2^{64}$ get the same 24 significand bits. Ask a 32-bit posit for the number right after one and it says $1 + 2^{-27}$, where binary32 says $1 + 2^{-23}$, so near one the posit's grid is sixteen times finer. Near $2^{64}$ the posit has 12 significand bits left, half of binary32's 24.
+The successor of $1$ in binary32 is $1+2^{-23}$. In a 32-bit posit it is $1+2^{-27}$. Both formats occupy four bytes, but the spacing immediately above $1$ is sixteen times finer in the posit format. At $2^{64}$ the comparison reverses. The posit has 12 significand bits and binary32 still has 24.
 
-Posits vary the number of significand bits through the *regime*, a run of identical bits that encodes part of the exponent. A longer regime leaves fewer bits for the fraction. This variable allocation gives posits higher precision near magnitude one and lower precision at large or small magnitudes.
-
-The 2022 Standard for Posit Arithmetic [@positStandard2022] fixes the rest, and it's a short list: one width parameter, one rounding rule, one exceptional value called NaR (not a real), no signed zero, no infinities, and an exact accumulator called the quire. The quire adds up products without rounding, so a whole dot product, a sum like $a_1 b_1 + a_2 b_2 + a_3 b_3$, rounds once, as long as its running sum stays in range.
+The 2022 Standard for Posit Arithmetic [@positStandard2022] achieves this *tapered precision* with a variable-length field called the *regime*. A longer regime encodes a more extreme magnitude and leaves less room for the fraction. The standard also defines a *quire*, a fixed-point accumulator wide enough to hold exact products. For a dot product whose running sum stays within its capacity, the first rounding takes place when you convert the quire back to a posit.
 
 ## How to create a posit
 
-In FloatLib a format is a Lean type, and a posit is one more `ExecFloat` type, used like the binary formats of [the IEEE chapter](#/chapter/ieee-binary-formats). `Posit32` is short for `ExecFloat.Posit (bits := 32)`, and `Posit8`, `Posit16` and `Posit64` name the other standard widths. `toRat?` reads a result as an exact rational, wrapped in `some` for a reason we'll come to, and the comment under each `#eval` is what Lean prints. If you start with this:
+In FloatLib a format is a Lean type, and a posit is one more `ExecFloat` type, used like the binary formats of [the IEEE chapter](#/chapter/ieee-binary-formats). `Posit32` is short for `ExecFloat.Posit (bits := 32)`, and FloatLib also provides `Posit8`, `Posit16` and `Posit64`. The standard takes the width as a parameter. For a finite value, `toRat?` returns its exact rational value wrapped in `some`.
 
 ```lean
 open FloatLib.Floats
@@ -58,7 +56,7 @@ The answers are reciprocals, $2^{\pm 120}$, and out here the regime has eaten ne
 
 [Figure 8.1](#/chapter/posits-and-the-quire/figure-ch14-tapered-precision) follows that trade across every binade, the stretch between two neighbouring powers of two. Near the extremes the regime leaves too few exponent bits to reach every binade, so gaps mark binades with no positive posit and isolated ticks those with just one.
 
-![Significand bits available to a 32-bit posit and to binary32, computed from the two formats' parameters; gaps mark binades with no positive posit, and isolated ticks mark binades containing just one](assets/ch14-tapered-precision.png "Significand bits by magnitude, with gaps for empty binades and isolated ticks for single-posit ones.")
+![Two step lines against magnitude from 2^-150 to 2^150. The posit32 line is a tent: 28 bits from 2^-4 to 2^4, one bit less every four binades, down to 2 bits near 2^-108 and 2^108, with isolated ticks at 1 bit out to 2^-120 and 2^120. The binary32 line is flat at 24 bits from 2^-126 to 2^127 and drops through the subnormal range to 1 bit at 2^-149](assets/ch14-tapered-precision.png "Significand bits of posit32 and binary32 by magnitude. The vertical axis counts the fraction bits plus one, and the horizontal axis is logarithmic. A posit32 has 28 significand bits at 1 and 12 at 2^64, and binary32 has 24 at both. A tick marks a binade that holds exactly one posit, and a gap marks a binade that holds none.")
 
 In 16 bits the taper, the way precision thins out away from one, shows at ordinary sizes: the posit after 4096 is 4112, a spacing of 16, or 8 fraction bits where binary16, the 16-bit IEEE float, has 10.
 
@@ -118,7 +116,7 @@ open FloatLib.Floats.Formats.Posit in
 
 you get each field back, and `0x6C` is $4 \cdot 2^5 = 128$. [Figure 8.2](#/chapter/posits-and-the-quire/figure-ch14-posit-layout) sets it beside one, `0x40`, and the extreme words `0x01` and `0x7F`, which are nothing but regime. Decoding those two gives the ends of the range, so an 8-bit posit runs from $2^{-24}$ to $2^{24}$. And `0x80`, the sign bit on its own, is NaR, which has no dyadic value, no integer times a power of two for `toDyadic?` to report.
 
-![Four 8-bit posit words with their sign, regime, terminator, exponent and fraction fields, ordered by value, so that the regime run lengthens and the fraction shrinks toward both ends of the range](assets/ch14-posit-layout.png "Four posit8 encodings: longer regimes leave fewer exponent and fraction bits.")
+![Four rows of eight bit cells. 0x01 is a sign bit 0, six regime zeros and a terminating 1, with k = −6 and the value 2^-24. 0x40 is a sign bit, one regime bit, a terminator, exponent bits 00 and fraction bits 000, the value 1. 0x6C is a sign bit, two regime ones, a terminator, exponent bits 11 and fraction bits 00, the value 4 × 2^5 = 128. 0x7F is a sign bit and seven regime ones, with k = 6 and the value 2^24](assets/ch14-posit-layout.png "Four 8-bit posit words with their fields, most significant bit on the left and smallest value at the top. With regime value k, exponent e and f fraction bits that hold F, the value is (2^f + F) × 2^(4k + e − f). The longer the regime run, the fewer bits are left for the exponent and the fraction, and the two extreme words are regime only.")
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
@@ -212,7 +210,7 @@ example : ExecFloat.Posit.Conversion.Context :=
 
 ## How do you know the arithmetic is right?
 
-Correct arithmetic means computing the exact result and rounding it once, and that's what our [reference definitions](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Arithmetic/Spec.lean) do. [[FloatLib.Floats.Formats.Posit.Model.Spec.add]] adds the operands as `Rat` and calls `roundRat`, `div` returns NaR for a zero divisor, and `fma`, the fused multiply-add, rounds the exact $a \cdot b + c$. `roundSqrtRat` compares the radicand, the number under the root, with squared posit boundaries, since a square root needn't be rational. Host `Float`, your processor's floating point, appears nowhere. The public theorems say the operations you run equal their specifications:
+Correct arithmetic means computing the exact result and rounding it once, and that's what our [reference definitions](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Arithmetic/Spec.lean) do. [[FloatLib.Floats.Formats.Posit.Model.Spec.addition]] adds the operands as `Rat` and calls `roundRat`, `div` returns NaR for a zero divisor, and `fma`, the fused multiply-add, rounds the exact $a \cdot b + c$. `roundSqrtRat` compares the radicand, the number under the root, with squared posit boundaries, since a square root needn't be rational. Host `Float`, your processor's floating point, appears nowhere. The public theorems say the operations you run equal their specifications:
 
 ```lean
 example (a b : Posit32) :
@@ -258,7 +256,7 @@ Each arithmetic operation so far rounds once, so a dot product summed in a posit
 
 For an $n$-bit posit the standard fixes a two's-complement word of $16n$ bits whose least significant bit is worth $2^{16 - 8n}$, 512 bits at a scale of $2^{-240}$ for `Posit32`. The most negative word is quire NaR, and the bits above the largest product in [Figure 8.3](#/chapter/posits-and-the-quire/figure-ch14-quire) are headroom for carries.
 
-![The 512-bit posit32 quire as a fixed-point word, with landmark weights 2^240 at bit 480, 1 at bit 240, and 2^-240 at bit 0, plus the 31 carry-guard bits from bit 480 to bit 510 and the sign bit](assets/ch14-quire.png "From zero, the quire accumulates strictly fewer than 2^31 finite posit32 products exactly.")
+![One bar for the 512 bits of the quire, most significant bit on the left: a sign bit, 31 carry-guard bits, 240 integer bits and 240 fraction bits. Ticks mark bit 480 with weight 2^240, bit 240 with weight 1 and bit 0 with weight 2^-240](assets/ch14-quire.png "The 512-bit quire of posit32 as a fixed-point word whose bit 0 is worth 2^-240. The largest product of two posit32 values is 2^240, which lands on bit 480, the lowest of the 31 carry-guard bits. The guard takes up the carries of a sum, so starting from zero, any sum of fewer than 2^31 finite products is exact.")
 
 ```lean
 open FloatLib.Floats.Formats.Posit in
@@ -379,7 +377,7 @@ Powers are trickier. `powInt` computes an integer power exactly, and `compound` 
 
 ## How to compute exponentials and logarithms
 
-The boundary comparisons behind `pow` also give proved $2^x$, $10^x$ and their minus-one variants. For every finite input the [rational-power theorems](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Algebraic/RationalPower/Proof.lean) identify the result with one rounding of the exact real expression, so $2^x-1$ and $10^x-1$ subtract before rounding. We have no independent external comparison for these, though, so those theorems are their whole guarantee. The [base-two and base-ten logarithms](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Logarithm) have real-rounding proofs too, `log2Plus1` and `log10Plus1` included.
+The boundary comparisons behind `pow` also give proved $2^x$, $10^x$ and their minus-one variants. For every finite input the [rational-power theorems](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Algebraic/RationalPower/Proof.lean) identify the result with one rounding of the exact real expression, so $2^x-1$ and $10^x-1$ subtract before rounding. We also checked all four functions on every encoding at widths 2 through 8 against [an independent posit rounder using MPFR enclosures](https://github.com/lean-dojo/FloatLib/blob/main/tests/oracles/posit_functions.py). The [base-two and base-ten logarithms](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Logarithm) have real-rounding proofs too, `log2Plus1` and `log10Plus1` included.
 
 The [natural-function API](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Floats/Formats/Posit/Elementary) adds `exp`, `expMinus1`, `log` and `logPlus1`, whose [configured proofs](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Configured/Elementary/Proof.lean) show each one equals the real function followed by posit rounding. For `x` decoding to a rational $q>-1$, `logPlus1_eq_real` says the output decodes to
 
@@ -434,14 +432,53 @@ The [hyperbolic API](https://github.com/lean-dojo/FloatLib/tree/main/FloatLib/Fl
 
 ## What does the posit decoder trust about the compiler?
 
-The posit decoder is the one place in the library where we swap in compiled code with `implemented_by`, which tells Lean's compiler to run another function in place of a definition. Every other kernel runs the definition Lean checked or a replacement justified by a proved `csimp` equation, a theorem that lets the compiler swap in an equal function, as [the chapter on running code and proofs](#/chapter/the-numerical-models) explains.
+The posit decoder is the one place in the library where we swap in compiled code with `implemented_by`, which tells Lean's compiler to run another function in place of a definition. Every other kernel runs the definition Lean checked or a replacement justified by a proved `csimp` equation, a theorem that lets the compiler swap in an equal function, as [the chapter on running code and proofs](#/chapter/the-numerical-models) explains. One replacement is Lean's own and not ours: since Lean 4.36 the constructor index of an inductive type, which a derived equality test calls, is compiled as a read of the constructor's tag. No theorem can cover it, and `TRUST.md` lists it with the rest of code generation.
 
 Every theorem about [[FloatLib.Floats.Formats.Posit.Model.toDyadic?]] uses its definition through `decodeExact`. Its compiled code is a private one-pass `Internal.toDyadic?`, and the private theorem `Internal.toDyadic?_eq` in the [posit decoder](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/Formats/Posit/Model/Decode.lean) proves the two equal on every word. But Lean's kernel never sees the substitution, and `Lean.collectAxioms`, which lists a theorem's axioms, shows no trace of it. So we trust the compiler to substitute that function and no other, which matters because this decoder runs in every posit operation and quire conversion. In return, execution gets one pass and proofs keep the transparent field decoder.
 
+## Where is each operation of the Posit Standard?
+
+FloatLib implements the family of the 2022 Posit Standard [@positStandard2022], which fixes `es = 2`, at every valid width. Other values of `es` aren't implemented. The operations carry the standard's names, so a program written from its text reads the same in Lean. You still write `x + y` for `addition`, and the quire, which keeps an integer accumulator with the capacity and the NaR rules the standard states, is driven by `pToQ`, `qMulAdd` and `qToP`:
+
+```lean
+section PositStandard
+
+open ExecFloat.Posit.Quire
+
+/-- Three in posit16. -/
+abbrev three : Posit16 := 3
+/-- Five in posit16. -/
+abbrev five : Posit16 := 5
+
+-- `3 + 3 * 5 = 18`, accumulated exactly in the quire and rounded once
+example : ExecFloat.Posit.toNatBits (qToP (qMulAdd (pToQ three) three five) : Posit16) =
+    ExecFloat.Posit.toNatBits (18 : Posit16) := by
+  float_decide
+
+example : ExecFloat.Posit.compareLess (1.5 : Posit16) 2.25 = true := by float_decide
+
+end PositStandard
+```
+
+| Clause | Operations | In FloatLib |
+| --- | --- | --- |
+| 3, 4 | the encoding and the rounding | `Posit.Format`, `Model.decodeFields`, `Model.roundRat` |
+| 5.2 | `negate`, `abs`, `sign`, `nearestInt`, `ceil`, `floor`, `next`, `prior` | the same names under `ExecFloat.Posit` |
+| 5.3 | `compareEqual`, `compareNotEqual`, `compareGreater`, `compareGreaterEqual`, `compareLess`, `compareLessEqual` | the same names under `ExecFloat.Posit` |
+| 5.4 | `addition`, `subtraction`, `multiplication`, `division` | `+`, `-`, `*`, `/`, and the same names under `ExecFloat.Posit` |
+| 5.5 | `sqrt`, `rSqrt`, the exponentials and logarithms with their `Minus1` and `Plus1` forms, the trigonometric functions in radians and in half-turns with their inverses, the hyperbolic functions with their inverses | the same names under `ExecFloat.Posit` |
+| 5.6 | `hypot`, `pow`, `arcTan2`, `arcTan2Pi` | the same names under `ExecFloat.Posit` |
+| 5.7, 5.8 | `fMM`, `compound`, `rootN` | the same names under `ExecFloat.Posit` |
+| 5.11 | `pToQ`, `qNegate`, `qAbs`, `qAddP`, `qSubP`, `qAddQ`, `qSubQ`, `qMulAdd`, `qMulSub`, `qToP` | the same names under `ExecFloat.Posit.Quire` |
+| 6.1 | conversion between posit widths | `ExecFloat.Posit.pₘToₙ` |
+| 6.3 to 6.5 | conversions to and from text, integers and IEEE formats, for which the standard prescribes no spelling | `ExecFloat.Posit.display`, `parse`, `ofFixedInt`, `toFixedInt`, and `ExecFloat.cast` |
+
+The [theorem index](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md#posits-and-quires) has the theorems behind each row. Comparing with SoftPosit taught us the difference between an oracle and a specification. In SoftPosit 0.3.4.4, passing the eight-bit word 129 through `nearestInt` gives word 127, which is positive. But word 129 already denotes the negative integer $-2^{24}$, as our checked counterexample shows, so the sign is lost in that branch.
+
 ## How we compare posits with Universal and SoftPosit
 
-The last kind of evidence here isn't a proof. A proof connects our code to our specification, so it can't check how we read the standard, but a comparison with an independent implementation can. The benchmark runner times Stillwater's Universal library [@stillwaterUniversal] only on workloads where the two agree bit for bit on every output.
+Our proofs establish that the executable operations agree with our reading of the standard. To check that reading, we compare result words with other implementations. Before timing Stillwater's Universal library [@stillwaterUniversal], the runner checks 16 input fixtures for each format and operation and times the pairs that agree on every result word.
 
 Our first comparison with SoftPosit [@softPosit], revision `17d5628`, found 7,562 differences, all from two problems in that version. First, SoftPosit disagreed with itself. Its generic variable-width path, pX2, and its dedicated p32 functions differed on three 32-bit boundary examples, repeated across 7,560 sampled cases, and there the dedicated functions agreed with FloatLib. The other two are 16-bit fused multiply-adds, one on each side of zero, whose exact answers sit just past a tie, such as $52800 + 2^{-56}$. SoftPosit lost the tiny addend from its sticky bit and rounded as if it were a tie.
 
-Another 9,175,040 comparisons over widths 9 through 15 turned up two more FMA inputs, at 14 and 15 bits, with the same lost sticky bit. On all seven distinct inputs, exact rational evaluation agrees with FloatLib. [The testing chapter follows the calculation and source diagnosis](#/chapter/external-validation/why-did-softposit-disagree-with-floatlib), and [the performance chapter](#/chapter/performance) times FloatLib against Universal. These comparisons test software on the stated inputs. They aren't an official posit certification or a validation of a hardware posit unit.
+Another 9,175,040 comparisons over widths 9 through 15 turned up two more FMA inputs, at 14 and 15 bits, with the same lost sticky bit. On all seven distinct inputs, exact rational evaluation agrees with FloatLib. [The testing chapter follows the calculation and source diagnosis](#/chapter/external-validation/why-did-softposit-disagree-with-floatlib), and [the benchmark guide](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/docs/Comparison.md) describes the Universal timing procedure.

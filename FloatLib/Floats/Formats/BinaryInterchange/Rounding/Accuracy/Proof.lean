@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -37,29 +37,30 @@ Scaling a value certified over a nonzero mantissa by `2^exponent` gives binary m
 theorem magnitude_mul_bpow_of_accuracyRepresents
     {mantissa : Nat} {accuracy : Accuracy} {value : Real} (exponent : Int)
     (hmantissa : mantissa ≠ 0)
-    (haccuracy : accuracyRepresents mantissa accuracy value) :
+    (haccuracy : AccuracyRepresents mantissa accuracy value) :
     magnitude Numerics.binaryRadix (value * bpow Numerics.binaryRadix exponent) =
       Int.ofNat mantissa.log2 + exponent + 1 := by
   rw [magnitude_mul_bpow _ _ _ (pos_of_accuracyRepresents hmantissa haccuracy).ne',
     magnitude_of_accuracyRepresents hmantissa haccuracy]
-  ring
+  ac_rfl
 
 /-- The model and rounded-real semantics choose the same exponent for a valid certificate. -/
 theorem cexp_accuracy_mul_bpow_eq_targetExponent
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
     (accuracy : Accuracy) (value : Real) (hfmt : fmt.isIEEE = true)
     (hmantissa : mantissa ≠ 0)
-    (haccuracy : accuracyRepresents mantissa accuracy value) :
+    (haccuracy : AccuracyRepresents mantissa accuracy value) :
     cexp Numerics.binaryRadix (fexpOf fmt)
         (value * bpow Numerics.binaryRadix exponent) =
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent) := by
   rw [cexp, magnitude_mul_bpow_of_accuracyRepresents exponent hmantissa haccuracy]
-  simp [fexpOf, fltExp, Float.Model.Format.targetExponent,
-    Float.Model.totalExponent, Float.Model.Format.mantissaBits,
-    Float.Model.Format.minExponent, FloatFormat.toModel,
-    FloatFormat.minSubnormalExponent_eq_ieee fmt hfmt,
-    FloatFormat.ieeeMinSubnormalExponent, FloatFormat.bias]
+  simp only [fexpOf, fltExp, Int.ofNat_eq_natCast, add_sub_add_right_eq_sub,
+    FloatFormat.minSubnormalExponent_eq_ieee fmt hfmt, FloatFormat.ieeeMinSubnormalExponent,
+    FloatFormat.bias, Order.lt_two_iff, zero_le, pow_pos, Nat.cast_pred, Nat.cast_pow,
+    Nat.cast_ofNat, Float.Model.Format.targetExponent, Float.Model.totalExponent,
+    Float.Model.Format.mantissaBits, FloatFormat.toModel, Nat.cast_add, Nat.cast_one,
+    Float.Model.Format.minExponent]
   congr 1 <;> omega
 
 /-- The certificate value at the model exponent is the canonical scaled mantissa. -/
@@ -67,7 +68,7 @@ theorem scaledMantissa_accuracy_mul_bpow
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
     (accuracy : Accuracy) (value : Real) (hfmt : fmt.isIEEE = true)
     (hmantissa : mantissa ≠ 0)
-    (haccuracy : accuracyRepresents mantissa accuracy value) :
+    (haccuracy : AccuracyRepresents mantissa accuracy value) :
     scaledMantissa Numerics.binaryRadix (fexpOf fmt)
         (value * bpow Numerics.binaryRadix exponent) =
       value * bpow Numerics.binaryRadix
@@ -82,9 +83,9 @@ theorem scaledMantissa_accuracy_mul_bpow
           (Float.Model.totalExponent mantissa exponent) =
     exponent + -
       (FloatFormat.toModel fmt).targetExponent
-        (Float.Model.totalExponent mantissa exponent) by ring]
+        (Float.Model.totalExponent mantissa exponent) by rfl]
   rw [bpow.add_exp]
-  ring
+  ac_rfl
 
 /--
 When no left shift is needed, the first stage of `roundWithAccuracy` shifts the extended mantissa
@@ -119,7 +120,7 @@ exponent.
 theorem roundedMantissa_shiftToTargetExponent_eq_nearestEven
     (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
     (accuracy : Accuracy) (value : Real)
-    (haccuracy : accuracyRepresents mantissa accuracy value)
+    (haccuracy : AccuracyRepresents mantissa accuracy value)
     (hle : exponent ≤
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent)) :
@@ -198,7 +199,7 @@ represented value.
 -/
 theorem roundWithAccuracy_zero_eq_finishRoundedMantissa
     (fmt : FloatFormat) (sign : Sign) (exponent : Int) (accuracy : Accuracy) (value : Real)
-    (haccuracy : accuracyRepresents 0 accuracy value)
+    (haccuracy : AccuracyRepresents 0 accuracy value)
     (hle : exponent ≤
       (FloatFormat.toModel fmt).targetExponent (Float.Model.totalExponent 0 exponent)) :
     ∃ rounded : Nat, rounded ≤ 1 ∧
@@ -210,7 +211,6 @@ theorem roundWithAccuracy_zero_eq_finishRoundedMantissa
         finishRoundedMantissa (FloatFormat.toModel fmt) sign
           (rounded, FloatFormat.ieeeMinSubnormalExponent fmt) := by
   have htarget := targetExponent_totalExponent_zero_eq_minSubnormal fmt exponent hle
-  have hfloor : exponent ≤ FloatFormat.ieeeMinSubnormalExponent fmt := htarget ▸ hle
   have hbelow : value < 1 := by
     simpa using (accuracyRepresents_bounds haccuracy).2
   obtain ⟨rounded, hrounded⟩ : ∃ rounded : Nat, rounded =
@@ -253,7 +253,7 @@ signed zero or a signed least subnormal, so no finiteness premise is needed.
 theorem toReal_ofModel_roundWithAccuracy_zero_eq_roundAt
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (sign : Sign) (exponent : Int) (accuracy : Accuracy) (value : Real)
-    (haccuracy : accuracyRepresents 0 accuracy value)
+    (haccuracy : AccuracyRepresents 0 accuracy value)
     (hle : exponent ≤
       (FloatFormat.toModel fmt).targetExponent (Float.Model.totalExponent 0 exponent)) :
     toReal
@@ -330,7 +330,7 @@ theorem toReal_ofModel_roundWithAccuracy_eq_roundAt
     (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (sign : Sign) (mantissa : Nat) (exponent : Int)
     (accuracy : Accuracy) (value : Real)
-    (haccuracy : accuracyRepresents mantissa accuracy value)
+    (haccuracy : AccuracyRepresents mantissa accuracy value)
     (hle : exponent ≤
       (FloatFormat.toModel fmt).targetExponent
         (Float.Model.totalExponent mantissa exponent))
@@ -445,7 +445,7 @@ theorem toReal_ofModel_roundWithAccuracy_eq_roundAt
       rw [hscaledMul, natCast_pow2_eq_bpow, ← bpow.add_exp]
       refine hupperExact.le.trans_eq (congrArg _ ?_)
       push_cast
-      ring
+      omega
     rw [toReal_ofModel_finishRoundedMantissa_normal fmt hfmt sign rounded k
       (Int.ofNat_le.mp ((natCast_le_nearestEven_of_le hscaledLower).trans hnearest.symm.le))
       (Int.ofNat_le.mp (hnearest.trans_le (nearestEven_le_natCast_of_le hscaledUpper)))

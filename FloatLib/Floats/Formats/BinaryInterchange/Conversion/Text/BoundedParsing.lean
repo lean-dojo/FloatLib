@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -103,10 +103,12 @@ theorem readTextWithLimits_eq_ok_iff (limits : ParseLimits) (input : String) (va
         simp [readTextWithLimits, hbytes, hread, Except.bind]
     | ok scanned =>
         by_cases hexponent : scanned.exponentMagnitude ≤ limits.maxExponent
-        · simp [readTextWithLimits, hbytes, hread, Except.bind, hexponent]
+        · simp only [readTextWithLimits, hbytes, ↓reduceIte, Except.bind, hread, hexponent,
+          Except.ok.injEq, true_and, iff_self_and]
           rintro rfl
           exact hexponent
-        · simp [readTextWithLimits, hbytes, hread, Except.bind, hexponent]
+        · simp only [readTextWithLimits, hbytes, ↓reduceIte, Except.bind, hread, hexponent,
+          reduceCtorEq, Except.ok.injEq, true_and, false_iff, not_and, not_le]
           rintro rfl
           exact Nat.lt_of_not_ge hexponent
   · simp [readTextWithLimits, hbytes]

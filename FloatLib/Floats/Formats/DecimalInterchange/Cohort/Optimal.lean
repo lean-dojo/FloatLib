@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -68,7 +68,6 @@ theorem preferredCohort_quantum_closest (f : Format) (c : Nat) (q preferred : In
       dsimp [fuel]
       omega
     have hout : q + (result.2 : Int) ≤ preferred := by omega
-    have htarget : q + (result.2 : Int) ≤ f.maxQuantum := by omega
     change |preferred - (q + (result.2 : Int))| ≤ |preferred - r|
     rw [abs_of_nonneg (by omega)]
     by_cases hr : r ≤ q + (result.2 : Int)

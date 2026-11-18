@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -39,7 +39,7 @@ def intervalCandidates (format : Format) (x : ℚ) : Interval format :=
   let upper : Model format :=
     if Model.nonnegativeRatAt format lowerCode = magnitude then lower
     else Model.ofNatBits (lowerCode + 1)
-  if x < 0 then ⟨Model.neg upper, Model.neg lower⟩ else ⟨lower, upper⟩
+  if x < 0 then ⟨Model.negate upper, Model.negate lower⟩ else ⟨lower, upper⟩
 
 /--
 Checked outward rounding for arbitrary posit widths.

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Logarithm.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
+public import FloatLib.Floats.Formats.Posit.Logarithm.Runtime
 
 /-!
 # Configured base-two and base-ten posit logarithms
@@ -31,19 +31,23 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Correctly rounded base-two logarithm. NaR and nonpositive inputs produce NaR. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded base-two logarithm. NaR and nonpositive inputs produce NaR. -/
 @[inline] def log2 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log2 value
 
-/-- Correctly rounded base-ten logarithm. NaR and nonpositive inputs produce NaR. -/
+/-- Posit Standard (2022), §5.5.
+Correctly rounded base-ten logarithm. NaR and nonpositive inputs produce NaR. -/
 @[inline] def log10 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log10 value
 
-/-- Base-two logarithm of exact `1 + x`, with one final rounding. -/
+/-- Posit Standard (2022), §5.5.
+Base-two logarithm of exact `1 + x`, with one final rounding. -/
 @[inline] def log2Plus1 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log2Plus1 value
 
-/-- Base-ten logarithm of exact `1 + x`, with one final rounding. -/
+/-- Posit Standard (2022), §5.5.
+Base-ten logarithm of exact `1 + x`, with one final rounding. -/
 @[inline] def log10Plus1 (value : Value) : Value :=
   ModelCodec.liftUnary (Model := Model format) (plan := plan) Model.log10Plus1 value
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,11 +7,12 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Functions.Basic
 public import FloatLib.Floats.Formats.Posit.Rounding.RoundTrip
-import FloatLib.Floats.Formats.Posit.Cast.Widening
+
 import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Semantics.Candidates
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
+import FloatLib.Floats.Formats.Posit.Cast.Widening
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -59,9 +60,6 @@ private theorem exists_code_scaled_nat (format : Format) (significand leading sc
     tailPrefix_eq_streamPrefix exponent significand leading _ hlower hupper,
     trailingRat_streamPrefix_eq_of_width_le _ _ _ htail,
     trailingRat_exactTailRaw exponent significand leading he hlower hupper]
-  have hscale : regime * 4 + (exponent : ℤ) = scale := by
-    dsimp [regime, exponent]
-    omega
   simp only [Int.ofNat_eq_natCast, Nat.cast_pow, Nat.cast_ofNat]
   rw [div_mul_eq_mul_div, div_mul_eq_mul_div, mul_assoc,
     ← zpow_add₀ (by norm_num : (2 : ℚ) ≠ 0)]
@@ -88,16 +86,8 @@ private theorem exists_code_two_pow (format : Format) (e : Nat)
 
 /-- The unit encoding exists even when the exponent field is completely tapered away. -/
 private theorem exists_code_one (format : Format) :
-    ∃ code < format.signMaskNat, nonnegativeRatAt format code = 1 := by
-  refine ⟨format.oneCodeNat, format.oneCodeNat_lt_signMaskNat, ?_⟩
-  have hw := nonnegativeRatAt_widen { bits := 2 } format
-    format.bits_ge_two (code := 1) (by decide)
-  dsimp only at hw
-  have he : format.oneCodeNat = 1 * 2 ^ (format.bits - 2) := by
-    simp [Format.oneCodeNat, Format.payloadBits, Nat.sub_sub]
-  rw [he, hw]
-  simpa [Format.signMaskNat, Format.signIndex, Format.payloadBits] using
-    nonnegativeRatAt_maxPositive { bits := 2 }
+    ∃ code < format.signMaskNat, nonnegativeRatAt format code = 1 :=
+  ⟨format.oneCodeNat, format.oneCodeNat_lt_signMaskNat, nonnegativeRatAt_oneCodeNat format⟩
 
 /--
 A nonintegral positive binade has enough fraction positions for every integer up to its
@@ -215,43 +205,6 @@ private theorem exists_code_integer_neighbor (format : Format) {code : Nat}
   obtain ⟨other, ho, hvalue⟩ := exists_code_nat format n.toNat (by omega)
   exact ⟨other, ho, hvalue.trans (by exact_mod_cast Int.toNat_of_nonneg hn)⟩
 
-/-- Restoring the sign of a finite magnitude preserves its exact rational meaning. -/
-private theorem toRat?_signed_code (format : Format) (code : Nat)
-    (hcode : code < format.signMaskNat) (negative : Bool) :
-    (if negative then neg (ofNatBits (format := format) code) else ofNatBits code).toRat? =
-      some (if negative then -nonnegativeRatAt format code
-        else nonnegativeRatAt format code) := by
-  have hne (word : Nat) (hw : word < format.modulus)
-      (hn : word ≠ format.signMaskNat) :
-      ofNatBits (format := format) word ≠ nar format := by
-    intro h
-    have he := congrArg toNatBits h
-    rw [toNatBits_ofNatBits_of_lt _ hw, nar_toNatBits] at he
-    exact hn he
-  cases negative
-  · simp only [Bool.false_eq_true, ite_false]
-    rw [toRat?_eq_signed_magnitude _
-      (hne code (hcode.trans format.signMaskNat_lt_modulus) (Nat.ne_of_lt hcode)),
-      signBit_ofNatBits_eq_false format code hcode,
-      magnitudeBits_ofNatBits_of_lt_signMask format code hcode]
-    rfl
-  · simp only [ite_true]
-    by_cases hz : code = 0
-    · subst code
-      change (neg (zero format)).toRat? = some (-nonnegativeRatAt format 0)
-      simp
-    have hm := format.modulus_eq_two_mul_signMaskNat
-    have hw : format.modulus - code < format.modulus := by omega
-    have hs : (ofNatBits (format := format) (format.modulus - code)).signBit = true := by
-      rw [signBit_ofNatBits_eq_decide format _ hw]
-      exact decide_eq_true (by omega)
-    have hmag : (ofNatBits (format := format) (format.modulus - code)).magnitudeBits =
-        code := by
-      rw [magnitudeBits, hs, ite_eq_left rfl, toNatBits_ofNatBits_of_lt _ hw]
-      omega
-    rw [neg, toNatBits_ofNatBits_of_lt _ (hcode.trans format.signMaskNat_lt_modulus),
-      toRat?_eq_signed_magnitude _ (hne _ hw (by omega)), hs, ite_eq_left rfl, hmag]
-
 /--
 Every integer between the exact floor and ceiling of a finite posit is representable.
 This includes both endpoints and has no precision or magnitude precondition.
@@ -286,7 +239,7 @@ theorem exists_toRat?_integer_neighbor (value : Model format) {q : ℚ}
       rw [hq, hf] at hlower
       omega
     obtain ⟨code, hcode, hv⟩ := exists_code_integer_neighbor format hm (-n) hlo hhi
-    refine ⟨neg (ofNatBits code), ?_⟩
+    refine ⟨negate (ofNatBits code), ?_⟩
     simpa only [ite_true, hv, Int.cast_neg, neg_neg] using
       toRat?_signed_code format code hcode true
 

@@ -1,18 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.Algebra.Order.Algebra
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.DivisionSemantics
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Subtraction
+public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SqrtSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
 public import FloatLib.Floats.Formats.Flocq.Theory.Error.Addition
 public import FloatLib.Floats.Formats.Flocq.Theory.Error.Relative
+public import Mathlib.Algebra.Order.Algebra
 
 /-!
 # Error bounds for executable binary floats
@@ -52,7 +52,7 @@ noncomputable abbrev minNormalAt (fmt : FloatFormat) : ℝ :=
 /-- The exponent-selection function of every executable format is monotone. -/
 instance (fmt : FloatFormat) : MonotoneExp (fexpOf fmt) := by
   simpa [fexpOf] using
-    (fltMonotoneExp (FloatFormat.minSubnormalExponent fmt)
+    (monotoneExp_flt (FloatFormat.minSubnormalExponent fmt)
       (Int.ofNat (fmt.fracWidth + 1)))
 
 /--
@@ -104,7 +104,7 @@ theorem relativeError_roundAt_le_of_normal (fmt : FloatFormat) (x : ℝ)
     rw [minSubnormalExponent_add_precision_sub_one]
     exact hnormal
   simpa [roundAt, fexpOf] using
-    (relative_error_round_FLT_normal
+    (relative_error_round_flt_normal
       (β := Numerics.binaryRadix)
       (FloatFormat.minSubnormalExponent fmt)
       (Int.ofNat (fmt.fracWidth + 1))
@@ -192,7 +192,7 @@ theorem isFinite_cast_of_abs_toReal_le_posMaxFinite {src dst : FloatFormat} (x :
     (hbound : |toReal x| ≤ toReal (posMaxFinite dst)) :
     isFinite (cast src dst x) = true := by
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hx
   obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite hx
   have hreal : toReal x = d.toReal := by rw [toReal_eq, hd]
   have hround := isFinite_roundDyadic_of_isIEEE_of_abs_toReal_le_posMaxFinite
@@ -307,7 +307,7 @@ operands, so `hout` is the only finiteness assumption.
 theorem genericFormat_toReal_add_sub {fmt : FloatFormat} (x y : Model fmt)
     (hfmt : fmt.isIEEE = true)
     (hout : isFinite (add x y) = true) :
-    genericFormat Numerics.binaryRadix (fexpOf fmt)
+    GenericRepresentable Numerics.binaryRadix (fexpOf fmt)
       (toReal (add x y) - (toReal x + toReal y)) := by
   obtain ⟨hx, hy⟩ := isFinite_of_isFinite_add hfmt hout
   rw [toReal_add_eq_roundAt x y hfmt hout]

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 
 /-!
 # Directed square-root bounds
@@ -131,7 +131,7 @@ private theorem sqrt_source_scaled (fmt : FloatFormat) (d : Numerics.Dyadic)
         rw [show
           FloatLib.Floats.Formats.Flocq.bpow Numerics.binaryRadix 1 = (2 : ℝ) by
             exact bpow_one]
-        simp [mantissa, evenExponent, hOdd]
+        simp only [hOdd, ↓reduceIte, Nat.cast_mul, Nat.cast_ofNat, mantissa, evenExponent]
         ring
   have hscaled :
       (scaled : ℝ) = (mantissa : ℝ) * (2 : ℝ) ^ (2 * extraPrecision) := by

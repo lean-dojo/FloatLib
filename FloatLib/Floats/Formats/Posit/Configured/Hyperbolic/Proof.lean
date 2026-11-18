@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Hyperbolic.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Hyperbolic.Runtime
+public import FloatLib.Floats.Formats.Posit.Hyperbolic.Proof
 
 /-!
 # Correct rounding of configured posit hyperbolic functions

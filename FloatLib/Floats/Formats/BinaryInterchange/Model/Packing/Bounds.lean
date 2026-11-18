@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Core
+
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -81,7 +82,7 @@ theorem decode_encodedExponent
         Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth =
       exponent - Int.ofNat fmt.fracWidth := by
   rw [ofNat_toNat_biasedExponent fmt exponent hmin]
-  ring
+  omega
 
 /--
 Removing the implicit leading bit from a mantissa below `2^(fracWidth + 1)` fits the fraction

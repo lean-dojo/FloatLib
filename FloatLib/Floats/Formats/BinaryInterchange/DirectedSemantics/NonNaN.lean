@@ -1,15 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
-import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Bounds
+
+import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 
 /-!
 # Non-NaN results for conventional IEEE directed arithmetic
@@ -144,7 +145,7 @@ theorem isNaN_roundRatScaled_eq_false
   simp only [beq_iff_eq, hdenominator, ite_false]
   split_ifs
   all_goals first
-    | (simp [isNaN_negZero fmt hsigned]; done)
+    | (simp only [isNaN_negZero fmt hsigned, isNaN_posZero, isNaN_negInf, isNaN_posInf])
     | (split <;> exact isNaN_ofFields_of_lt_expAllOnesNat hfmt sign _ (by omega))
     | exact isNaN_ofFields_of_lt_expAllOnesNat hfmt sign _
         (by simp only [Int.ofNat_eq_natCast] at *; omega)
@@ -233,12 +234,12 @@ theorem isNaN_fma_eq_false_of_isFinite
   have hchoose : chooseNaN3 x y z = none := by
     simp [chooseNaN3, isNaN_eq_false_of_isFinite_eq_true x hx,
       isNaN_eq_false_of_isFinite_eq_true y hy, isNaN_eq_false_of_isFinite_eq_true z hz,
-      isSNaN_eq_false_of_isNaN_eq_false x (isNaN_eq_false_of_isFinite_eq_true x hx),
-      isSNaN_eq_false_of_isNaN_eq_false y (isNaN_eq_false_of_isFinite_eq_true y hy),
-      isSNaN_eq_false_of_isNaN_eq_false z (isNaN_eq_false_of_isFinite_eq_true z hz)]
-  have hxInf := isInf_eq_false_of_isFinite_eq_true x hx
-  have hyInf := isInf_eq_false_of_isFinite_eq_true y hy
-  have hzInf := isInf_eq_false_of_isFinite_eq_true z hz
+      isSignaling_eq_false_of_isNaN_eq_false x (isNaN_eq_false_of_isFinite_eq_true x hx),
+      isSignaling_eq_false_of_isNaN_eq_false y (isNaN_eq_false_of_isFinite_eq_true y hy),
+      isSignaling_eq_false_of_isNaN_eq_false z (isNaN_eq_false_of_isFinite_eq_true z hz)]
+  have hxInf := isInfinite_eq_false_of_isFinite_eq_true x hx
+  have hyInf := isInfinite_eq_false_of_isFinite_eq_true y hy
+  have hzInf := isInfinite_eq_false_of_isFinite_eq_true z hz
   by_cases hmode : mode = .nearest
   · subst hmode
     change isNaN (fma x y z) = false

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -69,7 +69,7 @@ theorem toReal_round_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
     (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
     (hfinite : isFinite (round fmt sign compare) = true) :
     toReal (round fmt sign compare) = roundAt fmt (if sign then -target else target) := by
-  unfold round at hfinite ⊢
+  rw [round_eq fmt sign hcompare] at hfinite ⊢
   split
   · rename_i hsmall
     have hle : target ≤ bpow Numerics.binaryRadix (lowerExponent fmt) := by
@@ -105,7 +105,7 @@ theorem round_eq_nativeOverflow_of_isFinite_eq_false (fmt : FloatFormat)
     (hfmt : fmt.isIEEE = true) (sign : Bool) (compare : Rat → Ordering)
     (hnonfinite : isFinite (round fmt sign compare) = false) :
     round fmt sign compare = nativeOverflow fmt sign := by
-  unfold round at hnonfinite ⊢
+  simp only [round] at hnonfinite ⊢
   split_ifs at hnonfinite ⊢
   · simp [isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt sign)] at hnonfinite
   · rfl

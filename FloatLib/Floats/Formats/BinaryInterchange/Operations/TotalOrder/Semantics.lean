@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.EReal
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Compare.Proof
 
 /-!
 # Numerical and exceptional-value rules for binary total order
@@ -106,25 +106,25 @@ private theorem not_nan_of_compare_some {fmt : FloatFormat} {x y : Model fmt}
 theorem totalOrder_of_compare_eq_lt {fmt : FloatFormat} {x y : Model fmt}
     (h : compare x y = some .lt) : totalOrder x y = true := by
   obtain ⟨hxNaN, hyNaN⟩ := not_nan_of_compare_some h
-  cases hxInf : isInf x <;> cases hyInf : isInf y
-  · have hx := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hxNaN hxInf
-    have hy := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hyNaN hyInf
+  cases hxInf : isInfinite x <;> cases hyInf : isInfinite y
+  · have hx := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hxNaN hxInf
+    have hy := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hyNaN hyInf
     exact totalOrder_of_toReal_lt hx hy
       ((compare_eq_some_lt_iff_toReal_lt_of_isFinite x y hx hy).1 h)
-  · have hx := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hxNaN hxInf
+  · have hx := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hxNaN hxInf
     obtain ⟨a, ha⟩ := exists_toDyadic?_of_isFinite hx
     rw [totalOrder, exactValue_eq_finite_of_toDyadic?_eq_some ha,
-      exactValue_eq_infinity_of_isInf hyInf]
+      exactValue_eq_infinity_of_isInfinite hyInf]
     cases hs : signBit y <;>
       simp_all [compare, compareNonNaN]
-  · have hy := isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hyNaN hyInf
+  · have hy := isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hyNaN hyInf
     obtain ⟨b, hb⟩ := exists_toDyadic?_of_isFinite hy
-    rw [totalOrder, exactValue_eq_infinity_of_isInf hxInf,
+    rw [totalOrder, exactValue_eq_infinity_of_isInfinite hxInf,
       exactValue_eq_finite_of_toDyadic?_eq_some hb]
     cases hs : signBit x <;>
       simp_all [compare, compareNonNaN]
-  · rw [totalOrder, exactValue_eq_infinity_of_isInf hxInf,
-      exactValue_eq_infinity_of_isInf hyInf]
+  · rw [totalOrder, exactValue_eq_infinity_of_isInfinite hxInf,
+      exactValue_eq_infinity_of_isInfinite hyInf]
     cases hs : signBit x <;> cases ht : signBit y <;>
       simp_all [compare, compareNonNaN]
 
@@ -187,11 +187,11 @@ positive zero, which precedes itself.
 theorem exactValue_finite_or_infinity_of_isNaN_eq_false {fmt : FloatFormat}
     {x : Model fmt} (hx : isNaN x = false) :
     (∃ d, exactValue x = .finite d) ∨ exactValue x = .infinity (signBit x) := by
-  cases hinf : isInf x
+  cases hinf : isInfinite x
   · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite
-      (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hx hinf)
+      (isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hx hinf)
     exact Or.inl ⟨d, exactValue_eq_finite_of_toDyadic?_eq_some hd⟩
-  · exact Or.inr (exactValue_eq_infinity_of_isInf hinf)
+  · exact Or.inr (exactValue_eq_infinity_of_isInfinite hinf)
 
 /-- A NaN precedes a number just when its sign bit is negative. -/
 theorem totalOrder_nan_number {fmt : FloatFormat} {x y : Model fmt}
@@ -221,11 +221,11 @@ theorem totalOrder_nan_iff {fmt : FloatFormat} {x y : Model fmt}
     totalOrder x y = true ↔
       (signBit x = true ∧ signBit y = false) ∨ signBit x = signBit y ∧
         (if signBit x then
-          (isSNaN x = false ∧ isSNaN y = true) ∨
-            isSNaN x = isSNaN y ∧ fracField y ≤ fracField x
+          (isSignaling x = false ∧ isSignaling y = true) ∨
+            isSignaling x = isSignaling y ∧ fracField y ≤ fracField x
         else
-          (isSNaN x = true ∧ isSNaN y = false) ∨
-            isSNaN x = isSNaN y ∧ fracField x ≤ fracField y) := by
+          (isSignaling x = true ∧ isSignaling y = false) ∨
+            isSignaling x = isSignaling y ∧ fracField x ≤ fracField y) := by
   rw [totalOrder, exactValue_eq_nan_of_isNaN hx, exactValue_eq_nan_of_isNaN hy,
     ExactValue.totalOrder_nan_iff]
 
@@ -233,7 +233,7 @@ theorem totalOrder_nan_iff {fmt : FloatFormat} {x y : Model fmt}
 theorem totalOrder_posNaN_payload {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = true) (hy : isNaN y = true)
     (hsx : signBit x = false) (hsy : signBit y = false)
-    (hclass : isSNaN x = isSNaN y) :
+    (hclass : isSignaling x = isSignaling y) :
     totalOrder x y = true ↔ fracField x ≤ fracField y := by
   rw [totalOrder_nan_iff hx hy]
   simp [hsx, hsy, hclass]
@@ -242,7 +242,7 @@ theorem totalOrder_posNaN_payload {fmt : FloatFormat} {x y : Model fmt}
 theorem totalOrder_negNaN_payload {fmt : FloatFormat} {x y : Model fmt}
     (hx : isNaN x = true) (hy : isNaN y = true)
     (hsx : signBit x = true) (hsy : signBit y = true)
-    (hclass : isSNaN x = isSNaN y) :
+    (hclass : isSignaling x = isSignaling y) :
     totalOrder x y = true ↔ fracField y ≤ fracField x := by
   rw [totalOrder_nan_iff hx hy]
   simp [hsx, hsy, hclass]

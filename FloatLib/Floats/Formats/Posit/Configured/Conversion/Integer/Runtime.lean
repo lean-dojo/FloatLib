@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -38,13 +38,13 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
 local notation "Value" =>
   FloatLib.Floats.ExecFloat (Configured.Family format code plan)
 
-/-- Convert a signed integer to a configured posit, reserving the MSB-only input for NaR. -/
+/-- Posit Standard (2022), §6.4: convert signed integers, reserving the MSB-only input for NaR. -/
 @[inline] def ofFixedInt {width : Nat} (value : FixedInt width)
     (hwidth : 0 < width := by decide) : Value :=
   ofModel (Model.ofFixedInt format value hwidth)
 
 /--
-Convert a configured posit to a signed integer with nearest-even rounding.
+Posit Standard (2022), §6.4: convert to a signed integer with nearest-even rounding.
 NaR and a rounded value outside the signed range produce the MSB-only sentinel.
 -/
 @[inline] def toFixedInt (width : Nat) (value : Value)

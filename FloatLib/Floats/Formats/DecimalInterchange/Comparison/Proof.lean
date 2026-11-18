@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -62,7 +62,10 @@ theorem compare_eq_eq_iff (x y : Datum) :
     Datum.compare x y = some .eq ↔
       ∃ a : NumericValue, x.numericValue? = some a ∧ y.numericValue? = some a := by
   unfold Datum.compare
-  cases x.numericValue? <;> cases y.numericValue? <;> simp
+  cases x.numericValue? <;> cases y.numericValue? <;> simp only [Option.bind_eq_bind,
+    Option.bind_none, Option.bind_fun_none, reduceCtorEq, and_self,
+    exists_const, Option.bind_some, Option.some.injEq, false_and, and_false,
+    Std.LawfulEqCmp.compare_eq_iff_eq, exists_eq_left']
   exact eq_comm
 
 /-- A greater-than result means the first operand is strictly greater in the exact extended
@@ -87,7 +90,7 @@ theorem compare_finite_eq_iff (s t : Bool) (c d : Nat) (q r : Int) :
     Datum.compare (.finite s c q) (.finite t d r) = some .eq ↔
       Datum.finiteValue s c q = Datum.finiteValue t d r := by
   rw [compare_eq_eq_iff]
-  simp [Datum.numericValue?]
+  simp only [numericValue?, Option.some.injEq, exists_eq_left', WithBot.coe_inj, WithTop.coe_inj]
   exact eq_comm
 
 /-- Any two zeros compare equal, whatever their signs and quanta. -/
@@ -108,7 +111,7 @@ namespace Datum
 /-- A quiet comparison raises invalid if and only if an operand is a signaling NaN. -/
 theorem compareQuiet_invalid_iff (p : Numerics.IEEEComparison.Predicate) (x y : Datum) :
     (x.compareQuiet p y).status.invalid = true ↔
-      x.isSNaN = true ∨ y.isSNaN = true := by
+      x.isSignaling = true ∨ y.isSignaling = true := by
   simp [compareQuiet]
 
 /-- A signaling comparison raises invalid if and only if an operand is a NaN, quiet or signaling.
@@ -143,7 +146,7 @@ theorem compareQuiet_value_iff (p : Numerics.IEEEComparison.Predicate) (x y : Da
 
 /-- Comparison never raises numerical range, division, or inexact exceptions. -/
 theorem compareQuiet_status (p : Numerics.IEEEComparison.Predicate) (x y : Datum) :
-    (x.compareQuiet p y).status = { invalid := x.isSNaN || y.isSNaN } := rfl
+    (x.compareQuiet p y).status = { invalid := x.isSignaling || y.isSignaling } := rfl
 
 /-- A signaling comparison raises only invalid, and only on a NaN operand. -/
 theorem compareSignaling_status (p : Numerics.IEEEComparison.Predicate) (x y : Datum) :

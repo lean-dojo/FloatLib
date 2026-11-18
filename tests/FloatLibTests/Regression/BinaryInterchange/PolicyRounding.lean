@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -17,7 +17,7 @@ This file complements the general theorems with executable checks of the named l
 formats. It never converts through Lean's native `Float`: every expected value is either a raw bit
 pattern or an exact `Numerics.Dyadic`.
 
-`smallFormatRoundTripFailures` enumerates every bit pattern of E2M1, E2M3, E3M2, E4M3FN,
+`smallFormatRoundTripFailures` enumerates every bit pattern of E2M1, E2M3, E3M2, E4M3,
 E4M3FNUZ, E5M2, and E5M2FNUZ. For each finite pattern it decodes the exact value and quantizes that
 value back under nearest-even rounding. A zero count is a useful regression check but no
 replacement for the encoding-independent theorems in
@@ -35,6 +35,9 @@ The golden patterns come from the OCP OFP8 and MX tables and the ONNX FNUZ descr
 * <https://www.opencompute.org/documents/ocp-8-bit-floating-point-specification-ofp8-revision-1-0-2023-12-01-pdf-1>
 * <https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf>
 * <https://onnx.ai/onnx/technical/float8.html>
+
+Reference: The OCP encoding tables are in OCP 8-bit Floating Point Specification (OFP8),
+revision 1.0, §5.1, and OCP Microscaling Formats (MX) Specification v1.0, §§5.3–5.4.
 -/
 
 @[expose] public section
@@ -76,7 +79,7 @@ def smallFormatRoundTripFailures : Thunk Nat := ⟨fun _ =>
   finiteRoundTripFailures FloatFormat.e2m1 +
   finiteRoundTripFailures FloatFormat.e2m3 +
   finiteRoundTripFailures FloatFormat.e3m2 +
-  finiteRoundTripFailures FloatFormat.e4m3fn +
+  finiteRoundTripFailures FloatFormat.e4m3 +
   finiteRoundTripFailures FloatFormat.e4m3fnuz +
   finiteRoundTripFailures FloatFormat.e5m2 +
   finiteRoundTripFailures FloatFormat.e5m2fnuz⟩
@@ -85,8 +88,8 @@ def smallFormatRoundTripFailures : Thunk Nat := ⟨fun _ =>
 
 /-- Check the exceptional patterns and largest finite values stated in the format tables. -/
 def formatTableFailures : Thunk Nat := ⟨fun _ =>
-  let e4NaN := Model.ofNatBits (fmt := FloatFormat.e4m3fn) 0x7f
-  let e4Max := Model.ofNatBits (fmt := FloatFormat.e4m3fn) 0x7e
+  let e4NaN := Model.ofNatBits (fmt := FloatFormat.e4m3) 0x7f
+  let e4Max := Model.ofNatBits (fmt := FloatFormat.e4m3) 0x7e
   let e5Inf := Model.ofNatBits (fmt := FloatFormat.e5m2) 0x7c
   let e4uzNaN := Model.ofNatBits (fmt := FloatFormat.e4m3fnuz) 0x80
   let e4uzZero := Model.ofNatBits (fmt := FloatFormat.e4m3fnuz) 0x00
@@ -94,16 +97,16 @@ def formatTableFailures : Thunk Nat := ⟨fun _ =>
   failureCount (Model.isNaN e4NaN) +
   failureCount
     (Model.toDyadic? e4Max == some { negative := false, significand := 14, exponent := 5 }) +
-  failureCount (Model.isInf e5Inf) +
+  failureCount (Model.isInfinite e5Inf) +
   failureCount (Model.isNaN e4uzNaN) +
   failureCount (Model.isZero e4uzZero) +
   failureCount
     (Model.toDyadic? e2m1Max == some { negative := false, significand := 3, exponent := 1 })⟩
 
 /--
-Check saturation, native E4M3FN overflow, FNUZ zero canonicalization, and output FTZ.
+Check saturation, native E4M3 overflow, FNUZ zero canonicalization, and output FTZ.
 
-E4M3FN represents `448` as `0x7e`, and its next pattern `0x7f` is NaN. So the same exact overflow
+E4M3 represents `448` as `0x7e`, and its next pattern `0x7f` is NaN. So the same exact overflow
 may become either `0x7e` or `0x7f`, depending on the operation's overflow policy.
 -/
 def policyFailures : Thunk Nat := ⟨fun _ =>
@@ -111,25 +114,25 @@ def policyFailures : Thunk Nat := ⟨fun _ =>
   let exact500 : Numerics.Dyadic := { negative := false, significand := 500, exponent := 0 }
   let negativeZero : Numerics.Dyadic := { negative := true, significand := 0, exponent := 0 }
   let minSubnormal : Numerics.Dyadic :=
-    { negative := false, significand := 1, exponent := FloatFormat.e4m3fn.minSubnormalExponent }
-  let nativeMax := Model.Policy.roundDyadic FloatFormat.e4m3fn
+    { negative := false, significand := 1, exponent := FloatFormat.e4m3.minSubnormalExponent }
+  let nativeMax := Model.Policy.roundDyadic FloatFormat.e4m3
     QuantizationPolicy.nearest 0 exact448
-  let nativeOverflow := Model.Policy.roundDyadic FloatFormat.e4m3fn
+  let nativeOverflow := Model.Policy.roundDyadic FloatFormat.e4m3
     QuantizationPolicy.nearest 0 exact500
-  let saturatedOverflow := Model.Policy.roundDyadic FloatFormat.e4m3fn
+  let saturatedOverflow := Model.Policy.roundDyadic FloatFormat.e4m3
     QuantizationPolicy.saturating 0 exact500
   let fnuzZero := Model.Policy.roundDyadic FloatFormat.e4m3fnuz
     QuantizationPolicy.nearest 0 negativeZero
-  let gradual := Model.Policy.roundDyadic FloatFormat.e4m3fn
+  let gradual := Model.Policy.roundDyadic FloatFormat.e4m3
     QuantizationPolicy.nearest 0 minSubnormal
-  let flushed := Model.Policy.roundDyadic FloatFormat.e4m3fn
+  let flushed := Model.Policy.roundDyadic FloatFormat.e4m3
     QuantizationPolicy.flushToZero 0 minSubnormal
-  failureCount (hasBits FloatFormat.e4m3fn nativeMax 0x7e) +
-  failureCount (hasBits FloatFormat.e4m3fn nativeOverflow 0x7f) +
-  failureCount (hasBits FloatFormat.e4m3fn saturatedOverflow 0x7e) +
+  failureCount (hasBits FloatFormat.e4m3 nativeMax 0x7e) +
+  failureCount (hasBits FloatFormat.e4m3 nativeOverflow 0x7f) +
+  failureCount (hasBits FloatFormat.e4m3 saturatedOverflow 0x7e) +
   failureCount (hasBits FloatFormat.e4m3fnuz fnuzZero 0x00) +
-  failureCount (hasBits FloatFormat.e4m3fn gradual 0x01) +
-  failureCount (hasBits FloatFormat.e4m3fn flushed 0x00)⟩
+  failureCount (hasBits FloatFormat.e4m3 gradual 0x01) +
+  failureCount (hasBits FloatFormat.e4m3 flushed 0x00)⟩
 
 /-- Invalid rational inputs are rejected even for formats without a NaN encoding. -/
 def invalidRationalFailures : Thunk Nat := ⟨fun _ =>
@@ -149,7 +152,7 @@ def nearestAwayPolicy : QuantizationPolicy := { rounding := .nearestAway }
 
 /-- The named formats of at most eight bits, one per encoding policy and layout. -/
 def smallFormats : List FloatFormat :=
-  [ FloatFormat.e2m1, FloatFormat.e2m3, FloatFormat.e3m2, FloatFormat.e4m3fn,
+  [ FloatFormat.e2m1, FloatFormat.e2m3, FloatFormat.e3m2, FloatFormat.e4m3,
     FloatFormat.e4m3fnuz, FloatFormat.e5m2, FloatFormat.e5m2fnuz ]
 
 /--
@@ -162,12 +165,12 @@ def nearestAwayDelivers (fmt : FloatFormat) (exact : Numerics.Dyadic) (expected 
     hasBits fmt (Model.Policy.roundDyadic fmt nearestAwayPolicy 0 exact) expected
 
 /--
-Named nearest-away cases for binary32, E4M3FN, and E5M2: a normal tie, subnormal ties, half the
+Named nearest-away cases for binary32, E4M3, and E5M2: a normal tie, subnormal ties, half the
 least subnormal, and the overflow midpoint, with both signs where the sign matters.
 -/
 def nearestAwayTieFailures : Thunk Nat := ⟨fun _ =>
   let b32 := FloatFormat.binary32
-  let e4 := FloatFormat.e4m3fn
+  let e4 := FloatFormat.e4m3
   let e5 := FloatFormat.e5m2
   countFailures
     [ -- binary32: 1 + 2^-24 lies halfway between 1 and its successor; 1 + 2^-25 does not.
@@ -183,7 +186,7 @@ def nearestAwayTieFailures : Thunk Nat := ⟨fun _ =>
     , nearestAwayDelivers b32 (dyadic false (2 ^ 25 - 1) 103) 0x7f800000
     , nearestAwayDelivers b32 (dyadic true (2 ^ 25 - 1) 103) 0xff800000
     , nearestAwayDelivers b32 (dyadic false (2 ^ 26 - 3) 102) 0x7f7fffff
-      -- E4M3FN: 1.0625 rounds to 1.125 and half the least subnormal to that subnormal. The
+      -- E4M3: 1.0625 rounds to 1.125 and half the least subnormal to that subnormal. The
       -- midpoint 464 between 448 and the next grid value 480, whose encoding is the NaN pattern,
       -- overflows to NaN, although 448 has an even significand and nearest-even keeps it.
     , nearestAwayDelivers e4 (dyadic false 17 (-4)) 0x39
@@ -267,7 +270,7 @@ Named nearest-away status vectors. Around the smallest normal `μ` with least su
 -/
 def nearestAwayStatusVectorFailures : Thunk Nat := ⟨fun _ =>
   let b32 := FloatFormat.binary32
-  let e4 := FloatFormat.e4m3fn
+  let e4 := FloatFormat.e4m3
   let e5 := FloatFormat.e5m2
   let minNormal : Rat := 2 ^ (-126 : Int)
   let minSubnormal : Rat := 2 ^ (-149 : Int)
@@ -287,7 +290,7 @@ def nearestAwayStatusVectorFailures : Thunk Nat := ⟨fun _ =>
     , nearestAwayStatus b32 nearestAwayPolicy (minSubnormal / 2) ==
         some (0x00000001, { inexact := true, underflow := true })
     , nearestAwayStatus b32 nearestAwayPolicy 0 == some (0x00000000, {})
-      -- E4M3FN: a normal tie, half the least subnormal, and the overflow midpoint 464, which
+      -- E4M3: a normal tie, half the least subnormal, and the overflow midpoint 464, which
       -- overflows to NaN natively and saturates to 448 otherwise.
     , nearestAwayStatus e4 nearestAwayPolicy (17 / 16) == some (0x39, { inexact := true })
     , nearestAwayStatus e4 nearestAwayPolicy (2 ^ (-10 : Int)) ==
@@ -356,7 +359,7 @@ the magnitude rule of each rounding direction.
 -/
 def awayFailures : Thunk Nat := ⟨fun _ =>
   let b32 := FloatFormat.binary32
-  let e4 := FloatFormat.e4m3fn
+  let e4 := FloatFormat.e4m3
   countFailures
     [ hasBits b32 (Model.roundDyadicAway b32 (dyadic false (2 ^ 30 + 1) (-30))) 0x3f800001
     , hasBits b32 (Model.roundDyadicAway b32 (dyadic true (2 ^ 30 + 1) (-30))) 0xbf800001

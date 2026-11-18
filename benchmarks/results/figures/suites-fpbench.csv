@@ -1,0 +1,45 @@
+row,outcome_or_measure,value
+"forward bound, conditional",done,165
+"forward bound, conditional",failed,23
+"forward bound, conditional",not expressible,84
+"forward bound, conditional",not run,0
+"forward bound, numerical",done,25
+"forward bound, numerical",failed,83
+"forward bound, numerical",not expressible,164
+"forward bound, numerical",not run,0
+"closed bound, conditional",done,156
+"closed bound, conditional",failed,32
+"closed bound, conditional",not expressible,84
+"closed bound, conditional",not run,0
+"closed bound, numerical",done,12
+"closed bound, numerical",failed,96
+"closed bound, numerical",not expressible,164
+"closed bound, numerical",not run,0
+backward statement,done,22
+backward statement,failed,166
+backward statement,not expressible,84
+backward statement,not run,0
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.327272727272727
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.327272727272727
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.327272727272727
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.327272727272727
+"ratio to FPTaylor 0.9.4, same export",bound ratio,3.2
+"ratio to FPTaylor 0.9.4, same export",bound ratio,3.2
+"ratio to FPTaylor 0.9.4, same export",bound ratio,698372.9925676998
+"ratio to FPTaylor 0.9.4, same export",bound ratio,698372.9925676998
+"ratio to FPTaylor 0.9.4, same export",bound ratio,698372.9925676998
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.133333333333333
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.133333333333333
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.562402252111354
+"ratio to FPTaylor 0.9.4, same export",bound ratio,2.666666666666666
+"ratio to Gappa 1.8.3, same export",bound ratio,1.0385395537525355
+"ratio to Gappa 1.8.3, same export",bound ratio,1.0385395537525355
+"ratio to Gappa 1.8.3, same export",bound ratio,1.0385395537525355
+"ratio to Gappa 1.8.3, same export",bound ratio,1.0385395537525355
+"ratio to Gappa 1.8.3, same export",bound ratio,1.9393939393939394
+"ratio to Gappa 1.8.3, same export",bound ratio,1.9393939393939394
+"ratio to Gappa 1.8.3, same export",bound ratio,1.5421686746987953
+"ratio to Gappa 1.8.3, same export",bound ratio,1.5421686746987953
+"ratio to Gappa 1.8.3, same export",bound ratio,1.6139089319575444
+"ratio to FPTaylor, published bounds",bound ratio,525303.4384443266
+"ratio to FPTaylor, published bounds",bound ratio,1.613908931957544

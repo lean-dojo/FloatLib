@@ -1,0 +1,4 @@
+# Output of `python3 tests/checks/source-screen.py`. The script says what each count means.
+# `--check` fails when a count exceeds the `limit` line; lower the line when a count goes down.
+4.0.0 DUPDEF=29 DUPTHM=0 equivalences=20 unused=1121
+limit DUPDEF=29 DUPTHM=0 equivalences=20 unused=1121

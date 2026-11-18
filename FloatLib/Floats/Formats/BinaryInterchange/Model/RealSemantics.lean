@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Rational
 public import FloatLib.Floats.Formats.Flocq.Theory.Core
-import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 public import FloatLib.Numerics.Exact.Dyadic.Real
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
+
+import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
 
 /-!
 # Real interpretation of binary models
@@ -190,21 +191,21 @@ theorem toDyadic?_eq_none_of_isFinite_eq_false {fmt : FloatFormat} {x : Model fm
       contradiction
 
 /-- An infinity has no dyadic decoding. -/
-theorem toDyadic?_eq_none_of_isInf_eq_true {fmt : FloatFormat} {x : Model fmt}
-    (hinf : isInf x = true) : toDyadic? x = none := by
+theorem toDyadic?_eq_none_of_isInfinite_eq_true {fmt : FloatFormat} {x : Model fmt}
+    (hinf : isInfinite x = true) : toDyadic? x = none := by
   cases hdecode : toDyadic? x with
   | none => rfl
   | some d =>
-      rw [isInf_eq_false_of_toDyadic?_some hdecode] at hinf
+      rw [isInfinite_eq_false_of_toDyadic?_some hdecode] at hinf
       contradiction
 
 /-- A value without a dyadic decoding that is not an infinity is a NaN. -/
-theorem isNaN_eq_true_of_toDyadic?_eq_none_of_isInf_eq_false {fmt : FloatFormat}
-    {x : Model fmt} (hdecode : toDyadic? x = none) (hinf : isInf x = false) :
+theorem isNaN_eq_true_of_toDyadic?_eq_none_of_isInfinite_eq_false {fmt : FloatFormat}
+    {x : Model fmt} (hdecode : toDyadic? x = none) (hinf : isInfinite x = false) :
     isNaN x = true := by
   cases hnan : isNaN x
   · obtain ⟨d, hd⟩ := exists_toDyadic?_of_isFinite
-      (isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hinf)
+      (isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnan hinf)
     rw [hdecode] at hd
     contradiction
   · rfl

@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Cohort
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Cohort
 public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Semantics
 
 /-!
@@ -50,7 +50,8 @@ theorem sqrtPair_quantum_minimal (f : Format) (mode : RoundingMode)
   Arithmetic.quantum_le_of_minimum_or_full f _ d _ r (sqrtPair_minimum_or_full f mode x) hd hr
     hvalue
 
-/-- An inexact finite root has the least quantum in its valid cohort, even when the exact root is irrational. -/
+/-- An inexact finite root has the least quantum in its valid cohort, even when the exact root is
+irrational. -/
 theorem sqrtMagnitude_inexact_quantum_minimal (f : Format) (mode : RoundingMode)
     (x : ℚ) (preferred : Int)
     (hinexact : (sqrtMagnitude f mode x preferred).status.inexact = true)

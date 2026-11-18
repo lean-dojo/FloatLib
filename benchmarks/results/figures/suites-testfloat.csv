@@ -1,0 +1,36 @@
+format,outcome_or_measure,value
+binary16,done,45
+binary16,failed,0
+binary16,not expressible,0
+binary16,not run,0
+binary32,done,54
+binary32,failed,0
+binary32,not expressible,0
+binary32,not run,0
+binary64,done,53
+binary64,failed,0
+binary64,not expressible,0
+binary64,not run,0
+binary128,done,57
+binary128,failed,0
+binary128,not expressible,0
+binary128,not run,0
+bfloat16,done,1
+bfloat16,failed,0
+bfloat16,not expressible,0
+bfloat16,not run,0
+binary16,vectors,31926072
+binary16,mismatches,0
+binary16,check_seconds,451.4
+binary32,vectors,31933968
+binary32,mismatches,0
+binary32,check_seconds,472.3
+binary64,vectors,31936896
+binary64,mismatches,0
+binary64,check_seconds,659.9
+binary128,vectors,31944168
+binary128,mismatches,0
+binary128,check_seconds,1536.8
+bfloat16,vectors,600
+bfloat16,mismatches,0
+bfloat16,check_seconds,0.1

@@ -1,16 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.Difference.Runtime
 public import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Runtime
-import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
 public import FloatLib.Kernels.FixedWord.RestoringSqrt.Runtime
-public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
+
+import FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
 import FloatLib.Kernels.FixedWord.RestoringSqrt.Compiler
 
 /-!

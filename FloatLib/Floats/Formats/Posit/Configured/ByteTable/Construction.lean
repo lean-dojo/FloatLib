@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Configured.ByteTable.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.ByteTable.Runtime
 
 /-!
 # Certified construction of byte-sized posit tables
@@ -35,10 +35,10 @@ variable {format : Format}
 Lazily generated direct addition table.
 
 The generator is the model-valued direct kernel `Model.DirectDyadicArithmetic.add`, so the
-refinement theorem `add_eq_spec` makes the resulting table a table for `Model.Spec.add`.
+refinement theorem `add_eq_spec` makes the resulting table a table for `Model.Spec.addition`.
 -/
 def addTable (width_le : format.bits ≤ 8) :
-    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.add where
+    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.addition where
   model := Model.DirectDyadicArithmetic.add
   table := TinyTable.lazyBinaryTotal (encoding format width_le)
     (Model.DirectDyadicArithmetic.add)
@@ -48,7 +48,7 @@ def addTable (width_le : format.bits ≤ 8) :
 
 /-- Lazily generated direct subtraction table from the model-valued direct kernel. -/
 def subTable (width_le : format.bits ≤ 8) :
-    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.sub where
+    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.subtraction where
   model := Model.DirectDyadicArithmetic.sub
   table := TinyTable.lazyBinaryTotal (encoding format width_le)
     (Model.DirectDyadicArithmetic.sub)
@@ -58,7 +58,7 @@ def subTable (width_le : format.bits ≤ 8) :
 
 /-- Lazily generated direct multiplication table from the model-valued direct kernel. -/
 def mulTable (width_le : format.bits ≤ 8) :
-    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.mul where
+    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.multiplication where
   model := Model.DirectDyadicArithmetic.mul
   table := TinyTable.lazyBinaryTotal (encoding format width_le)
     (Model.DirectDyadicArithmetic.mul)
@@ -68,7 +68,7 @@ def mulTable (width_le : format.bits ≤ 8) :
 
 /-- Lazily generated direct division table using one quotient prefix and exact remainder. -/
 def divTable (width_le : format.bits ≤ 8) :
-    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.div where
+    TinyTable.CertifiedBinary (encoding format width_le) Model.Spec.division where
   model := Model.DirectDyadicArithmetic.div
   table := TinyTable.lazyBinaryTotal (encoding format width_le)
     (Model.DirectDyadicArithmetic.div)

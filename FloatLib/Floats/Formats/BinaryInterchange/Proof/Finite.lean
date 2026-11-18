@@ -1,18 +1,18 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Operation.Proof.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Constants
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Division
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Multiplication
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.SquareRoot
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Subtraction
 public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Core
+public import FloatLib.Numerics.Operation.Proof.Finite
 
 /-!
 # Finite proof-indexed binary-interchange arithmetic

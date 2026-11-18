@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Kernels.FixedWord.Product.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.SignedSum.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Elimination.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Runtime
@@ -87,7 +86,7 @@ continues in `roundWideFieldsWord`.
   else if leftExponent ≤ rightExponent then
     let shift := Int.toNat (rightExponent - leftExponent)
     if _hshift : shift < 64 then
-      if _hfit : FixedWord.DyadicCompare.shiftFits rightSignificand shift then
+      if _hfit : FixedWord.DyadicCompare.ShiftFits rightSignificand shift then
         roundAlignedFieldsWord format heligible
           leftNegative leftSignificand
           rightNegative (rightSignificand <<< UInt64.ofNat shift)
@@ -103,7 +102,7 @@ continues in `roundWideFieldsWord`.
   else
     let shift := Int.toNat (leftExponent - rightExponent)
     if _hshift : shift < 64 then
-      if _hfit : FixedWord.DyadicCompare.shiftFits leftSignificand shift then
+      if _hfit : FixedWord.DyadicCompare.ShiftFits leftSignificand shift then
         roundAlignedFieldsWord format heligible
           leftNegative (leftSignificand <<< UInt64.ofNat shift)
           rightNegative rightSignificand

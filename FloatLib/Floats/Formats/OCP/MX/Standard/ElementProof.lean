@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,11 +7,13 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.OCP.MX.Standard.Runtime
+
 import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
 import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Bound
 
 /-!
 # Numerical contracts for OCP MX element rounding
@@ -23,6 +25,8 @@ beyond the finite range, where it picks the nearest finite word and needs no sat
 own. For INT8 we prove the asymmetric two's-complement range and its two saturation endpoints
 (`int8_bounds`, `toRat?_endpoint_int8`). One thing this file doesn't prove is that `endpoint`, the
 constant the saturating conversion path uses, is the extreme finite word of each float profile.
+
+Reference: OCP Microscaling Formats (MX) Specification v1.0, §§5.3 and 6.3.
 -/
 
 public section
@@ -56,7 +60,7 @@ private theorem toRat?_decodeFloat_zero (fmt : FloatFormat) :
     toRat? (0#profile.width) = some 0 := by
   cases profile <;> simp only [toRat?, decode]
   · simpa [Model.zero, Model.posZero] using toRat?_decodeFloat_zero .e5m2
-  · simpa [Model.zero, Model.posZero] using toRat?_decodeFloat_zero .e4m3fn
+  · simpa [Model.zero, Model.posZero] using toRat?_decodeFloat_zero .e4m3
   · simpa [Model.zero, Model.posZero] using toRat?_decodeFloat_zero .e3m2
   · simpa [Model.zero, Model.posZero] using toRat?_decodeFloat_zero .e2m3
   · simpa [Model.zero, Model.posZero] using toRat?_decodeFloat_zero .e2m1
@@ -75,7 +79,7 @@ theorem int8_bounds (word : Element .int8) :
   have hhi : word.toInt ≤ (127 : Int) := BitVec.toInt_le
   have hlo' : (-128 : Rat) ≤ word.toInt := by exact_mod_cast hlo
   have hhi' : (word.toInt : Rat) ≤ 127 := by exact_mod_cast hhi
-  constructor <;> linarith
+  constructor <;> bound
 
 /-- The INT8 saturation endpoints are the two ends of the permitted asymmetric range: code `0x80`
 denotes `-2` and code `0x7f` denotes `127/64`. -/
@@ -140,5 +144,18 @@ theorem Quantizes.even_of_tie {profile : Profile} {input : SignedRat}
   have hkey := (Prod.Lex.toLex_le_toLex'.mp (hmin other otherValue hother)).2 htie
   simp only [heven, mul_zero, zero_add] at hkey
   split_ifs at hkey <;> omega
+
+/-- Both element overflow modes refine their numerical contract. -/
+theorem quantize_quantizesWith (profile : Profile) (overflow : OverflowMode)
+    (input : SignedRat) :
+    QuantizesWith overflow input (quantize profile (.finite input) overflow) := by
+  unfold quantize quantizeWith QuantizesWith
+  by_cases h : overflow = .native ∧ roundsOut profile input.value = true
+  · simp [h.1, h.2]
+  · have hbool :
+        (decide (overflow = .native) && roundsOut profile input.value) = false :=
+      Bool.eq_false_iff.mpr (by simpa using h)
+    simp only [hbool, Bool.false_eq_true, ↓reduceIte, ite_eq_right h]
+    exact quantizeFinite_quantizes profile input
 
 end FloatLib.Floats.Formats.OCP.MX.Standard.Element

@@ -8,39 +8,6 @@ inputs and policies, and for the general statements you need the proofs.
 Run every command below from the repository root. If you're running current source, follow the
 [project setup](../README.md#installation) first.
 
-## Check or redraw the results
-
-In the [direct comparisons](results/main/release/external) you'll find results, raw logs, and the
-SoftPosit analysis, while the [ecosystem results](results/main/ecosystem) mostly record upstream
-projects' own checks. For both, the [manifests](results/main/MANIFEST.tsv) and [source
-records](results/main/provenance/SNAPSHOT.txt) identify the files, revisions, and environment behind
-each measurement.
-
-To check those saved files:
-
-```bash
-bash tests/oracles/verify-main-result.sh
-```
-
-It verifies hashes, provenance, the consistency of statuses and counts, and the saved SQLite
-databases. Then it redraws the summaries and figures in temporary space and compares them byte for
-byte. You need Git, Python, and Matplotlib. Nothing is rebuilt: the verifier never compiles FloatLib
-or reruns an external tool. Benchmark evidence has its own [verifier](../benchmarks/README.md).
-
-To redraw just the direct-comparison summary and figures into a directory of your choice:
-
-```bash
-python3 tests/oracles/render_release_result.py \
-  tests/results/main/release/external/summary.tsv \
-  /path/to/local-output/external-figures
-```
-
-The renderer just reads saved data, and it doesn't validate or regenerate any numerical
-answer. Point it at an output directory outside `tests/results/`. For the ecosystem summary,
-`render_ecosystem_result.py` takes the same two arguments. The verifier redraws both summaries
-and compares the bytes with the saved files. Raw logs and provenance records keep the names and
-hashes they were recorded with.
-
 ## Run comparisons on current source
 
 The `quick` profile runs a bounded set of comparisons:
@@ -62,9 +29,8 @@ further with `--cpu-set`. Suites run one after another, with parallelism inside 
 `--results`, output goes to a fresh directory under `TMPDIR` (normally `/tmp`), and a path you pick
 yourself must not exist yet. `FLOATLIB_BUILD_DIR` sets the local directory for compiler output.
 
-These are new runs. The source, adapter coverage, tool versions, and machine settings can all differ
-from the saved results. Running today's script won't replay an old snapshot. To recreate one, you
-need its linked source and environment records.
+Every run is a new measurement of your checkout, with the adapter coverage, tool versions and
+machine settings of that run. The runner writes them next to the results.
 
 You'll need Linux command-line tools, Git, Make, and C/C++ compilers. TestFloat and SoftPosit
 use their upstream Linux x86-64 build directories. For MPFR you need its development
@@ -120,6 +86,12 @@ source tests/lib/lake.sh
 floatlib_test_lake exe check arb
 floatlib_test_lake exe check native
 
+# Block-scaled formats against torchao, microxcaling, and PyTorch casts
+source tests/lib/lake.sh
+floatlib_test_lake build oracle
+python3 tests/oracles/block_formats.py --oracle "$FLOATLIB_BUILD_DIR/bin/oracle" \
+  --torchao /path/to/torchao-target --microxcaling /path/to/microxcaling --out /path/to/result.json
+
 # Other independent references
 bash tests/oracles/ibm_fpgen.sh
 bash tests/oracles/smt_fp.sh
@@ -137,7 +109,7 @@ bash tests/oracles/exhaustive16.sh --softfloat-dir /path/to/berkeley-softfloat-3
 bash tests/oracles/exhaustive16.sh --softfloat-dir /path/to/berkeley-softfloat-3 \
   sqrt f32 sqrt min 300
 
-# Certified expMinus1 on a 2^22 block of binary32 inputs and on listed inputs of any format.
+# Certified expm1 on a 2^22 block of binary32 inputs and on listed inputs of any format.
 source tests/lib/lake.sh
 floatlib_benchmark_lake build execFloatCertifiedExpLog
 cc -O2 tests/oracles/certified_explog_block.c -lmpfr -lgmp -o /tmp/explog_block
@@ -153,8 +125,7 @@ That binary16 command covers one shard of input pairs, so it doesn't reach every
 CI takes 17 left operands for both addition and multiplication and pairs each with all 65,536
 right encodings, which makes **2,228,224 ordered pairs**. Those operands cover signed zeros, subnormal boundaries,
 adjacent normal values, both largest finite magnitudes, infinities, and quiet/signaling NaNs. For
-the `quick` and `release` profiles it's 16 left operands, or **2,097,152 ordered pairs**. Our saved
-release evidence predates this expansion and records two rows, or 131,072 pairs.
+the `quick` and `release` profiles it's 16 left operands, or **2,097,152 ordered pairs**.
 
 The transcendental command compares FloatLib's `exp`, `log`, `sin`, `cos`, `sinh`, `cosh`, `tanh`,
 `pow` and `pi` with MPFR in binary16, bfloat16, binary32, binary64, binary128 and `ieee 31 23`.
@@ -216,7 +187,7 @@ protocols.
 | Low-bit interchange values | [ONNX float8 specification](https://onnx.ai/onnx/technical/float8.html) |
 | Configurable low-precision values | [IEEE P3109 public tables](https://github.com/P3109/Public) |
 | P3109 arithmetic and timing in three small formats | [FLoPS executable artifact](../benchmarks/external/flops/README.md) |
-| FP16, BF16, E4M3FN, and E5M2 scalar conversions | [TensorLib conversion comparison](../benchmarks/external/tensorlib/README.md) |
+| FP16, BF16, E4M3, and E5M2 scalar conversions | [TensorLib conversion comparison](../benchmarks/external/tensorlib/README.md) |
 | Binary arithmetic and rounding | [GNU MPFR](https://www.mpfr.org/mpfr-current/mpfr.html) |
 | Ball and transcendental arithmetic | [Arb](https://arblib.org/) through [python-flint](https://python-flint.readthedocs.io/) |
 | Additional IEEE vectors | [IBM FPgen test suite](https://github.com/sergev/ieee754-test-suite) |
@@ -224,8 +195,9 @@ protocols.
 | Independent posit execution | [SoftPosit](https://gitlab.com/cerlane/SoftPosit) |
 | Transcendental observations | [CORE-MATH](https://gitlab.inria.fr/core-math/core-math), [OpenLibm](https://github.com/JuliaMath/openlibm), and [RLIBM](https://github.com/rutgers-apl/rlibm) |
 | Every binary16 and bfloat16 arithmetic pair, every binary32 square root | [Berkeley SoftFloat](https://www.jhauser.us/arithmetic/SoftFloat-3/doc/SoftFloat.html) and an MPFR emulation of each format |
-| Certified `expMinus1` and `logPlus1` | [GNU MPFR](https://www.mpfr.org/mpfr-current/mpfr.html) and the [CORE-MATH](https://gitlab.inria.fr/core-math/core-math) worst-case lists |
+| Certified `expm1` and `logp1` | [GNU MPFR](https://www.mpfr.org/mpfr-current/mpfr.html) and the [CORE-MATH](https://gitlab.inria.fr/core-math/core-math) worst-case lists |
 | A double-rounding format simulator | [MPFX](https://github.com/bksaiki/mpfx) |
+| OCP MX block quantization and decoding, NVFP4 quantization, FP8, FP6 and FP4 element casts | [torchao](https://github.com/pytorch/ao) `prototype.mx_formats`, [microxcaling](https://github.com/microsoft/microxcaling), and PyTorch's `float8_e4m3fn` and `float8_e5m2` casts |
 
 ### TestFloat details
 
@@ -266,7 +238,7 @@ individual measurements.
 ### Scalar conversions with TensorLib
 
 In the [TensorLib comparison](../benchmarks/external/tensorlib/README.md) we convert every FP16,
-BF16, E4M3FN, and E5M2 encoding to Float32, and in the other direction we test rounding boundaries
+BF16, E4M3, and E5M2 encoding to Float32, and in the other direction we test rounding boundaries
 and selected Float32 inputs. Both libraries pass 952,612 numerical checks against an independent
 adjacent-value reference, and all 2,423 result words that differ come from NaN inputs, where
 FloatLib keeps the input's sign and payload and TensorLib returns a canonical NaN. This comparison
@@ -295,17 +267,12 @@ host replacement implements the software model for every input.
 
 ### SoftPosit
 
-Our [saved SoftPosit results](results/main/release/external/11-softposit) include disagreements. We
-kept the failed rows and checked every disputed answer against FloatLib's exact rational
-specification, and in the [analysis](results/main/release/external/11-softposit/ADJUDICATION.md) we
-record the operands and neighboring encodings: the 32-bit cases expose inconsistent pX2 endpoint
-handling, and the 16-bit FMA cases lose sticky information that should decide the rounding. On those
-inputs, FloatLib's executable agrees with its exact specification.
-
-That analysis backs the recorded `external-limitation` classification, but the raw comparison fails
-all the same. Later checks at more widths are in the [website's validation
-chapter](../site/content/chapters/14-external-validation.md). Don't substitute its broader counts
-into the older result manifest.
+The comparison with the pinned SoftPosit revision reports disagreements, and the raw comparison
+fails on them. We keep the failed rows and check every disputed answer against FloatLib's exact
+rational specification. The 32-bit cases expose inconsistent pX2 endpoint handling, and the 16-bit
+FMA cases lose sticky information that should decide the rounding. On those inputs FloatLib's
+executable agrees with its exact specification, so the runner classifies the suite as
+`external-limitation`.
 
 ### SMT and transcendentals
 
@@ -313,18 +280,14 @@ SMT-LIB floating-point values expose one abstract NaN, so QF_FP comparisons trea
 can't check payload identity. Where the theory exposes the bits, the adapter records bit-for-bit
 agreement.
 
-Our saved transcendental row is `observational-complete`, since it predates the known-failure gate
-and recorded every result and difference without failing. MPFR supplies the correctly rounded
-references, while CORE-MATH, OpenLibm, and RLIBM support different functions and rounding contracts
-and stay observational. Today's command gates FloatLib against MPFR by case identity. MPFR has a
-single NaN, so the Lean fixtures cover signaling-NaN and payload behavior. Since the
-known-failure list is empty, a passing run of the gate has no listed differences: no case differs
-from MPFR in its encoding, its NaN class or its ternary sign. Those observational comparisons are
-why a release run is recorded as `qualified-pass`. To accept the evidence, the verifier requires a
-passing gate with no new, changed or stale differences, none in a correctly rounded domain, and
-coverage that matched the census entry `release`. It also recomputes the summary rows, the provider
-coverage and the census counts from the retained `details.tsv`. All of this is about the approximate
-binary kernels, and none of it about the proved posit functions described on the website.
+MPFR supplies the correctly rounded references of the transcendental comparison, while CORE-MATH,
+OpenLibm, and RLIBM support different functions and rounding contracts and stay observational. The
+command gates FloatLib against MPFR by case identity. MPFR has a single NaN, so the Lean fixtures
+cover signaling-NaN and payload behavior. Since the known-failure list is empty, a passing run of
+the gate has no listed differences: no case differs from MPFR in its encoding, its NaN class or its
+ternary sign. Those observational comparisons are why a release run is recorded as
+`qualified-pass`. All of this is about the approximate binary kernels, and none of it about the
+proved posit functions described on the website.
 
 ### Exhaustive 16-bit arithmetic
 
@@ -341,7 +304,7 @@ SoftFloat.
 Across the 12,288 blocks that's 154,618,822,656 results, and none shows a value, flag, kernel, or
 reference difference ([summary](results/differential/exhaustive16-floatlib.csv)).
 
-### Certified expMinus1 and logPlus1
+### Certified expm1 and logp1
 
 We ran the certified functions on all 2^32 binary32 inputs, every finite binary16 and bfloat16
 input, and the distinct entries of CORE-MATH's binary64 `expm1.wc` and `log1p.wc` lists (123,552 and
@@ -349,6 +312,69 @@ input, and the distinct entries of CORE-MATH's binary64 `expm1.wc` and `log1p.wc
 exactly when its input is not finite or its result overflows or is undefined
 ([binary32](results/differential/certified-expm1-log1p-binary32.csv), [other
 formats](results/differential/certified-expm1-log1p-other.csv)).
+
+### IEEE 754-2019 additions
+
+`tests/oracles/ieee2019.sh` checks the operations of IEEE 754-2019 that were added in 2026-11. Its
+first part runs the binary operations of clauses 9.4 to 9.7 (`augmentedAddition`,
+`augmentedSubtraction`, `augmentedMultiplication`, the four minimum and maximum operations by
+magnitude, `sumAbs`, `sumSquare`, `scaledProd`) on every ordered pair of encodings of a six-bit
+IEEE format, and the three payload operations on every encoding of a ten-bit format. The expected
+results are computed by [brute force from the definitions](FloatLibTests/Oracle/IEEE2019.lean): the
+nearest of all finite values to the exact rational result, with the tie rule and the overflow
+threshold of the operation.
+
+The second part compares generated cases with other implementations
+([references](oracles/ieee2019/reference.py), [payload reference](oracles/ieee2019/payload.c)):
+decimal addition, subtraction and multiplication in decimal32, decimal64 and decimal128 and the
+five rounding directions, values and flags, against Python's `decimal` module (libmpdec), for the
+specification and for the kernel path; the decimal `maximumNumber`, `minimumNumber`,
+`maximumMagnitudeNumber` and `minimumMagnitudeNumber` against its `max`, `min`, `max_mag` and
+`min_mag`; the augmented operations, `sumAbs`, `sumSquare` and `scaledProd` on binary64 against
+exact rational arithmetic in Python; and `getPayload`, `setPayload` and `setPayloadSignaling` on
+binary32 and binary64 against glibc 2.34. Python's `decimal` follows IEEE 754-2008 for `max` and
+`min`, so cases with a signaling NaN or with two NaN operands are left out there.
+
+With 150,000 generated cases of each kind that's 1,523,537 cases, and none fails
+([summary](results/differential/ieee2019.csv)).
+
+The formatOf operations of clause 5.4.1 are compared with `add`, `sub`, `mul`, `div` and `fma`
+on every pair of encodings of the six-bit format in six rounding directions, value, flags and
+ternary value, and across three formats with the rules of the standard and the rounded exact
+rational result: 1,228,800 cases, none fails.
+
+The decimal reductions `sum`, `sumAbs`, `sumSquare` and `dot` of clause 9.4 are compared with
+Python's `decimal`: the reference adds the terms without rounding in a context of 26,000
+digits and rounds the exact sum once in the interchange context, with its flags. 150,000 cases
+of up to five operands in the three formats and the five rounding directions, none fails.
+
+The recommended functions of clause 9.2 on binary formats (`exp2`, `log10p1`, `sinPi`, `atan2Pi`,
+`powr`, `compound` and the others, 30 in all) are compared with
+[`mpmath`](oracles/ieee2019/functions.py), a Python package, when `IEEE2019_PACKAGES` names the
+directory that holds it. The reference computes each result with a working precision far above
+the format and rounds it with exact rational arithmetic, and it states the special cases of
+ISO/IEC 9899:2024 F.10.1 to F.10.4 a second time, independently of the Lean definitions. Values
+and all five flags are compared, in the five rounding directions of the standard: every
+encoding of an eight-bit format for the 26 functions of one operand, every pair of encodings of
+a six-bit format for `atan2`, `atan2Pi` and `powr`, `compound` on that format with thirteen
+exponents, and pseudo-random operands of binary16, binary32 and binary64 in a pseudo-random
+direction. With 150 operands for each function and format that's 112,389 cases, and none
+fails. While the reference was written it disagreed with FloatLib twice, and FloatLib was
+right both times: `sin x` is inexact for the smallest subnormal `x`, which a fixed precision of
+800 bits does not show, and `tanh`, `exp2m1` and `exp10m1` of a large operand are inexact
+although the result is the limit.
+
+The certified decimal functions of clause 9.2 (`Transcendentals.Certified.exp2`, `sin`, `atanh`
+and the others of one argument, `exp` and `log`) are compared with `mpmath` by
+[`decimal_functions.py`](oracles/ieee2019/decimal_functions.py): the reference computes each
+result with four times the precision of the format and 60 digits more and rounds it to the
+precision of the format with exact rational arithmetic. A decimal function returns a result
+only when an enclosure settles the rounding, so the oracle compares the value of every result
+that is returned and counts the cases without one. With 150 operands of magnitude between
+1/1000 and 100 for each of the 28 functions in each of decimal32, decimal64 and decimal128,
+12,565 of 12,600 cases return a result and none of them differs from the reference; the 35
+cases without a result are `exp10` (31) and `exp` (4) of operands whose result is too small
+for the two grids.
 
 ### MPFX
 
@@ -365,35 +391,73 @@ container ([sampled](results/differential/mpfx-sampled-classes.csv),
 [exhaustive](results/differential/mpfx-exhaustive16.csv)). We group the remaining EFT differences by
 engine without assigning a cause to every case.
 
-## Reading the ecosystem results
+### Block-scaled formats
 
-We also built upstream tools for floating-point testing, rewriting, error analysis, and reproducible
-arithmetic. Most rows below run each project's own checks, so a pass means that project worked in
-the recorded environment. Agreement with FloatLib takes a direct comparison.
+`tests/oracles/block_formats.py` compares the stored codes and decoded values of the general block
+format (`Formats.Block`) bit for bit with three references: torchao's `to_mx`, `to_dtype` and
+`nvfp4_quantize` and its FP4 and FP6 kernels, microxcaling's `_quantize_mx`, and PyTorch's casts
+to `float8_e4m3fn` and `float8_e5m2`. FloatLib runs through `oracle block`, which reads tensors of
+binary32 words. The inputs are random tensors and adversarial ones: block maxima at binade
+boundaries, ties of the element rounding, saturation, zeros and negative zeros, and scales at
+both ends of the scale format's range. Inputs that are not finite are not generated, and torchao's
+`EVEN` scale mode is not compared. This comparison is not part of the `quick` and `release`
+profiles. It needs `torch`, `numpy`, a torchao install and a microxcaling checkout.
 
-| Family | What was checked |
+The run of 2026-11-14 (torchao 0.18.0, torch 2.13.0, microxcaling `7bc4195`, seed 20261114, 150
+draws per generator) has no unexplained difference. A difference counts as explained when the
+script names its cause from the input alone:
+
+| Comparison | Compared | Different | Cause |
+| --- | --- | --- | --- |
+| OCP MX, five FP profiles, torchao `FLOOR`, `CEIL`, `RCEIL`: scale code, element codes, decoded values | 761,520 | 28,260 | torchao divides by `2^-126` when the stored scale is `2^-127`; the scale of an all-zero block, which the specification leaves open (FloatLib `2^0`, torchao `2^-127`) |
+| OCP MX, six profiles, microxcaling with `round="even"`: decoded values | 128,992 | 765 | microxcaling takes the exponent from a binary32 `log2`, which is one too large for a block maximum one ulp below a power of two; its INT8 clamps at `-127/64` where FloatLib stores `-2` |
+| NVFP4 without and with an outer scale, exact scale arithmetic: scale and element codes | 43,622 | 1,074 | torchao keeps the block scale at least `2^-6`; scaled inputs within `2^-20` of a rounding tie, which torchao's binary32 scale arithmetic decides |
+| NVFP4, exact scale arithmetic with the same floor of `2^-6` | 43,622 | 386 | the ties alone |
+| NVFP4, the same tensors through FloatLib's binary32 arithmetic in torchao's order | 43,622 | 0 | |
+| `float8_e4m3fn` cast against the SAT conversion, `float8_e5m2` against the OVF conversion, torchao's E2M1, E2M3 and E3M2 kernels, and both FP8 decoders | 23,658 | 0 | |
+| `float8_e4m3fn` cast against the OVF conversion, `float8_e5m2` against the SAT conversion | 10,036 | 1,005 | PyTorch saturates E4M3 and returns the E5M2 infinity above the largest finite value |
+
+The exact-arithmetic NVFP4 format rounds each exact scaled input once. A reference that scales in
+binary32 can differ from it at a tie, and the binary32 model in `oracle block nvfp4f32` shows that
+this is the only arithmetic difference on these inputs.
+
+### The standards' operations and the complex functions
+
+Each standard has compiled producers, Lake executables of the test workspace that print what the
+public operations return, and Python references that read those observations. The references are
+written from the documents and don't call FloatLib. These comparisons are not part of the `quick`
+and `release` profiles.
+
+| Producer | Reference | Compared with |
+| --- | --- | --- |
+| `positStandard` | `oracles/posit_standard.py` | SoftPosit's generic `pX2` family and the signed-word order |
+| `positFunctions` | `oracles/posit_functions.py` | a decoder and rounder on `Fraction` written from sections 4.1 and 5 of the Posit Standard, with MPFR directed enclosures for the elementary functions and the quire |
+| `positConversions`, `positIEEE` | `oracles/posit_conversions.py`, `oracles/posit_ieee.py` | exact rational conversion between widths, text, integers and IEEE formats (sections 6.1 and 6.3 to 6.5) |
+| `ofp8Standard` | `oracles/ofp8.py`, `oracles/ofp8_secondary.py` | gfloat's encodings, and microxcaling's saturating conversion and PyTorch's casts |
+| `blockStandard` | `oracles/mx_standard.py`, `mx_element.py`, `mx_dot.py`, `mx_finite_dot.py`, `nvfp4.py` | gfloat and microxcaling for MX blocks and elements, exact fractions rounded once by MPFR for the dot products, and CPU torchao for NVFP4 |
+| `p3109Comparison`, `p3109Functions`, `p3109Queries`, `p3109Blocks`, `p3109BlockFunctions` | the scripts of the same names in `oracles/` | the formulas of the interim report v4.1 on `Fraction`, MPFR directed enclosures for the functions, and gfloat 0.5.2 for the queries and the small-word block operations |
+| `embeddedFixedPoint`, `embeddedText`, `embeddedConstant`, `embeddedFormatted` | the scripts of the same names in `oracles/` | exact `Fraction` arithmetic, regular expressions and an independent automaton for the text conversions, and Clang's fixed-point types |
+| `oracle complex` | `oracles/complex_mpc.py`, `oracles/complex_cmath.py` | GNU MPC through gmpy2 in every rounding direction, and CPython's `cmath` for the special values of C23 Annex G |
+
+Each script says what it needs with `--help`. The run of 2026-11-18 (Lean v4.36.0) had no
+unexplained difference:
+
+| Family | Cases |
 | --- | --- |
-| [FPBench](https://fpbench.org/) | Upstream workflow and standalone diagnostics; no direct FloatLib comparison |
-| [Daisy](https://github.com/malyzajko/daisy) and [FPTaylor](https://github.com/soarlab/FPTaylor) | Upstream analysis and regression suites; no direct FloatLib comparison |
-| [Herbie](https://herbie.uwplse.org/) | Upstream tests and workload observations; no direct FloatLib comparison |
-| OpenLibm and RLIBM | Upstream gates plus a separate direct transcendental observation where adapters overlap |
-| CORE-MATH | All 169 available binary16, bfloat16, binary32, and binary64 function checks; 166 passed and three could not link against the recorded MPFR version |
-| [Verificarlo](https://github.com/verificarlo/verificarlo) | Upstream instrumentation diagnostics; no direct FloatLib comparison |
-| [FLiT](https://github.com/PRUNERS/FLiT) | The complete 140-configuration GCC/Clang litmus matrix in base, OpenMPI, and MPICH modes, with final comparison CSVs and SQLite databases |
-| [ReproBLAS](https://bebop.cs.berkeley.edu/reproblas/) and [ExBLAS](https://github.com/riakymch/exblas) | Upstream reproducible or exact-reduction checks and secondary diagnostics |
-| SMT QF_FP | Direct FloatLib/Z3 exact-bit and NaN-class differential results |
+| Posit operations | 508 per unary operation and 87,376 per binary operation, fused multiply-add or comparison; for the quire 567 quire-minus-quire, 4,572 quire-minus-posit and 49,104 each for multiply-add and multiply-subtract |
+| P3109 | 9,818,928 projections, 635,040 elementary-function projections and 7,278,336 block cases |
+| OFP8 | every code decoded, 262,144 conversions each from binary16 and bfloat16 and 19,768 from binary32 |
+| OCP MX and NVFP4 | 75,240 and 368,603 |
+| Embedded C fixed point | 1,196,256 interface cases, with 160,196 ordinary and 409,536 policy comparisons |
+| Complex functions | 10,944 MPC comparisons in binary16, bfloat16, binary32 and binary64, and 1,673 `cmath` references: 1,648 agreements, 19 signs that C23 leaves unspecified and six values that C23 requires where `cmath` returns NaN |
 
-Each row of the [summary](results/main/ecosystem/summary.tsv) links to its log, and
-[provenance](results/main/ecosystem/provenance) records source revisions, commands, and any
-compatibility patches. Those launch records describe the original environment, so they won't work as
-a portable rerun command (and `check.sh --profile release` doesn't run this wider collection).
+Two findings concern the references and not FloatLib. SoftPosit 0.3.4.4 turns the eight-bit
+word 129, which denotes `-2^24`, into the positive word 127 in `nearestInt`. And microxcaling
+loses the sign of an input negative zero in its finite saturating path, in specific OFP8 and MX
+cases. The NVFP4 comparison covers the modelled format with a finite positive outer binary32
+scale. It says nothing about a GPU implementation or about stochastic hardware behaviour.
 
-The three CORE-MATH compound-interest functions couldn't link, because MPFR 4.2.1 doesn't export
-`mpfr_compound`. FLiT's three modes passed with timing disabled, since what we checked was output
-variation across compiler configurations. Its Makefile removes the earlier `*-out` intermediates
-after generating the comparison CSVs, but those final CSVs and databases are saved.
-
-### Status labels
+## Status labels
 
 Summaries label each outcome with one of these statuses:
 
@@ -410,11 +474,11 @@ Summaries label each outcome with one of these statuses:
 Every qualification points to an explanation. An upstream pass, a matching value table, a sampled
 arithmetic comparison, and a timing measurement each answer a different question.
 
-## Limits of the saved comparisons
+## Limits of the `release` profile
 
-Our saved direct-comparison bundle has these coverage limits:
+The suites of the `release` profile have these coverage limits:
 
-| Area | Historical coverage limit |
+| Area | Coverage limit |
 | --- | --- |
 | Representations | No IEEE decimal32/64/128 or binary80 explicit-integer-bit comparisons |
 | Rounding and conversion | Not every floating-point/integer policy; no nearest-away, round-to-odd, tininess-before-rounding, or universal NaN payload-selection rule |
@@ -423,11 +487,10 @@ Our saved direct-comparison bundle has these coverage limits:
 | Transcendentals | No global correct-rounding or real-error theorems for all transcendentals |
 | Linear algebra | No optimized verified BLAS implementation |
 
-These limits belong to that comparison and don't describe the library as it stands now. Later
-decimal, posit, and other checks are in the [validation
-chapter](../site/content/chapters/14-external-validation.md). Even exhaustive testing at one finite
-width can't establish a theorem over every descriptor, and scalar arithmetic checks don't give you a
-verified GEMM implementation.
+The comparisons outside the profile that this page describes (the IEEE 754-2019 additions with
+their decimal cases, the standards' operations, the block-scaled formats) cover some of these
+areas. Even exhaustive testing at one finite width can't establish a theorem over every descriptor,
+and scalar arithmetic checks don't give you a verified GEMM implementation.
 
 When a comparison finds a bug, we isolate it in scratch space and then fix the general specification
 or implementation. The [testing guide](README.md#checking-a-change) says where those experiments go.

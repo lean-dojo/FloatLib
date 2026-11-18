@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,8 +9,8 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.PowerProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Rounding.Proof
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.Core
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Value.CoreProof
+public import FloatLib.Tactic.IeeeFormat
 
 /-!
 # Real values of configured binary values
@@ -78,6 +78,11 @@ zero. Theorems about it carry finiteness hypotheses, and `toReal?` is the partia
 -/
 noncomputable def toReal (value : Value) : ℝ :=
   Model.toReal (toModel value)
+
+/-- Packing a model into a configured carrier preserves its real observation. -/
+@[simp] theorem toReal_ofModel (value : Model format) :
+    toReal (ofModel (plan := plan) (code := code) value) = Model.toReal value := by
+  rw [toReal, toModel_ofModel]
 
 /-- The optional real value is absent if and only if the value is not finite. -/
 @[simp, grind =] theorem toReal?_eq_none_iff (value : Value) :

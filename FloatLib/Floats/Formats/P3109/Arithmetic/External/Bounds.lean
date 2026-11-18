@@ -1,15 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Arithmetic.External.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
+public import FloatLib.Floats.Formats.P3109.Arithmetic.External.Runtime
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Semantics
-public import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
 # Precision and range of external P3109 results
@@ -75,8 +74,9 @@ theorem endpoint_eq_maxFiniteDyadic (format : FloatFormat) (hformat : format.isI
     endpoint format false = Model.maxFiniteDyadic format := by
   have hencoding := FloatFormat.encoding_eq_ieee_of_isIEEE format hformat
   have hpow := Nat.two_pow_pos format.fracWidth
-  simp [endpoint, Model.maxFiniteDyadic, FloatFormat.maxFiniteFracField, hencoding,
-    FloatFormat.fracMaskNat, Model.pow2_eq_two_pow, pow_succ]
+  simp only [endpoint, pow_succ, Int.ofNat_eq_natCast, Model.maxFiniteDyadic,
+    Model.pow2_eq_two_pow, FloatFormat.maxFiniteFracField, hencoding, FloatFormat.fracMaskNat,
+    Dyadic.mk.injEq, and_true, true_and]
   omega
 
 /-- Clearing the sign of a dyadic gives the absolute value of its real denotation. -/
@@ -143,7 +143,8 @@ theorem saturate_finite (format : FloatFormat) (hformat : format.isIEEE = true)
       next hoverflow =>
         cases hs : policy.saturation <;> cases hr : policy.rounding <;>
           cases hn : value.negative <;>
-          simp [finiteOverflow, hs, hr, hn] at hresult <;>
+          simp only [finiteOverflow, hs, hn, NumericalValue.finite.injEq, hr, Bool.false_eq_true,
+            ↓reduceIte, reduceCtorEq] at hresult <;>
           (subst result; exact hendpoint _)
       next hnot =>
         rw [← NumericalValue.finite.inj hresult]

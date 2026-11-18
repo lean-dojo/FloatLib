@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Core
 public import FloatLib.Numerics.Quantization.Affine.Real
+import Mathlib.Tactic.Bound
 
 /-!
 # Executable affine quantization and real rounding
@@ -52,7 +53,7 @@ theorem nearestEven_ratCast (x : ℚ) : nearestEven (x : ℝ) = roundRatEven x :
         simpa using (Rat.cast_lt (K := ℝ) (p := x - (x.floor : ℚ)) (q := 1 / 2))
       rw [hcast]
       push_cast
-      constructor <;> intro h <;> linarith
+      constructor <;> intro h <;> bound
     have habove : (x : ℝ) - (x.floor : ℝ) > 1 / 2 ↔
         (x.ceil : ℚ) - x < x - (x.floor : ℚ) := by
       rw [hstep]
@@ -61,7 +62,7 @@ theorem nearestEven_ratCast (x : ℚ) : nearestEven (x : ℝ) = roundRatEven x :
         simpa using (Rat.cast_lt (K := ℝ) (p := 1 / 2) (q := x - (x.floor : ℚ)))
       rw [hcast]
       push_cast
-      constructor <;> intro h <;> linarith
+      constructor <;> intro h <;> bound
     have hfloor : ⌊(x : ℝ)⌋ = x.floor := Rat.floor_cast x
     simp only [nearestEven, hfloor, hbelow, habove, Int.even_iff, hstep]
 

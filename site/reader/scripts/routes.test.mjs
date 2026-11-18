@@ -75,12 +75,13 @@ test('moved sections resolve directly across the revised chapters', () => {
     ['posits-and-the-quire', 'where-the-posit-work-stops', 'posits-and-the-quire',
       'how-does-a-posit-round'],
     ['kernels-fixed-word-algorithms', 'capacity-bounds-and-compiler-assumptions',
-      'performance', 'what-are-the-capacity-bounds'],
+      'performance', 'division-rounding-and-limb-arithmetic'],
     ['backends-and-the-planner', 'choosing-and-caching-an-implementation',
-      'performance', 'how-an-ordinary-addition-reaches-its-kernel'],
-    ['performance', 'timing-results', 'performance', 'how-fast-are-the-calls-you-write-yourself'],
+      'performance', 'how-the-planner-selects-a-kernel'],
+    ['performance', 'timing-results', 'performance', 'public-binary-operations'],
     ['performance', 'comparing-with-leans-native-floats', 'performance',
-      'how-does-floatlib-compare-with-softfloat-mpfr-and-native-c'],
+      'host-arithmetic-as-a-reference'],
+    ['performance', 'computing-in-the-kernel', 'proof-by-computation', 'computing-in-the-kernel'],
   ];
   for (const [oldSlug, oldHeading, slug, heading] of destinations) {
     assert.deepEqual(parseRoute(`#${chapterPath(oldSlug, oldHeading)}`), {
@@ -127,7 +128,7 @@ test('alias destinations never require a second router pass', () => {
 
 test('alias resolution decodes names once and ignores inherited object properties', () => {
   assert.deepEqual(parseRoute('#/chapter/perform%61nce/timing-%72esults'), {
-    kind: 'chapter', slug: 'performance', heading: 'how-fast-are-the-calls-you-write-yourself',
+    kind: 'chapter', slug: 'performance', heading: 'public-binary-operations',
   });
   for (const heading of ['toString', '__proto__', 'unknown-section', '%invalid']) {
     assert.deepEqual(parseRoute(`#${chapterPath('performance', heading)}`), {

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -37,52 +37,60 @@ the definitions remain available to proofs.
 -/
 
 /--
-Independent exact configured addition specification: `Model.Spec.add` on the decoded words, which
-rounds the exact sum once and propagates NaR.
+Posit Standard (2022), §5.4: `Model.Spec.addition` on decoded words,
+rounding the exact sum once and propagating NaR.
 -/
-@[noinline, nospecialize] def add {format : Format} {plan : StoragePlan format} {code : Type}
+@[noinline, nospecialize] def addition {format : Format} {plan : StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :=
-  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan) Model.Spec.add
+  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan)
+    Model.Spec.addition
 
 /--
-Independent exact configured subtraction specification: `Model.Spec.sub` on the decoded words,
-which rounds the exact difference once and propagates NaR.
+Posit Standard (2022), §5.4: `Model.Spec.subtraction` on decoded words,
+rounding the exact difference once and propagating NaR.
 -/
-@[noinline, nospecialize] def sub {format : Format} {plan : StoragePlan format} {code : Type}
+@[noinline, nospecialize] def subtraction {format : Format} {plan : StoragePlan format} {code :
+    Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :=
-  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan) Model.Spec.sub
+  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan)
+    Model.Spec.subtraction
 
 /--
-Independent exact configured multiplication specification: `Model.Spec.mul` on the decoded words,
-which rounds the exact product once and propagates NaR.
+Posit Standard (2022), §5.4: `Model.Spec.multiplication` on decoded words,
+rounding the exact product once and propagating NaR.
 -/
-@[noinline, nospecialize] def mul {format : Format} {plan : StoragePlan format} {code : Type}
+@[noinline, nospecialize] def multiplication {format : Format} {plan : StoragePlan format} {code
+    : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :=
-  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan) Model.Spec.mul
+  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan)
+    Model.Spec.multiplication
 
 /--
-Independent exact configured division specification: `Model.Spec.div` on the decoded words, which
-rounds the exact quotient once and returns NaR for NaR input or a zero divisor.
+Posit Standard (2022), §5.4: `Model.Spec.division` on decoded words,
+rounding the exact quotient once and returning NaR for NaR input or a zero divisor.
 -/
-@[noinline, nospecialize] def div {format : Format} {plan : StoragePlan format} {code : Type}
+@[noinline, nospecialize] def division {format : Format} {plan : StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :=
-  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan) Model.Spec.div
+  ModelCodec.liftBinary (F := Family format code plan) (Model := Model format) (plan := plan)
+    Model.Spec.division
 
 /--
-Independent exact configured square-root specification: `Model.Spec.sqrt` on the decoded word,
-which rounds the real root once and returns NaR for NaR or a negative input.
+Posit Standard (2022), §5.5: `Model.Spec.sqrt` on the decoded word,
+rounding the real root once and returning NaR for NaR or a negative input.
 -/
 @[noinline, nospecialize] def sqrt {format : Format} {plan : StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :=
-  ModelCodec.liftUnary (F := Family format code plan) (Model := Model format) (plan := plan) Model.Spec.sqrt
+  ModelCodec.liftUnary (F := Family format code plan) (Model := Model format) (plan := plan)
+    Model.Spec.sqrt
 
 /--
-Independent exact configured fused-multiply-add specification: `Model.Spec.fma` on the decoded
-words, which rounds `left * right + addend` once and propagates NaR.
+FloatLib FMA extension with Posit Standard (2022), §4.1 rounding:
+`Model.Spec.fma` on decoded words rounds `left * right + addend` once and propagates NaR.
 -/
 @[noinline, nospecialize] def fma {format : Format} {plan : StoragePlan format} {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :=
-  ModelCodec.liftTernary (F := Family format code plan) (Model := Model format) (plan := plan) Model.Spec.fma
+  ModelCodec.liftTernary (F := Family format code plan) (Model := Model format) (plan := plan)
+    Model.Spec.fma
 
 end Spec
 

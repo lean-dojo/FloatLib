@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Fields
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Runtime
 
@@ -92,6 +91,8 @@ Round any exact dyadic through the direct positive packer and whole-word sign re
 
 Exact zero remains the unique unsigned zero. A negative nonzero result uses the Posit Standard
 (2022)'s whole-word two's-complement symmetry.
+
+Reference: Standard for Posit Arithmetic (2022), §§3.3 and 4.1.
 -/
 @[noinline] def round
     (format : Format) (value : FloatLib.Numerics.Dyadic) : Model format :=
@@ -100,7 +101,7 @@ Exact zero remains the unique unsigned zero. A negative nonzero result uses the 
   else
     let magnitude := DyadicRounding.magnitude value
     if value.negative then
-      Model.neg (roundPositive format magnitude)
+      Model.negate (roundPositive format magnitude)
     else
       roundPositive format magnitude
 

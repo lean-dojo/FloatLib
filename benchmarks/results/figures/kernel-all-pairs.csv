@@ -1,0 +1,8 @@
+statement,loop_seconds,lanes_seconds
+e4m3 add-commutes,19.0,2.456
+e4m3 mul-commutes,23.1,0.748
+e5m2 add-commutes,,2.135
+e5m2 mul-commutes,,1.518
+binary16-slice add-commutes,,3.6109999999999998
+binary16-slice mul-commutes,,1.588
+e4m3 add-table,,2.856

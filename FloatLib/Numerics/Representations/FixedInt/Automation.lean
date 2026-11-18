@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Representations.FixedInt.Semantics.Refinement
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
+public import FloatLib.Tactic.Numerics -- shake: keep
 public import Mathlib.Tactic.NormNum
 
 /-!
@@ -16,6 +16,9 @@ public import Mathlib.Tactic.NormNum
 Symbolic goals use the proved modular, checked, and saturating contracts. Concrete reduction unfolds
 the `BitVec` kernels only in the separate closed-term phase.
 -/
+
+-- The exported attribute registrations are this module's public effect.
+set_option linter.privateModule false
 
 public meta section
 

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,9 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Rounding.Direct.Candidate.Runtime
-public import FloatLib.Numerics.Quantization.Deterministic
-import Mathlib.Tactic.NormNum.Pow
+
 import Mathlib.Tactic.NormNum.Inv
+import Mathlib.Tactic.NormNum.Pow
 
 /-!
 # Pure guard-and-sticky Posit tail specification
@@ -165,6 +165,11 @@ theorem roundStreamPrefix_eq_roundShiftRightEven
       Nat.add_sub_cancel]
     rcases Nat.mod_two_eq_zero_or_one (raw / 2 ^ shift) with hguard | hguard <;>
       rcases Nat.mod_two_eq_zero_or_one (raw / 2 ^ (shift + 1)) with hparity | hparity <;>
-      simp [hguard, hparity] <;> (try split_ifs) <;> omega
+      simp only [hguard, zero_ne_one, decide_false, hparity, bne_self_eq_false, Bool.or_false,
+        Bool.false_and, Bool.false_eq_true, ↓reduceIte, mul_zero, add_zero, left_eq_ite_iff,
+        not_lt, right_eq_ite_iff, Nat.left_eq_add, one_ne_zero, imp_false, Nat.reduceBNe,
+        Bool.or_true, Bool.and_true, ite_self, not_le, gt_iff_lt, decide_true, Bool.true_and,
+        bne_iff_ne, ne_eq, ite_not, mul_one, add_lt_iff_neg_right, not_lt_zero,
+        lt_add_iff_pos_left, Bool.and_self] <;> (try split_ifs) <;> omega
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding

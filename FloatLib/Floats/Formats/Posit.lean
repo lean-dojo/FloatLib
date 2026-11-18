@@ -1,39 +1,41 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module -- shake: keep-all
 
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Square
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Runtime
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Runtime
+public meta import FloatLib.Tactic.FloatInfo.Posit
+public meta import FloatLib.Tactic.FloatInfo.Posit.Quire
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Runtime
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Add.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Sub.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Fma.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Mul.Proof
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Sqrt.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Fma.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Limb.Packed.Sub.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Square
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Packed.Dyadic.Proof
 public import FloatLib.Floats.Formats.Posit.Cast.Widening
 public import FloatLib.Floats.Formats.Posit.Configured
-public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Instances
+public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Proof
+public import FloatLib.Floats.Formats.Posit.Configured.Conversion.Runtime
+public import FloatLib.Floats.ExecFloat.Conversion.PositIEEE
 public import FloatLib.Floats.Formats.Posit.Configured.Real
 public import FloatLib.Floats.Formats.Posit.Configured.Projective
-public import FloatLib.Floats.Formats.Posit.Rounding.Enclosure.Convergence
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Proof
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Views
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Runtime
-public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Proof
-public import FloatLib.Floats.Formats.Posit.Quire.Capacity
 public import FloatLib.Floats.Formats.Posit.Quire.Accumulation
-public meta import FloatLib.Floats.Formats.Posit.Quire.Info
-public meta import FloatLib.Floats.Formats.Posit.Info
+public import FloatLib.Floats.Formats.Posit.Quire.Capacity
+public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Proof
+public import FloatLib.Floats.Formats.Posit.Quire.Configured.Conversion.Runtime
+public import FloatLib.Floats.Formats.Posit.Quire.Configured.Proof
+public import FloatLib.Floats.Formats.Posit.General.Standard
+public import FloatLib.Floats.Formats.Posit.Quire.Configured.Views
+public import FloatLib.Floats.Formats.Posit.Rounding.Enclosure.Convergence
 
 /-!
 # Posit numerical formats
@@ -50,12 +52,23 @@ accumulator, `ExecFloat.Posit.Quire (bits := n)`.
 * John L. Gustafson, *Standard Posit Arithmetic*, *Supercomputing Frontiers and
   Innovations* 9(1), 2022, <https://doi.org/10.14529/jsfi220102>.
 
+## Other exponent sizes
+
+The Posit Standard (2022) fixes two exponent bits. `Posit.General` is a FloatLib extension
+beyond it: the values of the codes, their order and the rounding of a result are proved for
+every number `es` of exponent bits and every width (`General.value`, `General.value_strictMono`,
+`General.encode_value`, `General.encode_between`), on the natural-number encodings that
+`Posit.KernelPath.Core` computes with. `General.Standard` identifies the instance `es = 2` with
+the standard's model. The public types and their arithmetic stay at `es = 2`.
+
 ## Arithmetic
 
 This module exposes the exact specifications of the six universal arithmetic operations, along
 with the certified exact-dyadic, native-word, and two-limb rounding backends. Picking a backend
 for a static width happens under `Posit.Configured`. `square` gets no kernel of its own, because it
 reuses the selected multiplication kernel and its refinement theorem.
+
+Reference: Standard for Posit Arithmetic (2022), §§3.1–3.4.
 -/
 
 @[expose] public section

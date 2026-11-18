@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Proof
 public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 
@@ -22,7 +21,7 @@ Exceptional values follow three rules:
 
 * NaR is never interpreted as infinity, and it propagates through the six core operations.
 * Division by zero gives NaR, and so does the square root of a negative finite value.
-* Fused multiply-add computes the exact rational expression `left * right + addend` and rounds
+* Fused multiply-addition computes the exact rational expression `left * right + addend` and rounds
   only the final result.
 
 For square root the rounding decision is exact too. `roundSqrtRat` compares the rational radicand
@@ -41,8 +40,8 @@ namespace FloatLib.Floats.Formats.Posit.Model.Spec
 
 variable {format : Format}
 
-/-- Exact addition followed by one standardized posit rounding. NaR in either operand gives NaR. -/
-@[inline] def add (left right : Model format) : Model format :=
+/-- Posit Standard (2022), §5.4: exact addition rounded once; NaR propagates. -/
+@[inline] def addition (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
       roundRat format (leftValue + rightValue)
@@ -50,9 +49,9 @@ variable {format : Format}
       nar format
 
 /--
-Exact subtraction followed by one standardized posit rounding. NaR in either operand gives NaR.
+Posit Standard (2022), §5.4: exact subtraction rounded once; NaR propagates.
 -/
-@[inline] def sub (left right : Model format) : Model format :=
+@[inline] def subtraction (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
       roundRat format (leftValue - rightValue)
@@ -60,9 +59,9 @@ Exact subtraction followed by one standardized posit rounding. NaR in either ope
       nar format
 
 /--
-Exact multiplication followed by one standardized posit rounding. NaR in either operand gives NaR.
+Posit Standard (2022), §5.4: exact multiplication rounded once; NaR propagates.
 -/
-@[inline] def mul (left right : Model format) : Model format :=
+@[inline] def multiplication (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
       roundRat format (leftValue * rightValue)
@@ -70,12 +69,12 @@ Exact multiplication followed by one standardized posit rounding. NaR in either 
       nar format
 
 /--
-Exact division followed by one standardized posit rounding.
+Posit Standard (2022), §5.4: exact division followed by one rounding.
 
 The standard's real-number interpretation has no result for a zero divisor, so the operation
 returns NaR in that case.
 -/
-@[inline] def div (left right : Model format) : Model format :=
+@[inline] def division (left right : Model format) : Model format :=
   match left.toRat?, right.toRat? with
   | some leftValue, some rightValue =>
       if rightValue = 0 then
@@ -86,7 +85,7 @@ returns NaR in that case.
       nar format
 
 /--
-Correctly rounded square root for the standardized real domain.
+Posit Standard (2022), §5.5: correctly rounded square root.
 
 NaR and negative finite inputs produce NaR. Zero and positive inputs use exact rational boundary
 comparisons.
@@ -102,7 +101,8 @@ comparisons.
         roundSqrtRat format rational
 
 /--
-Exact fused multiply-add with a single final standardized rounding. NaR in any operand gives NaR.
+FloatLib FMA extension with Posit Standard (2022), §4.1 rounding.
+The exact fused multiply-addition rounds once, and NaR propagates.
 -/
 @[inline] def fma (left right addend : Model format) : Model format :=
   match left.toRat?, right.toRat?, addend.toRat? with
@@ -113,48 +113,48 @@ Exact fused multiply-add with a single final standardized rounding. NaR in any o
 
 /-- NaR propagates from the left operand of specified addition. -/
 @[simp] theorem add_nar_left (right : Model format) :
-    add (nar format) right = nar format := by
-  simp [add]
+    addition (nar format) right = nar format := by
+  simp [addition]
 
 /-- NaR propagates from the right operand of specified addition. -/
 @[simp] theorem add_nar_right (left : Model format) :
-    add left (nar format) = nar format := by
-  simp [add]
+    addition left (nar format) = nar format := by
+  simp [addition]
 
 /-- NaR propagates from the left operand of specified subtraction. -/
 @[simp] theorem sub_nar_left (right : Model format) :
-    sub (nar format) right = nar format := by
-  simp [sub]
+    subtraction (nar format) right = nar format := by
+  simp [subtraction]
 
 /-- NaR propagates from the right operand of specified subtraction. -/
 @[simp] theorem sub_nar_right (left : Model format) :
-    sub left (nar format) = nar format := by
-  simp [sub]
+    subtraction left (nar format) = nar format := by
+  simp [subtraction]
 
 /-- NaR propagates from the left operand of specified multiplication. -/
 @[simp] theorem mul_nar_left (right : Model format) :
-    mul (nar format) right = nar format := by
-  simp [mul]
+    multiplication (nar format) right = nar format := by
+  simp [multiplication]
 
 /-- NaR propagates from the right operand of specified multiplication. -/
 @[simp] theorem mul_nar_right (left : Model format) :
-    mul left (nar format) = nar format := by
-  simp [mul]
+    multiplication left (nar format) = nar format := by
+  simp [multiplication]
 
 /-- NaR propagates from the dividend of specified division. -/
 @[simp] theorem div_nar_left (right : Model format) :
-    div (nar format) right = nar format := by
-  simp [div]
+    division (nar format) right = nar format := by
+  simp [division]
 
 /-- NaR propagates from the divisor of specified division. -/
 @[simp] theorem div_nar_right (left : Model format) :
-    div left (nar format) = nar format := by
-  simp [div]
+    division left (nar format) = nar format := by
+  simp [division]
 
 /-- Specified posit division by zero produces NaR. -/
 @[simp] theorem div_zero_right (left : Model format) :
-    div left (zero format) = nar format := by
-  cases hleft : left.toRat? <;> simp [div, hleft]
+    division left (zero format) = nar format := by
+  cases hleft : left.toRat? <;> simp [division, hleft]
 
 /-- The specified square root of NaR is NaR. -/
 @[simp] theorem sqrt_nar :

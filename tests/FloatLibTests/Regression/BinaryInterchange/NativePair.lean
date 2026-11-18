@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -310,7 +310,8 @@ namespace Fma
 
 variable (fmt : FloatFormat)
 
-/-- Cases accepted by the native route alongside exceptional and differently aligned baseline cases. -/
+/-- Cases accepted by the native route alongside exceptional and differently aligned baseline
+cases. -/
 def fixtures : Array (Model fmt × Model fmt × Model fmt) :=
   #[
     ⟨value fmt false fmt.bias 0, value fmt false fmt.bias 0, value fmt false fmt.bias 0⟩,

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,12 +8,9 @@ module
 
 public import FloatLib.Numerics.Enclosure.Expression.Backends
 public import FloatLib.Numerics.Enclosure.Expression.Real
-public import FloatLib.Numerics.Enclosure.Interval.BinaryGridProof
-public import FloatLib.Numerics.Enclosure.Interval.ElementaryProof
 public import FloatLib.Numerics.Enclosure.Interval.FusedProof
 public import FloatLib.Numerics.Enclosure.Interval.HyperbolicProof
 public import FloatLib.Numerics.Enclosure.Interval.InverseTrigProof
-public import FloatLib.Numerics.Enclosure.Interval.OperationsProof
 
 /-!
 # Real-containment contracts for expression backends

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -189,14 +189,14 @@ theorem nearestEven_congr {x y : ℝ} (hfloor : ⌊x⌋ = ⌊y⌋)
 /--
 Nearest-even rounds down when the fractional part is strictly less than `1/2`.
 -/
-lemma nearestEven_eq_floor_of_frac_lt_half (x : ℝ) (h : x - ⌊x⌋ < 1/2) :
+lemma nearestEven_eq_floor_of_frac_lt_half (x : ℝ) (h : x - ⌊x⌋ < 1 / 2) :
     nearestEven x = ⌊x⌋ := by
   simp only [nearestEven, h, ite_true]
 
 /--
 Nearest-even rounds up when the fractional part is strictly greater than `1/2`.
 -/
-lemma nearestEven_eq_ceil_of_frac_gt_half (x : ℝ) (h : x - ⌊x⌋ > 1/2) :
+lemma nearestEven_eq_ceil_of_frac_gt_half (x : ℝ) (h : x - ⌊x⌋ > 1 / 2) :
     nearestEven x = ⌊x⌋ + 1 := by
   simp only [nearestEven]
   have h1 : ¬(x - ⌊x⌋ < 1/2) := not_lt.mpr (le_of_lt h)
@@ -206,22 +206,22 @@ lemma nearestEven_eq_ceil_of_frac_gt_half (x : ℝ) (h : x - ⌊x⌋ > 1/2) :
 Nearest-even tie-breaking: when the fractional part is `1/2` and the floor is even,
 round down to the even integer.
 -/
-lemma nearestEven_eq_floor_of_frac_half_even (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) (h2 : Even ⌊x⌋) :
+lemma nearestEven_eq_floor_of_frac_half_even (x : ℝ) (h1 : x - ⌊x⌋ = 1 / 2) (h2 : Even ⌊x⌋) :
     nearestEven x = ⌊x⌋ := by
   simp only [nearestEven]
-  have h3 : ¬(x - ⌊x⌋ < 1/2) := by rw [h1]; norm_num
-  have h4 : ¬(x - ⌊x⌋ > 1/2) := by rw [h1]; norm_num
+  have h3 : ¬(x - ⌊x⌋ < 1/2) := by rw [h1]; exact lt_irrefl _
+  have h4 : ¬(x - ⌊x⌋ > 1/2) := by rw [h1]; exact lt_irrefl _
   simp only [h3, h4, ite_false, h2, ite_true]
 
 /--
 Nearest-even tie-breaking: when the fractional part is `1/2` and the floor is odd,
 round up to the even integer.
 -/
-lemma nearestEven_eq_ceil_of_frac_half_odd (x : ℝ) (h1 : x - ⌊x⌋ = 1/2) (h2 : ¬Even ⌊x⌋) :
+lemma nearestEven_eq_ceil_of_frac_half_odd (x : ℝ) (h1 : x - ⌊x⌋ = 1 / 2) (h2 : ¬Even ⌊x⌋) :
     nearestEven x = ⌊x⌋ + 1 := by
   simp only [nearestEven]
-  have h3 : ¬(x - ⌊x⌋ < 1/2) := by rw [h1]; norm_num
-  have h4 : ¬(x - ⌊x⌋ > 1/2) := by rw [h1]; norm_num
+  have h3 : ¬(x - ⌊x⌋ < 1/2) := by rw [h1]; exact lt_irrefl _
+  have h4 : ¬(x - ⌊x⌋ > 1/2) := by rw [h1]; exact lt_irrefl _
   simp only [h3, h4, ite_false, h2, ite_false]
 
 /-- `nearestEven` is a valid rounding mode: it is monotone and fixes integers. -/
@@ -231,7 +231,7 @@ instance : ValidRnd nearestEven where
     by_cases hfloor : ⌊x⌋ = ⌊y⌋
     · have hfrac : x - ⌊x⌋ ≤ y - ⌊y⌋ := by
         rw [hfloor]
-        linarith
+        gcongr
       by_cases hxlt : x - ⌊x⌋ < 1 / 2
       · rw [nearestEven_eq_floor_of_frac_lt_half x hxlt, hfloor]
         exact (nearestEven_bounds y).1
@@ -250,7 +250,7 @@ instance : ValidRnd nearestEven where
             · rw [nearestEven_eq_ceil_of_frac_half_odd x hxeq heven,
                 nearestEven_eq_ceil_of_frac_gt_half y hygt, hfloor]
             · have hyge : (1 / 2 : ℝ) ≤ y - ⌊y⌋ := by
-                linarith
+                exact hxge.trans hfrac
               have hyeq : y - ⌊y⌋ = (1 / 2 : ℝ) :=
                 le_antisymm (le_of_not_gt hygt) hyge
               have hyodd : ¬Even ⌊y⌋ := by
@@ -291,7 +291,7 @@ theorem nearestEven_abs_eq_round (x : ℝ) :
   · by_cases hgt : x - (⌊x⌋ : ℝ) > 1 / 2
     · rw [nearestEven_eq_ceil_of_frac_gt_half x hgt, round_eq_floor_add_one_of_half_le hgt.le]
     · have heq : x - (⌊x⌋ : ℝ) = 1 / 2 := by
-        linarith
+        exact le_antisymm (le_of_not_gt hgt) (le_of_not_gt hlt)
       by_cases heven : Even ⌊x⌋
       · rw [nearestEven_eq_floor_of_frac_half_even x heq heven,
           round_eq_floor_add_one_of_half_le heq.ge]
@@ -300,7 +300,7 @@ theorem nearestEven_abs_eq_round (x : ℝ) :
           push_cast
           linarith
         rw [hleft, hright]
-        norm_num
+        exact abs_neg (1 / 2)
       · rw [nearestEven_eq_ceil_of_frac_half_odd x heq heven,
           round_eq_floor_add_one_of_half_le heq.ge]
 
@@ -366,16 +366,14 @@ theorem scaledMantissa_nonpos {x : ℝ} (hx : x ≤ 0) : scaledMantissa β fexp 
 /--
 A value in the generic format has an integral mantissa at its canonical exponent.
 -/
-theorem scaled_mantissa_int_of_generic (x : ℝ) (hx : genericFormat β fexp x) :
+theorem scaledMantissa_int_of_generic (x : ℝ) (hx : GenericRepresentable β fexp x) :
     ∃ n : ℤ, scaledMantissa β fexp x = n := by
   let m := ⌊scaledMantissa β fexp x⌋
   let e := cexp β fexp x
   use m
-
   have h_repr : x = m * bpow β e := by
-    simp only [genericFormat, toReal] at hx
+    simp only [GenericRepresentable, toReal] at hx
     exact hx
-
   calc scaledMantissa β fexp x
     = x * bpow β (-cexp β fexp x)             := by rfl
     _ = x * bpow β (-e)                              := by rfl
@@ -395,29 +393,24 @@ This is the Flocq-style `round_generic` law: every valid integer rounder fixes t
 canonical mantissa, so reconstructing the value returns the original grid point.
 -/
 @[simp] theorem round_preserves_generic (rnd : ℝ → ℤ) [ValidRnd rnd] (x : ℝ)
-    (hx : genericFormat β fexp x) :
+    (hx : GenericRepresentable β fexp x) :
     round (β := β) (fexp := fexp) rnd x = x := by
   simp only [round]
-
-  obtain ⟨n, hn⟩ := scaled_mantissa_int_of_generic x hx
-
+  obtain ⟨n, hn⟩ := scaledMantissa_int_of_generic x hx
   have h_rnd : rnd (scaledMantissa β fexp x) = n := by
     rw [hn]
     exact ValidRnd.id n
-
   have h_floor : n = ⌊scaledMantissa β fexp x⌋ := by
     rw [hn]
     simp only [Int.floor_intCast]
-
   rw [h_rnd, h_floor]
-
-  simp only [genericFormat] at hx
+  simp only [GenericRepresentable] at hx
   exact hx.symm
 
 /--
 Multiplying the canonical scaled mantissa by its radix power reconstructs the original value.
 -/
-lemma scaled_mantissa_mul_bpow (x : ℝ) :
+lemma scaledMantissa_mul_bpow (x : ℝ) :
     scaledMantissa β fexp x * bpow β (cexp β fexp x) = x := by
   simp only [scaledMantissa]
   rw [mul_assoc, ← bpow.add_exp]
@@ -425,23 +418,23 @@ lemma scaled_mantissa_mul_bpow (x : ℝ) :
   simp [Numerics.Radix.toReal, mul_one]
 
 /-- An integral canonical scaled mantissa puts a value in the generic format. -/
-theorem generic_format_of_scaled_mantissa_int (x : ℝ) (n : ℤ)
-    (h : scaledMantissa β fexp x = n) : genericFormat β fexp x := by
-  unfold genericFormat toReal
+theorem genericRepresentable_of_scaledMantissa_int (x : ℝ) (n : ℤ)
+    (h : scaledMantissa β fexp x = n) : GenericRepresentable β fexp x := by
+  unfold GenericRepresentable toReal
   calc
     x = scaledMantissa β fexp x * bpow β (cexp β fexp x) :=
-      (scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x).symm
+      (scaledMantissa_mul_bpow (β := β) (fexp := fexp) x).symm
     _ = (n : ℝ) * bpow β (cexp β fexp x) := by rw [h]
     _ = (⌊scaledMantissa β fexp x⌋ : ℝ) *
           bpow β (cexp β fexp x) := by rw [h]; simp
 
 /-- A value is in the generic format if and only if its canonical scaled mantissa is an integer. -/
-theorem generic_format_iff_scaled_mantissa_int (x : ℝ) :
-    genericFormat β fexp x ↔ ∃ n : ℤ, scaledMantissa β fexp x = n := by
+theorem genericRepresentable_iff_scaledMantissa_int (x : ℝ) :
+    GenericRepresentable β fexp x ↔ ∃ n : ℤ, scaledMantissa β fexp x = n := by
   constructor
-  · exact scaled_mantissa_int_of_generic (β := β) (fexp := fexp) x
+  · exact scaledMantissa_int_of_generic (β := β) (fexp := fexp) x
   · rintro ⟨n, hn⟩
-    exact generic_format_of_scaled_mantissa_int (β := β) (fexp := fexp) x n hn
+    exact genericRepresentable_of_scaledMantissa_int (β := β) (fexp := fexp) x n hn
 
 /--
 Half-ULP error bound for `round` under round-to-nearest.
@@ -454,19 +447,19 @@ theorem error_bound_ulp (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
   by_cases hx : x = 0
   · subst hx
     rw [round_zero, sub_self, abs_zero]
-    exact div_nonneg (ulp.nonneg (β := β) (fexp := fexp) 0) (by norm_num)
-  · simp [ulp, hx]
-    simp [round, toReal]
+    exact div_nonneg (ulp.nonneg (β := β) (fexp := fexp) 0) (zero_le_two)
+  · simp only [ulp, hx, ↓reduceIte]
+    simp only [round, toReal]
     set s : ℝ := scaledMantissa β fexp x
     set e : ℤ := cexp β fexp x
     have hxrepr : s * bpow β e = x := by
       subst s e
-      simpa using (scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x)
+      simpa using (scaledMantissa_mul_bpow (β := β) (fexp := fexp) x)
     rw [← hxrepr]
     rw [← sub_mul]
     rw [abs_mul]
     have hbpos : 0 < bpow β e := bpow.pos β e
-    simp [abs_of_pos hbpos]
+    simp only [abs_of_pos hbpos, ge_iff_le]
     have h := ValidRndToNearest.abs_sub_le_half (rnd := rnd) s
     have hbnonneg : 0 ≤ bpow β e := le_of_lt hbpos
     have hmul := mul_le_mul_of_nonneg_right h hbnonneg

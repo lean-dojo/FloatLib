@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -30,7 +30,7 @@ namespace FloatLibTests.Oracle.Posit
 
 open FloatLib.Floats
 
-private inductive Operation where
+inductive Operation where
   | add
   | sub
   | mul
@@ -43,7 +43,7 @@ private inductive Operation where
   | lt
   deriving BEq, Repr
 
-private def Operation.ofId? : UInt8 → Option Operation
+def Operation.ofId? : UInt8 → Option Operation
   | 1 => some .add
   | 2 => some .sub
   | 3 => some .mul
@@ -56,7 +56,7 @@ private def Operation.ofId? : UInt8 → Option Operation
   | 10 => some .lt
   | _ => none
 
-private def Operation.name : Operation → String
+def Operation.name : Operation → String
   | .add => "add"
   | .sub => "sub"
   | .mul => "mul"
@@ -68,44 +68,44 @@ private def Operation.name : Operation → String
   | .le => "le"
   | .lt => "lt"
 
-private def Operation.arity : Operation → Nat
+def Operation.arity : Operation → Nat
   | .sqrt | .rint => 1
   | .add | .sub | .mul | .div | .eq | .le | .lt => 2
   | .fma => 3
 
-private def Operation.isComparison : Operation → Bool
+def Operation.isComparison : Operation → Bool
   | .eq | .le | .lt => true
   | _ => false
 
-private inductive Family where
+inductive Family where
   | px2
   | p32
   deriving BEq
 
-private def Family.ofId? : UInt8 → Option Family
+def Family.ofId? : UInt8 → Option Family
   | 0 => some .px2
   | 1 => some .p32
   | _ => none
 
-private def Family.name : Family → String
+def Family.name : Family → String
   | .px2 => "px2"
   | .p32 => "p32"
 
-private inductive GenerationMode where
+inductive GenerationMode where
   | exhaustive
   | sampled
   deriving BEq
 
-private def GenerationMode.ofId? : UInt8 → Option GenerationMode
+def GenerationMode.ofId? : UInt8 → Option GenerationMode
   | 0 => some .exhaustive
   | 1 => some .sampled
   | _ => none
 
-private def GenerationMode.name : GenerationMode → String
+def GenerationMode.name : GenerationMode → String
   | .exhaustive => "exhaustive"
   | .sampled => "sampled"
 
-private structure Header where
+structure Header where
   bits : Nat
   operation : Operation
   family : Family
@@ -117,52 +117,52 @@ private structure Header where
   seed : Nat
   sourceRevision : String
 
-private structure Statistics where
+structure Statistics where
   cases : Nat := 0
   mismatches : Nat := 0
   protocolErrors : Nat := 0
 
-private def Statistics.failed (statistics : Statistics) : Bool :=
+def Statistics.failed (statistics : Statistics) : Bool :=
   statistics.cases == 0 || statistics.mismatches != 0 || statistics.protocolErrors != 0
 
-private structure Check where
+structure Check where
   caseId : Nat
   expected : Nat
   actual : Nat
   operands : Array Nat
 
-private def byte (bytes : ByteArray) (offset : Nat) : Nat :=
+def byte (bytes : ByteArray) (offset : Nat) : Nat :=
   (bytes.get! offset).toNat
 
-private def uint32LE (bytes : ByteArray) (offset : Nat) : Nat :=
+def uint32LE (bytes : ByteArray) (offset : Nat) : Nat :=
   byte bytes offset +
     (byte bytes (offset + 1) <<< 8) +
     (byte bytes (offset + 2) <<< 16) +
     (byte bytes (offset + 3) <<< 24)
 
-private def uint64LE (bytes : ByteArray) (offset : Nat) : Nat :=
+def uint64LE (bytes : ByteArray) (offset : Nat) : Nat :=
   uint32LE bytes offset + (uint32LE bytes (offset + 4) <<< 32)
 
-private def hexText (value : Nat) : String :=
+def hexText (value : Nat) : String :=
   String.ofList (Nat.toDigits 16 value)
 
-private def byteHexText (value : Nat) : String :=
+def byteHexText (value : Nat) : String :=
   if value < 16 then "0" ++ hexText value else hexText value
 
-private def revisionText (bytes : ByteArray) : String :=
+def revisionText (bytes : ByteArray) : String :=
   String.intercalate "" <|
     (List.range 20).map fun index => byteHexText (byte bytes (56 + index))
 
-private def protocolHeaderSize : Nat :=
+def protocolHeaderSize : Nat :=
   80
 
-private def expectedCaseCount (sourceCases firstCaseId caseStride : Nat) : Nat :=
+def expectedCaseCount (sourceCases firstCaseId caseStride : Nat) : Nat :=
   if firstCaseId < sourceCases then
     1 + (sourceCases - 1 - firstCaseId) / caseStride
   else
     0
 
-private def decodeHeader (bytes : ByteArray) : Except String Header := do
+def decodeHeader (bytes : ByteArray) : Except String Header := do
   if bytes.size < protocolHeaderSize then
     throw s!"truncated protocol header: received {bytes.size} of {protocolHeaderSize} bytes"
   if byte bytes 0 != 0x53 || byte bytes 1 != 0x50 ||
@@ -240,7 +240,7 @@ private def decodeHeader (bytes : ByteArray) : Except String Header := do
     sourceRevision := revisionText bytes
   }
 
-@[inline] private def evaluate {bits : Nat} (bits_ge_two : 2 ≤ bits)
+@[inline] def evaluate {bits : Nat} (bits_ge_two : 2 ≤ bits)
     (operation : Operation) (operands : Array Nat) : Except String Nat := do
   let value (index : Nat) : ExecFloat.Posit bits bits_ge_two :=
     ExecFloat.Posit.ofNatBits (operands[index]!)
@@ -257,14 +257,14 @@ private def decodeHeader (bytes : ByteArray) : Except String Header := do
   | .le => pure <| if ExecFloat.compareLessEqual (value 0) (value 1) then 1 else 0
   | .lt => pure <| if ExecFloat.compareLess (value 0) (value 1) then 1 else 0
 
-private def recordSize (operation : Operation) : Nat :=
+def recordSize (operation : Operation) : Nat :=
   8 + 4 * (operation.arity + 1)
 
-private def decodeOperands (operation : Operation) (record : ByteArray) : Array Nat :=
+def decodeOperands (operation : Operation) (record : ByteArray) : Array Nat :=
   Array.ofFn fun index : Fin operation.arity =>
     uint32LE record (8 + 4 * index)
 
-private def reportMismatch (header : Header) (caseId expected actual : Nat)
+def reportMismatch (header : Header) (caseId expected actual : Nat)
     (operands : Array Nat) : IO Unit := do
   let rendered := String.intercalate " " <|
     operands.toList.map fun operand => s!"0x{hexText operand}"
@@ -273,7 +273,7 @@ private def reportMismatch (header : Header) (caseId expected actual : Nat)
       s!"operation={header.operation.name} operands=[{rendered}]"
   IO.eprintln s!"  result: actual=0x{hexText actual} expected=0x{hexText expected}"
 
-private def checkRecord {bits : Nat} (bits_ge_two : 2 ≤ bits)
+def checkRecord {bits : Nat} (bits_ge_two : 2 ≤ bits)
     (header : Header) (expectedCaseId : Nat) (record : ByteArray) : Except String Check := do
   let caseId := uint64LE record 0
   if caseId != expectedCaseId then
@@ -293,7 +293,7 @@ private def checkRecord {bits : Nat} (bits_ge_two : 2 ≤ bits)
   let actual ← evaluate bits_ge_two header.operation operands
   pure { caseId, expected, actual, operands }
 
-private partial def checkBuffered {bits : Nat} (bits_ge_two : 2 ≤ bits)
+partial def checkBuffered {bits : Nat} (bits_ge_two : 2 ≤ bits)
     (stdin : IO.FS.Stream) (header : Header) (maximumReports : Nat)
     (buffer : ByteArray) (cursor reports : Nat) (statistics : Statistics) :
     IO Statistics := do
@@ -340,12 +340,12 @@ private partial def checkBuffered {bits : Nat} (bits_ge_two : 2 ≤ bits)
       checkBuffered bits_ge_two stdin header maximumReports (remainder.append chunk) 0 reports
         statistics
 
-private def checkWidth {bits : Nat} (bits_ge_two : 2 ≤ bits)
+def checkWidth {bits : Nat} (bits_ge_two : 2 ≤ bits)
     (stdin : IO.FS.Stream) (header : Header) (maximumReports : Nat)
     (buffer : ByteArray) : IO Statistics :=
   checkBuffered bits_ge_two stdin header maximumReports buffer protocolHeaderSize 0 {}
 
-private def dispatchWidth (stdin : IO.FS.Stream) (header : Header) (maximumReports : Nat)
+def dispatchWidth (stdin : IO.FS.Stream) (header : Header) (maximumReports : Nat)
     (buffer : ByteArray) : IO Statistics :=
   match header.bits with
   | 2 => checkWidth (bits := 2) (by decide) stdin header maximumReports buffer
@@ -381,7 +381,7 @@ private def dispatchWidth (stdin : IO.FS.Stream) (header : Header) (maximumRepor
   | 32 => checkWidth (bits := 32) (by decide) stdin header maximumReports buffer
   | _ => throw <| IO.userError s!"unsupported posit width: {header.bits}"
 
-private partial def readInitialBuffer (stdin : IO.FS.Stream) : IO ByteArray := do
+partial def readInitialBuffer (stdin : IO.FS.Stream) : IO ByteArray := do
   let rec loop (buffer : ByteArray) : IO ByteArray := do
     if protocolHeaderSize ≤ buffer.size then
       pure buffer
@@ -393,10 +393,10 @@ private partial def readInitialBuffer (stdin : IO.FS.Stream) : IO ByteArray := d
       loop (buffer.append chunk)
   loop ByteArray.empty
 
-private def usage : String :=
+def usage : String :=
   "usage: oracle posit [MAX_REPORTS]"
 
-private def parseMaximumReports (text : String) : IO Nat :=
+def parseMaximumReports (text : String) : IO Nat :=
   match text.toNat? with
   | some value => pure value
   | none => throw <| IO.userError s!"invalid maximum report count: {text}"

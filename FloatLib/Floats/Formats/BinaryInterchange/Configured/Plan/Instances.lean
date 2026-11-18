@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Plan.FirstOrder
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Direct.Proof
-public import FloatLib.Floats.ExecFloat.Core.Capability
+public import FloatLib.Tactic.AutomaticCapability
+public import FloatLib.Tactic.LimbCapability
+public import FloatLib.Tactic.PortfolioCapability
 
 /-!
 # Capability instances for configured binary formats
@@ -22,58 +22,23 @@ a closed `ExecFloat.Binary` call can specialize that kernel to its descriptor.
 Priorities encode capability preference and carry no numerical meaning, because every candidate
 must supply the same refinement contract before it can be selected. All of this wiring lives in
 this module, which keeps storage-specific instances out of the rest of the configured API.
+
+Every instance takes the portfolio of candidates tagged `@[compiler_optimize]` for its reference
+operation. A custom carrier selects among its own candidates and the tagged ones
+(`Capability.ofTagged`). A built-in carrier keeps the direct entry points below where no tagged
+candidate applies, and otherwise selects among its own choice and the tagged candidates
+(`Capability.Static`).
 -/
 
 @[expose] public section
 namespace FloatLib.Floats.Formats.BinaryInterchange.Configured
 
-instance (priority := 100) addCapability
-    (format : FloatFormat) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Add (Family format code plan) where
-  spec := Spec.add
-  candidates := Plan.addCandidates format plan
-
-instance (priority := 100) subCapability
-    (format : FloatFormat) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Sub (Family format code plan) where
-  spec := Spec.sub
-  candidates := Plan.subCandidates format plan
-
-instance (priority := 100) mulCapability
-    (format : FloatFormat) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Mul (Family format code plan) where
-  spec := Spec.mul
-  candidates := Plan.mulCandidates format plan
-
-instance (priority := 100) divCapability
-    (format : FloatFormat) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Div (Family format code plan) where
-  spec := Spec.div
-  candidates := Plan.divCandidates format plan
-
-instance (priority := 100) sqrtCapability
-    (format : FloatFormat) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Sqrt (Family format code plan) where
-  spec := Spec.sqrt
-  candidates := Plan.sqrtCandidates format plan
-
-instance (priority := 100) fmaCapability
-    (format : FloatFormat) (plan : StoragePlan format) (code : Type)
-    [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code]
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor (Family format code plan)] :
-    FloatLib.Floats.ExecFloat.Fma (Family format code plan) where
-  spec := Spec.fma
-  candidates := Plan.fmaCandidates format plan
+portfolio_capability Add add FloatFormat for Spec.add
+portfolio_capability Sub sub FloatFormat for Spec.sub
+portfolio_capability Mul mul FloatFormat for Spec.mul
+portfolio_capability Div div FloatFormat for Spec.div
+portfolio_capability Sqrt sqrt FloatFormat for Spec.sqrt
+portfolio_capability Fma fma FloatFormat for Spec.fma
 
 /-!
 Higher-priority built-in-carrier instances match `Code plan` before inspecting the plan. This
@@ -170,185 +135,18 @@ theorem directFma_eq {format : FloatFormat} {plan : StoragePlan format}
 
 end Plan
 
-@[always_inline] instance (priority := 200) automaticAddCapability
-    (format : FloatFormat) (plan : StoragePlan format)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Add (Family format (Code plan) plan) :=
-  let selection := Thunk.mk fun _ =>
-    FloatLib.Floats.ExecFloat.Backend.selectCertified planning.policy
-      (Plan.automaticAddCandidates format plan)
-  { spec := Spec.add
-    candidates := Plan.automaticAddCandidates format plan
-    selection := selection
-    execute := fun left right =>
-      if Plan.firstOrderSelected planning.policy plan .add then
-        Backend.directAdd left right
-      else if Plan.firstOrderGenericSelected planning.policy plan .add then
-        Backend.genericAdd left right
-      else
-        selection.get.run left right
-    execute_eq_implementation := by
-      funext left right
-      split
-      · rename_i h
-        rw [Backend.directAdd_eq, ← Plan.select_add_run_of_firstOrder planning.policy plan h]
-        rfl
-      · split
-        · rename_i h
-          rw [← Plan.select_add_run_of_firstOrderGeneric planning.policy plan h]
-          rfl
-        · rfl }
-
-@[always_inline] instance (priority := 200) automaticSubCapability
-    (format : FloatFormat) (plan : StoragePlan format)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Sub (Family format (Code plan) plan) :=
-  let selection := Thunk.mk fun _ =>
-    FloatLib.Floats.ExecFloat.Backend.selectCertified planning.policy
-      (Plan.automaticSubCandidates format plan)
-  { spec := Spec.sub
-    candidates := Plan.automaticSubCandidates format plan
-    selection := selection
-    execute := fun left right =>
-      if Plan.firstOrderSelected planning.policy plan .sub then
-        Backend.directSub left right
-      else if Plan.firstOrderGenericSelected planning.policy plan .sub then
-        Backend.genericSub left right
-      else
-        selection.get.run left right
-    execute_eq_implementation := by
-      funext left right
-      split
-      · rename_i h
-        rw [Backend.directSub_eq, ← Plan.select_sub_run_of_firstOrder planning.policy plan h]
-        rfl
-      · split
-        · rename_i h
-          rw [← Plan.select_sub_run_of_firstOrderGeneric planning.policy plan h]
-          rfl
-        · rfl }
-
-@[always_inline] instance (priority := 200) automaticMulCapability
-    (format : FloatFormat) (plan : StoragePlan format)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Mul (Family format (Code plan) plan) :=
-  let selection := Thunk.mk fun _ =>
-    FloatLib.Floats.ExecFloat.Backend.selectCertified planning.policy
-      (Plan.automaticMulCandidates format plan)
-  { spec := Spec.mul
-    candidates := Plan.automaticMulCandidates format plan
-    selection := selection
-    execute := fun left right =>
-      if Plan.firstOrderSelected planning.policy plan .mul then
-        Backend.directMul left right
-      else if Plan.firstOrderGenericSelected planning.policy plan .mul then
-        Backend.genericMul left right
-      else
-        selection.get.run left right
-    execute_eq_implementation := by
-      funext left right
-      split
-      · rename_i h
-        rw [Backend.directMul_eq, ← Plan.select_mul_run_of_firstOrder planning.policy plan h]
-        rfl
-      · split
-        · rename_i h
-          rw [← Plan.select_mul_run_of_firstOrderGeneric planning.policy plan h]
-          rfl
-        · rfl }
-
-@[always_inline] instance (priority := 200) automaticDivCapability
-    (format : FloatFormat) (plan : StoragePlan format)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Div (Family format (Code plan) plan) :=
-  let selection := Thunk.mk fun _ =>
-    FloatLib.Floats.ExecFloat.Backend.selectCertified planning.policy
-      (Plan.automaticDivCandidates format plan)
-  { spec := Spec.div
-    candidates := Plan.automaticDivCandidates format plan
-    selection := selection
-    execute := fun left right =>
-      if Plan.firstOrderSelected planning.policy plan .div then
-        Backend.directDiv left right
-      else if Plan.firstOrderGenericSelected planning.policy plan .div then
-        Backend.genericDiv left right
-      else
-        selection.get.run left right
-    execute_eq_implementation := by
-      funext left right
-      split
-      · rename_i h
-        rw [Backend.directDiv_eq, ← Plan.select_div_run_of_firstOrder planning.policy plan h]
-        rfl
-      · split
-        · rename_i h
-          rw [← Plan.select_div_run_of_firstOrderGeneric planning.policy plan h]
-          rfl
-        · rfl }
-
-@[always_inline] instance (priority := 200) automaticSqrtCapability
-    (format : FloatFormat) (plan : StoragePlan format)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Sqrt (Family format (Code plan) plan) :=
-  let selection := Thunk.mk fun _ =>
-    FloatLib.Floats.ExecFloat.Backend.selectCertified planning.policy
-      (Plan.automaticSqrtCandidates format plan)
-  { spec := Spec.sqrt
-    candidates := Plan.automaticSqrtCandidates format plan
-    selection := selection
-    execute := fun value =>
-      if Plan.firstOrderSelected planning.policy plan .sqrt then
-        Plan.directSqrt value
-      else if Plan.firstOrderGenericSelected planning.policy plan .sqrt then
-        Backend.genericSqrt value
-      else
-        selection.get.run value
-    execute_eq_implementation := by
-      funext value
-      split
-      · rename_i h
-        rw [Plan.directSqrt_eq, ← Plan.select_sqrt_run_of_firstOrder planning.policy plan h]
-        rfl
-      · split
-        · rename_i h
-          rw [← Plan.select_sqrt_run_of_firstOrderGeneric planning.policy plan h]
-          rfl
-        · rfl }
-
-@[always_inline] instance (priority := 200) automaticFmaCapability
-    (format : FloatFormat) (plan : StoragePlan format)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Code plan) plan)] :
-    FloatLib.Floats.ExecFloat.Fma (Family format (Code plan) plan) :=
-  let selection := Thunk.mk fun _ =>
-    FloatLib.Floats.ExecFloat.Backend.selectCertified planning.policy
-      (Plan.automaticFmaCandidates format plan)
-  { spec := Spec.fma
-    candidates := Plan.automaticFmaCandidates format plan
-    selection := selection
-    execute := fun left right addend =>
-      if Plan.firstOrderSelected planning.policy plan .fma then
-        Plan.directFma left right addend
-      else if Plan.firstOrderGenericSelected planning.policy plan .fma then
-        Backend.genericFma left right addend
-      else
-        selection.get.run left right addend
-    execute_eq_implementation := by
-      funext left right addend
-      split
-      · rename_i h
-        rw [Plan.directFma_eq, ← Plan.select_fma_run_of_firstOrder planning.policy plan h]
-        rfl
-      · split
-        · rename_i h
-          rw [← Plan.select_fma_run_of_firstOrderGeneric planning.policy plan h]
-          rfl
-        · rfl }
+automatic_capability Add add Plan.automaticAddCandidates (left right) :=
+  Backend.directAdd, Backend.directAdd_eq
+automatic_capability Sub sub Plan.automaticSubCandidates (left right) :=
+  Backend.directSub, Backend.directSub_eq
+automatic_capability Mul mul Plan.automaticMulCandidates (left right) :=
+  Backend.directMul, Backend.directMul_eq
+automatic_capability Div div Plan.automaticDivCandidates (left right) :=
+  Backend.directDiv, Backend.directDiv_eq
+automatic_capability Sqrt sqrt Plan.automaticSqrtCandidates (value) :=
+  Plan.directSqrt, Plan.directSqrt_eq
+automatic_capability Fma fma Plan.automaticFmaCandidates (left right addend) :=
+  Plan.directFma, Plan.directFma_eq
 
 /-!
 Closed limb plans expose their concrete carrier during typeclass indexing. These instances
@@ -370,58 +168,11 @@ instance (priority := 900) limbCodec
       (Model format) (Model.WideLimb.Value format) :=
   codecForPlan format (.limbs width_gt)
 
-/-- Policy-selected addition for the concrete limb carrier. -/
-@[always_inline] instance (priority := 210) limbAddCapability
-    (format : FloatFormat) (width_gt : 128 < format.bitWidth)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt))] :
-    FloatLib.Floats.ExecFloat.Add
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt)) :=
-  automaticAddCapability format (.limbs width_gt)
-
-/-- Policy-selected subtraction for the concrete limb carrier. -/
-@[always_inline] instance (priority := 210) limbSubCapability
-    (format : FloatFormat) (width_gt : 128 < format.bitWidth)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt))] :
-    FloatLib.Floats.ExecFloat.Sub
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt)) :=
-  automaticSubCapability format (.limbs width_gt)
-
-/-- Policy-selected multiplication for the concrete limb carrier. -/
-@[always_inline] instance (priority := 210) limbMulCapability
-    (format : FloatFormat) (width_gt : 128 < format.bitWidth)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt))] :
-    FloatLib.Floats.ExecFloat.Mul
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt)) :=
-  automaticMulCapability format (.limbs width_gt)
-
-/-- Policy-selected division for the concrete limb carrier. -/
-@[always_inline] instance (priority := 210) limbDivCapability
-    (format : FloatFormat) (width_gt : 128 < format.bitWidth)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt))] :
-    FloatLib.Floats.ExecFloat.Div
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt)) :=
-  automaticDivCapability format (.limbs width_gt)
-
-/-- Policy-selected square root for the concrete limb carrier. -/
-@[always_inline] instance (priority := 210) limbSqrtCapability
-    (format : FloatFormat) (width_gt : 128 < format.bitWidth)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt))] :
-    FloatLib.Floats.ExecFloat.Sqrt
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt)) :=
-  automaticSqrtCapability format (.limbs width_gt)
-
-/-- Policy-selected fused multiply-add for the concrete limb carrier. -/
-@[always_inline] instance (priority := 210) limbFmaCapability
-    (format : FloatFormat) (width_gt : 128 < format.bitWidth)
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt))] :
-    FloatLib.Floats.ExecFloat.Fma
-      (Family format (Model.WideLimb.Value format) (.limbs width_gt)) :=
-  automaticFmaCapability format (.limbs width_gt)
+limb_capability Add add "addition"
+limb_capability Sub sub "subtraction"
+limb_capability Mul mul "multiplication"
+limb_capability Div div "division"
+limb_capability Sqrt sqrt "square root"
+limb_capability Fma fma "fused multiply-add"
 
 end FloatLib.Floats.Formats.BinaryInterchange.Configured

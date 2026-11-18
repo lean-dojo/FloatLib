@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -75,12 +75,13 @@ theorem Backend.containsReal_encloseInterval? {α : Type*} {B : Backend α}
     (h : B.encloseInterval? I = some J) {x : ℝ} (hx : I.ContainsReal some x) :
     J.ContainsReal B.decode x := by
   cases hlo : B.const? I.lo with
-  | none => simp [Backend.encloseInterval?, hlo] at h
+  | none => simp [Backend.encloseInterval?_def, hlo] at h
   | some lower =>
     cases hhi : B.const? I.hi with
-    | none => simp [Backend.encloseInterval?, hlo, hhi] at h
+    | none => simp [Backend.encloseInterval?_def, hlo, hhi] at h
     | some upper =>
-      simp [Backend.encloseInterval?, hlo, hhi] at h
+      simp only [encloseInterval?_def, hlo, hhi, Option.pure_def, Option.bind_eq_bind,
+        Option.bind_some, Option.some.injEq] at h
       subst J
       obtain ⟨a, _, ha, _, hax, _⟩ := hB.const hlo
       obtain ⟨_, b, _, hb, _, hxb⟩ := hB.const hhi
@@ -95,18 +96,19 @@ theorem Box.containsReal_enclose? {α : Type*} {B : Backend α} (hB : B.Sound fu
       intervals[i]? = some I → I.ContainsReal B.decode (values i) := by
   induction box generalizing intervals values with
   | nil =>
-    simp [Box.enclose?] at h
+    simp only [enclose?_nil, Option.some.injEq, List.nil_eq] at h
     subst intervals
     intro i I hI
     simp at hI
   | cons J tail ih =>
     cases hJ : B.encloseInterval? J with
-    | none => simp [Box.enclose?, hJ] at h
+    | none => simp [Box.enclose?_cons, hJ] at h
     | some K =>
       cases ht : Box.enclose? tail B with
-      | none => simp [Box.enclose?, hJ, ht] at h
+      | none => simp [Box.enclose?_cons, hJ, ht] at h
       | some rest =>
-        simp [Box.enclose?, hJ, ht] at h
+        simp only [enclose?_cons, hJ, ht, Option.pure_def, Option.bind_eq_bind, Option.bind_some,
+          Option.some.injEq] at h
         subst intervals
         obtain ⟨head, tail⟩ := (Box.containsReal_cons_iff J _ values).1 hbox
         intro i I hI
@@ -124,10 +126,10 @@ theorem Relation.holds_of_check {relation : Relation} {hi : ℚ}
     relation.Holds x := by
   cases relation with
   | nonpositive =>
-    have hhi : hi ≤ 0 := of_decide_eq_true h
+    have hhi : hi ≤ 0 := (Kernel.Q.le_iff hi 0).1 h
     exact hx.trans (by exact_mod_cast hhi)
   | negative =>
-    have hhi : hi < 0 := of_decide_eq_true h
+    have hhi : hi < 0 := (Kernel.Q.lt_iff hi 0).1 h
     exact hx.trans_lt (by exact_mod_cast hhi)
 
 /-- A successful leaf check establishes the inequality for every real assignment in its box. -/
@@ -136,16 +138,16 @@ theorem Expr.checkBox_sound {α : Type*} (e : Expr) {B : Backend α} (hB : B.Sou
     {values : Nat → ℝ} (hbox : box.ContainsReal values) :
     relation.Holds (e.eval values functions) := by
   cases hbox' : box.enclose? B with
-  | none => simp [Expr.checkBox, hbox'] at h
+  | none => simp [Expr.checkBox_def, hbox'] at h
   | some intervals =>
     cases heval : e.eval? B (fun i => intervals[i]?) with
-    | none => simp [Expr.checkBox, hbox', heval] at h
+    | none => simp [Expr.checkBox_def, hbox', heval] at h
     | some I =>
       cases hhi : B.decode I.hi with
-      | none => simp [Expr.checkBox, hbox', heval, hhi] at h
+      | none => simp [Expr.checkBox_def, hbox', heval, hhi] at h
       | some hi =>
         have hcheck : relation.check hi = true := by
-          simpa [Expr.checkBox, hbox', heval, hhi] using h
+          simpa [Expr.checkBox_def, hbox', heval, hhi] using h
         obtain ⟨_, upper, _, hu, _, hx⟩ :=
           e.containsReal_eval? hB (Box.containsReal_enclose? hB hbox' hbox) heval
         have hu' : (hi : ℝ) = upper := by simpa [hhi] using hu
@@ -161,7 +163,7 @@ theorem Box.containsReal_set {box : Box} {values : Nat → ℝ}
   · subst j
     rw [List.getElem?_set] at hJ
     by_cases hi : i < box.length
-    · simp [hi] at hJ
+    · simp only [↓reduceIte, hi, Option.some.injEq] at hJ
       subst J
       exact hI
     · simp [hi] at hJ
@@ -173,14 +175,15 @@ theorem Box.containsReal_bisect? {box left right : Box}
     (hbox : box.ContainsReal values) :
     left.ContainsReal values ∨ right.ContainsReal values := by
   cases hw : box.widest? with
-  | none => simp [Box.bisect?, hw] at h
+  | none => simp [Box.bisect?_def, hw] at h
   | some selected =>
     rcases selected with ⟨i, width⟩
     cases hi : box[i]? with
-    | none => simp [Box.bisect?, hw, hi] at h
+    | none => simp [Box.bisect?_def, hw, hi] at h
     | some I =>
       by_cases hwidth : I.lo < I.hi
-      · simp [Box.bisect?, hw, hi, hwidth] at h
+      · simp only [bisect?_def, hw, Option.pure_def, Option.bind_eq_bind, Option.bind_some, hi,
+        hwidth, ↓reduceIte, Option.some.injEq, Prod.mk.injEq] at h
         rcases h with ⟨rfl, rfl⟩
         obtain ⟨hlo, hhi⟩ := (containsReal_some_iff I _).1 (hbox i I hi)
         by_cases hmid : values i ≤ (((I.lo + I.hi) / 2 : ℚ) : ℝ)
@@ -188,7 +191,7 @@ theorem Box.containsReal_bisect? {box left right : Box}
             ((containsReal_some_iff _ _).2 ⟨hlo, hmid⟩))
         · exact Or.inr (Box.containsReal_set hbox
             ((containsReal_some_iff _ _).2 ⟨le_of_lt (lt_of_not_ge hmid), hhi⟩))
-      · simp [Box.bisect?, hw, hi, hwidth] at h
+      · simp [Box.bisect?_def, hw, hi, hwidth] at h
 
 /--
 A successful adaptive check proves the real inequality throughout the original rational box.
@@ -202,17 +205,18 @@ theorem Expr.check_sound {α : Type*} (e : Expr) {B : Backend α} (hB : B.Sound 
     (hbox : box.ContainsReal values) : relation.Holds (e.eval values functions) := by
   induction depth generalizing box with
   | zero =>
-    exact e.checkBox_sound hB (by simpa [Expr.check] using h) hbox
+    exact e.checkBox_sound hB (by rw [Expr.check] at h; exact h) hbox
   | succ depth ih =>
     by_cases hleaf : e.checkBox B relation box = true
     · exact e.checkBox_sound hB hleaf hbox
-    · cases hsplit : box.bisect? with
-      | none => simp [Expr.check, hleaf, hsplit] at h
+    · rw [Expr.check_def] at h
+      cases hsplit : box.bisect? with
+      | none => simp [hleaf, hsplit] at h
       | some children =>
         rcases children with ⟨left, right⟩
         have hc : e.check B relation left depth = true ∧
             e.check B relation right depth = true := by
-          simpa [Expr.check, hleaf, hsplit] using h
+          simpa [hleaf, hsplit] using h
         rcases Box.containsReal_bisect? hsplit hbox with hl | hr
         · exact ih hc.1 hl
         · exact ih hc.2 hr

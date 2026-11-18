@@ -4,7 +4,11 @@
     "FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked",
     "FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals",
     "FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded",
-    "FloatLib.Floats.Formats.BinaryInterchange.Automation.Roundoff",
+    "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.PowerProof",
+    "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.ValueProof",
+    "FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError.Rounding",
+    "FloatLib.Tactic.Roundoff",
+    "FloatLib.Floats.Formats.Block.Roundoff",
     "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof"
   ],
   "phases": [
@@ -147,11 +151,11 @@
           "title": "Canonical exponent"
         },
         {
-          "name": "FloatLib.Floats.Formats.Flocq.genericFormat",
+          "name": "FloatLib.Floats.Formats.Flocq.GenericRepresentable",
           "title": "Representable values on the grid"
         },
         {
-          "name": "FloatLib.Floats.Formats.Flocq.representable_iff_genericFormat",
+          "name": "FloatLib.Floats.Formats.Flocq.representable_iff_genericRepresentable",
           "title": "Representability agrees with grid membership"
         },
         {
@@ -171,7 +175,7 @@
           "title": "Round a real into the format"
         },
         {
-          "name": "FloatLib.Floats.Formats.Flocq.generic_format_round",
+          "name": "FloatLib.Floats.Formats.Flocq.genericRepresentable_round",
           "title": "Rounding returns a grid value"
         },
         {
@@ -183,7 +187,7 @@
           "title": "Half-ulp error bound"
         },
         {
-          "name": "FloatLib.Floats.Formats.Flocq.round_relative_error_FLX",
+          "name": "FloatLib.Floats.Formats.Flocq.round_relative_error_flx",
           "title": "The (1 + delta) model in FLX"
         },
         {
@@ -195,7 +199,7 @@
           "title": "Gradual underflow selection (FLT)"
         },
         {
-          "name": "FloatLib.Floats.Formats.Flocq.generic_format_FLX_sterbenz",
+          "name": "FloatLib.Floats.Formats.Flocq.genericRepresentable_flx_sterbenz",
           "title": "Sterbenz lemma in FLX"
         },
         {
@@ -203,7 +207,7 @@
           "title": "Addition's rounding error is representable"
         },
         {
-          "name": "FloatLib.Floats.Formats.Flocq.round_floor_double_FLX",
+          "name": "FloatLib.Floats.Formats.Flocq.round_floor_double_flx",
           "title": "Directed double rounding agrees with one rounding"
         },
         {
@@ -265,7 +269,7 @@
           "title": "Finite classification"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.isInf",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.isInfinite",
           "title": "Infinity classification"
         },
         {
@@ -407,11 +411,11 @@
           "title": "Hypotenuse rounds the exact norm once"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_rootN_eq_roundAt",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_rootn_eq_roundAt",
           "title": "Integer roots round the signed real root"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_powInt_eq_roundAt",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_pown_eq_roundAt",
           "title": "Integer powers have one final rounding"
         },
         {
@@ -497,7 +501,11 @@
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.Reduction.dot_status_value_toReal_eq_roundAt_of_finite",
           "title": "One rounding for finite dot products including zero"
-        }
+        },
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.cast_rounding_policy",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_augmentedAddition_add",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_formatOfAddition",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.toReal_mul_cast_exact"
       ]
     },
     {
@@ -691,7 +699,12 @@
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.le_toEReal_ofRat_up",
           "title": "Exact rational conversion is an upper bound"
-        }
+        },
+        "FloatLib.Numerics.Interval.Constraint.refutes",
+        "FloatLib.Numerics.Interval.Constraint.refutes_sound",
+        "FloatLib.Numerics.Interval.Form.definiteOn",
+        "FloatLib.Numerics.Interval.Form.vanishes_of_definiteOn",
+        "FloatLib.Numerics.Interval.Refutation"
       ]
     },
     {
@@ -769,7 +782,47 @@
         {
           "name": "FloatLib.Numerics.Enclosure.ArgumentReduction.QuarterTurns.Reduces.exists_sin_cos_eq_rotate",
           "title": "Sine and cosine from the reduced argument"
-        }
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.roundReal_roundsTo",
+          "title": "Rounding a real number in every direction"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.gaussianInt_add_sum_exp_div_ne_zero",
+          "title": "Exponentials at Gaussian rationals do not cancel a constant"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.exp_eq",
+          "title": "The complex exponential is correctly rounded"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.sinh_asinhExact_value",
+          "title": "The complex inverse hyperbolic sine inverts sinh"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.exp_logExact_value",
+          "title": "The complex logarithm inverts exp"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.atanExact_value",
+          "title": "The complex inverse tangent rounds Mathlib's arctan"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.log_zero",
+          "title": "The logarithm of a zero is the pole with its angle"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.exp_conj",
+          "title": "The complex exponential commutes with conjugation at every argument"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.pow_eq",
+          "title": "A certified complex power is correctly rounded"
+        },
+        "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.abs_roundedMagnitude_sub_le",
+        "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.norm_roundedDiv_sub_le",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.apply_encloses",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.toReal_apply"
       ]
     },
     {
@@ -1201,6 +1254,36 @@
       ]
     },
     {
+      "id": "kernel-arithmetic",
+      "title": "Arithmetic for Lean's kernel",
+      "nodes": [
+        "FloatLib.Floats.Formats.Posit.KernelPath.add_eq_spec",
+        "FloatLib.Numerics.Packed.forall_pairs",
+        "FloatLib.Numerics.Kernel.Frac.le_iff",
+        "FloatLib.Numerics.Kernel.Frac.le_cast",
+        "FloatLib.Numerics.Kernel.Ball.contains_mul",
+        "FloatLib.Numerics.Kernel.Ball.le_sound",
+        "FloatLib.Numerics.Kernel.powMod_eq",
+        "FloatLib.Numerics.Kernel.isqrt_eq",
+        "FloatLib.Numerics.Kernel.popCount_eq",
+        "FloatLib.Numerics.Kernel.strict_eq",
+        "FloatLib.Numerics.Kernel.CBall.contains_mul",
+        "FloatLib.Numerics.Kernel.CBall.mem_mul",
+        "FloatLib.Numerics.Kernel.CBall.mem_expI",
+        "FloatLib.Numerics.Kernel.CBall.contains_halfPi",
+        "FloatLib.Numerics.Kernel.CFix.contains_mul",
+        "FloatLib.Numerics.Kernel.CSum.contains_scale",
+        "FloatLib.Numerics.Kernel.Split.total_contains_Icc",
+        "FloatLib.Numerics.Kernel.Cover.total_contains",
+        "FloatLib.Numerics.Packed.dot_eq",
+        "FloatLib.Numerics.Packed.entries_matMul",
+        "FloatLib.Numerics.Packed.length_eq_of_matMulCheck",
+        "FloatLib.Numerics.Packed.F2.isInverse_sound",
+        "FloatLib.Numerics.Packed.F2.isInverse_square",
+        "FloatLib.Numerics.Packed.lanesLe_sound"
+      ]
+    },
+    {
       "id": "ieee-formats",
       "title": "IEEE formats in use",
       "nodes": [
@@ -1309,25 +1392,26 @@
           "title": "Squaring preserves the multiplication result"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_expMinus1_eq_ok",
+          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_expm1_eq_ok",
           "title": "Certified binary exp-minus-one"
         },
         {
-          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_logPlus1_eq_ok",
+          "name": "FloatLib.Floats.ExecFloat.Binary.Certified.toReal_of_logp1_eq_ok",
           "title": "Certified binary log-plus-one"
         },
         {
-          "name": "FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.rootN_error_le_half",
+          "name": "FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.rootn_error_le_half",
           "title": "Nearest decimal roots have half-grid error"
         },
         {
-          "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_expMinus1_eq_some",
+          "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_expm1_eq_some",
           "title": "Certified decimal exp-minus-one"
         },
         {
-          "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_logPlus1_eq_some",
+          "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_logp1_eq_some",
           "title": "Certified decimal log-plus-one"
-        }
+        },
+        "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_apply_eq_some"
       ]
     },
     {
@@ -1351,8 +1435,8 @@
           "title": "FP8 E5M2FNUZ"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.e4m3fn",
-          "title": "FP8 E4M3FN"
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.e4m3",
+          "title": "FP8 E4M3"
         },
         {
           "name": "FloatLib.Floats.Formats.BinaryInterchange.FloatFormat.e4m3fnuz",
@@ -1379,7 +1463,7 @@
           "title": "Finite-only encodings have no NaN"
         },
         {
-          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.isInf_eq_false_of_encoding_ne_ieee",
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.Model.isInfinite_eq_false_of_encoding_ne_ieee",
           "title": "Only IEEE encodings have infinities"
         },
         {
@@ -1399,25 +1483,74 @@
           "title": "E8M0 has no zero"
         },
         {
-          "name": "FloatLib.Floats.Formats.OCP.MX.E8M0.decodeBlock?",
-          "title": "Exact value of a block with one shared scale"
+          "name": "FloatLib.Floats.Formats.OCP.MX.Standard.format",
+          "title": "The block format of an MX profile"
         },
         {
           "name": "FloatLib.Floats.Formats.OCP.MX.E8M0.scaleDyadic_refines",
           "title": "Scaling by an E8M0 scale is exact"
         },
         {
-          "name": "FloatLib.Floats.Formats.OCP.MX.E8M0.decodeElement_refines",
+          "name": "FloatLib.Floats.Formats.OCP.MX.Standard.Tensor.decode_finite",
           "title": "Decoding an element applies the scale exactly"
         },
         {
-          "name": "FloatLib.Floats.Formats.OCP.MX.BlockCode",
-          "title": "An MX block"
+          "name": "FloatLib.Floats.Formats.Block.Tensor",
+          "title": "A stored block-scaled tensor"
         },
         {
-          "name": "FloatLib.Floats.Formats.OCP.MX.BlockCode.decode_refines",
+          "name": "FloatLib.Floats.Formats.Block.Tensor.decode_finite",
           "title": "Block decoding is exact"
-        }
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.CodedFormat",
+          "title": "A stored block-scaled format"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Tensor.decode",
+          "title": "Exact decoding of a block-scaled tensor"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Format.reconstruct_eq",
+          "title": "Each element is one rounding at its scale"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Format.abs_reconstruct_sub_le",
+          "title": "Element error of a block-scaled format"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Format.reconstruct_eq_zero_iff_abs_le",
+          "title": "Which elements a block flushes to zero"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Format.reconstruct_relabel",
+          "title": "Quantization commutes with relabelling positions"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.OCP.MX.Standard.policy",
+          "title": "The scale rule of OCP MX"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.mx_scaled_max",
+          "title": "The MX scale puts the block maximum in one binade"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Tensor.dotExact",
+          "title": "Exact dot product of stored tensors"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Tensor.abs_toReal_Dot_sub_le",
+          "title": "A block dot product rounds once"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.abs_accumulate_sub_le",
+          "title": "Ordered accumulation in an accumulator format"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4",
+          "title": "NVFP4"
+        },
+        "FloatLib.Floats.Formats.OCP.MX.Dot"
       ]
     },
     {
@@ -1469,7 +1602,7 @@
           "title": "Rounding preserves nonnegative posit codes"
         },
         {
-          "name": "FloatLib.Floats.Formats.Posit.Model.Spec.add",
+          "name": "FloatLib.Floats.Formats.Posit.Model.Spec.addition",
           "title": "Reference posit addition"
         },
         {
@@ -1693,16 +1826,16 @@
           "title": "Codebook quantization minimizes distance"
         },
         {
-          "name": "FloatLib.Floats.Formats.Block.SharedScaleCode",
+          "name": "FloatLib.Floats.Formats.Block.sharedScale",
           "title": "A block with one shared exponent"
         },
         {
-          "name": "FloatLib.Floats.Formats.Block.quantizeAt",
-          "title": "Quantize each element at a shared scale"
+          "name": "FloatLib.Floats.Formats.Block.CodedFormat.quantize",
+          "title": "Quantize each element at its shared scales"
         },
         {
-          "name": "FloatLib.Floats.Formats.Block.quantizeAt_refines",
-          "title": "Block quantization meets its contract"
+          "name": "FloatLib.Floats.Formats.Block.CodedFormat.value_quantize",
+          "title": "Block quantization is one rounding per element"
         },
         {
           "name": "FloatLib.Numerics.Quantization.AffineQuantizer",
@@ -1719,6 +1852,62 @@
         {
           "name": "FloatLib.Floats.Formats.Flocq.affine_toReal_quantize",
           "title": "Executable affine quantization agrees with the real specification"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.sharedExponent",
+          "title": "The policy that stores a supplied exponent"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.blockScaled_tensor",
+          "title": "Every stored format is block scaled"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4Stored",
+          "title": "NVFP4 storage"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4Policy",
+          "title": "The scale selection of NVFP4"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Format.e2m1_reconstruct_eq_zero_iff",
+          "title": "Flush to zero of E2M1 in every rounding direction"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4_reconstruct_eq_zero_iff",
+          "title": "NVFP4 flushes a quarter of the block scale"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4_abs_reconstruct_sub_le",
+          "title": "Element error of NVFP4"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4_reconstruct_transpose",
+          "title": "NVFP4 tiles commute with transposition"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.OCP.MX.Standard.abs_value_quantize_sub_le",
+          "title": "Stored MX elements are nearest at their scale"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.Format.reconstruct_mixedError",
+          "title": "The roundoff rule for a block-quantized element"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.OCP.MX.Standard.Profile.codec_round_eq_real",
+          "title": "The MX element codecs are the real roundings"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.nvfp4Stored_value_eq_reconstruct_of_lt",
+          "title": "Stored NVFP4 is the real format"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.mx_value_eq_reconstruct_of_lt",
+          "title": "Stored OCP MX is the real format"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.Block.combine_value_eq_reconstruct",
+          "title": "The stored combine format is the real format"
         }
       ]
     },

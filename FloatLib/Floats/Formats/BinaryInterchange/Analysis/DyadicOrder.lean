@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
+
 import FloatLib.Numerics.Exact.Dyadic.Order
 
 /-!
@@ -40,7 +41,8 @@ theorem toReal_eq_signedSignificand_shiftLeft (d : Numerics.Dyadic) (exponent : 
     (hexponent : exponent ≤ d.exponent) :
     d.toReal =
       ((Numerics.Dyadic.mk d.negative
-          (Nat.shiftLeft d.significand (Int.toNat (d.exponent - exponent))) 0).signedSignificand : ℝ) *
+          (Nat.shiftLeft d.significand (Int.toNat (d.exponent - exponent))) 0).signedSignificand
+            : ℝ) *
         bpow Numerics.binaryRadix exponent := by
   have hnonneg : 0 ≤ d.exponent - exponent := sub_nonneg.mpr hexponent
   have htoNat : (Int.ofNat (Int.toNat (d.exponent - exponent))) = d.exponent - exponent := by
@@ -59,7 +61,8 @@ theorem toReal_eq_signedSignificand_shiftLeft (d : Numerics.Dyadic) (exponent : 
     simpa [shift] using
       congrArg (fun value : Int => bpow Numerics.binaryRadix value) htoNat.symm
   have hshift :
-      ((Numerics.Dyadic.mk d.negative (Nat.shiftLeft d.significand shift) 0).signedSignificand : ℝ) =
+      ((Numerics.Dyadic.mk d.negative (Nat.shiftLeft d.significand shift) 0).signedSignificand :
+        ℝ) =
         (d.signedSignificand : ℝ) *
           bpow Numerics.binaryRadix (d.exponent - exponent) := by
     have hshiftNat := signedSignificand_shiftLeft d shift
@@ -71,7 +74,7 @@ theorem toReal_eq_signedSignificand_shiftLeft (d : Numerics.Dyadic) (exponent : 
           bpow Numerics.binaryRadix (d.exponent - exponent)) =
       ((d.signedSignificand : ℝ) *
           bpow Numerics.binaryRadix (d.exponent - exponent)) *
-        bpow Numerics.binaryRadix exponent by ring]
+        bpow Numerics.binaryRadix exponent by ac_rfl]
   simpa [shift, mul_assoc] using
     congrArg (fun value : ℝ => value * bpow Numerics.binaryRadix exponent) hshift.symm
 

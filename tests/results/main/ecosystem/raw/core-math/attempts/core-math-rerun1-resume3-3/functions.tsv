@@ -1,4 +1,0 @@
-binary64	cospi	PASS
-binaryb16	atan2pi_bf16	PASS
-binaryb16	log10p1_bf16	PASS
-binaryb16	sqrt_bf16	PASS

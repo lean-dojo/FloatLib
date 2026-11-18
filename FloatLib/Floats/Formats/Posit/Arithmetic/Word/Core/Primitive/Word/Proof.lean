@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Core.Primitive.Word.Runtime
-public import FloatLib.Kernels.FixedWord.Core.Proof
-public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
+public import FloatLib.Kernels.FixedWord.Core.Proof
 
 /-!
 # Correctness of native-word posit primitives
@@ -55,7 +54,7 @@ theorem signMaskWord_toNat (format : Format)
   rw [FloatLib.Numerics.FixedWord.shiftLeft_toNat
     (1 : UInt64) format.signIndex]
   · simp [Format.signMaskNat, Nat.shiftLeft_eq]
-  · simp [Nat.shiftLeft_eq]
+  · simp only [UInt64.reduceToNat, Nat.shiftLeft_eq, one_mul, Nat.reducePow]
     exact Nat.pow_lt_pow_right (by decide) hindex
 
 /-- Native and natural comparisons with the positive-code endpoint are identical. -/
@@ -224,10 +223,12 @@ theorem lowMask_toNat (width : Nat) (hwidth : width < 64) :
     (lowMask width).toNat = 2 ^ width - 1 := by
   unfold lowMask
   rw [ite_eq_left hwidth, UInt64.toNat_sub_of_le]
-  · simp [Nat.mod_eq_of_lt hwidth, Nat.shiftLeft_eq]
+  · simp only [UInt64.toNat_shiftLeft, UInt64.reduceToNat, UInt64.toNat_ofNat', Nat.reducePow,
+    Nat.reduceDvd, Nat.mod_mod_of_dvd, Nat.mod_eq_of_lt hwidth, Nat.shiftLeft_eq, one_mul]
     rw [Nat.mod_eq_of_lt (Nat.pow_lt_pow_right (by decide) hwidth)]
-  · simp [UInt64.le_iff_toNat_le, Nat.mod_eq_of_lt hwidth,
-      Nat.shiftLeft_eq]
+  · simp only [UInt64.le_iff_toNat_le, UInt64.reduceToNat, UInt64.toNat_shiftLeft,
+    UInt64.toNat_ofNat', Nat.reducePow, Nat.reduceDvd, Nat.mod_mod_of_dvd, Nat.mod_eq_of_lt
+    hwidth, Nat.shiftLeft_eq, one_mul]
     rw [Nat.mod_eq_of_lt (Nat.pow_lt_pow_right (by decide) hwidth)]
     exact Nat.one_le_two_pow
 

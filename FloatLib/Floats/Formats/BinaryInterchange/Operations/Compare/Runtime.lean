@@ -1,12 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Classification
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
 
 /-!
@@ -22,6 +21,9 @@ same comparator. We provide both the deprecated IEEE 754-2008 `minNum`/`maxNum` 
 operand. With `status := true`, `minimum` and `maximum` also report the `invalid` signal that a
 signaling NaN operand owes, and `minimumNumber` and `maximumNumber` take the same option in
 `Operations.Runtime`.
+
+Reference: IEEE 754-2008 §5.3.1 and IEEE 754-2019 §9.6; ISO/IEC 9899:2024 (WG14 N3220),
+§§F.10.9.4–F.10.9.5.
 -/
 
 @[expose] public section
@@ -37,20 +39,20 @@ dyadics extracted from those classification proofs.
 -/
 def compareNonNaN {fmt : FloatFormat} (x y : Model fmt)
     (hxNaN : isNaN x = false) (hyNaN : isNaN y = false) : Ordering :=
-  if hxInf : isInf x then
-    if isInf y then
+  if hxInf : isInfinite x then
+    if isInfinite y then
       if signBit x == signBit y then .eq
       else if signBit x then .lt else .gt
     else
       if signBit x then .lt else .gt
-  else if hyInf : isInf y then
+  else if hyInf : isInfinite y then
     if signBit y then .gt else .lt
   else
     let hxFinite :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hxNaN
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hxNaN
         (Bool.eq_false_of_not_eq_true hxInf)
     let hyFinite :=
-      isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false y hyNaN
+      isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false y hyNaN
         (Bool.eq_false_of_not_eq_true hyInf)
     cmpDyadic (finiteDyadic x hxFinite) (finiteDyadic y hyFinite)
 
@@ -68,23 +70,23 @@ def compare {fmt : FloatFormat} (x y : Model fmt) : Option Ordering :=
     some (compareNonNaN x y hnotNaN.1 hnotNaN.2)
 
 /-- Strict IEEE order, `compare x y = some .lt`. It fails when either operand is a NaN. -/
-def lt {fmt : FloatFormat} (x y : Model fmt) : Prop :=
+def Lt {fmt : FloatFormat} (x y : Model fmt) : Prop :=
   compare x y = some .lt
 
 /-- Weak IEEE order, `compare x y` is `some .lt` or `some .eq`. It fails for a NaN operand. -/
-def le {fmt : FloatFormat} (x y : Model fmt) : Prop :=
+def Le {fmt : FloatFormat} (x y : Model fmt) : Prop :=
   match compare x y with
   | some .lt => True
   | some .eq => True
   | _ => False
 
-/-- `le` is decided by the executable comparison. -/
-instance {fmt : FloatFormat} (x y : Model fmt) : Decidable (le x y) :=
+/-- `Le` is decided by the executable comparison. -/
+instance {fmt : FloatFormat} (x y : Model fmt) : Decidable (Le x y) :=
   match h : compare x y with
-  | some .lt => isTrue (by simp [le, h])
-  | some .eq => isTrue (by simp [le, h])
-  | some .gt => isFalse (by simp [le, h])
-  | none => isFalse (by simp [le, h])
+  | some .lt => isTrue (by simp [Le, h])
+  | some .eq => isTrue (by simp [Le, h])
+  | some .gt => isFalse (by simp [Le, h])
+  | none => isFalse (by simp [Le, h])
 
 /-- The value of IEEE `minimum`, the kernel of `Model.minimum x y`, with NaNs selected by
 `chooseNaN2` and `minimum(-0,+0) = -0`. -/
@@ -125,7 +127,7 @@ is a signaling NaN (§6.2).
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => outcomeWithInvalid (Internal.Value.minimum x y) (isSNaN x || isSNaN y)
+  | true => outcomeWithInvalid (Internal.Value.minimum x y) (isSignaling x || isSignaling y)
   | false => Internal.Value.minimum x y
 
 /--
@@ -139,19 +141,19 @@ is a signaling NaN (§6.2).
     | true => IEEEOutcome fmt
     | false => Model fmt :=
   match status with
-  | true => outcomeWithInvalid (Internal.Value.maximum x y) (isSNaN x || isSNaN y)
+  | true => outcomeWithInvalid (Internal.Value.maximum x y) (isSignaling x || isSignaling y)
   | false => Internal.Value.maximum x y
 
 /--
-IEEE 754-2008 `minNum`, deprecated by IEEE 754-2019 in favor of `minimumNumber`.
+IEEE 754-2008 §5.3.1 `minNum`, deprecated by IEEE 754-2019 §9.6 in favor of `minimumNumber`.
 
 A signaling NaN takes priority and propagates as a quiet NaN. Otherwise, a lone quiet NaN is
 ignored, two quiet NaNs select the left operand after quieting, and two numbers use `minimum`,
 including its `minNum(-0, +0) = -0` rule.
 -/
 def minNum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  if isSNaN x then quietNaN x
-  else if isSNaN y then quietNaN y
+  if isSignaling x then quietNaN x
+  else if isSignaling y then quietNaN y
   else if isNaN x then
     if isNaN y then quietNaN x else y
   else if isNaN y then
@@ -160,15 +162,15 @@ def minNum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
     minimum x y
 
 /--
-IEEE 754-2008 `maxNum`, deprecated by IEEE 754-2019 in favor of `maximumNumber`.
+IEEE 754-2008 §5.3.1 `maxNum`, deprecated by IEEE 754-2019 §9.6 in favor of `maximumNumber`.
 
 A signaling NaN takes priority and propagates as a quiet NaN. Otherwise, a lone quiet NaN is
 ignored, two quiet NaNs select the left operand after quieting, and two numbers use `maximum`,
 including its `maxNum(-0, +0) = +0` rule.
 -/
 def maxNum {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  if isSNaN x then quietNaN x
-  else if isSNaN y then quietNaN y
+  if isSignaling x then quietNaN x
+  else if isSignaling y then quietNaN y
   else if isNaN x then
     if isNaN y then quietNaN x else y
   else if isNaN y then
@@ -182,7 +184,7 @@ Quiet NaN delivered when both operands of `minimumNumber` or `maximumNumber` are
 The signaling operand is preferred, then the left operand, matching `chooseNaN2`.
 -/
 @[inline] def bothNaNNumber {fmt : FloatFormat} (x y : Model fmt) : Model fmt :=
-  if !isSNaN x && isSNaN y then quietNaN y else quietNaN x
+  if !isSignaling x && isSignaling y then quietNaN y else quietNaN x
 
 namespace Internal.Value
 

@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Executable.Conversion.Core
 public import FloatLib.Floats.Formats.Posit.Configured.Constants
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
 public import FloatLib.Floats.Formats.Posit.Rounding.Runtime
-public import FloatLib.Floats.ExecFloat.Conversion.Core
 
 /-!
 # Configured posit conversion runtime
@@ -63,7 +63,8 @@ inductive ExceptionalPolicy where
   | toNaR
   deriving DecidableEq, Repr
 
-/-- Posit conversion policies, defaulting to the Posit Standard (2022) special-value mapping. -/
+/-- Posit conversion policies, defaulting to the Posit Standard (2022) §5.1 special-value
+    mapping. -/
 structure Context where
   /-- Source infinity maps to `NaR` by default, as required by §6.5. -/
   infinity : InfinityPolicy := .toNaR
@@ -111,7 +112,7 @@ variable {format : Format} {plan : Configured.StoragePlan format} {code : Type}
       .success (ExecFloat.Posit.nar) { mappedSpecial := true }
   | .saturate =>
       let magnitude := Model.roundRat format (maxPositiveRat format)
-      let rounded := if negative then Model.neg magnitude else magnitude
+      let rounded := if negative then Model.negate magnitude else magnitude
       .success (ExecFloat.Posit.ofModel rounded)
         { inexact := true
           overflow := true
@@ -128,7 +129,7 @@ signaling NaN source also raises `invalid`, as it does for a binary destination.
       .failure (.exceptional .source exceptional)
   | .toNaR =>
       .success (ExecFloat.Posit.nar)
-        { mappedSpecial := true, invalid := exceptional.isSNaN }
+        { mappedSpecial := true, invalid := exceptional.isSignaling }
 
 /-- Reference conversion for every exact-rational observation. -/
 @[inline] def run (context : Context) :
@@ -148,3 +149,17 @@ instance exactDecoder :
 end Conversion
 end ExecFloat.Posit
 end FloatLib.Floats
+
+namespace FloatLib.Floats.ExecFloat.Posit.Conversion.ExceptionalPolicy
+
+/-- Reconstruct a `ExceptionalPolicy` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.ExecFloat.Posit.Conversion.ExceptionalPolicy
+
+namespace FloatLib.Floats.ExecFloat.Posit.Conversion.InfinityPolicy
+
+/-- Reconstruct a `InfinityPolicy` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.ExecFloat.Posit.Conversion.InfinityPolicy

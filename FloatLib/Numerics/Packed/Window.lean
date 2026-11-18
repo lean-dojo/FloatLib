@@ -1,12 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Packed.Proof
+public import FloatLib.Numerics.Packed.Proof.Products
+public import FloatLib.Numerics.Packed.Proof.Sums
+public import FloatLib.Numerics.Packed.Proof.Unsigned
 
 /-!
 # Windows, rescaling and symmetric rows
@@ -132,18 +134,14 @@ def signRow (c : Nat) (xs : List Int) : List Int :=
 /-! ### Lanes of shifts and masks -/
 
 private theorem shift_eq (w k : Nat) (z : Int) : shift w k z = (2 ^ w) ^ k * z := by
-  simp only [shift, pow2_eq, Nat.mul_eq, Int.mul_def, Int.ofNat_eq_natCast, natCast_two_pow,
+  simp only [shift, pow2_eq, Nat.mul_eq, Kernel.Z.mul_eq, Int.ofNat_eq_natCast, natCast_two_pow,
     Int.pow_mul, Int.mul_comm]
-
-/-- Shifting right by whole lanes moves lane `k + a` to lane `k`. -/
-theorem lane_shiftRight (w k a u : Nat) : lane w k (u >>> (w * a)) = lane w (k + a) u := by
-  rw [lane_eq, lane_eq, Nat.shiftRight_eq_div_pow, Nat.div_div_eq_div_mul, ← Nat.pow_add,
-    Nat.mul_add, Nat.add_comm (w * a)]
 
 private theorem entries_drop_take {w n a len : Nat} (h : a + len ≤ n) (u : Nat) :
     ((entries w n u).drop a).take len = (List.range len).map fun k => entry w (k + a) u := by
   apply List.ext_getElem
-  · simp [length_entries]; omega
+  · simp only [List.length_take, List.length_drop, length_entries, List.length_map,
+    List.length_range, inf_eq_left]; omega
   · intro k h1 h2
     simp only [List.getElem_take, List.getElem_drop, List.getElem_map, List.getElem_range]
     rw [getElem_entries]
@@ -162,7 +160,7 @@ theorem restrict_eq {w n a len : Nat} (hw : 1 ≤ w) (h : a + len ≤ n) (z : In
       ((entries w n u).drop a).take len := by
     rw [entries_drop_take h, entries_eq_lanes, Nat.and_two_pow_sub_one_eq_mod, lanes_mod]
     simp [lanes, lane_shiftRight, entry_eq]
-  show toInt w len ((u >>> (w * a)) &&& (2 ^ (w * len) - 1)) = _
+  change toInt w len ((u >>> (w * a)) &&& (2 ^ (w * len) - 1)) = _
   rw [← eval_entries hw hv, hent]
 
 /-! ### Rounding to a coarser grid -/
@@ -207,7 +205,7 @@ private theorem lanes_low {w n s : Nat} (hs : s < w) {xs : List Int} (hn : xs.le
     omega
   have hl := lanes_ofInt_eval hw hn hx
   simp only [low, pow2_eq, Nat.sub_eq, Nat.mul_eq]
-  show (lanes w n (ofInt w n (eval (2 ^ w) xs) &&& (2 ^ s - 1) * ones w n)).map _ = _
+  change (lanes w n (ofInt w n (eval (2 ^ w) xs) &&& (2 ^ s - 1) * ones w n)).map _ = _
   rw [lanes_land_ones hw hc]
   generalize ofInt w n (eval (2 ^ w) xs) = u at hl
   have e := natCast_two_pow s
@@ -269,11 +267,13 @@ theorem shiftDown_eval {w n s : Nat} (hs : s < w) {xs : List Int} (hn : xs.lengt
     | nil => rfl
     | cons x xs ih =>
         simp only [List.map_cons, sub, add, smul, List.map_map] at ih ⊢
-        rw [ih (by simp at hn; omega) (fun y hy => hx y (by simp [hy]))]
+        rw [ih (by
+          simp only [List.length_cons,
+            Order.add_one_le_iff] at hn; omega) (fun y hy => hx y (by simp [hy]))]
         congr 1
-        have := Int.emod_add_mul_ediv x (2 ^ s); simp; omega
+        have := Int.emod_add_mul_ediv x (2 ^ s); simp only [Int.reduceNeg, neg_mul, one_mul]; omega
   simp only [shiftDown, Int.ofNat_eq_natCast, low_eval hs hn hx, pow2_eq]
-  show (eval (2 ^ w) xs - eval (2 ^ w) (xs.map (· % 2 ^ s))) / ((2 ^ s : Nat) : Int) = _
+  change (eval (2 ^ w) xs - eval (2 ^ w) (xs.map (· % 2 ^ s))) / ((2 ^ s : Nat) : Int) = _
   rw [key, natCast_two_pow, Int.mul_ediv_cancel_left _ (Int.pow_ne_zero (by decide))]
 
 /-- The remainders and the rounded entries put the row back together: `x = 2 ^ s * (x / 2 ^ s) +
@@ -287,7 +287,9 @@ theorem eval_shiftDown_add_low {w n s : Nat} (hs : s < w) {xs : List Int} (hn : 
   | nil => rfl
   | cons x xs ih =>
       simp only [List.map_cons, add, smul] at ih ⊢
-      rw [← ih (by simp at hn; omega) (fun y hy => hx y (by simp [hy]))]
+      rw [← ih (by
+        simp only [List.length_cons,
+          Order.add_one_le_iff] at hn; omega) (fun y hy => hx y (by simp [hy]))]
       congr 1
       have := Int.emod_add_mul_ediv x (2 ^ s); omega
 
@@ -331,7 +333,9 @@ theorem laneSum_low {w n s : Nat} (hs : s < w) {xs : List Int} (hn : xs.length �
 theorem length_mirror (a : List Int) (odd : Bool) : (mirror a odd).length = 2 * a.length - 1 := by
   cases a with
   | nil => rfl
-  | cons a₀ as => cases odd <;> simp [mirror] <;> omega
+  | cons a₀ as => cases odd <;>
+    simp only [mirror, cond_eq_ite, Bool.false_eq_true, ↓reduceIte, List.length_append,
+    List.length_reverse, List.length_cons, List.length_map] <;> omega
 
 /-- The value of a two-sided row: the reversed half row plus the half row moved up to the centre,
 with a minus sign on the reversed half for odd rows. -/
@@ -358,7 +362,8 @@ theorem unfold_eq {w n h : Nat} (hw : 1 ≤ w) (hh : h < 2 ^ (w * n)) (odd : Boo
     eval_entries hw (rev_lt w n h)]
   cases odd <;>
   simp only [unfold, Bool.cond_false, Bool.cond_true, shift, pow2_eq, Nat.mul_eq, Nat.sub_eq,
-    Int.add_def, intSub, Int.mul_def, Int.ofNat_eq_natCast, natCast_two_pow, ← Int.pow_mul] <;>
+    Int.add_def, intSub, Kernel.Z.mul_eq, Int.ofNat_eq_natCast, natCast_two_pow,
+    ← Int.pow_mul] <;>
   grind
 
 /-- The two-sided row of a half row with entries in `[-2 ^ g, 2 ^ g)` fits lanes of width `w` when
@@ -414,7 +419,9 @@ theorem l1_mirror_le (a : List Int) (odd : Bool) : l1 (mirror a odd) ≤ 2 * l1 
       have hneg : l1 (as.map (- ·)) = l1 as := by simp [l1, Function.comp_def]
       cases odd <;> simp only [mirror, Bool.cond_false, Bool.cond_true, l1, List.map_append,
         List.sum_append, List.map_reverse, List.sum_reverse, List.map_cons, List.sum_cons] <;>
-      simp only [l1] at hneg <;> simp [Int.natAbs_mul] at * <;> omega
+      simp only [l1] at hneg <;> simp only [List.map_map, Int.natAbs_mul, Int.reduceAbs,
+        ge_iff_le, Int.natAbs_zero,
+        zero_add] at * <;> omega
 
 /-! ### Signs -/
 
@@ -426,7 +433,7 @@ private theorem signRow_split (c : Nat) (A : List Int) (x : Int) (B : List Int)
   · apply List.ext_getElem (by simp)
     intro k h1 h2
     simp only [List.getElem_mapIdx, List.getElem_map]
-    have hk : k < c := by simp at h1; omega
+    have hk : k < c := by simp only [List.length_mapIdx] at h1; omega
     have : Int.sign ((k : Int) - c) = -1 := Int.sign_eq_neg_one_of_neg (by omega)
     rw [this]; omega
   · congr 1
@@ -445,7 +452,7 @@ theorem signs_eq {w n : Nat} (hw : 1 ≤ w) (z : Int) :
       eval (2 ^ w) (signRow (n - 1) (entries w (2 * n - 1) (ofInt w (2 * n - 1) z))) := by
   have intSub : ∀ a b : Int, Int.sub a b = a - b := fun _ _ => rfl
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · simp [signs, restrict_eq hw, shift, entries, signRow, eval, intSub]
+  · simp [signs, restrict_eq hw, shift, entries, signRow, eval, intSub, Kernel.Z.mul_eq]
   have h1 : n + (n - 1) ≤ 2 * n - 1 := by omega
   have h0 : 0 + (n - 1) ≤ 2 * n - 1 := by omega
   simp only [signs, Nat.mul_eq, Nat.sub_eq, intSub]
@@ -456,10 +463,12 @@ theorem signs_eq {w n : Nat} (hw : 1 ≤ w) (z : Int) :
     have := List.drop_eq_getElem_cons (l := es) (i := n - 1) (by omega)
     rw [Nat.sub_add_cancel hn] at this
     rw [← this, List.take_append_drop]
-  have htake : (es.drop n).take (n - 1) = es.drop n := List.take_of_length_le (by simp; omega)
+  have htake : (es.drop n).take (n - 1) = es.drop n := List.take_of_length_le (by
+    simp only [List.length_drop, tsub_le_iff_right]; omega)
   rw [htake, List.drop_zero, eval_append, eval_zeros, List.length_replicate, Int.zero_add]
   conv => rhs; rw [hsplit]
-  rw [signRow_split (n - 1) _ _ _ (by simp; omega), eval_append, ← neg_eval]
+  rw [signRow_split (n - 1) _ _ _ (by
+    simp only [List.length_take, inf_eq_left, tsub_le_iff_right]; omega), eval_append, ← neg_eval]
   rw [List.length_map, List.length_take, show min (n - 1) es.length = n - 1 by omega]
   simp only [eval]
   obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
@@ -485,7 +494,7 @@ theorem signRow_mirror_odd (a : List Int) :
       simp only [mirror, Bool.cond_false, Bool.cond_true, List.length_cons, Nat.add_sub_cancel,
         List.set_cons_zero]
       rw [signRow_split _ _ _ _ (by simp), List.map_reverse, List.map_map]
-      simp [Function.comp_def]
+      simp
 
 /-! ### Derivative weights -/
 
@@ -531,7 +540,7 @@ private theorem rampAux_spec (w : Nat) (hw : 1 ≤ w) : ∀ d n u, n ≤ d → u
         simp only [rampAux, hb, Bool.cond_false, pow2_eq, Nat.mul_eq, Nat.sub_eq, Int.add_def,
           Int.mul_def,
           Int.ofNat_eq_natCast]
-        show rampAux w d (n / 2) (u &&& 2 ^ (w * (n / 2)) - 1) +
+        change rampAux w d (n / 2) (u &&& 2 ^ (w * (n / 2)) - 1) +
             shift w (n / 2) (rampAux w d (n - n / 2) (u >>> (w * (n / 2))) +
               ((n / 2 : Nat) : Int) * toInt w (n - n / 2) (u >>> (w * (n / 2)))) = _
         rw [Nat.and_two_pow_sub_one_eq_mod, Nat.shiftRight_eq_div_pow]

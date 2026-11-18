@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -12,7 +12,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Certifie
 /-!
 # Correctly rounded binary exponential and logarithm for every input
 
-`CorrectlyRounded.exp`, `log`, `expMinus1`, `logPlus1` and the weighted exponential `expMul`
+`CorrectlyRounded.exp`, `log`, `expm1`, `logp1` and the weighted exponential `expMul`
 always return a value. A finite argument goes to an enclosure search first, and if the search
 does not settle, exact comparisons of the real result with rational candidates decide the rounding
 through `AlgebraicRounding.round`, as in `Model.pi`. Those comparisons terminate for every
@@ -32,12 +32,12 @@ argument with the logarithm of the boundary. Cases decided exactly, such as `log
 the logarithm until one of them excludes the candidate. We prove that this terminates. Our proof
 bounds neither the number of refinements nor the size of the rationals, though.
 
-The exponential and `expMinus1` searches are those of `Certified.expRat` and
-`Certified.expMinus1Rat`, and they use both fields of the budget. The logarithm search writes its
+The exponential and `expm1` searches are those of `Certified.expRat` and
+`Certified.expm1Rat`, and they use both fields of the budget. The logarithm search writes its
 argument as `s * 2 ^ e` with `s` in `[3/4, 3/2)`. It adds the cached table reduction
 `Certified.logReduced` of `log s` to `e` times the cached `log 2`, on grids that start at the
 destination precision plus guard bits and the bits that cancel when `s` is near one. It uses
-`maxAttempts` but not `initialDegree`, which has no effect on `log` and `logPlus1`.
+`maxAttempts` but not `initialDegree`, which has no effect on `log` and `logp1`.
 
 `expMul x w` rounds `exp x * w` once. Its search reduces `x` by a multiple `k` of `log 2` and
 rounds the enclosure of `exp (x - k * log 2)` times the significand of `w`, scaled by `2 ^ k` and
@@ -45,6 +45,9 @@ the exponent of `w` without forming that power. So for finite operands the produ
 whenever its rounding is, even when `exp x` alone overflows, and a zero weight with a finite `x`
 gives the zero with the weight's sign. NaN operands and `exp (±∞)` follow the IEEE 754 product
 rules described at `expMul`, so `expMul (+∞) 0` is invalid.
+
+Reference: The IEEE 754 special-value conventions used here are given in ISO/IEC 9899:2024 (WG14
+N3220), §§F.2.2, F.10 and F.10.3.
 -/
 
 @[expose] public section
@@ -56,7 +59,7 @@ open FloatLib.Numerics
 /-! ## Exact comparisons -/
 
 /-- Compare `|exp argument - 1|` with a rational boundary. -/
-def compareAbsExpMinus1 (argument boundary : ℚ) : Ordering :=
+def compareAbsExpm1 (argument boundary : ℚ) : Ordering :=
   if argument < 0 then (ElementaryComparison.compareExp argument (1 - boundary)).swap
   else ElementaryComparison.compareExp argument (boundary + 1)
 
@@ -72,22 +75,22 @@ def compareExpMul (argument weight boundary : ℚ) : Ordering :=
 /-! ## Enclosure searches -/
 
 /--
-Enclose `log (scaled * 2 ^ binaryExponent)` on the grid of `precision` fractional bits, adding
-`binaryExponent` times the cached `log 2` to the table reduction of `log scaled`.
+Enclose `log (scaled * 2 ^ logB)` on the grid of `precision` fractional bits, adding
+`logB` times the cached `log 2` to the table reduction of `log scaled`.
 -/
-def logEnclosure (scaled : ℚ) (binaryExponent : ℤ) (precision : Nat) : RationalInterval :=
+def logEnclosure (scaled : ℚ) (logB : ℤ) (precision : Nat) : RationalInterval :=
   FloatLib.Numerics.Enclosure.BinaryGrid.toRationalInterval precision
     (Interval.BinaryGrid.add (Certified.logReduced scaled precision)
       (FloatLib.Numerics.Enclosure.BinaryGrid.scaleRat
-        (FloatLib.Numerics.Enclosure.Constants.ln2Grid precision) binaryExponent))
+        (FloatLib.Numerics.Enclosure.Constants.ln2Grid precision) logB))
 
 /--
 The first grid of a logarithm search: the destination precision with guard bits, plus the bits
-that cancel in `log scaled` when `scaled` is near one and `binaryExponent` is zero.
+that cancel in `log scaled` when `scaled` is near one and `logB` is zero.
 -/
-def logPrecision (fmt : FloatFormat) (scaled : ℚ) (binaryExponent : ℤ) : Nat :=
+def logPrecision (fmt : FloatFormat) (scaled : ℚ) (logB : ℤ) : Nat :=
   let cancellation :=
-    if binaryExponent = 0 then (scaled - 1).den.log2 - (scaled - 1).num.natAbs.log2 else 0
+    if logB = 0 then (scaled - 1).den.log2 - (scaled - 1).num.natAbs.log2 else 0
   FloatLib.Numerics.Enclosure.BinaryGrid.workingPrecision (fmt.fracWidth + 1 + cancellation) 0
 
 /--
@@ -164,12 +167,12 @@ def expRat (fmt : FloatFormat) (argument : ℚ) (budget : Certified.Budget := {}
 Round `exp argument - 1` for an exact rational: the certified search, then exact comparisons
 when it returns a failure.
 -/
-def expMinus1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Certified.Budget := {}) :
+def expm1Rat (fmt : FloatFormat) (argument : ℚ) (budget : Certified.Budget := {}) :
     Model fmt :=
-  match Certified.expMinus1Rat fmt argument budget with
+  match Certified.expm1Rat fmt argument budget with
   | .ok result => result
   | .error _ =>
-      AlgebraicRounding.round fmt (decide (argument < 0)) (compareAbsExpMinus1 argument)
+      AlgebraicRounding.round fmt (decide (argument < 0)) (compareAbsExpm1 argument)
 
 /--
 Round `log argument` for a positive rational: the table-reduced search, then exact comparisons
@@ -203,7 +206,7 @@ NaNs are quieted, `+∞` gives `+∞`, and `-∞` gives `+0`.
 def exp {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}) :
     Model fmt :=
   if isNaN input then quietNaN input
-  else if isInf input then if signBit input then zero fmt false else nativeOverflow fmt false
+  else if isInfinite input then if signBit input then zero fmt false else nativeOverflow fmt false
   else
     match toRat? input with
     | some argument => expRat fmt argument budget
@@ -214,14 +217,14 @@ def exp {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}
 
 NaNs are quieted, `+∞` gives `+∞`, `-∞` gives `-1`, and either zero is returned unchanged.
 -/
-def expMinus1 {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}) :
+def expm1 {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}) :
     Model fmt :=
   if isNaN input then quietNaN input
-  else if isInf input then if signBit input then negOne fmt else nativeOverflow fmt false
+  else if isInfinite input then if signBit input then negOne fmt else nativeOverflow fmt false
   else if isZero input then input
   else
     match toRat? input with
-    | some argument => expMinus1Rat fmt argument budget
+    | some argument => expm1Rat fmt argument budget
     | none => invalidResult fmt
 
 /--
@@ -233,7 +236,8 @@ give the invalid result. `budget.initialDegree` has no effect.
 def log {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}) :
     Model fmt :=
   if isNaN input then quietNaN input
-  else if isInf input then if signBit input then invalidResult fmt else nativeOverflow fmt false
+  else if isInfinite input then if signBit input then invalidResult fmt else
+    nativeOverflow fmt false
   else if isZero input then nativeOverflow fmt true
   else
     match toRat? input with
@@ -249,10 +253,11 @@ descriptor.
 NaNs are quieted, `+∞` gives `+∞`, either zero is returned unchanged, `-1` gives `-∞`, and inputs
 below `-1`, `-∞` included, give the invalid result. `budget.initialDegree` has no effect.
 -/
-def logPlus1 {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}) :
+def logp1 {fmt : FloatFormat} (input : Model fmt) (budget : Certified.Budget := {}) :
     Model fmt :=
   if isNaN input then quietNaN input
-  else if isInf input then if signBit input then invalidResult fmt else nativeOverflow fmt false
+  else if isInfinite input then if signBit input then invalidResult fmt else
+    nativeOverflow fmt false
   else if isZero input then input
   else
     match toRat? input with
@@ -276,12 +281,12 @@ def expMul {fmt : FloatFormat} (input weight : Model fmt) (budget : Certified.Bu
     Model fmt :=
   if isNaN input then quietNaN input
   else if isNaN weight then quietNaN weight
-  else if isInf input then
+  else if isInfinite input then
     if signBit input then
-      if isInf weight then invalidResult fmt else zero fmt (signBit weight)
+      if isInfinite weight then invalidResult fmt else zero fmt (signBit weight)
     else if isZero weight then invalidResult fmt
     else nativeOverflow fmt (signBit weight)
-  else if isInf weight then nativeOverflow fmt (signBit weight)
+  else if isInfinite weight then nativeOverflow fmt (signBit weight)
   else if isZero weight then zero fmt (signBit weight)
   else
     match toRat? input, toDyadic? weight with

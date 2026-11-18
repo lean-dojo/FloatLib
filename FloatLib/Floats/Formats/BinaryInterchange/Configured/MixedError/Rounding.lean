@@ -1,11 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError.Attribute
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Rational
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.MixedError
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Operations.Proof
@@ -22,7 +23,8 @@ carry the underflow error. A quotient keeps a finite divisor and a square root a
 its domain.
 
 Next to those local steps sit finiteness from a range condition on an enclosure of the exact
-result, and the finiteness of FloatLib's exact operations, which needs no range condition. A
+result, the finiteness of FloatLib's exact operations, which needs no range condition, and the
+converse for sums, differences and products: a finite result has finite operands. A
 finite conversion of a rational is its rounding. So C's `(float) n` of an integer or a natural
 number has relative error `u`, and none when its magnitude is at most `2 ^ p`, with
 `p = fracWidth + 1`.
@@ -30,6 +32,13 @@ number has relative error `u`, and none when its magnitude is at most `2 ^ p`, w
 A range condition bounds the enclosure `(1 + r) * |x₀| + a` of the exact operation on the
 computed operands by the largest finite value. It is an inequality on inputs and budgets, never
 the assumption that the result is finite.
+
+A sum, a difference, a product or a fused multiply-add with a rounding attribute,
+`add left right (mode := mode)` and the three others, has the unit roundoff of that attribute,
+`Model.unitRoundoffIn format mode`, in each of the six attributes. A fused multiply-add with the
+default attribute has its own rule too (`fma_rounding`). A directed rounding saturates on
+overflow, so these rules ask that the exact result be within the largest finite magnitude and
+not only that the result be finite.
 -/
 
 @[expose] public section
@@ -86,6 +95,17 @@ theorem mul_rounding {left right : Value}
     MixedError (toReal (left * right)) (toReal left * toReal right)
       (Model.unitRoundoffAt format) (Model.underflowErrorAt format) :=
   mixedError_toReal_of_eq_roundAt (toReal_mul_eq_roundAt hresult)
+
+/-- For an IEEE descriptor, a finite configured fused multiply-add has the mixed error of one
+rounding against the exact `left * right + addend`. -/
+theorem fma_rounding {left right addend : Value}
+    [cap : ExecFloat.Fma (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.fma]
+    (hresult : isFinite (fma left right addend) = true)
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MixedError (toReal (fma left right addend)) (toReal left * toReal right + toReal addend)
+      (Model.unitRoundoffAt format) (Model.underflowErrorAt format) :=
+  mixedError_toReal_of_eq_roundAt (toReal_fma_eq_roundAt hresult)
 
 /-- For an IEEE descriptor, a finite configured quotient by a finite divisor has the mixed error of
 one rounding. -/
@@ -179,6 +199,212 @@ theorem isFinite_div_of_mixedError {left right : Value}
   rw [toModel_hDiv]
   exact Model.isFinite_div_of_abs_div_le_posMaxFinite _ _ hformat hleft hright hzero
     (bound.abs_le.trans range)
+
+/-! ### Operations in a rounding attribute
+
+`add left right (mode := mode)` rounds the exact sum once in the attribute `mode`. A directed
+attribute saturates: a sum above the largest finite value rounds downward to that value, which is
+finite and far from the exact sum. So each rule below asks that the exact result be within the
+largest finite magnitude, which also makes the result finite.
+-/
+
+/-- For an IEEE descriptor and every rounding attribute, the configured sum of finite
+operands whose exact sum is within the largest finite magnitude has the relative error of that
+attribute against the exact sum, and no absolute part. -/
+theorem add_rounding_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Add (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.add]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (hrange : |toReal left + toReal right| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MixedError (toReal (add left right (mode := mode))) (toReal left + toReal right)
+      (Model.unitRoundoffIn format mode) 0 := by
+  unfold isFinite toReal at *
+  rw [toModel_add]
+  exact Model.add_rounding_mode hformat hleft hright hrange
+
+/-- For an IEEE descriptor and every rounding attribute, the configured difference of
+finite operands whose exact difference is within the largest finite magnitude has the relative
+error of that attribute against the exact difference, and no absolute part. -/
+theorem sub_rounding_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Sub (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.sub]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (hrange : |toReal left - toReal right| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MixedError (toReal (sub left right (mode := mode))) (toReal left - toReal right)
+      (Model.unitRoundoffIn format mode) 0 := by
+  unfold isFinite toReal at *
+  rw [toModel_sub]
+  exact Model.sub_rounding_mode hformat hleft hright hrange
+
+/-- For an IEEE descriptor and every rounding attribute, the configured product of
+finite operands whose exact product is within the largest finite magnitude has the mixed error of
+one rounding in that attribute. -/
+theorem mul_rounding_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Mul (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.mul]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (hrange : |toReal left * toReal right| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MixedError (toReal (mul left right (mode := mode))) (toReal left * toReal right)
+      (Model.unitRoundoffIn format mode) (Model.underflowErrorIn format mode) := by
+  unfold isFinite toReal at *
+  rw [toModel_mul]
+  exact Model.mul_rounding_mode hformat hleft hright hrange
+
+/-- For an IEEE descriptor and every rounding attribute, the configured sum of finite
+operands whose exact sum is within the largest finite magnitude is within the relative error of
+that attribute of the exact sum. -/
+theorem abs_toReal_add_sub_le_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Add (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.add]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (hrange : |toReal left + toReal right| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    |toReal (add left right (mode := mode)) - (toReal left + toReal right)| ≤
+      Model.unitRoundoffIn format mode * |toReal left + toReal right| := by
+  simpa using (add_rounding_mode hleft hright hrange hformat).bound
+
+/-- For an IEEE descriptor and every rounding attribute, the configured difference of
+finite operands whose exact difference is within the largest finite magnitude is within the
+relative error of that attribute of the exact difference. -/
+theorem abs_toReal_sub_sub_le_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Sub (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.sub]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (hrange : |toReal left - toReal right| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    |toReal (sub left right (mode := mode)) - (toReal left - toReal right)| ≤
+      Model.unitRoundoffIn format mode * |toReal left - toReal right| := by
+  simpa using (sub_rounding_mode hleft hright hrange hformat).bound
+
+/-- For an IEEE descriptor and every rounding attribute, the configured product of
+finite operands whose exact product is within the largest finite magnitude is within the relative
+and the absolute error of that attribute of the exact product. -/
+theorem abs_toReal_mul_sub_le_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Mul (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.mul]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (hrange : |toReal left * toReal right| ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    |toReal (mul left right (mode := mode)) - toReal left * toReal right| ≤
+      Model.unitRoundoffIn format mode * |toReal left * toReal right| +
+        Model.underflowErrorIn format mode :=
+  (mul_rounding_mode hleft hright hrange hformat).bound
+
+/-- For an IEEE descriptor and every rounding attribute, the configured fused multiply-add of
+finite operands whose exact `left * right + addend` is within the largest finite magnitude has
+the mixed error of one rounding in that attribute. -/
+theorem fma_rounding_mode {left right addend : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Fma (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.fma]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (haddend : isFinite addend = true)
+    (hrange : |toReal left * toReal right + toReal addend| ≤
+      Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    MixedError (toReal (fma left right addend (mode := mode)))
+      (toReal left * toReal right + toReal addend)
+      (Model.unitRoundoffIn format mode) (Model.underflowErrorIn format mode) := by
+  unfold isFinite toReal at *
+  rw [toModel_fma]
+  exact Model.fma_rounding_mode hformat hleft hright haddend hrange
+
+/-- For an IEEE descriptor and every rounding attribute, the configured fused multiply-add of
+finite operands whose exact `left * right + addend` is within the largest finite magnitude is
+within the relative and the absolute error of that attribute of the exact value. -/
+theorem abs_toReal_fma_sub_le_mode {left right addend : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Fma (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.fma]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (haddend : isFinite addend = true)
+    (hrange : |toReal left * toReal right + toReal addend| ≤
+      Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    |toReal (fma left right addend (mode := mode)) -
+        (toReal left * toReal right + toReal addend)| ≤
+      Model.unitRoundoffIn format mode * |toReal left * toReal right + toReal addend| +
+        Model.underflowErrorIn format mode :=
+  (fma_rounding_mode hleft hright haddend hrange hformat).bound
+
+/-- A sum, a difference or a product with the default attribute written out is the operation
+that `+`, `-` or `*` runs. -/
+theorem toReal_add_nearest {left right : Value}
+    [ExecFloat.Add (Configured.Family format code plan)] :
+    toReal (add left right (mode := .nearest)) = toReal (left + right) := rfl
+
+@[inherit_doc toReal_add_nearest]
+theorem toReal_sub_nearest {left right : Value}
+    [ExecFloat.Sub (Configured.Family format code plan)] :
+    toReal (sub left right (mode := .nearest)) = toReal (left - right) := rfl
+
+@[inherit_doc toReal_add_nearest]
+theorem toReal_mul_nearest {left right : Value}
+    [ExecFloat.Mul (Configured.Family format code plan)] :
+    toReal (mul left right (mode := .nearest)) = toReal (left * right) := rfl
+
+/-- For an IEEE descriptor and every rounding attribute, finite operands whose exact sum
+has an enclosure at most the largest finite value have a finite configured sum in that
+attribute. -/
+theorem isFinite_add_of_mixedError_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Add (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.add]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (bound : MixedError (toReal left + toReal right) x₀ r a)
+    (range : (1 + r) * |x₀| + a ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite (add left right (mode := mode)) = true := by
+  unfold isFinite toReal at *
+  rw [toModel_add]
+  exact (Model.add_finite_roundAt hformat hleft hright (bound.abs_le.trans range)).1
+
+/-- For an IEEE descriptor and every rounding attribute, finite operands whose exact
+difference has an enclosure at most the largest finite value have a finite configured difference
+in that attribute. -/
+theorem isFinite_sub_of_mixedError_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Sub (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.sub]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (bound : MixedError (toReal left - toReal right) x₀ r a)
+    (range : (1 + r) * |x₀| + a ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite (sub left right (mode := mode)) = true := by
+  unfold isFinite toReal at *
+  rw [toModel_sub]
+  exact (Model.sub_finite_roundAt hformat hleft hright (bound.abs_le.trans range)).1
+
+/-- For an IEEE descriptor and every rounding attribute, finite operands whose exact
+product has an enclosure at most the largest finite value have a finite configured product in
+that attribute. -/
+theorem isFinite_mul_of_mixedError_mode {left right : Value} {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Mul (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.mul]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (bound : MixedError (toReal left * toReal right) x₀ r a)
+    (range : (1 + r) * |x₀| + a ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite (mul left right (mode := mode)) = true := by
+  unfold isFinite toReal at *
+  rw [toModel_mul]
+  exact (Model.mul_finite_roundAt hformat hleft hright (bound.abs_le.trans range)).1
+
+/-- For an IEEE descriptor and every rounding attribute, finite operands whose exact
+`left * right + addend` has an enclosure at most the largest finite value have a finite configured
+fused multiply-add in that attribute. -/
+theorem isFinite_fma_of_mixedError_mode {left right addend : Value}
+    {mode : Model.IEEERoundingMode}
+    [cap : ExecFloat.Fma (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.fma]
+    (hleft : isFinite left = true) (hright : isFinite right = true)
+    (haddend : isFinite addend = true)
+    (bound : MixedError (toReal left * toReal right + toReal addend) x₀ r a)
+    (range : (1 + r) * |x₀| + a ≤ Model.toReal (Model.posMaxFinite format))
+    (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite (fma left right addend (mode := mode)) = true := by
+  unfold isFinite toReal at *
+  rw [toModel_fma]
+  exact (Model.fma_finite_roundAt hformat hleft hright haddend (bound.abs_le.trans range)).1
 
 /-! ### Exact operations
 
@@ -285,6 +511,47 @@ theorem isFinite_div_of_abs_toReal_eq_one_right {left right : Value}
     simp [(isFinite_and_toReal_eq_zero_of_isZero hzero).2] at hone
   exact isFinite_div_of_mixedError hleft hright hzero (.refl _) (by
     simpa [abs_div, hone] using abs_toReal_le_posMaxFinite_of_isFinite hleft)
+
+/-- For an IEEE descriptor, a finite configured sum has finite operands. -/
+theorem isFinite_of_isFinite_add {left right : Value}
+    [cap : ExecFloat.Add (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.add]
+    (hresult : isFinite (left + right) = true) (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite left = true ∧ isFinite right = true := by
+  unfold isFinite at *
+  rw [toModel_hAdd] at hresult
+  exact Model.isFinite_of_isFinite_add hformat hresult
+
+/-- For an IEEE descriptor, a finite configured difference has finite operands. -/
+theorem isFinite_of_isFinite_sub {left right : Value}
+    [cap : ExecFloat.Sub (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.sub]
+    (hresult : isFinite (left - right) = true) (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite left = true ∧ isFinite right = true := by
+  unfold isFinite at *
+  rw [toModel_hSub] at hresult
+  exact Model.isFinite_of_isFinite_sub hformat hresult
+
+/-- For an IEEE descriptor, a finite configured product has finite operands. -/
+theorem isFinite_of_isFinite_mul {left right : Value}
+    [cap : ExecFloat.Mul (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.mul]
+    (hresult : isFinite (left * right) = true) (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite left = true ∧ isFinite right = true := by
+  unfold isFinite at *
+  rw [toModel_hMul] at hresult
+  exact Model.isFinite_of_isFinite_mul hformat hresult
+
+/-- For an IEEE descriptor, a finite configured quotient has a finite dividend. The divisor may
+be an infinity. -/
+theorem isFinite_left_of_isFinite_div {left right : Value}
+    [cap : ExecFloat.Div (Configured.Family format code plan)]
+    [ExecFloat.Capability.HasSpec cap Configured.Spec.div]
+    (hresult : isFinite (left / right) = true) (hformat : format.isIEEE = true := by ieee_format) :
+    isFinite left = true := by
+  unfold isFinite at *
+  rw [toModel_hDiv] at hresult
+  exact Model.isFinite_left_of_isFinite_div hformat hresult
 
 end Rounding
 

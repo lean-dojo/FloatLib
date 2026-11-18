@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,9 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.P3109.Projection.Runtime
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
+
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.NormNum.Pow
 
 /-!
@@ -35,10 +36,6 @@ theorem quantumExponent_lower
     format.minimumQuantumExponent ≤
       max leading format.minimumNormalExponent -
         Int.ofNat format.precision + 1 := by
-  have minimum_le :
-      format.minimumNormalExponent ≤
-        max leading format.minimumNormalExponent :=
-    le_max_right _ _
   unfold minimumQuantumExponent minimumNormalExponent
   omega
 

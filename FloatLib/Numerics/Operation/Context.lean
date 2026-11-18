@@ -1,10 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
+
+public import Mathlib.Init -- Standard source linters.
 
 /-!
 # Representation-independent operation context
@@ -81,3 +83,24 @@ def flushToZero : QuantizationPolicy := { underflow := .flushToZero }
 
 end QuantizationPolicy
 end FloatLib.Numerics
+
+namespace FloatLib.Numerics.OverflowMode
+
+/-- Reconstruct a `OverflowMode` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.OverflowMode
+
+namespace FloatLib.Numerics.RoundingMode
+
+/-- Reconstruct a `RoundingMode` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.RoundingMode
+
+namespace FloatLib.Numerics.UnderflowMode
+
+/-- Reconstruct a `UnderflowMode` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.UnderflowMode

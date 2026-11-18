@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Proof
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
+
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -41,6 +41,7 @@ quire-NaR word.
 namespace FloatLib.Floats.Formats.Posit.Quire.Model
 
 open FloatLib.Numerics
+open FloatLib.Floats.Formats
 
 variable {format : Format}
 
@@ -49,14 +50,14 @@ private def minPosUnitCoefficient
   value.significand *
     2 ^ Int.toNat
       (value.exponent -
-        (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+        (Posit.Model.DyadicRounding.minPositive
           format).exponent)
 
 /-- The smallest positive posit exponent, written in terms of the total width. -/
 private theorem minPositive_exponent_eq (format : Format) :
-    (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent =
+    (Posit.Model.DyadicRounding.minPositive format).exponent =
       -(4 * ((format.bits : Int) - 2)) := by
-  rw [FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_eq_fields]
+  rw [Posit.Model.DyadicRounding.minPositive_eq_fields]
   have hbits := format.bits_ge_two
   simp only [Format.payloadBits, Int.ofNat_eq_natCast]
   omega
@@ -122,7 +123,7 @@ private theorem minPosUnitCoefficient_le
         (FloatLib.Floats.Formats.Posit.Model.decodeExact_eq_finite_iff
           value fields).mp hdecode
       have hminExponent :=
-        FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive_exponent_le_scale_of_not_special
+        Posit.Model.DyadicRounding.minPositive_exponent_le_scale_of_not_special
           value hzero hnar
       have hmin := minPositive_exponent_eq format
       have hbits := format.bits_ge_two
@@ -134,7 +135,7 @@ private theorem minPosUnitCoefficient_le
         value.decodeFields.significand *
             2 ^ Int.toNat
               (value.scale -
-                (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+                (Posit.Model.DyadicRounding.minPositive
                   format).exponent) ≤
           2 ^ (8 * (format.bits - 2))
       rcases lt_or_eq_of_le value.regimeRunLength_le_payload with hlt | hfull
@@ -144,12 +145,12 @@ private theorem minPosUnitCoefficient_le
           value.decodeFields.significand *
                 2 ^ Int.toNat
                   (value.scale -
-                    (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+                    (Posit.Model.DyadicRounding.minPositive
                       format).exponent) ≤
               2 ^ (value.fractionBits + 1 +
                 Int.toNat
                   (value.scale -
-                    (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+                    (Posit.Model.DyadicRounding.minPositive
                       format).exponent)) := by
             rw [Nat.pow_add]
             exact Nat.mul_le_mul_right _ hsignificand.le
@@ -206,17 +207,17 @@ scale, twice that exponent, by the sum of the two offsets.
 private theorem toNat_sub_scaleExponent_eq_add {exponent first second : Int}
     (hsum : exponent = first + second)
     (hfirst :
-      (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent ≤ first)
+      (Posit.Model.DyadicRounding.minPositive format).exponent ≤ first)
     (hsecond :
-      (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent ≤
+      (Posit.Model.DyadicRounding.minPositive format).exponent ≤
         second) :
     Int.toNat (exponent - scaleExponent format) =
       Int.toNat
           (first -
-            (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent) +
+            (Posit.Model.DyadicRounding.minPositive format).exponent) +
         Int.toNat
           (second -
-            (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive format).exponent) := by
+            (Posit.Model.DyadicRounding.minPositive format).exponent) := by
   rw [scaleExponent_eq_two_mul_minPositive_exponent, hsum]
   omega
 
@@ -236,7 +237,7 @@ theorem natAbs_coefficientOfDyadic_le_positCoefficientBound
       Int.toNat (dyadic.exponent - scaleExponent format) =
         Int.toNat
             (dyadic.exponent -
-              (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+              (Posit.Model.DyadicRounding.minPositive
                 format).exponent) +
           4 * (format.bits - 2) := by
     rw [toNat_sub_scaleExponent_eq_add (add_zero dyadic.exponent).symm hminExponent
@@ -274,11 +275,11 @@ theorem natAbs_coefficientOfDyadic_mul_le_productCoefficientBound
             scaleExponent format) =
         Int.toNat
             (leftDyadic.exponent -
-              (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+              (Posit.Model.DyadicRounding.minPositive
                 format).exponent) +
           Int.toNat
             (rightDyadic.exponent -
-              (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+              (Posit.Model.DyadicRounding.minPositive
                 format).exponent) :=
     toNat_sub_scaleExponent_eq_add
       (by simp [FloatLib.Numerics.Dyadic.mul, FloatLib.Numerics.Dyadic.mulFields])
@@ -291,11 +292,11 @@ theorem natAbs_coefficientOfDyadic_mul_le_productCoefficientBound
     leftDyadic.significand * rightDyadic.significand *
           (2 ^ Int.toNat
               (leftDyadic.exponent -
-                (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+                (Posit.Model.DyadicRounding.minPositive
                   format).exponent) *
             2 ^ Int.toNat
               (rightDyadic.exponent -
-                (FloatLib.Floats.Formats.Posit.Model.DyadicRounding.minPositive
+                (Posit.Model.DyadicRounding.minPositive
                   format).exponent)) =
         minPosUnitCoefficient format leftDyadic *
           minPosUnitCoefficient format rightDyadic := by

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Posit.Semantics.Projective
 public import FloatLib.Floats.Formats.Posit.Configured
+public import FloatLib.Floats.Formats.Posit.Semantics.Projective
 
 /-!
 # Optional projective views of configured posits

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Text.Parsing
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
+public import FloatLib.Floats.Formats.BinaryInterchange.Status.Proof
 
 /-!
 # Decimal exponent clamping preserves binary conversion
@@ -223,7 +223,12 @@ theorem rationalEqualsDyadicScaled_finite_of_low (fmt : FloatFormat) (sign : Boo
       (by simp only [dyadicLeadingExponent]; omega)
     simp only [rationalEqualsDyadicScaled]
     simp only [RationalBinary.compareDyadicScaled?] at hlt ⊢
-    cases sign <;> cases hneg : a.negative <;> simp_all <;> split_ifs at hlt ⊢ <;> simp_all
+    cases sign <;> cases hneg : a.negative <;>
+      simp_all only [ne_eq, Order.le_sub_one_iff, beq_iff_eq, ↓reduceIte, bne_self_eq_false,
+      Bool.false_eq_true, gt_iff_lt, Option.some.injEq, ite_eq_left_iff, not_lt,
+      Option.some_beq_some, beq_eq_false_iff_ne, Bool.bne_true, Bool.not_false,
+      Ordering.gt_beq_eq, Bool.bne_false, Ordering.lt_beq_eq,
+        Ordering.swap_eq_eq] <;> split_ifs at hlt ⊢ <;> simp_all
 
 /-- Above `decimalSaturationHigh`, the status does not depend on the exact rational. -/
 theorem rationalRoundingStatusScaled_eq_of_high (fmt : FloatFormat) (mode : IEEERoundingMode)
@@ -294,7 +299,7 @@ private theorem compare_signed_eq_of_lt_abs {value first second : ℝ} (sign : B
       apply compare_lt_iff_lt.mpr
       cases sign
       · simp only [Bool.false_eq_true, ↓reduceIte]
-        linarith
+        exact hnegative.trans hbound
       · simp only [↓reduceIte]
         linarith
     rw [hbound first hfirst hfirstValue, hbound second hsecond hsecondValue]
@@ -313,7 +318,7 @@ private theorem compare_signed_eq_of_lt_abs {value first second : ℝ} (sign : B
       apply compare_gt_iff_gt.mpr
       cases sign
       · simp only [Bool.false_eq_true, ↓reduceIte]
-        linarith
+        assumption
       · simp only [↓reduceIte]
         linarith
     rw [hbound first hfirst hfirstValue, hbound second hsecond hsecondValue]
@@ -399,7 +404,7 @@ private theorem decimalMagnitude_num_ne_zero (x : DecimalText.Decimal)
     (hx : x.significand ≠ 0) : (decimalMagnitude x).num.natAbs ≠ 0 := by
   have : decimalMagnitude x ≠ 0 := by
     simp only [decimalMagnitude]
-    exact mul_ne_zero (by exact_mod_cast hx) (zpow_ne_zero _ (by norm_num))
+    exact mul_ne_zero (by exact_mod_cast hx) (zpow_ne_zero _ (by decide))
   simpa [Int.natAbs_eq_zero, Rat.num_eq_zero] using this
 
 private theorem floorLog2_decimalMagnitude (x : DecimalText.Decimal)
@@ -432,7 +437,6 @@ private theorem three_mul_le_log_decimal (s : Nat) (hs : s ≠ 0) (k : Nat) :
 
 private theorem log_decimal_le (s : Nat) (hs : s ≠ 0) (k : Nat) :
     Int.log 2 ((s : ℝ) * (10 : ℝ) ^ (-(k : Int))) ≤ (s.log2 : Int) - 3 * (k : Int) := by
-  have hspos : (0 : ℝ) < s := by exact_mod_cast Nat.pos_of_ne_zero hs
   have hpos : (0 : ℝ) < (s : ℝ) * (10 : ℝ) ^ (-(k : Int)) := by positivity
   have hlt : (s : ℝ) * (10 : ℝ) ^ (-(k : Int)) <
       ((2 : Nat) : ℝ) ^ ((s.log2 : Int) - 3 * (k : Int) + 1) := by
@@ -444,7 +448,7 @@ private theorem log_decimal_le (s : Nat) (hs : s ≠ 0) (k : Nat) :
         (2 : ℝ) ^ (s.log2 + 1) * (8 : ℝ) ^ (-(k : Int)) := by
       have : ((s.log2 : Int) - 3 * (k : Int) + 1) =
           ((s.log2 + 1 : Nat) : Int) + 3 * (-(k : Int)) := by
-        push_cast; ring
+        push_cast; omega
       rw [this, zpow_add₀ (by norm_num), zpow_mul, zpow_natCast]
       norm_num
     rw [hrw]

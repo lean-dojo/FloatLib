@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -16,7 +16,7 @@ Dyadic projection implements §4.7.4 with shifts, and its fractional-part formul
 same as in the rational implementation. The stochastic decisions hold for every supplied word,
 even a word of width zero, and no probability or distribution hypothesis is used.
 
-Reference: P3109 unapproved interim report 4.0.3, revision `34f5964`, §4.7.4.
+Reference: P3109 unapproved interim report v4.1, 14 September 2026, §4.7.4.
 -/
 
 @[expose] public section
@@ -65,14 +65,14 @@ theorem scaled_fraction_eq (remainder discarded output : Nat) :
 /-- The shift-based stochastic-C helper computes the report's RNITE. -/
 theorem scaleFractionNearestEven_eq (remainder discarded output : Nat) :
     scaleFractionNearestEven remainder discarded output =
-      RationalRounding.nearestEven (((remainder : Rat) / 2 ^ discarded) * 2 ^ output) := by
+      RoundingFormula.nearestEven (((remainder : Rat) / 2 ^ discarded) * 2 ^ output) := by
   rw [scaled_fraction_eq]
   unfold scaleFractionNearestEven
   split
   · have hc : (remainder : Rat) * 2 ^ (output - discarded) =
         ((remainder * 2 ^ (output - discarded) : Nat) : Rat) := by norm_cast
-    have hn (n : Nat) : RationalRounding.nearestEven (n : Rat) = n := by
-      simp only [RationalRounding.nearestEven, Nat.floor_natCast]
+    have hn (n : Nat) : RoundingFormula.nearestEven (n : Rat) = n := by
+      simp only [RoundingFormula.nearestEven, Nat.floor_natCast]
       simp
     rw [hc]
     rw [hn]
@@ -86,7 +86,7 @@ theorem roundAway_eq_rational (format : Format) (mode : RoundingMode)
     (negative : Bool) (quantum : Int) (lower remainder discarded : Nat)
     (hrange : remainder < 2 ^ discarded) :
     roundAway format mode negative quantum lower remainder discarded =
-      RationalRounding.roundAway mode negative (format.lowerCodeIsEven quantum lower)
+      RoundingFormula.roundAway mode negative (format.lowerCodeIsEven quantum lower)
         ((remainder : Rat) / 2 ^ discarded) := by
   have hb := RationalRounding.roundRationalAwayWithParity_eq mode negative
     (format.lowerCodeIsEven quantum lower) remainder (2 ^ discarded) (Nat.two_pow_pos discarded)
@@ -97,7 +97,7 @@ theorem roundAway_eq_rational (format : Format) (mode : RoundingMode)
   have hd : 0 < discarded := by
     by_contra h
     have : discarded = 0 := by omega
-    simp [this] at hrange
+    simp only [this, pow_zero, Nat.lt_one_iff] at hrange
     omega
   have hp : 2 ^ discarded = 2 * 2 ^ (discarded - 1) := by
     obtain ⟨n, rfl⟩ : ∃ n, discarded = n + 1 := ⟨discarded - 1, by omega⟩
@@ -145,7 +145,7 @@ theorem roundFiniteToPrecision_report_spec (format : Format) (mode : RoundingMod
           (2 : Rat) ^ format.quantumExponent value ∧
       (format.roundFiniteToPrecision mode value).toRat =
         Internal.signRat value.negative *
-          ((if RationalRounding.roundAway mode value.negative
+          ((if RoundingFormula.roundAway mode value.negative
             (format.lowerCodeIsEven (format.quantumExponent value) lower)
             ((remainder : Rat) / 2 ^ discarded) then lower + 1 else lower : Nat) : Rat) *
           (2 : Rat) ^ format.quantumExponent value := by

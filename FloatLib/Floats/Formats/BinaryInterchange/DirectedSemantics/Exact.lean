@@ -1,15 +1,16 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Finiteness
-public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.TotalOrder.Encoding
+public import FloatLib.Floats.Formats.BinaryInterchange.Status.Runtime
+
 import FloatLib.Floats.Formats.BinaryInterchange.Analysis.DyadicOrder
 import FloatLib.Numerics.Bitwise
 
@@ -86,7 +87,6 @@ theorem abs_toReal_lt_bpow_of_toDyadic?_some
   have hfin : isFinite x = true := isFinite_eq_true_of_toDyadic?_some hd
   have hexponentLe := expField_le_maxFiniteExpField_of_isFinite x hfin
   have hfractionLt := fracField_lt_pow2 x
-  have hmaxPositive := fmt.maxFiniteExpField_pos
   -- A significand below `2^k` scaled by `2^e` stays below `2^(k + e)`.
   have hbound : ∀ (k : Nat), d.significand < 2 ^ k →
       (k : Int) + d.exponent ≤ fmt.maxNormalExponent + 1 →
@@ -124,15 +124,15 @@ theorem Dyadic.genericFormat_of_eq_mul_pow2
     (hsig : d.significand = m * 2 ^ k)
     (hm : m < 2 ^ (fmt.fracWidth + 1))
     (hexp : fmt.minSubnormalExponent ≤ d.exponent) :
-    genericFormat Numerics.binaryRadix (fexpOf fmt) d.toReal := by
-  have hprec : (0 : ℤ) < fmt.fracWidth + 1 := by positivity
-  apply (generic_format_FLT_iff fmt.minSubnormalExponent (fmt.fracWidth + 1) hprec _).2
+    GenericRepresentable Numerics.binaryRadix (fexpOf fmt) d.toReal := by
+  have hprec : (0 : ℤ) < fmt.fracWidth + 1 := Int.succ_ofNat_pos fmt.fracWidth
+  apply (genericRepresentable_flt_iff fmt.minSubnormalExponent (fmt.fracWidth + 1) hprec _).2
   refine ⟨hprec, ⟨if d.negative then -(m : Int) else m, d.exponent + k⟩, ?_, ?_,
     show fmt.minSubnormalExponent ≤ d.exponent + (k : Int) by omega⟩
   · cases hneg : d.negative <;>
       simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand, hneg, hsig,
         Flocq.toReal, Flocq.bpow, Numerics.binaryRadix, Numerics.Radix.toReal,
-        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)] <;> ring
+        zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)] <;> ac_rfl
   · cases d.negative <;> simpa [Numerics.binaryRadix] using hm
 
 /--
@@ -144,7 +144,7 @@ theorem Dyadic.genericFormat_of_significand_lt
     (fmt : FloatFormat) (d : Numerics.Dyadic)
     (hsig : d.significand < 2 ^ (fmt.fracWidth + 1))
     (hexp : fmt.minSubnormalExponent ≤ d.exponent) :
-    genericFormat Numerics.binaryRadix (fexpOf fmt) d.toReal :=
+    GenericRepresentable Numerics.binaryRadix (fexpOf fmt) d.toReal :=
   Dyadic.genericFormat_of_eq_mul_pow2 fmt d d.significand 0 (by simp) hsig hexp
 
 /-- The exact value of the largest finite word, as a dyadic, denotes the same real. -/
@@ -199,7 +199,6 @@ theorem roundMantissaToLeadingBitUp_ne_pow2_succ_of_eq_mul_pow2
   have hlog : (m * 2 ^ k).log2 = m.log2 + k := by
     rw [← Nat.shiftLeft_eq]
     exact Nat.log2_shiftLeft_of_ne_zero m k hm
-  have hne : m * 2 ^ k ≠ 0 := Nat.mul_ne_zero hm (Nat.two_pow_pos k).ne'
   unfold roundMantissaToLeadingBitUp
   rw [hlog]
   by_cases hle : fracWidth ≤ m.log2 + k
@@ -333,7 +332,7 @@ theorem roundDyadicPosUp_of_representable
     round_preserves_generic ceilRound _ hgeneric
 
 /-- Real value of a dyadic in terms of its sign and magnitude. -/
-private theorem Dyadic.toReal_eq_signed_magnitude (d : Numerics.Dyadic) :
+theorem Dyadic.toReal_eq_signed_magnitude (d : Numerics.Dyadic) :
     d.toReal =
       if d.negative then -((d.significand : ℝ) * bpow d.exponent)
       else (d.significand : ℝ) * bpow d.exponent := by
@@ -474,7 +473,7 @@ private theorem toReal_posMaxFinite_lt_overflowMidpoint (fmt : FloatFormat) :
   rw [← Dyadic.toReal_maxFiniteDyadic]
   simp only [overflowMidpoint, maxFiniteDyadic, Numerics.Dyadic.toReal_mk_false]
   set M : ℝ := ((pow2 fmt.fracWidth + fmt.maxFiniteFracField : Nat) : ℝ) with hM
-  set E : Int := fmt.maxNormalExponent - Int.ofNat fmt.fracWidth with hE
+  set E : Int := fmt.maxNormalExponent - Int.ofNat fmt.fracWidth
   have hsplit : bpow E = 2 * bpow (E - 1) := by
     rw [show E = 1 + (E - 1) by ring, bpow_add, bpow_one]
     ring_nf
@@ -483,7 +482,7 @@ private theorem toReal_posMaxFinite_lt_overflowMidpoint (fmt : FloatFormat) :
       ((2 * (pow2 fmt.fracWidth + fmt.maxFiniteFracField) + 1 : Nat) : ℝ) = 2 * M + 1 := by
     rw [hM]
     push_cast
-    ring
+    rfl
   change M * bpow E < ((2 * (pow2 fmt.fracWidth + fmt.maxFiniteFracField) + 1 : Nat) : ℝ) *
     bpow (E - 1)
   rw [hcast, hsplit]
@@ -495,19 +494,19 @@ private theorem toReal_posMaxFinite_lt_overflowLimit (fmt : FloatFormat) :
   rw [← Dyadic.toReal_maxFiniteDyadic]
   simp only [overflowLimit, maxFiniteDyadic, Numerics.Dyadic.toReal_mk_false]
   set M : ℝ := ((pow2 fmt.fracWidth + fmt.maxFiniteFracField : Nat) : ℝ) with hM
-  set E : Int := fmt.maxNormalExponent - Int.ofNat fmt.fracWidth with hE
+  set E : Int := fmt.maxNormalExponent - Int.ofNat fmt.fracWidth
   have hpos : 0 < bpow E := bpow_pos _
   have hcast :
       ((pow2 fmt.fracWidth + fmt.maxFiniteFracField + 1 : Nat) : ℝ) = M + 1 := by
     rw [hM]
     push_cast
-    ring
+    rfl
   change M * bpow E < ((pow2 fmt.fracWidth + fmt.maxFiniteFracField + 1 : Nat) : ℝ) * bpow E
   rw [hcast]
-  nlinarith
+  exact mul_lt_mul_of_pos_right (lt_add_one _) hpos
 
 /-- The magnitude of a dyadic denotes the absolute value of its real value. -/
-private theorem Dyadic.toReal_magnitude (d : Numerics.Dyadic) :
+theorem Dyadic.toReal_magnitude (d : Numerics.Dyadic) :
     ({ d with negative := false } : Numerics.Dyadic).toReal = |d.toReal| := by
   rw [Dyadic.abs_toReal]
   simp [Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand,

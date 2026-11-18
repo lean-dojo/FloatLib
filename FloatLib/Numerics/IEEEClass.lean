@@ -1,9 +1,11 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
+
+public import Mathlib.Init -- Standard source linters.
 
 /-!
 # IEEE floating-point classes
@@ -42,3 +44,10 @@ inductive IEEEClass where
   deriving DecidableEq, Repr
 
 end FloatLib.Numerics
+
+namespace FloatLib.Numerics.IEEEClass
+
+/-- Reconstruct a `IEEEClass` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Numerics.IEEEClass

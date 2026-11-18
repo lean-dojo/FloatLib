@@ -1,23 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Direct.Runtime
+public import FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Full.Fma.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Core.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Word.Small.Add.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Word.TwoWordMul.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Division.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Word.Full.Fma.Proof
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Addition.Proof
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Multiplication.Proof
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Division.Proof
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Sqrt.Proof
-public import FloatLib.Floats.ExecFloat.Backends.FixedLimb.Pair.Fma.Proof
-public import FloatLib.Floats.ExecFloat.Backends.Dispatch.FmaWord.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Direct.Runtime
 
 /-!
 # Correctness of direct storage-word arithmetic

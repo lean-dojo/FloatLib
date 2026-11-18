@@ -1,22 +1,25 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.P3109.Block.Runtime
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Runtime
+public import FloatLib.Floats.Formats.P3109.Block.Runtime
 
 /-!
 # P3109 block square roots and norms
 
 A block root is normalized at the result scale before it is rounded. A finite nonzero scale `s`
-turns `sqrt(q) / s` into the signed root of `q / s²`, so with `s = -2` and `q = 16` the lane value
+turns `BlockSqrt(q) / s` into the signed root of `q / s²`, so with `s = -2` and `q = 16` the
+    lane value
 is `-2`. Exact square comparisons then do the one destination rounding, negative scales and
 lane-specific stochastic words included. Zero, infinite, and NaN scales follow the rules of
 ordinary block projection.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.10.8, 4.10.14, 5.4.2 and 5.7.
 -/
 
 @[expose] public section
@@ -102,14 +105,16 @@ def projectRoots (format : Format) (policy : BlockPolicy length) (scale : Result
     BlockRoot.project format (policy.at lane)
       (BlockRoot.normalize exactScale radicands[lane.val])⟩
 
-/-- Elementwise square root, normalized before the single final destination rounding. -/
-def sqrt (format : Format) (policy : BlockPolicy length)
+/-- P3109 interim report v4.1 (unapproved), §§5.7, 4.10.8: normalize exact square roots before
+    final rounding. -/
+def BlockSqrt (format : Format) (policy : BlockPolicy length)
     (block : Block Scale Source length) (resultScale : ResultScale) :
     Block ResultScale (ExecFloat.P3109 format) length :=
   projectRoots format policy resultScale (decode block)
 
-/-- Elementwise reciprocal square root with the report's nonpositive-domain rule. -/
-def rsqrt (format : Format) (policy : BlockPolicy length)
+/-- P3109 interim report v4.1 (unapproved), §§5.7, 4.10.8: reciprocal root with the
+    nonpositive-domain rule. -/
+def BlockRSqrt (format : Format) (policy : BlockPolicy length)
     (block : Block Scale Source length) (resultScale : ResultScale) :
     Block ResultScale (ExecFloat.P3109 format) length :=
   projectRoots format policy resultScale ((decode block).map Arithmetic.rsqrtRadicand)
@@ -118,8 +123,9 @@ variable {RightScale RightScaleExact Right RightExact : Type}
 variable [ExactDecoder RightScale RightScaleExact] [ExactMap RightScaleExact Rat]
 variable [ExactDecoder Right RightExact] [ExactMap RightExact Rat]
 
-/-- Elementwise hypotenuse of independently scaled sources, retaining the exact sum of squares. -/
-def hypot (format : Format) (policy : BlockPolicy length)
+/-- P3109 interim report v4.1 (unapproved), §§5.7, 4.10.14: hypotenuse retaining the exact sum
+    of squares. -/
+def BlockHypot (format : Format) (policy : BlockPolicy length)
     (left : Block Scale Source length) (right : Block RightScale Right length)
     (resultScale : ResultScale) : Block ResultScale (ExecFloat.P3109 format) length :=
   let leftValues := decode left

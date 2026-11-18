@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,14 +8,14 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Model.Decode
 public import FloatLib.Numerics.Bitwise
+
 import Mathlib.Algebra.Order.Field.Basic
-public import Mathlib.Data.Nat.Log
-import Mathlib.Tactic.Zify
-import Mathlib.Tactic.Positivity.Finset
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
 import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
 import Mathlib.Tactic.NormNum.Pow
+import Mathlib.Tactic.Positivity.Finset
+import Mathlib.Tactic.Zify
 
 /-!
 # Fixed-width bit runs in positive Posit encodings
@@ -92,7 +92,7 @@ theorem countLeadingRun_false_eq_log2
       width - (Nat.log2 value + 1) := by
   induction width generalizing value with
   | zero =>
-      simp at hlt
+      simp only [pow_zero, Nat.lt_one_iff] at hlt
       omega
   | succ width inductionHypothesis =>
       have htopBound : value < 2 ^ (width + 1) := by
@@ -101,7 +101,7 @@ theorem countLeadingRun_false_eq_log2
       | false =>
           rw [countLeadingRun]
           simp only [htop]
-          simp
+          simp only [BEq.rfl, ↓reduceIte, Nat.reduceSubDiff]
           have hnotLower : ¬2 ^ width ≤ value := by
             intro hlower
             have htrue :=
@@ -116,7 +116,7 @@ theorem countLeadingRun_false_eq_log2
       | true =>
           rw [countLeadingRun]
           simp only [htop]
-          simp
+          simp only [beq_false, Bool.not_true, Bool.false_eq_true, ↓reduceIte, Nat.reduceSubDiff]
           have hlower : 2 ^ width ≤ value :=
             (Nat.testBit_eq_true_iff_two_pow_le_of_lt htopBound).1 htop
           have hlog : Nat.log2 value = width :=
@@ -128,21 +128,7 @@ theorem countLeadingRun_false_eq_log2
 private theorem testBit_mod_twoPow
     (value index width : Nat) (hindex : index < width) :
     (value % 2 ^ width).testBit index = value.testBit index := by
-  have hgap : 0 < width - index :=
-    Nat.sub_pos_of_lt hindex
-  have hpow :
-      2 ^ width = 2 ^ (width - index) * 2 ^ index := by
-    rw [← Nat.pow_add]
-    congr 1
-    omega
-  have hdvd : 2 ∣ 2 ^ (width - index) := by
-    rw [show width - index = (width - index - 1) + 1 by omega,
-      Nat.pow_succ]
-    simp
-  simp only [Nat.testBit, Nat.shiftRight_eq_div_pow,
-    Nat.one_and_eq_mod_two]
-  rw [hpow, Nat.mod_mul_left_div_self]
-  rw [← Nat.mod_mod_of_dvd (value / 2 ^ index) hdvd]
+  simp only [Nat.testBit_mod_two_pow, hindex, decide_true, Bool.true_and]
 
 /-- A leading-run scan depends only on the low `width` bits being scanned. -/
 theorem countLeadingRun_mod_twoPow
@@ -201,7 +187,7 @@ theorem countLeadingRun_true_eq_false_of_testBit_flip
           have hright : right.testBit width = false := by
             simpa [hleft] using htop
           simp only [countLeadingRun, hleft, hright]
-          simp
+          simp only [BEq.rfl, ↓reduceIte, Nat.add_left_cancel_iff]
           rw [inductionHypothesis left right]
           exact fun index hindex => hflip index (by omega)
 
@@ -268,25 +254,20 @@ theorem countLeadingRun_true_mono
   rw [countLeadingRun_true_eq_fixedComplement right width hright]
   apply countLeadingRun_false_anti
   · omega
-  · have hpower : 0 < 2 ^ width :=
-      Nat.two_pow_pos width
-    omega
+  · omega
 
-/-- The binary length of `2 * value + 1` is one more than that of a positive `value`. -/
-private theorem log2_two_mul_add_one
-    {value : Nat} (hpos : 0 < value) :
-    Nat.log2 (2 * value + 1) =
-      Nat.log2 value + 1 := by
-  apply (Nat.log2_eq_iff (by omega)).2
-  have hlower := Nat.log2_self_le hpos.ne'
-  have hupper := Nat.lt_log2_self (n := value)
-  constructor
-  · rw [Nat.pow_succ]
-    omega
-  · rw [show Nat.log2 value + 1 + 1 =
-      (Nat.log2 value + 1) + 1 by omega,
-      Nat.pow_succ]
-    omega
+/-- Appending a low zero preserves every leading-one run, including an empty scan. -/
+theorem countLeadingRun_two_mul_true (value width : Nat) :
+    countLeadingRun (2 * value) (width + 1) true =
+      countLeadingRun value width true := by
+  induction width with
+  | zero =>
+      simp [countLeadingRun, Nat.testBit_zero]
+  | succ width ih =>
+      change (if (2 * value).testBit (width + 1) == true then
+        1 + countLeadingRun (2 * value) (width + 1) true else 0) =
+        if value.testBit width == true then 1 + countLeadingRun value width true else 0
+      simp only [Nat.testBit_succ, Nat.mul_div_cancel_left value Nat.zero_lt_two, ih]
 
 /--
 Appending a low zero bit to a positive bounded word preserves its leading regime run.
@@ -301,81 +282,24 @@ theorem countLeadingRun_two_mul
         ((2 * value).testBit width) =
       countLeadingRun value width
         (value.testBit (width - 1)) := by
-  have hwidth : 0 < width := by
-    by_contra hzero
-    have : width = 0 := by omega
-    subst width
-    simp at hbound
-    omega
-  have hdoubleBound :
-      2 * value < 2 ^ (width + 1) := by
+  have hwidth : 0 < width :=
+    Nat.pos_of_ne_zero (Nat.one_lt_two_pow_iff.mp
+      ((Nat.succ_le_of_lt hpos).trans_lt hbound))
+  have hdoubleBound : 2 * value < 2 ^ (width + 1) := by
     rw [Nat.pow_succ]
     omega
-  have htop :
-      (2 * value).testBit width =
-        value.testBit (width - 1) := by
-    rw [show width = (width - 1) + 1 by omega,
-      Nat.testBit_succ]
-    norm_num
+  have htop : (2 * value).testBit width = value.testBit (width - 1) := by
+    conv_lhs =>
+      rw [show width = (width - 1) + 1 by omega, Nat.testBit_succ,
+        Nat.mul_div_cancel_left value Nat.zero_lt_two]
   rw [htop]
-  cases hbit :
-      value.testBit (width - 1) with
+  cases hbit : value.testBit (width - 1) with
   | false =>
-      rw [countLeadingRun_false_eq_log2
-        value width hpos hbound]
-      rw [countLeadingRun_false_eq_log2
-        (2 * value) (width + 1)
-          (by omega) hdoubleBound]
-      rw [Nat.log2_two_mul hpos.ne']
+      rw [countLeadingRun_false_eq_log2 value width hpos hbound,
+        countLeadingRun_false_eq_log2 (2 * value) (width + 1) (by omega) hdoubleBound,
+        Nat.log2_two_mul hpos.ne']
       omega
-  | true =>
-      rw [countLeadingRun_true_eq_fixedComplement
-        value width hbound]
-      rw [countLeadingRun_true_eq_fixedComplement
-        (2 * value) (width + 1) hdoubleBound]
-      let complement :=
-        2 ^ width - 1 - value
-      have hnewComplement :
-          2 ^ (width + 1) - 1 - 2 * value =
-            2 * complement + 1 := by
-        dsimp [complement]
-        rw [Nat.pow_succ]
-        omega
-      rw [hnewComplement]
-      change
-        countLeadingRun (2 * complement + 1)
-            (width + 1) false =
-          countLeadingRun complement width false
-      by_cases hcomplementZero :
-          complement = 0
-      · rw [hcomplementZero]
-        rw [countLeadingRun_false_eq_log2
-          1 (width + 1) (by decide)
-            (Nat.one_lt_two_pow (by omega))]
-        rw [show Nat.log2 1 = 0 by decide,
-          countLeadingRun_zero_false]
-        omega
-      · have hcomplementPos : 0 < complement :=
-          Nat.pos_of_ne_zero hcomplementZero
-        have hcomplementBound :
-            complement < 2 ^ width := by
-          dsimp [complement]
-          have hpower := Nat.two_pow_pos width
-          omega
-        have hnewBound :
-            2 * complement + 1 <
-              2 ^ (width + 1) := by
-          rw [Nat.pow_succ]
-          omega
-        rw [countLeadingRun_false_eq_log2
-          complement width
-            hcomplementPos hcomplementBound]
-        rw [countLeadingRun_false_eq_log2
-          (2 * complement + 1) (width + 1)
-            (by omega) hnewBound]
-        rw [log2_two_mul_add_one
-          hcomplementPos]
-        omega
+  | true => exact countLeadingRun_two_mul_true value width
 
 /-- The regime bit of a nonnegative code is the top bit of its payload. -/
 theorem regimeBit_ofNatBits (format : Format) {code : Nat}
@@ -431,11 +355,13 @@ theorem regimeValue_ofNatBits_le_of_le
     cases hrightBit : right.testBit (format.payloadBits - 1) <;>
       simp only [hleftBit, hrightBit] at *
   · exact neg_le_neg (Int.ofNat_le.mpr (countLeadingRun_false_anti hle hright))
-  · simp
+  · simp only [Bool.false_eq_true, ↓reduceIte, Int.ofNat_eq_natCast, neg_le_sub_iff_le_add,
+    ge_iff_le]
     omega
-  · simp at hleftOne hrightOne
+  · simp only [true_iff, Bool.false_eq_true, false_iff, not_le] at hleftOne hrightOne
     omega
-  · simp
+  · simp only [↓reduceIte, Int.ofNat_eq_natCast, tsub_le_iff_right, sub_add_cancel, Nat.cast_le,
+    ge_iff_le]
     exact countLeadingRun_true_mono hle hright
 
 /--
@@ -452,7 +378,9 @@ theorem regimeValue_eq_iff (left right : Model format) :
   have hleftPos := regimeRunLength_pos left
   have hrightPos := regimeRunLength_pos right
   unfold regimeValue
-  cases left.regimeBit <;> cases right.regimeBit <;> simp <;> omega
+  cases left.regimeBit <;> cases right.regimeBit <;>
+    simp only [Bool.false_eq_true, ↓reduceIte, Int.ofNat_eq_natCast, neg_inj, Nat.cast_inj,
+    true_and, false_and, iff_false, ne_eq, Bool.true_eq_false, sub_left_inj] <;> omega
 
 /-- A bounded word has a full leading-zero run if and only if the word is zero. -/
 private theorem countLeadingRun_false_eq_width_iff
@@ -507,7 +435,6 @@ private theorem div_twoPow_after_true_run
   let trailing := Nat.log2 complement
   have hcomplementBound : complement < 2 ^ width := by
     dsimp [complement]
-    have hpower := Nat.two_pow_pos width
     omega
   have htrailingLt : trailing < width :=
     (Nat.log2_lt hcomplement.ne').2 hcomplementBound

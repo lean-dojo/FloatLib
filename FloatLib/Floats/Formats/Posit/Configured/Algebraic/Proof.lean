@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -103,7 +103,7 @@ theorem rootN_eq_roundPositive (value : Value) {q : Rat} (degree : Int)
 theorem rootN_eq_neg_roundPositive (value : Value) {q : Rat} (degree : Int)
     (hvalue : toRat? value = some q) (hq : q < 0) (hodd : degree % 2 ≠ 0) :
     toModel (rootN value degree) =
-      Model.neg
+      Model.negate
         (Model.RealRounding.roundPositive format ((-(q : ℝ)) ^ (degree : ℝ)⁻¹)) := by
   rw [toModel_rootN]
   exact Model.rootN_eq_neg_roundPositive _ degree hvalue hq hodd

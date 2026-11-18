@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -9,7 +9,7 @@ module
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.FiniteBounds
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Arithmetic
 public import FloatLib.Floats.Formats.BinaryInterchange.IntervalSemantics.Order
-public import FloatLib.Floats.Interval.RealBounds
+public import FloatLib.Numerics.Enclosure.Interval.Bounds
 
 /-!
 # Range-limited finite-only interval enclosures
@@ -86,10 +86,10 @@ theorem mul_sound_of_encoding_finite
   have hfinite (z : Model fmt) : isFinite z = true :=
     isFinite_eq_true_of_encoding_finite hfmt z
   have hxy :=
-    FloatLib.Floats.Interval.mul_bounds_Icc
+    FloatLib.Numerics.Interval.mul_bounds_Icc
       (toReal A.lo) (toReal A.hi) (toReal B.lo) (toReal B.hi) x y hx hy
   refine realMem_ofBounds (hfinite _) (hfinite _) ⟨le_trans ?_ hxy.1, hxy.2.trans ?_⟩
-  · simp only [minOfFour, FloatLib.Floats.Interval.minOfFour,
+  · simp only [minOfFour, FloatLib.Numerics.Interval.minOfFour,
       toReal_minimum_eq_min_of_isFinite _ _ (hfinite _) (hfinite _)]
     exact min_le_min
       (min_le_min
@@ -98,7 +98,7 @@ theorem mul_sound_of_encoding_finite
       (min_le_min
         (toReal_mul_down_le_of_encoding_finite A.hi B.lo hfmt h10)
         (toReal_mul_down_le_of_encoding_finite A.hi B.hi hfmt h11))
-  · simp only [maxOfFour, FloatLib.Floats.Interval.maxOfFour,
+  · simp only [maxOfFour, FloatLib.Numerics.Interval.maxOfFour,
       toReal_maximum_eq_max_of_isFinite _ _ (hfinite _) (hfinite _)]
     exact max_le_max
       (max_le_max

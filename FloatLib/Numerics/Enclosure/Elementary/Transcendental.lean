@@ -1,16 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import Mathlib.NumberTheory.Transcendental.Lindemann.AnalyticalPart
-public import Mathlib.Data.Nat.Prime.Infinite
 public import Mathlib.Analysis.SpecificLimits.Normed
-public import Mathlib.RingTheory.Algebraic.Integral
+public import Mathlib.NumberTheory.Transcendental.Lindemann.AnalyticalPart
 public import Mathlib.RingTheory.Localization.Integral
+
 import Mathlib.Data.Nat.Prime.Int
 
 /-!
@@ -45,7 +44,7 @@ theorem exists_prime_mul_pow_div_factorial_lt_one (weight c : ℝ) (bound : ℕ)
     simpa using (Real.summable_pow_div_factorial c).tendsto_atTop_zero.const_mul
       (weight * c)
   obtain ⟨N, hN⟩ := eventually_atTop.mp
-    (hlimit.eventually (gt_mem_nhds (show (0 : ℝ) < 1 by norm_num)))
+    (hlimit.eventually (gt_mem_nhds (show (0 : ℝ) < 1 from zero_lt_one)))
   obtain ⟨p, hpbound, hp⟩ := Nat.exists_infinite_primes (max (N + 1) (bound + 1))
   refine ⟨p, by omega, hp, ?_⟩
   have hsmall := hN (p - 1) (by omega)
@@ -55,7 +54,7 @@ theorem exists_prime_mul_pow_div_factorial_lt_one (weight c : ℝ) (bound : ℕ)
     have hpow : c ^ p = c ^ (p - 1) * c :=
       (congrArg (c ^ ·) hpstep.symm).trans (pow_succ c (p - 1))
     rw [hpow]
-    ring
+    rw [mul_div_right_comm]; ac_rfl
   rwa [heq] at hsmall
 
 /--
@@ -85,7 +84,7 @@ theorem norm_mul_add_mul_sum_le {K : Type*} [NormedField K] {ι : Type*} (s : Fi
   have hsplit : ∑ k ∈ s, a k * (n * x k - p * y k) =
       n * ∑ k ∈ s, a k * x k - p * ∑ k ∈ s, a k * y k := by
     rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_sub_distrib]
-    exact Finset.sum_congr rfl fun k _ => by ring
+    exact Finset.sum_congr rfl fun k _ => by rw [mul_sub]; ac_rfl
   have hsum : n * a₀ + p * ∑ k ∈ s, a k * y k = -∑ k ∈ s, a k * (n * x k - p * y k) := by
     rw [hsplit]
     linear_combination n * hrelation
@@ -103,7 +102,7 @@ theorem transcendental_int_of_add_sum_pow_ne_zero {A : Type*} [Field A] (x : A) 
       (a₀ : A) + ∑ k ∈ s, (a k : A) * x ^ k ≠ 0) :
     Transcendental ℤ x := by
   intro halgebraic
-  obtain ⟨q, hqzero, hq⟩ := halgebraic.exists_nonzero_coeff_and_aeval_eq_zero
+  obtain ⟨q, hqzero, hq⟩ := halgebraic.exists_coeff_ne_zero_and_aeval_eq_zero
     (mem_nonZeroDivisors_iff_ne_zero.mpr hx)
   apply hrelation (q.support.erase 0) q.coeff (q.coeff 0) hqzero
     (fun k hk => (Finset.mem_erase.mp hk).1)

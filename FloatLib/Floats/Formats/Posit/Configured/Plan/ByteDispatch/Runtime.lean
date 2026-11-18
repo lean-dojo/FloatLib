@@ -1,17 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Scoring
+public import FloatLib.Kernels.Selection.Scoring
 public import FloatLib.Floats.Formats.Posit.Configured.Backend.FixedWords.Byte.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Backend.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.ByteTable.Construction
-public import FloatLib.Floats.Formats.Posit.Configured.Plan.Core.Estimates
 public import FloatLib.Floats.Formats.Posit.Configured.Core
+public import FloatLib.Floats.Formats.Posit.Configured.Plan.Core.Estimates
 
 /-!
 # First-order runtime dispatch for byte-sized posits
@@ -36,9 +36,13 @@ open FloatLib.Floats.ExecFloat.Backend
 
 /-- The four certified implementation classes available to every byte-sized posit operation. -/
 inductive Choice where
+  /-- The reference specification. -/
   | reference
+  /-- A lookup table indexed by the operand bytes. -/
   | table
+  /-- Arithmetic on the packed native word. -/
   | word
+  /-- Width-generic dyadic arithmetic. -/
   | dyadic
   deriving DecidableEq, Repr
 
@@ -100,10 +104,10 @@ abbrev ByteFloat (format : Format) (width_le : format.bits ≤ 8) :=
 @[noinline] def addSelected
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.add)
+      (ByteTable.encoding format width_le) Model.Spec.addition)
     (left right : ByteFloat format width_le) : ByteFloat format width_le :=
   match selection with
-  | .reference => Spec.add left right
+  | .reference => Spec.addition left right
   | .table => ByteTable.runBinary width_le table left right
   | .word => Backend.Byte.add width_le left right
   | .dyadic => Backend.dyadicAdd left right
@@ -119,10 +123,10 @@ abbrev ByteFloat (format : Format) (width_le : format.bits ≤ 8) :=
 @[noinline] def subSelected
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.sub)
+      (ByteTable.encoding format width_le) Model.Spec.subtraction)
     (left right : ByteFloat format width_le) : ByteFloat format width_le :=
   match selection with
-  | .reference => Spec.sub left right
+  | .reference => Spec.subtraction left right
   | .table => ByteTable.runBinary width_le table left right
   | .word => Backend.Byte.sub width_le left right
   | .dyadic => Backend.dyadicSub left right
@@ -138,10 +142,10 @@ abbrev ByteFloat (format : Format) (width_le : format.bits ≤ 8) :=
 @[noinline] def mulSelected
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.mul)
+      (ByteTable.encoding format width_le) Model.Spec.multiplication)
     (left right : ByteFloat format width_le) : ByteFloat format width_le :=
   match selection with
-  | .reference => Spec.mul left right
+  | .reference => Spec.multiplication left right
   | .table => ByteTable.runBinary width_le table left right
   | .word => Backend.Byte.mul width_le left right
   | .dyadic => Backend.dyadicMul left right
@@ -157,10 +161,10 @@ abbrev ByteFloat (format : Format) (width_le : format.bits ≤ 8) :=
 @[noinline] def divSelected
     (selection : Choice) (width_le : format.bits ≤ 8)
     (table : TinyTable.CertifiedBinary
-      (ByteTable.encoding format width_le) Model.Spec.div)
+      (ByteTable.encoding format width_le) Model.Spec.division)
     (left right : ByteFloat format width_le) : ByteFloat format width_le :=
   match selection with
-  | .reference => Spec.div left right
+  | .reference => Spec.division left right
   | .table => ByteTable.runBinary width_le table left right
   | .word => Backend.Byte.div width_le left right
   | .dyadic => Backend.dyadicDiv left right
@@ -211,3 +215,10 @@ abbrev ByteFloat (format : Format) (width_le : format.bits ≤ 8) :=
     width_le (ByteTable.fmaTable width_le) left right addend
 
 end FloatLib.Floats.Formats.Posit.Configured.Plan.ByteDispatch
+
+namespace FloatLib.Floats.Formats.Posit.Configured.Plan.ByteDispatch.Choice
+
+/-- Reconstruct a `Choice` constructor from its constructor index. -/
+add_decl_doc ofNat_ctorIdx
+
+end FloatLib.Floats.Formats.Posit.Configured.Plan.ByteDispatch.Choice

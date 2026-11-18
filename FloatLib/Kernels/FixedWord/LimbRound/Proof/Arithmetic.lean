@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,11 +8,12 @@ module
 
 public import FloatLib.Kernels.FixedWord.LimbRound.Runtime
 public import FloatLib.Kernels.FixedWord.Product.Proof
-import Mathlib.Tactic.NormNum.OfScientific
-import Mathlib.Tactic.NormNum.DivMod
-import Mathlib.Tactic.NormNum.Abs
-import Mathlib.Tactic.Ring.RingNF
+
 import Mathlib.Data.Rat.Cast.Order
+import Mathlib.Tactic.NormNum.Abs
+import Mathlib.Tactic.NormNum.DivMod
+import Mathlib.Tactic.NormNum.OfScientific
+import Mathlib.Tactic.Ring.RingNF
 
 /-!
 # Four-word subtraction, comparison, and widening
@@ -118,7 +119,7 @@ theorem UInt128.shiftLeft256_toNat (value : UInt128) (shift : Nat) (hshift : shi
       congr 1
       omega
     rw [Nat.shiftLeft_eq]
-    set complementPow := 2 ^ (64 - shift) with hcomplementDef
+    set complementPow := 2 ^ (64 - shift)
     set rlo := value.lo.toNat % complementPow
     set qlo := value.lo.toNat / complementPow
     set rhi := value.hi.toNat % complementPow
@@ -132,7 +133,8 @@ theorem UInt128.shiftLeft256_toNat (value : UInt128) (shift : Nat) (hshift : shi
   by_cases h64 : shift = 64
   · subst h64
     simp only [beq_self_eq_true, ite_true]
-    simp [UInt256.toNat, UInt128.toNat, Nat.shiftLeft_eq]
+    simp only [UInt256.toNat, UInt64.toNat_zero, Nat.reducePow, zero_add, zero_mul, add_zero,
+      toNat, Nat.shiftLeft_eq]
     ring
   rw [ite_eq_right (by simpa using h64)]
   exact UInt256.toNat_ofUInt128ShiftedLeft value shift (by omega) hshift

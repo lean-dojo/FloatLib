@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Runtime
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.GridProof
 public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Zero
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.GridProof
 
 /-!
 # Algebraic special values and preferred zero cohorts
@@ -34,7 +34,9 @@ theorem sqrtMagnitude_zero (f : Format) (mode : RoundingMode) (preferred : Int) 
     omega
   have hr : mode.sqrtRound 0 = 0 := by simpa using mode.sqrtRound_nat_sq 0
   have hp : sqrtPair f mode 0 = (0, f.minQuantum) := by
-    simp [sqrtPair, hq, hr, Numerics.RadixText.carry]
+    simp only [sqrtPair, Numerics.RadixText.carry, hq, zero_div, hr, PNat.mk_coe,
+      ite_eq_right_iff, Prod.mk.injEq, Nat.pow_eq_zero, OfNat.ofNat_ne_zero, ne_eq, false_and,
+      add_eq_left, one_ne_zero, and_self, imp_false]
     exact (pow_pos (by decide : 0 < (10 : Nat)) f.precision).ne
   calc
     sqrtMagnitude f mode 0 preferred = projectMagnitude f mode false 0 preferred := by
@@ -56,26 +58,26 @@ theorem square_infinity (f : Format) (mode : RoundingMode) (s : Bool) :
   simp [square, mul]
 
 /-- This is the IEEE signed-zero rule: reciprocal square root of `-0` is `-∞`. -/
-theorem rsqrt_zero (f : Format) (mode : RoundingMode) (s : Bool) (q : Int) :
-    rsqrt f mode (.finite s 0 q) =
+theorem rSqrt_zero (f : Format) (mode : RoundingMode) (s : Bool) (q : Int) :
+    rSqrt f mode (.finite s 0 q) =
       { value := .infinity s, status := { divideByZero := true } } := by
-  simp [rsqrt]
+  simp [rSqrt]
 
 /-- The reciprocal square root of `+∞` is `+0` at the least quantum, with no flags. -/
-theorem rsqrt_infinity (f : Format) (mode : RoundingMode) :
-    rsqrt f mode (.infinity false) = { value := .finite false 0 f.minQuantum } := by
-  simp [rsqrt, projectMagnitude_zero, f.minQuantum_le_maxQuantum]
+theorem rSqrt_infinity (f : Format) (mode : RoundingMode) :
+    rSqrt f mode (.infinity false) = { value := .finite false 0 f.minQuantum } := by
+  simp [rSqrt, projectMagnitude_zero, f.minQuantum_le_maxQuantum]
 
 /-- The reciprocal square root of `-∞` is the default quiet NaN with the invalid flag. -/
-theorem rsqrt_negative_infinity (f : Format) (mode : RoundingMode) :
-    rsqrt f mode (.infinity true) = invalidResult := by
-  simp [rsqrt]
+theorem rSqrt_negative_infinity (f : Format) (mode : RoundingMode) :
+    rSqrt f mode (.infinity true) = invalidResult := by
+  simp [rSqrt]
 
 /-- The reciprocal square root of a negative nonzero finite datum is the default quiet NaN with the
 invalid flag. -/
-theorem rsqrt_negative (f : Format) (mode : RoundingMode) (c : Nat) (q : Int)
-    (hc : c ≠ 0) : rsqrt f mode (.finite true c q) = invalidResult := by
-  simp [rsqrt, hc]
+theorem rSqrt_negative (f : Format) (mode : RoundingMode) (c : Nat) (q : Int)
+    (hc : c ≠ 0) : rSqrt f mode (.finite true c q) = invalidResult := by
+  simp [rSqrt, hc]
 
 /-- A hypotenuse of two zeros is `+0` whatever their signs, in the finer operand cohort. -/
 theorem hypot_zero (f : Format) (mode : RoundingMode) (sx sy : Bool) (qx qy : Int) :
@@ -95,7 +97,7 @@ flags. -/
 theorem hypot_quietNaN_infinity (f : Format) (mode : RoundingMode)
     (sx sy : Bool) (payload : Nat) :
     hypot f mode (.nan sx false payload) (.infinity sy) = { value := .infinity false } := by
-  simp [hypot, Datum.isSNaN]
+  simp [hypot, Datum.isSignaling]
 
 /-- An infinity does not absorb a signaling NaN: the hypotenuse quiets the second operand's NaN,
 keeping its sign and representable payload, and raises invalid. -/
@@ -116,46 +118,46 @@ sign and representable payload and raises invalid. -/
 theorem hypot_quietNaN_signalingNaN (f : Format) (mode : RoundingMode)
     (sx sy : Bool) (px py : Nat) :
     hypot f mode (.nan sx false px) (.nan sy true py) = nanResult f sx px true := by
-  simp [hypot, Datum.isSNaN]
+  simp [hypot, Datum.isSignaling]
 
 /-- A negative integer power of a signed zero is a pole: an infinity with the sign of the power,
 negative only for `-0` with an odd exponent, and the divide-by-zero flag. -/
-theorem powInt_zero_neg (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
+theorem pown_zero_neg (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
     (hn : n < 0) :
-    powInt f mode (.finite s 0 q) n =
+    pown f mode (.finite s 0 q) n =
       { value := .infinity (powerSign s n), status := { divideByZero := true } } := by
-  simp [powInt, hn]
+  simp [pown, hn]
 
 /-- A positive integer power of a signed zero is an exact zero with the sign of the power, negative
 only for `-0` with an odd exponent, and no flags. Its quantum is the operand quantum times the
 exponent, clamped to the format's quantum range. -/
-theorem powInt_zero_pos (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
+theorem pown_zero_pos (f : Format) (mode : RoundingMode) (s : Bool) (q n : Int)
     (hn : 0 < n) :
-    powInt f mode (.finite s 0 q) n =
+    pown f mode (.finite s 0 q) n =
       { value := .finite (powerSign s n) 0
           (max f.minQuantum (min (q * n) f.maxQuantum)) } := by
-  simp [powInt, not_lt.mpr hn.le, Datum.finiteValue, zero_zpow n hn.ne', project_zero]
+  simp [pown, not_lt.mpr hn.le, Datum.finiteValue, zero_zpow n hn.ne', project_zero]
 
 /-- Every finite datum, either zero included, to the power zero gives one, projected with preferred
 quantum zero. -/
-theorem powInt_degree_zero_finite (f : Format) (mode : RoundingMode)
+theorem pown_degree_zero_finite (f : Format) (mode : RoundingMode)
     (s : Bool) (c : Nat) (q : Int) :
-    powInt f mode (.finite s c q) 0 = project f mode 1 0 := by
-  simp [powInt, powerSign]
+    pown f mode (.finite s c q) 0 = project f mode 1 0 := by
+  simp [pown, powerSign]
 
 /-- A quiet NaN to the power zero gives one, projected with preferred quantum zero, and raises no
 invalid flag. -/
-theorem powInt_degree_zero_quietNaN (f : Format) (mode : RoundingMode)
+theorem pown_degree_zero_quietNaN (f : Format) (mode : RoundingMode)
     (s : Bool) (payload : Nat) :
-    powInt f mode (.nan s false payload) 0 = project f mode 1 0 := by
-  simp [powInt]
+    pown f mode (.nan s false payload) 0 = project f mode 1 0 := by
+  simp [pown]
 
 /-- A signaling NaN to any integer power, zero included, gives its quieted NaN, keeping its sign and
 representable payload, and raises invalid. -/
-theorem powInt_signalingNaN (f : Format) (mode : RoundingMode)
+theorem pown_signalingNaN (f : Format) (mode : RoundingMode)
     (s : Bool) (payload : Nat) (n : Int) :
-    powInt f mode (.nan s true payload) n = nanResult f s payload true := by
-  simp [powInt]
+    pown f mode (.nan s true payload) n = nanResult f s payload true := by
+  simp [pown]
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

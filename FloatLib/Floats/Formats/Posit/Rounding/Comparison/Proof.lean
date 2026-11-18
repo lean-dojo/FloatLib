@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -27,7 +27,7 @@ theorem lowerCode_eq_real (format : Format) (compareTarget : Rat → Ordering) (
     (hcompare : ∀ q : Rat, compareTarget q = cmp target (q : ℝ)) :
     lowerCode format compareTarget = RealRounding.lowerCode format target := by
   unfold lowerCode RealRounding.lowerCode
-  apply lowerCodeByBisection_congr
+  apply Numerics.bisect_congr
   intro code _ _
   simp only [hcompare, ne_eq, cmp_eq_lt_iff, not_lt, RealRounding.nonnegativeRealAt]
   rfl

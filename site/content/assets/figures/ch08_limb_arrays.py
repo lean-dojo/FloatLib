@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw content/assets/ch08-limb-arrays.png: one carry through three 32-bit limbs.
 
-Chapter 13 introduces `FloatLib.Numerics.LimbArray` (FloatLib/Kernels/LimbArray/Core/Runtime.lean):
+The chapter on arithmetic performance introduces `FloatLib.Numerics.LimbArray` (FloatLib/Kernels/LimbArray/Core/Runtime.lean):
 a natural number stored as a little-endian `Array UInt32`, limb i carrying weight 2^(32 i), with
 limbs beyond the stored ones read as zero. Its Lean block prints two results checked here:
 
@@ -10,7 +10,7 @@ limbs beyond the stored ones read as zero. Its Lean block prints two results che
     #eval LimbArray.add (LimbArray.ofNat (2 ^ 96 - 1) 3) (LimbArray.ofNat 1 1)
     -- { limbs := #[0, 0, 0, 1] }
 
-The figure follows only the second example, with B = 2^32 and array order stated explicitly.
+The figure follows only the second example, with B = 2^32; limb 0, the lowest, is drawn first.
 `add` from FloatLib/Kernels/LimbArray/Arithmetic/Runtime.lean runs `addLoop`, which
 at each limb forms `a_i + b_i + carry` in a UInt64, stores the low 32 bits, and passes the high
 bits on as the next carry; the sum is placed in one limb more than the wider operand and the final
@@ -34,7 +34,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import figstyle as fs  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
 
 RADIX = 2 ** 32
 MASK = RADIX - 1
@@ -81,52 +80,42 @@ ADD_LEFT, ADD_RIGHT, ADD_EXPECTED = (2 ** 96 - 1, 3), (1, 1), [0, 0, 0, 1]
 
 
 def draw(mobile: bool, steps: list[dict]):
-    fig = plt.figure(figsize=(3.8, 7.8) if mobile else (9, 4.7))
-    fig.text(0.035, 0.98, "A carry through 32-bit limbs", fontsize=14, weight="bold", va="top")
-    fig.text(0.035, 0.915 if mobile else 0.87,
-             "Each limb is a digit in base $B=2^{32}$.\nStart with [B−1, B−1, B−1] and add 1."
-             if mobile else
-             "Each limb is a base-$B$ digit, with $B=2^{32}$.  Add 1 to [B−1, B−1, B−1].",
-             fontsize=12, linespacing=1.5, va="top" if mobile else "baseline")
-    canvas = fig.add_axes([0, 0, 1, 1], zorder=0)
-    canvas.set(xlim=(0, 1), ylim=(0, 1))
-    canvas.axis("off")
-    rects = ([(0.06, 0.64 - i * 0.175, 0.88, 0.125) for i in range(3)] if mobile else
-             [(0.035 + i * 0.26, 0.36, 0.22, 0.29) for i in range(3)])
-    for row, rect in zip(steps, rects):
-        ax = fig.add_axes(rect)
-        ax.set(xlim=(0, 1), ylim=(0, 1))
-        ax.axis("off")
-        ax.add_patch(Rectangle((0, 0), 1, 1, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
-        ax.text(0.05, 0.78, f"Limb {row['index']}", fontsize=12, weight="bold")
-        ax.text(0.05, 0.45, "(B−1) + 1 = B", fontsize=13)
-        ax.text(0.05, 0.11, "store 0; carry 1", fontsize=12, color=fs.BLUE)
-    for i, (x, y, w, h) in enumerate(rects):
-        if i < 2:
-            nx, ny, nw, nh = rects[i + 1]
-            start, end = ((x + w / 2, y), (nx + nw / 2, ny + nh)) if mobile else (
-                (x + w, y + h / 2), (nx, ny + nh / 2))
-        else:
-            start, end = ((x + w / 2, y), (0.5, 0.235)) if mobile else (
-                (x + w, y + h / 2), (0.85, y + h / 2))
-        canvas.annotate("", end, start, arrowprops=dict(arrowstyle="->", color=fs.BLUE, lw=1.4))
-        if mobile and i < 2:
-            canvas.text(0.55, (start[1] + end[1]) / 2, "carry 1", fontsize=11.5, va="center")
+    """Four limb cells, lowest limb first; each arrow carries one into the next cell."""
+    width, height = (fs.MOBILE_WIDTH, 5.4) if mobile else (fs.WIDTH, 1.7)
+    fig = plt.figure(figsize=(width, height))
+    ax = fs.diagram_axes(fig, (0, width), (0, height))
+    cells = len(steps) + 1
     if mobile:
-        canvas.add_patch(Rectangle((0.06, 0.155), 0.88, 0.077, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
-        canvas.text(0.10, 0.195, "New limb 3: store the final 1", fontsize=12, va="center")
+        w, h, gap = 3.0, 0.95, 0.42
+        origins = [(0.4, height - 0.15 - h - i * (h + gap)) for i in range(cells)]
     else:
-        canvas.add_patch(Rectangle((0.85, 0.36), 0.12, 0.29, fc=fs.PAPER_2, ec=fs.LINE, lw=0.8))
-        canvas.text(0.91, 0.585, "Limb 3", fontsize=12, ha="center", weight="bold")
-        canvas.text(0.91, 0.47, "1", fontsize=16, ha="center", color=fs.BLUE)
-        canvas.text(0.91, 0.39, "new limb", fontsize=11, ha="center")
-    fig.text(0.035, 0.095 if mobile else 0.21,
-             r"Result: $[0,0,0,1] = B^3 = 2^{96}$", fontsize=13, weight="bold")
-    fig.text(0.035, 0.023 if mobile else 0.10,
-             "Arrays list limb 0 first (lowest weight).\nThe added 1 enters limb 0; then it is a carry."
-             if mobile else
-             "Arrays list limb 0 first (lowest weight).  The added 1 enters limb 0; subsequent 1s are carries.",
-             fontsize=11.5, color=fs.MUTED, linespacing=1.5)
+        w, h, gap = 1.72, 1.3, 0.62
+        origins = [(0.2 + i * (w + gap), 0.2) for i in range(cells)]
+    for index, (x, y) in enumerate(origins):
+        fs.box(ax, x, y, w, h)
+        ax.text(x + 0.12, y + h - 0.22, f"limb {index}", fontsize=fs.SIZE_TICK, color=fs.MUTED,
+                va="center")
+        if index < len(steps):
+            row = steps[index]
+            assert row["total"] == RADIX and row["stored"] == 0 and row["carry_out"] == 1
+            ax.text(x + w / 2, y + h / 2 - 0.02, "(B − 1) + 1 = B", fontsize=fs.SIZE_LABEL,
+                    ha="center", va="center")
+            ax.text(x + w / 2, y + 0.2, f"stores {row['stored']}", fontsize=fs.SIZE_TICK,
+                    ha="center", va="center")
+        else:
+            ax.text(x + w / 2, y + h / 2 - 0.02, "1", fontsize=fs.SIZE_LABEL, ha="center",
+                    va="center")
+        if index + 1 < cells:
+            nx, ny = origins[index + 1]
+            start, end = ((x + w / 2, y), (nx + w / 2, ny + h)) if mobile else (
+                (x + w, y + h / 2), (nx, ny + h / 2))
+            fs.arrow(ax, start, end, color=fs.ROLE["main"], linewidth=fs.LW_REF + 0.4)
+            if mobile:
+                ax.text(start[0] + 0.12, (start[1] + end[1]) / 2, "carry 1",
+                        fontsize=fs.SIZE_TICK, va="center")
+            else:
+                ax.text((start[0] + end[0]) / 2, start[1] + 0.12, "carry 1",
+                        fontsize=fs.SIZE_TICK, ha="center", va="bottom")
     return fig
 
 
@@ -143,7 +132,7 @@ def main() -> None:
     fs.setup()
     out = args.out or fs.ASSETS / "ch08-limb-arrays.png"
     for mobile in (False, True):
-        target = out.with_name(out.stem + "-mobile.png") if mobile else out
+        target = fs.mobile_path(out) if mobile else out
         print(f"wrote {fs.save(draw(mobile, steps), target.name, target)}")
 
 

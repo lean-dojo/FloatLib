@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -29,7 +29,9 @@ theorem IntegerRange.round?_eq_some_iff (range : IntegerRange) (round : ℚ → 
     (value : ℚ) (integer : Int) :
     range.round? round value = some integer ↔
       round value = integer ∧ range.Contains integer := by
-  by_cases h : range.Contains (round value) <;> simp [IntegerRange.round?, h]
+  by_cases h : range.Contains (round value) <;> simp only [round?, h, ↓reduceIte,
+    Option.some.injEq, iff_self_and, reduceCtorEq, false_iff,
+    not_and]
   all_goals
     rintro rfl
     exact h

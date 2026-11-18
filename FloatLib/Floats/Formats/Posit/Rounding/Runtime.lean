@@ -1,11 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Order.Bisection.Runtime
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Order
@@ -43,26 +44,6 @@ namespace FloatLib.Floats.Formats.Posit.Model
 variable {format : Format}
 
 /--
-Shared bounded bisection over an unsigned code interval.
-
-`accept code` states that `code` is still on the lower side of the target boundary. Separating
-the search from the comparison domain lets the exact-rational specification and certified
-integer implementations follow literally the same control flow.
--/
-@[inline] def lowerCodeByBisection (accept : Nat → Bool) :
-    Nat → Nat → Nat → Nat
-  | 0, lower, _ => lower
-  | fuel + 1, lower, upper =>
-      if lower + 1 < upper then
-        let middle := (lower + upper) / 2
-        if accept middle then
-          lowerCodeByBisection accept fuel middle upper
-        else
-          lowerCodeByBisection accept fuel lower middle
-      else
-        lower
-
-/--
 Greatest candidate code found below an exclusive upper bound.
 
 The initial interval is `[0, signMaskNat)`. Its size is a power of two, so `format.bits` bisections
@@ -70,7 +51,7 @@ are sufficient to isolate adjacent codes. Exact rational comparison avoids host-
 double-rounding.
 -/
 @[inline] def lowerCodeForPositive (format : Format) (target : Rat) : Nat :=
-  lowerCodeByBisection
+  Numerics.bisect
     (fun code => decide (nonnegativeRatAt format code ≤ target))
     format.bits 0 format.signMaskNat
 
@@ -131,7 +112,7 @@ also keeps square-root rounding fully executable over exact rationals: no approx
 root or host floating-point operation enters the specification.
 -/
 @[inline] def lowerSqrtCode (format : Format) (radicand : Rat) : Nat :=
-  lowerCodeByBisection
+  Numerics.bisect
     (fun code =>
       let value := nonnegativeRatAt format code
       decide (value * value ≤ radicand))
@@ -183,14 +164,15 @@ posit negation restores the sign. Nothing overflows or underflows. Magnitudes ab
 saturate to `maxPos` and nonzero magnitudes below `minPos` round to `minPos`, so the result is
 never NaR and is zero only for a zero input. No `Float`, `Float32`, MPFR, or other destination
 format is involved.
+
+Reference: Standard for Posit Arithmetic (2022), §§3.3 and 4.1.
 -/
 @[inline] def roundRat (format : Format) (value : Rat) : Model format :=
   if value = 0 then
     zero format
   else if value < 0 then
-    neg (roundPositiveRat format (-value))
+    negate (roundPositiveRat format (-value))
   else
     roundPositiveRat format value
-
 
 end FloatLib.Floats.Formats.Posit.Model

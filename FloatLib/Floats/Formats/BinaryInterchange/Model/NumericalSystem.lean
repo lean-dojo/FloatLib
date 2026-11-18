@@ -1,16 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Core.System
-public import FloatLib.Numerics.Operation.Semantics
-public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Subtraction
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Proof
+public import FloatLib.Numerics.Operation.Semantics
 public import Mathlib.Algebra.Order.Algebra
 
 /-!
@@ -39,8 +37,8 @@ denote their real value, so the zero sign is not observed. -/
 noncomputable def toNumericalValue {fmt : FloatFormat}
     (x : Model fmt) : NumericalValue ℝ :=
   if isNaN x then
-    .exceptional (.nan (some (nanPayload x)) (signBit x) (isSNaN x))
-  else if isInf x then
+    .exceptional (.nan (some (nanPayload x)) (signBit x) (isSignaling x))
+  else if isInfinite x then
     .infinity (signBit x)
   else
     .finite (toReal x)
@@ -71,7 +69,7 @@ theorem toNumericalValue_of_isFinite {fmt : FloatFormat} (x : Model fmt)
     (hx : isFinite x = true) :
     toNumericalValue x = .finite (toReal x) := by
   have hnan := isNaN_eq_false_of_isFinite_eq_true x hx
-  have hinf := isInf_eq_false_of_isFinite_eq_true x hx
+  have hinf := isInfinite_eq_false_of_isFinite_eq_true x hx
   simp [toNumericalValue, hnan, hinf]
 
 /-- Every finite executable float denotes its real interpretation in the general interface. -/
@@ -95,9 +93,9 @@ real. This is the main bridge from the single executable carrier to proof-orient
   constructor
   · intro h
     cases hnan : isNaN x
-    · cases hinf : isInf x
+    · cases hinf : isInfinite x
       · have hfinite :=
-          isFinite_eq_true_of_isNaN_eq_false_of_isInf_eq_false x hnan hinf
+          isFinite_eq_true_of_isNaN_eq_false_of_isInfinite_eq_false x hnan hinf
         have hreal : toReal x = r := by
           simpa [Represents, toNumericalValue, hnan, hinf] using h
         exact ⟨hfinite, hreal⟩

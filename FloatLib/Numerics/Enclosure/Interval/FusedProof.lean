@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Interval.Fused
 public import FloatLib.Numerics.Enclosure.Interval.BinaryGridProof
+public import FloatLib.Numerics.Enclosure.Interval.Fused
 
 /-!
 # Containment for interval multiply-add
@@ -20,7 +20,18 @@ public section
 
 namespace FloatLib.Numerics.Interval
 
-variable {α β : Type*} [Field β] [LinearOrder β] [IsStrictOrderedRing β]
+variable {α β : Type*} [Field β] [LinearOrder β]
+
+/-- Multiply-add succeeds exactly when all three inputs decode and the exact bounds round
+outward. -/
+theorem fma?_eq_some_iff (R : OutwardRounding α β) {I J K L : Interval α} :
+    fma? R I J K = some L ↔
+      ∃ a b c, I.decode? R.decode = some a ∧ J.decode? R.decode = some b ∧
+        K.decode? R.decode = some c ∧ encloseInterval? R (fmaBounds a b c) = some L := by
+  unfold fma?
+  cases I.decode? R.decode <;> cases J.decode? R.decode <;> cases K.decode? R.decode <;> simp
+
+variable [IsStrictOrderedRing β]
 
 /-- Exact multiply-add bounds contain every combination of members of the three intervals. -/
 theorem fma_bounds (I J K : Interval β) {x y z : β}
@@ -29,15 +40,6 @@ theorem fma_bounds (I J K : Interval β) {x y z : β}
     (fmaBounds I J K).lo ≤ x * y + z ∧ x * y + z ≤ (fmaBounds I J K).hi := by
   have hxy := mul_bounds_Icc I.lo I.hi J.lo J.hi x y hx hy
   exact ⟨add_le_add hxy.1 hz.1, add_le_add hxy.2 hz.2⟩
-
-omit [IsStrictOrderedRing β] in
-/-- Multiply-add succeeds exactly when all three inputs decode and the exact bounds round outward. -/
-theorem fma?_eq_some_iff (R : OutwardRounding α β) {I J K L : Interval α} :
-    fma? R I J K = some L ↔
-      ∃ a b c, I.decode? R.decode = some a ∧ J.decode? R.decode = some b ∧
-        K.decode? R.decode = some c ∧ encloseInterval? R (fmaBounds a b c) = some L := by
-  unfold fma?
-  cases I.decode? R.decode <;> cases J.decode? R.decode <;> cases K.decode? R.decode <;> simp
 
 /-- Any outward rounder preserves the exact multiply-add bounds over its ordered field. -/
 theorem contains_fma? (R : OutwardRounding α β) {I J K L : Interval α}

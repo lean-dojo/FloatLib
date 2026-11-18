@@ -1,11 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Enclosure.Interval.Basic
 public import FloatLib.Numerics.Enclosure.Interval.Bounds
 
 /-!
@@ -63,7 +64,8 @@ def ofCandidates (decode : α → Option β) (candidate : β → Interval α) :
       | none => simp [checkedCandidates?, hlo, hhi] at h
       | some hi =>
         by_cases hbounds : lo ≤ x ∧ x ≤ hi
-        · simp [checkedCandidates?, hlo, hhi, hbounds] at h
+        · simp only [checkedCandidates?, hlo, hhi, hbounds, and_self, ↓reduceIte,
+          Option.some.injEq] at h
           subst I
           exact ⟨lo, hi, hlo, hhi, hbounds⟩
         · simp [checkedCandidates?, hlo, hhi, hbounds] at h

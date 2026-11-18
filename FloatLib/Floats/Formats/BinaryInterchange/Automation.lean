@@ -1,15 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
+public meta import FloatLib.Tactic.BinaryInterchangeSpec
+public meta import FloatLib.Tactic.FloatFormat.Attribute
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Error
 public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Exact
-public import FloatLib.Numerics.Automation.Numerics -- shake: keep
+public import FloatLib.Floats.Formats.BinaryInterchange.Proof.Finite
+public import FloatLib.Tactic.Numerics -- shake: keep
 
 /-!
 # Binary-interchange rules for numerical automation
@@ -17,43 +19,13 @@ public import FloatLib.Numerics.Automation.Numerics -- shake: keep
 This format-family plugin registers the descriptor model's semantic equations and concrete
 decoder definitions with the representation-independent `numerics` tactic, and the
 `binary_interchange_spec` tactic rewrites descriptor-model arithmetic to its exact specifications.
-Universal capability arithmetic is handled elsewhere, by `FloatLib.Floats.ExecFloat.Automation`, so
+Universal capability arithmetic is handled elsewhere, by `FloatLib.Tactic.ExecFloatSpec`, so
 the family-independent layer does not depend on this binary layout.
 -/
 
 public meta section
 
 open FloatLib.Numerics
-
-/--
-Register a static `FloatFormat` definition for concrete `Model` proof reduction.
-
-The format stays ordinary compile-time data. This attribute only lets `numerics` unfold its
-name when checking a closed encoded value.
--/
-macro "floatFormat" : attr => `(attr| numerics_reduction)
-
-namespace FloatLib.Floats.Formats.BinaryInterchange.Model
-
-/--
-Rewrite binary-interchange descriptor arithmetic in the goal and local hypotheses to its exact
-specifications. When a public-to-specification equality is itself the goal, use `grind` instead.
--/
-syntax (name := binaryInterchangeSpec) "binary_interchange_spec" : tactic
-
-macro_rules
-| `(tactic| binary_interchange_spec) =>
-    `(tactic|
-      simp_all (failIfUnchanged := false) only [
-        FloatLib.Floats.Formats.BinaryInterchange.Model.Proof.add_eq_spec,
-        FloatLib.Floats.Formats.BinaryInterchange.Model.Proof.sub_eq_spec,
-        FloatLib.Floats.Formats.BinaryInterchange.Model.Proof.mul_eq_spec,
-        FloatLib.Floats.Formats.BinaryInterchange.Model.Proof.div_eq_spec,
-        FloatLib.Floats.Formats.BinaryInterchange.Model.Proof.sqrt_eq_spec,
-        FloatLib.Floats.Formats.BinaryInterchange.Model.Proof.fma_eq_spec
-      ])
-
-end FloatLib.Floats.Formats.BinaryInterchange.Model
 
 namespace FloatLib.Floats.Formats.BinaryInterchange
 namespace Model
@@ -108,10 +80,10 @@ attribute [numerics_reduction]
   ieeeToDyadic?
   isFinite
   isNaN
-  isSNaN
-  isInf
+  isSignaling
+  isInfinite
   IEEE.isNaN
-  IEEE.isInf
+  IEEE.isInfinite
   signBit
   expField
   fracField

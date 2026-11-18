@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -93,6 +93,23 @@ theorem AllSteps.of_forall (step : α → β → α) (condition : α → β → 
   | nil => trivial
   | cons value rest ih => exact ⟨hcondition _ _, ih _⟩
 
+/-- A property that holds of the accumulator before a step whenever it holds after it, such as
+finiteness under IEEE addition, holds after every visited step once it holds of the result of
+the loop. -/
+theorem AllSteps.of_foldl {step : α → β → α} (property : α → Prop)
+    (hstep : ∀ state value, property (step state value) → property state) (initial : α)
+    (input : List β) (hfinal : property (input.foldl step initial)) :
+    AllSteps step (fun state value => property (step state value)) initial input := by
+  have hbefore : ∀ (rest : List β) (state : α), property (rest.foldl step state) →
+      property state := by
+    intro rest
+    induction rest with
+    | nil => exact fun _ h => h
+    | cons value rest ih => exact fun state h => hstep _ _ (ih _ h)
+  induction input generalizing initial with
+  | nil => trivial
+  | cons value rest ih => exact ⟨hbefore rest _ hfinal, ih _ hfinal⟩
+
 /-- A property of the accumulator that every step keeps holds of the result of the loop. -/
 theorem foldl_induction {step : α → β → α} {initial : α} {input : List β} (motive : α → Prop)
     (hinit : motive initial) (hstep : ∀ state value, motive state → motive (step state value)) :
@@ -119,7 +136,7 @@ def foldError (step : α → β → α) (reference : ℝ → β → ℝ) (error 
   unfold foldError
   induction input generalizing initial initialReference with
   | nil => rfl
-  | cons value rest ih => exact ih _ _
+  | cons value _ ih => exact ih _ _
 
 /-- Lift a bound on one step through a list loop, including the initial error. -/
 theorem fold_error (observe : α → ℝ) (step : α → β → α) (reference : ℝ → β → ℝ)

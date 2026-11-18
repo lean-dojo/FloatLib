@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -53,7 +53,7 @@ theorem ne_zero (radix : Radix) : radix.toReal ≠ 0 :=
 
 /-- Every positional radix is strictly greater than one. -/
 theorem gt_one (radix : Radix) : 1 < radix.toReal := by
-  simp [toReal]
+  simp only [toReal, Nat.one_lt_cast]
   exact Nat.one_lt_cast.mpr (Nat.succ_le_iff.mp radix.base_valid)
 
 end Radix

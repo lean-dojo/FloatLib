@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 public import FloatLib.Floats.Formats.Flocq.Theory.Format.Formats
+public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Order
 
 /-!
 # Double Rounding
@@ -77,46 +77,46 @@ theorem round_ceil_double {fexpFine fexpCoarse : ℤ → ℤ}
       (round_ceil_point (fexp := fexpFine) x) (round_ceil_point x))
 
 /-- Increasing FLX precision keeps every representable value representable. -/
-theorem generic_format_FLX_mono {coarsePrec finePrec : ℤ}
+theorem genericRepresentable_flx_mono {coarsePrec finePrec : ℤ}
     (hcoarse : 0 < coarsePrec) (hfine : 0 < finePrec) (hprec : coarsePrec ≤ finePrec)
     {x : ℝ}
-    (hx : @genericFormat β (flxExp coarsePrec)
-      (flxValidExp coarsePrec hcoarse) x) :
-    @genericFormat β (flxExp finePrec) (flxValidExp finePrec hfine) x := by
-  let : ValidExp (flxExp coarsePrec) := flxValidExp coarsePrec hcoarse
-  let : ValidExp (flxExp finePrec) := flxValidExp finePrec hfine
+    (hx : @GenericRepresentable β (flxExp coarsePrec)
+      (validExp_flx coarsePrec hcoarse) x) :
+    @GenericRepresentable β (flxExp finePrec) (validExp_flx finePrec hfine) x := by
+  let : ValidExp (flxExp coarsePrec) := validExp_flx coarsePrec hcoarse
+  let : ValidExp (flxExp finePrec) := validExp_flx finePrec hfine
   apply generic_inclusion (fexp₁ := flxExp coarsePrec) (fexp₂ := flxExp finePrec)
   · intro e
-    simp [flxExp]
-    linarith
+    simp only [flxExp, tsub_le_iff_right]
+    omega
   · exact hx
 
 /-- Downward FLX double rounding equals direct rounding to the coarser precision. -/
-theorem round_floor_double_FLX {coarsePrec finePrec : ℤ}
+theorem round_floor_double_flx {coarsePrec finePrec : ℤ}
     (hcoarse : 0 < coarsePrec) (hfine : 0 < finePrec) (hprec : coarsePrec ≤ finePrec)
     (x : ℝ) :
-    @round β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)
+    @round β (flxExp coarsePrec) (validExp_flx coarsePrec hcoarse)
         floorRound
-        (@round β (flxExp finePrec) (flxValidExp finePrec hfine)
+        (@round β (flxExp finePrec) (validExp_flx finePrec hfine)
           floorRound x) =
-      @round β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)
+      @round β (flxExp coarsePrec) (validExp_flx coarsePrec hcoarse)
         floorRound x := by
-  let : ValidExp (flxExp coarsePrec) := flxValidExp coarsePrec hcoarse
-  let : ValidExp (flxExp finePrec) := flxValidExp finePrec hfine
-  exact round_floor_double (fun e => by simp [flxExp]; linarith) x
+  let : ValidExp (flxExp coarsePrec) := validExp_flx coarsePrec hcoarse
+  let : ValidExp (flxExp finePrec) := validExp_flx finePrec hfine
+  exact round_floor_double (fun e => by simp only [flxExp, tsub_le_iff_right]; linarith) x
 
 /-- Upward FLX double rounding equals direct rounding to the coarser precision. -/
-theorem round_ceil_double_FLX {coarsePrec finePrec : ℤ}
+theorem round_ceil_double_flx {coarsePrec finePrec : ℤ}
     (hcoarse : 0 < coarsePrec) (hfine : 0 < finePrec) (hprec : coarsePrec ≤ finePrec)
     (x : ℝ) :
-    @round β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)
+    @round β (flxExp coarsePrec) (validExp_flx coarsePrec hcoarse)
         ceilRound
-        (@round β (flxExp finePrec) (flxValidExp finePrec hfine)
+        (@round β (flxExp finePrec) (validExp_flx finePrec hfine)
           ceilRound x) =
-      @round β (flxExp coarsePrec) (flxValidExp coarsePrec hcoarse)
+      @round β (flxExp coarsePrec) (validExp_flx coarsePrec hcoarse)
         ceilRound x := by
-  let : ValidExp (flxExp coarsePrec) := flxValidExp coarsePrec hcoarse
-  let : ValidExp (flxExp finePrec) := flxValidExp finePrec hfine
-  exact round_ceil_double (fun e => by simp [flxExp]; linarith) x
+  let : ValidExp (flxExp coarsePrec) := validExp_flx coarsePrec hcoarse
+  let : ValidExp (flxExp finePrec) := validExp_flx finePrec hfine
+  exact round_ceil_double (fun e => by simp only [flxExp, tsub_le_iff_right]; linarith) x
 
 end FloatLib.Floats.Formats.Flocq

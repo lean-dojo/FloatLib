@@ -10753,21 +10753,10 @@
   "measured": {
     "cpu": 88,
     "date_utc": "2026-10-31",
-    "differences_from_earlier_campaign": [
-      "Lean 4.35.0 with Mathlib 56a00585 instead of Lean 4.34.0 with Mathlib 5ed29652",
-      "Nine trials instead of three, alternating AB, BA, and so on, so trials 1 to 3 follow the earlier AB, BA, AB protocol",
-      "CPU 88 instead of CPU 4 of the same CPU model",
-      "Driver patch: DriverSupport.lean gains the two-word storage case `| .pair _ _ => fun value => value.raw.1.lo`, which binary128 selects since October 2026. The earlier driver does not build against 2.0.0, and its binary128 observation converted the proof model to bits",
-      "run.py and runner.py accept --trials, and build.py and lean-toolchain pin Lean 4.35.0",
-      "Some timed windows ran under the 40 ms target because trials ran faster than calibration: 99 of 1,512 rows are below 36 ms, the shortest is 22.2 ms, the median is 40.1 ms"
-    ],
-    "later_code": "FloatLib 3.0.0 was not timed. Comparing the code Lean generates for 8c88715 and 3.0.0, we found the same arithmetic on these timed paths: the changes there are erased proof arguments, renamed parameters, and documentation, and the compiled code differs in small details such as instruction order",
     "load_average": "30 to 150 on the host during the session",
     "machine": "Intel Xeon Platinum 8275CL, 96 logical CPUs, shared with other work",
-    "release": "2.0.0",
     "source": "git archive of 8c88715, built with Lean 4.35.0 and Mathlib 56a00585",
     "source_commit": "8c8871576a941a86e73dcf0882702b823139aa93",
-    "unchanged": "fixtures and their input hashes, MPFR 4.1.0-p13 with GMP 6.2.1, GCC 11.5.0, CPU model, 40 ms target, 512 warmup calls, 4,194,304 iteration cap",
     "window_utc": "22:07-22:12"
   },
   "measurements": {

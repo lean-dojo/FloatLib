@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -47,7 +47,7 @@ theorem add_eq_spec
     (left right :
       FloatLib.Floats.ExecFloat
         (Family format (Code (.word64 width_le)) (.word64 width_le))) :
-    add width_le left right = Spec.add left right := by
+    add width_le left right = Spec.addition left right := by
   refine Eq.trans ?_
     (storedNativeWordAdd_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
@@ -62,7 +62,7 @@ theorem sub_eq_spec
     (left right :
       FloatLib.Floats.ExecFloat
         (Family format (Code (.word64 width_le)) (.word64 width_le))) :
-    sub width_le left right = Spec.sub left right := by
+    sub width_le left right = Spec.subtraction left right := by
   refine Eq.trans ?_
     (storedNativeWordSub_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
@@ -79,7 +79,7 @@ theorem mul_eq_spec
     (left right :
       FloatLib.Floats.ExecFloat
         (Family format (Code (.word64 width_le)) (.word64 width_le))) :
-    mul width_le left right = Spec.mul left right := by
+    mul width_le left right = Spec.multiplication left right := by
   refine Eq.trans ?_
     (storedNativeWordMul_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext
@@ -94,7 +94,7 @@ theorem div_eq_spec
     (left right :
       FloatLib.Floats.ExecFloat
         (Family format (Code (.word64 width_le)) (.word64 width_le))) :
-    div width_le left right = Spec.div left right := by
+    div width_le left right = Spec.division left right := by
   refine Eq.trans ?_
     (storedNativeWordDiv_eq_spec (le_trans width_le (by decide)) left right)
   apply FloatLib.Floats.ExecFloat.ext

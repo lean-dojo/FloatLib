@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -87,7 +87,7 @@ private theorem expMask_ne_zero (fmt : FloatFormat) :
   rw [expMask_toNat] at hnat
   have hpositive : 0 < FloatFormat.expMaskNat fmt := by
     simp [FloatFormat.expMaskNat, FloatFormat.expAllOnesNat_pos]
-  simp at hnat
+  simp only [BitVec.ofNat_eq_ofNat, BitVec.toNat_ofNat, Nat.zero_mod] at hnat
   omega
 
 private theorem expMask_ne_signMask (fmt : FloatFormat) :
@@ -255,15 +255,15 @@ private theorem copySign_eq_self_or_toggleSign {fmt : FloatFormat}
       rw [isZero_toggleSign_eq_isNaN_of_finiteUnsignedZero hencoding, hnan, hzero]
 
 /-- Copying a sign preserves infinity classification. -/
-@[simp] theorem isInf_copySign {fmt : FloatFormat}
+@[simp] theorem isInfinite_copySign {fmt : FloatFormat}
     (magnitude signSource : Model fmt) :
-    isInf (copySign magnitude signSource) = isInf magnitude := by
+    isInfinite (copySign magnitude signSource) = isInfinite magnitude := by
   cases hencoding : fmt.encoding with
   | ieee =>
       rcases copySign_eq_self_or_toggleSign magnitude signSource with h | ⟨h, -⟩ <;> rw [h]
-      simp [isInf, hencoding]
+      simp [isInfinite, hencoding]
   | finiteMaxNaN | finite | finiteUnsignedZero =>
-      simp [isInf, hencoding]
+      simp [isInfinite, hencoding]
 
 /-- Copying a sign preserves finiteness. -/
 @[simp] theorem isFinite_copySign {fmt : FloatFormat}
@@ -287,8 +287,8 @@ private theorem copySign_eq_self_or_toggleSign {fmt : FloatFormat}
   simp [abs]
 
 /-- Absolute value preserves infinity classification. -/
-@[simp] theorem isInf_abs {fmt : FloatFormat} (x : Model fmt) :
-    isInf (abs x) = isInf x := by
+@[simp] theorem isInfinite_abs {fmt : FloatFormat} (x : Model fmt) :
+    isInfinite (abs x) = isInfinite x := by
   simp [abs]
 
 /-- Absolute value preserves finiteness. -/
@@ -466,9 +466,9 @@ private theorem isZero_ofFields_zero_one (fmt : FloatFormat) (sign : Bool) :
   isNaN_eq_false_of_isFinite_eq_true _ (isFinite_posMinSubnormal fmt)
 
 /-- The least positive subnormal is not an infinity. -/
-@[simp] theorem isInf_posMinSubnormal (fmt : FloatFormat) :
-    isInf (posMinSubnormal fmt) = false :=
-  isInf_eq_false_of_isFinite_eq_true _ (isFinite_posMinSubnormal fmt)
+@[simp] theorem isInfinite_posMinSubnormal (fmt : FloatFormat) :
+    isInfinite (posMinSubnormal fmt) = false :=
+  isInfinite_eq_false_of_isFinite_eq_true _ (isFinite_posMinSubnormal fmt)
 
 /-- The negative subnormal of least magnitude packs a set sign bit, exponent zero and fraction one.
 -/
@@ -505,9 +505,9 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
   isNaN_eq_false_of_isFinite_eq_true _ (isFinite_negMinSubnormal fmt)
 
 /-- The negative subnormal of least magnitude is not an infinity. -/
-@[simp] theorem isInf_negMinSubnormal (fmt : FloatFormat) :
-    isInf (negMinSubnormal fmt) = false :=
-  isInf_eq_false_of_isFinite_eq_true _ (isFinite_negMinSubnormal fmt)
+@[simp] theorem isInfinite_negMinSubnormal (fmt : FloatFormat) :
+    isInfinite (negMinSubnormal fmt) = false :=
+  isInfinite_eq_false_of_isFinite_eq_true _ (isFinite_negMinSubnormal fmt)
 
 /-- Negation maps the least positive subnormal to its negative counterpart. -/
 @[simp] theorem neg_posMinSubnormal (fmt : FloatFormat) :
@@ -541,9 +541,9 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
   isNaN_eq_false_of_isFinite_eq_true _ (isFinite_maxFinite fmt sign)
 
 /-- A largest finite encoding is never an infinity. -/
-@[simp] theorem isInf_maxFinite (fmt : FloatFormat) (sign : Bool) :
-    isInf (maxFinite fmt sign) = false :=
-  isInf_eq_false_of_isFinite_eq_true _ (isFinite_maxFinite fmt sign)
+@[simp] theorem isInfinite_maxFinite (fmt : FloatFormat) (sign : Bool) :
+    isInfinite (maxFinite fmt sign) = false :=
+  isInfinite_eq_false_of_isFinite_eq_true _ (isFinite_maxFinite fmt sign)
 
 /-- Negation toggles the sign of the largest finite magnitude. -/
 @[simp] theorem neg_maxFinite (fmt : FloatFormat) (sign : Bool) :
@@ -574,10 +574,10 @@ theorem negMinSubnormal_eq_ofFields (fmt : FloatFormat) :
         (neg_eq_self_or_toggleSign_of_finiteUnsignedZero x hencoding)).1
 
 /-- Negation preserves infinity classification. -/
-@[simp] theorem isInf_neg {fmt : FloatFormat} (x : Model fmt) :
-    isInf (neg x) = isInf x := by
+@[simp] theorem isInfinite_neg {fmt : FloatFormat} (x : Model fmt) :
+    isInfinite (neg x) = isInfinite x := by
   cases hencoding : fmt.encoding <;>
-    simp [isInf, hencoding, neg, FloatFormat.supportsSignedZero]
+    simp [isInfinite, hencoding, neg, FloatFormat.supportsSignedZero]
 
 /-- Negation preserves zero classification. -/
 @[simp] theorem isZero_neg {fmt : FloatFormat} (x : Model fmt) :
@@ -624,7 +624,12 @@ theorem toDyadic?_neg_of_toDyadic?_some {fmt : FloatFormat} (x : Model fmt) {d :
       · have hfiniteNeg : isFinite (neg x) = true := by
           simpa using hfinite
         by_cases hexponent : expField x = 0 <;> by_cases hfraction : fracField x = 0 <;>
-          · simp_all [toDyadic?, negDyadic, isZero, IEEE.isZero]
+          · simp_all only [toDyadic?, Bool.false_eq_true, ↓reduceIte, Bool.not_true, isZero,
+            IEEE.isZero, BEq.rfl, Bool.and_self, Option.some.injEq, Bool.not_eq_true,
+            expField_toggleSign, fracField_toggleSign, signBit_toggleSign, negDyadic,
+            Bool.and_false, Numerics.Dyadic.neg_eq, Numerics.Dyadic.mk.injEq,
+            Bool.not_eq_eq_eq_not, Bool.not_not, Bool.true_and, beq_iff_eq, Bool.and_true,
+            add_zero, Int.ofNat_eq_natCast, Bool.and_eq_true, and_self]
             exact Numerics.Dyadic.mk.inj hx
   | finiteMaxNaN =>
       have hsignedZero : fmt.supportsSignedZero = true := by
@@ -636,7 +641,12 @@ theorem toDyadic?_neg_of_toDyadic?_some {fmt : FloatFormat} (x : Model fmt) {d :
       have hfiniteNeg : isFinite (neg x) = true := by
         simpa using hfinite
       by_cases hexponent : expField x = 0 <;> by_cases hfraction : fracField x = 0 <;>
-        · simp_all [toDyadic?, negDyadic, isZero, IEEE.isZero]
+        · simp_all only [toDyadic?, Bool.false_eq_true, ↓reduceIte, Bool.not_true, isZero,
+          IEEE.isZero, BEq.rfl, Bool.and_self, Option.some.injEq, expField_toggleSign,
+          fracField_toggleSign, signBit_toggleSign, negDyadic, Bool.and_false,
+          Numerics.Dyadic.neg_eq, Numerics.Dyadic.mk.injEq, Bool.not_eq_eq_eq_not, Bool.not_not,
+          Bool.true_and, beq_iff_eq, Bool.and_true, add_zero, Int.ofNat_eq_natCast,
+          Bool.and_eq_true, and_self]
           exact Numerics.Dyadic.mk.inj hx
   | finiteUnsignedZero =>
       have hunsigned : fmt.supportsSignedZero = false := by
@@ -683,12 +693,18 @@ theorem toDyadic?_neg_of_toDyadic?_some {fmt : FloatFormat} (x : Model fmt) {d :
               simp [hnan] at hnan'
           · have hzeroNeg : isZero (neg x) = false := by
               simpa using hzeroFalse
-            simp_all [toDyadic?, negDyadic]
+            simp_all only [toDyadic?, Bool.false_eq_true, ↓reduceIte, Bool.not_true, BEq.rfl,
+              Option.some.injEq, not_false_eq_true, expField_toggleSign, signBit_toggleSign,
+              fracField_toggleSign, negDyadic, Bool.not_false, Bool.and_true, beq_iff_eq,
+              Numerics.Dyadic.neg_eq]
             cases hx
             simp [hfraction]
         · have hzeroNeg : isZero (neg x) = false := by
             simpa using hzeroFalse
-          simp_all [toDyadic?, negDyadic]
+          simp_all only [toDyadic?, Bool.false_eq_true, ↓reduceIte, Bool.not_true, beq_iff_eq,
+            Int.ofNat_eq_natCast, Option.some.injEq, not_false_eq_true, expField_toggleSign,
+            signBit_toggleSign, fracField_toggleSign, negDyadic, Bool.not_false, Bool.and_true,
+            Numerics.Dyadic.neg_eq]
           cases hx
           simp [pow2_eq_two_pow]
   | finite =>
@@ -701,7 +717,12 @@ theorem toDyadic?_neg_of_toDyadic?_some {fmt : FloatFormat} (x : Model fmt) {d :
       have hfiniteNeg : isFinite (neg x) = true := by
         simpa using hfinite
       by_cases hexponent : expField x = 0 <;> by_cases hfraction : fracField x = 0 <;>
-        · simp_all [toDyadic?, negDyadic, isNaN, isZero, IEEE.isZero]
+        · simp_all only [toDyadic?, Bool.false_eq_true, ↓reduceIte, Bool.not_true, isZero,
+          IEEE.isZero, BEq.rfl, Bool.and_self, Option.some.injEq, isNaN, expField_toggleSign,
+          fracField_toggleSign, signBit_toggleSign, negDyadic, Bool.and_false,
+          Numerics.Dyadic.neg_eq, Numerics.Dyadic.mk.injEq, Bool.not_eq_eq_eq_not, Bool.not_not,
+          Bool.true_and, beq_iff_eq, Bool.and_true, add_zero, Int.ofNat_eq_natCast,
+          Bool.and_eq_true, and_self]
           exact Numerics.Dyadic.mk.inj hx
 
 /-- Format-aware dyadic negation is real-number negation. -/

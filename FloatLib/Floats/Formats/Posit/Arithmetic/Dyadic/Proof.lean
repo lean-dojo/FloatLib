@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,13 +7,11 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Runtime
-public import FloatLib.Floats.Formats.Posit.Rounding.Dyadic.Proof
+public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
 public import FloatLib.Floats.Formats.Posit.Rounding.Quotient.Proof
 public import FloatLib.Floats.Formats.Posit.Rounding.SquareRoot.Proof
-public import FloatLib.Floats.Formats.Posit.Semantics.Exact.Proof
 
 import FloatLib.Numerics.Exact.Dyadic.Arithmetic.Proof
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Spec
 
 /-!
 # Correctness of exact-dyadic posit arithmetic
@@ -33,8 +31,8 @@ variable {format : Format}
 
 /-- Exact-dyadic addition refines the reference rational specification. -/
 theorem add_eq_spec (left right : Model format) :
-    add left right = Spec.add left right := by
-  unfold add Spec.add
+    add left right = Spec.addition left right := by
+  unfold add Spec.addition
   rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
   cases left.toDyadic? <;> cases right.toDyadic? <;>
     simp [DyadicRounding.round_eq_roundRat,
@@ -42,8 +40,8 @@ theorem add_eq_spec (left right : Model format) :
 
 /-- Exact-dyadic subtraction refines the reference rational specification. -/
 theorem sub_eq_spec (left right : Model format) :
-    sub left right = Spec.sub left right := by
-  unfold sub Spec.sub
+    sub left right = Spec.subtraction left right := by
+  unfold sub Spec.subtraction
   rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
   cases left.toDyadic? <;> cases right.toDyadic? <;>
     simp [DyadicRounding.round_eq_roundRat,
@@ -51,8 +49,8 @@ theorem sub_eq_spec (left right : Model format) :
 
 /-- Exact-dyadic multiplication refines the reference rational specification. -/
 theorem mul_eq_spec (left right : Model format) :
-    mul left right = Spec.mul left right := by
-  unfold mul Spec.mul
+    mul left right = Spec.multiplication left right := by
+  unfold mul Spec.multiplication
   rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
   cases left.toDyadic? <;> cases right.toDyadic? <;>
     simp [DyadicRounding.round_eq_roundRat,
@@ -60,8 +58,8 @@ theorem mul_eq_spec (left right : Model format) :
 
 /-- Exact-dyadic cross-multiplied division refines the rational specification. -/
 theorem div_eq_spec (left right : Model format) :
-    div left right = Spec.div left right := by
-  unfold div Spec.div
+    div left right = Spec.division left right := by
+  unfold div Spec.division
   rw [Model.toRat?_eq_toDyadic?_map, Model.toRat?_eq_toDyadic?_map]
   cases left.toDyadic? <;> cases right.toDyadic? <;>
     simp [DyadicQuotient.round_eq_reference]

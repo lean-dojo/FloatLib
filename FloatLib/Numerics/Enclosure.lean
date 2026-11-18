@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Constants.Proof
-public import FloatLib.Numerics.Enclosure.Elementary.Convergence
 public import FloatLib.Numerics.Enclosure.Elementary.ComplexTranscendental
+public import FloatLib.Numerics.Enclosure.Elementary.Convergence
 public import FloatLib.Numerics.Enclosure.Elementary.LogTable.Proof
 public import FloatLib.Numerics.Enclosure.Elementary.TrigonometricIrrational
 public import FloatLib.Numerics.Enclosure.Expression.BackendsProof
@@ -16,8 +16,8 @@ public import FloatLib.Numerics.Enclosure.Expression.CheckProof
 public import FloatLib.Numerics.Enclosure.Interval.Proof
 public import FloatLib.Numerics.Enclosure.Interval.Real
 public import FloatLib.Numerics.Enclosure.Rational.Proof
-public import FloatLib.Numerics.Enclosure.Trigonometric.Convergence
 public import FloatLib.Numerics.Enclosure.Trigonometric.ArgumentReduction.Termination
+public import FloatLib.Numerics.Enclosure.Trigonometric.Convergence
 public import FloatLib.Numerics.Enclosure.Trigonometric.Termination
 
 /-!

@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Backends.Selection.Certified
 public import FloatLib.Floats.Formats.Posit.Configured.Backend.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Plan.Core.Estimates
+public import FloatLib.Tactic.CompilerOptimize
 
 /-!
 # Representation-independent configured posit candidates
@@ -31,43 +31,43 @@ open FloatLib.Floats.ExecFloat.Backend
 /-! ## Representation-independent two-limb rounding candidates -/
 
 /-- Certified two-limb-rounded addition candidate for formats of at most 128 bits. -/
-@[inline] def nativeLimbAdd?
+@[inline, compiler_optimize direct] def nativeLimbAdd?
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    Option (Certified (@Spec.add format plan code inferInstance)) :=
+    Option (Certified (@Spec.addition format plan code inferInstance)) :=
   if heligible : Model.NativeLimb.Eligible format then
     some (Certified.binary (nativeLimbEstimate plan .add)
-      Spec.add (Backend.nativeLimbAdd heligible)
+      Spec.addition (Backend.nativeLimbAdd heligible)
       (Backend.nativeLimbAdd_eq_spec heligible))
   else
     none
 
 /-- Certified two-limb-rounded subtraction candidate. -/
-@[inline] def nativeLimbSub?
+@[inline, compiler_optimize direct] def nativeLimbSub?
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    Option (Certified (@Spec.sub format plan code inferInstance)) :=
+    Option (Certified (@Spec.subtraction format plan code inferInstance)) :=
   if heligible : Model.NativeLimb.Eligible format then
     some (Certified.binary (nativeLimbEstimate plan .sub)
-      Spec.sub (Backend.nativeLimbSub heligible)
+      Spec.subtraction (Backend.nativeLimbSub heligible)
       (Backend.nativeLimbSub_eq_spec heligible))
   else
     none
 
 /-- Certified two-limb-rounded multiplication candidate. -/
-@[inline] def nativeLimbMul?
+@[inline, compiler_optimize direct] def nativeLimbMul?
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
-    Option (Certified (@Spec.mul format plan code inferInstance)) :=
+    Option (Certified (@Spec.multiplication format plan code inferInstance)) :=
   if heligible : Model.NativeLimb.Eligible format then
     some (Certified.binary (nativeLimbEstimate plan .mul)
-      Spec.mul (Backend.nativeLimbMul heligible)
+      Spec.multiplication (Backend.nativeLimbMul heligible)
       (Backend.nativeLimbMul_eq_spec heligible))
   else
     none
 
 /-- Certified two-limb-rounded fused-multiply-add candidate. -/
-@[inline] def nativeLimbFma?
+@[inline, compiler_optimize direct] def nativeLimbFma?
     (format : Format) (plan : StoragePlan format) {code : Type}
     [FloatLib.Floats.ExecFloat.ModelCodec plan (Model format) code] :
     Option (Certified (@Spec.fma format plan code inferInstance)) :=

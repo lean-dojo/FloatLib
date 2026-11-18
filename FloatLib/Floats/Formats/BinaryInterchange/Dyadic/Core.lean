@@ -1,15 +1,15 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.Lean
 public import FloatLib.Numerics.Exact.Dyadic.Basic
 public import FloatLib.Numerics.Quantization.Deterministic
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.Fields.Optimized
 
 /-!
 # Exact dyadic decoding primitives
@@ -169,18 +169,29 @@ theorem cmpDyadic_eq_cmpDyadicAligned (a b : Numerics.Dyadic) :
   · simp [ha, hb]
   · have := hA0 ha
     have := hB hb
-    cases an <;> cases bn <;> simp [ha, hb, compare, compareOfLessAndEq] <;>
+    cases an <;> cases bn <;> simp only [ha, BEq.rfl, Bool.true_and, beq_iff_eq, hb, ↓reduceIte,
+      Bool.false_eq_true,
+      compare, compareOfLessAndEq, Int.ofNat_eq_natCast, Nat.cast_lt, Nat.cast_inj,
+      left_eq_ite_iff, not_lt, Nat.cast_eq_neg_cast, Nat.neg_cast_eq_cast, neg_lt_neg_iff,
+      neg_inj] <;>
       split_ifs <;> first | rfl | omega
   · have := hB0 hb
     have := hA ha
-    cases an <;> cases bn <;> simp [ha, hb, compare, compareOfLessAndEq] <;>
+    cases an <;> cases bn <;> simp only [hb, BEq.rfl, Bool.and_true, beq_iff_eq, ha, ↓reduceIte,
+      Bool.false_eq_true,
+      compare, compareOfLessAndEq, Int.ofNat_eq_natCast, Nat.cast_lt, Nat.cast_inj,
+      Nat.cast_eq_neg_cast, Nat.neg_cast_eq_cast, left_eq_ite_iff, not_lt, neg_lt_neg_iff,
+      neg_inj] <;>
       split_ifs <;> first | rfl | omega
   · have := hA ha
     have := hB hb
     have hAB := hAB hb hea heb
     have hBA := hBA ha heb hea
     cases an <;> cases bn <;>
-      simp [ha, hb, compare, compareOfLessAndEq] <;>
+      simp only [Bool.and_eq_true, beq_iff_eq, ha, hb, and_self, ↓reduceIte, bne_self_eq_false,
+        Bool.false_eq_true, compare, compareOfLessAndEq, Int.ofNat_eq_natCast, Nat.cast_lt,
+        Nat.cast_inj, Bool.bne_true, Bool.not_false, Nat.cast_eq_neg_cast, Bool.bne_false,
+        Nat.neg_cast_eq_cast, left_eq_ite_iff, not_lt, neg_lt_neg_iff, neg_inj] <;>
       split_ifs <;> first | rfl | omega
 
 /--
@@ -214,7 +225,7 @@ infinity patterns. It is the value of `x` only when `fmt.isIEEE`. For a custom b
 finite-only, maximum-NaN or unsigned-zero encoding, use `toDyadic?`.
 -/
 @[inline] def ieeeToDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
-  if IEEE.isNaN x || IEEE.isInf x then
+  if IEEE.isNaN x || IEEE.isInfinite x then
     none
   else
     let s := signBit x
@@ -239,7 +250,7 @@ Compiled IEEE finite decoder, with the same IEEE-layout reading as `ieeeToDyadic
 
 The storage word is converted to `Nat` once, then all three fields are extracted from that shared
 value. The exponent field alone determines whether an IEEE encoding is exceptional, so the
-decoder also avoids the repeated masks and shifts performed by `IEEE.isNaN` and `IEEE.isInf`.
+decoder also avoids the repeated masks and shifts performed by `IEEE.isNaN` and `IEEE.isInfinite`.
 -/
 @[inline] def Internal.ieeeToDyadic? {fmt : FloatFormat} (x : Model fmt) : Option Numerics.Dyadic :=
   let bits := x.toNatBits
@@ -290,8 +301,8 @@ decoder also avoids the repeated masks and shifts performed by `IEEE.isNaN` and 
   rw [← expField_eq_internal_apply x, ← signBit_eq_internal_apply x,
     ← fracField_eq_internal_apply x]
   by_cases he : expField x = FloatFormat.expAllOnesNat fmt
-  · simp [ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, he]
-  · simp [ieeeToDyadic?, IEEE.isNaN, IEEE.isInf, he]
+  · simp [ieeeToDyadic?, IEEE.isNaN, IEEE.isInfinite, he]
+  · simp [ieeeToDyadic?, IEEE.isNaN, IEEE.isInfinite, he]
 
 
 end Model

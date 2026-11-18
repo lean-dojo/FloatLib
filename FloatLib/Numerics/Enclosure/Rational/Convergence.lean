@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Numerics.Enclosure.Rational.Proof
 public import Mathlib.Topology.Instances.Real.Lemmas
-public import Mathlib.Topology.Order.OrderClosed
 
 /-!
 # Convergence through rational interval operations
@@ -44,7 +43,7 @@ theorem tendsto_squareRepeat_lo {α : Type*} {l : Filter α}
   | zero => simpa [squareRepeat] using hlo
   | succ n ih =>
       have hmax := (tendsto_const_nhds (x := (0 : ℝ))).max ih
-      simpa [squareRepeat, squareNonnegative, max_eq_right (pow_nonneg hx _),
+      simpa [squareRepeat, squareNonnegative_def, max_eq_right (pow_nonneg hx _),
         pow_succ, pow_mul] using hmax.pow 2
 
 /-- The upper endpoints of a repeatedly squared enclosure approach the corresponding power. -/
@@ -56,6 +55,6 @@ theorem tendsto_squareRepeat_hi {α : Type*} {l : Filter α}
   induction n with
   | zero => simpa [squareRepeat] using hhi
   | succ n ih =>
-      simpa [squareRepeat, squareNonnegative, pow_succ, pow_mul] using ih.pow 2
+      simpa [squareRepeat, squareNonnegative_def, pow_succ, pow_mul] using ih.pow 2
 
 end FloatLib.Numerics.RationalInterval

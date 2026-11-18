@@ -1,14 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Internal
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.SignedSemantics.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Internal
 
 /-!
 # Bounds for positive directed dyadic rounding
@@ -200,12 +199,12 @@ theorem toReal_roundDyadicPosDown_eq_roundAt_of_le_max
         (roundMantissaToLeadingBitDown_lt_pow2_succ mantissa fmt.fracWidth) hnormal hmax).2
 
 /--
-A word packed by the positive normal path is finite whenever the shared overflow guard does not
+A word packed by the normal path is finite whenever the shared overflow guard does not
 fire, in every encoding: the guard keeps the exponent field at or below the largest finite field
-and, at that field, the fraction at or below the largest finite fraction.
+and, at that field, the fraction at or below the largest finite fraction. Either sign is allowed.
 -/
-private theorem isFinite_ofFields_of_packingGuard_eq_false
-    (fmt : FloatFormat) (exponent : Int) (fraction : Nat)
+theorem isFinite_ofFields_of_packingGuard_eq_false
+    (fmt : FloatFormat) (sign : Bool) (exponent : Int) (fraction : Nat)
     (hmin : fmt.minNormalExponent ≤ exponent)
     (hfraction : fraction < 2 ^ fmt.fracWidth)
     (hguard :
@@ -213,7 +212,7 @@ private theorem isFinite_ofFields_of_packingGuard_eq_false
           (Int.toNat (exponent + Int.ofNat fmt.exponentBias) == fmt.maxFiniteExpField &&
             decide (fraction > fmt.maxFiniteFracField))) = true) :
     isFinite
-        (ofFields fmt false (Int.toNat (exponent + Int.ofNat fmt.exponentBias)) fraction) =
+        (ofFields fmt sign (Int.toNat (exponent + Int.ofNat fmt.exponentBias)) fraction) =
       true := by
   simp only [Bool.or_eq_true, decide_eq_true_eq, Bool.and_eq_true, beq_iff_eq,
     not_or, not_and, not_lt] at hguard
@@ -290,7 +289,7 @@ theorem toReal_roundDyadicPosDown_le
     apply mul_le_mul_of_nonneg_right _ (bpow_nonneg _)
     exact_mod_cast (show pow2 fmt.fracWidth + fmt.maxFiniteFracField ≤ rounded by omega)
   · rw [toReal_ofFields_normalized fmt rounded _ hroundedLow hroundedHigh hnormal hmax
-      (isFinite_ofFields_of_packingGuard_eq_false fmt _ _ hnormal
+      (isFinite_ofFields_of_packingGuard_eq_false fmt false _ _ hnormal
         (normalizedMantissa_sub_pow2_lt fmt rounded hroundedHigh) hguard)]
     exact halign
 
@@ -341,7 +340,7 @@ theorem isFinite_roundDyadicPosDown
         dsimp only
         split_ifs with hguard
         · exact isFinite_posMaxFinite fmt
-        · apply isFinite_ofFields_of_packingGuard_eq_false fmt _ _ hnormal _ hguard
+        · apply isFinite_ofFields_of_packingGuard_eq_false fmt false _ _ hnormal _ hguard
           rw [pow2_eq_two_pow, pow_succ] at hroundedHigh
           rw [pow2_eq_two_pow]
           omega
@@ -569,6 +568,58 @@ theorem roundDyadicPosUp_finite_roundAt_of_le_max_of_no_carry
         le_of_not_gt hsubnormal
       exact roundDyadicPosUp_normal_no_carry_finite_roundAt
         fmt mantissa exponent hfmt hm hnormal hmax hnoCarry
+
+/--
+In a conventional IEEE format, upward rounding of a positive dyadic no larger than the largest
+finite value is finite and equals the real ceiling on the format grid. The largest finite value is
+itself a grid point, so the ceiling cannot pass it: a carry out of the top binade would.
+-/
+theorem roundDyadicPosUp_finite_roundAt_of_le_posMaxFinite
+    (fmt : FloatFormat) (mantissa : Nat) (exponent : Int)
+    (hfmt : fmt.isIEEE = true)
+    (hm : mantissa ≠ 0)
+    (hbound : (mantissa : ℝ) * bpow exponent ≤ toReal (posMaxFinite fmt)) :
+    isFinite (roundDyadicPosUp fmt mantissa exponent) = true ∧
+      toReal (roundDyadicPosUp fmt mantissa exponent) =
+        roundAt fmt ((mantissa : ℝ) * bpow exponent) .up := by
+  have hleading : (pow2 mantissa.log2 : ℝ) ≤ mantissa := by
+    exact_mod_cast pow2_log2_le hm
+  have hlower : bpow ((mantissa.log2 : Int) + exponent) ≤ (mantissa : ℝ) * bpow exponent := by
+    rw [bpow_add, ← Int.ofNat_eq_natCast, bpow_ofNat]
+    exact mul_le_mul_of_nonneg_right hleading (bpow_nonneg _)
+  have hmax : (mantissa.log2 : Int) + exponent ≤ fmt.maxNormalExponent := by
+    have hpow := hlower.trans_lt (hbound.trans_lt (toReal_posMaxFinite_lt_bpow fmt))
+    have := (bpow_lt_bpow_iff Numerics.binaryRadix _ _).mp hpow
+    omega
+  by_cases hnormal : fmt.minNormalExponent ≤ (mantissa.log2 : Int) + exponent
+  · by_cases hcarry :
+        roundMantissaToLeadingBitUp mantissa fmt.fracWidth = pow2 (fmt.fracWidth + 1)
+    · by_cases hcarryMax : (mantissa.log2 : Int) + exponent + 1 ≤ fmt.maxNormalExponent
+      · exact roundDyadicPosUp_normal_carry_finite_roundAt
+          fmt mantissa exponent hfmt hnormal hcarry hcarryMax
+      · exfalso
+        have hround := roundAt_up_pos_eq_of_minNormal_le fmt mantissa exponent hfmt hnormal
+        rw [hcarry] at hround
+        have hmono := roundAt_mono fmt hbound .up
+        rw [roundAt_of_genericFormat fmt
+          (toReal_genericFormat_of_isFinite _ (isFinite_posMaxFinite fmt)) .up, hround] at hmono
+        have hcarried : (pow2 (fmt.fracWidth + 1) : ℝ) *
+            bpow ((mantissa.log2 : Int) + exponent - Int.ofNat fmt.fracWidth) =
+              bpow ((mantissa.log2 : Int) + exponent + 1) := by
+          rw [← bpow_ofNat, ← bpow_add]
+          congr 1
+          simp only [Int.ofNat_eq_natCast, Int.natCast_add]
+          omega
+        rw [hcarried] at hmono
+        have hpow := hmono.trans_lt (toReal_posMaxFinite_lt_bpow fmt)
+        have := (bpow_lt_bpow_iff Numerics.binaryRadix _ _).mp hpow
+        omega
+    · exact roundDyadicPosUp_normal_no_carry_finite_roundAt
+        fmt mantissa exponent hfmt hm hnormal hmax hcarry
+  · by_cases hunderflow : (mantissa.log2 : Int) + exponent < fmt.minSubnormalExponent
+    · exact roundDyadicPosUp_underflow_finite_roundAt fmt mantissa exponent hfmt hm hunderflow
+    · exact roundDyadicPosUp_subnormal_finite_roundAt fmt mantissa exponent hfmt hm
+        (le_of_not_gt hunderflow) (lt_of_not_ge hnormal)
 
 /-- In a conventional IEEE format, positive upward dyadic rounding is never classified as NaN. -/
 theorem isNaN_roundDyadicPosUp_eq_false

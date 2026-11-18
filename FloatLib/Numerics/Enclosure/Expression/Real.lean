@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -10,7 +10,6 @@ public import FloatLib.Numerics.Enclosure.Expression.Basic
 public import FloatLib.Numerics.Enclosure.Interval.Real
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 
 /-!
 # Sound interval evaluation of real expressions
@@ -200,45 +199,46 @@ theorem Expr.containsReal_eval? {α : Type*} (e : Expr) {B : Backend α}
         (Expr.evalArgs args values functions))
     ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ e
   · intro q I h
-    simpa only [eval] using hB.const (by simpa only [eval?] using h)
+    simpa only [eval] using hB.const (by simpa only [Expr.eval?_const] using h)
   · intro i I h
-    simpa only [eval] using henv i I (by simpa only [eval?] using h)
+    simpa only [eval] using henv i I (by simpa only [Expr.eval?_var] using h)
   · intro op a ha I h
     cases harg : a.eval? B env with
-    | none => simp [eval?, harg] at h
-    | some J => simpa only [eval] using hB.unary (by simpa [eval?, harg] using h) (ha harg)
+    | none => simp [Expr.eval?_unary, harg] at h
+    | some J =>
+      simpa only [eval] using hB.unary (by simpa [Expr.eval?_unary, harg] using h) (ha harg)
   · intro op a b ha hb I h
     cases hleft : a.eval? B env with
-    | none => simp [eval?, hleft] at h
+    | none => simp [Expr.eval?_binary, hleft] at h
     | some J =>
       cases hright : b.eval? B env with
-      | none => simp [eval?, hleft, hright] at h
+      | none => simp [Expr.eval?_binary, hleft, hright] at h
       | some K =>
         simpa only [eval] using
-          hB.binary (by simpa [eval?, hleft, hright] using h) (ha hleft) (hb hright)
+          hB.binary (by simpa [Expr.eval?_binary, hleft, hright] using h) (ha hleft) (hb hright)
   · intro op a b c ha hb hc I h
     cases hfirst : a.eval? B env with
-    | none => simp [eval?, hfirst] at h
+    | none => simp [Expr.eval?_ternary, hfirst] at h
     | some J =>
       cases hsecond : b.eval? B env with
-      | none => simp [eval?, hfirst, hsecond] at h
+      | none => simp [Expr.eval?_ternary, hfirst, hsecond] at h
       | some K =>
         cases hthird : c.eval? B env with
-        | none => simp [eval?, hfirst, hsecond, hthird] at h
+        | none => simp [Expr.eval?_ternary, hfirst, hsecond, hthird] at h
         | some L =>
           simpa only [eval] using
-            hB.ternary (by simpa [eval?, hfirst, hsecond, hthird] using h)
+            hB.ternary (by simpa [Expr.eval?_ternary, hfirst, hsecond, hthird] using h)
             (ha hfirst) (hb hsecond) (hc hthird)
   · intro index args ha I h
-    simp only [eval?, Option.bind_eq_some_iff] at h
+    simp only [Expr.eval?_call, Option.bind_eq_some_iff] at h
     obtain ⟨inputs, hinputs, hcall⟩ := h
     simpa only [eval] using hB.call hcall (ha hinputs)
   · intro inputs h
-    simp only [Expr.evalArgs?, Option.some.injEq] at h
+    simp only [Expr.evalArgs?_nil, Option.some.injEq] at h
     subst inputs
     exact .nil
   · intro arg args ha hat inputs h
-    simp only [Expr.evalArgs?, Option.bind_eq_bind, Option.bind_eq_some_iff,
+    simp only [Expr.evalArgs?_cons, Option.bind_eq_bind, Option.bind_eq_some_iff,
       Option.pure_def, Option.some.injEq] at h
     obtain ⟨head, hhead, tail, htail, rfl⟩ := h
     exact .cons (ha hhead) (hat htail)

@@ -1,0 +1,4 @@
+theorem,statement,decide_kernel_seconds,float_decide_seconds,coq_kernel_conversion_seconds,coq_vm_seconds
+sumTenth,"1,000 binary32 additions of 0.1",4.24,0.0527,0.381,0.058
+sum64,"sum of 1,000 binary64 values",4.7,0.108,4.56,0.327
+dot64,"dot product of 1,000 binary64 pairs",8.79,0.159,9.35,0.73

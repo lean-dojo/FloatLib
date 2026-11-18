@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -38,8 +38,8 @@ def exactNumericalSystem (fmt : FloatFormat) : NumericalSystem where
     match Model.toDyadic? x with
     | some value => .finite value
     | none =>
-        if Model.isInf x then .infinity (Model.signBit x)
-        else .exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSNaN x))
+        if Model.isInfinite x then .infinity (Model.signBit x)
+        else .exceptional (.nan (some (Model.nanPayload x)) (Model.signBit x) (Model.isSignaling x))
 
 /-- A policy-aware binary word with an erased proof of its exact finite dyadic value. -/
 abbrev ExactAtFinite (fmt : FloatFormat) (value : Numerics.Dyadic) :=
@@ -77,8 +77,8 @@ theorem exactNumericalSystem_ne_infinity_of_nonIEEE {fmt : FloatFormat}
   cases hdecode : Model.toDyadic? x with
   | some value => simp [hdecode]
   | none =>
-      have hinf : Model.isInf x = false := by
-        cases hencoding : fmt.encoding <;> simp_all [Model.isInf]
+      have hinf : Model.isInfinite x = false := by
+        cases hencoding : fmt.encoding <;> simp_all [Model.isInfinite]
       simp [hdecode, hinf]
 
 end FloatLib.Floats.Formats.BinaryInterchange.Model

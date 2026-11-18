@@ -1,16 +1,17 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.RealSemantics
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Runtime
+
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Semantics
+import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
 
 /-!
 # IEEE remainder contracts
@@ -416,8 +417,7 @@ private theorem remainderFromDivision_significand_le_numerator
     · have h' := of_decide_eq_true h
       omega
     · exact le_rfl
-  · have hge : denominator ≤ numerator := not_lt.mp hlt
-    simp only [Operations.Internal.remainderFromDivision]
+  · simp only [Operations.Internal.remainderFromDivision]
     split_ifs <;> omega
 
 /--
@@ -484,7 +484,8 @@ theorem remainder_exact
       hnonzero]
   dsimp only
   by_cases hzero : (remainderDyadic exactDividend exactDivisor hnonzero).significand = 0
-  · have hbeq : ((remainderDyadic exactDividend exactDivisor hnonzero).significand == 0) = true := by
+  · have hbeq : ((remainderDyadic exactDividend exactDivisor hnonzero).significand == 0) =
+    true := by
       simp [hzero]
     simp only [hbeq, ite_true]
     refine ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt exactDividend.negative), ?_⟩
@@ -497,7 +498,8 @@ theorem remainder_exact
     have hrep :
         (remainderDyadic exactDividend exactDivisor hnonzero).significand <
             2 ^ (fmt.fracWidth + 1) ∧
-          fmt.minSubnormalExponent ≤ (remainderDyadic exactDividend exactDivisor hnonzero).exponent ∧
+          fmt.minSubnormalExponent ≤ (remainderDyadic exactDividend exactDivisor
+            hnonzero).exponent ∧
           |(remainderDyadic exactDividend exactDivisor hnonzero).toReal| ≤
             toReal (posMaxFinite fmt) := by
       rcases remainderDyadic_eq_or_le exactDividend exactDivisor hnonzero with
@@ -526,7 +528,7 @@ private theorem remainderDyadic_toRat_eq_sub (dividend divisor : Numerics.Dyadic
   by_cases hexp : divisor.exponent ≤ dividend.exponent
   · rw [ite_eq_left hexp]
     dsimp only
-    set n := Int.toNat (dividend.exponent - divisor.exponent) with hn
+    set n := Int.toNat (dividend.exponent - divisor.exponent)
     have hsh : Nat.shiftLeft dividend.significand n = dividend.significand * 2 ^ n :=
       Nat.shiftLeft_eq _ _
     rw [hsh]
@@ -536,10 +538,14 @@ private theorem remainderDyadic_toRat_eq_sub (dividend divisor : Numerics.Dyadic
     have hpow : (2 : ℚ) ^ dividend.exponent = (2 : ℚ) ^ n * 2 ^ divisor.exponent := by
       rw [← zpow_natCast, ← zpow_add₀ (by norm_num), hshift]; congr 1; ring
     simp only [Numerics.Dyadic.toRat, sgn, hpow, sx, sy]
-    cases dividend.negative <;> cases divisor.negative <;> simp [Rat.ofInt_eq_cast] <;> ring
+    cases dividend.negative <;> cases divisor.negative <;>
+      simp only [Bool.false_eq_true, ↓reduceIte, Int.ofNat_eq_natCast, Nat.cast_mul, Nat.cast_pow,
+      Nat.cast_ofNat, Rat.ofInt_eq_cast, Int.cast_sub, Int.cast_mul, Int.cast_natCast,
+      Int.cast_pow, Int.cast_ofNat, one_mul, mul_one, Int.reduceNeg, mul_neg, neg_mul,
+      Int.cast_neg, _root_.neg_neg, neg_sub, sub_neg_eq_add] <;> ring
   · rw [ite_eq_right hexp]
     dsimp only
-    set n := Int.toNat (divisor.exponent - dividend.exponent) with hn
+    set n := Int.toNat (divisor.exponent - dividend.exponent)
     have hsh : Nat.shiftLeft divisor.significand n = divisor.significand * 2 ^ n :=
       Nat.shiftLeft_eq _ _
     rw [hsh]
@@ -549,7 +555,11 @@ private theorem remainderDyadic_toRat_eq_sub (dividend divisor : Numerics.Dyadic
     have hpow : (2 : ℚ) ^ divisor.exponent = (2 : ℚ) ^ n * 2 ^ dividend.exponent := by
       rw [← zpow_natCast, ← zpow_add₀ (by norm_num), hshift]; congr 1; ring
     simp only [Numerics.Dyadic.toRat, sgn, hpow, sx, sy]
-    cases dividend.negative <;> cases divisor.negative <;> simp [Rat.ofInt_eq_cast] <;> ring
+    cases dividend.negative <;> cases divisor.negative <;>
+      simp only [Bool.false_eq_true, ↓reduceIte, Int.ofNat_eq_natCast, Nat.cast_mul, Nat.cast_pow,
+      Nat.cast_ofNat, Rat.ofInt_eq_cast, Int.cast_sub, Int.cast_natCast, Int.cast_mul,
+      Int.cast_pow, Int.cast_ofNat, one_mul, mul_one, Int.reduceNeg, mul_neg, neg_mul,
+      Int.cast_neg, _root_.neg_neg, neg_sub, sub_neg_eq_add] <;> ring
 
 /--
 When the divisor exponent is at most the dividend's, the exact remainder of a nonzero dividend has
@@ -577,7 +587,7 @@ exponent belongs to the descriptor's grid.
 -/
 private theorem genericFormat_int_mul_zpow (fmt : FloatFormat) (m e : ℤ)
     (hm : m.natAbs < 2 ^ (fmt.fracWidth + 1)) (he : fmt.minSubnormalExponent ≤ e) :
-    genericFormat Numerics.binaryRadix (fexpOf fmt) ((m : ℝ) * (2 : ℝ) ^ e) := by
+    GenericRepresentable Numerics.binaryRadix (fexpOf fmt) ((m : ℝ) * (2 : ℝ) ^ e) := by
   have h := Dyadic.genericFormat_of_eq_mul_pow2 fmt ⟨decide (m < 0), m.natAbs, e⟩ m.natAbs 0
     (by simp) hm he
   rw [Dyadic.toReal_mk, bpow_binaryRadix, Nat.cast_natAbs, Int.cast_abs] at h
@@ -634,12 +644,12 @@ private theorem remainderDyadic_abs_toRat_le (dividend divisor : Numerics.Dyadic
   · rw [ite_eq_right hexp]
     dsimp only
     rw [habs]
-    set n := Int.toNat (divisor.exponent - dividend.exponent) with hn
+    set n := Int.toNat (divisor.exponent - dividend.exponent)
     have hsh : Nat.shiftLeft divisor.significand n = divisor.significand * 2 ^ n :=
       Nat.shiftLeft_eq _ _
     rw [hsh]
     have hres := abs_sub_roundQuotientEven_mul_le dividend.significand
-      (divisor.significand * 2 ^ n) (Nat.mul_ne_zero h (pow_ne_zero n (by norm_num)))
+      (divisor.significand * 2 ^ n) (Nat.mul_ne_zero h (pow_ne_zero n (by decide)))
     have hshift : (n : ℤ) = divisor.exponent - dividend.exponent := Int.toNat_of_nonneg (by omega)
     have hpow' : (2 : ℚ) ^ divisor.exponent = (2 : ℚ) ^ n * 2 ^ dividend.exponent := by
       rw [← zpow_natCast, ← zpow_add₀ (by norm_num), hshift]; congr 1; ring
@@ -767,7 +777,7 @@ theorem remainder_add_copySign_exact
   have hexpB := minSubnormalExponent_le_toDyadic? divisor hY
   -- On the divisor's grid the corrected magnitude `|y| - |r|` has a smaller significand than `y`.
   have divisorGrid : R.exponent = Y.exponent → R.significand ≤ Y.significand →
-      genericFormat Numerics.binaryRadix (fexpOf fmt) (|Y.toReal| - |R.toReal|) ∧
+      GenericRepresentable Numerics.binaryRadix (fexpOf fmt) (|Y.toReal| - |R.toReal|) ∧
         |(|Y.toReal| - |R.toReal|)| ≤ toReal (posMaxFinite fmt) := by
     intro hRe hRs
     have ht : |Y.toReal| - |R.toReal| =
@@ -779,7 +789,7 @@ theorem remainder_add_copySign_exact
       exact genericFormat_int_mul_zpow fmt _ _ (by omega) hexpB
     · rw [abs_of_nonneg (by linarith)]
       linarith [abs_nonneg R.toReal]
-  have key : genericFormat Numerics.binaryRadix (fexpOf fmt) (|Y.toReal| - |R.toReal|) ∧
+  have key : GenericRepresentable Numerics.binaryRadix (fexpOf fmt) (|Y.toReal| - |R.toReal|) ∧
       |(|Y.toReal| - |R.toReal|)| ≤ toReal (posMaxFinite fmt) := by
     by_cases hexp : Y.exponent ≤ X.exponent
     · obtain ⟨hRe, hRs⟩ := remainderDyadic_of_exponent_le X Y hYsig hXsig hexp
@@ -793,7 +803,6 @@ theorem remainder_add_copySign_exact
       exact divisorGrid hRe hRs
     rw [← hR] at hRe hRs
     -- On the dividend's finer grid, `x = k * y + r` with `k ≠ 0` bounds `|y| - |r|` by `|x|`.
-    have hlt : X.exponent < Y.exponent := lt_of_not_ge hexp
     obtain ⟨k, hk⟩ := remainderDyadic_toRat_eq_sub X Y hYsig
     rw [← hR] at hk
     have hkR : R.toReal = X.toReal - k * Y.toReal := by
@@ -818,7 +827,7 @@ theorem remainder_add_copySign_exact
       exact le_mul_of_one_le_left (abs_nonneg _) hk1
     have htX : |(|Y.toReal| - |R.toReal|)| ≤ |X.toReal| := by
       rw [abs_le]; constructor <;> linarith [abs_nonneg Y.toReal]
-    set n := (Y.exponent - X.exponent).toNat with hn
+    set n := (Y.exponent - X.exponent).toNat
     have hn' : (n : ℤ) = Y.exponent - X.exponent := Int.toNat_of_nonneg (by omega)
     have hpow : (2 : ℝ) ^ Y.exponent = (2 : ℝ) ^ n * (2 : ℝ) ^ X.exponent := by
       rw [← zpow_natCast, ← zpow_add₀ (by norm_num), hn']; congr 1; ring
@@ -842,11 +851,11 @@ theorem remainder_add_copySign_exact
     rcases hsigns with ⟨hx, -, h2⟩ | ⟨hx, -, h2⟩
     · rw [hx, abs_of_pos h2]; simp only [ite_true]; ring
     · rw [hx, abs_of_neg h2]; simp only [Bool.false_eq_true, ite_false]; ring
-  have hgen : genericFormat Numerics.binaryRadix (fexpOf fmt)
+  have hgen : GenericRepresentable Numerics.binaryRadix (fexpOf fmt)
       (toReal (remainder dividend divisor) + toReal (copySign divisor dividend)) := by
     rw [hsum]
     split_ifs
-    · rw [neg_one_mul]; exact generic_format_neg _ key.1
+    · rw [neg_one_mul]; exact genericRepresentable_neg _ key.1
     · rw [one_mul]; exact key.1
   have habs : |toReal (remainder dividend divisor) + toReal (copySign divisor dividend)| ≤
       toReal (posMaxFinite fmt) := by

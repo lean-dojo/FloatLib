@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Instances -- shake: keep
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Form
+public import FloatLib.Kernels.Execution.Instances -- shake: keep
 public import FloatLib.Floats.Formats.FixedPoint.Configured.Plan
-public import FloatLib.Floats.ExecFloat.Core.Capability
 
 /-!
 # Literal and dispatch instances for exact fixed point
@@ -43,18 +43,40 @@ instance : OfScientific (ExecFloat.FixedPoint radix fractionalDigits) where
     ofRat
       (OfScientific.ofScientific mantissa exponentSign decimalExponent : Rat)
 
-/-- Same-scale fixed-point addition participates in ordinary `ExecFloat` dispatch. -/
+/--
+Same-scale fixed-point addition participates in ordinary `ExecFloat` dispatch: the planner
+selects among the exact baseline and every candidate tagged `@[compiler_optimize]` for
+`FixedPoint.add`.
+-/
 @[always_inline] instance
-    [planning : Backend.PolicyFor (Family radix fractionalDigits)] :
+    [planning : Backend.PolicyFor (Family radix fractionalDigits)]
+    [portfolio : Backend.Portfolio
+      (FixedPoint.add (radix := radix) (fractionalDigits := fractionalDigits))] :
     ExecFloat.Add (Family radix fractionalDigits) :=
-  ExecFloat.Capability.ofDirectKernel
-    .add FixedPoint.add Plan.addCertified FixedPoint.add rfl
+  ExecFloat.Capability.ofTagged .add portfolio Plan.addCertified FixedPoint.add rfl
 
-/-- Same-scale fixed-point subtraction participates in ordinary `ExecFloat` dispatch. -/
+/--
+Same-scale fixed-point subtraction participates in ordinary `ExecFloat` dispatch, with the
+candidates tagged for `FixedPoint.sub`.
+-/
 @[always_inline] instance
-    [planning : Backend.PolicyFor (Family radix fractionalDigits)] :
+    [planning : Backend.PolicyFor (Family radix fractionalDigits)]
+    [portfolio : Backend.Portfolio
+      (FixedPoint.sub (radix := radix) (fractionalDigits := fractionalDigits))] :
     ExecFloat.Sub (Family radix fractionalDigits) :=
-  ExecFloat.Capability.ofDirectKernel
-    .sub FixedPoint.sub Plan.subCertified FixedPoint.sub rfl
+  ExecFloat.Capability.ofTagged .sub portfolio Plan.subCertified FixedPoint.sub rfl
+
+/--
+Lean's kernel evaluates same-scale addition as the sum of the two integer coefficients: the
+reference operation is the kernel operation.
+-/
+instance [Backend.PolicyFor (Family radix fractionalDigits)]
+    [Backend.Portfolio (FixedPoint.add (radix := radix) (fractionalDigits := fractionalDigits))] :
+    KernelPath.DirectReference (Family radix fractionalDigits) .add where
+
+/-- Lean's kernel evaluates same-scale subtraction as the difference of the coefficients. -/
+instance [Backend.PolicyFor (Family radix fractionalDigits)]
+    [Backend.Portfolio (FixedPoint.sub (radix := radix) (fractionalDigits := fractionalDigits))] :
+    KernelPath.DirectReference (Family radix fractionalDigits) .sub where
 
 end FloatLib.Floats.ExecFloat.FixedPoint

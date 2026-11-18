@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -61,6 +61,7 @@ positive start, and with `degree = 0` every attempt uses degree zero.
     (check : RationalInterval → Option α) (degree precision steps : Nat) : Option α :=
   Internal.refine enclose check degree precision none steps
 
+/-- With no step left, refinement returns nothing. -/
 @[simp] theorem refine_zero {α : Type} (enclose : Nat → Nat → RationalInterval)
     (check : RationalInterval → Option α) (degree precision : Nat) :
     refine enclose check degree precision 0 = none := rfl

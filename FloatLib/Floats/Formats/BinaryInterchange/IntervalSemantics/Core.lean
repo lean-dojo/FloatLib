@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Interval.Core
+public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 
 /-!
 # Semantic membership for arbitrary-format executable intervals
@@ -57,7 +57,7 @@ theorem Valid.hi_isFinite {fmt : FloatFormat} {I : Interval fmt} (hI : Valid I) 
 
 /-- The endpoints of a valid interval are ordered by executable comparison. -/
 theorem Valid.ordered {fmt : FloatFormat} {I : Interval fmt} (hI : Valid I) :
-    Model.le I.lo I.hi :=
+    Model.Le I.lo I.hi :=
   hI.2.2
 
 /-- The lower endpoint of an extended-valid interval is not a NaN. -/
@@ -75,7 +75,7 @@ theorem ValidExtended.hi_isNaN_eq_false
 /-- The endpoints of an extended-valid interval are ordered numerically. -/
 theorem ValidExtended.ordered
     {fmt : FloatFormat} {I : Interval fmt} (hI : ValidExtended I) :
-    Model.le I.lo I.hi :=
+    Model.Le I.lo I.hi :=
   hI.2.2
 
 /-- Every finite valid interval is extended-valid. -/

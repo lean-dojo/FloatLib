@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,11 +7,10 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Fields
-import Mathlib.Tactic.FieldSimp
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Word.Rounding.GuardSticky.Spec.Stream
-public import FloatLib.Floats.Formats.Posit.Semantics.Positive.BitRuns
-public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Trailing
 public import FloatLib.Floats.Formats.Posit.Semantics.Positive.Order
+
+import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Ring.RingNF
 
 /-!
@@ -118,7 +117,7 @@ theorem exactTailRaw_mod_eq_significand_mod
         fractionRaw significand leading + 2 ^ suffix * (exponentField * factor) := by
     unfold exactTailRaw
     rw [hfactor]
-    ring
+    ac_rfl
   have hsignificand :
       significand = fractionRaw significand leading + 2 ^ suffix * factor := by
     unfold fractionRaw
@@ -165,9 +164,7 @@ theorem tailPrefix_eq_streamPrefix
       omega
     rw [hpower, ← Nat.div_div_eq_div_mul,
       exactTailRaw_div_two_pow exponentField significand leading hlower hupper]
-  · have hcountLarge : 2 < count := by
-      omega
-    simp only [DirectDyadicPacking.tailPrefix, ite_eq_right hcountTwo,
+  · simp only [DirectDyadicPacking.tailPrefix, ite_eq_right hcountTwo,
       Nat.shiftLeft_eq]
     by_cases hcountWidth : count ≤ leading + 2
     · have hfractionCount : count - 2 ≤ leading := by
@@ -311,8 +308,6 @@ theorem tailHasNonzeroAfter_succ_eq_streamSticky
       have hfraction :
           fractionRaw significand leading < 2 ^ leading :=
         fractionRaw_lt_two_pow significand leading hlower hupper
-      have hpowerPos : 0 < 2 ^ leading :=
-        Nat.two_pow_pos leading
       have hexponentModLt : exponentField % 2 < 2 :=
         Nat.mod_lt exponentField (by decide)
       have hexponentModLe : exponentField % 2 ≤ 1 := by
@@ -463,7 +458,7 @@ theorem trailingRat_exactTailRaw
         (2 : Rat) ^ Int.ofNat exponentField
   rw [hfractionCast]
   field_simp
-  ring
+  simp_all
 
 /--
 A normalized exact value factors into the finite tail value and its Posit regime scale.
@@ -506,7 +501,7 @@ theorem normalizedValue_eq_trailingRat_mul_regime
       rw [zpow_add₀ (by norm_num : (2 : Rat) ≠ 0)]
       simp only [Int.ofNat_eq_natCast, zpow_natCast]
       norm_num [Nat.cast_pow, div_eq_mul_inv, inv_pow]
-      ring
+      ac_rfl
 
 /-- Appending zero bits preserves the rational value represented by a finite tail. -/
 theorem trailingRat_mul_two_pow
@@ -528,7 +523,7 @@ theorem trailingRat_mul_two_pow
           Model.trailingRat ((trailing + extra) + 1)
             (2 * (raw * 2 ^ extra)) := by
             congr 1
-            ring
+            ac_rfl
         _ =
           Model.trailingRat (trailing + extra)
             (raw * 2 ^ extra) :=
@@ -637,7 +632,7 @@ theorem trailingRat_lt_streamPrefix_succ
           2 ^ shift * (raw / 2 ^ shift) :=
         Nat.add_lt_add_right hmodLt _
       _ = (raw / 2 ^ shift + 1) * 2 ^ shift := by
-        ring
+        rw [add_mul]; ac_rfl
   have hpaddedBound :
       (pfx + 1) * 2 ^ shift < 2 ^ width := by
     rw [← hwidth, Nat.pow_add]
@@ -666,6 +661,5 @@ theorem trailingRat_lt_iff_of_bounded
         Model.trailingRat_lt_of_lt hleft hlt
       exact (not_lt_of_ge hreverse.le) hrat
   · exact Model.trailingRat_lt_of_lt hright
-
 
 end FloatLib.Floats.Formats.Posit.Model.GuardStickyRounding

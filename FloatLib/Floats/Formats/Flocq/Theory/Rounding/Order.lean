@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,6 +8,8 @@ module
 
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Generic
 public import FloatLib.Floats.Formats.Flocq.Theory.Rounding.Predicates
+
+import FloatLib.Numerics.ErrorBound.Algebra
 
 /-!
 # Order Theory for Generic Rounding
@@ -72,12 +74,12 @@ private theorem round_mono_pos (rnd : ℝ → ℤ) [ValidRnd rnd]
               have hey : ey ≤ fexp ex := le_of_not_gt hnot
               have hconst := ((ValidExp.flocq_valid (fexp := fexp) ex).2 hxSmall).2
               have := hconst ey hey
-              linarith
+              omega
             linarith
         · have hxLarge : fexp ex < ex := lt_of_not_ge hxSmall
           have hb := (round_pos_large_bounds_and_generic
             (β := β) (fexp := fexp) rnd x hx (by simpa [ex] using hxLarge)).1.2
-          exact hb.trans ((bpow_le_bpow_iff β _ _).2 (by linarith))
+          exact hb.trans ((bpow_le_bpow_iff β _ _).2 (by omega))
       have hyLower := (round_pos_large_bounds_and_generic
         (β := β) (fexp := fexp) rnd y hy (by simpa [ey] using hyLarge)).1.1
       exact hxUpper.trans (by simpa [ey] using hyLower)
@@ -121,37 +123,37 @@ theorem round_mono (rnd : ℝ → ℤ) [ValidRnd rnd] {x y : ℝ} (hxy : x ≤ y
 
 /-- A representable lower value remains below rounding of any larger input. -/
 theorem generic_le_round (rnd : ℝ → ℤ) [ValidRnd rnd] {x y : ℝ}
-    (hx : genericFormat β fexp x) (hxy : x ≤ y) :
+    (hx : GenericRepresentable β fexp x) (hxy : x ≤ y) :
     x ≤ round (β := β) (fexp := fexp) rnd y := by
   rw [← round_preserves_generic rnd x hx]
   exact round_mono rnd hxy
 
 /-- Rounding of a smaller input remains below a representable upper value. -/
 theorem round_le_generic (rnd : ℝ → ℤ) [ValidRnd rnd] {x y : ℝ}
-    (hy : genericFormat β fexp y) (hxy : x ≤ y) :
+    (hy : GenericRepresentable β fexp y) (hxy : x ≤ y) :
     round (β := β) (fexp := fexp) rnd x ≤ y := by
   rw [← round_preserves_generic rnd y hy]
   exact round_mono rnd hxy
 
 /-- Directed-down generic rounding selects the greatest representable value below its input. -/
 theorem round_floor_point (x : ℝ) :
-    RoundDownPoint (genericFormat β fexp) x
+    RoundDownPoint (GenericRepresentable β fexp) x
       (round (β := β) (fexp := fexp) floorRound x) := by
-  refine ⟨generic_format_round floorRound x, round_floor_le x, ?_⟩
+  refine ⟨genericRepresentable_round floorRound x, round_floor_le x, ?_⟩
   intro g hg hgx
   exact generic_le_round floorRound hg hgx
 
 /-- Directed-up generic rounding selects the least representable value above its input. -/
 theorem round_ceil_point (x : ℝ) :
-    RoundUpPoint (genericFormat β fexp) x
+    RoundUpPoint (GenericRepresentable β fexp) x
       (round (β := β) (fexp := fexp) ceilRound x) := by
-  refine ⟨generic_format_round ceilRound x, le_round_ceil x, ?_⟩
+  refine ⟨genericRepresentable_round ceilRound x, le_round_ceil x, ?_⟩
   intro g hg hxg
   exact round_le_generic ceilRound hg hxg
 
 /-- Generic truncation satisfies the toward-zero rounding specification. -/
 theorem round_trunc_point (x : ℝ) :
-    RoundTowardZeroPoint (genericFormat β fexp) x
+    RoundTowardZeroPoint (GenericRepresentable β fexp) x
       (round (β := β) (fexp := fexp) truncRound x) := by
   constructor
   · intro hx
@@ -175,7 +177,7 @@ theorem toNearest_is_nearest_integer (rnd : ℝ → ℤ) [ValidRndToNearest rnd]
   · have hgap : (1 : ℝ) ≤ abs ((rnd x : ℝ) - (n : ℝ)) := by
       have h := Int.one_le_abs (sub_ne_zero.mpr hn)
       exact_mod_cast h
-    have htri := abs_sub_le (rnd x : ℝ) x (n : ℝ)
+    have htri := Numerics.compose_error hhalf (le_refl |x - (n : ℝ)|)
     rw [abs_sub_comm (n : ℝ) x]
     linarith
 
@@ -184,7 +186,7 @@ private theorem round_sub_self (rnd : ℝ → ℤ) (x : ℝ) :
     round (β := β) (fexp := fexp) rnd x - x =
       ((rnd (scaledMantissa β fexp x) : ℝ) - scaledMantissa β fexp x) *
         bpow β (cexp β fexp x) := by
-  have hx := scaled_mantissa_mul_bpow (β := β) (fexp := fexp) x
+  have hx := scaledMantissa_mul_bpow (β := β) (fexp := fexp) x
   unfold round toReal
   linear_combination hx
 
@@ -206,18 +208,18 @@ theorem round_nearestEven_error_le (rnd : ℝ → ℤ) (x : ℝ) :
 
 /-- Every nearest rounding rule selects a globally nearest representable value. -/
 theorem round_toNearest_point (rnd : ℝ → ℤ) [ValidRndToNearest rnd] (x : ℝ) :
-    RoundNearestPoint (genericFormat β fexp) x
+    RoundNearestPoint (GenericRepresentable β fexp) x
       (round (β := β) (fexp := fexp) rnd x) := by
   apply roundNearestPoint_of_down_up
     (round_floor_point (β := β) (fexp := fexp) x)
     (round_ceil_point (β := β) (fexp := fexp) x)
-  · exact generic_format_round rnd x
+  · exact genericRepresentable_round rnd x
   · exact round_toNearest_error_le rnd floorRound x
   · exact round_toNearest_error_le rnd ceilRound x
 
 /-- Nearest-even rounding selects a globally nearest representable value. -/
 theorem round_nearestEven_point (x : ℝ) :
-    RoundNearestPoint (genericFormat β fexp) x
+    RoundNearestPoint (GenericRepresentable β fexp) x
       (round (β := β) (fexp := fexp) nearestEven x) :=
   round_toNearest_point nearestEven x
 

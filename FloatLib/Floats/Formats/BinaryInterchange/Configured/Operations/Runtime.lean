@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -67,7 +67,8 @@ result also reports fractional loss and, for a custom finite-only format that sa
         (fun x => Model.roundToIntegral x mode) value
 
 /--
-Multiply by `2^n` and round in `mode` (nearest-even by default), IEEE 754 `scaleB`. With
+Multiply by `2^n` and round in `mode` (nearest-even by default), IEEE 754 (C23 draft N3220 Annex
+F.3, Table F.2) `scaleB`. With
 `status := true` the result also carries the IEEE exception indicators and the ternary value.
 -/
 @[macro_inline] def scale (value : Value) (n : Int)
@@ -84,25 +85,25 @@ Multiply by `2^n` and round in `mode` (nearest-even by default), IEEE 754 `scale
         (fun x => Model.scale x n mode) value
 
 /-- Exact integer-result IEEE `logB`, with no packing or exponent rounding. -/
-@[inline] def binaryExponentInt (value : Value) : Model.IntegerExponentOutcome :=
-  Model.binaryExponentInt (ExecFloat.Binary.toModel value)
+@[inline] def logBInt (value : Value) : Model.IntegerExponentOutcome :=
+  Model.logBInt (ExecFloat.Binary.toModel value)
 
 /--
-Leading binary exponent rounded to nearest-even into the configured format. `binaryExponentInt`
+Leading binary exponent rounded to nearest-even into the configured format. `logBInt`
 is the exact integer version. With `status := true` the result also carries the IEEE exception
 indicators and the ternary value.
 -/
-@[macro_inline] def binaryExponent (value : Value) (status : Bool := false) :
+@[macro_inline] def logB (value : Value) (status : Bool := false) :
     match status with
     | true => IEEEOutcome (format := format) (plan := plan) (code := code)
     | false => Value :=
   match status with
   | true =>
       IEEEOutcome.ofModel <|
-        Model.binaryExponent (ExecFloat.Binary.toModel value) (status := true)
+        Model.logB (ExecFloat.Binary.toModel value) (status := true)
   | false =>
       ModelCodec.liftUnary (Model := Model format) (plan := plan)
-        (fun x => Model.binaryExponent x) value
+        (fun x => Model.logB x) value
 
 /--
 The integer that rounds the exact value of a finite configured value in `mode`, toward zero by
@@ -119,6 +120,18 @@ in the format.
 @[inline] def copySign (magnitude signSource : Value) : Value :=
   ModelCodec.liftBinary (Model := Model format) (plan := plan)
     Model.copySign magnitude signSource
+
+/--
+IEEE 754-2019 §5.5.1 `copy`: the operand unchanged, with its sign bit and, for a NaN, its
+signaling state and payload. No flag is raised.
+-/
+@[inline] def copy (value : Value) : Value := value
+
+/--
+IEEE 754-2019 §5.7.2 `radix` (C23 `FLT_RADIX`, N3220 Table F.2): two, the radix of every
+configured binary format.
+-/
+@[inline] def radix (_ : Value) : Nat := 2
 
 /-- Absolute value under the configured encoding policy. -/
 @[inline] def abs (value : Value) : Value :=
@@ -224,5 +237,23 @@ other operand is a number and supplies the result.
   | false =>
       ModelCodec.liftBinary (Model := Model format) (plan := plan)
         (fun x y => Model.maximumNumber x y) left right
+
+/-! ## Integral rounding and conversion to an integer by the names of the standard -/
+
+ieee_by_direction "IEEE 754-2019 §5.3.1" roundToIntegral (value : Value) : Value :=
+  fun mode => roundToIntegral value (mode := mode)
+
+/--
+IEEE 754-2019 §5.3.1 `roundToIntegralExact`: `roundToIntegral` in the direction `mode`, the
+rounding-direction attribute (nearest-even by default), with its flags: `inexact` is raised
+when the result differs from the operand.
+-/
+@[inline] def roundToIntegralExact (value : Value)
+    (mode : Model.IEEERoundingMode := .nearest) :
+    IEEEOutcome (format := format) (plan := plan) (code := code) :=
+  roundToIntegral value mode (status := true)
+
+ieee_by_direction "IEEE 754-2019 §5.4.1" convertToInteger of toInt? (value : Value) :
+    Option Int := fun mode => toInt? value mode
 
 end FloatLib.Floats.ExecFloat.Binary

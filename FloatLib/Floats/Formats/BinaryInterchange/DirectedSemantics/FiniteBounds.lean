@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Bounds
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Finite
 
 /-!
 # Range-limited directed bounds for finite-only binary formats

@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.Formats.OCP.MX.Standard.Runtime
-public import FloatLib.Floats.Formats.OCP.MX.Standard.DotProduct.Runtime
+public import FloatLib.Floats.Formats.Block.CodedDot
+public import FloatLib.Floats.Formats.OCP.MX.Standard.ErrorBounds
 public import FloatLibTests.Accounting
 
 /-!
@@ -15,12 +15,16 @@ public import FloatLibTests.Accounting
 
 Fixed endpoint and midpoint expectations come from the OFP8 1.0 and MX 1.0 encodings.
 Complete FP6 and asymmetric INT8 decoding checks use independent rational tables. Block checks
-exercise the standard 32-lane representation, NaN scales, signed zero, mixed-profile dots,
-and cancellation of products larger than binary32 before the single final rounding.
+exercise the standard 32-element blocks as stored tensors of the general block format: NaN scales,
+signed zero, mixed-profile dots, and cancellation of products larger than binary32 before the
+single final rounding.
 
 References:
 <https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf>,
 <https://www.opencompute.org/documents/ocp-8-bit-floating-point-specification-ofp8-revision-1-0-2023-12-01-pdf-1>.
+
+Reference: OCP 8-bit Floating Point Specification (OFP8), revision 1.0, §5.1; OCP Microscaling
+Formats (MX) Specification v1.0, §§5.2–5.4 and 6.1–6.3.
 -/
 
 @[expose] public section
@@ -30,6 +34,7 @@ set_option compiler.extract_closed false
 namespace FloatLibTests.Conformance.Formats.MXStandard
 
 open FloatLib.Numerics
+open FloatLib.Floats.Formats
 open FloatLib.Floats.Formats.OCP.MX
 open Standard FloatLibTests.Accounting
 
@@ -89,9 +94,21 @@ def decodeFailures : Thunk Nat := ⟨fun _ =>
       decide (Element.toRat? (profile := .int8) (BitVec.ofNat 8 code) =
         some ((integer : Rat) / 64))⟩
 
-/-- Form a standard 32-lane block with the scale code and one element code in every lane. -/
-def constantBlock (profile : Profile) (scale code : Nat) : Block profile :=
-  ⟨E8M0.ofNatBits scale, Vector.replicate 32 (BitVec.ofNat profile.width code)⟩
+/-- The block shape of one standard block: 32 elements in one group. -/
+abbrev oneBlock : Fin 32 → Unit := fun _ => ()
+
+/-- Form a standard 32-element block with the scale code and one element code in every lane. -/
+def constantBlock (profile : Profile) (scale code : Nat) :
+    Block.Tensor (format oneBlock profile) where
+  scales := (fun _ => E8M0.ofNatBits scale, ())
+  elements _ := BitVec.ofNat profile.width code
+
+/-- Three standard blocks: positions are pairs of a block and a lane. -/
+abbrev threeBlocks : Fin 3 × Fin 32 → Fin 3 := Prod.fst
+
+/-- The positions of three blocks, block by block. -/
+def threeBlockOrder : List (Fin 3 × Fin 32) :=
+  (List.finRange 3).flatMap fun block => (List.finRange 32).map fun lane => (block, lane)
 
 /-- Standard block conversion and one-rounding accumulation across lanes and blocks. -/
 def blockFailures : Thunk Nat := ⟨fun _ =>
@@ -99,31 +116,38 @@ def blockFailures : Thunk Nat := ⟨fun _ =>
   let left := constantBlock .e2m1 128 2
   let right := constantBlock .int8 126 64
   let negativeZeros := constantBlock .e2m1 128 8
-  let alternatingLeft : Block .e2m1 := ⟨E8M0.ofNatBits 128,
-    Vector.ofFn fun lane => if lane.val % 2 = 0 then 2 else 4⟩
-  let alternatingRight : Block .int8 := ⟨E8M0.ofNatBits 126,
-    Vector.ofFn fun lane => if lane.val % 2 = 0 then 64 else 128⟩
-  let largeLeft : Vector (Block .int8) 3 := Vector.ofFn fun lane =>
-    if lane.val = 0 then constantBlock .int8 254 64
-    else if lane.val = 1 then ones else constantBlock .int8 254 192
-  let largeRight : Vector (Block .int8) 3 := Vector.ofFn fun lane =>
-    if lane.val = 1 then ones else constantBlock .int8 254 64
-  let input := Vector.replicate 32 (SignedRat.ofRat 1)
-  let converted := quantizeFinite .e2m1 input
+  let nanBlock := constantBlock .int8 255 0
+  let alternatingLeft : Block.Tensor (format oneBlock .e2m1) :=
+    { scales := (fun _ => E8M0.ofNatBits 128, ())
+      elements := fun lane => if lane.val % 2 = 0 then 2 else 4 }
+  let alternatingRight : Block.Tensor (format oneBlock .int8) :=
+    { scales := (fun _ => E8M0.ofNatBits 126, ())
+      elements := fun lane => if lane.val % 2 = 0 then 64 else 128 }
+  let largeLeft : Block.Tensor (format threeBlocks .int8) :=
+    { scales := (fun block => E8M0.ofNatBits (if block.val = 1 then 127 else 254), ())
+      elements := fun position => if position.1.val = 2 then 192 else 64 }
+  let largeRight : Block.Tensor (format threeBlocks .int8) :=
+    { scales := (fun block => E8M0.ofNatBits (if block.val = 1 then 127 else 254), ())
+      elements := fun _ => 64 }
+  let lanes := List.finRange 32
+  let input : Fin 32 → SignedRat := fun _ => SignedRat.ofRat 1
+  let converted := (format oneBlock .e2m1).quantize (policy oneBlock .e2m1) input
   countFailures
-    [ decide (left.values.size = 32)
-    , decide ((left.decodeLane 0).finite?.map SignedRat.value = some 2)
-    , decide ((negativeZeros.decodeLane 0).finite? = some SignedRat.negZero)
-    , decide ((Block.nan .e2m1).decodeLane 0 = .exceptional .nan)
-    , decide (Block.ofArray? (profile := .e2m1) (E8M0.ofNatBits 127) #[] = none)
-    , decide (converted.scale = E8M0.ofNatBits 125)
-    , converted.values[0].toNat == 6
-    , decide ((converted.decodeLane 0).finite?.map SignedRat.value = some 1)
-    , (dot left right).toNatBits == 0x42000000
-    , (dot alternatingLeft alternatingRight).toNatBits == 0xc2400000
-    , (dotGeneral largeLeft largeRight).toNatBits == 0x42000000
-    , (dot ones (Block.nan .int8)).isNaN
-    , (dotGeneral (Vector.replicate 0 ones) (Vector.replicate 0 ones)).toNatBits == 0 ]⟩
+    [ decide ((left.decode 0).finite?.map SignedRat.value = some 2)
+    , decide ((negativeZeros.decode 0).finite? = some SignedRat.negZero)
+    , decide ((constantBlock .e2m1 255 0).decode 0 = .exceptional .nan)
+    , decide (converted.scales.1 () = E8M0.ofNatBits 125)
+    , (converted.elements 0).toNat == 6
+    , decide ((converted.decode 0).finite?.map SignedRat.value = some 1)
+    , decide (converted.value 0 = 1)
+    , (OCP.MX.Dot .binary32 left right lanes).toNatBits == 0x42000000
+    , (OCP.MX.Dot .binary32 alternatingLeft alternatingRight lanes).toNatBits == 0xc2400000
+    , (OCP.MX.Dot .binary32 largeLeft largeRight threeBlockOrder).toNatBits == 0x42000000
+    , (OCP.MX.DotGeneral .binary32 largeLeft largeRight
+        ((List.finRange 3).map fun block =>
+          (List.finRange 32).map fun lane => (block, lane))).toNatBits == 0x42000000
+    , (OCP.MX.Dot .binary32 ones nanBlock lanes).isNaN
+    , (OCP.MX.Dot .binary32 ones ones []).toNatBits == 0 ]⟩
 
 /-- Conversion and dot-product failure count included in the core executable suite. -/
 def totalFailures : Thunk Nat := ⟨fun _ =>

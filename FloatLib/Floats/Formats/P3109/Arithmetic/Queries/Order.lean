@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -8,7 +8,6 @@ module
 
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Extrema.Proof
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Queries.Runtime
-public import FloatLib.Floats.Formats.P3109.Order
 
 /-!
 # Integer indices for P3109 numerical order
@@ -18,6 +17,8 @@ Negative magnitude codes get negative indices, zero gets zero, and nonnegative c
 numbers, so in a signed 8-bit format code `0x81` gets index `-1`. The exact decoder preserves this
 order, the infinite endpoints of extended formats included. With these indices, adjacency
 arguments never have to enumerate a descriptor's code space.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §§3.1 and 4.16.
 -/
 
 @[expose] public section
@@ -59,7 +60,7 @@ private theorem negative_lt_positiveFinite (format : Format) (left right : Nat)
 theorem less_decodeNat_iff_orderIndex (format : Format) (left right : Nat)
     (hleft : left < format.modulus) (hright : right < format.modulus)
     (hleftNan : left ≠ format.nanBits) (hrightNan : right ≠ format.nanBits) :
-    Arithmetic.less (Arithmetic.toRat (format.decodeNat left))
+    Arithmetic.CompareLess (Arithmetic.toRat (format.decodeNat left))
       (Arithmetic.toRat (format.decodeNat right)) = true ↔
         format.orderIndex left < format.orderIndex right := by
   have hmodulus := format.modulus_eq_two_mul_signBoundary
@@ -73,7 +74,7 @@ theorem less_decodeNat_iff_orderIndex (format : Format) (left right : Nat)
     (by_cases hrn : right = format.negativeInfinityBits) <;>
     simp_all only [decodeNat, orderIndex, nanBits, positiveInfinityBits, negativeInfinityBits,
       reduceCtorEq, true_and, false_and, ite_true, ite_false,
-      Arithmetic.toRat, Arithmetic.less, Dyadic.neg_toRat,
+      Arithmetic.toRat, Arithmetic.CompareLess, Dyadic.neg_toRat,
       decide_eq_true_eq, Bool.false_eq_true, neg_lt_neg_iff,
       format.decodePositiveFinite_strictMono.lt_iff_lt, positiveFinite_lt_negative,
       true_iff, false_iff] <;>

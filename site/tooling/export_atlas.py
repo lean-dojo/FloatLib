@@ -107,14 +107,14 @@ def run_exporter(raw: Path) -> None:
     # The guide includes opt-in APIs that a default `lake build` does not reach.
     # Build the imports explicitly before Lean opens the exporter's environment.
     imports = json.loads(PHASES.read_text()).get("imports", ["FloatLib"])
-    build_command = ["lake", f"-KbuildDir={build_dir}", "build", *imports]
+    build_command = ["lake", "-R", f"-KbuildDir={build_dir}", "build", *imports]
     print("export_atlas: " + " ".join(build_command), flush=True)
     result = subprocess.run(build_command, cwd=ROOT)
     if result.returncode != 0:
         fail(f"building the exporter imports failed with status {result.returncode}")
     raw.parent.mkdir(parents=True, exist_ok=True)
     command = [
-        "lake", f"-KbuildDir={build_dir}", "env", "lean", "--run",
+        "lake", "-R", f"-KbuildDir={build_dir}", "env", "lean", "--run",
         str(EXPORTER.relative_to(ROOT)), str(PHASES.relative_to(ROOT)), str(raw),
     ]
     print("export_atlas: " + " ".join(command))

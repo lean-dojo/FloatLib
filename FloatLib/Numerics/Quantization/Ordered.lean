@@ -1,14 +1,14 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
+public import FloatLib.Numerics.Core.System
 public import Mathlib.Order.Bounds.Defs
 public import Mathlib.Order.Defs.PartialOrder
-public import FloatLib.Numerics.Core.System
 
 /-!
 # Order-theoretic representable neighbors

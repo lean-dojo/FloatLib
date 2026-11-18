@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,8 +7,8 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Logarithm
-public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Quotient
+public import FloatLib.Floats.Formats.BinaryInterchange.ModelRounding.Proof
 
 /-!
 # Nearest-even rounding of rational quotients
@@ -113,7 +113,7 @@ theorem roundQuotientEven_normal_bounds
             (Int.ofNat fmt.fracWidth - rationalExponent) =
           Int.ofNat fmt.fracWidth := by
       simp only [rationalExponent]
-      ring
+      omega
     rw [hexponent] at hscaledBounds
     rw [bpow_ofNat] at hscaledBounds
     simpa [scaled] using hscaledBounds.1
@@ -213,19 +213,22 @@ theorem roundQuotientEven_scaleByPowerOfTwo_add
     let first := Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator firstExponent
     let second := Numerics.RationalBinary.scaleByPowerOfTwo first.1 first.2 secondExponent
     let combined :=
-      Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (firstExponent + secondExponent)
+      Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (firstExponent +
+        secondExponent)
     roundQuotientEven second.1 second.2 =
       roundQuotientEven combined.1 combined.2 := by
   dsimp only
   apply roundQuotientEven_eq_of_rat_eq
   · exact Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero _ _ _
-      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator firstExponent hdenominator)
+      (Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero numerator denominator firstExponent
+        hdenominator)
   · exact Numerics.RationalBinary.scaleByPowerOfTwo_snd_ne_zero
       numerator denominator (firstExponent + secondExponent) hdenominator
   · rw [scaleByPowerOfTwo_real, scaleByPowerOfTwo_real]
     change
       ((Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator firstExponent).1 : Real) /
-          ((Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator firstExponent).2 : Real) *
+          ((Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator firstExponent).2 :
+            Real) *
           bpow secondExponent =
         scaledRatToReal numerator denominator (firstExponent + secondExponent)
     rw [scaleByPowerOfTwo_real]
@@ -266,8 +269,10 @@ theorem roundQuotientEven_shift_to_exponent
           (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (-Int.ofNat shift)).2 :=
       roundQuotientEven_mul_pow2_den numerator denominator shift
     _ = roundQuotientEven
-          (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent + -targetExponent)).1
-          (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent + -targetExponent)).2 := by
+          (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent +
+            -targetExponent)).1
+          (Numerics.RationalBinary.scaleByPowerOfTwo numerator denominator (exponent +
+            -targetExponent)).2 := by
       congr 2 <;> congr 1 <;> grind
     _ = roundQuotientEven
           (Numerics.RationalBinary.scaleByPowerOfTwo

@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -7,13 +7,13 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Operations
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Status
-public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
-public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Minimal
-public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Direction
-public import FloatLib.Floats.Formats.DecimalInterchange.Quantize.Proof
-public import FloatLib.Floats.Formats.DecimalInterchange.Integral.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Inspection.Basic
+public import FloatLib.Floats.Formats.DecimalInterchange.Integral.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Direction
+public import FloatLib.Floats.Formats.DecimalInterchange.Projection.Minimal
+public import FloatLib.Floats.Formats.DecimalInterchange.Quantize.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Direction
+public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Minimal
 
 /-!
 # Decimal interchange arithmetic and its numerical guarantees

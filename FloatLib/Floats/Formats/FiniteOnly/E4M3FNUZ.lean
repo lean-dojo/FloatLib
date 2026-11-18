@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
@@ -105,10 +105,13 @@ meta instance : StaticByte.FamilyInfo E4M3FNUZ.Family where
   sqrtTable := sqrtTable
 
 @[always_inline, instance_reducible] instance
-    [planning : FloatLib.Floats.ExecFloat.Backend.PolicyFor E4M3FNUZ.Family] :
-    FloatLib.Floats.ExecFloat.Fma E4M3FNUZ.Family :=
-  StaticByte.Plans.modelFmaCapability width_le_eight
-    Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
+    {_ : FloatLib.Floats.ExecFloat.Backend.PolicyFor E4M3FNUZ.Family} :
+    FloatLib.Floats.ExecFloat.Capability.Static (F := E4M3FNUZ.Family) .fma
+      (StaticByte.Spec.fma (F := E4M3FNUZ.Family)) where
+  spec_eq := rfl
+  capability :=
+    StaticByte.Plans.modelFmaCapability width_le_eight
+      Model.FmaBackend.generic Model.FmaBackend.generic_eq_spec
 
 end E4M3FNUZ
 

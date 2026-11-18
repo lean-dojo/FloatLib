@@ -1,13 +1,12 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Floats.ExecFloat.Proof.Arithmetic
-public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Direct.Proof
+public import FloatLib.Kernels.Execution.Proof
 public import FloatLib.Floats.Formats.Posit.Configured.Plan.Dispatch
 public import FloatLib.Floats.Formats.Posit.Configured.Type
 public import FloatLib.Floats.Formats.Posit.Configured.Value.Runtime
@@ -34,7 +33,7 @@ namespace FloatLib.Floats.Formats.Posit.Model
 
 /-- Model squaring refines the exact rational multiplication specification. -/
 theorem square_eq_spec {format : Format} (value : Model format) :
-    square value = Spec.mul value value :=
+    square value = Spec.multiplication value value :=
   DirectDyadicArithmetic.mul_eq_spec value value
 
 /-- The exact rational square is rounded once for every finite posit. -/
@@ -42,7 +41,7 @@ theorem square_of_toRat {format : Format} (value : Model format) (q : Rat)
     (hvalue : value.toRat? = some q) :
     square value = roundRat format (q * q) := by
   rw [square_eq_spec]
-  simp [Spec.mul, hvalue]
+  simp [Spec.multiplication, hvalue]
 
 /-- Not-a-Real propagates through squaring. -/
 @[simp] theorem square_nar {format : Format} :
@@ -107,11 +106,11 @@ configured posit multiplication as its reference operation.
 -/
 @[simp] theorem toModel_square (value : Value) :
     toModel (square value) = Model.square (toModel value) := by
-  have hspec : square value = Configured.Spec.mul value value := by
+  have hspec : square value = Configured.Spec.multiplication value value := by
     rw [square_eq_spec]
     cases plan <;> rfl
   rw [hspec, Model.square_eq_spec]
-  simp [Configured.Spec.mul, toModel, Configured.Family.toModel]
+  simp [Configured.Spec.multiplication, toModel, Configured.Family.toModel]
 
 /-- A finite configured square rounds the exact rational square once. -/
 theorem square_eq_roundRat (value : Value) {q : Rat} (hvalue : toRat? value = some q) :

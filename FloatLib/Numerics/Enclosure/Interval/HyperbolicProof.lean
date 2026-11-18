@@ -1,13 +1,13 @@
 /-
-Copyright (c) 2026 FloatLib
+Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
 module
 
-public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.ElementaryProof
+public import FloatLib.Numerics.Enclosure.Interval.Hyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.OperationsProof
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
@@ -28,6 +28,7 @@ namespace FloatLib.Numerics.Interval
 theorem containsReal_tanBounds? {I K : Interval ℚ} {terms : Nat}
     (h : tanBounds? I terms = some K) {x : ℝ} (hx : I.ContainsReal some x) :
     K.ContainsReal some (Real.tan x) := by
+  rw [tanBounds?_def] at h
   simpa only [Real.tan_eq_sin_div_cos, Internal.rationalOutwardRounding] using
     containsReal_div? Internal.rationalOutwardRounding h
       (containsReal_sinBounds I terms hx) (containsReal_cosBounds I terms hx)
@@ -38,7 +39,8 @@ private theorem containsReal_sinhPointBounds (x : ℚ) (terms : Nat) :
   have hn := Enclosure.contains_exp (-x) terms
   simp only [Rat.cast_neg] at hn
   apply (containsReal_some_iff _ _).mpr
-  dsimp [Internal.sinhPointBounds]
+  rw [Internal.sinhPointBounds_def]
+  dsimp only
   push_cast
   rw [Real.sinh_eq]
   exact ⟨div_le_div_of_nonneg_right (sub_le_sub hp.1 hn.2) (by norm_num),
@@ -59,7 +61,8 @@ private theorem containsReal_coshPointBounds (x : ℚ) (terms : Nat) :
   have hn := Enclosure.contains_exp (-x) terms
   simp only [Rat.cast_neg] at hn
   apply (containsReal_some_iff _ _).mpr
-  dsimp [Internal.coshPointBounds]
+  rw [Internal.coshPointBounds_def]
+  dsimp only
   push_cast
   refine ⟨max_le (Real.one_le_cosh _) ?_, ?_⟩
   · rw [Real.cosh_eq]
@@ -96,7 +99,6 @@ private theorem tanh_eq_exp_twice (x : ℝ) :
   rw [Real.tanh_eq, Real.exp_neg, two_mul, Real.exp_add]
   have hpos := Real.exp_pos x
   have hne := ne_of_gt hpos
-  have hden : Real.exp x * Real.exp x + 1 ≠ 0 := by positivity
   field_simp
 
 private theorem tanh_ratio_mono {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) :
@@ -116,7 +118,8 @@ theorem containsReal_tanhBounds (I : Interval ℚ) (terms : Nat) {x : ℝ}
       mul_le_mul_of_nonneg_left hhi (by norm_num)⟩
   have he := (containsReal_some_iff _ _).mp (containsReal_expBounds _ terms htwice)
   apply (containsReal_some_iff _ _).mpr
-  dsimp [tanhBounds]
+  rw [tanhBounds_def]
+  dsimp only
   push_cast
   rw [tanh_eq_exp_twice]
   exact ⟨tanh_ratio_mono (le_max_left _ _) (max_le (Real.exp_pos _).le he.1),
