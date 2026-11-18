@@ -86,8 +86,9 @@ example {format : Format} {plan : Configured.StoragePlan format} {code : Type}
         (fun q => if q < 0 then -1 else if q = 0 then 0 else 1) :=
   ExecFloat.Posit.toRat?_sign x
 
-/-- Posit Standard (2022), §5.2: the integer −2^24 is fixed by nearest-integer rounding.
-SoftPosit 0.3.4.4's pX2 path returns the positive endpoint for this word. -/
+/-- Posit Standard (2022), §5.2: the integer −2^24, the eight-bit word 129, is fixed by
+nearest-integer rounding. `tests/oracles/posit_standard.py` lists this input as its one known
+difference from the reference. -/
 example :
     ExecFloat.Posit.nearestInt (ExecFloat.Posit.ofNatBits 129 : Posit8) =
       ExecFloat.Posit.ofNatBits 129 := by

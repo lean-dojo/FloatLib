@@ -2021,11 +2021,13 @@ For NVFP4, the exact source is NVIDIA, *Pretraining Large Language Models with
 NVFP4*, arXiv:2509.25149v2, Appendix B.1–B.3 (vendor description, not a standard).
 The independent oracle records 445,793 exact observations with no mismatches:
 gfloat/Fraction/MPFR for the rational policies, and CPU torchao 0.18.0 for a
-separate test-only binary32 model. Torchao floors local scales at `2^-6` and
-rounds intermediate arithmetic. Even after adding that floor, its codes differ
-from the exact policy in 18 single-level and 368 two-level observations in this
-corpus. Those are different contracts; the test does not prove the binary32
-model equal to the rational policy or a hardware GEMM.
+separate test-only binary32 model. That model has a floor of `2^-6` on local
+scales and rounds its intermediate arithmetic in binary32. With the same floor,
+the exact policy's codes differ from it in 18 single-level and 368 two-level
+observations in this corpus, each within `2^-20` of a rounding tie of the scaled
+input, where the exact policy rounds the exact quotient once. Those are different
+contracts; the test does not prove the binary32 model equal to the rational
+policy or a hardware GEMM.
 
 For the six concrete OCP MX profiles, import `FloatLib.Floats.Formats.OCP.MX`. `Standard.format`
 is their storage format in the general block format and `Standard.policy` the scale selection of
@@ -2036,7 +2038,7 @@ natural-number bisection equal to the finite argmin for every profile and signed
 rational input. `Element.Compiled.quantize_eq` lifts it through the exceptional
 dispatcher for both overflow policies. Their compiler certificates and `csimp`
 equations install the bisection in direct scalar calls and the block codecs.
-At commit `f9cf35f`, scalar medians are 1.744–6.161 µs per conversion; this does not establish
+Scalar medians are 1.744–6.161 µs per conversion; this does not establish
 the same cost for a block or for kernel evaluation.
 
 | Theorem | Informal statement |

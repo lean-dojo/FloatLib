@@ -2,9 +2,7 @@
   "fpbench": {
     "first_utc": "2026-11-17T23:13:13Z",
     "last_utc": "2026-11-17T23:24:07Z",
-    "floatlib_commits": [
-      "ce4078d275b4d4e0549dc971c5a2a736741ce436"
-    ],
+    "floatlib_commits": [],
     "rows": 816,
     "results_csv": {
       "bytes": 4472775,
@@ -25,9 +23,7 @@
   "inequalities": {
     "first_utc": "2026-11-17T22:02:41Z",
     "last_utc": "2026-11-17T22:26:49Z",
-    "floatlib_commits": [
-      "c45ccda33278b0bec7d2523eb288ec9741d5008f"
-    ],
+    "floatlib_commits": [],
     "rows": 2224,
     "results_csv": {
       "bytes": 3046080,
@@ -40,9 +36,7 @@
   "correct-rounding": {
     "first_utc": "2026-11-17T22:27:50Z",
     "last_utc": "2026-11-17T22:32:07Z",
-    "floatlib_commits": [
-      "c45ccda33278b0bec7d2523eb288ec9741d5008f"
-    ],
+    "floatlib_commits": [],
     "rows": 321645,
     "results_csv": {
       "bytes": 241913837,
@@ -55,9 +49,7 @@
   "testfloat": {
     "first_utc": "2026-11-17T22:34:02Z",
     "last_utc": "2026-11-17T22:38:34Z",
-    "floatlib_commits": [
-      "c45ccda33278b0bec7d2523eb288ec9741d5008f"
-    ],
+    "floatlib_commits": [],
     "rows": 210,
     "results_csv": {
       "bytes": 272627,

@@ -405,14 +405,14 @@ profiles. It needs `torch`, `numpy`, a torchao install and a microxcaling checko
 
 The run of 2026-11-14 (torchao 0.18.0, torch 2.13.0, microxcaling `7bc4195`, seed 20261114, 150
 draws per generator) has no unexplained difference. A difference counts as explained when the
-script names its cause from the input alone:
+script recognizes its class from the input alone:
 
-| Comparison | Compared | Different | Cause |
+| Comparison | Compared | Different | Inputs that differ |
 | --- | --- | --- | --- |
-| OCP MX, five FP profiles, torchao `FLOOR`, `CEIL`, `RCEIL`: scale code, element codes, decoded values | 761,520 | 28,260 | torchao divides by `2^-126` when the stored scale is `2^-127`; the scale of an all-zero block, which the specification leaves open (FloatLib `2^0`, torchao `2^-127`) |
-| OCP MX, six profiles, microxcaling with `round="even"`: decoded values | 128,992 | 765 | microxcaling takes the exponent from a binary32 `log2`, which is one too large for a block maximum one ulp below a power of two; its INT8 clamps at `-127/64` where FloatLib stores `-2` |
-| NVFP4 without and with an outer scale, exact scale arithmetic: scale and element codes | 43,622 | 1,074 | torchao keeps the block scale at least `2^-6`; scaled inputs within `2^-20` of a rounding tie, which torchao's binary32 scale arithmetic decides |
-| NVFP4, exact scale arithmetic with the same floor of `2^-6` | 43,622 | 386 | the ties alone |
+| OCP MX, five FP profiles, torchao `FLOOR`, `CEIL`, `RCEIL`: scale code, element codes, decoded values | 761,520 | 28,260 | blocks whose stored scale is `2^-127`, where FloatLib divides the elements by the stored scale as the specification's conversion does; all-zero blocks, whose scale the specification leaves open (FloatLib stores `2^0`) |
+| OCP MX, six profiles, microxcaling with `round="even"`: decoded values | 128,992 | 765 | block maxima one ulp below a power of two, where FloatLib has the exact exponent `floor(log2 max)`; INT8 inputs at the negative end, where FloatLib stores `-2` and the specification also permits the symmetric range that ends at `-127/64` |
+| NVFP4 without and with an outer scale, exact scale arithmetic: scale and element codes | 43,622 | 1,074 | blocks whose exact scale is below `2^-6`; scaled inputs within `2^-20` of a rounding tie, where the exact format rounds the exact quotient once |
+| NVFP4, exact scale arithmetic with a floor of `2^-6` on the block scale | 43,622 | 386 | the ties alone |
 | NVFP4, the same tensors through FloatLib's binary32 arithmetic in torchao's order | 43,622 | 0 | |
 | `float8_e4m3fn` cast against the SAT conversion, `float8_e5m2` against the OVF conversion, torchao's E2M1, E2M3 and E3M2 kernels, and both FP8 decoders | 23,658 | 0 | |
 | `float8_e4m3fn` cast against the OVF conversion, `float8_e5m2` against the SAT conversion | 10,036 | 1,005 | PyTorch saturates E4M3 and returns the E5M2 infinity above the largest finite value |
@@ -451,11 +451,14 @@ unexplained difference:
 | Embedded C fixed point | 1,196,256 interface cases, with 160,196 ordinary and 409,536 policy comparisons |
 | Complex functions | 10,944 MPC comparisons in binary16, bfloat16, binary32 and binary64, and 1,673 `cmath` references: 1,648 agreements, 19 signs that C23 leaves unspecified and six values that C23 requires where `cmath` returns NaN |
 
-Two findings concern the references and not FloatLib. SoftPosit 0.3.4.4 turns the eight-bit
-word 129, which denotes `-2^24`, into the positive word 127 in `nearestInt`. And microxcaling
-loses the sign of an input negative zero in its finite saturating path, in specific OFP8 and MX
-cases. The NVFP4 comparison covers the modelled format with a finite positive outer binary32
-scale. It says nothing about a GPU implementation or about stochastic hardware behaviour.
+Two differences from a reference are known, and in both FloatLib has the result of the exact
+specification. One is `nearestInt` of the eight-bit posit word 129: the word denotes the integer
+`-2^24`, so the operation returns it unchanged
+(`tests/FloatLibTests/Conformance/Posit/Standard.lean` proves it). The other is an input
+negative zero in the finite saturating conversions to OFP8 and to the MX floating-point
+elements, where the result keeps the sign. The NVFP4 comparison covers the modelled format with
+a finite positive outer binary32 scale. It says nothing about a GPU implementation or about
+stochastic hardware behaviour.
 
 ## Status labels
 

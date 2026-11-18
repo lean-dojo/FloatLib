@@ -85,7 +85,7 @@ import timing  # noqa: E402
 from results import (  # noqa: E402
     BASIC, EXTRAS, install, LOOPS, machine, MEASURED, Missing,
     need, number, OUT, positive, read_csv, REAL_FUNCTIONS, record_run,
-    RECORDED, relative, RESULTS, ROOT)
+    commit_of, RECORDED, relative, RESULTS, ROOT)
 
 sys.path.insert(0, str(ROOT / "site" / "content" / "assets" / "figures"))
 import figstyle  # noqa: E402  (the guide's shared style; this script only reads it)
@@ -1269,7 +1269,7 @@ def fig_correctly_rounded(ctx):
          "Real: the recommended functions of IEEE 754-2019, clause 9.2, on the descriptor model "
          "(`execFloatIEEE2019 functions FORMAT`): one pass over eight operands up to 128 bits, two at 256 "
          "bits, one at 1,024 and 4,096 bits, where a function without a result within 120 seconds has no "
-         "point. Complex: the functions of C23 Annex G, as recorded at `14f7bd1` and `af1473f`: the "
+         "point. Complex: the functions of C23 Annex G, as recorded: the "
          "average over each run of its comparison with GNU MPC, whose arguments differ from width to width "
          "(the hard grid weighs on binary64 and above), timed by a Python driver around the compiled "
          "oracle. No runner under `benchmarks/` times the complex functions, so the timing mode does not "
@@ -1284,9 +1284,19 @@ def fig_correctly_rounded(ctx):
 def fig_compiled_precision(ctx):
     """Compiled arithmetic at every precision: FloatLib, MPFR, SoftFloat and the host FPU."""
     path = need(ctx.results / "backends/compiled-comparison.csv", "compiled-comparison.csv")
+    calls = need(ctx.results / "public-binary/measurements.csv", "public-binary/measurements.csv")
     prov = ctx.provenance("compiled-comparison")
     data = read_csv(path)
-    keys = [("FloatLib", "now", NOW), ("MPFR", "mpfr", MPFR_NAME),
+    # At 32 and 64 bits the harness names the fixed-word kernels, and a public call selects other
+    # proved kernels. Its times are the medians of the public-call campaign, as their own series.
+    public, trials = "FloatLib public call", defaultdict(list)
+    for r in read_csv(calls):
+        if r["arm"] == "binary" and r["format"] in ("binary32", "binary64"):
+            trials[r["operation"], r["width"]].append(number(r["ns_per_operation"]))
+    data += [dict(operation=op, implementation=public, bits=bits,
+                  nanoseconds=round(statistics.median(times), 1)) for (op, bits), times in trials.items()]
+    keys = [("FloatLib", "now", f"{NOW}, fixed-word kernels at 32 and 64 bits"),
+            (public, "written", f"{NOW}, public call"), ("MPFR", "mpfr", MPFR_NAME),
             ("SoftFloat", "softfloat", SOFTFLOAT_NAME), ("native FPU", "other", "host FPU")]
     ops = [op for op in BASIC if any(r["operation"] == op for r in data)]
     widths = sorted({int(r["bits"]) for r in data if r["implementation"] in ("FloatLib", "MPFR")})
@@ -1303,30 +1313,40 @@ def fig_compiled_precision(ctx):
                 present.append((key, label))
             lone = key == "other"
             axis.plot([x for x, _ in points], [y for _, y in points],
-                      zorder=4 if key == "now" else 2,
+                      zorder={"now": 4, "written": 5}.get(key, 2),
                       **{**style(key), **({"linestyle": "none"} if lone else {})})
             rows += [[op, implementation, x, y] for x, y in points]
         width_axis(axis, widths)
         panel_title(axis, index, BASIC_NAMES[op])
     unit = time_axis(axes.flat, base=1e-9)
     axis_labels(figure, "format width (bits)", f"time per operation ({unit})")
-    legend_below(figure, [handle(key, label, line=key != "other") for key, label in present], columns=4)
+    legend_below(figure, [handle(key, label, line=key != "other") for key, label in present], columns=3)
     save(ctx, figure, "compiled-precision",
          "Six panels of lines, one per arithmetic operation: compiled time per operation against format "
-         "width for FloatLib and MPFR up to 4,096 bits, with SoftFloat and the host processor as "
-         "short series at 32 and 64 bits.",
+         "width for FloatLib and MPFR up to 4,096 bits, with SoftFloat, the host processor and "
+         "FloatLib's public calls as short series at 32 and 64 bits, where the public calls lie below "
+         "the FloatLib line in every panel.",
          "Compiled time of one arithmetic operation at every precision: FloatLib against MPFR, "
          "Berkeley SoftFloat and the host processor. A point is the time per operation in a scalar "
          "dependency chain, with MPFR at the precision, exponent range and rounding of the binary format "
-         "of that width; SoftFloat and the host exist for binary32 and binary64 only. Both axes are "
-         "logarithmic, and lower is faster. " + where(prov),
+         "of that width, and SoftFloat and the host exist for binary32 and binary64 only; both axes are "
+         "logarithmic, and lower is faster. At 32 and 64 bits the FloatLib line times the fixed-word "
+         "kernels called by name, and the open circles are a public call, which selects other proved "
+         "kernels. "
+         + where(prov, "the public calls are medians of nine trials on one pinned core, measured on "
+                       "2026-10-31 with Lean 4.35.0"),
          "The harness is `benchmarks/scripts/format-comparison.sh`: one development trial per cell, "
          "calibrated loops of about 200 ms, MPFR 4.1.0 and SoftFloat 3e. FloatLib's operations are proved "
-         "and run in software; the host processor's own arithmetic is the unproved reference. "
+         "and run in software; the host processor's own arithmetic is the unproved reference. The public "
+         "calls are the `binary` arm of the public-call campaign "
+         "(`benchmarks/results/public-binary/measurements.csv`, commit `8c88715`), whose loop feeds each "
+         "result into a checksum, so the two FloatLib series come from two harnesses and two days. "
          + sources("the FloatLib times (`IO.monoNanosNow` in the benchmark executable)",
-                   "the MPFR, SoftFloat and host times (C programs in the same run)"),
-         ["operation", "implementation: FloatLib, MPFR, SoftFloat or native FPU", "bits: storage width",
-          "nanoseconds: time per operation"], rows, [path],
+                   "the MPFR, SoftFloat and host times (C programs in the same run) and the medians of "
+                   "the public calls"),
+         ["operation", "implementation: FloatLib (this harness), FloatLib public call (the public-call "
+          "campaign), MPFR, SoftFloat or native FPU", "bits: storage width",
+          "nanoseconds: time per operation"], rows, [path, calls],
          "python3 benchmarks/plots/figures.py time RAW --only compiled-comparison")
 
 
@@ -1765,8 +1785,7 @@ def fig_kernel_checkers(ctx):
          "hatched bar is a run that ended without a verdict, at the time it stopped. The checkers ran "
          "once, and the timing mode does not run them again.",
          f"The numbers are those of `{relative(files[0])}`; the README "
-         "section next to that file says how each checker was run, at which commit, and what a rejection "
-         "means. " + ("Runs without a verdict: " + "; ".join(refused) + ". " if refused else
+         "section next to that file says how each checker was run and what a rejection means. " + ("Runs without a verdict: " + "; ".join(refused) + ". " if refused else
                       "Every run ended with the family accepted. ")
          + "The CSV also has the time net of the same imports without the family's theorems, where the "
          "input has it. From Lean: nothing. From scripts: every time (each checker's own run).",
@@ -1915,16 +1934,21 @@ def write_index(ctx: Context, skipped: list, guide: bool = False) -> None:
     ]
     if m:
         state = " with uncommitted changes to tracked files" if m.get("dirty") else ""
+        sections = m.get("sections", {})
+        # A record names its commit when the run that wrote it did; the column exists only then.
+        named = any(entry.get("short") for entry in sections.values())
+        subject = commit_of(dict(short=m.get("commit")), "measured commit ", f"{state} with") or "used"
         lines += [
-            f"The last timing run measured commit `{m.get('commit', '')}`{state} with Lean "
+            f"The last timing run {subject} Lean "
             f"{m.get('lean', '')} on {m.get('machine', '')}, started {m.get('started_utc', '')}, "
             f"{m.get('jobs', '')} sections at a time with {m.get('threads', '')} threads in all, "
             f"{float(m.get('seconds', 0)) / 60:.0f} minutes of wall time.", "",
-            "| section | exit | seconds | rows | Lean errors in its logs | commit |",
-            "| --- | ---: | ---: | ---: | ---: | --- |"]
-        for name, entry in m.get("sections", {}).items():
+            "| section | exit | seconds | rows | Lean errors in its logs |" + (" commit |" if named else ""),
+            "| --- | ---: | ---: | ---: | ---: |" + (" --- |" if named else "")]
+        for name, entry in sections.items():
             lines.append(f"| `{name}` | {entry.get('exit', '')} | {float(entry.get('seconds', 0)):.0f} "
-                         f"| {entry.get('rows', '')} | {entry.get('errors', 0)} | `{entry.get('short', '')}` |")
+                         f"| {entry.get('rows', '')} | {entry.get('errors', 0)} |"
+                         + (f" `{entry.get('short', '')}` |" if named else ""))
         lines.append("")
     lines += [
         "Not measured by the timing mode, and where it comes from:", "",

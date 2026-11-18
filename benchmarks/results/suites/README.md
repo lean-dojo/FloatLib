@@ -1,12 +1,12 @@
 # Standard suites: results
 
-Written by `benchmarks/suites/summarize.py` from one run of `benchmarks/suites/run.sh`. The CSV files next to this file have one short row per case; `counts.csv` has every number of the tables below; `provenance.json` has the commits, the toolchain and the size and SHA-256 of each full result file, which is not in the repository. The suite READMEs say what each outcome means.
+Written by `benchmarks/suites/summarize.py` from one run of `benchmarks/suites/run.sh`. The CSV files next to this file have one short row per case; `counts.csv` has every number of the tables below; `provenance.json` has the toolchain and the size and SHA-256 of each full result file, which is not in the repository. The suite READMEs say what each outcome means.
 
 The run of 2026-11-17 (Lean v4.36.0): eight Lean processes at a time, three threads each, on a shared 96-thread Xeon Platinum 8275CL. Limits per process: FPBench 60 seconds and 4 GB (`lean -M 4096`) for a conditional and for a numerical proof; inequalities 20 seconds and 4 GB; TestFloat 900 seconds per campaign. Hard-to-round inputs: 16,384 sampled CORE-MATH cases per function, and the binary32 screens.
 
 ## FPBench with `roundoff`
 
-Measured 2026-11-17T23:13:13Z to 2026-11-17T23:24:07Z at `ce4078d2` with Lean 4.36.0.
+Measured 2026-11-17T23:13:13Z to 2026-11-17T23:24:07Z with Lean 4.36.0.
 
 | theorem | proved | refused | over the time limit | out of memory | not attempted | not translated |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -38,7 +38,7 @@ Programs and default precisions with a numerical bound from both sides: 30; from
 
 ## Real inequalities with `interval`
 
-Measured 2026-11-17T22:02:41Z to 2026-11-17T22:26:49Z at `c45ccda3` with Lean 4.36.0.
+Measured 2026-11-17T22:02:41Z to 2026-11-17T22:26:49Z with Lean 4.36.0.
 
 | suite and route | proved | refused | timeout | runner error | translation refusal |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -56,7 +56,7 @@ Measured 2026-11-17T22:02:41Z to 2026-11-17T22:26:49Z at `c45ccda3` with Lean 4.
 
 ## Hard-to-round inputs
 
-Measured 2026-11-17T22:27:50Z to 2026-11-17T22:32:07Z at `c45ccda3` with Lean 4.36.0.
+Measured 2026-11-17T22:27:50Z to 2026-11-17T22:32:07Z with Lean 4.36.0.
 
 | domain | matched | not representable | excluded |
 | --- | ---: | ---: | ---: |
@@ -67,7 +67,7 @@ A complex input `z = x + i x` counts once per part of its result. `correct-round
 
 ## Berkeley TestFloat
 
-Measured 2026-11-17T22:34:02Z to 2026-11-17T22:38:34Z at `c45ccda3` with Lean 4.36.0.
+Measured 2026-11-17T22:34:02Z to 2026-11-17T22:38:34Z with Lean 4.36.0.
 
 | operations | campaigns that match | vectors | campaigns that do not |
 | --- | ---: | ---: | ---: |

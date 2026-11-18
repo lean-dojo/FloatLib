@@ -38,9 +38,10 @@ def lintRoots : Array String := #[
   "FloatLib.Tactic.PackedValues"]
 
 /--
-The linters every library module is built with: Mathlib's standard set, then the linters that
-Lean, Batteries and Mathlib register and leave off by default. `tests/checks/linters.sh` fails on
-a warning. The `weak.` prefix lets a module that does not import a linter accept its option.
+The linters every library module is built with: Mathlib's standard set and the options listed
+here, each of which Lean, Batteries or Mathlib registers and leaves off by default.
+`tests/checks/linters.sh` fails on a warning. The `weak.` prefix lets a module that does not
+import a linter accept its option.
 -/
 def linterOptions : Array LeanOption := #[
   ⟨`weak.linter.mathlibStandardSet, true⟩,

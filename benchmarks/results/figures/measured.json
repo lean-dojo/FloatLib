@@ -3,7 +3,6 @@
     "kernel-binary": {
       "exit": 0,
       "seconds": 37.3,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 234,
@@ -12,7 +11,6 @@
     "families": {
       "exit": 0,
       "seconds": 21.6,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 33,
@@ -21,7 +19,6 @@
     "exhaustive": {
       "exit": 0,
       "seconds": 63.5,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 9,
@@ -30,7 +27,6 @@
     "compiled": {
       "exit": 0,
       "seconds": 569.0,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 246,
@@ -39,7 +35,6 @@
     "compiled-comparison": {
       "exit": 0,
       "seconds": 1375.9,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 288,
@@ -48,7 +43,6 @@
     "matched": {
       "exit": 0,
       "seconds": 17.8,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 35,
@@ -57,7 +51,6 @@
     "kernel-public": {
       "exit": 0,
       "seconds": 29.1,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 90,
@@ -66,7 +59,6 @@
     "kernel-spec": {
       "exit": 0,
       "seconds": 8.7,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 36,
@@ -75,7 +67,6 @@
     "kernel-public-64": {
       "exit": 0,
       "seconds": 86.1,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 90,
@@ -84,7 +75,6 @@
     "kernel-spec-64": {
       "exit": 0,
       "seconds": 16.0,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 36,
@@ -93,7 +83,6 @@
     "kernel-64": {
       "exit": 0,
       "seconds": 25.8,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 126,
@@ -102,7 +91,6 @@
     "ieee2019": {
       "exit": 0,
       "seconds": 706.4,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 1212,
@@ -111,7 +99,6 @@
     "ieee2019-wide": {
       "exit": 0,
       "seconds": 996.7,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 246,
@@ -120,7 +107,6 @@
     "ieee2019-compiled": {
       "exit": 0,
       "seconds": 182.1,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 1217,
@@ -129,7 +115,6 @@
     "functions": {
       "exit": 0,
       "seconds": 316.9,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 310,
@@ -138,7 +123,6 @@
     "extras": {
       "exit": 0,
       "seconds": 100.0,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 38,
@@ -147,7 +131,6 @@
     "loops": {
       "exit": 0,
       "seconds": 101.6,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 6,
@@ -156,7 +139,6 @@
     "blocks": {
       "exit": 0,
       "seconds": 12.2,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 12,
@@ -165,7 +147,6 @@
     "exact": {
       "exit": 0,
       "seconds": 150.2,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 1359,
@@ -174,7 +155,6 @@
     "exact-native": {
       "exit": 0,
       "seconds": 3.8,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 13,
@@ -183,15 +163,12 @@
     "exact-compiled": {
       "exit": 0,
       "seconds": 59.8,
-      "short": "e58d3251",
       "lean": "v4.36.0",
       "date": "2026-11-18",
       "rows": 74,
       "errors": 0
     }
   },
-  "commit": "e58d3251956bf29b4e2d76e47cda50f40959575f",
-  "short": "e58d3251",
   "dirty": false,
   "toolchain": "leanprover/lean4:v4.36.0",
   "lean": "v4.36.0",

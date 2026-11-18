@@ -47,9 +47,9 @@ calls it affects (the [benchmark guide](benchmarks/README.md) has the commands).
 
 ### Linters
 
-We build FloatLib with every linter that Lean, Batteries and Mathlib offer a library, and a
-change is ready when none of them has anything to say. That is Mathlib's standard set and,
-beyond it: a docstring on every definition, constructor and structure field, no name that
+We build FloatLib with Mathlib's standard set of linters and the options of `linterOptions`,
+and a change is ready when none of them has anything to say. Beyond the standard set, the
+options ask for: a docstring on every definition, constructor and structure field, no name that
 nothing refers to (also inside tactic proofs), no redundant `private` or `public`, no `omit`
 (declare a `variable` where the theorems that need it begin), no `admit`, no file over 1,500
 lines, and Lean's extra linters. The list is `linterOptions` in [lakefile.lean](lakefile.lean).

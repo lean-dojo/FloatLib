@@ -83,8 +83,10 @@ if a chapter names a missing node.
 
 `check_chapters.py` compiles each chapter ` ```lean ` block and compares `-- ` result comments
 with Lean's output. ` ```lean standalone ` compiles as its own file, and `nocheck` skips a block
-with a warning. `site/build.sh` turns on strict checks and fails on warnings unless
-`FLOATLIB_SITE_STRICT=0`.
+with a warning. Before it compiles them, the checker runs `lake build` on the modules of this
+repository that the blocks import, so a chapter can use an opt-in module that neither
+`lake build FloatLib` nor the exporter builds. `site/build.sh` turns on strict checks and fails on
+warnings unless `FLOATLIB_SITE_STRICT=0`.
 
 ## Figure checks
 

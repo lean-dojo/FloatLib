@@ -22,7 +22,7 @@ Which part is Lean and which is the script:
   script's, not Lean's. The script checks that no measured error exceeds a bound.
 
 The tables are `python3 benchmarks/roundoff/bounds.py --trials 100 --json
-benchmarks/results/roundoff/bounds.json` at commit `4f4be8b` (seed 20261115, about a minute, 47 MB),
+benchmarks/results/roundoff/bounds.json` (seed 20261115, about a minute, 47 MB),
 measured on 2026-11-15. Rows of length 4,096 and the perceptron rows use 25 trials. A trial whose
 computed result is exact is left out of the ratios.
 

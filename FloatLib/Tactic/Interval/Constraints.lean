@@ -206,19 +206,6 @@ def prepare (goal : MVarId) : MetaM MVarId := do
   let goal ← splitConjunctions (← exposeHypotheses (← openExists goal))
   splitConjunctions (← pushNegations (← exposeHypotheses (← instantiateFinite goal)))
 
-/-- Facts that Mathlib proves about a constant that occurs as an atom: bounds on `π`. -/
-def constantFacts (atoms : Array Q(ℝ)) : Array Lean.Expr :=
-  if atoms.any (·.isConstOf ``Real.pi) then
-    #[mkConst ``Real.pi_gt_d20, mkConst ``Real.pi_lt_d20]
-  else #[]
-
-/-- The bounds of the constants that occur as atoms. -/
-def constantBounds (atoms : Array Q(ℝ)) : MetaM (Array Bound) := do
-  let mut bounds := #[]
-  for fact in constantFacts atoms do
-    bounds := bounds ++ (← boundsOfProofFor atoms fact)
-  return bounds
-
 /-- The widths of the intervals of a box, with `0` for one that is negligible next to the
 widest: less than `2 ^ (-30)` of it, as the interval of a constant such as `π` is. -/
 def significantWidths (box : Box) : Array ℚ :=

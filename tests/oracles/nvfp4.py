@@ -146,9 +146,9 @@ def main():
             difference = compare(f"torchao versus exact {mode} {variant}",
                                  expected_torch, expected, (0, 1))
             difference["interpretation"] = (
-                "Different contracts: torchao rounds binary32 intermediates and clamps "
-                "the block scale to at least 2^-6; the exact policy only has that floor "
-                "in the clamp variant. These counts are reported, not adjudicated away.")
+                "Different contracts: the exact policy rounds each exact quotient once and "
+                "has a floor of 2^-6 on the block scale only in the clamp variant, and the "
+                "reference computes in binary32. These counts are reported as they are.")
             policy_differences.append(difference)
         actual = run_oracle(args.oracle, ["nvfp4f32", mode], rows)
         if any(result is None or result[2] for result in actual):

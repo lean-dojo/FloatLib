@@ -51,9 +51,10 @@ contracts they cover the kernel path and its lane programs (`Tactic/FloatDecide`
 `Tactic/Roundoff/Block`, `Tactic/Roundoff/Shape`), the backend tags and what they refuse
 (`Tactic/KernelOptimize`, `Tactic/CompilerOptimize`), the block formats
 (`Conformance/Formats/BlockTheory`, with worked instances on explicit data in `BlockExamples`),
-stochastic rounding (`Numerics/Stochastic*`) and the constraint route of `interval`
+stochastic rounding (`Numerics/Stochastic*`), the constraint route of `interval`
 (`Tactic/Interval/Constraints`: goal shapes, zero margins, sets without a box, hints,
-failure messages, the trace of the route, and certificates written by hand).
+failure messages, the trace of the route, and certificates written by hand) and the bounds
+that its enclosure route gives `π` without a hypothesis (`Tactic/Interval/Constants`).
 
 Native suites cover models, public instances, rounding policies, integer kernels, tiny formats,
 transcendental kernels (behind the named `Configured.Transcendentals` import), exact

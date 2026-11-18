@@ -58,22 +58,22 @@ def main():
         differences = indices[~equal]
         known = 0
         for idx in differences:
-            # The upstream torch.sign(-0) step discards the sign of a source zero.
+            # The known difference: an input negative zero, whose sign OFP8 keeps.
             position = np.searchsorted(indices, idx)
-            adjudicated = (inputs[idx] == 0 and np.signbit(inputs[idx]) and
-                           expected[position] == 0 and np.signbit(expected[position]) and
-                           reference[position] == 0 and not np.signbit(reference[position]) and
-                           int(codes[idx, 2 * destination]) == 128)
-            known += int(adjudicated)
-            unexplained += int(not adjudicated)
+            known_difference = (inputs[idx] == 0 and np.signbit(inputs[idx]) and
+                                expected[position] == 0 and np.signbit(expected[position]) and
+                                reference[position] == 0 and not np.signbit(reference[position]) and
+                                int(codes[idx, 2 * destination]) == 128)
+            known += int(known_difference)
+            unexplained += int(not known_difference)
             if len(first) < 20:
                 first.append({"reference": "microxcaling", "destination": name,
                               "input": rows[idx][:2], "actual_code": int(codes[idx, 2 * destination]),
                               "reference_value": repr(float(reference[np.searchsorted(indices, idx)])),
-                              "adjudicated_negative_zero_loss": bool(adjudicated)})
+                              "known_negative_zero_difference": bool(known_difference)})
         summaries.append({"reference": "microxcaling", "destination": name,
                           "mode": "SAT, finite inputs only", "comparisons": int(finite.sum()),
-                          "mismatches": len(differences), "adjudicated_negative_zero_loss": known})
+                          "mismatches": len(differences), "known_negative_zero_differences": known})
 
         dtype = torch.float8_e4m3fn if name == "e4m3" else torch.float8_e5m2
         # The installed header implements SAT for E4M3 and NONSAT for E5M2.
@@ -105,8 +105,8 @@ def main():
               "torch_version": torch.__version__, "microxcaling": source,
               "summaries": summaries, "first_mismatches": first,
               "unexplained_mismatches": unexplained,
-              "status": "pass-with-adjudicated-reference-defect" if unexplained == 0 else "fail",
-              "adjudication": "microxcaling's _round_mantissa uses torch.sign(A), which changes negative zero to positive zero; OFP8 requires sign preservation. Lean's signed-zero regressions cover both destination formats.",
+              "status": "pass-with-known-difference" if unexplained == 0 else "fail",
+              "known_difference": "An input negative zero in the finite saturating conversion: OFP8 requires sign preservation, and FloatLib returns negative zero. Lean's signed-zero regressions cover both destination formats.",
               "limitations": ["microxcaling is checked only for finite SAT inputs; its generic element routine is not an OFP8 special-value conversion API.",
                               "microxcaling uses CPU binary64 intermediate tensors; every source value is exact.",
                               "PyTorch NaN signs and payloads are compared by class."]}

@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public meta import FloatLib.Tactic.Interval.Reify
+public import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
 # Hypothesis bounds and certified input boxes
@@ -14,7 +15,8 @@ public meta import FloatLib.Tactic.Interval.Reify
 Hypotheses, stated plainly or pointwise, supply rational endpoints for the real atoms the reifier
 finds, and taking the strongest endpoints gives the input box, with a proof that each coordinate is
 a member. Strict hypotheses are weakened conservatively, and unresolved indices or guards supply no
-bounds.
+bounds. Two kinds of atom have endpoints without a hypothesis: a nonnegative real has the lower
+endpoint zero, and `π` has Mathlib's bounds `Real.pi_gt_d20` and `Real.pi_lt_d20`.
 -/
 
 public meta section
@@ -185,6 +187,19 @@ partial def boundsOfProofFor (atoms : Array Q(ℝ)) (proof : Lean.Expr) : MetaM 
         result := result ++ (← boundsAtAtom atom type proof)
       return result
 
+/-- Facts that Mathlib proves about a constant that occurs as an atom: bounds on `π`. -/
+def constantFacts (atoms : Array Q(ℝ)) : Array Lean.Expr :=
+  if atoms.any (·.isConstOf ``Real.pi) then
+    #[mkConst ``Real.pi_gt_d20, mkConst ``Real.pi_lt_d20]
+  else #[]
+
+/-- The bounds of the constants that occur as atoms. -/
+def constantBounds (atoms : Array Q(ℝ)) : MetaM (Array Bound) := do
+  let mut bounds := #[]
+  for fact in constantFacts atoms do
+    bounds := bounds ++ (← boundsOfProofFor atoms fact)
+  return bounds
+
 /-- A rational box and the proof that its ordered real coordinates belong to it. -/
 structure ReifiedBox where
   /-- Rational intervals in variable-index order. -/
@@ -196,8 +211,9 @@ structure ReifiedBox where
 
 /--
 Select the strongest endpoints and prove membership, without an intermediate coordinate. The
-terms of `rest` follow those of the box in the environment and get no interval, so the box
-constrains a prefix of the coordinates.
+endpoints come from `bounds`, from zero below a nonnegative real, and from `constantBounds` for a
+constant such as `π`. The terms of `rest` follow those of the box in the environment and get no
+interval, so the box constrains a prefix of the coordinates.
 -/
 def reifyBoxWithTail (bounds : Array Bound) (terms : List Q(ℝ)) (rest : Q(List ℝ)) :
     MetaM ReifiedBox :=
@@ -213,7 +229,8 @@ def reifyBoxWithTail (bounds : Array Bound) (terms : List Q(ℝ)) (rest : Q(List
         return (← boundsOfLE q(NNReal.coe_nonneg $x)).find? (·.lower)
       | _ => pure none
     let mut upper : Option Bound := none
-    for bound in bounds do
+    -- A constant such as `π` has its endpoints without a local hypothesis as well.
+    for bound in (← constantBounds #[term]) ++ bounds do
       unless ← withReducible (isDefEq term bound.term) do continue
       if bound.lower then
         if lower.all (·.value < bound.value) then lower := some bound

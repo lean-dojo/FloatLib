@@ -102,25 +102,20 @@ def main():
     for width in range(2, 9):
         if next_unary[width] != 1 << width or next_binary[width] != 1 << (2 * width):
             raise ValueError(f"Incomplete width {width}")
-    # This exact reference defect is checked by a permanent Lean proof. Preserve
-    # the raw difference; accepting it never masks a different word or result.
-    reference_defect = {
+    # One difference from the reference is known, and a permanent Lean proof fixes
+    # FloatLib's word for it. Preserve the raw difference; accepting it never masks a
+    # different word or result.
+    known_difference = {
         "input": ["U", "8", "129"], "operation": "nearestInt", "actual": 129, "expected": 127,
     }
-    unexplained = [row for row in mismatches if row != reference_defect]
-    adjudications = []
-    if reference_defect in mismatches:
-        adjudications.append({
-            "difference": reference_defect,
+    unexplained = [row for row in mismatches if row != known_difference]
+    known_differences = []
+    if known_difference in mismatches:
+        known_differences.append({
+            "difference": known_difference,
             "correct_word": 129,
             "reason": "The word denotes the integer -2^24, which nearestInt must fix.",
             "lean_proof": "tests/FloatLibTests/Conformance/Posit/Standard.lean",
-            "source_file": "SoftPosit-master/source/pX2_roundToInt.c",
-            "source_sha256": "19337b84e873e03543ffa90a6865f7fa8c7bf5dfb0445cf9c34cec295146e683",
-            "source_defect": (
-                "The large-integer branch for x <= 8 leaves uA.ui at the original "
-                "negative word; the final sign restoration negates it again."
-            ),
         })
     result = {
         "reference": f"softposit {importlib.metadata.version('softposit')}",
@@ -132,9 +127,9 @@ def main():
         "mismatches": len(mismatches),
         "unexplained_mismatches": len(unexplained),
         "first_mismatches": mismatches[:20],
-        "adjudications": adjudications,
+        "known_differences": known_differences,
         "status": ("fail" if unexplained else
-                   "pass-with-adjudicated-reference-defect" if mismatches else "pass"),
+                   "pass-with-known-difference" if mismatches else "pass"),
         "limitations": [
             "FMA enumerates both multiplicands with the third word fixed at minpos.",
             "This corpus covers thirteen standard operations and FloatLib's FMA extension.",

@@ -257,9 +257,9 @@ def mx_torchao_cause(rows):
         values = floats(rows[row])
         amax = max(abs(v) for v in values)
         if amax == 0:
-            return "all-zero block: the scale is not specified (FloatLib 2^0, torchao 2^-127)"
+            return "all-zero block: the specification leaves the scale open (FloatLib stores 2^0)"
         if e[0] is not None and e[0][0] == 0:
-            return "stored scale 2^-127: torchao divides by 2^-126"
+            return "stored scale 2^-127: FloatLib divides by the stored scale"
         return None
     return cause
 
@@ -273,14 +273,14 @@ def microxcaling_cause(rows, profile):
         exact = exact_floor_log2(amax)
         approx = int(np.floor(np.log2(np.float32(amax))))
         if exact != approx:
-            return "block maximum one ulp below a power of two: microxcaling's float32 log2 gives the next exponent"
+            return "block maximum one ulp below a power of two: FloatLib has the exact exponent"
         if profile == "int8":
             got_value = g[2][position]
             if got_value is not None:
                 x = values[position]
                 scale = 2.0 ** (exact - 0)
                 if x < 0 and struct.unpack("<f", struct.pack("<I", got_value))[0] == -2.0 * scale:
-                    return "INT8 endpoint: FloatLib stores -2 (two's complement); microxcaling clamps to -127/64"
+                    return "INT8 negative endpoint: FloatLib stores -2 (two's complement); the symmetric range ends at -127/64"
         return None
     return cause
 
@@ -296,7 +296,7 @@ def nvfp4_cause(rows, two_level):
             block = values[16 * position:16 * position + 16]
             ideal = Fraction(max(abs(v) for v in block)) / 6 / outer
             if ideal < Fraction(1, 64):
-                return "block scale below 2^-6: torchao keeps the scale at least 2^-6"
+                return "exact block scale below 2^-6"
             return None
         block = position // 16
         if e[0][block] != g[0][block]:
@@ -307,7 +307,7 @@ def nvfp4_cause(rows, two_level):
         y = abs(Fraction(values[position]) / scale)
         for tie in E2M1_TIES:
             if abs(y - Fraction(tie)) <= Fraction(tie) / 2 ** 20:
-                return "scaled input within 2^-20 of a rounding tie: decided by binary32 scale arithmetic"
+                return "scaled input within 2^-20 of a rounding tie: the exact format rounds the exact quotient once"
         return None
     return cause
 

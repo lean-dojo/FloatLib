@@ -36,7 +36,7 @@ No imported expected output is a Lean theorem.
 
 ## Results on Lean v4.36.0
 
-The full level-1 matrix ran on 2026-11-17, at `c45ccda3`,
+The full level-1 matrix ran on 2026-11-17,
 eight campaigns at a time: **210 campaigns, 127,741,704 vectors,
 0 value mismatches and 0 flag mismatches**.
 [`../results/suites/README.md`](../results/suites/README.md) has the table by group and

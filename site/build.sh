@@ -7,7 +7,8 @@
 # a failing chapter fails the build), then render the reader on local disk
 # (site/reader/build.sh). Every step regenerates its outputs from scratch, so running this
 # twice gives the same site; nothing is committed. The export first builds its selected imports,
-# including the optional APIs that a default library build does not reach.
+# including the optional APIs that a default library build does not reach, and the chapter check
+# builds the modules that the chapters' Lean blocks import.
 #
 # The figures are prebuilt inputs. The preflight (site/tooling/check_figures.py --fresh)
 # regenerates each one in a temporary directory and compares the bytes, rather than trusting

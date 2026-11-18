@@ -142,6 +142,12 @@ BITS = {"e4m3": 8, "e5m2": 8, "e4f3": 8, "binary16": 16, "bfloat16": 16, "e8f15"
 IEEE_COUNT = 4          # operand triples per cell of `ieee2019.sh`, as `timing.py` starts it
 
 
+def commit_of(entry: dict, before: str = "", after: str = "") -> str:
+    """The commit that a record names, between `before` and `after`; nothing for a record without one."""
+    short = entry.get("short")
+    return f"{before}`{short}`{after}" if short else ""
+
+
 def record_run(raw: Path, commit: str, dirty: bool, started: str, seconds: float, jobs: int,
                threads: int, done: list) -> None:
     """`RAW/run.json`: what the timing mode measured, section by section."""
@@ -327,8 +333,8 @@ def backends_readme(generated: Path, backends: Path, measured: dict) -> None:
     head = [
         "# Benchmark suite: kernel and compiled code", "",
         "This directory records the suite sections of one timing run of `benchmarks/plots/figures.py`, "
-        "which starts `benchmarks/suite/run.sh` section by section: commit "
-        f"`{measured.get('short', '')}`{state}, Lean {measured.get('lean', '')}, "
+        "which starts `benchmarks/suite/run.sh` section by section: "
+        f"{commit_of(measured, 'commit ', state + ', ')}Lean {measured.get('lean', '')}, "
         f"{measured.get('machine', '')}, {measured.get('date', '')}. Other jobs were running, so read "
         "the tables as ratios. `../figures/measured.json` has the exit code and the time of every "
         "section.", "",
@@ -368,8 +374,8 @@ def ieee_readme(ieee: Path, measured: dict) -> None:
 
     def section(name: str) -> str:
         entry = measured.get("sections", {}).get(name)
-        return (f"`{entry.get('short', '')}` on {entry.get('date', '')} (Lean {entry.get('lean', '')})"
-                if entry else "an earlier run")
+        return (f"{commit_of(entry, 'at ', ' ')}on {entry.get('date', '')} (Lean {entry.get('lean', '')})"
+                if entry else "in an earlier run")
     lines = [
         "# Compiled and kernel time of the operations of IEEE 754-2019", "",
         "Every operation of IEEE 754-2019 clauses 5 and 9 that FloatLib provides, under its name in "
@@ -379,17 +385,17 @@ def ieee_readme(ieee: Path, measured: dict) -> None:
         "code and the time of every section. `n/a` is a cell without a result, and `< 1` a kernel "
         "cell under half a microsecond: the difference of two folds, which for the cheapest "
         "operations can come out at zero or below on a busy machine (the CSV keeps the number).", "",
-        f"* Compiled time (`compiled.csv`), measured at {section('ieee2019-compiled')}: "
+        f"* Compiled time (`compiled.csv`), measured {section('ieee2019-compiled')}: "
         "`execFloatIEEE2019` (`benchmarks/lean/FloatLibBenchmarks/Public/IEEE2019.lean`), "
         "nanoseconds for one call on the descriptor model `Model fmt` or on a decimal `Datum`, the "
         "fastest of five trials of at least 20 ms over 64 operand triples. The reductions take eight "
         "elements or pairs.",
-        f"* The rows `exp2` to `rootn` of the binary compiled table, measured at {section('functions')}: "
+        f"* The rows `exp2` to `rootn` of the binary compiled table, measured {section('functions')}: "
         "the recommended functions of clause 9.2 (`execFloatIEEE2019 functions FORMAT`), one pass "
         "over eight operands up to 128 bits, two operands at 256 bits and one at 1,024 and at 4,096 "
         "bits, where each function runs alone and has no result after 120 seconds.",
-        f"* Kernel time (`kernel.csv`), measured at {section('ieee2019')}, the formats of 1,024 and "
-        f"4,096 bits at {section('ieee2019-wide')}: `benchmarks/kernel/ieee2019.sh 4 3`, microseconds "
+        f"* Kernel time (`kernel.csv`), measured {section('ieee2019')}, the formats of 1,024 and "
+        f"4,096 bits {section('ieee2019-wide')}: `benchmarks/kernel/ieee2019.sh 4 3`, microseconds "
         "for one evaluation by Lean's kernel on the configured type `ExecFloat.Binary` or on a decimal "
         "`Datum`: as written, and after the rewrite of `float_decide` with the rules tagged "
         "`@[kernel_optimize]`. A cell is the time of a fold over four operand triples minus the time "
@@ -420,8 +426,8 @@ def kernel_readme(kernel: Path, backends: Path, measured: dict) -> None:
     """`kernel/README.md`: the tables of the kernel runners at this checkout."""
     def section(name: str) -> str:
         entry = measured.get("sections", {}).get(name)
-        return f"`{entry.get('short', '')}`, {entry.get('date', '')}, Lean {entry.get('lean', '')}" if entry \
-            else "not measured"
+        return f"{commit_of(entry, 'at ', ', ')}{entry.get('date', '')}, Lean {entry.get('lean', '')}" \
+            if entry else "not measured"
 
     def cells(source: Path, **where) -> dict:
         found = defaultdict(dict)
@@ -472,8 +478,8 @@ def kernel_readme(kernel: Path, backends: Path, measured: dict) -> None:
         "bits or carry. The step of an accumulation loop, a sum of two values of one sign that "
         "keeps the exponent of the larger operand, is cheaper: see the loop theorems below.", "",
         "## Eight triples per cell", "",
-        f"`benchmarks/kernel/run.sh public 8 3` (as written, at {section('kernel-public')}), "
-        f"`spec 8 3 e4m3 e5m2` (at {section('kernel-spec')}) and `kernel 8 3` (kernel path, at "
+        f"`benchmarks/kernel/run.sh public 8 3` (as written, {section('kernel-public')}), "
+        f"`spec 8 3 e4m3 e5m2` ({section('kernel-spec')}) and `kernel 8 3` (kernel path, "
         f"{section('kernel-binary')}). The as-written cells read and store encodings with the public "
         "conversions of each format, the kernel-path cells with `KernelPath.ofNat` and "
         "`KernelPath.toNat`. One-time work (format constants) is spread over eight operations only. "
@@ -494,8 +500,8 @@ def kernel_readme(kernel: Path, backends: Path, measured: dict) -> None:
         lines += ["", "## Sixty-four triples per cell, the same conversions on both sides", "",
                   "Both sides read and store encodings with `KernelPath.ofNat` and `KernelPath.toNat` "
                   "(`KERNEL_BENCH_CONVERSIONS=kernel`), so a cell is the operation alone, and one-time "
-                  "work is spread over 64 operations: `run.sh public 64 2` (at "
-                  f"{section('kernel-public-64')}), `spec 64 2 e4m3 e5m2` and `kernel 64 5` (at "
+                  "work is spread over 64 operations: `run.sh public 64 2` ("
+                  f"{section('kernel-public-64')}), `spec 64 2 e4m3 e5m2` and `kernel 64 5` ("
                   f"{section('kernel-64')}). The special class is left out: it has nine distinct triples, "
                   "and the kernel remembers a repeated computation. The subnormal rows of E5M2 are too "
                   "low on both sides for the same reason (three subnormal fractions).", ""] + header
@@ -540,7 +546,7 @@ def kernel_readme(kernel: Path, backends: Path, measured: dict) -> None:
         data = {(r["format"], r["term"]): (positive(r["as_written_microseconds"]),
                                            positive(r["with_rules_microseconds"])) for r in read_csv(extras)}
         lines += ["", "## Outcomes with status flags, comparisons, conversions and literals", "",
-                  f"`benchmarks/kernel/extras.sh 64 5` (at {section('extras')}) reduces one term per row "
+                  f"`benchmarks/kernel/extras.sh 64 5` ({section('extras')}) reduces one term per row "
                   "twice: as written, through the public operations, and after the rewrite that "
                   "`float_decide` applies. Microseconds per operation on normal operands, 64 operand "
                   "triples or literals per cell, the fastest of five runs. A row with `status := true` "
@@ -567,7 +573,7 @@ def kernel_readme(kernel: Path, backends: Path, measured: dict) -> None:
         coq = {r["theorem"]: r for r in read_csv(RECORDED / "coq-loops.csv")} \
             if (RECORDED / "coq-loops.csv").exists() else {}
         lines += ["", "## Three theorems about loops of 1,000 steps", "",
-                  f"`benchmarks/kernel/loops.sh 3` (at {section('loops')}) type-checks each theorem of "
+                  f"`benchmarks/kernel/loops.sh 3` ({section('loops')}) type-checks each theorem of "
                   "`Loops.lean` three times by `decide +kernel` on the public operations and by "
                   "`float_decide`, and prints the `type checking` time of Lean's profiler; the table "
                   "has the fastest run. `FlocqConversion.v` states the same three results for Coq "
@@ -594,7 +600,7 @@ def kernel_readme(kernel: Path, backends: Path, measured: dict) -> None:
     if exhaustive.exists():
         lines += ["", "## Statements about all 65,536 pairs of encodings", "",
                   "Seconds of kernel time to check one statement about all pairs "
-                  f"(at {section('exhaustive')}): the loop of `float_decide` over the pairs "
+                  f"({section('exhaustive')}): the loop of `float_decide` over the pairs "
                   "(`benchmarks/kernel/Exhaustive.lean`: addition and multiplication of E4M3 commute "
                   "on all pairs of encodings that are not both NaN), and one run of each side on "
                   "rows of 65,536 lanes (`lane_decide`, `benchmarks/suite/Lanes.lean`), where the "

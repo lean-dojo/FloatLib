@@ -19,8 +19,6 @@ precedes each measurement.
 
 open FloatLib.Floats FloatLib.Numerics FloatLib.Floats.ExecFloat FloatLib.Floats.Formats
 
-set_option linter.unusedVariables false
-
 /-- Binary fixed point with eight fractional bits. -/
 abbrev Q8 := ExecFloat.FixedPoint binaryRadix 8
 /-- Powers of ten with a sign. -/

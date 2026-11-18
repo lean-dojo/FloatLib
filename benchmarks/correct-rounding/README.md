@@ -68,7 +68,7 @@ calibrations of the reference and Lean runner are separate from corpus counts.
 
 ## Results on Lean v4.36.0
 
-The suite ran on 2026-11-17, at `c45ccda3`.
+The suite ran on 2026-11-17.
 [`../results/suites/README.md`](../results/suites/README.md) has the table and
 [`correct-rounding.csv`](../results/suites/correct-rounding.csv) the counts and the median times per
 source, format and function.

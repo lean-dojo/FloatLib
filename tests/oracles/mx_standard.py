@@ -3,7 +3,7 @@
 Reuse the repository's binary32 block generator and Lean oracle protocol.
 Reference arithmetic uses binary64: scaling these binary32 inputs by powers
 of two is exact. Codes and decoded binary32 observations are both checked.
-Only exact, source-supported differences are adjudicated.
+Only differences that the input alone determines count as known.
 """
 
 import argparse
@@ -97,21 +97,21 @@ def main():
                     cause = None
                     if (field == "scale" and not np.any(data[row]) and
                             e == 0 and a == 127):
-                        cause = "permitted all-zero scale choice: gfloat -127, FloatLib 0"
+                        cause = "all-zero block: the specification leaves the scale open (FloatLib stores 2^0)"
                     record(row, "gfloat", field, lane, e, a, cause)
             for lane, (e, a) in enumerate(zip(words(micro[row]), got[2], strict=True)):
                 counts["microxcaling_value"] += 1
                 if e == a:
                     continue
                 cause = None
-                # The upstream torch.sign(-0) step discards a source zero's sign.
+                # A known difference: an input negative zero, whose sign the element keeps.
                 if e == 0 and a == 0x80000000 and rows[row][lane] == 0x80000000:
-                    cause = "reference negative-zero loss"
-                # A floating simulation can produce -0, but two's-complement
-                # INT8 has only the all-zero code. Check that exact situation.
+                    cause = "input negative zero: the element keeps the sign"
+                # Two's-complement INT8 has only the all-zero code, so a negative
+                # value that rounds to zero is stored as that code. Check that exact situation.
                 if (profile == "int8" and e == 0x80000000 and a == 0 and
                         got[1][lane] == 0 and rows[row][lane] & 0x80000000):
-                    cause = "reference INT8 negative zero has no stored encoding"
+                    cause = "INT8 negative zero has no stored encoding"
                 # MX §5.3.4 explicitly permits leaving the -2 encoding unused.
                 scale = 2.0 ** (got[0][0] - 127)
                 if (profile == "int8" and got[1][lane] == 128 and
@@ -139,7 +139,7 @@ def main():
         "seed": args.seed, "random_draws_per_profile": args.count,
         "cases": cases, "differences": differences,
         "unexplained_mismatches": unexplained,
-        "status": "pass-with-explicit-policy-and-reference-differences"
+        "status": "pass-with-known-differences"
                   if unexplained == 0 else "fail",
         "limitations": [
             "Finite binary32 blocks only; exceptional decoding has separate Lean regressions.",

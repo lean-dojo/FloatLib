@@ -35,31 +35,31 @@ python3 benchmarks/plots/figures.py draw         # draw again from the result fi
 
 `RAW` is a directory outside the checkout for the logs. The library has to be built (`FLOATLIB_BUILD_DIR`, or `.lake/build`); the timing mode links the benchmark executables it starts and builds nothing else. It runs the runners under `benchmarks/kernel/`, `benchmarks/suite/`, `benchmarks/exact/` and `benchmarks/scripts/`, at most eight at a time, and those runners print every time (`Lean.Kernel.whnf`, Lean's profiler, `IO.monoNanosNow`, `/usr/bin/time`). Python starts them, copies their tables and draws.
 
-The last timing run measured commit `e58d3251956bf29b4e2d76e47cda50f40959575f` with Lean v4.36.0 on Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, started 2026-11-18T03:19Z, 8 sections at a time with 24 threads in all, 24 minutes of wall time.
+The last timing run used Lean v4.36.0 on Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, started 2026-11-18T03:19Z, 8 sections at a time with 24 threads in all, 24 minutes of wall time.
 
-| section | exit | seconds | rows | Lean errors in its logs | commit |
-| --- | ---: | ---: | ---: | ---: | --- |
-| `kernel-binary` | 0 | 37 | 234 | 0 | `e58d3251` |
-| `families` | 0 | 22 | 33 | 0 | `e58d3251` |
-| `exhaustive` | 0 | 64 | 9 | 0 | `e58d3251` |
-| `compiled` | 0 | 569 | 246 | 0 | `e58d3251` |
-| `compiled-comparison` | 0 | 1376 | 288 | 0 | `e58d3251` |
-| `matched` | 0 | 18 | 35 | 0 | `e58d3251` |
-| `kernel-public` | 0 | 29 | 90 | 0 | `e58d3251` |
-| `kernel-spec` | 0 | 9 | 36 | 0 | `e58d3251` |
-| `kernel-public-64` | 0 | 86 | 90 | 0 | `e58d3251` |
-| `kernel-spec-64` | 0 | 16 | 36 | 0 | `e58d3251` |
-| `kernel-64` | 0 | 26 | 126 | 0 | `e58d3251` |
-| `ieee2019` | 0 | 706 | 1212 | 0 | `e58d3251` |
-| `ieee2019-wide` | 0 | 997 | 246 | 0 | `e58d3251` |
-| `ieee2019-compiled` | 0 | 182 | 1217 | 0 | `e58d3251` |
-| `functions` | 0 | 317 | 310 | 0 | `e58d3251` |
-| `extras` | 0 | 100 | 38 | 0 | `e58d3251` |
-| `loops` | 0 | 102 | 6 | 0 | `e58d3251` |
-| `blocks` | 0 | 12 | 12 | 0 | `e58d3251` |
-| `exact` | 0 | 150 | 1359 | 0 | `e58d3251` |
-| `exact-native` | 0 | 4 | 13 | 0 | `e58d3251` |
-| `exact-compiled` | 0 | 60 | 74 | 0 | `e58d3251` |
+| section | exit | seconds | rows | Lean errors in its logs |
+| --- | ---: | ---: | ---: | ---: |
+| `kernel-binary` | 0 | 37 | 234 | 0 |
+| `families` | 0 | 22 | 33 | 0 |
+| `exhaustive` | 0 | 64 | 9 | 0 |
+| `compiled` | 0 | 569 | 246 | 0 |
+| `compiled-comparison` | 0 | 1376 | 288 | 0 |
+| `matched` | 0 | 18 | 35 | 0 |
+| `kernel-public` | 0 | 29 | 90 | 0 |
+| `kernel-spec` | 0 | 9 | 36 | 0 |
+| `kernel-public-64` | 0 | 86 | 90 | 0 |
+| `kernel-spec-64` | 0 | 16 | 36 | 0 |
+| `kernel-64` | 0 | 26 | 126 | 0 |
+| `ieee2019` | 0 | 706 | 1212 | 0 |
+| `ieee2019-wide` | 0 | 997 | 246 | 0 |
+| `ieee2019-compiled` | 0 | 182 | 1217 | 0 |
+| `functions` | 0 | 317 | 310 | 0 |
+| `extras` | 0 | 100 | 38 | 0 |
+| `loops` | 0 | 102 | 6 | 0 |
+| `blocks` | 0 | 12 | 12 | 0 |
+| `exact` | 0 | 150 | 1359 | 0 |
+| `exact-native` | 0 | 4 | 13 | 0 |
+| `exact-compiled` | 0 | 60 | 74 | 0 |
 
 Not measured by the timing mode, and where it comes from:
 
@@ -351,7 +351,7 @@ Measured again by: `python3 benchmarks/plots/figures.py time RAW --only exact-na
 
 Alt text: 5 panels of horizontal bars, one panel per family of proofs and one bar per checker, each bar ending in its time in seconds; a hatched grey bar is a run that ended without a verdict.
 
-Notes: The numbers are those of `benchmarks/kernel/checkers.csv`; the README section next to that file says how each checker was run, at which commit, and what a rejection means. Runs without a verdict: `nanoda` on `exhaustive`: no verdict; `lean-export` on `exhaustive`: no verdict. The CSV also has the time net of the same imports without the family's theorems, where the input has it. From Lean: nothing. From scripts: every time (each checker's own run).
+Notes: The numbers are those of `benchmarks/kernel/checkers.csv`; the README section next to that file says how each checker was run and what a rejection means. Runs without a verdict: `nanoda` on `exhaustive`: no verdict; `lean-export` on `exhaustive`: no verdict. The CSV also has the time net of the same imports without the family's theorems, where the input has it. From Lean: nothing. From scripts: every time (each checker's own run).
 
 Files: `figures/kernel-checkers.png`, `figures/kernel-checkers.pdf`, `figures/kernel-checkers.csv` (25 rows).
 
@@ -395,7 +395,7 @@ Inputs: `benchmarks/results/figures/recorded/interval-corpora.csv`.
 
 Alt text: Two panels of lines, real functions and complex functions: compiled time per call against format width, with one thin line per function and a thick line with markers for their median.
 
-Notes: Real: the recommended functions of IEEE 754-2019, clause 9.2, on the descriptor model (`execFloatIEEE2019 functions FORMAT`): one pass over eight operands up to 128 bits, two at 256 bits, one at 1,024 and 4,096 bits, where a function without a result within 120 seconds has no point. Complex: the functions of C23 Annex G, as recorded at `14f7bd1` and `af1473f`: the average over each run of its comparison with GNU MPC, whose arguments differ from width to width (the hard grid weighs on binary64 and above), timed by a Python driver around the compiled oracle. No runner under `benchmarks/` times the complex functions, so the timing mode does not measure them again. From Lean: the times of the real functions (`IO.monoNanosNow` in the benchmark executable). From scripts: the times of the complex functions and the medians.
+Notes: Real: the recommended functions of IEEE 754-2019, clause 9.2, on the descriptor model (`execFloatIEEE2019 functions FORMAT`): one pass over eight operands up to 128 bits, two at 256 bits, one at 1,024 and 4,096 bits, where a function without a result within 120 seconds has no point. Complex: the functions of C23 Annex G, as recorded: the average over each run of its comparison with GNU MPC, whose arguments differ from width to width (the hard grid weighs on binary64 and above), timed by a Python driver around the compiled oracle. No runner under `benchmarks/` times the complex functions, so the timing mode does not measure them again. From Lean: the times of the real functions (`IO.monoNanosNow` in the benchmark executable). From scripts: the times of the complex functions and the medians.
 
 Files: `figures/correctly-rounded.png`, `figures/correctly-rounded.pdf`, `figures/correctly-rounded.csv` (411 rows).
 
@@ -412,24 +412,24 @@ Measured again by: `python3 benchmarks/plots/figures.py time RAW --only function
 
 ## Figure 15: compiled-precision
 
-![Six panels of lines, one per arithmetic operation: compiled time per operation against format width for FloatLib and MPFR up to 4,096 bits, with SoftFloat and the host processor as short series at 32 and 64 bits.](figures/compiled-precision.png "Compiled time of one arithmetic operation at every precision: FloatLib against MPFR, Berkeley SoftFloat and the host processor. A point is the time per operation in a scalar dependency chain, with MPFR at the precision, exponent range and rounding of the binary format of that width; SoftFloat and the host exist for binary32 and binary64 only. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18).")
+![Six panels of lines, one per arithmetic operation: compiled time per operation against format width for FloatLib and MPFR up to 4,096 bits, with SoftFloat, the host processor and FloatLib's public calls as short series at 32 and 64 bits, where the public calls lie below the FloatLib line in every panel.](figures/compiled-precision.png "Compiled time of one arithmetic operation at every precision: FloatLib against MPFR, Berkeley SoftFloat and the host processor. A point is the time per operation in a scalar dependency chain, with MPFR at the precision, exponent range and rounding of the binary format of that width, and SoftFloat and the host exist for binary32 and binary64 only; both axes are logarithmic, and lower is faster. At 32 and 64 bits the FloatLib line times the fixed-word kernels called by name, and the open circles are a public call, which selects other proved kernels. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18); the public calls are medians of nine trials on one pinned core, measured on 2026-10-31 with Lean 4.35.0.")
 
-**Figure 15.** Compiled time of one arithmetic operation at every precision: FloatLib against MPFR, Berkeley SoftFloat and the host processor. A point is the time per operation in a scalar dependency chain, with MPFR at the precision, exponent range and rounding of the binary format of that width; SoftFloat and the host exist for binary32 and binary64 only. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18).
+**Figure 15.** Compiled time of one arithmetic operation at every precision: FloatLib against MPFR, Berkeley SoftFloat and the host processor. A point is the time per operation in a scalar dependency chain, with MPFR at the precision, exponent range and rounding of the binary format of that width, and SoftFloat and the host exist for binary32 and binary64 only; both axes are logarithmic, and lower is faster. At 32 and 64 bits the FloatLib line times the fixed-word kernels called by name, and the open circles are a public call, which selects other proved kernels. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18); the public calls are medians of nine trials on one pinned core, measured on 2026-10-31 with Lean 4.35.0.
 
-Alt text: Six panels of lines, one per arithmetic operation: compiled time per operation against format width for FloatLib and MPFR up to 4,096 bits, with SoftFloat and the host processor as short series at 32 and 64 bits.
+Alt text: Six panels of lines, one per arithmetic operation: compiled time per operation against format width for FloatLib and MPFR up to 4,096 bits, with SoftFloat, the host processor and FloatLib's public calls as short series at 32 and 64 bits, where the public calls lie below the FloatLib line in every panel.
 
-Notes: The harness is `benchmarks/scripts/format-comparison.sh`: one development trial per cell, calibrated loops of about 200 ms, MPFR 4.1.0 and SoftFloat 3e. FloatLib's operations are proved and run in software; the host processor's own arithmetic is the unproved reference. From Lean: the FloatLib times (`IO.monoNanosNow` in the benchmark executable). From scripts: the MPFR, SoftFloat and host times (C programs in the same run).
+Notes: The harness is `benchmarks/scripts/format-comparison.sh`: one development trial per cell, calibrated loops of about 200 ms, MPFR 4.1.0 and SoftFloat 3e. FloatLib's operations are proved and run in software; the host processor's own arithmetic is the unproved reference. The public calls are the `binary` arm of the public-call campaign (`benchmarks/results/public-binary/measurements.csv`, commit `8c88715`), whose loop feeds each result into a checksum, so the two FloatLib series come from two harnesses and two days. From Lean: the FloatLib times (`IO.monoNanosNow` in the benchmark executable). From scripts: the MPFR, SoftFloat and host times (C programs in the same run) and the medians of the public calls.
 
-Files: `figures/compiled-precision.png`, `figures/compiled-precision.pdf`, `figures/compiled-precision.csv` (192 rows).
+Files: `figures/compiled-precision.png`, `figures/compiled-precision.pdf`, `figures/compiled-precision.csv` (204 rows).
 
 CSV columns:
 
 - `operation`
-- `implementation`: FloatLib, MPFR, SoftFloat or native FPU
+- `implementation`: FloatLib (this harness), FloatLib public call (the public-call campaign), MPFR, SoftFloat or native FPU
 - `bits`: storage width
 - `nanoseconds`: time per operation
 
-Inputs: `benchmarks/results/backends/compiled-comparison.csv`.
+Inputs: `benchmarks/results/backends/compiled-comparison.csv`, `benchmarks/results/public-binary/measurements.csv`.
 
 Measured again by: `python3 benchmarks/plots/figures.py time RAW --only compiled-comparison`.
 

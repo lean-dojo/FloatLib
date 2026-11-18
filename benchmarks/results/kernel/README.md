@@ -10,7 +10,7 @@ These tables record what Lean's kernel, the proof checker, spends on one operati
 
 ## Eight triples per cell
 
-`benchmarks/kernel/run.sh public 8 3` (as written, at `e58d3251`, 2026-11-18, Lean v4.36.0), `spec 8 3 e4m3 e5m2` (at `e58d3251`, 2026-11-18, Lean v4.36.0) and `kernel 8 3` (kernel path, at `e58d3251`, 2026-11-18, Lean v4.36.0). The as-written cells read and store encodings with the public conversions of each format, the kernel-path cells with `KernelPath.ofNat` and `KernelPath.toNat`. One-time work (format constants) is spread over eight operations only. The ratio is as written over kernel path.
+`benchmarks/kernel/run.sh public 8 3` (as written, 2026-11-18, Lean v4.36.0), `spec 8 3 e4m3 e5m2` (2026-11-18, Lean v4.36.0) and `kernel 8 3` (kernel path, 2026-11-18, Lean v4.36.0). The as-written cells read and store encodings with the public conversions of each format, the kernel-path cells with `KernelPath.ofNat` and `KernelPath.toNat`. One-time work (format constants) is spread over eight operations only. The ratio is as written over kernel path.
 
 | format | operands | | add | sub | mul | div | sqrt | fma |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -80,7 +80,7 @@ These tables record what Lean's kernel, the proof checker, spends on one operati
 
 ## Sixty-four triples per cell, the same conversions on both sides
 
-Both sides read and store encodings with `KernelPath.ofNat` and `KernelPath.toNat` (`KERNEL_BENCH_CONVERSIONS=kernel`), so a cell is the operation alone, and one-time work is spread over 64 operations: `run.sh public 64 2` (at `e58d3251`, 2026-11-18, Lean v4.36.0), `spec 64 2 e4m3 e5m2` and `kernel 64 5` (at `e58d3251`, 2026-11-18, Lean v4.36.0). The special class is left out: it has nine distinct triples, and the kernel remembers a repeated computation. The subnormal rows of E5M2 are too low on both sides for the same reason (three subnormal fractions).
+Both sides read and store encodings with `KernelPath.ofNat` and `KernelPath.toNat` (`KERNEL_BENCH_CONVERSIONS=kernel`), so a cell is the operation alone, and one-time work is spread over 64 operations: `run.sh public 64 2` (2026-11-18, Lean v4.36.0), `spec 64 2 e4m3 e5m2` and `kernel 64 5` (2026-11-18, Lean v4.36.0). The special class is left out: it has nine distinct triples, and the kernel remembers a repeated computation. The subnormal rows of E5M2 are too low on both sides for the same reason (three subnormal fractions).
 
 | format | operands | | add | sub | mul | div | sqrt | fma |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -156,7 +156,7 @@ The cost grows slowly with the width: the short paths of addition and multiplica
 
 ## Outcomes with status flags, comparisons, conversions and literals
 
-`benchmarks/kernel/extras.sh 64 5` (at `e58d3251`, 2026-11-18, Lean v4.36.0) reduces one term per row twice: as written, through the public operations, and after the rewrite that `float_decide` applies. Microseconds per operation on normal operands, 64 operand triples or literals per cell, the fastest of five runs. A row with `status := true` evaluates the delivered value, the comparison of the flags with a record and the comparison of the ternary value with a constant, as a statement about an outcome does. The cast rows are the reference cast `Model.cast` of a decoded value, stored in the destination format; the public conversion `x.cast (target := T)` is not rewritten. The rational numbers are `mkRat (2 * i + 1) (3 * i + 7)`, and the time the kernel needs to build them is subtracted on both sides. `n/a` is a cell whose difference came out at zero or below, which happens to the cheapest terms on a busy machine.
+`benchmarks/kernel/extras.sh 64 5` (2026-11-18, Lean v4.36.0) reduces one term per row twice: as written, through the public operations, and after the rewrite that `float_decide` applies. Microseconds per operation on normal operands, 64 operand triples or literals per cell, the fastest of five runs. A row with `status := true` evaluates the delivered value, the comparison of the flags with a record and the comparison of the ternary value with a constant, as a statement about an outcome does. The cast rows are the reference cast `Model.cast` of a decoded value, stored in the destination format; the public conversion `x.cast (target := T)` is not rewritten. The rational numbers are `mkRat (2 * i + 1) (3 * i + 7)`, and the time the kernel needs to build them is subtracted on both sides. `n/a` is a cell whose difference came out at zero or below, which happens to the cheapest terms on a busy machine.
 
 | term | binary32 as written | binary32 rewritten | ratio | binary64 as written | binary64 rewritten | ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -182,7 +182,7 @@ The cost grows slowly with the width: the short paths of addition and multiplica
 
 ## Three theorems about loops of 1,000 steps
 
-`benchmarks/kernel/loops.sh 3` (at `e58d3251`, 2026-11-18, Lean v4.36.0) type-checks each theorem of `Loops.lean` three times by `decide +kernel` on the public operations and by `float_decide`, and prints the `type checking` time of Lean's profiler; the table has the fastest run. `FlocqConversion.v` states the same three results for Coq 8.20.1 with Flocq 4.2.2; its two columns are the `Time Qed` lines recorded on 2026-11-15 in the container `leanfloat-flocq-bench:4.2.2` (8 GB, 2 CPUs).
+`benchmarks/kernel/loops.sh 3` (2026-11-18, Lean v4.36.0) type-checks each theorem of `Loops.lean` three times by `decide +kernel` on the public operations and by `float_decide`, and prints the `type checking` time of Lean's profiler; the table has the fastest run. `FlocqConversion.v` states the same three results for Coq 8.20.1 with Flocq 4.2.2; its two columns are the `Time Qed` lines recorded on 2026-11-15 in the container `leanfloat-flocq-bench:4.2.2` (8 GB, 2 CPUs).
 
 | theorem | `decide +kernel`, public operations | `float_decide` | Coq, kernel conversion (recorded) | Coq, bytecode VM (recorded) |
 | --- | ---: | ---: | ---: | ---: |
@@ -194,7 +194,7 @@ The `float_decide` column is the kernel's check of the loop. Each proof has two 
 
 ## Statements about all 65,536 pairs of encodings
 
-Seconds of kernel time to check one statement about all pairs (at `e58d3251`, 2026-11-18, Lean v4.36.0): the loop of `float_decide` over the pairs (`benchmarks/kernel/Exhaustive.lean`: addition and multiplication of E4M3 commute on all pairs of encodings that are not both NaN), and one run of each side on rows of 65,536 lanes (`lane_decide`, `benchmarks/suite/Lanes.lean`), where the time is the sum over the lane widths that were tried.
+Seconds of kernel time to check one statement about all pairs (2026-11-18, Lean v4.36.0): the loop of `float_decide` over the pairs (`benchmarks/kernel/Exhaustive.lean`: addition and multiplication of E4M3 commute on all pairs of encodings that are not both NaN), and one run of each side on rows of 65,536 lanes (`lane_decide`, `benchmarks/suite/Lanes.lean`), where the time is the sum over the lane widths that were tried.
 
 | statement | method | seconds | lane widths tried |
 | --- | --- | ---: | ---: |

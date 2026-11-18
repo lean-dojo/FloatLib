@@ -55,7 +55,7 @@ in Table 1 remain unmapped to the current extraction.
 
 ## Results on Lean v4.36.0
 
-The suite ran on 2026-11-17, at `c45ccda3`, eight Lean
+The suite ran on 2026-11-17, eight Lean
 processes at a time with three threads each, 20 seconds and 4 GB per process.
 [`../results/suites/README.md`](../results/suites/README.md) has the tables and
 [`inequalities.csv`](../results/suites/inequalities.csv) one row per goal and route.

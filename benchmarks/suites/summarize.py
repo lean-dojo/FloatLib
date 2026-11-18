@@ -257,13 +257,17 @@ def readme(out: Path, counts: list, provenance: dict, conditions: str) -> None:
         record = provenance.get(suite, {})
         commits = ", ".join(f"`{c[:8]}`" for c in record.get("floatlib_commits", []))
         release = re.search(r"version ([0-9.]+)", record.get("lean_version", ""))
-        return (f"Measured {record.get('first_utc', '')} to {record.get('last_utc', '')} at {commits}"
+        return (f"Measured {record.get('first_utc', '')} to {record.get('last_utc', '')}"
+                + (f" at {commits}" if commits else "")
                 + (f" with Lean {release.group(1)}." if release else "."))
 
     lines = ["# Standard suites: results", "",
              "Written by `benchmarks/suites/summarize.py` from one run of `benchmarks/suites/run.sh`. "
              "The CSV files next to this file have one short row per case; `counts.csv` has every "
-             "number of the tables below; `provenance.json` has the commits, the toolchain and the "
+             "number of the tables below; `provenance.json` has "
+             + ("the commits, " if any(isinstance(record, dict) and record.get("floatlib_commits")
+                                       for record in provenance.values()) else "")
+             + "the toolchain and the "
              "size and SHA-256 of each full result file, which is not in the repository. "
              "The suite READMEs say what each outcome means.", ""]
     if conditions:

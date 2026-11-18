@@ -10,7 +10,9 @@ For every ``NN-slug.md`` chapter we
   with ``lake -KbuildDir=<build> env lean --json`` from the repository root, and map every
   compiler message back to chapter line numbers. A block fenced as ```` ```lean standalone ````
   is compiled as its own file instead, with exactly the imports it carries, for the rare
-  example that needs a module ``import FloatLib`` leaves out (the unchecked host FPU API);
+  example that needs a module ``import FloatLib`` leaves out (the unchecked host FPU API).
+  Before compiling, ``lake build`` builds every module of this repository that the generated
+  files import, so an opt-in module that a chapter uses need not be built beforehand;
 * compare the ``-- `` result comments under ``#eval`` and friends with what Lean printed; a
   disagreement is an error, because SITE_SPEC.md says those comments are what the prose claims;
 * reject em dashes (U+2014) and en dashes (U+2013) anywhere in the file;
@@ -82,7 +84,7 @@ FIGURE_RE = re.compile(r"!\[(?P<alt>[^\]]*)\]\((?P<target>[^)\s]*)(?:\s+\"[^\"]*
 INLINE_CODE_RE = re.compile(r"(`+)[^`]*?\1")
 TRAILING_COMMENT_RE = re.compile(r"^(?P<code>.*\S)[ \t]+--[ \t]*(?P<text>.*?)[ \t]*$")
 COMMENT_LINE_RE = re.compile(r"^[ \t]*--[ \t]*(?P<text>.*?)[ \t]*$")
-IMPORT_LINE_RE = re.compile(r"^\s*import\s+\S")
+IMPORT_LINE_RE = re.compile(r"^\s*import\s+(?P<module>\S+)")
 TWO_SENTENCES_RE = re.compile(r"[.!?][\"')\]]?\s+[A-Z0-9]")
 DASHES = {"\u2014": "em dash (U+2014)", "\u2013": "en dash (U+2013)"}
 REQUIRED_KEYS = ("number", "slug", "title", "summary")
@@ -132,6 +134,7 @@ class CompileUnit:
     path: Path
     line_map: dict[int, int]
     label: str
+    imports: tuple[str, ...] = ()
 
 
 @dataclass
@@ -187,7 +190,7 @@ class Chapter:
     def compile_units(self) -> list[CompileUnit]:
         units = list(self.standalone_units)
         if self.lean_file is not None:
-            units.insert(0, CompileUnit(self.lean_file, self.line_map, "shared"))
+            units.insert(0, CompileUnit(self.lean_file, self.line_map, "shared", ("FloatLib",)))
         return units
 
 
@@ -572,7 +575,24 @@ def write_lean_file(chapter: Chapter, scratch: Path) -> None:
         out.append("")
         scratch.mkdir(parents=True, exist_ok=True)
         lean_path.write_text("\n".join(out), encoding="utf-8")
-        chapter.standalone_units.append(CompileUnit(lean_path, line_map, f"block {block.index}"))
+        imports = tuple(match["module"] for match in map(IMPORT_LINE_RE.match, block.lines) if match)
+        chapter.standalone_units.append(
+            CompileUnit(lean_path, line_map, f"block {block.index}", imports))
+
+
+def repository_modules(units: list[CompileUnit], repo_root: Path) -> list[str]:
+    """The modules that the units import and whose source is in this repository, each once.
+
+    Lake builds these before the examples are compiled. Every other import (Mathlib, Lean's own
+    libraries) arrives compiled with the dependencies.
+    """
+    modules: list[str] = []
+    for unit in units:
+        for module in unit.imports:
+            source = repo_root.joinpath(*module.split(".")).with_suffix(".lean")
+            if module not in modules and source.is_file():
+                modules.append(module)
+    return modules
 
 
 def compile_lean(lean_path: Path, repo_root: Path, env: dict[str, str],
@@ -968,13 +988,25 @@ def main(argv: list[str]) -> int:
     if not args.no_compile:
         to_compile = [(c, unit) for c in chapters for unit in c.compile_units]
         if to_compile:
+            lake_env = dict(os.environ, FLOATLIB_BUILD_DIR=str(args.build_dir))
+            # A chapter may import an opt-in module, which `lake build FloatLib` does not reach.
+            # Build what the examples import; for modules that are built already this is a check.
+            modules = repository_modules([unit for _, unit in to_compile], args.repo_root)
+            if modules:
+                build_command = [lake, "-R", f"-KbuildDir={args.build_dir}", "build", *modules]
+                print(f"check_chapters: lake build of the {len(modules)} module(s) that the "
+                      "examples import", flush=True)
+                build = subprocess.run(build_command, cwd=args.repo_root, env=lake_env)
+                if build.returncode:
+                    print("check_chapters: building the imports of the examples failed with status "
+                          f"{build.returncode}: {' '.join(build_command)}", file=sys.stderr)
+                    return 2
             # Lake caches the build directory in its compiled package configuration. Resolve the
             # requested directory once, then let every example use the same compiler environment.
             setup = subprocess.run(
                 [lake, "-R", f"-KbuildDir={args.build_dir}", "env", sys.executable, "-c",
                  "import json, os; print(json.dumps(dict(os.environ)))"],
-                cwd=args.repo_root, env=dict(os.environ, FLOATLIB_BUILD_DIR=str(args.build_dir)),
-                capture_output=True, text=True)
+                cwd=args.repo_root, env=lake_env, capture_output=True, text=True)
             if setup.returncode:
                 print(f"check_chapters: lake env failed: {setup.stderr}", file=sys.stderr)
                 return 2

@@ -13,6 +13,8 @@ add,FloatLib,512,1940.7
 add,FloatLib,1024,1988.3
 add,FloatLib,2048,2085.8
 add,FloatLib,4096,2386.0
+add,FloatLib public call,32,25.1
+add,FloatLib public call,64,17.1
 add,MPFR,4,34.4
 add,MPFR,5,40.9
 add,MPFR,6,35.4
@@ -45,6 +47,8 @@ sub,FloatLib,512,1884.0
 sub,FloatLib,1024,1949.8
 sub,FloatLib,2048,2100.4
 sub,FloatLib,4096,2354.2
+sub,FloatLib public call,32,24.8
+sub,FloatLib public call,64,17.0
 sub,MPFR,4,31.7
 sub,MPFR,5,38.6
 sub,MPFR,6,34.3
@@ -77,6 +81,8 @@ mul,FloatLib,512,1788.9
 mul,FloatLib,1024,1973.1
 mul,FloatLib,2048,2563.1
 mul,FloatLib,4096,4304.2
+mul,FloatLib public call,32,20.7
+mul,FloatLib public call,64,11.2
 mul,MPFR,4,30.3
 mul,MPFR,5,41.7
 mul,MPFR,6,37.2
@@ -109,6 +115,8 @@ div,FloatLib,512,2129.6
 div,FloatLib,1024,2222.6
 div,FloatLib,2048,2851.0
 div,FloatLib,4096,4569.6
+div,FloatLib public call,32,49.9
+div,FloatLib public call,64,58.9
 div,MPFR,4,34.4
 div,MPFR,5,58.3
 div,MPFR,6,37.5
@@ -141,6 +149,8 @@ sqrt,FloatLib,512,5378.0
 sqrt,FloatLib,1024,6777.9
 sqrt,FloatLib,2048,9119.7
 sqrt,FloatLib,4096,14059.9
+sqrt,FloatLib public call,32,17.7
+sqrt,FloatLib public call,64,94.9
 sqrt,MPFR,4,40.2
 sqrt,MPFR,5,51.5
 sqrt,MPFR,6,39.3
@@ -173,6 +183,8 @@ fma,FloatLib,512,2403.9
 fma,FloatLib,1024,2742.9
 fma,FloatLib,2048,3314.6
 fma,FloatLib,4096,5063.8
+fma,FloatLib public call,32,33.4
+fma,FloatLib public call,64,113.4
 fma,MPFR,4,72.5
 fma,MPFR,5,92.9
 fma,MPFR,6,59.5

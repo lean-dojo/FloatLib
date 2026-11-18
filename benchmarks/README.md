@@ -82,7 +82,7 @@ declarations: a module with only the imports for the replaying checkers, and for
 constants that the family uses from other modules, which `Closure.lean` lists.
 [`kernel/checkers.csv`](kernel/checkers.csv) has one row per family and checker: the verdict, the
 seconds of the run and of its baseline, and their difference. The saved file is one run of each
-checker with Lean 4.36.0 on 2026-11-17, at commit `64494e50`, on the shared Xeon machine of the
+checker with Lean 4.36.0 on 2026-11-17, on the shared Xeon machine of the
 other benchmarks while other jobs were running, so a difference of a few seconds is within the
 noise of the two runs it is taken from. The rows of the first family are from a second call of the
 script, `checkers.sh exact-layer`.

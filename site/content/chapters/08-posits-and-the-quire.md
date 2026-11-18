@@ -473,7 +473,7 @@ end PositStandard
 | 6.1 | conversion between posit widths | `ExecFloat.Posit.pₘToₙ` |
 | 6.3 to 6.5 | conversions to and from text, integers and IEEE formats, for which the standard prescribes no spelling | `ExecFloat.Posit.display`, `parse`, `ofFixedInt`, `toFixedInt`, and `ExecFloat.cast` |
 
-The [theorem index](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md#posits-and-quires) has the theorems behind each row. Comparing with SoftPosit taught us the difference between an oracle and a specification. In SoftPosit 0.3.4.4, passing the eight-bit word 129 through `nearestInt` gives word 127, which is positive. But word 129 already denotes the negative integer $-2^{24}$, as our checked counterexample shows, so the sign is lost in that branch.
+The [theorem index](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Floats/THEOREMS.md#posits-and-quires) has the theorems behind each row. Comparing with SoftPosit taught us the difference between an oracle and a specification. Our result and the reference's differ on one input of `nearestInt`, the eight-bit word 129. That word already denotes the negative integer $-2^{24}$, as our checked example shows, so the operation has to return it unchanged, and FloatLib does.
 
 ## How we compare posits with Universal and SoftPosit
 

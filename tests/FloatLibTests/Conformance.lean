@@ -78,6 +78,7 @@ public import FloatLibTests.Tactic.FloatInfo.Imports
 public import FloatLibTests.Tactic.Interval
 public import FloatLibTests.Tactic.Interval.Coeff
 public import FloatLibTests.Tactic.Interval.Configured
+public import FloatLibTests.Tactic.Interval.Constants
 public import FloatLibTests.Tactic.Interval.Constraints
 public import FloatLibTests.Tactic.Interval.Extensions
 public import FloatLibTests.Tactic.Interval.NonBinary

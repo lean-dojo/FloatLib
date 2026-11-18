@@ -151,7 +151,7 @@ The campaign does not search for an optimized bound; Lean must prove the proposa
 
 ## Results on Lean v4.36.0
 
-The suite ran on 2026-11-17, at `ce4078d2`, eight Lean processes at a time with
+The suite ran on 2026-11-17, eight Lean processes at a time with
 three threads each and 60 seconds per process. [`../results/suites/README.md`](../results/suites/README.md)
 has the tables, [`fpbench.csv`](../results/suites/fpbench.csv) one row per program, default precision
 and method, and [`fpbench-comparison.csv`](../results/suites/fpbench-comparison.csv) the ratios.
