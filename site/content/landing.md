@@ -8,7 +8,7 @@ authors:
 
 FloatLib supports IEEE binary and decimal formats, posits with exact quire accumulation, and low precision formats for machine learning. Its arithmetic implementations share integer kernels and rounding theory, with proofs connecting executable operations to their numerical specifications.
 
-A floating-point calculation can run inside Lean's kernel as part of a proof. For a dot product of 1,000 binary64 terms, `float_decide` reduced the time to check the loop from 8.79 seconds to 0.159 seconds. [Speeding up computation in Lean's kernel](#/chapter/proof-by-computation) explains how the rewrite works, compares the result with Rocq's VM, and shows how to prove properties of all pairs of FP8 inputs. The [README example](https://github.com/lean-dojo/FloatLib/blob/main/README.md#a-calculation-and-a-proof) starts with one binary32 addition.
+One feature you might like is [`float_decide`](#/chapter/proof-by-computation), a fast way to prove floating-point equalities directly in Lean's kernel.
 
 - **Custom formats.** [Define a format](#/chapter/using-the-library/which-formats-can-you-use) with your own field widths, encodings and rounding rules through the shared numerical interfaces.
 - **Rounding and error bounds.** Apply [correct-rounding theorems, half-ulp bounds and Sterbenz's lemma](#/chapter/the-mathematics-of-rounding) to executable arithmetic under their stated hypotheses.

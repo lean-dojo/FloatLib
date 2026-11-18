@@ -31,6 +31,12 @@ __pycache__/
 /paper/
 /papers/
 
+# Reference checkouts downloaded by the benchmark suites
+/benchmarks/correct-rounding/**/upstream/
+/benchmarks/fpbench/**/upstream/
+/benchmarks/inequalities/**/upstream/
+/benchmarks/testfloat/**/upstream/
+
 # Keep complete published evidence, including the recorded comparison providers.
 /benchmarks/results/*
 !/benchmarks/results/flocq-matched/

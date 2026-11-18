@@ -3,7 +3,12 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: &docs_paths
+      - 'site/**'
+      - '**/*.md'
+      - '.github/workflows/site.yml'
   pull_request:
+    paths-ignore: *docs_paths
   workflow_dispatch:
 
 concurrency:
@@ -39,9 +44,6 @@ jobs:
             /usr/share/swift
           sudo docker image prune --all --force || true
           df -h
-
-      - name: Check publication privacy
-        run: python3 tests/checks/publication-privacy.py
 
       - name: Install independent-oracle dependencies
         run: |
@@ -143,8 +145,3 @@ jobs:
 
       - name: Check the benchmark workspace and command interface
         run: bash benchmarks/scripts/checks/harness.sh
-
-      - name: Validate the website's Lean examples and theorem links
-        run: |
-          bash site/tooling/export.sh
-          python3 site/tooling/check_chapters.py --strict

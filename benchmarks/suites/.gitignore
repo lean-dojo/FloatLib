@@ -1,9 +1,4 @@
-__pycache__/
 results/
-*.olean
-*.ilean
 *.c
-*.o
-.lake/
 generated/
 lake-manifest.json

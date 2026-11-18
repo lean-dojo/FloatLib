@@ -3,14 +3,15 @@ name: Website
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: false
+  group: github-pages-${{ github.event.pull_request.number || 'publish' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   FLOATLIB_BUILD_DIR: ${{ github.workspace }}/.lake/build
@@ -19,6 +20,7 @@ env:
 jobs:
   setup:
     name: Check Pages setup
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -56,11 +58,16 @@ jobs:
   build:
     name: Build the checked website
     needs: setup
-    if: needs.setup.outputs.enabled == 'true'
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.setup.outputs.enabled == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v6
+
+      - name: Check publication privacy and documentation links
+        run: |
+          python3 tests/checks/publication-privacy.py
+          python3 tests/checks/doc-links.py
 
       - name: Prepare the runner
         run: |
@@ -112,7 +119,7 @@ jobs:
           restore-keys: |
             floatlib-site-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
 
-      - name: Build FloatLib
+      - name: Fetch compiled Mathlib dependencies
         run: |
           set -euo pipefail
           source tests/lib/lake.sh
@@ -122,18 +129,19 @@ jobs:
             echo "The Mathlib cache is missing; refusing to compile it from source." >&2
             exit 1
           fi
-          floatlib_lake build FloatLib
 
       - name: Check examples and build the website
         run: bash site/build.sh --require-clean
 
       - name: Upload the website
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
           path: ${{ env.OUT_DIR }}
 
   deploy:
     name: Publish to GitHub Pages
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-24.04
     permissions:

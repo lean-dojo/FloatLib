@@ -341,7 +341,7 @@ example : (cover100.total 8 fun _ => CFix.one 8).count = 100 := by decide +kerne
 
 ### Rows packed in one number
 
-A row of integer coefficients can be stored in equal-width lanes of one natural number. A product of two packed rows then contains sums of products of coefficients. Reverse one row before multiplying to put the dot product in one lane. The example reads out `3 * 2 + 1 * 7 + 4 * 1 = 17`.
+We can compute a dot product with one integer multiplication. Pack the coefficients of each row into equal-width lanes, wide enough to hold each sum of products. Reversing one row puts the dot product in a single lane. This is the same [Kronecker substitution](#/chapter/proving-numerical-bounds/how-does-the-kernel-check-a-certificate-so-fast) we used for polynomial multiplication [@harvey2009]. Here the lane holds `3 * 2 + 1 * 7 + 4 * 1 = 17`.
 
 ```lean standalone
 import FloatLib

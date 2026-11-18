@@ -1326,15 +1326,10 @@ def fig_compiled_precision(ctx):
          "width for FloatLib and MPFR up to 4,096 bits, with SoftFloat, the host processor and "
          "FloatLib's public calls as short series at 32 and 64 bits, where the public calls lie below "
          "the FloatLib line in every panel.",
-         "Compiled time of one arithmetic operation at every precision: FloatLib against MPFR, "
-         "Berkeley SoftFloat and the host processor. A point is the time per operation in a scalar "
-         "dependency chain, with MPFR at the precision, exponent range and rounding of the binary format "
-         "of that width, and SoftFloat and the host exist for binary32 and binary64 only; both axes are "
-         "logarithmic, and lower is faster. At 32 and 64 bits the FloatLib line times the fixed-word "
-         "kernels called by name, and the open circles are a public call, which selects other proved "
-         "kernels. "
-         + where(prov, "the public calls are medians of nine trials on one pinned core, measured on "
-                       "2026-10-31 with Lean 4.35.0"),
+         "Time per operation against format width, both on logarithmic scales. In the comparison "
+         "with MPFR, SoftFloat and the host processor, each result selects the next input. "
+         + where(prov) + " The open circles show public FloatLib calls at 32 and 64 bits, timed "
+         "on a fixed cycle of inputs (median of nine trials on one pinned core, Lean 4.35.0, 2026-10-31).",
          "The harness is `benchmarks/scripts/format-comparison.sh`: one development trial per cell, "
          "calibrated loops of about 200 ms, MPFR 4.1.0 and SoftFloat 3e. FloatLib's operations are proved "
          "and run in software; the host processor's own arithmetic is the unproved reference. The public "

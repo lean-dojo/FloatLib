@@ -192,9 +192,8 @@ To build, the reader needs `data/nodes.json`, Markdown chapters, `content/landin
 - `references`: bibliography entries with key, authors, title, venue, year, and source URL.
 
 On the landing page the reader renders the HTML as one article with the chapter index after it.
-Numbered citations link to bibliography entries, and the entries' source URLs point to the cited
-publications. The data build also writes `data/reader-warnings.md` and the bundled MathJax
-stylesheet and fonts.
+Numbered citations link to bibliography entries, with source links where available. The data
+build also writes `data/reader-warnings.md` and the bundled MathJax stylesheet and fonts.
 
 ## Measurements
 
@@ -225,11 +224,10 @@ Lean nor the reader. Other development flags, strictness settings, and the clean
 requirement are in the
 [build-options table](tooling/README.md#build-options).
 
-Every fenced `lean` block in `content/chapters/` is extracted into a per-chapter scratch file,
-prefixed with `import FloatLib`, and compiled against the local library build. Claimed evaluation
-outputs are checked as well. An unresolved link, an unexpected compiler warning, an output mismatch,
-or a failing example fails the strict build. The chapter extractor never looks at the landing page,
-so a new Lean example there has to be checked in local scratch or copied verbatim from a checked
-chapter example.
+The checker compiles each chapter's `lean` blocks together with `import FloatLib`. A block
+fenced as `lean standalone` compiles as its own file with its own imports. The checker also
+compares claimed evaluation outputs with Lean's results. An unresolved link, an unexpected
+compiler warning, an output mismatch, or a failing example fails the strict build. For an
+example on the landing page, use a checked chapter example or verify it separately.
 
 To preview, run `python3 site/serve.py --dir <local-output>`.
