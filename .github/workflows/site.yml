@@ -130,6 +130,12 @@ jobs:
             exit 1
           fi
 
+      - name: Build FloatLib
+        run: |
+          set -euo pipefail
+          source tests/lib/lake.sh
+          floatlib_lake build FloatLib
+
       - name: Check examples and build the website
         run: bash site/build.sh --require-clean
 
