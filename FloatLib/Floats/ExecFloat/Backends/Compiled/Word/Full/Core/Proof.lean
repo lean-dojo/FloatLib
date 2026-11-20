@@ -512,7 +512,7 @@ private theorem roundNormalLimb_refines
         unfold FloatLib.Numerics.FixedWord.UInt128.toNat
         have hlo := product.lo.toNat_lt
         norm_num at hhighNat hlo ⊢
-        nlinarith
+        linarith
       have hlog : product.toNat.log2 = 104 :=
         (Nat.log2_eq_iff hproductNe).2
           ⟨hproductLower, by
@@ -527,7 +527,7 @@ private theorem roundNormalLimb_refines
       have hproductGe : 2 ^ 105 ≤ product.toNat := by
         unfold FloatLib.Numerics.FixedWord.UInt128.toNat
         norm_num at hhighNat ⊢
-        nlinarith
+        linarith
       have hlog : product.toNat.log2 = 105 :=
         (Nat.log2_eq_iff hproductNe).2
           ⟨hproductGe, by

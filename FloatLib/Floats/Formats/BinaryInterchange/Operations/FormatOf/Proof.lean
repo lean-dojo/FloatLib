@@ -10,6 +10,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Runt
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.ScaledProduct.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.DivisionSemantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Status.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rounded
 
 /-!
 # Semantics of the formatOf operations
@@ -27,13 +28,17 @@ proves:
   value denotes `roundAt destination` of the exact real sum, difference, product, quotient or
   `x * y + z` (`toReal_formatOfAddition`, `toReal_formatOfSubtraction`,
   `toReal_formatOfMultiplication`, `toReal_formatOfDivision`,
-  `toReal_formatOfFusedMultiplyAdd`).
+  `toReal_formatOfFusedMultiplyAdd`);
+* in every rounding direction, with a conventional IEEE destination and an exact sum,
+  difference, product or `x * y + z` within the largest finite magnitude of the destination,
+  the result is finite and denotes `roundAt destination` of that exact value in the direction
+  (`formatOfAddition_finite_roundAt`, `formatOfSubtraction_finite_roundAt`,
+  `formatOfMultiplication_finite_roundAt`, `formatOfFusedMultiplyAdd_finite_roundAt`).
 
-The hypothesis that the result is finite excludes overflow. No statement is made here about
-the directed directions as real numbers, nor about the flags. The agreement with `add`, `sub`,
-`mul`, `div` and `fma` when the three formats coincide, special values and flags included, is
-checked exhaustively on a format of six bits in every direction by the test suite and is not
-proved.
+The hypotheses on the range exclude overflow. No statement is made here about the quotient in
+the directed directions as a real number, nor about the flags. When the three formats coincide
+the operations are `add`, `sub`, `mul`, `div` and `fma` with their flags, for every operand:
+`Operations.FormatOf.Homogeneous` proves it.
 -/
 
 @[expose] public section
@@ -74,6 +79,26 @@ theorem Factor.toReal_deliver_finite (hfmt : destination.isIEEE = true)
   · simp [hzero, Numerics.Dyadic.toReal, Numerics.Dyadic.signedSignificand]
   · simp only [hzero, ite_false] at hfin ⊢
     exact toReal_roundDyadic_eq_roundAt destination hfmt exact hfin
+
+/--
+For a conventional IEEE destination and every rounding direction, a finite exact result within
+the largest finite magnitude is delivered as a finite value that denotes its rounding on the
+grid of the destination in that direction.
+-/
+theorem Factor.deliver_finite_roundAt (hfmt : destination.isIEEE = true)
+    (mode : IEEERoundingMode) (exact : Numerics.Dyadic) (zeroNegative : Bool)
+    (hbound : |exact.toReal| ≤ toReal (posMaxFinite destination)) :
+    isFinite ((Factor.finite exact : Factor destination).deliver mode zeroNegative).value =
+        true ∧
+      toReal ((Factor.finite exact : Factor destination).deliver mode zeroNegative).value =
+        roundAt destination exact.toReal mode := by
+  rw [Factor.deliver_finite_value]
+  by_cases hzero : exact.significand = 0
+  · have hreal : exact.toReal = 0 := (Dyadic.toReal_eq_zero_iff exact).mpr hzero
+    rw [ite_eq_left hzero, hreal, roundAt_zero destination mode, toReal_zero]
+    exact ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero destination zeroNegative), rfl⟩
+  · rw [ite_eq_right hzero]
+    exact Internal.Directed.roundDyadic_finite_roundAt destination hfmt mode exact hbound
 
 end Reduction.Internal
 
@@ -234,6 +259,93 @@ theorem toReal_formatOfDivision (hfmt : destination.isIEEE = true) (x : Model le
     rw [toReal_roundRatScaled_eq_roundAt destination _ _ _ _ hfmt hfin,
       signedScaledRatToReal_eq_div_toReal dx dy]
     simp [toReal_eq, hdx, hdy]
+
+/-! ## One rounding in every direction -/
+
+/--
+**formatOf addition is one rounding in every direction.** For finite operands of any two
+formats, a conventional IEEE destination and each rounding direction `mode`, an exact sum
+within the largest finite magnitude of the destination gives a finite result that denotes
+`roundAt destination (toReal x + toReal y) mode`.
+-/
+theorem formatOfAddition_finite_roundAt (hfmt : destination.isIEEE = true)
+    (mode : IEEERoundingMode) (x : Model left) (y : Model right) (hx : isFinite x = true)
+    (hy : isFinite y = true)
+    (hbound : |toReal x + toReal y| ≤ toReal (posMaxFinite destination)) :
+    isFinite (formatOfAddition destination x y mode).value = true ∧
+      toReal (formatOfAddition destination x y mode).value =
+        roundAt destination (toReal x + toReal y) mode := by
+  obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
+  obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
+  have hexact : (addDyadic dx dy).toReal = toReal x + toReal y := by
+    rw [Dyadic.toReal_addDyadic]
+    simp [toReal_eq, hdx, hdy]
+  rw [formatOfAddition_of_toDyadic?_eq_some hdx hdy mode, ← hexact]
+  exact Factor.deliver_finite_roundAt hfmt mode _ _ (hexact ▸ hbound)
+
+/--
+**formatOf subtraction is one rounding in every direction.** For finite operands of any two
+formats, a conventional IEEE destination and each rounding direction `mode`, an exact
+difference within the largest finite magnitude of the destination gives a finite result that
+denotes `roundAt destination (toReal x - toReal y) mode`.
+-/
+theorem formatOfSubtraction_finite_roundAt (hfmt : destination.isIEEE = true)
+    (mode : IEEERoundingMode) (x : Model left) (y : Model right) (hx : isFinite x = true)
+    (hy : isFinite y = true)
+    (hbound : |toReal x - toReal y| ≤ toReal (posMaxFinite destination)) :
+    isFinite (formatOfSubtraction destination x y mode).value = true ∧
+      toReal (formatOfSubtraction destination x y mode).value =
+        roundAt destination (toReal x - toReal y) mode := by
+  have h := formatOfAddition_finite_roundAt hfmt mode x (neg y) hx (by simpa using hy)
+    (by rwa [toReal_neg y hy, ← sub_eq_add_neg])
+  rwa [toReal_neg y hy, ← sub_eq_add_neg] at h
+
+/--
+**formatOf multiplication is one rounding in every direction.** For finite operands of any two
+formats, a conventional IEEE destination and each rounding direction `mode`, an exact product
+within the largest finite magnitude of the destination gives a finite result that denotes
+`roundAt destination (toReal x * toReal y) mode`.
+-/
+theorem formatOfMultiplication_finite_roundAt (hfmt : destination.isIEEE = true)
+    (mode : IEEERoundingMode) (x : Model left) (y : Model right) (hx : isFinite x = true)
+    (hy : isFinite y = true)
+    (hbound : |toReal x * toReal y| ≤ toReal (posMaxFinite destination)) :
+    isFinite (formatOfMultiplication destination x y mode).value = true ∧
+      toReal (formatOfMultiplication destination x y mode).value =
+        roundAt destination (toReal x * toReal y) mode := by
+  obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
+  obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
+  have hexact : (Numerics.Dyadic.mk (Bool.xor dx.negative dy.negative)
+      (dx.significand * dy.significand) (dx.exponent + dy.exponent)).toReal =
+      toReal x * toReal y := by
+    rw [Dyadic.toReal_mul]
+    simp [toReal_eq, hdx, hdy]
+  rw [formatOfMultiplication_of_toDyadic?_eq_some hdx hdy mode, ← hexact]
+  exact Factor.deliver_finite_roundAt hfmt mode _ _ (hexact ▸ hbound)
+
+/--
+**formatOf fused multiply-add is one rounding in every direction.** For finite operands of any
+three formats, a conventional IEEE destination and each rounding direction `mode`, an exact
+`x * y + z` within the largest finite magnitude of the destination gives a finite result that
+denotes `roundAt destination (toReal x * toReal y + toReal z) mode`.
+-/
+theorem formatOfFusedMultiplyAdd_finite_roundAt (hfmt : destination.isIEEE = true)
+    (mode : IEEERoundingMode) (x : Model left) (y : Model right) (z : Model addend)
+    (hx : isFinite x = true) (hy : isFinite y = true) (hz : isFinite z = true)
+    (hbound : |toReal x * toReal y + toReal z| ≤ toReal (posMaxFinite destination)) :
+    isFinite (formatOfFusedMultiplyAdd destination x y z mode).value = true ∧
+      toReal (formatOfFusedMultiplyAdd destination x y z mode).value =
+        roundAt destination (toReal x * toReal y + toReal z) mode := by
+  obtain ⟨dx, hdx⟩ := exists_toDyadic?_of_isFinite hx
+  obtain ⟨dy, hdy⟩ := exists_toDyadic?_of_isFinite hy
+  obtain ⟨dz, hdz⟩ := exists_toDyadic?_of_isFinite hz
+  have hexact : (addDyadic (Numerics.Dyadic.mk (Bool.xor dx.negative dy.negative)
+      (dx.significand * dy.significand) (dx.exponent + dy.exponent)) dz).toReal =
+      toReal x * toReal y + toReal z := by
+    rw [Dyadic.toReal_addDyadic, Dyadic.toReal_mul]
+    simp [toReal_eq, hdx, hdy, hdz]
+  rw [formatOfFusedMultiplyAdd_of_toDyadic?_eq_some hdx hdy hdz mode, ← hexact]
+  exact Factor.deliver_finite_roundAt hfmt mode _ _ (hexact ▸ hbound)
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

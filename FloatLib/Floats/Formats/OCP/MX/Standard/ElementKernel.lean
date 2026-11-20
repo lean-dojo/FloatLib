@@ -6,7 +6,10 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Exact
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Plumbing
 public import FloatLib.Floats.Formats.OCP.MX.Standard.KernelPath.Nearest
+public import FloatLib.Tactic.KernelShape
 public meta import FloatLib.Tactic.NearestFlat
 
 /-!
@@ -27,22 +30,20 @@ open FloatLib.Numerics FloatLib.Floats.ExecFloat.KernelPath
 
 
 /--
-`nearest` with one flat test and one flat entry per sign-magnitude profile, and `int8Nearest`
-with a flat test and a flat entry for INT8: the form that Lean's kernel evaluates
-(`nearestAll_eq`, `nearestAll_int8`).
+`nearest` as one flat term per sign-magnitude profile, and `int8Nearest` as one flat term for
+INT8, each with the constants of its profile computed: the form that Lean's kernel evaluates
+(`nearestAll_eq`, `nearestAll_int8`). Each profile is a function of the input, so the kernel
+copies the term of the one profile that it evaluates.
 -/
 noncomputable def nearestAll (profile : Profile) (sp neg ap q : Nat) : Nat :=
-  Profile.casesOn (motive := fun _ => Nat) profile
-    (nearest_flat% .e5m2 sp neg ap q 128 7) (nearest_flat% .e4m3 sp neg ap q 128 7)
-    (nearest_flat% .e3m2 sp neg ap q 32 5) (nearest_flat% .e2m3 sp neg ap q 32 5)
-    (nearest_flat% .e2m1 sp neg ap q 8 3)
-    (int8NearestWith
-      (fun i => kernel_inline% [int8Below] (int8Below sp (Nat.mul ap 64) q i))
-      (fun i =>
-        kernel_inline% [entry, int8Code, codeKey, distance, tie, magnitude, signBit,
-            twosComplement, denominator, Profile.width]
-          (entry .int8 sp neg ap q (int8Code sp i)))
-      sp)
+  Profile.rec (motive := fun _ => Nat → Nat → Nat → Nat → Nat)
+    (fun sp neg ap q => nearest_flat% .e5m2 sp neg ap q)
+    (fun sp neg ap q => nearest_flat% .e4m3 sp neg ap q)
+    (fun sp neg ap q => nearest_flat% .e3m2 sp neg ap q)
+    (fun sp neg ap q => nearest_flat% .e2m3 sp neg ap q)
+    (fun sp neg ap q => nearest_flat% .e2m1 sp neg ap q)
+    (fun sp neg ap q => int8_nearest_flat% sp neg ap q)
+    profile sp neg ap q
 
 /-- The flat form is `nearest`, for every sign-magnitude profile. -/
 theorem nearestAll_eq (profile : Profile) (h : twosComplement profile = false)
@@ -55,6 +56,36 @@ theorem nearestAll_eq (profile : Profile) (h : twosComplement profile = false)
 theorem nearestAll_int8 (sp neg ap q : Nat) :
     nearestAll .int8 sp neg ap q = int8Nearest sp neg ap q :=
   kernel_refl%
+
+/--
+`nearestAll` with a guess of the field that the bisection finds: the flat forms of
+`nearestGuessed` and `int8NearestGuessed` with `nearestAll` as the alternative. The quotient of
+the input gives the field in a few operations, two tests confirm it, and the bisection runs
+only when a test fails (`nearestFast_eq`).
+-/
+noncomputable def nearestFast (profile : Profile) (sp neg ap q : Nat) : Nat :=
+  Profile.rec (motive := fun _ => Nat → Nat → Nat → Nat → Nat)
+    (fun sp neg ap q => nearest_guess_flat% .e5m2 sp neg ap q (nearestAll .e5m2 sp neg ap q))
+    (fun sp neg ap q => nearest_guess_flat% .e4m3 sp neg ap q (nearestAll .e4m3 sp neg ap q))
+    (fun sp neg ap q => nearest_guess_flat% .e3m2 sp neg ap q (nearestAll .e3m2 sp neg ap q))
+    (fun sp neg ap q => nearest_guess_flat% .e2m3 sp neg ap q (nearestAll .e2m3 sp neg ap q))
+    (fun sp neg ap q => nearest_guess_flat% .e2m1 sp neg ap q (nearestAll .e2m1 sp neg ap q))
+    (fun sp neg ap q => int8_nearest_guess_flat% sp neg ap q (nearestAll .int8 sp neg ap q))
+    profile sp neg ap q
+
+/-- The guessed flat form is `nearestAll`, for every profile and every input. -/
+@[kernel_optimize ← (cost := 300)]
+theorem nearestFast_eq (profile : Profile) (sp neg ap q : Nat) :
+    nearestFast profile sp neg ap q = nearestAll profile sp neg ap q := by
+  cases profile
+  case int8 =>
+    refine (kernel_refl% : nearestFast .int8 sp neg ap q =
+      int8NearestGuessed sp neg ap q (nearestAll .int8 sp neg ap q)).trans ?_
+    rw [nearestAll_int8]
+    exact int8NearestGuessed_eq sp neg ap q
+  all_goals
+    rw [nearestAll_eq _ rfl, ← nearestGuessed_eq _ rfl sp neg ap q, ← nearestAll_eq _ rfl]
+    exact kernel_refl%
 
 /--
 The code that nearest-even rounding selects for `input`, with its rounding key above its `width`
@@ -86,7 +117,25 @@ theorem quantizeFinite_eq_round (profile : Profile) (input : SignedRat) :
     rw [nearestAll_int8, hcount,
       scan_eq_int8Nearest _ _ _ _ (Bool.toNat_le _) (Bool.toNat_le _) input.value.den_pos]
 
+/-!
+The kernel shape of `roundCode` reads the two sign bits with the recursor of `Bool` and the
+numerator with the kernel arithmetic of `Int`.
+-/
+kernel_shape roundCode inlining [Bool.toNat]
+
 attribute [kernel_optimize unfold] quantize quantizeWith
+
+/-- The saturating mode is not the native mode: the decision that `quantize` unfolds to. -/
+@[kernel_optimize (cost := 1)]
+theorem decide_saturate_eq_native :
+    decide (OverflowMode.saturate = OverflowMode.native) = false :=
+  rfl
+
+/-- The native mode is the native mode: the decision that `quantize` unfolds to. -/
+@[kernel_optimize (cost := 1)]
+theorem decide_native_eq_native :
+    decide (OverflowMode.native = OverflowMode.native) = true :=
+  rfl
 
 
 end FloatLib.Floats.Formats.OCP.MX.Standard.Element

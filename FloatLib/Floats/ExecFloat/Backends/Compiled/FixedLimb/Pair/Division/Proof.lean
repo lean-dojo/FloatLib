@@ -551,8 +551,7 @@ private theorem rationalFloorLog2_normal (precision : Nat)
     (Nat.log2_eq_iff hnumNe).2 hnum
   have hdenLog : Nat.log2 den = precision :=
     (Nat.log2_eq_iff hdenNe).2 hden
-  unfold Numerics.RationalBinary.floorLog2
-  rw [hnumLog, hdenLog, sub_self]
+  rw [Numerics.RationalBinary.floorLog2_eq_log2, hnumLog, hdenLog, sub_self]
   norm_num
   by_cases hle : den ≤ num
   · have hltTwice : num < den * 2 := by

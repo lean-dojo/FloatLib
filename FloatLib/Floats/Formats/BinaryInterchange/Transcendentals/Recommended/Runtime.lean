@@ -29,10 +29,11 @@ provides, for every binary `FloatFormat`:
 * `sin`, `cos`, `tan`, `sinPi`, `cosPi`, `tanPi`, `asin`, `acos`, `atan`, `asinPi`, `acosPi`,
   `atanPi`, and of two arguments `atan2`, `atan2Pi`;
 * `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`;
-* `powr` and `compound`.
+* `powr`, `pow` and `compound`.
 
-`exp`, `expm1`, `log`, `logp1` are in `Transcendentals.CorrectlyRounded`, and `hypot`, `rSqrt`,
-`rootn`, `pown`, `pow` in `Algebraic` and `Operations.Power`.
+`pow` is here too, in every rounding direction and with flags. `exp`, `expm1`, `log`, `logp1`
+are in `Transcendentals.CorrectlyRounded`, `hypot`, `rSqrt`, `rootn`, `pown` in `Algebraic`, and
+`Operations.Power` has the nearest-even `Model.pow` that searches enclosures.
 
 Each function returns an `IEEEOutcome`: the value with its exception flags and ternary value.
 A finite operand in the domain is decoded to its exact rational value, and the real result is
@@ -41,10 +42,10 @@ default), from an exact comparator of `Numerics.Exact` that orders the real resu
 every rational: the comparators of rational powers, of the trigonometric and of the hyperbolic
 functions. Nothing limits that search, so every finite operand has a result. To nearest-even
 each finite result is proved correctly rounded on a conventional IEEE descriptor for finite
-operands in the theorem’s domain. The results toward negative and positive infinity enclose
-the real value (`Recommended.Proof`). That the directed results are the nearest values on their
-side, and the three other directions, are tested against a reference and have no theorem. The
-comparisons cost about `fracWidth + expWidth` exact comparisons for one result.
+operands in the theorem’s domain, and in every other rounding direction the result is the
+correctly rounded value of that direction, with the overflow result of IEEE 754-2019 clause 7.4
+beyond the finite range (`Recommended.Proof`). The comparisons cost about
+`fracWidth + expWidth` exact comparisons for one result.
 
 To nearest-even an enclosure is tried first, for the functions of one argument, `atan2`,
 `atan2Pi`, `powr` and `compound`. `Function.expr` writes the function at the operand as an
@@ -544,6 +545,56 @@ operands give the limit of the formula: `+0` or `+∞` without a flag.
 def powr {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode := .nearest) :
     IEEEOutcome fmt :=
   ComparisonRounding.binary powrRule x y mode (powrHint fmt)
+
+/-- Whether a rational is an odd integer. -/
+def oddInteger (q : ℚ) : Bool :=
+  decide (q.den = 1 ∧ q.num % 2 = 1)
+
+/--
+The rule of `pow x y` at operands that are not NaNs, with the special cases of IEEE 754-2019
+§9.2.1. A positive base is located by the comparator of rational powers, and a negative base
+with an integral exponent by the same comparator on its magnitude, mirrored for an odd
+exponent.
+-/
+def powRule : Operand → Operand → Rule
+  | .finite negative base, .finite _ exponent =>
+      if exponent = 0 then .rational 1
+      else if base = 0 then
+        if exponent < 0 then .pole (negative && oddInteger exponent)
+        else .zero (negative && oddInteger exponent)
+      else if 0 < base then .real (RationalPower.compare base exponent)
+      else if exponent.den = 1 then
+        if exponent.num % 2 = 1 then
+          .real fun candidate => (RationalPower.compare (-base) exponent (-candidate)).swap
+        else .real (RationalPower.compare (-base) exponent)
+      else .invalid
+  | .finite _ base, .infinite negative =>
+      if base = 0 then (if negative then .infinity false else .zero false)
+      else if |base| = 1 then .rational 1
+      else if decide (1 < |base|) == negative then .zero false
+      else .infinity false
+  | .infinite negativeBase, .finite _ exponent =>
+      if exponent = 0 then .rational 1
+      else if exponent < 0 then .zero (negativeBase && oddInteger exponent)
+      else .infinity (negativeBase && oddInteger exponent)
+  | .infinite _, .infinite negative => if negative then .zero false else .infinity false
+
+/--
+IEEE 754-2019 §9.2 `pow` (ISO/IEC 9899:2024 7.12.7.5, F.10.4.5): `x ^ y` with one rounding in
+`mode` (nearest-even by default), the value with its flags and ternary value. The special
+cases are those of §9.2.1: `pow x (±0)` is 1 for every `x`, a quiet NaN included, and
+`pow 1 y` is 1 for every `y`, a quiet NaN included; `pow (±0) y` is `±∞` with `divideByZero`
+for a negative odd integer `y`, `+∞` with `divideByZero` for every other finite negative `y`,
+`±0` for a positive odd integer and `+0` for every other positive `y`; `pow (-1) (±∞)` is 1; a
+finite negative `x` with a finite `y` that is not an integer is invalid; the remaining
+infinite operands give the limit, with the sign of `x` when `y` is an odd integer. Every finite
+operand pair has a result: nothing limits the comparisons.
+-/
+def pow {fmt : FloatFormat} (x y : Model fmt) (mode : IEEERoundingMode := .nearest) :
+    IEEEOutcome fmt :=
+  if (isZero y = true ∧ isSignaling x = false) ∨ (toRat? x = some 1 ∧ isSignaling y = false) then
+    (Rule.rational 1).deliver fmt mode
+  else ComparisonRounding.binary powRule x y mode (powrHint fmt)
 
 /-- The hint of `compound` at a finite operand above -1: the enclosure search when the power is
 `powerEnclosable`. -/

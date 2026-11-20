@@ -17,14 +17,15 @@ The code is sorted by the mode an implementation serves.
 
 | Where | What it holds |
 | --- | --- |
-| [`FloatLib/Tactic/`](../../../Tactic/CompilerOptimize.lean) | the two tags, `@[compiler_optimize]` ([`CompilerOptimize.lean`](../../../Tactic/CompilerOptimize.lean)) and `@[kernel_optimize]` ([`KernelOptimize.lean`](../../../Tactic/KernelOptimize.lean)), `float_decide`, `#kernel_eval`, `#kernel_cost`, `#kernel_rules`, `#compiler_backends`, and the commands that declare a family's capabilities. The checks that a tagged implementation is proved and that its compiled code is the code of its definitions are in [`Util/Provenance.lean`](../../../Util/Provenance.lean) |
+| [`FloatLib/Tactic/`](../../../Tactic/CompilerOptimize.lean) | the two tags, `@[compiler_optimize]` ([`CompilerOptimize.lean`](../../../Tactic/CompilerOptimize.lean)) and `@[kernel_optimize]` ([`KernelOptimize.lean`](../../../Tactic/KernelOptimize.lean)), `float_decide`, `#kernel_eval`, `#kernel_cost`, `#kernel_rules`, `#compiler_backends`, the commands that declare a family's capabilities, and the forms that write a definition the way Lean's kernel evaluates it best (`kernel_inline%`, `kernel_shape`, `kernel_constant`, `kernel_refl%`). The checks that a tagged implementation is proved and that its compiled code is the code of its definitions are in [`Util/Provenance.lean`](../../../Util/Provenance.lean) |
 | [`FloatLib/Kernels/Selection/`](../../../Kernels/Selection/Policy.lean) and [`Execution/`](../../../Kernels/Execution/Capability.lean) | the planner (policy, scoring, portfolio, report) and the capabilities, certificates and dispatch that every family shares |
 | [`Compiled/`](Compiled/) | the certified kernels for compiled code: the dispatchers (`Dispatch/`) and `TinyTable/`, `Word/`, `FixedLimb/`, `WideLimb/`, `Generic/` |
 | [`Kernel/`](Kernel/Form.lean) | what Lean's kernel needs that is not tied to one family: the kernel form of a family's operation and the rules that rewrite a public operation to it (`Form`: `KernelForm`, `DirectReference`), the loop rules (`Loop`), the rules of exact arithmetic (`Exact`), of lists, arrays and options (`Plumbing`), and of the integer square root (`Root`) |
 
 A family keeps its own kernels in its own directory: the kernel operations of the binary formats
-are in `Formats/BinaryInterchange/KernelPath/`, those of posits in `Formats/Posit/KernelPath/`,
-and those of P3109 in `Formats/P3109/KernelPath/`.
+are in `Formats/BinaryInterchange/KernelPath/`, those of the decimal formats in
+`Formats/DecimalInterchange/KernelPath/`, those of posits in `Formats/Posit/KernelPath/`, and those
+of P3109 in `Formats/P3109/KernelPath/`.
 
 [`Tactic/KernelPrepare.lean`](../../../Tactic/KernelPrepare.lean) provides `kernel_prepare% e`.
 It applies the registered equations once and returns the rewritten expression

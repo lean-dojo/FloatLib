@@ -37,12 +37,16 @@ def negZeroNaN (fmt : FloatFormat) : Nat :=
   | .finiteUnsignedZero => 1
   | .ieee | .finiteMaxNaN | .finite => 0
 
+kernel_constant negZeroNaN
+
 /--
 Zero when a word with sign `sign` and exponent-and-fraction fields `magnitude` is finite: the
 fields are at most `maxFinite`, and the word is not the negative zero of an unsigned-zero format.
 -/
 def nonFinite (fmt : FloatFormat) (sign magnitude : Nat) : Nat :=
   Nat.add (Nat.sub magnitude (maxFinite fmt)) (Nat.mul (negZeroNaN fmt) (Nat.sub sign magnitude))
+
+kernel_constant nonFinite
 
 /-- The encoding of a value is its sign bit above its exponent and fraction fields. -/
 theorem toNatBits_eq_fields {fmt : FloatFormat} (x : Model fmt) :

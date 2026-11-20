@@ -103,6 +103,9 @@ private def classifyModule (moduleName : String) : Except String Classification 
       hasModulePrefix moduleName "FloatLib.Util" then
     -- Tactics, commands and their helpers, as the automation modules they came from were.
     classified "core-numerics" "experimental"
+  else if hasModulePrefix moduleName "FloatLib.Examples" then
+    -- The worked examples, which the axiom audit loads. No module of the root imports them.
+    classified "examples" "experimental"
   else
     .error s!"unclassified FloatLib module: {moduleName}"
 
@@ -197,6 +200,7 @@ private def classifyMovedModule : String → Option (String × String)
   | "FloatLib.Tactic.KernelProj"
   | "FloatLib.Tactic.KernelRefl"
   | "FloatLib.Tactic.KernelRules"
+  | "FloatLib.Tactic.KernelShape"
   | "FloatLib.Tactic.KernelTwin"
   | "FloatLib.Util.Declaration"
   | "FloatLib.Util.KernelReduction"

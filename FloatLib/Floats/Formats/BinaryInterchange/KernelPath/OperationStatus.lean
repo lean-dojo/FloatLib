@@ -27,6 +27,10 @@ operation, raised by a signaling NaN or by an invalid combination of infinities 
 `addStatus_eq`, `subStatus_eq`, `mulStatus_eq` and `fmaStatus_eq` prove that the decoded flags and
 ternary value are the reference ones, for every format descriptor, every rounding direction and
 all operands.
+
+Each status number is a function of the delivered word (`addStatusWith`, `subStatusWith`,
+`mulStatusWith`, `fmaStatusWith`), taken at the operation on the encodings. A statement about
+the value and the flags of one operation gives that function the word it has already computed.
 -/
 
 @[expose] public section
@@ -63,9 +67,11 @@ def sumMagnitude (sa X sb Y : Nat) : Nat :=
 
 /--
 The status number of the sum of the values encoded by `a` and `b`, rounded in the direction
-`mode` (`addStatus_eq`).
+`mode`, when `w` is the word of the rounded sum. `addStatus` is this number at
+`add fmt mode a b`. With the word as an argument, a statement about the value and the flags of
+one sum computes the sum once.
 -/
-def addStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : Nat :=
+def addStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b w : Nat) : Nat :=
   (fun sa sb ua ub =>
     Bool.casesOn (motive := fun _ => Nat)
       (Nat.beq (Nat.add (nonFinite fmt sa ua) (nonFinite fmt sb ub)) 0)
@@ -78,13 +84,28 @@ def addStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : 
         (infFlag fmt ua) (infFlag fmt ub) (nanFlag fmt sa ua) (nanFlag fmt sb ub))
       ((fun ha hb =>
           (fun X Y =>
-            roundStatus fmt mode (sumSign sa X sb Y) (sumMagnitude sa X sb Y) 0 (add fmt mode a b))
+            roundStatus fmt mode (sumSign sa X sb Y) (sumMagnitude sa X sb Y) 0 w)
             (Nat.shiftLeft (Nat.sub ua (Nat.shiftLeft ha fmt.fracWidth)) (Nat.add ha 2))
             (Nat.shiftLeft (Nat.sub ub (Nat.shiftLeft hb fmt.fracWidth)) (Nat.add hb 2)))
         (Nat.sub (Nat.shiftRight ua fmt.fracWidth) 1)
         (Nat.sub (Nat.shiftRight ub fmt.fracWidth) 1)))
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
+
+/--
+The status number of the sum of the values encoded by `a` and `b`, rounded in the direction
+`mode` (`addStatus_eq`).
+-/
+def addStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : Nat :=
+  addStatusWith fmt mode a b (add fmt mode a b)
+
+/--
+The status number of the difference of the values encoded by `a` and `b`, rounded in the
+direction `mode`, when `w` is the word of the rounded difference. `subStatus` is this number at
+`sub fmt mode a b`.
+-/
+def subStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b w : Nat) : Nat :=
+  addStatusWith fmt mode a (neg fmt b) w
 
 /--
 The status number of the difference of the values encoded by `a` and `b`, rounded in the
@@ -95,9 +116,10 @@ def subStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : 
 
 /--
 The status number of the product of the values encoded by `a` and `b`, rounded in the direction
-`mode` (`mulStatus_eq`).
+`mode`, when `w` is the word of the rounded product. `mulStatus` is this number at
+`mul fmt mode a b`.
 -/
-def mulStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : Nat :=
+def mulStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b w : Nat) : Nat :=
   (fun sa sb ua ub =>
     Bool.casesOn (motive := fun _ => Nat)
       (Nat.beq (Nat.add (nonFinite fmt sa ua) (nonFinite fmt sb ub)) 0)
@@ -114,17 +136,25 @@ def mulStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : 
               (Nat.mul (Nat.sub ua (Nat.shiftLeft ha fmt.fracWidth))
                 (Nat.sub ub (Nat.shiftLeft hb fmt.fracWidth)))
               (Nat.add (Nat.add ha hb) 2))
-            fmt.subnormalAlignExp (mul fmt mode a b))
+            fmt.subnormalAlignExp w)
         (Nat.sub (Nat.shiftRight ua fmt.fracWidth) 1)
         (Nat.sub (Nat.shiftRight ub fmt.fracWidth) 1)))
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
 
 /--
-The status number of `x * y + z` rounded once in the direction `mode`, for the values encoded by
-`a`, `b` and `c` (`fmaStatus_eq`).
+The status number of the product of the values encoded by `a` and `b`, rounded in the direction
+`mode` (`mulStatus_eq`).
 -/
-def fmaStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b c : Nat) : Nat :=
+def mulStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : Nat :=
+  mulStatusWith fmt mode a b (mul fmt mode a b)
+
+/--
+The status number of `x * y + z` rounded once in the direction `mode`, for the values encoded by
+`a`, `b` and `c`, when `w` is the word of the rounded result. `fmaStatus` is this number at
+`fma fmt mode a b c`.
+-/
+def fmaStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b c w : Nat) : Nat :=
   (fun sa sb sc ua ub uc =>
     Bool.casesOn (motive := fun _ => Nat)
       (Nat.beq
@@ -149,7 +179,7 @@ def fmaStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b c : Nat) 
       ((fun ha hb hc =>
           (fun X Z =>
             roundStatus fmt mode (sumSign (Nat.xor sa sb) X sc Z)
-              (sumMagnitude (Nat.xor sa sb) X sc Z) fmt.subnormalAlignExp (fma fmt mode a b c))
+              (sumMagnitude (Nat.xor sa sb) X sc Z) fmt.subnormalAlignExp w)
             (Nat.shiftLeft
               (Nat.mul (Nat.sub ua (Nat.shiftLeft ha fmt.fracWidth))
                 (Nat.sub ub (Nat.shiftLeft hb fmt.fracWidth)))
@@ -162,6 +192,13 @@ def fmaStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b c : Nat) 
     (Nat.shiftRight c (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
     (Nat.land c (magnitudeMask fmt))
+
+/--
+The status number of `x * y + z` rounded once in the direction `mode`, for the values encoded by
+`a`, `b` and `c` (`fmaStatus_eq`).
+-/
+def fmaStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b c : Nat) : Nat :=
+  fmaStatusWith fmt mode a b c (fma fmt mode a b c)
 
 /-! ## Exact results and exactly delivered results -/
 
@@ -309,7 +346,7 @@ theorem addStatus_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x y : 
   have hfx := Model.fracField_lt_pow2 x
   have hfy := Model.fracField_lt_pow2 y
   rw [← Model.Internal.Status.add_eq]
-  unfold addStatus Model.Internal.Status.add
+  unfold addStatus addStatusWith Model.Internal.Status.add
   simp only [Nat.shiftRight_eq', Nat.land_eq, Nat.shiftLeft_eq', Nat.sub_eq, Nat.add_eq,
     Nat.mul_eq, Nat.xor_eq, sign_toNatBits, magnitude_toNatBits, fields_shiftRight _ _ _ hfx,
     fields_shiftRight _ _ _ hfy, fields_sub_shiftLeft, xor_sign, infFlag_eq, nanFlag_eq,
@@ -399,7 +436,7 @@ theorem mulStatus_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x y : 
   have hfx := Model.fracField_lt_pow2 x
   have hfy := Model.fracField_lt_pow2 y
   rw [← Model.Internal.Status.mul_eq]
-  unfold mulStatus Model.Internal.Status.mul
+  unfold mulStatus mulStatusWith Model.Internal.Status.mul
   simp only [Nat.shiftRight_eq', Nat.land_eq, Nat.shiftLeft_eq', Nat.sub_eq, Nat.add_eq,
     Nat.mul_eq, Nat.xor_eq, sign_toNatBits, magnitude_toNatBits, fields_shiftRight _ _ _ hfx,
     fields_shiftRight _ _ _ hfy, fields_sub_shiftLeft, xor_sign, infFlag_eq, nanFlag_eq,
@@ -483,7 +520,7 @@ theorem fmaStatus_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x y z 
   have hfy := Model.fracField_lt_pow2 y
   have hfz := Model.fracField_lt_pow2 z
   rw [← Model.Internal.Status.fma_eq]
-  unfold fmaStatus Model.Internal.Status.fma
+  unfold fmaStatus fmaStatusWith Model.Internal.Status.fma
   simp only [Nat.shiftRight_eq', Nat.land_eq, Nat.shiftLeft_eq', Nat.sub_eq, Nat.add_eq,
     Nat.mul_eq, Nat.xor_eq, sign_toNatBits, magnitude_toNatBits, fields_shiftRight _ _ _ hfx,
     fields_shiftRight _ _ _ hfy, fields_shiftRight _ _ _ hfz, fields_sub_shiftLeft, xor_sign,

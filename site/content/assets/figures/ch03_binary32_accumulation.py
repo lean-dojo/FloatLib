@@ -105,9 +105,11 @@ def draw_mobile(target: Path, ks: list[int], errors: dict[str, list[float]],
     for index, j in enumerate(LABELLED_BINADES):
         k = crossings[j]
         ax.axvline(k, color=fs.MUTED, linestyle=":", linewidth=1.0, zorder=1)
-        ax.annotate(str(2 ** j), (k, 0.052 if index % 2 == 0 else 0.030), xytext=(2, 0),
-                    textcoords="offset points", ha="left", va="bottom",
-                    fontsize=fs.SIZE_SMALL, color=fs.MUTED)
+        # The lines of 64 and 128 are closer than a label is wide, so the labels sit above the
+        # lines, every second one a row higher.
+        ax.annotate(str(2 ** j), (k, 1.0), xycoords=("data", "axes fraction"),
+                    xytext=(0, 3 if index % 2 == 0 else 14), textcoords="offset points",
+                    ha="center", va="bottom", fontsize=fs.SIZE_SMALL, color=fs.MUTED)
     ax.axhline(0, color=fs.INK, linewidth=0.8, zorder=1)
     labels = {mode: style["label"] for mode, style in SERIES.items()}
     for mode, style in SERIES.items():

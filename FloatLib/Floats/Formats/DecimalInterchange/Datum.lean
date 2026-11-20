@@ -37,7 +37,37 @@ inductive Datum where
   | infinity (negative : Bool)
   /-- A NaN with its sign, whether it is signaling, and its payload. -/
   | nan (negative : Bool) (signaling : Bool) (payload : Nat)
-  deriving DecidableEq
+
+/--
+Two datums are equal exactly when they are of the same kind with the same fields, and the
+decision compares the fields one after the other. Lean's kernel reduces it by evaluating the
+fields. A derived instance returns its answer through rewrites along the proofs that the fields
+are equal, and to reduce those the kernel compares the computations of the fields as terms.
+-/
+instance : DecidableEq Datum := fun x y =>
+  match x, y with
+  | .finite s c q, .finite s' c' q' =>
+      if hs : s = s' then
+        if hc : c = c' then
+          if hq : q = q' then isTrue (by rw [hs, hc, hq])
+          else isFalse fun h => hq (Datum.finite.inj h).2.2
+        else isFalse fun h => hc (Datum.finite.inj h).2.1
+      else isFalse fun h => hs (Datum.finite.inj h).1
+  | .infinity s, .infinity s' =>
+      if hs : s = s' then isTrue (by rw [hs]) else isFalse fun h => hs (Datum.infinity.inj h)
+  | .nan s t p, .nan s' t' p' =>
+      if hs : s = s' then
+        if ht : t = t' then
+          if hp : p = p' then isTrue (by rw [hs, ht, hp])
+          else isFalse fun h => hp (Datum.nan.inj h).2.2
+        else isFalse fun h => ht (Datum.nan.inj h).2.1
+      else isFalse fun h => hs (Datum.nan.inj h).1
+  | .finite .., .infinity .. => isFalse nofun
+  | .finite .., .nan .. => isFalse nofun
+  | .infinity .., .finite .. => isFalse nofun
+  | .infinity .., .nan .. => isFalse nofun
+  | .nan .., .finite .. => isFalse nofun
+  | .nan .., .infinity .. => isFalse nofun
 
 namespace Datum
 

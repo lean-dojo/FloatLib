@@ -19,6 +19,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.ToRat
 public import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.TotalOrder
 public import FloatLib.Tactic.FloatDecide -- shake: keep
 public import FloatLib.Tactic.KernelInline
+public import FloatLib.Tactic.KernelRefl
 
 /-!
 # The `specialize_directions` command
@@ -56,7 +57,7 @@ macro defDoc:docComment ruleDoc:docComment "specialize_directions " op:ident
       $ruleDoc:docComment
       @[kernel_optimize] theorem $ruleName (fmt : FloatFormat) ($args* : Nat) :
           $op fmt $constructor $args* = $name fmt $args* :=
-        rewrite_rule rfl)
+        rewrite_rule kernel_refl%)
   return ⟨Lean.mkNullNode commands⟩
 
 end Flat

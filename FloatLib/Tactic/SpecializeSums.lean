@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Tactic.InlineShort
 public import FloatLib.Tactic.KernelOptimize
+public import FloatLib.Tactic.KernelRefl
 
 /-!
 # The `specialize_sums` command
@@ -58,7 +59,7 @@ macro (name := specializeSums) "specialize_sums" : command => do
       /-- The flat addition in a literal direction is its specialization to that direction. -/
       @[kernel_optimize] theorem $sumRule (fmt : FloatFormat) (a b : Nat) :
           add fmt $constructor a b = $sum fmt a b :=
-        rewrite_rule rfl
+        rewrite_rule kernel_refl%
 
       /-- Subtraction on encodings in one rounding direction, with the code of that direction. -/
       noncomputable def $difference (fmt : FloatFormat) (a b : Nat) : Nat :=
@@ -70,7 +71,7 @@ macro (name := specializeSums) "specialize_sums" : command => do
       /-- The flat subtraction in a literal direction is its specialization to that direction. -/
       @[kernel_optimize] theorem $differenceRule (fmt : FloatFormat) (a b : Nat) :
           sub fmt $constructor a b = $difference fmt a b :=
-        rewrite_rule rfl)
+        rewrite_rule kernel_refl%)
   return ⟨Lean.mkNullNode commands⟩
 
 end Flat

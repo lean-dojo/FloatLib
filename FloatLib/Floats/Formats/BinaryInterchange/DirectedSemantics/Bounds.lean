@@ -411,16 +411,23 @@ theorem toReal_roundDyadicDown_nonneg (fmt : FloatFormat) (value : Numerics.Dyad
     | exact toReal_nonneg_of_signBit_eq_false (by simp)
     | simp_all
 
+/-- Nearest-even rational rounding in an IEEE format keeps the sign bit it is given, in every
+case of the rounding: zero, underflow, a subnormal or normal result and overflow. -/
+theorem signBit_ieeeRoundRatScaled {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (sign : Bool)
+    (numerator denominator : Nat) (exponent : Int) (hdenominator : denominator ≠ 0) :
+    signBit (ieeeRoundRatScaled fmt sign numerator denominator exponent hfmt) = sign := by
+  unfold ieeeRoundRatScaled
+  simp only [beq_iff_eq, hdenominator, ite_false]
+  split_ifs <;> (try split) <;> simp_all
+
 /-- Nearest-even rounding of a nonnegative scaled rational has nonnegative real interpretation. -/
 theorem toReal_roundRatScaled_false_nonneg (fmt : FloatFormat)
     (numerator denominator : Nat) (exponent : Int) (hdenominator : denominator ≠ 0) :
     0 ≤ toReal (roundRatScaled fmt false numerator denominator exponent) := by
   unfold roundRatScaled
   split
-  · apply toReal_nonneg_of_signBit_eq_false
-    unfold ieeeRoundRatScaled
-    simp only [beq_iff_eq, hdenominator, ite_false]
-    split_ifs <;> (try split) <;> simp_all
+  · exact toReal_nonneg_of_signBit_eq_false
+      (signBit_ieeeRoundRatScaled _ false numerator denominator exponent hdenominator)
   · unfold roundRatScaledGeneral
     dsimp only
     simp only [beq_iff_eq, hdenominator, ite_false]

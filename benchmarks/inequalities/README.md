@@ -55,8 +55,8 @@ in Table 1 remain unmapped to the current extraction.
 
 ## Results on Lean v4.36.0
 
-The suite ran on 2026-11-17, eight Lean
-processes at a time with three threads each, 20 seconds and 4 GB per process.
+The suite ran on 2026-11-20, eight Lean
+processes at a time with three threads each, one goal per process, 20 seconds and 4 GB per process.
 [`../results/suites/README.md`](../results/suites/README.md) has the tables and
 [`inequalities.csv`](../results/suites/inequalities.csv) one row per goal and route.
 
@@ -66,14 +66,13 @@ provides it. The first route imports `FloatLib.Tactic.Interval` alone.
 
 | Route | Proved | Tactic refusals | Timeouts | Out of memory | Translation refusals |
 |---|---:|---:|---:|---:|---:|
-| MetiTarski, `interval` alone | 92 | 691 | 15 | 0 | 150 |
-| MetiTarski, with the constraint engine | 184 | 418 | 189 | 7 | 150 |
-| Flyspeck, `interval` alone | 2 | 18 | 0 | 0 | 144 |
-| Flyspeck, with the constraint engine | 5 | 3 | 8 | 4 | 144 |
+| MetiTarski, `interval` alone | 124 | 674 | 0 | 0 | 150 |
+| MetiTarski, with the constraint engine | 340 | 394 | 64 | 0 | 150 |
+| Flyspeck, `interval` alone | 3 | 17 | 0 | 0 | 144 |
+| Flyspeck, with the constraint engine | 6 | 11 | 3 | 0 | 144 |
 
-At least one route proves 188 of the 948 MetiTarski goals and
-5 of the 164 Flyspeck records. An out-of-memory row is a Lean process
-that stopped at its 4 GB limit (`lean -M 4096`) inside the interpreter. With the imports of the
-first route, `interval` has no rational bound for `Real.pi` (`(3 : ℝ) < Real.pi` is refused), so
-its goals with π are refused. With `import FloatLib`, the second route, the bound is there, and
-four of the eight problems named after π are proved.
+At least one route proves 340 of the 948 MetiTarski goals and
+6 of the 164 Flyspeck records, and the second route proves every goal that the first one
+proves. An out-of-memory row would be a Lean process that stopped at its 4 GB limit
+(`lean -M 4096`): the largest process took 3.8 GB. Of the eight problems named after π, the
+first route proves three and the second six.

@@ -103,7 +103,7 @@ theorem abs_eval_sub_exact_le_mixedBudget (t : ReductionTree α)
     have localError := h.2.2
     have triangle := add_error ea eb localError
     dsimp only [eval, mixedBudget]
-    nlinarith [mul_nonneg hu (sub_nonneg.mpr ma), mul_nonneg hu (sub_nonneg.mpr mb)]
+    linarith [mul_nonneg hu (sub_nonneg.mpr ma), mul_nonneg hu (sub_nonneg.mpr mb)]
 
 /-- Relative-only analysis is the mixed bound with zero absolute allowance. -/
 theorem abs_eval_sub_exact_le_relativeBudget (t : ReductionTree α)
@@ -168,7 +168,7 @@ theorem mixedBudget_zero_le_depth (value : α → ℝ) (u : ℝ) (hu : 0 ≤ u)
         (a.sumAbs value + b.sumAbs value)
     rw [pow_succ]
     change _ ≤ (g * (1 + u) - 1) * _
-    nlinarith
+    linarith
 
 /-- The factor of the depth bound is at most the factor of the size bound: no schedule is deeper
 than its number of additions. -/

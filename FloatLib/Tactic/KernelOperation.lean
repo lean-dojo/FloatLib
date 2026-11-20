@@ -42,7 +42,8 @@ spec, specEq) for pub [args]` declares the kernel operation `name` on stored val
 direction: the definition (the operation `staged` lifted by `lift`, which Lean compiles, where
 the flat `op` it equals by unfolding is for the kernel only), `name_eq_lift` (it is the reference
 operation `model` in that direction carried through the family's conversions), `toNat_name` (its
-encoding is `op` on the encodings of the operands) and `name_eq` (the public operation
+encoding is `op` on the encodings of the operands, by the equation `op_eq : @op = @staged`, so
+that the elaborator does not unfold the flat form) and `name_eq` (the public operation
 `ExecFloat.pub` equals it in the nearest-even direction, where `specEq` says that `model` is
 `spec`). `cost n` is the declared kernel cost of that rule in microseconds: the measured time of
 one binary32 operation on normal operands.
@@ -55,6 +56,7 @@ macro doc:docComment "kernel_operation " name:ident " := " lift:ident ", " liftE
   let eqLift := Lean.mkIdent (name.getId.appendAfter "_eq_lift")
   let eqPub := Lean.mkIdent (name.getId.appendAfter "_eq")
   let toNatName := Lean.mkIdent (Lean.Name.mkSimple ("toNat_" ++ name.getId.toString))
+  let opEq := Lean.mkIdent (op.getId.appendAfter "_eq")
   let pubName := Lean.mkIdent (`FloatLib.Floats.ExecFloat ++ pub.getId)
   let capName := Lean.mkIdent (`FloatLib.Floats.ExecFloat ++
     Lean.Name.mkSimple pub.getId.toString.capitalize)
@@ -75,8 +77,9 @@ macro doc:docComment "kernel_operation " name:ident " := " lift:ident ", " liftE
     /-- The encoding of the result is the flat operation on the encodings of the operands. -/
     @[kernel_optimize] theorem $toNatName (mode : Model.IEEERoundingMode)
         ($args* : FloatLib.Floats.ExecFloat F) :
-        toNat ($name mode $args*) = $op format mode $natArgs* :=
-      $toNatLift _ _ _ $args*
+        toNat ($name mode $args*) = $op format mode $natArgs* := by
+      rw [$opEq:ident]
+      exact $toNatLift _ _ _ $args*
 
     /--
     The public operation equals the kernel operation in the nearest-even direction, for every

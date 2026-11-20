@@ -455,6 +455,7 @@ def pow_arguments(fmt, args, rng):
     special = [exact(v) for v in (0, 1, -1, 2, -2, 3, Fraction(1, 2), Fraction(-1, 2),
                                   Fraction(1, 4), Fraction(3, 2), 5, -3, 10, 100)]
     quadruples = []
+    strict = set()
     if args.hard:
         bases = [exact(v) for v in (1, -1, 2, -4, Fraction(1, 2), Fraction(-1, 4), 0, 3)]
         zeros = [0, 1 << fmt.sign_shift]
@@ -471,6 +472,57 @@ def pow_arguments(fmt, args, rng):
             for c in (Fraction(1, 4), Fraction(-1, 4), Fraction(3, 4), Fraction(1, 8),
                       Fraction(3, 2), Fraction(-3, 2), Fraction(5, 2), Fraction(3, 8)):
                 quadruples.append((exact(x), exact(y), exact(c), 0))
+        # Bases next to an axis, at real exponents whose power lies next to an axis again: the
+        # part next to zero keeps its relative accuracy only with the angle from that axis.
+        offsets = [Fraction(1, 2 ** k) for k in (fmt.frac_width + 10, 3 * fmt.frac_width,
+                                                 fmt.bias - 2)]
+        for scale in (1, Fraction(3, 2), Fraction(1, 1024), 1 << 10):
+            for offset in offsets:
+                for x, y in ((-scale, offset), (-scale, -offset), (scale, offset),
+                             (offset, scale), (-offset, scale), (offset, -scale)):
+                    for c in (2, 3, 7, 100, -7, Fraction(3, 2), Fraction(5, 2), Fraction(-3, 2),
+                              Fraction(7, 2)):
+                        quadruples.append((exact(x), exact(y), exact(c), 0))
+        # Perfect powers with a perturbation of one part: the power lies next to a
+        # representable number, at a distance of the square of the perturbation.
+        for x, c in ((4, Fraction(3, 2)), (16, Fraction(3, 4)), (9, Fraction(5, 2)),
+                     (Fraction(1, 4), Fraction(3, 2)), (-4, Fraction(3, 2)), (-9, Fraction(5, 2)),
+                     (16, Fraction(-5, 4)), (-16, Fraction(3, 2))):
+            for offset in offsets:
+                for y in (offset, -offset):
+                    quadruples.append((exact(x), exact(y), exact(c), 0))
+                    quadruples.append((exact(y), exact(x), exact(c), 0))
+        # Bases whose parts have the least ratio of the format, at exponents whose power of the
+        # larger part is representable: the power lies at a relative distance of the square
+        # of that ratio from a representable number.
+        top = Fraction(2) ** (4 * ((fmt.emax - 3) // 4))
+        least = Fraction(2) ** (fmt.emin - fmt.frac_width)
+        for x, y in ((top, least), (-top, least), (top, -least), (least, top), (-least, top),
+                     (1 / top, least), (top, 3 * least), (-top, -least)):
+            for c in (Fraction(3, 4), Fraction(3, 2), Fraction(-3, 4), Fraction(5, 4),
+                      Fraction(1, 4), Fraction(-1, 4), Fraction(5, 2), Fraction(7, 4)):
+                quadruples.append((exact(x), exact(y), exact(c), 0))
+        # Powers far outside the range of the format, and integer powers too long to form. No
+        # part of these is zero, except at an even integer exponent of the base on the diagonal,
+        # so a result below the format is compared with its sign.
+        for x, y in ((1, 1), (3, -2), (Fraction(1, 2), Fraction(1, 3)), (-5, 1)):
+            for c in (10 ** 7 + Fraction(1, 2), -(10 ** 7) - Fraction(1, 2), 2 ** 40,
+                      Fraction(10 ** 5 + 1, 4), 100001, -100001, 2 ** 70 + 2 ** 30,
+                      -(2 ** 90) - 2 ** 40):
+                for d in (0, exact(Fraction(1, 2)), exact(-(2 ** 45))):
+                    quadruple = (exact(x), exact(y), exact(c), d)
+                    quadruples.append(quadruple)
+                    rounded = fmt.classify(quadruple[2])[2]
+                    if rounded is not None and not (
+                            x == y and d == 0 and rounded.denominator == 1 and rounded % 2 == 0):
+                        strict.add(quadruple)
+        # Bases on a diagonal at even integer exponents: the power lies on an axis, at any size
+        # of the exponent.
+        for x in (1, -1, 3, Fraction(-1, 2), Fraction(5, 8)):
+            for y in (x, -x):
+                for c in (2, 6, -4, 100, 2046, -2148, 10 ** 6, 100002, 200004, -100006,
+                          2 ** 40, -(2 ** 40)):
+                    quadruples.append((exact(x), exact(y), exact(c), 0))
     styles = ["moderate", "near_one", "wide", "moderate"]
     for index in range(args.samples):
         style = styles[index % len(styles)]
@@ -488,12 +540,12 @@ def pow_arguments(fmt, args, rng):
             c, d = exact(rng.randint(-40, 40)), rng.choice([0, exact(rng.randint(-3, 3))])
         quadruples.append((re, im, c, d))
     return [q for q in quadruples if all(is_finite(fmt, word) for word in q)
-            and not (fmt.classify(q[0])[2] == 0 and fmt.classify(q[1])[2] == 0)]
+            and not (fmt.classify(q[0])[2] == 0 and fmt.classify(q[1])[2] == 0)], strict
 
 
 def run_pow(args, fmt, modes, rng):
     """Compare `pow` with MPC on bases and exponents. Returns the number of failures."""
-    cases = pow_arguments(fmt, args, rng)
+    cases, strict = pow_arguments(fmt, args, rng)
     total_failures = 0
     for mode in modes:
         requests = [f"pow {fmt.exp_width} {fmt.frac_width} {mode} {re} {im} {c} {d}"
@@ -515,10 +567,18 @@ def run_pow(args, fmt, modes, rng):
             if expected is None:
                 undecided += 1
                 uncertified += 0 if certified else 1
+                if args.show_uncertified and undecided <= args.show:
+                    values = [fmt.classify(word)[2] for word in words]
+                    print(f"  UNDECIDED pow {mode} base {float(values[0])!r} "
+                          f"{float(values[1])!r} exponent {float(values[2])!r} "
+                          f"{float(values[3])!r}: got {answer}")
                 continue
-            ok = all(matches(fmt, "pow", expected[k], int(fields[k])) or (
-                is_tiny(fmt, expected[k]) and is_tiny(fmt, ("word", int(fields[k]))))
-                for k in (0, 1))
+            if words in strict:
+                ok = all(matches(fmt, "strict", expected[k], int(fields[k])) for k in (0, 1))
+            else:
+                ok = all(matches(fmt, "pow", expected[k], int(fields[k])) or (
+                    is_tiny(fmt, expected[k]) and is_tiny(fmt, ("word", int(fields[k]))))
+                    for k in (0, 1))
             if not certified:
                 uncertified += 1
                 uncertified_equal += 1 if ok else 0
@@ -578,6 +638,8 @@ def random_word(fmt, rng, style):
         exponent = fmt.bias + rng.randint(-6, 6)
     elif style == "near_one":
         exponent = fmt.bias + rng.choice([-1, 0])
+    elif style == "small":
+        exponent = rng.randint(0, fmt.bias - 5)
     else:
         exponent = rng.randint(0, fmt.exp_all_ones - 1)
     fraction = rng.randrange(1 << fmt.frac_width)
@@ -663,7 +725,8 @@ def main():
     parser.add_argument("--seed", type=int, default=20261116)
     parser.add_argument("--styles", default="bits,moderate,near_one,wide",
                         help="kinds of random arguments, in turn: bits (any encoding), moderate "
-                             "(exponents within six of zero), near_one, wide (any exponent)")
+                             "(exponents within six of zero), near_one, wide (any exponent), "
+                             "small (magnitudes below one sixteenth, subnormal numbers included)")
     parser.add_argument("--hard", action="store_true", help="add the grid of hard arguments")
     parser.add_argument("--exhaustive", action="store_true", help="every pair of encodings")
     parser.add_argument("--axes", action="store_true",

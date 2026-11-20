@@ -57,11 +57,12 @@ structure Limits where
 /--
 Replace each atom that the bounds pin to one rational value by that value: an atom `x` with the
 bounds `c ≤ x` and `x ≤ c` is the number `c`, which `linarith` proves from the given facts. The
-value replaces the atom in every hypothesis except those that bound it, so the hypotheses that
-pin it stay. The result says whether a hypothesis changed.
+facts are computed only when an atom is pinned. The value replaces the atom in every hypothesis
+except those that bound it, so the hypotheses that pin it stay. The result says whether a
+hypothesis changed.
 -/
-def substitutePinned (atoms : Array Q(ℝ)) (bounds : Array Bound) (facts : Array Lean.Expr) :
-    TacticM Bool := do
+def substitutePinned (atoms : Array Q(ℝ)) (bounds : Array Bound)
+    (facts : TacticM (Array Lean.Expr)) : TacticM Bool := do
   let mut changed := false
   for (atom : Q(ℝ)) in atoms do
     let mut lower : Option ℚ := none
@@ -88,7 +89,7 @@ def substitutePinned (atoms : Array Q(ℝ)) (bounds : Array Bound) (facts : Arra
     unless needed do continue
     -- the equation, and each such hypothesis with the value in place of the atom
     let value ← ratTerm lo
-    let some equation ← linarithProof? q($atom = $value) facts | continue
+    let some equation ← linarithProof? q($atom = $value) (← facts) | continue
     let (next, rewritten) ← rewriteHypotheses goal atom value equation own
     unless rewritten do continue
     replaceMainGoal [next]
@@ -300,10 +301,11 @@ A bound on the atom `x` from a comparison whose difference is affine in atoms wi
 coefficients, `α * x + Σ βⱼ * yⱼ + γ` with `α ≠ 0`, when every other atom `yⱼ` has the bound it
 needs: `x ≤ c` for `α > 0` and `c ≤ x` for `α < 0`, where `c` is the extreme value of
 `-(Σ βⱼ * yⱼ + γ) / α` on the bounds of the `yⱼ`. `linarith` proves it from the given facts,
-which are the comparisons that hold outright and the facts about constants. The result is the
-bound, its proof and whether it is an upper bound.
+which are the comparisons that hold outright and the facts about constants, and which are
+computed only when the comparison gives a bound. The result is the bound, its proof and whether
+it is an upper bound.
 -/
-def affineBound (atoms : Array Q(ℝ)) (bounds : Array Bound) (facts : Array Lean.Expr)
+def affineBound (atoms : Array Q(ℝ)) (bounds : Array Bound) (facts : TacticM (Array Lean.Expr))
     (literal : Literal) (i : Nat) : TacticM (Option (Q(Prop) × Lean.Expr × Bool)) := do
   let some (x : Q(ℝ)) := atoms[i]? | return none
   let expansion ← Expansion.of atoms literal none #[]
@@ -332,7 +334,7 @@ def affineBound (atoms : Array Q(ℝ)) (bounds : Array Bound) (facts : Array Lea
     | _ => return none
   let limit ← ratTerm extreme
   let type : Q(Prop) := if 0 < slope then q($x ≤ $limit) else q($limit ≤ $x)
-  let some proof ← linarithProof? type facts | return none
+  let some proof ← linarithProof? type (← facts) | return none
   return some (type, proof, 0 < slope)
 
 /--

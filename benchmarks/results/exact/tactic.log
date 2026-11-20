@@ -1,24 +1,24 @@
-KCMD interval/x * (1 - x) ≤ 13/50 on [0, 1] ns=80084142 errors=false
-KCMD interval/x ^ 3 - 2 * x ≤ 1/100 on [0, 7/5] ns=77810235 errors=false
-KCMD interval/exp x ≤ 11/4 on [0, 1] ns=30685433 errors=false
-KCMD interval/x * exp (-x) ≤ 2/5 on [0, 3] ns=314500592 errors=false
-KCMD interval/log x ≤ 7/10 on [1, 2] ns=38532128 errors=false
-KCMD interval/sqrt x ≤ 3/2 on [1, 2] ns=26984672 errors=false
-KCMD interval/sin x ≤ x on [0, 1] ns=491847970 errors=false
-KCMD interval/x * y - x ^ 2 ≤ 1/3 on [0, 1]² ns=88792165 errors=false
-KCMD interval/x * (1 - x) ≤ 13/50 on [0, 1] ns=83160799 errors=false
-KCMD interval/x ^ 3 - 2 * x ≤ 1/100 on [0, 7/5] ns=71037302 errors=false
-KCMD interval/exp x ≤ 11/4 on [0, 1] ns=25547920 errors=false
-KCMD interval/x * exp (-x) ≤ 2/5 on [0, 3] ns=283337679 errors=false
-KCMD interval/log x ≤ 7/10 on [1, 2] ns=35321642 errors=false
-KCMD interval/sqrt x ≤ 3/2 on [1, 2] ns=24676283 errors=false
-KCMD interval/sin x ≤ x on [0, 1] ns=450967328 errors=false
-KCMD interval/x * y - x ^ 2 ≤ 1/3 on [0, 1]² ns=92497639 errors=false
-KCMD interval/x * (1 - x) ≤ 13/50 on [0, 1] ns=82109943 errors=false
-KCMD interval/x ^ 3 - 2 * x ≤ 1/100 on [0, 7/5] ns=69847371 errors=false
-KCMD interval/exp x ≤ 11/4 on [0, 1] ns=24859074 errors=false
-KCMD interval/x * exp (-x) ≤ 2/5 on [0, 3] ns=283518539 errors=false
-KCMD interval/log x ≤ 7/10 on [1, 2] ns=37051834 errors=false
-KCMD interval/sqrt x ≤ 3/2 on [1, 2] ns=26417083 errors=false
-KCMD interval/sin x ≤ x on [0, 1] ns=436826964 errors=false
-KCMD interval/x * y - x ^ 2 ≤ 1/3 on [0, 1]² ns=82964018 errors=false
+KCMD interval/x * (1 - x) ≤ 13/50 on [0, 1] ns=78817700 errors=false
+KCMD interval/x ^ 3 - 2 * x ≤ 1/100 on [0, 7/5] ns=64360969 errors=false
+KCMD interval/exp x ≤ 11/4 on [0, 1] ns=24150764 errors=false
+KCMD interval/x * exp (-x) ≤ 2/5 on [0, 3] ns=260284529 errors=false
+KCMD interval/log x ≤ 7/10 on [1, 2] ns=33532219 errors=false
+KCMD interval/sqrt x ≤ 3/2 on [1, 2] ns=23501496 errors=false
+KCMD interval/sin x ≤ x on [0, 1] ns=413227916 errors=false
+KCMD interval/x * y - x ^ 2 ≤ 1/3 on [0, 1]² ns=78454918 errors=false
+KCMD interval/x * (1 - x) ≤ 13/50 on [0, 1] ns=91356542 errors=false
+KCMD interval/x ^ 3 - 2 * x ≤ 1/100 on [0, 7/5] ns=76911402 errors=false
+KCMD interval/exp x ≤ 11/4 on [0, 1] ns=24456511 errors=false
+KCMD interval/x * exp (-x) ≤ 2/5 on [0, 3] ns=269837363 errors=false
+KCMD interval/log x ≤ 7/10 on [1, 2] ns=33720190 errors=false
+KCMD interval/sqrt x ≤ 3/2 on [1, 2] ns=23428777 errors=false
+KCMD interval/sin x ≤ x on [0, 1] ns=418879824 errors=false
+KCMD interval/x * y - x ^ 2 ≤ 1/3 on [0, 1]² ns=94809700 errors=false
+KCMD interval/x * (1 - x) ≤ 13/50 on [0, 1] ns=103030755 errors=false
+KCMD interval/x ^ 3 - 2 * x ≤ 1/100 on [0, 7/5] ns=70378423 errors=false
+KCMD interval/exp x ≤ 11/4 on [0, 1] ns=23624639 errors=false
+KCMD interval/x * exp (-x) ≤ 2/5 on [0, 3] ns=287935532 errors=false
+KCMD interval/log x ≤ 7/10 on [1, 2] ns=50882510 errors=false
+KCMD interval/sqrt x ≤ 3/2 on [1, 2] ns=25545743 errors=false
+KCMD interval/sin x ≤ x on [0, 1] ns=474347565 errors=false
+KCMD interval/x * y - x ^ 2 ≤ 1/3 on [0, 1]² ns=82732792 errors=false

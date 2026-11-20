@@ -251,7 +251,7 @@ theorem abs_foldl_round_sub_le {α : Type*} {A : Rounding K} {u η : K} (hu : 0 
     have e1 : a' + (g c + (rest.map g).sum) = a' + g c + (rest.map g).sum := by ac_rfl
     rw [e1]
     refine h.trans ?_
-    nlinarith [mul_nonneg (mul_nonneg (by linarith : (0 : K) ≤ p) hu) hG,
+    linarith [mul_nonneg (mul_nonneg (by linarith : (0 : K) ≤ p) hu) hG,
       mul_nonneg (mul_nonneg (by linarith : (0 : K) ≤ p) hu) hE,
       mul_nonneg (mul_nonneg (mul_nonneg hn (by linarith : (0 : K) ≤ p)) hu) hη,
       mul_nonneg (mul_nonneg (by linarith : (0 : K) ≤ p) hu) hη,
@@ -325,7 +325,7 @@ theorem abs_accumulateChunked_sub_le {N W : Rounding K} {uN ηN uW ηW : K}
   rw [hsumE] at h
   refine h.trans ?_
   have hm : (0 : K) ≤ chunks.length := Nat.cast_nonneg _
-  nlinarith [mul_le_mul_of_nonneg_left hsumAbs (by linarith : (0 : K) ≤ pW - 1),
+  linarith [mul_le_mul_of_nonneg_left hsumAbs (by linarith : (0 : K) ≤ pW - 1),
     mul_nonneg (mul_nonneg hm (by linarith : (0 : K) ≤ pW)) hηW]
 
 /--

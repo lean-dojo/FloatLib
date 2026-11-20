@@ -191,7 +191,7 @@ theorem checkRoot?_eq (value guess : Nat) (result : Nat × Nat)
     next hremainder =>
       have hroot : guess = Nat.sqrt value := Nat.eq_sqrt.mpr ⟨hlower, by
         have hdecompose := Nat.sub_add_cancel hlower
-        nlinarith⟩
+        linarith⟩
       rw [← hroot]
       exact (Option.some.inj h).symm
     next _ => simp at h

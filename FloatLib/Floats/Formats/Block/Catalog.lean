@@ -474,8 +474,8 @@ theorem nvfp4_abs_reconstruct_sub_le_of_scale {ε : ℝ} (hε : ε < 1)
   have hε0 : 0 ≤ ε := nonneg_of_mul_nonneg_left ((abs_nonneg _).trans hs) hideal
   have hsat : max 0 (|x i| - (nvfp4 outer block).scale x i * 6) ≤
       ε * amax block x (block i) :=
-    max_le (mul_nonneg hε0 ha.le) (by nlinarith)
-  nlinarith
+    max_le (mul_nonneg hε0 ha.le) (by linarith)
+  linarith
 
 /-- If the stored block scale is not below the ideal scale `amax / 6`, no element of the block
 exceeds the E2M1 range: every element is at most `6` times its scale. -/

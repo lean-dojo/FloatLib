@@ -38,7 +38,8 @@ trees, build products and raw working results are ignored by Git.
 
 Python parses sources, generates plans, checks reference agreement and writes CSV.
 `Proofs.lean` elaborates each proof in a restored command environment and checks
-the transitive axiom set. Native Lean executables perform the differential tests;
+the transitive axiom set. It is a `module`, so a case elaborates with the exported
+declarations of its imports, as a module of the library does. Native Lean executables perform the differential tests;
 these executable observations are not kernel proofs. `process.py` records wall
 time and a sampled RSS peak, and kills the process group on timeout. The outer
 job log records `/usr/bin/time -v` resource use.
@@ -62,7 +63,7 @@ runner separately; capability probes deliberately contain rejected cases.
 ## Results
 
 [`../results/suites/README.md`](../results/suites/README.md) has the results of the last
-run, on Lean v4.36.0, as tables, with one short CSV file per suite
+run of each suite, on Lean v4.36.0, as tables, with one short CSV file per suite
 next to it and `counts.csv` for every number. `summarize.py` writes them from the
 results directory of a run:
 
@@ -70,27 +71,24 @@ results directory of a run:
 python3 benchmarks/suites/summarize.py RESULTS --tools FPBENCH_TOOLS_RESULTS.csv
 ```
 
-A run's own `results.csv` files hold every statement, plan and command and are tens
-of megabytes, so they stay outside the repository; `provenance.json` records their
-sizes and SHA-256 hashes. The figures `suites-fpbench`, `suites-inequalities`,
+A suite that `RESULTS` does not hold keeps its summary, so one suite can be run again
+alone. Without `--tools` the bounds of the external FPBench tools are the recorded ones
+of `fpbench-tools.csv`. A run's own `results.csv` files hold every statement, plan and
+command and are tens of megabytes, so they stay outside the repository, and
+`provenance.json` records their sizes and SHA-256 hashes. The figures `suites-fpbench`, `suites-inequalities`,
 `suites-hard-cases` and `suites-testfloat` of
 [`../results/FIGURES.md`](../results/FIGURES.md) draw the summaries.
 
-What that run found beyond its counts:
+What the runs found beyond their counts:
 
-- FPBench's generated numerical proof needs two things on Lean v4.36.0. `constructor`
-  also applies to `a ≤ b` on the reals, so the premises are split with `And.intro`
-  only. And the premises of a binary64 theorem need a recursion depth between 4,000
-  and 10,000, above the default of 512; the proof sets 10,000. We have not yet
-  found which part of the generated statement needs that depth.
-- With the constraint engine imported, `interval` proves about twice as many
-  MetiTarski goals as without it, a few hundred attempts pass the 20 seconds of
-  the suite, and a few stop at Lean's 4 GB memory limit inside the interpreter
-  (`memory_refusal` in `inequalities.csv`).
-- With `FloatLib.Tactic.Interval` alone, `interval` has no rational bound for
-  `Real.pi`: `(3 : ℝ) < Real.pi` is refused with `interval needs a rational lower
-  bound for π`, and so are the MetiTarski goals that contain π. With
-  `import FloatLib` the bound is there, and four of the eight problems named
-  after π are proved.
+- FPBench's generated numerical proof splits its premises with `And.intro` only, because
+  `constructor` also applies to `a ≤ b` on the reals, and it sets a recursion depth of
+  10,000. Its refusals are refusals of that proof, most of them in an `interval` step
+  that has no rational bound for a computed value.
+- With the constraint engine imported, `interval` proves 340 MetiTarski goals where it
+  proves 124 without it, and 64 attempts pass the 20 seconds of the suite. No process
+  stops at Lean's 4 GB memory limit.
+- Of the eight MetiTarski problems named after π, `interval` proves three with
+  `FloatLib.Tactic.Interval` alone and six with `import FloatLib`.
 - The complex `exp`, `expm1`, `log` and `log1p` agree with GNU MPC on every part
   of every hard-to-round argument `x + i x` of the selection.

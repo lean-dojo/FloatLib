@@ -1,5 +1,12 @@
 """P3109 v4.1 closed functions checked with Fraction and directed MPFR.
 
+The same corpus covers the functions of IEEE 754-2019 clause 9.2 that the report does not
+list and FloatLib provides on P3109 formats: Exp10, Exp2MinusOne, Exp10MinusOne, Log10,
+Log2OnePlus, Log10OnePlus and Cbrt with one operand, Pow and Powr with an exponent in
+Binary8p3se, and Pown, Rootn and Compound with the integers from -3 to 3. Their special cases
+are those of IEEE 754-2019 9.2.1 with the conventions of the report: one zero, one NaN, a NaN
+operand gives NaN, and a pole at zero gives NaN.
+
 The projection oracle uses the report's logarithmic quantum and fraction
 formulas from p3109_comparison. MPFR enclosures must produce a unique output
 under every tested policy. Correctly rounded nonexact direct MPFR results
@@ -14,6 +21,7 @@ from fractions import Fraction as F
 from functools import lru_cache
 import hashlib
 import json
+import math
 from pathlib import Path
 import subprocess
 
@@ -31,6 +39,8 @@ UNARY_NAMES = (
     "Sin", "Cos", "Tan", "ArcSin", "ArcCos", "ArcTan", "Sinh", "Cosh",
     "Tanh", "ArcSinh", "ArcCosh", "ArcTanh", "SinPi", "CosPi", "TanPi",
     "ArcSinPi", "ArcCosPi", "ArcTanPi", "Softplus",
+    # IEEE 754-2019 9.2 functions that the report does not list (FloatLib extensions).
+    "Exp10", "Exp2MinusOne", "Exp10MinusOne", "Log10", "Log2OnePlus", "Log10OnePlus", "Cbrt",
 )
 
 
@@ -51,7 +61,9 @@ def expected_coverage(first, last):
                         counts.update({name: 2 ** width for name in UNARY_NAMES})
                         if width <= 4:
                             counts.update({name: 12 * 2 ** width
-                                           for name in ("ArcTan2", "ArcTan2Pi")})
+                                           for name in ("ArcTan2", "ArcTan2Pi", "Pow", "Powr")})
+                            counts.update({name: 7 * 2 ** width
+                                           for name in ("Pown", "Rootn", "Compound")})
     return pairs, counts
 
 
@@ -133,6 +145,9 @@ NAMES = {
     "SinPi": "sinPi", "CosPi": "cosPi", "TanPi": "tanPi",
     "ArcSinPi": "arcSinPi", "ArcCosPi": "arcCosPi", "ArcTanPi": "arcTanPi",
     "Softplus": "softplus",
+    "Exp10": "exp10", "Exp2MinusOne": "exp2Minus1", "Exp10MinusOne": "exp10Minus1",
+    "Log10": "log10", "Log2OnePlus": "log2Plus1", "Log10OnePlus": "log10Plus1",
+    "Cbrt": "rootn",
 }
 
 
@@ -148,7 +163,7 @@ def angle_bounds(precision, multiple):
     return numerator
 
 
-def real_projection(target, name, x, y=None, angle=None):
+def real_projection(target, name, x, y=None, angle=None, integer=None):
     for precision in PRECISIONS:
         try:
             if angle is not None:
@@ -159,7 +174,7 @@ def real_projection(target, name, x, y=None, angle=None):
                 lower, upper = enclosure(precision, lambda: g.log1p(
                     g.exp(g.mpfr(g.mpq(x.numerator, x.denominator)))))
             else:
-                lower, upper = elementary_bounds(precision, name, x, y)
+                lower, upper = elementary_bounds(precision, name, x, y, integer)
         except ArithmeticError:
             continue
         strict = angle is None and "Pi" not in name
@@ -175,12 +190,14 @@ def unary(target, name, x):
         return target.project("nan")
     if isinstance(x, str):
         negative = x == "-inf"
-        if name in ("Log", "Log2", "LogOnePlus", "ArcCosh"):
+        if name in ("Log", "Log2", "LogOnePlus", "ArcCosh", "Log10", "Log2OnePlus",
+                    "Log10OnePlus"):
             return target.project("nan" if negative else "+inf")
-        if name in ("Exp", "Exp2", "ExpMinusOne", "Softplus"):
-            return target.project(F(-1 if name == "ExpMinusOne" else 0)
+        if name in ("Exp", "Exp2", "ExpMinusOne", "Softplus", "Exp10", "Exp2MinusOne",
+                    "Exp10MinusOne"):
+            return target.project(F(-1 if name.endswith("MinusOne") else 0)
                                   if negative else "+inf")
-        if name in ("Sinh", "ArcSinh"):
+        if name in ("Sinh", "ArcSinh", "Cbrt"):
             return target.project(x)
         if name == "Cosh":
             return target.project("+inf")
@@ -191,10 +208,14 @@ def unary(target, name, x):
             return target.project(angle) if name == "ArcTanPi" else real_projection(
                 target, "angle", F(0), angle=angle)
         return target.project("nan")
-    if name in ("Log", "Log2", "LogOnePlus"):
-        argument = x + (name == "LogOnePlus")
+    if name in ("Log", "Log2", "LogOnePlus", "Log10", "Log2OnePlus", "Log10OnePlus"):
+        argument = x + name.endswith("OnePlus")
         if argument <= 0:
             return target.project("-inf" if argument == 0 else "nan")
+    if name == "Cbrt":
+        if x == 0:
+            return target.project(F(0))
+        return real_projection(target, "rootn", x, integer=3)
     if (name in ("ArcSin", "ArcCos", "ArcSinPi", "ArcCosPi") and abs(x) > 1
             or name == "ArcCosh" and x < 1 or name == "ArcTanh" and abs(x) > 1):
         return target.project("nan")
@@ -239,6 +260,116 @@ def binary(target, scaled, y, x):
     return real_projection(target, "arcTan2Pi" if scaled else "arcTan2", x, y)
 
 
+def real_power(target, x, y):
+    """The projection of x ** y for a positive rational x and a rational y."""
+    if y.denominator == 1 and abs(y) <= 64:
+        return target.project(x ** int(y))
+    # Far beyond every threshold of an eight-bit format the result is projected as any real
+    # number on that side: MPFR would overflow or underflow there.
+    magnitude = float(y) * math.log2(float(x))
+    if magnitude > 256:
+        return target.project(F(2) ** 256)
+    if magnitude < -256:
+        return target.project(F(1, 2 ** 256))
+    return real_projection(target, "pow", x, y)
+
+
+def integer_function(target, name, x, n):
+    """Pown, Rootn and Compound (IEEE 754-2019 9.2.1) under the conventions of the report."""
+    if x == "nan":
+        return target.project("nan")
+    if name == "Pown":
+        if isinstance(x, str):
+            if n == 0:
+                return target.project(F(1))
+            if n < 0:
+                return target.project(F(0))
+            return target.project("-inf" if x == "-inf" and n % 2 else "+inf")
+        if n == 0:
+            return target.project(F(1))
+        if x == 0:
+            return target.project(F(0) if n > 0 else "nan")
+        return target.project(x ** n)
+    if name == "Compound":
+        if isinstance(x, str):
+            if x == "-inf":
+                return target.project("nan")
+            return target.project(F(1) if n == 0 else "+inf" if n > 0 else F(0))
+        if x < -1:
+            return target.project("nan")
+        if x == -1:
+            return target.project(F(1) if n == 0 else F(0) if n > 0 else "nan")
+        return target.project((1 + x) ** n)
+    assert name == "Rootn"
+    if n == 0:
+        return target.project("nan")
+    if isinstance(x, str):
+        if x == "-inf" and n % 2 == 0:
+            return target.project("nan")
+        return target.project(F(0) if n < 0 else x)
+    if x == 0:
+        return target.project(F(0) if n > 0 else "nan")
+    if x < 0 and n % 2 == 0:
+        return target.project("nan")
+    return real_projection(target, "rootn", x, integer=n)
+
+
+def power_function(target, name, x, y):
+    """Pow and Powr (IEEE 754-2019 9.2.1) under the conventions of the report."""
+    if x == "nan" or y == "nan":
+        return target.project("nan")
+    if name == "Pow":
+        if isinstance(y, str):
+            if isinstance(x, str):
+                return target.project(F(0) if y == "-inf" else "+inf")
+            if abs(x) == 1:
+                return target.project(F(1))
+            return target.project("+inf" if (abs(x) > 1) == (y == "+inf") else F(0))
+        if isinstance(x, str):
+            if y == 0:
+                return target.project(F(1))
+            if y < 0:
+                return target.project(F(0))
+            odd = y.denominator == 1 and y.numerator % 2 == 1
+            return target.project("-inf" if x == "-inf" and odd else "+inf")
+        if y == 0:
+            return target.project(F(1))
+        if x == 0:
+            return target.project(F(0) if y > 0 else "nan")
+        if x > 0:
+            return real_power(target, x, y)
+        if y.denominator != 1:
+            return target.project("nan")
+        magnitude = real_power(target, -x, y)
+        if y.numerator % 2 == 0:
+            return magnitude
+        return real_power_negated(target, -x, y)
+    assert name == "Powr"
+    if isinstance(y, str):
+        if isinstance(x, str):
+            if x == "-inf":
+                return target.project("nan")
+            return target.project(F(0) if y == "-inf" else "+inf")
+        if x < 0 or x == 1:
+            return target.project("nan")
+        return target.project("+inf" if (x > 1) == (y == "+inf") else F(0))
+    if isinstance(x, str):
+        if x == "-inf" or y == 0:
+            return target.project("nan")
+        return target.project("+inf" if y > 0 else F(0))
+    if x > 0:
+        return real_power(target, x, y)
+    return target.project(F(0) if x == 0 and y > 0 else "nan")
+
+
+def real_power_negated(target, x, y):
+    """The projection of -(x ** y) for a positive rational x and an integral rational y."""
+    if abs(y) <= 64:
+        return target.project(-(x ** int(y)))
+    magnitude = float(y) * math.log2(float(x))
+    return target.project(-(F(2) ** 256) if magnitude > 0 else -F(1, 2 ** 256))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("producer", type=Path)
@@ -280,6 +411,21 @@ def main():
                 assert name in UNARY_NAMES and 0 <= int(row[1]) < 2 ** source.width
                 expected = unary(target, name, source.decode(int(row[1])))
                 actual = list(map(int, row[3:]))
+            elif row[0] == "P":
+                name = row[3]
+                assert name in ("Pow", "Powr") and source.width <= 4
+                assert 0 <= int(row[1]) < 2 ** source.width
+                assert int(row[2]) in (0, 1, 32, 63, 64, 65, 96, 127, 128, 129, 192, 255)
+                expected = power_function(target, name, source.decode(int(row[1])),
+                                          descriptor(8, 3, True, True).decode(int(row[2])))
+                actual = list(map(int, row[4:]))
+            elif row[0] == "I":
+                name = row[3]
+                assert name in ("Pown", "Rootn", "Compound") and source.width <= 4
+                assert 0 <= int(row[1]) < 2 ** source.width and -3 <= int(row[2]) <= 3
+                expected = integer_function(target, name, source.decode(int(row[1])),
+                                            int(row[2]))
+                actual = list(map(int, row[4:]))
             else:
                 assert row[0] == "B"
                 assert source.width <= 4 and 0 <= int(row[1]) < 2 ** source.width
@@ -306,6 +452,8 @@ def main():
     report = {"document": "P3109 v4.1, 14 September 2026, unapproved",
               "clauses": ["4.10.9", "4.10.10", "4.10.11", "4.10.12", "4.10.13",
                           "4.10.15", "4.10.16"],
+              "extensions": "IEEE 754-2019 9.2: exp10, exp2m1, exp10m1, log10, log2p1, log10p1, cbrt, "
+                            "pow, powr, pown, rootn, compound",
               "reference": "directed MPFR plus independent Fraction projection formulas",
               "source_widths": list(range(args.first, args.last)),
               "descriptor_pairs": len(pairs), "function_inputs": dict(counts),

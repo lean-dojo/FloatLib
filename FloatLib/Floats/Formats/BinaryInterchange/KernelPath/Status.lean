@@ -44,6 +44,8 @@ def geFlag (a b : Nat) : Nat :=
 def maxSignificand (fmt : FloatFormat) : Nat :=
   2 ^ fmt.fracWidth + fmt.maxFiniteFracField
 
+kernel_constant maxSignificand
+
 /--
 One when rounding the exact magnitude `E` with sign `sign` in the direction `mode` overflows:
 `Model.dyadicRoundingOverflows` (`overflowFlag_eq`).

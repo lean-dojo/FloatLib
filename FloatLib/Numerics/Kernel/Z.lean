@@ -7,7 +7,6 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Kernel.Bits
-public import FloatLib.Tactic.CompiledAs
 
 /-!
 # `Int` operations for Lean's kernel
@@ -246,22 +245,49 @@ theorem shiftRight_eq (x : Int) (k : Nat) : shiftRight x k = x >>> k := by
   funext p n
   rw [subNat_eq, Int.subNatNat_eq_coe]
 
-compiled_as negOfNat := Int.negOfNat by negOfNat_eq_core
+/-- Compiled code runs `Int.negOfNat` in place of `Z.negOfNat`. -/
+@[csimp] theorem negOfNat_eq_compiled : @negOfNat = @Int.negOfNat := by
+  funext
+  exact negOfNat_eq_core ..
 
-compiled_as neg := Int.neg by neg_eq
+/-- Compiled code runs `Int.neg` in place of `Z.neg`. -/
+@[csimp] theorem neg_eq_compiled : @neg = @Int.neg := by
+  funext
+  exact neg_eq ..
 
-compiled_as add := Int.add by add_eq
+/-- Compiled code runs `Int.add` in place of `Z.add`. -/
+@[csimp] theorem add_eq_compiled : @add = @Int.add := by
+  funext
+  exact add_eq ..
 
-compiled_as sub := Int.sub by sub_eq
+/-- Compiled code runs `Int.sub` in place of `Z.sub`. -/
+@[csimp] theorem sub_eq_compiled : @sub = @Int.sub := by
+  funext
+  exact sub_eq ..
 
-compiled_as mul := Int.mul by mul_eq
+/-- Compiled code runs `Int.mul` in place of `Z.mul`. -/
+@[csimp] theorem mul_eq_compiled : @mul = @Int.mul := by
+  funext
+  exact mul_eq ..
 
-compiled_as natAbs := Int.natAbs by natAbs_eq
+/-- Compiled code runs `Int.natAbs` in place of `Z.natAbs`. -/
+@[csimp] theorem natAbs_eq_compiled : @natAbs = @Int.natAbs := by
+  funext
+  exact natAbs_eq ..
 
-compiled_as toNat := Int.toNat by toNat_eq
+/-- Compiled code runs `Int.toNat` in place of `Z.toNat`. -/
+@[csimp] theorem toNat_eq_compiled : @toNat = @Int.toNat := by
+  funext
+  exact toNat_eq ..
 
-compiled_as shiftLeft := Int.shiftLeft by shiftLeft_eq
+/-- Compiled code runs `Int.shiftLeft` in place of `Z.shiftLeft`. -/
+@[csimp] theorem shiftLeft_eq_compiled : @shiftLeft = @Int.shiftLeft := by
+  funext
+  exact shiftLeft_eq ..
 
-compiled_as shiftRight := Int.shiftRight by shiftRight_eq
+/-- Compiled code runs `Int.shiftRight` in place of `Z.shiftRight`. -/
+@[csimp] theorem shiftRight_eq_compiled : @shiftRight = @Int.shiftRight := by
+  funext
+  exact shiftRight_eq ..
 
 end FloatLib.Numerics.Kernel.Z

@@ -10,7 +10,10 @@ import FloatLib.Floats.Formats.BinaryInterchange.Operations.MagnitudeExtrema.Run
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Payload.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.Augmented.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.SquareRoot.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Recommended.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Directed.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Directed.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Format.Catalog
 import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
 import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Magnitude.Runtime
@@ -19,7 +22,10 @@ import FloatLib.Floats.Formats.BinaryInterchange.Dyadic.Decode
 import FloatLib.Floats.Formats.DecimalInterchange.KernelPath.Runtime
 import FloatLib.Floats.Formats.DecimalInterchange.Recommended.Runtime
 import FloatLib.Floats.Formats.DecimalInterchange.Reduction.Runtime
+import FloatLib.Floats.Formats.DecimalInterchange.Reduction.ScaledProduct.Runtime
+import FloatLib.Floats.Formats.DecimalInterchange.Reduction.Schedule.Runtime
 import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Recommended.Runtime
+import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.CorrectlyRounded.Runtime
 
 /-!
 # The operations of IEEE 754-2019 against brute force and against other implementations
@@ -405,6 +411,27 @@ def formatOfReference {left right addend : FloatFormat} (operation : Nat)
             | none => .infinity sign false
           else sumDelivery mode product (Model.toRat? z) sign (Model.signBit z)
 
+/--
+A rational that rounds like the square root of the positive rational `q` in every direction,
+into a format of far fewer than `bits` bits: the root truncated to `bits` bits after the binary
+point by an integer square root, with half a unit more when the truncation is not exact.
+-/
+def sqrtRepresentative (q : Rat) (bits : Nat := 96) : Rat :=
+  let scaled := q * 4 ^ bits
+  let root := scaled.floor.toNat.sqrt
+  if (root : Rat) * root == scaled then (root : Rat) / 2 ^ bits
+  else ((root : Rat) + 1 / 2) / 2 ^ bits
+
+/-- What the formatOf square root must deliver, from the rules of the standard. -/
+def squareRootReference {source : FloatFormat} (x : Model source) : Delivery :=
+  if Model.isNaN x then .nan (Model.isSignaling x)
+  else if Model.isZero x then .zero (Model.signBit x)
+  else if Model.signBit x then .nan true
+  else
+    match Model.toRat? x with
+    | some q => .rounded (sqrtRepresentative q)
+    | none => .infinity false false
+
 /-- An operand format of eight bits and the three destinations. -/
 abbrev Byte : FloatFormat := FloatFormat.ieee 4 3
 abbrev Narrow : FloatFormat := FloatFormat.ieee 3 1
@@ -461,10 +488,31 @@ def formatOf : IO (Array (String × Tally)) := do
               (Model.formatOfFusedMultiplyAdd destination x y z mode)
           mixedFused := mixedFused.record (holds Narrow && holds Byte && holds Wide)
             fun _ => s!"three formats, direction {repr mode}: fma {a} {b} {c}"
+  let mut roots : Tally := {}
+  let mut mixedRoots : Tally := {}
+  for mode in directions do
+    for a in [0:64] do
+      let x := small a
+      roots := roots.record
+        (sameOutcome (Model.formatOfSquareRoot Small x mode)
+          (Model.sqrt x (mode := mode) (status := true)))
+        fun _ => s!"one format, direction {repr mode}: sqrt {a}"
+    for b in [0:256] do
+      let y : Model Byte := Model.ofNatBits b
+      roots := roots.record
+        (sameOutcome (Model.formatOfSquareRoot Byte y mode)
+          (Model.sqrt y (mode := mode) (status := true)))
+        fun _ => s!"one format of eight bits, direction {repr mode}: sqrt {b}"
+      let holds (destination : FloatFormat) : Bool :=
+        (squareRootReference y).matches mode (Model.formatOfSquareRoot destination y mode)
+      mixedRoots := mixedRoots.record (holds Narrow && holds Small && holds Wide)
+        fun _ => s!"three formats, direction {repr mode}: sqrt {b}"
   return #[("formatOf addition, subtraction, multiplication, division with one format", same),
     ("formatOf fusedMultiplyAdd with one format", fused),
     ("formatOf addition, subtraction, multiplication, division across formats", mixed),
-    ("formatOf fusedMultiplyAdd across formats", mixedFused)]
+    ("formatOf fusedMultiplyAdd across formats", mixedFused),
+    ("formatOf squareRoot with one format", roots),
+    ("formatOf squareRoot across formats", mixedRoots)]
 
 /-! ## Cases computed by other implementations -/
 
@@ -522,8 +570,8 @@ open Model.Transcendentals in
 /--
 One case of a function of §9.2 in the format `fmt` and the rounding direction `direction`
 (`E`, `A`, `Z`, `U` or `D`): `y` is `-`, the encoding of a second operand, or the integer
-exponent of `compound`. The expected value is an encoding or `nan` for
-any quiet NaN, and the flags are compared as their sum.
+of `compound`, `rootn` or `pown`. The expected value is an encoding or `nan` for any quiet NaN,
+and the flags are compared as their sum.
 -/
 def checkFunction (fmt : FloatFormat) (name direction x y expected flags : String) :
     Option Bool := do
@@ -541,7 +589,18 @@ def checkFunction (fmt : FloatFormat) (name direction x y expected flags : Strin
     | "atan2" => (parseHex? y).map fun y => CorrectlyRounded.atan2 x (Model.ofNatBits y) mode
     | "atan2Pi" => (parseHex? y).map fun y => CorrectlyRounded.atan2Pi x (Model.ofNatBits y) mode
     | "powr" => (parseHex? y).map fun y => CorrectlyRounded.powr x (Model.ofNatBits y) mode
+    | "pow" => (parseHex? y).map fun y => CorrectlyRounded.pow x (Model.ofNatBits y) mode
     | "compound" => (parseInt? y).map fun n => CorrectlyRounded.compound x n mode
+    | "exp" => some (Directed.exp x mode)
+    | "expm1" => some (Directed.expm1 x mode)
+    | "log" => some (Directed.log x mode)
+    | "logp1" => some (Directed.logp1 x mode)
+    | "rSqrt" => some (Model.Algebraic.Directed.rSqrt x mode)
+    | "cbrt" => some (Model.Algebraic.Directed.cbrt x mode)
+    | "hypot" =>
+        (parseHex? y).map fun y => Model.Algebraic.Directed.hypot x (Model.ofNatBits y) mode
+    | "rootn" => (parseInt? y).map fun n => Model.Algebraic.Directed.rootn x n mode
+    | "pown" => (parseInt? y).map fun n => Model.Algebraic.Directed.pown x n mode
     | _ => (functions.lookup name).map fun function => function.apply x mode
   let valueHolds ←
     if expected == "nan" then
@@ -557,6 +616,11 @@ def checkLine (fields : List String) : Option Bool :=
       match format with
       | "e3f2" => checkFunction (FloatFormat.ieee 3 2) name direction x y expected flags
       | "e4f3" => checkFunction (FloatFormat.ieee 4 3) name direction x y expected flags
+      | "e5m2" => checkFunction FloatFormat.e5m2 name direction x y expected flags
+      | "e4m3" => checkFunction FloatFormat.e4m3 name direction x y expected flags
+      | "e4m3fnuz" => checkFunction FloatFormat.e4m3fnuz name direction x y expected flags
+      | "e5m2fnuz" => checkFunction FloatFormat.e5m2fnuz name direction x y expected flags
+      | "e2m1" => checkFunction FloatFormat.e2m1 name direction x y expected flags
       | "binary16" => checkFunction FloatFormat.binary16 name direction x y expected flags
       | "binary32" => checkFunction FloatFormat.binary32 name direction x y expected flags
       | "binary64" => checkFunction FloatFormat.binary64 name direction x y expected flags
@@ -576,6 +640,29 @@ def checkLine (fields : List String) : Option Bool :=
         | _ => none
       some (specification.value == result && mask specification.status == flags &&
         kernel == specification)
+  | ["dtot", name, precision, mode, x, y, expected, flags] => do
+      let f ← decimalFormat? precision
+      let mode ← decimalMode? mode
+      let x ← parseDatum? x
+      let expected ← parseDatum? expected
+      let outcome ←
+        match name with
+        | "exp" => some (Transcendentals.CorrectlyRounded.exp f mode x)
+        | "expm1" => some (Transcendentals.CorrectlyRounded.expm1 f mode x)
+        | "log" => some (Transcendentals.CorrectlyRounded.log f mode x)
+        | "logp1" => some (Transcendentals.CorrectlyRounded.logp1 f mode x)
+        | "powr" => (parseDatum? y).map fun y => Transcendentals.CorrectlyRounded.powr f mode x y
+        | "pow" => (parseDatum? y).map fun y => Transcendentals.CorrectlyRounded.pow f mode x y
+        | "atan2" =>
+            (parseDatum? y).map fun y => Transcendentals.CorrectlyRounded.atan2 f mode x y
+        | "atan2Pi" =>
+            (parseDatum? y).map fun y => Transcendentals.CorrectlyRounded.atan2Pi f mode x y
+        | "compound" =>
+            (parseInt? y).map fun n => Transcendentals.CorrectlyRounded.compound f mode x n
+        | _ =>
+            (functions.lookup name).map fun function =>
+              Transcendentals.CorrectlyRounded.apply f function mode x
+      some (outcome.value == expected && mask outcome.status == (← flags.toNat?))
   | "dred" :: operation :: precision :: mode :: count :: rest => do
       let f ← decimalFormat? precision
       let mode ← decimalMode? mode
@@ -592,6 +679,52 @@ def checkLine (fields : List String) : Option Bool :=
           match Arithmetic.dot f mode xs.toArray ys.toArray, more.drop count with
           | .ok outcome, [result, flags] => agrees outcome result flags
           | _, _ => none
+      | _, _ => none
+  | "dsp" :: operation :: precision :: mode :: count :: rest => do
+      let f ← decimalFormat? precision
+      let mode ← decimalMode? mode
+      let count ← count.toNat?
+      let xs ← (rest.take count).mapM parseDatum?
+      let agrees (outcome : ScaledProduct Datum) (result scale flags : String) : Option Bool := do
+        some (outcome.product == (← parseDatum? result) &&
+          outcome.scaleFactor == (← parseInt? scale) && mask outcome.status == (← flags.toNat?))
+      let paired (operation : Array Datum → Array Datum →
+          Except FloatLib.Numerics.ReductionError (ScaledProduct Datum)) (more : List String) :
+          Option Bool := do
+        let ys ← (more.take count).mapM parseDatum?
+        match operation xs.toArray ys.toArray, more.drop count with
+        | .ok outcome, [result, scale, flags] => agrees outcome result scale flags
+        | _, _ => none
+      match operation, rest.drop count with
+      | "scaledprod", [result, scale, flags] =>
+          agrees (Arithmetic.scaledProd f mode xs.toArray) result scale flags
+      | "scaledprodsum", more => paired (Arithmetic.scaledProdSum f mode) more
+      | "scaledproddiff", more => paired (Arithmetic.scaledProdDiff f mode) more
+      | _, _ => none
+  | "dord" :: operation :: accumulator :: precision :: mode :: count :: rest => do
+      let acc ← decimalFormat? accumulator
+      let out ← decimalFormat? precision
+      let mode ← decimalMode? mode
+      let count ← count.toNat?
+      let xs ← (rest.take count).mapM parseDatum?
+      let agrees (outcome : Outcome) (result flags : String) : Option Bool := do
+        some (outcome.value == (← parseDatum? result) && mask outcome.status == (← flags.toNat?))
+      let inOrder (term : Datum → Outcome) : Outcome :=
+        Arithmetic.reduceInOrder acc out mode term xs
+      match operation, rest.drop count with
+      | "sum", [result, flags] =>
+          agrees (inOrder (Arithmetic.Reduction.sumTerm acc mode)) result flags
+      | "sumabs", [result, flags] =>
+          agrees (inOrder (Arithmetic.Reduction.sumAbsTerm acc mode)) result flags
+      | "sumsq", [result, flags] =>
+          agrees (inOrder (Arithmetic.Reduction.sumSquareTerm acc mode)) result flags
+      | "dot", more => do
+          let ys ← (more.take count).mapM parseDatum?
+          match more.drop count with
+          | [result, flags] =>
+              agrees (Arithmetic.reduceInOrder acc out mode (Arithmetic.Reduction.dotTerm acc mode)
+                (xs.zip ys)) result flags
+          | _ => none
       | _, _ => none
   | ["ext", operation, precision, x, y, result] => do
       let f ← decimalFormat? precision

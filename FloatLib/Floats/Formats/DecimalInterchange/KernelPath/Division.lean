@@ -24,11 +24,19 @@ result is moved to the preferred exponent by `preferredCohort`, as in the specif
 `projectRatio_eq` proves it equal to `projectMagnitude` for every format, rounding direction,
 numerator, nonzero denominator and preferred exponent.
 
+`projectScaled` is `projectRatio` of a numerator times a power of ten, given by its exponent.
+The scale of the least quantum puts a dividend four hundred digits up in decimal64 and six
+thousand in decimal128, and all but the last few of those digits only move the rounding quantum:
+`projectScaled` keeps the powers of ten that give the quotient as many digits as the precision
+and adds the rest to the quantum (`projectCancelled`), so the division is one of numbers of about
+twice the precision. `projectScaled_eq` proves it equal to `projectRatio` for every numerator,
+nonzero denominator and scale.
+
 `div` is the kernel form of `Arithmetic.div`: for a finite dividend and a finite nonzero
-divisor the two coefficients are put on the scale of the least quantum by one power of ten, and
-`projectRatio` rounds their ratio with the difference of the two quantum exponents as the
-preferred exponent. `div_eq`, tagged `@[kernel_optimize]`, proves it equal to the specification
-for every format, rounding direction and pair of data.
+divisor `projectScaled` rounds the ratio of the two coefficients on the scale of the least
+quantum, with the difference of the two quantum exponents as the preferred exponent. `div_eq`,
+tagged `@[kernel_optimize]`, proves it equal to the specification for every format, rounding
+direction and pair of data.
 -/
 
 @[expose] public section
@@ -141,16 +149,135 @@ theorem projectRatio_eq (f : Format) (mode : RoundingMode) (negative : Bool) (nu
   exact deliverRounded_eq f mode negative R shift _ _ preferred _ hpair
 
 /--
+`projectRatio f mode negative (scaled × 10 ^ cancelled) den preferred` for a quotient
+`scaled / den` of at least as many digits as the precision (`projectCancelled_eq`): the rounding
+quantum is then at least `10 ^ cancelled`, so that power is never formed.
+-/
+def projectCancelled (f : Format) (mode : RoundingMode) (negative : Bool)
+    (scaled den cancelled : Nat) (preferred : Int) : Outcome :=
+  (fun shift =>
+    (fun divisor =>
+      (fun lower remainder =>
+        deliverRounded f mode negative
+          (Nat.add lower (increment mode negative lower remainder divisor))
+          (Nat.add shift cancelled) (Nat.ble 1 remainder) false preferred)
+        (Nat.div scaled divisor) (Nat.mod scaled divisor))
+      (Nat.mul den (Nat.pow 10 shift)))
+    (Nat.sub (decimalLength (Nat.div scaled den)) (Nat.succ (Nat.mul 3 f.declets)))
+
+/--
+`projectRatio f mode negative (num × 10 ^ scale) den preferred` (`projectScaled_eq`) without the
+power `10 ^ scale` when it is large: `kept` powers of ten, the precision less one plus a bound
+on the digits of the denominator, give the quotient as many digits as the precision, and the
+other `scale - kept` only move the rounding quantum.
+-/
+def projectScaled (f : Format) (mode : RoundingMode) (negative : Bool) (num den scale : Nat)
+    (preferred : Int) : Outcome :=
+  (fun kept =>
+    Bool.casesOn (motive := fun _ => Outcome)
+      (Bool.and (Nat.ble 1 num) (Nat.ble kept scale))
+      (projectRatio f mode negative (Nat.mul num (Nat.pow 10 scale)) den preferred)
+      (projectCancelled f mode negative (Nat.mul num (Nat.pow 10 kept)) den (Nat.sub scale kept)
+        preferred))
+    (Nat.add (Nat.mul 3 f.declets) (digitBound den))
+
+/-- The increment of a rounding does not change when the remainder and the denominator are
+multiplied by one positive number. -/
+theorem increment_mul (mode : RoundingMode) (negative : Bool) (c : Nat) {d k : Nat} (hd : 0 < d)
+    (hk : 0 < k) :
+    increment mode negative (c / d) (c % d * k) (d * k) =
+      increment mode negative (c / d) (c % d) d := by
+  have h1 := roundMagnitude_natCast_div mode negative (c * k) (d * k) (Nat.mul_pos hd hk)
+  have h2 := roundMagnitude_natCast_div mode negative c d hd
+  have hq : ((c * k : Nat) : ℚ) / ((d * k : Nat) : ℚ) = (c : ℚ) / (d : ℚ) := by
+    push_cast
+    exact mul_div_mul_right _ _ (by exact_mod_cast hk.ne')
+  rw [hq, h2, Nat.mul_div_mul_right _ _ hk, Nat.mul_mod_mul_right] at h1
+  exact (Nat.add_left_cancel h1).symm
+
+/--
+`projectCancelled` is `projectRatio` of the numerator with the cancelled power of ten, when the
+quotient `scaled / den` has at least as many digits as the precision.
+-/
+theorem projectCancelled_eq (f : Format) (mode : RoundingMode) (negative : Bool)
+    {scaled den : Nat} (hden : 0 < den) (hq : 10 ^ (3 * f.declets) ≤ scaled / den)
+    (cancelled : Nat) (preferred : Int) :
+    projectCancelled f mode negative scaled den cancelled preferred =
+      projectRatio f mode negative (scaled * 10 ^ cancelled) den preferred := by
+  have hdivf : ∀ m n : Nat, Nat.div m n = m / n := fun _ _ => rfl
+  have hmodf : ∀ m n : Nat, Nat.mod m n = m % n := fun _ _ => rfl
+  have hpow : 0 < 10 ^ cancelled := Nat.pow_pos (by decide)
+  have hpos : 0 < scaled / den := Nat.lt_of_lt_of_le (Nat.pow_pos (by decide)) hq
+  have hlength := decimalLength_mul_pow_div hden hpos cancelled
+  have hdigits : 3 * f.declets + 1 ≤ decimalLength (scaled / den) := by
+    rw [decimalLength_eq_log]
+    exact Nat.succ_le_succ (Nat.le_log_of_pow_le (by decide) hq)
+  unfold projectCancelled projectRatio
+  simp only [Nat.add_eq, Nat.sub_eq, Nat.mul_eq, Nat.pow_eq, Nat.succ_eq_add_one, hdivf, hmodf]
+  rw [hlength]
+  generalize hshift : decimalLength (scaled / den) - (3 * f.declets + 1) = shift
+  have hsum : decimalLength (scaled / den) + cancelled - (3 * f.declets + 1) =
+      shift + cancelled := by omega
+  have hdivisor : den * 10 ^ (shift + cancelled) = den * 10 ^ shift * 10 ^ cancelled := by
+    rw [Nat.pow_add, Nat.mul_assoc]
+  have hD : 0 < den * 10 ^ shift := Nat.mul_pos hden (Nat.pow_pos (by decide))
+  have htiny : Nat.ble (scaled * 10 ^ cancelled + 1) (den * 10 ^ (3 * f.declets)) = false := by
+    apply Bool.eq_false_iff.mpr
+    intro h
+    have hle := Nat.le_of_ble_eq_true h
+    have h1 : den * 10 ^ (3 * f.declets) ≤ scaled :=
+      (Nat.mul_comm _ _).le.trans ((Nat.le_div_iff_mul_le hden).1 hq)
+    have h2 : scaled ≤ scaled * 10 ^ cancelled := Nat.le_mul_of_pos_right _ hpow
+    omega
+  have hone : Nat.ble 1 (scaled % (den * 10 ^ shift) * 10 ^ cancelled) =
+      Nat.ble 1 (scaled % (den * 10 ^ shift)) := by
+    rcases Nat.eq_zero_or_pos (scaled % (den * 10 ^ shift)) with h | h
+    · rw [h, Nat.zero_mul]
+    · rw [Nat.ble_eq_true_of_le h, Nat.ble_eq_true_of_le (Nat.mul_pos h hpow)]
+  rw [hsum, hdivisor, Nat.mul_div_mul_right _ _ hpow, Nat.mul_mod_mul_right,
+    increment_mul mode negative scaled hD hpow, htiny, hone]
+
+/--
+`projectScaled` is `projectRatio` of the numerator with its power of ten, for every format,
+rounding direction, sign, numerator, nonzero denominator, scale and preferred exponent.
+-/
+theorem projectScaled_eq (f : Format) (mode : RoundingMode) (negative : Bool) (num : Nat)
+    {den : Nat} (hden : den ≠ 0) (scale : Nat) (preferred : Int) :
+    projectScaled f mode negative num den scale preferred =
+      projectRatio f mode negative (num * 10 ^ scale) den preferred := by
+  unfold projectScaled
+  generalize hkept : Nat.add (Nat.mul 3 f.declets) (digitBound den) = kept
+  beta_reduce
+  cases hnum : Nat.ble 1 num
+  · rfl
+  cases hle : Nat.ble kept scale
+  · rfl
+  have hn : 0 < num := Nat.le_of_ble_eq_true hnum
+  have hks : kept ≤ scale := Nat.le_of_ble_eq_true hle
+  have hd : 0 < den := Nat.pos_of_ne_zero hden
+  -- The kept power gives the quotient as many digits as the precision.
+  have hq : 10 ^ (3 * f.declets) ≤ num * 10 ^ kept / den := by
+    rw [Nat.le_div_iff_mul_le hd]
+    calc 10 ^ (3 * f.declets) * den ≤ 10 ^ (3 * f.declets) * 10 ^ digitBound den :=
+          Nat.mul_le_mul_left _ (lt_ten_pow_digitBound den).le
+      _ = 10 ^ kept := by rw [← Nat.pow_add, ← hkept]; rfl
+      _ ≤ num * 10 ^ kept := Nat.le_mul_of_pos_left _ hn
+  change projectCancelled f mode negative (num * 10 ^ kept) den (scale - kept) preferred = _
+  rw [projectCancelled_eq f mode negative hd hq, Nat.mul_assoc, ← Nat.pow_add,
+    Nat.add_sub_cancel' hks]
+
+/--
 The quotient of two finite data with a nonzero divisor, on natural numbers (`divFinite_eq`):
-the coefficients on the scale of the least quantum, and `projectRatio` of their ratio with the
-difference of the quantum exponents as the preferred exponent and the sign of the quotient.
+the coefficients on the scale of the least quantum, and `projectScaled` of their ratio with the
+difference of the quantum exponents as the preferred exponent and the sign of the quotient. The
+power of ten that puts the dividend on that scale is passed as its exponent and not multiplied
+out.
 -/
 def divFinite (f : Format) (mode : RoundingMode) (sx : Bool) (cx : Nat) (qx : Int) (sy : Bool)
     (cy : Nat) (qy : Int) : Outcome :=
   (fun preferred =>
     offsets preferred f.bias fun above below =>
-      projectRatio f mode (differ sx sy) (Nat.mul cx (Nat.pow 10 above))
-        (Nat.mul cy (Nat.pow 10 below)) preferred)
+      projectScaled f mode (differ sx sy) cx (Nat.mul cy (Nat.pow 10 below)) above preferred)
     (Int.sub qx qy)
 
 /-- `divFinite` is `Arithmetic.div` on two finite data with a nonzero divisor. -/
@@ -173,7 +300,8 @@ theorem divFinite_eq (f : Format) (mode : RoundingMode) (sx : Bool) (cx : Nat) (
   have hab : (a : Int) - (b : Int) = qx - qy + f.bias := by omega
   have hB : (0 : ℚ) < (cy : ℚ) * (10 : ℚ) ^ qy :=
     mul_pos (Nat.cast_pos.2 (Nat.pos_of_ne_zero hcy)) (zpow_pos (by norm_num) _)
-  rw [projectRatio_eq f mode _ _ (Nat.mul_ne_zero hcy (by positivity)),
+  rw [projectScaled_eq f mode _ cx (Nat.mul_ne_zero hcy (by positivity)),
+    projectRatio_eq f mode _ _ (Nat.mul_ne_zero hcy (by positivity)),
     DecimalInterchange.project, differ_eq]
   congr 1
   · by_cases hcx : cx = 0
@@ -231,5 +359,13 @@ direction and pair of data: the same datum and the same flags.
   rcases cy with _ | cy
   · rfl
   · exact divFinite_eq f mode sx cx qx sy (Nat.succ_ne_zero cy) qy
+
+/-! ## Kernel shapes -/
+
+kernel_shape projectRatio
+kernel_shape projectCancelled
+kernel_shape projectScaled
+kernel_shape divFinite
+kernel_shape div
 
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

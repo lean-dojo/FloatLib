@@ -438,7 +438,7 @@ Every theorem about [[FloatLib.Floats.Formats.Posit.Model.toDyadic?]] uses its d
 
 ## Where is each operation of the Posit Standard?
 
-FloatLib implements the family of the 2022 Posit Standard [@positStandard2022], which fixes `es = 2`, at every valid width. Other values of `es` aren't implemented. The operations carry the standard's names, so a program written from its text reads the same in Lean. You still write `x + y` for `addition`, and the quire, which keeps an integer accumulator with the capacity and the NaR rules the standard states, is driven by `pToQ`, `qMulAdd` and `qToP`:
+FloatLib implements the family of the 2022 Posit Standard [@positStandard2022], which fixes `es = 2`, at every valid width. The types and the quire stay at `es = 2`. Underneath them, the operations on encodings that Lean's kernel evaluates take `es` as a parameter, and we prove every one of them for every `es`, against a specification on values: `KernelPath.add 7 0 0x40 0x40` is `0x60`, one plus one in eight bits with no exponent bit. The operations carry the standard's names, so a program written from its text reads the same in Lean. You still write `x + y` for `addition`, and the quire, which keeps an integer accumulator with the capacity and the NaR rules the standard states, is driven by `pToQ`, `qMulAdd` and `qToP`:
 
 ```lean
 section PositStandard

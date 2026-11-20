@@ -190,9 +190,10 @@ def main() -> None:
                 f"E = {exp_field}\nspacing {frac_label(step)}")
     bottom.text(-0.05, 1.33, "(b)", ha="left", va="top", fontsize=fs.SIZE_PANEL, color=fs.INK)
 
-    # Two thin lines tie the shaded band of the upper panel to the lower panel's full width.
+    # Two thin lines tie the shaded band of the upper panel to the lower panel's full width. They
+    # start under the tick labels 0 and 1, clear of the digits.
     for x_top, x_bottom in ((0.0, -0.05), (1.0, 1.05)):
-        fig.add_artist(ConnectionPatch(xyA=(x_top, -0.36), coordsA=top.transData,
+        fig.add_artist(ConnectionPatch(xyA=(x_top, -0.55), coordsA=top.transData,
                                        xyB=(x_bottom, 1.35), coordsB=bottom.transData,
                                        color=fs.LINE, linewidth=0.8))
 

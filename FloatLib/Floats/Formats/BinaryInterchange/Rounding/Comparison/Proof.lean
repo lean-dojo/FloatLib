@@ -22,12 +22,12 @@ result is finite (`toReal_round`). `inexact` is raised exactly when the delivere
 `r`, in every direction (`deliver_inexact_iff`), and a delivery that is not finite raises
 `overflow` (`deliver_overflow_of_isFinite_eq_false`).
 
-The equation with `roundAt` is for rounding to nearest-even. For the directions toward negative
-and toward positive infinity the theorems are enclosures in the extended reals: the result of
-`.down` is at most `r` (`toEReal_round_down_le`) and the result of `.up` is at least `r`
-(`le_toEReal_round_up`), infinite results included. That these two results are the nearest
-values of the format on their side of `r`, and the results of the directions toward zero, away
-from zero and to nearest with ties away, are not proved here.
+The equation with `roundAt` in this module is for rounding to nearest-even. For the directions
+toward negative and toward positive infinity the theorems here are enclosures in the extended
+reals: the result of `.down` is at most `r` (`toEReal_round_down_le`) and the result of `.up`
+is at least `r` (`le_toEReal_round_up`), infinite results included.
+`Rounding.Comparison.Directions` proves correct rounding in every direction: the result is
+`roundAt fmt r mode` in range and the overflow result of the direction beyond it.
 
 `Rule.Locates rule r` says that a rule delivers one rounding of `r`: an exact zero for `r = 0`,
 or a comparator of `r`. `toReal_unary` and `toReal_binary` carry `toReal_round` through the
@@ -234,7 +234,7 @@ theorem toEReal_round_down_le (hfmt : fmt.isIEEE = true) (compare : ℚ → Orde
   rw [heq, AlgebraicRounding.roundSigned_eq_roundReal fmt .down hcompare]
   by_cases hzero : target = 0
   · simp [hzero]
-  · exact (roundReal_roundsTo hfmt .down hzero).toEReal_down_le hfmt
+  · exact (roundReal_roundsTo (fmt := fmt) .down hzero).toEReal_down_le hfmt
 
 /--
 **Rounding toward positive infinity is not below the located number.** For a conventional IEEE
@@ -251,7 +251,7 @@ theorem le_toEReal_round_up (hfmt : fmt.isIEEE = true) (compare : ℚ → Orderi
   rw [heq, AlgebraicRounding.roundSigned_eq_roundReal fmt .up hcompare]
   by_cases hzero : target = 0
   · simp [hzero]
-  · exact (roundReal_roundsTo hfmt .up hzero).le_toEReal_up hfmt
+  · exact (roundReal_roundsTo (fmt := fmt) .up hzero).le_toEReal_up hfmt
 
 /-- `outcome` delivers the value it is given. -/
 @[simp] theorem outcome_value (compare : ℚ → Ordering) (value : Model fmt)
@@ -466,6 +466,29 @@ theorem unary_of_toRat? (rule : Operand → Rule) {x : Model fmt} {q : ℚ}
       (rule (.finite (signBit x) q)).deliver fmt mode (hint (.finite (signBit x) q)) := by
   simp [unary, Operand.of?_of_toRat? hq]
 
+/-- A rounding raises neither `invalid` nor `divideByZero`: the outcome of a value has the
+flags `overflow`, `underflow` and `inexact` only. -/
+theorem outcome_invalid_divideByZero (compare : ℚ → Ordering) (value : Model fmt)
+    (mode : IEEERoundingMode) (known : Option Ordering) :
+    (outcome fmt compare value mode known).status.invalid = false ∧
+      (outcome fmt compare value mode known).status.divideByZero = false := by
+  unfold outcome
+  split <;> exact ⟨rfl, rfl⟩
+
+/-- A rule that locates a real number raises neither `invalid` nor `divideByZero`, in every
+rounding direction and with any hint. -/
+theorem Rule.deliver_invalid_divideByZero {rule : Rule} {target : ℝ}
+    (hrule : rule.Locates target) (mode : IEEERoundingMode)
+    (hint : Unit → Option (Hint fmt)) :
+    (rule.deliver fmt mode hint).status.invalid = false ∧
+      (rule.deliver fmt mode hint).status.divideByZero = false := by
+  cases rule with
+  | zero negative => exact ⟨rfl, rfl⟩
+  | real compare => exact outcome_invalid_divideByZero compare _ mode _
+  | infinity negative => exact absurd hrule id
+  | pole negative => exact absurd hrule id
+  | invalid => exact absurd hrule id
+
 /-- At finite operands a function of two operands is the outcome of its rule, with the hint
 of that pair. -/
 theorem binary_of_toRat? (rule : Operand → Operand → Rule) {x y : Model fmt} {p q : ℚ}
@@ -475,6 +498,28 @@ theorem binary_of_toRat? (rule : Operand → Operand → Rule) {x y : Model fmt}
       (rule (.finite (signBit x) p) (.finite (signBit y) q)).deliver fmt mode
         (hint (.finite (signBit x) p) (.finite (signBit y) q)) := by
   simp [binary, Operand.of?_of_toRat? hp, Operand.of?_of_toRat? hq]
+
+/-- At a finite operand whose rule locates a real number, a function of one operand raises
+neither `invalid` nor `divideByZero`, in every rounding direction. -/
+theorem unary_invalid_divideByZero (rule : Operand → Rule) {x : Model fmt} {q : ℚ}
+    (hq : toRat? x = some q) {target : ℝ}
+    (hrule : (rule (.finite (signBit x) q)).Locates target) (mode : IEEERoundingMode)
+    (hint : Operand → Unit → Option (Hint fmt)) :
+    (unary rule x mode hint).status.invalid = false ∧
+      (unary rule x mode hint).status.divideByZero = false := by
+  rw [unary_of_toRat? rule hq]
+  exact Rule.deliver_invalid_divideByZero hrule mode _
+
+/-- At finite operands whose rule locates a real number, a function of two operands raises
+neither `invalid` nor `divideByZero`, in every rounding direction. -/
+theorem binary_invalid_divideByZero (rule : Operand → Operand → Rule) {x y : Model fmt}
+    {p q : ℚ} (hp : toRat? x = some p) (hq : toRat? y = some q) {target : ℝ}
+    (hrule : (rule (.finite (signBit x) p) (.finite (signBit y) q)).Locates target)
+    (mode : IEEERoundingMode) (hint : Operand → Operand → Unit → Option (Hint fmt)) :
+    (binary rule x y mode hint).status.invalid = false ∧
+      (binary rule x y mode hint).status.divideByZero = false := by
+  rw [binary_of_toRat? rule hp hq]
+  exact Rule.deliver_invalid_divideByZero hrule mode _
 
 /--
 **A function of one operand rounds once.** For a conventional IEEE descriptor, a finite operand

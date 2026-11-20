@@ -12,6 +12,7 @@ public import FloatLib.Floats.Formats.P3109.Proof
 public import FloatLib.Floats.Formats.P3109.Projection.Range
 public import FloatLib.Floats.Formats.P3109.Projection.Saturation
 public meta import FloatLib.Tactic.KernelNotation
+public import FloatLib.Tactic.KernelShape
 public import FloatLib.Numerics.Kernel.ZProof
 import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.Literal
 
@@ -80,6 +81,15 @@ def satIndex : SaturationMode → Nat
   | .finite => 0
   | .propagate => 1
   | .none => 2
+
+/-! The descriptor numbers are matches for the compiler; the kernel reads them as recursors. -/
+
+kernel_shape sgOf
+kernel_shape exOf
+kernel_shape modeIndex
+kernel_shape modeWidth
+kernel_shape modeRandom
+kernel_shape satIndex
 
 /-- The closed value of a class and a signed ratio: class zero is `(-1) ^ s * n / d`, one `+∞`,
 two `-∞`, and every other class NaN. -/

@@ -4,6 +4,7 @@ Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
 
+import FloatLib.Floats.Formats.Block
 import FloatLib.Floats.Formats.Block.Configured
 import FloatLib.Floats.Formats.Block.Stored
 import FloatLib.Floats.Formats.Block.CodedDot
@@ -15,6 +16,10 @@ import FloatLib.Tactic.KernelEval
 NVIDIA, arXiv:2509.25149v2, Appendix B.1–B.3: kernel observations under exact arithmetic.
 Quantization includes its input construction. The dot and decode inputs are literal stored
 codes, so those timings exclude quantization. These differ from the native corpus harness.
+
+The rows `NVFP4_WORKING` time `Block.nvfp4Working`, the quantizer on binary32 encodings in the
+order of torchao's `nvfp4_quantize`: one element, the scale of a block of 16, and all 17 words of
+the block (their sum is observed, so that the kernel computes each one).
 -/
 
 open FloatLib.Numerics FloatLib.Floats.Formats
@@ -44,3 +49,20 @@ private def tensor : Block.Tensor format where
 #print "NVFP4_KERNEL DotGeneral n=16"
 #kernel_cost rewritten
   (OCP.MX.DotGeneral .binary32 tensor tensor [List.finRange 16]).toNatBits
+
+private def word (bits : Nat) : Model FloatFormat.binary32 :=
+  Model.ofNatBits bits
+
+private def ramp : List (Model FloatFormat.binary32) :=
+  [0x3F800000, 0x40000000, 0x40400000, 0x40800000, 0x40A00000, 0x40C00000, 0x40E00000,
+    0x41000000, 0xBF800000, 0xC0000000, 0xC0400000, 0xC0800000, 0xC0A00000, 0xC0C00000,
+    0xC0E00000, 0xC1000000].map word
+
+#print "NVFP4_WORKING element n=1"
+#kernel_cost (Block.nvfp4Working.element (word 0x3E800000) (word 0x40400000)).toNatBits
+#print "NVFP4_WORKING scale n=16"
+#kernel_cost (Block.nvfp4Working.scale (word 0x3F800000) ramp).toNatBits
+#print "NVFP4_WORKING block n=16"
+#kernel_cost
+  (Block.nvfp4Working.words (word 0x3F800000) ramp).2.foldl Nat.add
+    (Block.nvfp4Working.words (word 0x3F800000) ramp).1

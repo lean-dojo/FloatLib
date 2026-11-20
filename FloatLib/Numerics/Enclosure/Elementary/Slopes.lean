@@ -46,7 +46,7 @@ theorem sub_cube_le_arctan {u : ℝ} (hu : 0 ≤ u) : u - u ^ 3 / 3 ≤ Real.arc
       (fun x _ => (hderiv x).continuousAt.continuousWithinAt)
       (fun x _ => (hderiv x).differentiableAt.differentiableWithinAt) fun x _ => ?_
     rw [(hderiv x).deriv, sub_nonneg, le_div_iff₀ (by positivity)]
-    nlinarith [sq_nonneg (x ^ 2)]
+    linarith [sq_nonneg (x ^ 2)]
   have h := hmono (Set.mem_Ici.2 le_rfl) (Set.mem_Ici.2 hu) hu
   simpa using h
 

@@ -25,10 +25,15 @@ mapfile -t trust_sources < <(
   floatlib_lean_files FloatLib.lean FloatLib tests benchmarks site
 )
 
+# The opt-in host-FPU operations carry no refinement certificate. Every import of their module
+# is counted below, and the module stays outside the axiom audit.
+export FLOATLIB_UNCHECKED_MODULE=FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked
+
 python3 - "${trust_sources[@]}" <<'PYTHON'
 from bisect import bisect_right
 from collections import Counter, defaultdict
 from pathlib import Path
+import os
 import re
 import sys
 
@@ -71,7 +76,7 @@ allowed_imports = {
     "tests/FloatLibTests/Conformance/BinaryInterchange/NativeExecution.lean": 1,
     "site/tooling/ExportNodes.lean": 1,
 }
-unchecked_module = "FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked"
+unchecked_module = os.environ["FLOATLIB_UNCHECKED_MODULE"]
 # The separate native 16-bit carriers trust host IEEE binary32 and Figueroa's double-rounding
 # argument. Arithmetic remains unchecked; narrowing, widening and normalization are proved.
 allowed_carrier_imports = {
@@ -293,6 +298,31 @@ if errors:
 print("\n".join(summaries))
 PYTHON
 
+# The compiled audit checks the declarations of the modules it imports. Follow its imports
+# through the sources: a library module that they do not reach would never be audited. Only the
+# unchecked host-FPU module stays outside.
+audit_module=FloatLibTests.Conformance.Trust.Axioms
+unaudited_modules="$(
+  comm -23 \
+    <(
+      floatlib_source_files |
+        awk '$0 == "FloatLib.lean" || /^FloatLib\//' |
+        while IFS= read -r source; do
+          floatlib_source_module "$source"
+        done |
+        grep -vxF "$FLOATLIB_UNCHECKED_MODULE" |
+        LC_ALL=C sort -u
+    ) \
+    <(floatlib_source_files | floatlib_reachable_modules "$audit_module")
+)"
+if [[ -n "$unaudited_modules" ]]; then
+  printf '%s\n' "$unaudited_modules" >&2
+  printf 'trust-surface check failed: %s\n' \
+    "library modules are outside the imports of the axiom audit ($audit_module)" >&2
+  exit 1
+fi
+printf '%s\n' 'Axiom audit imports reach every library module but the unchecked host-FPU module.'
+
 # The compiled audit checks the axioms of loaded FloatLib declarations and verifies that the
 # permitted compiler replacement has its unconditional equality proof.
 if [[ "$source_only" -eq 1 ]]; then
@@ -300,5 +330,44 @@ if [[ "$source_only" -eq 1 ]]; then
   exit 0
 fi
 floatlib_test_lake build FloatLibTests.Conformance.Trust.Axioms
+
+# The audit holds what its imports export, so a private constant that no declaration uses is not
+# among its declarations. A plain file loads every level of every module it imports. This one
+# imports the lint roots of `lakefile.lean`, whose import closures hold every library module
+# (`architecture.sh`), and fails on a constant of a `FloatLib` module that the kernel holds as an
+# axiom. Lean keeps a declaration that its kernel rejects as an axiom, so a command that catches
+# the rejection and goes on would leave one behind.
+mapfile -t lint_roots < <(
+  awk '/^def lintRoots/ { inside = 1 } inside { print } inside && /\]/ { exit }' lakefile.lean |
+    grep -oE '"FloatLib[A-Za-z0-9_.]*"' |
+    tr -d '"'
+)
+[[ "${#lint_roots[@]}" -gt 0 ]] ||
+  { printf 'trust-surface check failed: lakefile.lean names no lint root\n' >&2; exit 1; }
+floatlib_lake build "${lint_roots[@]}"
+scan="$(mktemp -d "${TMPDIR:-/tmp}/floatlib-axioms.XXXXXX")"
+trap 'rm -rf -- "$scan"' EXIT
+{
+  printf 'import %s\n' "${lint_roots[@]}"
+  cat <<'LEAN'
+open Lean Elab Command in
+run_cmd liftCoreM do
+  let environment ← getEnv
+  let modules := environment.header.moduleNames
+  let mut constants : Nat := 0
+  let mut found : Array Name := #[]
+  for (name, _) in environment.constants.map₁.toList do
+    let some index := environment.getModuleIdxFor? name | continue
+    unless (`FloatLib).isPrefixOf modules[index.toNat]! do continue
+    constants := constants + 1
+    if let some (.axiomInfo _) := environment.checked.get.find? name then found := found.push name
+  unless found.isEmpty do
+    throwError "constants of the library that the kernel holds as axioms: {found}"
+  if constants == 0 then throwError "no constant of a FloatLib module is loaded"
+  IO.println s!"No axiom among the {constants} constants of the library, private ones included."
+LEAN
+} > "$scan/AxiomConstants.lean"
+floatlib_lake env lean "$scan/AxiomConstants.lean" ||
+  { printf 'trust-surface check failed: a constant of the library is an axiom\n' >&2; exit 1; }
 
 printf '%s\n' 'FloatLib proof trust-surface audit passed.'

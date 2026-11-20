@@ -145,6 +145,13 @@ info: evaluated at 5 inputs; the largest bound over magnitude is at
 #guard_msgs (whitespace := lax) in
 #roundoff_check (samples := 5) (size := 3) dot_closed
 
+-- The command compiles the program once for its sampled inputs and runs it at each of them. The
+-- compiled program is not left in the environment.
+run_meta do
+  let left : Nat := (← Lean.getEnv).constants.map₂.foldl (init := 0) fun count name _ =>
+    if name.components.any (·.toString.startsWith "_roundoffCheck") then count + 1 else count
+  unless left == 0 do throwError "{left} compiled programs are left in the environment"
+
 -- Given inputs at another format.
 /--
 info: evaluated at 1 input

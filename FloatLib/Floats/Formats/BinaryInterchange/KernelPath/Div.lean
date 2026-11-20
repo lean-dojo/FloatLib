@@ -65,6 +65,8 @@ def divSpecial (fmt : FloatFormat) (a b : Nat) : Nat :=
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
 
+kernel_constant divSpecial
+
 /--
 Round and pack the quotient `na / nb * 2 ^ (D - U)` of two significands normalized to one width
 (`na` may be zero), in the direction `mode`. `below` is one when `na < nb`, and `t` is the
@@ -477,7 +479,7 @@ theorem roundRatScaledGeneral_bits (fmt : FloatFormat) (negative : Bool) (W na n
       have := Nat.mul_le_mul_right (2 ^ fmt.fracWidth) ht'
       omega
     rw [ite_eq_left hover, ite_eq_right hM0, ite_eq_right hnle]
-    rfl
+    exact (overflowWord_eq fmt negative).symm
   · rw [ite_eq_right hover]
     by_cases htiny : -(below : Int) + ((D : Int) - U) + 1 <
         1 - (fmt.exponentBias : Int) - fmt.fracWidth
@@ -502,7 +504,7 @@ theorem roundRatScaledGeneral_bits (fmt : FloatFormat) (negative : Bool) (W na n
             _ = nb * (2 * 2 ^ (1 - below)) := by ac_rfl
         exact lt_of_lt_of_le hstep (Nat.mul_le_mul_left _ hpow)
       rw [ite_eq_left htiny, ite_eq_left hzero]
-      rfl
+      exact (zeroWord_eq fmt negative).symm
     · rw [ite_eq_right htiny]
       by_cases hsub : -(below : Int) + ((D : Int) - U) < 1 - (fmt.exponentBias : Int)
       · -- Below the normal range the quantum is the least subnormal.
@@ -546,8 +548,7 @@ theorem roundRatScaledGeneral_bits (fmt : FloatFormat) (negative : Bool) (W na n
         have hM0 : mantissa ≠ 0 := by omega
         rw [ite_eq_right hsub, hshiftL, hshiftR, Nat.shiftLeft_zero, ← hmantissa,
           packRoundedNormal_bits fmt negative _ t mantissa _ (by omega) hbounds.1 hbounds.2,
-          ite_eq_right hM0]
-        rfl
+          ite_eq_right hM0, overflowWord_eq]
 
 /-! ## The IEEE rounder is the general one -/
 
@@ -774,7 +775,7 @@ theorem roundRatMagnitudeDirected_bits (fmt : FloatFormat) (up negative : Bool)
       have hfraction : 1 < 2 ^ fmt.fracWidth := Nat.one_lt_two_pow (by omega)
       rw [ite_eq_left htiny, hvalue]
       cases up
-      · simp [zeroWord]
+      · simp [zeroWord_eq]
       · simp only [ite_true, one_ne_zero, ite_false, hone]
         cases negative
         · simp only [Bool.false_eq_true, ite_false]
@@ -984,7 +985,7 @@ theorem directedRat_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (ne
       rw [show (2 * (na <<< (D + fmt.exponentBias + fmt.fracWidth - (U + t + 1)) %
           nb <<< (U + t + 1 - (D + fmt.exponentBias + fmt.fracWidth))) ==
         nb <<< (U + t + 1 - (D + fmt.exponentBias + fmt.fracWidth))) = true by simpa using htie,
-        ite_eq_left rfl]
+        ite_eq_left rfl, roundOverflowWord_eq]
       exact roundRatMagnitudeDirected_bits fmt true negative W na nb D U hna hnb t mantissa ht
         hmantissa
     · rw [Model.Policy.roundQuot_nearestAway_eq_nearest_of_ne _ _ 0 _ _ htie,
@@ -996,18 +997,22 @@ theorem directedRat_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (ne
       exact roundRatScaledGeneral_bits fmt negative W na nb D U hna hnb t mantissa ht hmantissa
   · -- toward zero
     rw [Model.Policy.roundQuot_towardZero_eq_roundQuotDirected] at hmantissa
+    rw [roundOverflowWord_eq]
     exact roundRatMagnitudeDirected_bits fmt false negative W na nb D U hna hnb t mantissa ht
       hmantissa
   · -- toward positive infinity
     rw [Model.Policy.roundQuot_up_eq_roundQuotDirected _ _ _ _ hden] at hmantissa
+    rw [roundOverflowWord_eq]
     exact roundRatMagnitudeDirected_bits fmt (!negative) negative W na nb D U hna hnb t mantissa
       ht hmantissa
   · -- toward negative infinity
     rw [Model.Policy.roundQuot_down_eq_roundQuotDirected _ _ _ _ hden] at hmantissa
+    rw [roundOverflowWord_eq]
     exact roundRatMagnitudeDirected_bits fmt negative negative W na nb D U hna hnb t mantissa ht
       hmantissa
   · -- away from zero
     rw [Model.Policy.roundQuot_away_eq_roundQuotDirected _ _ _ _ hden] at hmantissa
+    rw [roundOverflowWord_eq]
     exact roundRatMagnitudeDirected_bits fmt true negative W na nb D U hna hnb t mantissa ht
       hmantissa
 
@@ -1182,7 +1187,7 @@ theorem divSpecial_eq_of_nonFinite {fmt : FloatFormat} (x y : Model fmt)
       · rw [hi] at hy
         exact absurd hy (by decide)
       · exact Or.inr rfl
-  simp only [bne]
+  simp only [bne, zeroWord_eq, invalidWord_eq, overflowWord_eq]
   rcases hinf with hi | hi
   · rw [hi]
     cases Model.isInfinite y <;> cases (Model.signBit x == Model.signBit y) <;> rfl
@@ -1225,6 +1230,7 @@ theorem divSpecial_eq_of_zero_divisor {fmt : FloatFormat} (x y : Model fmt)
     Model.isInfinite_eq_false_of_toDyadic?_some hdy, Model.isNaN_eq_false_of_toDyadic?_some hdx,
     Model.isNaN_eq_false_of_toDyadic?_some hdy]
   rw [hspec]
+  simp only [invalidWord_eq, overflowWord_eq]
   by_cases hx0 : dx.significand = 0
   · rw [ite_eq_left hx0, hux.mpr hx0]
     rfl
@@ -1283,7 +1289,7 @@ theorem div_eq_spec {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x y : M
       simp only [ite_true, Nat.zero_shiftLeft]
       rw [divCore_eq fmt mode (Bool.xor dx.negative dy.negative) fmt.fracWidth _ 0 _ _ _ _ rfl
         (Or.inl rfl) hnb]
-      simp [zeroWord]
+      simp [zeroWord_eq]
     · have hna := normalized_bounds hx0 hmx
       have hla : fmt.fracWidth + 1 - (dx.significand.log2 + 1) =
           fmt.fracWidth - dx.significand.log2 := by omega

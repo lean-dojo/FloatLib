@@ -202,6 +202,60 @@ example (f : Nat → Nat → Nat) (lo n step : Nat) :
       Nat.rec (motive := fun _ => Nat) 0 (fun i s => f s (Nat.add lo (Nat.mul step i))) n :=
   FloatLib.Floats.ExecFloat.KernelPath.foldl_range' f 0 lo n step
 
+/-! ## The words of the special results and the copies of the stages
+
+`zeroWord`, `overflowWord`, `roundOverflowWord` and `invalidWord` are written on the two widths
+of a format and are the encodings of the zero, of the overflow results and of the invalid result
+of the model. The copies in kernel shape of the stages for operands that are not finite are the
+stages. -/
+
+/-- The words of the zeros of binary32, of E4M3 with its signed zero, and of an encoding with
+one zero. -/
+example :
+    zeroWord FloatFormat.binary32 false = 0 ∧ zeroWord FloatFormat.binary32 true = 2 ^ 31 ∧
+      zeroWord FloatFormat.e4m3 true = 128 ∧
+      zeroWord FloatFormat.e4m3fnuz true = 0 := by
+  decide +kernel
+
+example (fmt : FloatFormat) (negative : Bool) :
+    zeroWord fmt negative = (Model.zero fmt negative).toNatBits :=
+  zeroWord_eq fmt negative
+
+/-- The words of the overflow and invalid results of binary32: the infinities, the largest
+finite value in the truncating direction, and the quiet NaN. -/
+example :
+    overflowWord FloatFormat.binary32 false = 0x7F800000 ∧
+      overflowWord FloatFormat.binary32 true = 0xFF800000 ∧
+      roundOverflowWord FloatFormat.binary32 .towardZero false = 0x7F7FFFFF ∧
+      roundOverflowWord FloatFormat.binary32 .nearest true = 0xFF800000 ∧
+      roundOverflowWord FloatFormat.binary32 .up true = 0xFF7FFFFF ∧
+      invalidWord FloatFormat.binary32 = 0x7FC00000 := by
+  decide +kernel
+
+/-- The same words of E4M3, whose largest pattern is its NaN, and of the encoding with one
+zero, whose NaN is the word of the sign bit. -/
+example :
+    overflowWord FloatFormat.e4m3 false = 0x7F ∧ overflowWord FloatFormat.e4m3 true = 0xFF ∧
+      roundOverflowWord FloatFormat.e4m3 .towardZero true = 0xFE ∧
+      invalidWord FloatFormat.e4m3 = 0x7F ∧
+      overflowWord FloatFormat.e4m3fnuz false = 0x80 ∧
+      invalidWord FloatFormat.e4m3fnuz = 0x80 := by
+  decide +kernel
+
+example (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (negative : Bool) :
+    overflowWord fmt negative = (Model.nativeOverflow fmt negative).toNatBits ∧
+      roundOverflowWord fmt mode negative =
+        (Model.directedOverflow fmt negative
+          (mode.overflowRoundsMagnitudeUp negative)).toNatBits ∧
+      invalidWord fmt = (Model.invalidResult fmt).toNatBits :=
+  ⟨overflowWord_eq fmt negative, roundOverflowWord_eq fmt mode negative, invalidWord_eq fmt⟩
+
+example : @zeroWord = @zeroWord.kernel ∧ @packRare = @packRare.kernel ∧
+    @addSpecial = @addSpecial.kernel ∧ @nanFlag = @nanFlag.kernel ∧
+    @overflowWord = @overflowWord.kernel ∧ @invalidWord = @invalidWord.kernel :=
+  ⟨zeroWord.kernel_eq, packRare.kernel_eq, addSpecial.kernel_eq, nanFlag.kernel_eq,
+    overflowWord.kernel_eq, invalidWord.kernel_eq⟩
+
 /-! ## True statements: arithmetic -/
 
 /-- One thousand binary32 additions of `0.1`, with the exact value of the result. -/
@@ -438,6 +492,18 @@ theorem status_flags :
         { invalid := true } ∧
       (ExecFloat.Binary.fma (0.5 : Binary64) 4 (-2) (status := true)).status = {} := by
   float_decide
+
+/--
+The flags of an outcome are read off the status number at the word of the kernel value: the
+rewrite leaves the value of the sum once, as an argument of the status number.
+-/
+example (x y : Binary32) :
+    (ExecFloat.Binary.add x y (status := true)).status =
+      decodeStatus
+        (Flat.addStatusWith (ExecFloat.Binary.descriptor (exponentBits := 8) (fractionBits := 23))
+          .nearest (KernelPath.toNat x) (KernelPath.toNat y)
+          (KernelPath.toNat (KernelPath.Value.add .nearest x y))) := by
+  simp only [kernel_optimize]
 
 /-- The ternary value follows the rounding direction. -/
 theorem ternary_by_direction :

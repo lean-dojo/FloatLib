@@ -46,6 +46,13 @@ example (x y : Q8) : x + y = ExecFloat.Spec.add x y ∧ x - y = ExecFloat.Spec.s
 example (x y : Q8) : ExecFloat.add x y = ExecFloat.Spec.add x y := by
   simp only [kernel_optimize]
 
+/-- The reference sum and difference are the values of the sum and the difference of the
+coefficients, with the kernel arithmetic of `Int`. -/
+example (x y : Q8) :
+    x + y = ExecFloat.FixedPoint.ofCoefficient (Kernel.Z.add x.coefficient y.coefficient) ∧
+      x - y = ExecFloat.FixedPoint.ofCoefficient (Kernel.Z.sub x.coefficient y.coefficient) := by
+  simp only [kernel_optimize, and_self]
+
 example :
     ((ExecFloat.FixedPoint.ofCoefficient 12345 : Q8) + ExecFloat.FixedPoint.ofCoefficient (-777)
       - ExecFloat.FixedPoint.ofCoefficient 68).coefficient = 11500 := by
@@ -67,6 +74,23 @@ example :
     ((.ofExponent 2 : L10) * .ofExponent (-1) (negative := true)).toCode = .value true 1 := by
   float_decide
 
+/-- An equation between the code of a product and a code is the test `sameCode` on the product
+of the codes in its kernel shape. -/
+example (x y : L10) (code : Logarithmic.Code decimalRadix) :
+    ((x * y).toCode = code) =
+      (ExecFloat.Logarithmic.sameCode (Logarithmic.Code.mul.kernel x.toCode y.toCode) code =
+        true) := by
+  simp only [kernel_optimize]
+
+/-- A product with zero, a product of two negative powers of ten, one of them negated, and a
+product that is not the stated code. -/
+example :
+    ((ExecFloat.Logarithmic.zero : L10) * .ofExponent 5).toCode = .zero ∧
+      ((.ofExponent (-3) : L10) * .ofExponent (-4) (negative := true)).toCode =
+        .value true (-7) ∧
+      ((.ofExponent 2 : L10) * .ofExponent 3).toCode ≠ .value true 5 := by
+  float_decide
+
 /-! ## P3109 -/
 
 /-- The report's Binary8p4se. -/
@@ -82,6 +106,67 @@ example :
     ((1.5 : B8P4) + 2.25).toNatBits = (3.75 : B8P4).toNatBits ∧
       ((1.5 : B8P4) * 2.25).toNatBits = (3.375 : B8P4).toNatBits ∧
       ((2.25 : B8P4) / 1.5).toNatBits = (1.5 : B8P4).toNatBits := by
+  float_decide
+
+-- A value of a binary interchange format converts into a P3109 format on its encoding: 1.7
+-- in binary32 to the nearest code of Binary8p4se, -2.3e-5 in binary64 rounded up into a format
+-- of sixteen bits, and the negative zero, the two infinities and a NaN of binary32.
+example :
+    (P3109.Arithmetic.Mixed.Convert (P3109.Arithmetic.Destination.p3109 .binary8p4se)
+        (BinaryInterchange.Model.ofNatBits 0x3FD9999A :
+          BinaryInterchange.Model .binary32)).toNatBits = 70 ∧
+      (P3109.Arithmetic.Mixed.Convert
+        (P3109.Arithmetic.Destination.p3109 (P3109.Format.signed 16 8 .extended))
+        (BinaryInterchange.Model.ofNatBits 0xBEF81E03F705857B :
+          BinaryInterchange.Model .binary64) .up .finite).toNatBits = 47168 ∧
+      [0x80000000, 0x7F800000, 0xFF800000, 0x7FC00000].map (fun word =>
+        (P3109.Arithmetic.Mixed.Convert (P3109.Arithmetic.Destination.p3109 .binary8p4se)
+          (BinaryInterchange.Model.ofNatBits word :
+            BinaryInterchange.Model .binary32)).toNatBits) = [0, 127, 255, 128] := by
+  float_decide
+
+/-- The destination Binary8p4se of the mixed operations below. -/
+private abbrev mixedTarget := P3109.Arithmetic.Destination.p3109 .binary8p4se
+
+/-- The code 68 of Binary8p4se. -/
+private abbrev mixedCode : B8P4 := ExecFloat.P3109.ofNatBits 68
+
+/-- `1.7` in binary32. -/
+private abbrev mixedSingle : BinaryInterchange.Model .binary32 :=
+  BinaryInterchange.Model.ofNatBits 0x3FD9999A
+
+/-- `-2.5` in binary32. -/
+private abbrev mixedNegative : BinaryInterchange.Model .binary32 :=
+  BinaryInterchange.Model.ofNatBits 0xC0200000
+
+/-- `-2.3e-5` in binary64. -/
+private abbrev mixedDouble : BinaryInterchange.Model .binary64 :=
+  BinaryInterchange.Model.ofNatBits 0xBEF81E03F705857B
+
+-- Mixed arithmetic on operands of different kinds is one projection of a class, a sign and a
+-- ratio computed from the encodings: values of Binary8p4se, of binary32 and of binary64, and
+-- rationals, in each operation of the report. The expected codes are those of the compiled
+-- reference operations.
+example :
+    (P3109.Arithmetic.Mixed.Add mixedTarget mixedSingle mixedCode).toNatBits = 77 ∧
+      (P3109.Arithmetic.Mixed.Subtract mixedTarget mixedCode mixedDouble).toNatBits = 68 ∧
+      (P3109.Arithmetic.Mixed.Multiply mixedTarget mixedSingle mixedNegative).toNatBits = 209 ∧
+      (P3109.Arithmetic.Mixed.Divide mixedTarget mixedCode mixedNegative .up
+        .finite).toNatBits = 185 ∧
+      (P3109.Arithmetic.Mixed.Recip mixedTarget mixedNegative).toNatBits = 181 ∧
+      (P3109.Arithmetic.Mixed.FMA mixedTarget mixedSingle mixedCode mixedNegative).toNatBits =
+        29 ∧
+      (P3109.Arithmetic.Mixed.FAA mixedTarget mixedSingle mixedCode mixedDouble).toNatBits =
+        77 := by
+  float_decide
+
+example :
+    (P3109.Arithmetic.Mixed.Add mixedTarget mixedSingle (1 : Rat)).toNatBits = 75 ∧
+      (P3109.Arithmetic.Mixed.Multiply mixedTarget mixedCode (3 / 4 : Rat)).toNatBits = 65 ∧
+      (P3109.Arithmetic.Mixed.Convert mixedTarget (-5 / 3 : Rat)).toNatBits = 197 ∧
+      (P3109.Arithmetic.Mixed.Add mixedTarget mixedCode
+        (ExecFloat.P3109.ofNatBits 70 : B8P4)).toNatBits = 77 ∧
+      (P3109.Arithmetic.Mixed.Divide mixedTarget mixedSingle (0 : Rat)).toNatBits = 128 := by
   float_decide
 
 /-- Prepared P3109 stages preserve NaN precedence, zero divisors and signed root branches. -/
@@ -148,6 +233,65 @@ example :
       (ExecFloat.P3109.projectRat (format := .binary8p3se) (1.5 : B8P4).toClosedRat).toNatBits =
         (1.5 : ExecFloat.P3109 .binary8p3se).toNatBits ∧
       ((3 : B8P4) - 1.75).toNatBits = (1.25 : B8P4).toNatBits := by
+  float_decide
+
+/-- The reciprocal, the fused add-add, the copy of a sign and the three square roots run on
+encodings, in every rounding mode. -/
+example :
+    (ExecFloat.P3109.Recip (4 : B8P4)).toNatBits = (0.25 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.FAA (1.5 : B8P4) (2 : B8P4) (0.25 : B8P4)).toNatBits =
+        (3.75 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.CopySign (1.5 : B8P4) (ExecFloat.P3109.Negate (2 : B8P4))).toNatBits =
+        (ExecFloat.P3109.Negate (1.5 : B8P4)).toNatBits ∧
+      (ExecFloat.P3109.Sqrt (2.25 : B8P4)).toNatBits = (1.5 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Sqrt (2 : B8P4)).toNatBits = (1.375 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Sqrt (2 : B8P4) (mode := .up)).toNatBits = (1.5 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Sqrt (2 : B8P4) (mode := .stochasticA (.ofNat 2 3))).toNatBits =
+        (1.5 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.RSqrt (4 : B8P4)).toNatBits = (0.5 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Hypot (3 : B8P4) (4 : B8P4)).toNatBits = (5 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.square (1.5 : B8P4)).toNatBits = (2.25 : B8P4).toNatBits := by
+  float_decide
+
+/-- The comparisons, the extrema and the clamp run on encodings: NaN is unordered, a number
+variant ignores one NaN, a finite variant prefers a finite value to an infinity, and reversed
+bounds give NaN. -/
+example :
+    ExecFloat.P3109.CompareLess (1.5 : B8P4) (2 : B8P4) = true ∧
+      ExecFloat.P3109.CompareEqual (ExecFloat.P3109.ofNatBits 128 : B8P4)
+        (ExecFloat.P3109.ofNatBits 128 : B8P4) = false ∧
+      ExecFloat.P3109.CompareLessEqual (2 : B8P4) (2 : ExecFloat.P3109 .binary8p3se) = true ∧
+      ExecFloat.P3109.CompareGreater (2 : B8P4) (1.5 : B8P4) = true ∧
+      ExecFloat.P3109.CompareGreaterEqual (1.5 : B8P4) (2 : B8P4) = false ∧
+      ExecFloat.P3109.compare (1.5 : B8P4) (2 : B8P4) = some .lt ∧
+      (ExecFloat.P3109.Minimum (1.5 : B8P4) (2 : B8P4)).toNatBits = (1.5 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Maximum (ExecFloat.P3109.ofNatBits 128 : B8P4) (2 : B8P4)).toNatBits =
+        128 ∧
+      (ExecFloat.P3109.MaximumNumber (ExecFloat.P3109.ofNatBits 128 : B8P4)
+        (2 : B8P4)).toNatBits = (2 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.MinimumMagnitude (ExecFloat.P3109.Negate (2 : B8P4))
+        (2 : B8P4)).toNatBits = (ExecFloat.P3109.Negate (2 : B8P4)).toNatBits ∧
+      (ExecFloat.P3109.MaximumMagnitudeNumber (ExecFloat.P3109.Negate (2 : B8P4))
+        (2 : B8P4)).toNatBits = (2 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.MaximumFinite (ExecFloat.P3109.ofNatBits 127 : B8P4)
+        (2 : B8P4)).toNatBits = (2 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Clamp (5 : B8P4) (1 : B8P4) (2 : B8P4)).toNatBits =
+        (2 : B8P4).toNatBits ∧
+      (ExecFloat.P3109.Clamp (5 : B8P4) (2 : B8P4) (1 : B8P4)).toNatBits = 128 := by
+  float_decide
+
+/-- The classification queries and the neighbours run on encodings. -/
+example :
+    ExecFloat.P3109.IsOne (1 : B8P4) = true ∧ ExecFloat.P3109.IsZero (0 : B8P4) = true ∧
+      ExecFloat.P3109.IsNaN (ExecFloat.P3109.ofNatBits 128 : B8P4) = true ∧
+      ExecFloat.P3109.IsInfinite (ExecFloat.P3109.ofNatBits 127 : B8P4) = true ∧
+      ExecFloat.P3109.IsFinite (1.5 : B8P4) = true ∧
+      ExecFloat.P3109.IsSignMinus (ExecFloat.P3109.Negate (1.5 : B8P4)) = true ∧
+      ExecFloat.P3109.IsNormal (1.5 : B8P4) = true ∧
+      ExecFloat.P3109.IsSubnormal (ExecFloat.P3109.ofNatBits 1 : B8P4) = true ∧
+      (ExecFloat.P3109.NextGreaterThan (ExecFloat.P3109.ofNatBits 126 : B8P4)).toNatBits =
+        127 ∧
+      (ExecFloat.P3109.NextLessThan (0 : B8P4)).toNatBits = 129 := by
   float_decide
 
 /-! ## The bipolar codebook -/
@@ -241,6 +385,100 @@ example :
       ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofRat (1 / 3) : Posit8) = 51 := by
   float_decide
 
+/-- A signed integer of 32 bits. -/
+abbrev signed (value : Int) : Representations.FixedInt 32 :=
+  Representations.FixedInt.ofInt value
+
+/-- Posit Standard (2022), §6.4: integers of 32 bits are rounded by the flat ratio rounding of
+their magnitude: a positive and a negative signed integer, the reserved word, which gives NaR,
+an unsigned word and the reserved unsigned word. -/
+example :
+    ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofFixedInt (signed 12345) : Posit16) = 31106 ∧
+      ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofFixedInt (signed (-7)) : Posit16) = 43520 ∧
+      ExecFloat.Posit.toNatBits
+        (ExecFloat.Posit.ofFixedInt (signed (-2 ^ 31)) : Posit16) = 0x8000 ∧
+      ExecFloat.Posit.toNatBits
+        (ExecFloat.Posit.ofUnsigned (BitVec.ofNat 32 12345) : Posit32) = 2038548480 ∧
+      ExecFloat.Posit.toNatBits
+        (ExecFloat.Posit.ofUnsigned (BitVec.ofNat 32 (2 ^ 31)) : Posit32) = 0x80000000 := by
+  float_decide
+
+-- The compiled conversions give the same words.
+#guard ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofFixedInt (signed 12345) : Posit16) == 31106
+#guard ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofFixedInt (signed (-7)) : Posit16) == 43520
+#guard ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofFixedInt (signed (-2 ^ 31)) : Posit16) ==
+  0x8000
+#guard ExecFloat.Posit.toNatBits (ExecFloat.Posit.ofUnsigned (BitVec.ofNat 32 12345) : Posit32) ==
+  2038548480
+
+/-- The conversion of a signed integer is rewritten to the flat rounding of its word, for
+every posit format and every positive width. -/
+example (value : Representations.FixedInt 24) :
+    Posit.Model.ofFixedInt (ExecFloat.Posit.descriptor 32) value =
+      Posit.Model.ofNatBits
+        (Bool.rec (motive := fun _ => Nat)
+          (Bool.rec (motive := fun _ => Nat)
+            (Posit.KernelPath.Flat.ofRatio (ExecFloat.Posit.descriptor 32).payloadBits 2 0
+              value.toNatBits 1)
+            (Posit.KernelPath.Flat.ofRatio (ExecFloat.Posit.descriptor 32).payloadBits 2 1
+              (Nat.sub (Nat.pow 2 24) value.toNatBits) 1)
+            (Nat.ble (Nat.pow 2 (Nat.sub 24 1)) value.toNatBits))
+          (Posit.KernelPath.nar (ExecFloat.Posit.descriptor 32).payloadBits)
+          (Nat.beq value.toNatBits (Nat.pow 2 (Nat.sub 24 1)))) := by
+  simp only [kernel_optimize]
+
+/-- Posit Standard (2022), §6.4: posits rounded to integers on the kernel path. The ties `1.5`
+and `-2.5` go to the even integers `2` and `-2`, one half rounds to zero, the largest posit16
+and NaR give the reserved word of eight bits, three converts to three, and a negative value
+has no unsigned integer. -/
+example :
+    (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0x4400 : Posit16)).toNatBits = 2 ∧
+      (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0xB600 : Posit16)).toNatBits =
+        254 ∧
+      (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0x3000 : Posit16)).toNatBits = 0 ∧
+      (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0x7FFF : Posit16)).toNatBits =
+        128 ∧
+      (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0x8000 : Posit16)).toNatBits =
+        128 ∧
+      (ExecFloat.Posit.toFixedInt 32 (ExecFloat.Posit.ofNatBits 0x4C00 : Posit16)).toNatBits =
+        3 ∧
+      (ExecFloat.Posit.toUnsigned 8 (ExecFloat.Posit.ofNatBits 0xBC00 : Posit16)).toNat = 128 ∧
+      (ExecFloat.Posit.toUnsigned 32 (ExecFloat.Posit.ofNatBits 0x4C000000 : Posit32)).toNat =
+        3 := by
+  float_decide
+
+-- The compiled conversions give the same words.
+#guard (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0x4400 : Posit16)).toNatBits == 2
+#guard (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0xB600 : Posit16)).toNatBits ==
+  254
+#guard (ExecFloat.Posit.toFixedInt 8 (ExecFloat.Posit.ofNatBits 0x7FFF : Posit16)).toNatBits ==
+  128
+#guard (ExecFloat.Posit.toUnsigned 8 (ExecFloat.Posit.ofNatBits 0xBC00 : Posit16)).toNat == 128
+
+-- On every word of posit8 and every integer width up to ten bits, the conversions on encodings
+-- give the words of the compiled conversions.
+#guard (List.range 256).all fun word =>
+  (List.range 10).all fun k =>
+    if h : 0 < k + 1 then
+      (ExecFloat.Posit.toFixedInt (k + 1) (ExecFloat.Posit.ofNatBits word : Posit8) h).toNatBits ==
+          Posit.KernelPath.toSigned 7 2 (k + 1) word &&
+        (ExecFloat.Posit.toUnsigned (k + 1) (ExecFloat.Posit.ofNatBits word : Posit8) h).toNat ==
+          Posit.KernelPath.toUnsigned 7 2 (k + 1) word
+    else true
+
+/-- The conversions to integers are rewritten to the flat conversions of the word, for every
+posit format and every positive width. -/
+example (x : Posit.Model (ExecFloat.Posit.descriptor 16)) :
+    Posit.Model.toFixedInt 12 x =
+        Representations.FixedInt.ofNatBits
+          (Posit.KernelPath.Flat.toSigned (ExecFloat.Posit.descriptor 16).payloadBits 2 12
+            x.toNatBits) ∧
+      Posit.Model.toUnsigned 12 x =
+        BitVec.ofNat 12
+          (Posit.KernelPath.Flat.toUnsigned (ExecFloat.Posit.descriptor 16).payloadBits 2 12
+            x.toNatBits) := by
+  simp only [kernel_optimize, and_self]
+
 /-- A rational is rounded by the flat ratio rounding on its numerator and denominator. -/
 example (value : Rat) :
     (ExecFloat.Posit.ofRat value : Posit32) =
@@ -327,6 +565,65 @@ example :
       Element.scan .int8 0 0 1000 1 256 = some (Element.nearestAll .int8 0 0 1000 1) ∧
       Element.scan .int8 0 1 0 1 256 = some (Element.nearestAll .int8 0 1 0 1) := by
   decide +kernel
+
+/-- The guessed form gives the entry of the bisection: a tie between two codes, an input below
+the smallest magnitude, a negative input, an input beyond the largest finite magnitude, and the
+same for INT8 with the two ends of its range and a negative zero. -/
+example :
+    Element.nearestFast .e4m3 0 0 464 1 = Element.nearestAll .e4m3 0 0 464 1 ∧
+      Element.nearestFast .e2m3 0 0 1 1000 = Element.nearestAll .e2m3 0 0 1 1000 ∧
+      Element.nearestFast .e2m1 1 1 7 3 = Element.nearestAll .e2m1 1 1 7 3 ∧
+      Element.nearestFast .e5m2 0 0 100000 1 = Element.nearestAll .e5m2 0 0 100000 1 ∧
+      Element.nearestFast .e3m2 1 1 5 2 = Element.nearestAll .e3m2 1 1 5 2 ∧
+      Element.nearestFast .int8 1 1 7 3 = Element.nearestAll .int8 1 1 7 3 ∧
+      Element.nearestFast .int8 1 1 1000 1 = Element.nearestAll .int8 1 1 1000 1 ∧
+      Element.nearestFast .int8 0 0 1000 1 = Element.nearestAll .int8 0 0 1000 1 ∧
+      Element.nearestFast .int8 0 1 0 1 = Element.nearestAll .int8 0 1 0 1 := by
+  decide +kernel
+
+/-- The guess of the field is the field that the bisection finds, so the guessed form does not
+run the bisection: on 1,200 inputs of E4M3 and of E5M2, from zero to beyond the largest
+magnitude, on 240 inputs of E2M1, and on 1,200 inputs of INT8 with both signs. -/
+example :
+    ((List.range 300).all fun ap => (List.range 4).all fun k =>
+        Nat.beq (Element.fieldGuess .e4m3 (ap * 512) (2 * k + 1))
+            (Kernel.bisect (Element.below .e4m3 (ap * 512) (2 * k + 1)) 7 0) &&
+          Nat.beq (Element.fieldGuess .e5m2 (ap * 65536) (2 * k + 1))
+            (Kernel.bisect (Element.below .e5m2 (ap * 65536) (2 * k + 1)) 7 0)) = true ∧
+      ((List.range 60).all fun ap => (List.range 4).all fun k =>
+        Nat.beq (Element.fieldGuess .e2m1 (ap * 2) (2 * k + 1))
+          (Kernel.bisect (Element.below .e2m1 (ap * 2) (2 * k + 1)) 3 0)) = true ∧
+      ((List.range 150).all fun ap => (List.range 4).all fun k => (List.range 2).all fun sp =>
+        Nat.beq (Element.int8Guess sp (ap * 64) (2 * k + 1))
+          (Kernel.bisect (Element.int8Below sp (ap * 64) (2 * k + 1)) 8 0)) = true := by
+  decide +kernel
+
+/-- The rewrite turns the bisection form into the guessed form, for every profile and
+input. -/
+example (profile : Profile) (sp neg ap q : Nat) :
+    Element.nearestAll profile sp neg ap q = Element.nearestFast profile sp neg ap q := by
+  simp only [kernel_optimize]
+
+/-- The kernel shape of the rounded code reads the sign bits by recursors and the numerator by
+the kernel arithmetic of `Int`, and it is the rounded code: a positive, a negative and a zero
+input in a sign-magnitude profile and in INT8. -/
+example :
+    Element.roundCode.kernel .e4m3 (SignedRat.ofRat (7 / 3)) =
+        Element.roundCode .e4m3 (SignedRat.ofRat (7 / 3)) ∧
+      Element.roundCode.kernel .e2m3 (SignedRat.ofRat (-5 / 8)) =
+        Element.roundCode .e2m3 (SignedRat.ofRat (-5 / 8)) ∧
+      Element.roundCode.kernel .int8 (SignedRat.ofRat (-7 / 3)) =
+        Element.roundCode .int8 (SignedRat.ofRat (-7 / 3)) ∧
+      Element.roundCode.kernel .e5m2 SignedRat.negZero =
+        Element.roundCode .e5m2 SignedRat.negZero := by
+  decide +kernel
+
+/-- Under the saturating mode the rewrite leaves the rounded code and its width, without the
+test of the overflow mode. -/
+example (profile : Profile) (input : SignedRat) :
+    (Element.quantize profile (.finite input) .saturate).toNat =
+      Nat.mod (Element.roundCode.kernel profile input) (Nat.pow 2 profile.width) := by
+  simp only [kernel_optimize]
 
 /-- Quantize a rational scalar and read the element code. -/
 abbrev scalar (profile : Profile) (overflow : OverflowMode) (value : Rat) : Nat :=

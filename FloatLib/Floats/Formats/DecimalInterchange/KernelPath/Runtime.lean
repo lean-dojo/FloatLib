@@ -6,8 +6,9 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Exact
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Runtime
-public import FloatLib.Numerics.Kernel.Bits
+public import FloatLib.Numerics.Kernel.Bits.Shape
 
 /-!
 # Kernel path of decimal arithmetic
@@ -31,6 +32,10 @@ exact product of the first two, which is a coefficient at an exponent like any o
 The theorems `add_eq`, `sub_eq`, `mul_eq` and `fma_eq` of `KernelPath.Proof` prove that these
 functions are the specified operations for every format, rounding direction and operands, valid
 or not. They are tagged `@[kernel_optimize]`, so `float_decide` rewrites with them.
+
+The stages are written with `casesOn` and numerals, which Lean compiles. `kernel_shape` declares
+each stage as Lean's kernel evaluates it best (`add.kernel` and its siblings: recursors, literals
+and the kernel arithmetic of `Int`), and `float_decide` evaluates those.
 -/
 
 @[expose] public section
@@ -111,6 +116,14 @@ def decimalLength (c : Nat) : Nat :=
       (Bool.casesOn (motive := fun _ => Nat) (Nat.ble (Nat.pow 10 (Nat.succ d)) c)
         (Nat.succ d) (Nat.succ (Nat.log 10 c))))
     (Nat.shiftRight (Nat.mul (size c) 1233) 12)
+
+/--
+A bound on the number of decimal digits of `c` from its bit length alone, `c < 10 ^ digitBound c`
+(`lt_ten_pow_digitBound`): the bit length times `1234 / 4096`, which is above `log₁₀ 2`, plus one.
+It costs one bit length where the exact count `decimalLength` costs two more comparisons.
+-/
+def digitBound (c : Nat) : Nat :=
+  Nat.succ (Nat.shiftRight (Nat.mul (size c) 1234) 12)
 
 /--
 The amount, zero or one, by which a coefficient whose dropped digits are `remainder` out of
@@ -337,5 +350,35 @@ def datumBeq (x y : Datum) : Bool :=
       (fun _ _ _ => false) (fun _ => false)
       (fun sy ty py => Bool.casesOn (motive := fun _ => Bool) (Nat.beq px py) false
         (Bool.casesOn (motive := fun _ => Bool) (boolBeq sx sy) false (boolBeq tx ty))))
+
+/-! ## Kernel shapes -/
+
+kernel_shape flag
+kernel_shape offsets
+kernel_shape gaps
+kernel_shape offsets3
+kernel_shape quantumAt
+kernel_shape decimalLength
+kernel_shape digitBound
+kernel_shape increment
+kernel_shape overflow
+kernel_shape deliver
+kernel_shape projectRounded
+kernel_shape projectInexact
+kernel_shape projectAbove
+kernel_shape projectZero
+kernel_shape projectAt
+kernel_shape project
+kernel_shape isDown
+kernel_shape differ
+kernel_shape addFinite
+kernel_shape addFields
+kernel_shape add
+kernel_shape sub
+kernel_shape mul
+kernel_shape fma
+kernel_shape intBeq
+kernel_shape boolBeq
+kernel_shape datumBeq
 
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

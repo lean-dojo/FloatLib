@@ -26,7 +26,8 @@ FLOATLIB_RUN_INDEPENDENT_CHECKER=1 bash tests/verify.sh
 ```
 
 This runs `checks/kernel-replay.sh`, which loads the stored declarations of each library module
-and checks them again with the same kernel used during compilation, one module per process. It's
+and checks them again with the same kernel used during compilation, one module per process. It
+also fails if one of them is an axiom. It's
 opt-in because the whole library takes about an hour of processor time. Set
 `KERNEL_REPLAY_JOBS` to the number of processes to run at a time (default 4, up to 6 GB each),
 or name module prefixes to replay a part: `bash tests/checks/kernel-replay.sh FloatLib.Numerics.Kernel`.
@@ -176,13 +177,17 @@ use Lean's unchecked execution.
 `checks/trust-surface.sh` inventories native proof evaluation, compiler replacements, unchecked
 imports, and `unsafe` uses across library, test, benchmark, and site Lean sources.
 [Axioms.lean](FloatLibTests/Conformance/Trust/Axioms.lean) audits every production declaration
-its environment holds from the public root, the optional binary transcendental and correctly
-rounded imports, the decimal certified proofs, and the `roundoff` analysis, including private
-declarations and `@[csimp]` lemmas. A declaration it doesn't hold is checked through the ones that
-use it. We add `import all` for the compiler certificates and backend proof modules that every
-client imports privately, so their declarations are checked directly. Declarations neither held
-nor used, mostly compiler-generated auxiliaries, and modules that aren't imported fall outside the
-audit, though `checks/trust-surface.sh` rejects `sorry` and `axiom` in every source. Axioms.lean also compares the posit decoder's
+its environment holds, including private declarations and `@[csimp]` lemmas. Its imports reach
+every module of the library except the unchecked host-FPU module, and `checks/trust-surface.sh`
+follows them through the sources and fails when a library module is missing. A declaration the
+audit doesn't hold is checked through the ones that use it. We add `import all` for the compiler
+certificates, the backend proof modules that every client imports privately and the packed FP8
+tables, so their declarations are checked directly. Declarations neither held nor used, mostly
+compiler-generated auxiliaries, fall outside the audit. For those, `checks/trust-surface.sh`
+rejects `sorry` and `axiom` in every source, and it loads every level of every library module
+and fails if the kernel holds one of the library's constants as an axiom. Lean keeps a declaration
+that its kernel rejects as an axiom, so this is how a rejected proof that a command left behind
+gets caught. Axioms.lean also compares the posit decoder's
 actual replacement with the two endpoints of its general equality theorem, since collecting
 axioms alone can't establish that relationship.
 [RootImports.lean](FloatLibTests/Conformance/Trust/RootImports.lean) inspects the root's complete
@@ -223,10 +228,23 @@ python3 tests/checks/doc-links.py
 
 `checks/linters.sh` builds the library and the tests with `--wfail`, so that a linter warning
 fails the check, and then runs `lake lint` on every lint root. The linters are the
-`linterOptions` of `lakefile.lean` and of `tests/lakefile.lean`:
+`linterOptions` of `lakefile.lean` and of `tests/lakefile.lean`. A module that loads no package
+(`checks/core-only.py` prints them: the kernel number types and the packed rows) does not load
+Mathlib's source linters, so the check elaborates each of these once more with `Mathlib.Init`
+imported:
 
 ```bash
 bash tests/checks/linters.sh
+```
+
+The library and its tests are modules, and a module doesn't load the bodies of the private
+declarations of its imports. A file that doesn't start with `module` does, so a tactic can
+behave differently in one. `checks/plain-file.sh` elaborates `checks/PlainFile.lean` as such a
+file and fails on any message. It holds `roundoff` theorems whose statements have to be the
+ones a module gets:
+
+```bash
+bash tests/checks/plain-file.sh
 ```
 
 ## Layout

@@ -8,7 +8,9 @@ module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.KernelPath
 public import FloatLib.Floats.Formats.OCP.FP8.KernelTables
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Plumbing
 public import FloatLib.Tactic.FloatDecide
+public import FloatLib.Tactic.KernelShape
 
 /-!
 # Lane decision tests
@@ -18,6 +20,8 @@ on rows of `n * n` lanes in Lean's kernel. These tests check
 
 * statements about natural numbers with products, case distinctions, shared bindings and shifts
   by a count that differs from lane to lane;
+* a remainder by a power of two, the recursor of `Bool`, and a definition with `if` and `%` read
+  through its kernel shape;
 * that a false statement is refused, and that a value which does not fit a lane is refused and
   never gives a wrong result;
 * the staged kernel operations of E4M3, E5M2 and binary16 on all pairs of a range of
@@ -49,6 +53,40 @@ theorem distance_pairs : ∀ a b : Fin 256,
 /-- A shift by a count that differs from lane to lane, against the power of two. -/
 theorem shift_pairs : ∀ a b : Fin 32,
     Nat.shiftLeft (Nat.succ b.val) a.val = Nat.mul (Nat.succ b.val) (Nat.pow 2 a.val) := by
+  lane_decide
+
+/-- A remainder by a power of two is a mask, written with `%` or with `Nat.mod`. -/
+theorem mod_pairs : ∀ a b : Fin 256,
+    Nat.add (Nat.mul a.val b.val % 2 ^ 7) (Nat.mod (Nat.add a.val b.val) 16) =
+      Nat.add (Nat.land (Nat.mul a.val b.val) 127) (Nat.land (Nat.add a.val b.val) 15) := by
+  lane_decide
+
+/-- A remainder by a number that is not a power of two has no lane step. -/
+example : True := by
+  fail_if_success
+    have : ∀ a b : Fin 16, Nat.add a.val b.val % 3 = Nat.add b.val a.val % 3 := by lane_decide
+  trivial
+
+/-- The recursor of `Bool` is read as the case distinction it is. -/
+theorem rec_pairs : ∀ a b : Fin 256,
+    Bool.rec (motive := fun _ => Nat) (Nat.sub a.val b.val) (Nat.sub b.val a.val)
+        (Nat.ble a.val b.val) =
+      Bool.casesOn (motive := fun _ => Nat) (Nat.ble a.val b.val) (Nat.sub a.val b.val)
+        (Nat.sub b.val a.val) := by
+  lane_decide
+
+/-- A function written with `if` and `%`. -/
+def window (x : Nat) : Nat :=
+  if x % 2 ^ 4 = 3 then x <<< 2 % 2 ^ 8 else if x ≤ 100 then x + 1 else 0
+
+kernel_shape window
+
+/-- The kernel shape of a definition with `if` and `%` is read as it is. -/
+theorem shape_pairs : ∀ a b : Fin 256,
+    window.kernel (Nat.add a.val b.val) =
+      (fun x => Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.land x 15) 3)
+        (Bool.casesOn (motive := fun _ => Nat) (Nat.ble x 100) 0 (Nat.add x 1))
+        (Nat.land (Nat.shiftLeft x 2) 255)) (Nat.add a.val b.val) := by
   lane_decide
 
 /-- A false statement is refused. -/

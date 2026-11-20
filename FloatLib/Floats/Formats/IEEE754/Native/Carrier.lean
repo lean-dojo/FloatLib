@@ -10,7 +10,9 @@ public meta import Lean.Elab.Command
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Conversion
 public import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.Cast
 public import FloatLib.Numerics.Capabilities.Elementary
-import FloatLib.Floats.ExecFloat.Backends.Kernel.Loop
+import FloatLib.Floats.ExecFloat.Backends.Kernel.Plumbing
+import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.Lanes
+import FloatLib.Tactic.KernelShape
 
 /-!
 # Native binary16 and bfloat16 carriers
@@ -365,33 +367,47 @@ private theorem widenHalfWord_toNat (bits : UInt16) :
     UInt32.toNat_ofNat, beq_iff_eq, bne_iff_ne, ne_eq, ← UInt32.toNat_inj, Nat.reduceMod,
     Nat.reducePow]
 
+kernel_shape widenHalfNat
+
+/-- A bfloat16 word in the high half of a binary32 word, on natural numbers. -/
+private def shiftHighNat (word : Nat) : Nat := word <<< 16 % 2 ^ 32
+
+kernel_shape shiftHighNat
+
 /--
-`widen` is the kernel cast of `model` to binary32 at the word `high * 256 + low`, if a carrier
-holds that word: its low 15 bits are at most `infinity`, so it is not a NaN, or it is the NaN `nan`.
+`value` at a word that a carrier holds, and zero at any other word: one whose low 15 bits are
+above `infinity`, so that it is a NaN, and which is not the NaN `nan`.
 -/
-private def AgreesAt (model : FloatFormat) (infinity nan : Nat) (widen : Nat → Nat)
-    (high low : Nat) : Prop :=
-  (high * 256 + low) &&& 0x7FFF ≤ infinity ∨ high * 256 + low = nan →
-    widen (high * 256 + low) =
-      KernelPath.cast model FloatFormat.binary32 .nearest (high * 256 + low)
+private def held (infinity nan word value : Nat) : Nat :=
+  Bool.casesOn (motive := fun _ => Nat) (Nat.ble (Nat.land word 0x7FFF) infinity)
+    (Bool.casesOn (motive := fun _ => Nat) (Nat.beq word nan) 0 value) value
 
-/-- `AgreesAt` is decided by evaluating both sides. The instance is a constant, so the loop of
-`forall_fin_pairs` is stated over it exactly as Lean's kernel infers it. -/
-private instance AgreesAt.decidable (model : FloatFormat) (infinity nan : Nat)
-    (widen : Nat → Nat) (high low : Nat) : Decidable (AgreesAt model infinity nan widen high low) :=
-  inferInstanceAs (Decidable (_ ∨ _ → _))
-
-/-- A widening on natural numbers that agrees with the kernel cast at the 256 × 256 pairs of
-bytes agrees with it at every 16-bit word a carrier holds. -/
+/-- A widening on natural numbers that agrees with the kernel cast of `model` to binary32 at the
+256 × 256 pairs of bytes, where a carrier holds the word, is the kernel cast at every 16-bit
+word a carrier holds. -/
 private theorem agrees_of_bytes {model : FloatFormat} {infinity nan : Nat} {widen : Nat → Nat}
-    (h : ∀ high low : Fin 256, AgreesAt model infinity nan widen high.val low.val)
+    (h : ∀ high low : Fin 256,
+      held infinity nan (Nat.add (Nat.mul high.val 256) low.val)
+          (widen (Nat.add (Nat.mul high.val 256) low.val)) =
+        held infinity nan (Nat.add (Nat.mul high.val 256) low.val)
+          (KernelPath.cast model FloatFormat.binary32 .nearest
+            (Nat.add (Nat.mul high.val 256) low.val)))
     (bits : UInt16) (hbits : bits.toNat &&& 0x7FFF ≤ infinity ∨ bits.toNat = nan) :
     widen bits.toNat = KernelPath.cast model FloatFormat.binary32 .nearest bits.toNat := by
   have hlt := bits.toNat_lt
   have hword := h ⟨bits.toNat / 256, by omega⟩ ⟨bits.toNat % 256, Nat.mod_lt _ (by decide)⟩
-  unfold AgreesAt at hword
-  rw [Nat.div_add_mod'] at hword
-  exact hword hbits
+  have hsplit : Nat.add (Nat.mul (bits.toNat / 256) 256) (bits.toNat % 256) = bits.toNat :=
+    Nat.div_add_mod' bits.toNat 256
+  have hheld (value : Nat) : held infinity nan bits.toNat value = value := by
+    unfold held
+    rcases hbits with hle | heq
+    · have hble : Nat.ble (Nat.land bits.toNat 0x7FFF) infinity = true :=
+        Nat.ble_eq_true_of_le hle
+      rw [hble]
+    · rw [heq, Nat.beq_refl]
+      cases Nat.ble (Nat.land nan 0x7FFF) infinity <;> rfl
+  dsimp only at hword
+  rwa [hsplit, hheld, hheld] at hword
 
 /-- A widening function that agrees with the kernel cast on encodings is the reference cast, for
 a 16-bit layout. -/
@@ -408,6 +424,25 @@ private theorem widen_eq_cast (model : FloatFormat) (hwidth : model.bitWidth = 1
   rw [h, Nat.toUInt32_eq, UInt32.toNat_ofNat']
   exact (Nat.mod_eq_of_lt (Model.toNatBits_lt_two_pow _)).symm
 
+/-- `widenHalfNat` is the kernel cast of binary16 to binary32 on the words a carrier holds: one
+run of both on the 65,536 lanes of a row (`lane_decide`). -/
+private theorem widenHalfNat_lanes : ∀ high low : Fin 256,
+    held 0x7C00 0x7E00 (Nat.add (Nat.mul high.val 256) low.val)
+        (widenHalfNat.kernel (Nat.add (Nat.mul high.val 256) low.val)) =
+      held 0x7C00 0x7E00 (Nat.add (Nat.mul high.val 256) low.val)
+        (KernelPath.cast (FloatFormat.ieee 5 10 (by decide) (by decide)) FloatFormat.binary32
+          .nearest (Nat.add (Nat.mul high.val 256) low.val)) := by
+  lane_decide
+
+/-- `shiftHighNat` is the kernel cast of bfloat16 to binary32 on the words a carrier holds. -/
+private theorem shiftHighNat_lanes : ∀ high low : Fin 256,
+    held 0x7F80 0x7FC0 (Nat.add (Nat.mul high.val 256) low.val)
+        (shiftHighNat.kernel (Nat.add (Nat.mul high.val 256) low.val)) =
+      held 0x7F80 0x7FC0 (Nat.add (Nat.mul high.val 256) low.val)
+        (KernelPath.cast (FloatFormat.ieee 8 7 (by decide) (by decide)) FloatFormat.binary32
+          .nearest (Nat.add (Nat.mul high.val 256) low.val)) := by
+  lane_decide
+
 /-- `widenHalfWord` is the reference cast of binary16 to binary32 on every word that is not a
 NaN and on the quiet NaN `0x7E00`, checked by Lean's kernel on all 65,536 words. -/
 theorem widenHalfWord_eq_cast (bits : UInt16) (h : bits &&& 0x7FFF ≤ 0x7C00 ∨ bits = 0x7E00) :
@@ -417,11 +452,8 @@ theorem widenHalfWord_eq_cast (bits : UInt16) (h : bits &&& 0x7FFF ≤ 0x7C00 �
   refine widen_eq_cast _ rfl _ bits ?_
   have hword : bits.toNat &&& 0x7FFF ≤ 0x7C00 ∨ bits.toNat = 0x7E00 :=
     h.imp (fun h => by simpa using UInt16.le_iff_toNat_le.mp h) (congrArg UInt16.toNat)
-  rw [widenHalfWord_toNat]
-  -- One loop over the 65,536 words, on natural numbers, which the kernel computes with directly.
-  exact agrees_of_bytes (widen := widenHalfNat)
-    (ExecFloat.KernelPath.forall_fin_pairs (decide := AgreesAt.decidable _ _ _ _) 65536 rfl
-      (by decide +kernel)) bits hword
+  rw [widenHalfWord_toNat, widenHalfNat.kernel_eq]
+  exact agrees_of_bytes (widen := widenHalfNat.kernel) widenHalfNat_lanes bits hword
 
 /-- Placing a bfloat16 word in the high half of a binary32 word is the reference cast of
 bfloat16 to binary32 on every word that is not a NaN and on the quiet NaN `0x7FC0`, checked by
@@ -433,12 +465,11 @@ theorem shiftLeft_eq_cast (bits : UInt16) (h : bits &&& 0x7FFF ≤ 0x7F80 ∨ bi
   refine widen_eq_cast _ rfl (fun bits => bits.toUInt32 <<< 16) bits ?_
   have hword : bits.toNat &&& 0x7FFF ≤ 0x7F80 ∨ bits.toNat = 0x7FC0 :=
     h.imp (fun h => by simpa using UInt16.le_iff_toNat_le.mp h) (congrArg UInt16.toNat)
-  have hshift : (bits.toUInt32 <<< 16).toNat = bits.toNat <<< 16 % 2 ^ 32 := by
-    simp only [UInt32.toNat_shiftLeft, UInt16.toNat_toUInt32, UInt32.toNat_ofNat]
+  have hshift : (bits.toUInt32 <<< 16).toNat = shiftHighNat.kernel bits.toNat := by
+    rw [← shiftHighNat.kernel_eq]
+    simp only [shiftHighNat, UInt32.toNat_shiftLeft, UInt16.toNat_toUInt32, UInt32.toNat_ofNat]
   rw [hshift]
-  exact agrees_of_bytes (widen := fun word => word <<< 16 % 2 ^ 32)
-    (ExecFloat.KernelPath.forall_fin_pairs (decide := AgreesAt.decidable _ _ _ _) 65536 rfl
-      (by decide +kernel)) bits hword
+  exact agrees_of_bytes (widen := shiftHighNat.kernel) shiftHighNat_lanes bits hword
 
 end Word
 

@@ -8,7 +8,10 @@ module
 
 public import FloatLib.Floats.Formats.Posit.Arithmetic.Dyadic.Runtime
 public import FloatLib.Floats.Formats.Posit.Configured.Type
+public import FloatLib.Floats.Formats.Posit.KernelPath.Model
+public import FloatLib.Floats.Formats.Posit.KernelPath.QuireProof
 public import FloatLib.Floats.Formats.Posit.Quire.Arithmetic.Runtime
+public import FloatLib.Tactic.FloatDecide
 public import FloatLibTests.Accounting
 
 /-!
@@ -19,8 +22,9 @@ storage carrier. Conversion covers every posit word through eight bits; exact pr
 covers every operand pair through five bits.
 
 The Boolean predicates serve two purposes without introducing two specifications. Closed theorems
-reduce them in Lean's kernel, while the native validation executable reports the same predicates as
-a fast regression suite.
+state them for every word, and Lean's kernel evaluates them after the rewrite of `float_decide`
+with the kernel rules of the quire, which are proved for every word and every format. The native
+validation executable reports the same predicates as a fast regression suite.
 
 ## References
 
@@ -59,43 +63,43 @@ Zero and NaR use the same executable path as ordinary values.
 theorem posit2_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 2) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-- Every three-bit posit word converts exactly into its standard quire and back. -/
 theorem posit3_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 3) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-- Every four-bit posit word converts exactly into its standard quire and back. -/
 theorem posit4_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 4) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-- Every five-bit posit word converts exactly into its standard quire and back. -/
 theorem posit5_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 5) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-- Every six-bit posit word converts exactly into its standard quire and back. -/
 theorem posit6_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 6) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-- Every seven-bit posit word converts exactly into its standard quire and back. -/
 theorem posit7_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 7) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-- Every eight-bit posit word converts exactly into its standard quire and back. -/
 theorem posit8_all_quire_conversion_round_trips :
     conversionRoundTripFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 8) = 0 := by
-  decide +kernel
+  float_decide [conversionRoundTripFailures, conversionRoundTripAt, countWhereFailures]
 
 /-! ## Exact product accumulation -/
 
@@ -120,25 +124,25 @@ one `qToP` rounding and the certified direct posit multiplication kernel.
 theorem posit2_all_quire_products_refine :
     productRefinementFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 2) = 0 := by
-  decide +kernel
+  float_decide [productRefinementFailures, productRefinesAt, countPairFailures]
 
 /-- Every three-bit operand pair agrees with certified direct posit multiplication. -/
 theorem posit3_all_quire_products_refine :
     productRefinementFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 3) = 0 := by
-  decide +kernel
+  float_decide [productRefinementFailures, productRefinesAt, countPairFailures]
 
 /-- Every four-bit operand pair agrees with certified direct posit multiplication. -/
 theorem posit4_all_quire_products_refine :
     productRefinementFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 4) = 0 := by
-  decide +kernel
+  float_decide [productRefinementFailures, productRefinesAt, countPairFailures]
 
 /-- Every five-bit operand pair agrees with certified direct posit multiplication. -/
 theorem posit5_all_quire_products_refine :
     productRefinementFailures
       (FloatLib.Floats.ExecFloat.Posit.descriptor 5) = 0 := by
-  decide +kernel
+  float_decide [productRefinementFailures, productRefinesAt, countPairFailures]
 
 /-! ## Standard posit8 boundaries -/
 

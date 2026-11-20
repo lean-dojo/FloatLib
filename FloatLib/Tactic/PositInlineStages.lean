@@ -32,12 +32,17 @@ macro (name := positInlineStages) "posit_inline_stages% " body:term : term =>
       KernelPath.significand, KernelPath.fractionBits, KernelPath.tailLength,
       KernelPath.complement, KernelPath.magnitude, KernelPath.withSign, KernelPath.neg,
       KernelPath.jam, KernelPath.nar, KernelPath.bias, KernelPath.regimeBias,
-      KernelPath.quotient, KernelPath.ofRatio,
+      KernelPath.quotient, KernelPath.ofRatio, KernelPath.nearestNat, KernelPath.toSigned,
+      KernelPath.toUnsigned,
       KernelPath.quireAddPosit, KernelPath.quireAddProduct, KernelPath.quireAddQuire,
       KernelPath.quireRound, KernelPath.quireAccumulate, KernelPath.quireNar,
       KernelPath.quireWidth,
       FloatLib.Numerics.Kernel.lowBits, FloatLib.Numerics.Kernel.minNat,
-      FloatLib.Numerics.Kernel.maxNat] $body)
+      FloatLib.Numerics.Kernel.maxNat, FloatLib.Numerics.Kernel.size,
+      FloatLib.Numerics.Kernel.bitLength, FloatLib.Numerics.Kernel.laneLength,
+      FloatLib.Numerics.Kernel.laneOnes, FloatLib.Numerics.Kernel.laneOffsets,
+      FloatLib.Numerics.Kernel.isqrt, FloatLib.Numerics.Kernel.sqrtGuess,
+      FloatLib.Numerics.Kernel.isRoot, FloatLib.Numerics.Kernel.ceilDiv] $body)
 
 
 end FloatLib.Floats.Formats.Posit.KernelPath

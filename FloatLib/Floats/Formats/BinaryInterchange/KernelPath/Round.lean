@@ -6,7 +6,9 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Tactic.KernelInline
 public import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.BitLength
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.Adjacent.Proof.Encoding
 public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Agreement
 
 import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.ScaledDyadic
@@ -50,38 +52,95 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.KernelPath
 open FloatLib.Numerics
 open FloatLib.Numerics.Kernel (bitLength bitLength_eq searchLength searchLength_eq)
 
+/-!
+The field formulas of a descriptor are unfolded inside the copies declared below. A constant
+that an operation reads (the position of the sign, a mask, a bound) is such a copy: the kernel
+computes a call of it on a literal format once in a proof, and every later operation finds the
+value again, which costs less than computing the formula again.
+-/
+attribute [kernel_inline] FloatFormat.expAllOnesNat FloatFormat.fracMaskNat
+  FloatFormat.maxFiniteFracField FloatFormat.quietBitNat
+  FloatFormat.Encoding.maxFiniteExponent FloatFormat.bitWidth
+
+kernel_constant FloatFormat.maxFiniteExpField
+
 /-- Bit position of the sign: the exponent and fraction fields lie below it. -/
 def signPos (fmt : FloatFormat) : Nat :=
   fmt.expWidth + fmt.fracWidth
+
+kernel_constant signPos
 
 /-- Mask of the exponent and fraction fields. -/
 def magnitudeMask (fmt : FloatFormat) : Nat :=
   2 ^ (fmt.expWidth + fmt.fracWidth) - 1
 
+kernel_constant magnitudeMask
+
 /-- Exponent and fraction fields of the largest finite value, as one word. -/
 def maxFinite (fmt : FloatFormat) : Nat :=
   fmt.maxFiniteExpField * 2 ^ fmt.fracWidth + fmt.maxFiniteFracField
+
+kernel_constant maxFinite
 
 /-- One more than `maxFinite`. -/
 def maxFiniteSucc (fmt : FloatFormat) : Nat :=
   maxFinite fmt + 1
 
-/-- Encoding of the zero with sign `negative`: `Model.zero`. -/
-def zeroWord (fmt : FloatFormat) (negative : Bool) : Nat :=
-  (Model.zero fmt negative).toNatBits
+kernel_constant maxFiniteSucc
 
-/-- Encoding of the overflow result with sign `negative`: `Model.nativeOverflow`. -/
+/--
+Encoding of the zero with sign `negative`, `Model.zero` (`zeroWord_eq`): the sign bit for a
+negative zero of an encoding with signed zeros, and zero otherwise. It is written on the two
+widths, so that Lean's kernel computes it without unpacking a word of the model.
+-/
+def zeroWord (fmt : FloatFormat) (negative : Bool) : Nat :=
+  Bool.casesOn (motive := fun _ => Nat) negative 0
+    (FloatFormat.Encoding.casesOn (motive := fun _ => Nat) fmt.encoding
+      (2 ^ signPos fmt) (2 ^ signPos fmt) 0 (2 ^ signPos fmt))
+
+/-- `zeroWord` is the encoding of the zero of the model, for every format and both signs. -/
+theorem zeroWord_eq (fmt : FloatFormat) (negative : Bool) :
+    zeroWord fmt negative = (Model.zero fmt negative).toNatBits := by
+  cases negative
+  · change 0 = (Model.zero fmt false).toNatBits
+    simp [Model.zero]
+  · unfold zeroWord Model.zero
+    cases h : fmt.encoding <;>
+      simp [FloatFormat.supportsSignedZero, h, signPos, FloatFormat.signMaskNat_eq_two_pow]
+
+kernel_constant zeroWord
+
+/--
+Encoding of the overflow result with sign `negative`, `Model.nativeOverflow` (`overflowWord_eq`),
+by the encoding: the signed infinity, the NaN of a format whose largest pattern is its NaN, the
+NaN of a format with one zero, and the largest finite value with the sign. It is written on the
+two widths, so that Lean's kernel computes it without unpacking a word of the model.
+-/
 def overflowWord (fmt : FloatFormat) (negative : Bool) : Nat :=
-  (Model.nativeOverflow fmt negative).toNatBits
+  FloatFormat.Encoding.casesOn (motive := fun _ => Nat) fmt.encoding
+    (Bool.casesOn (motive := fun _ => Nat) negative
+      ((2 ^ fmt.expWidth - 1) * 2 ^ fmt.fracWidth % 2 ^ fmt.bitWidth)
+      (2 ^ (fmt.expWidth + fmt.fracWidth) % 2 ^ fmt.bitWidth |||
+        (2 ^ fmt.expWidth - 1) * 2 ^ fmt.fracWidth % 2 ^ fmt.bitWidth))
+    (Bool.casesOn (motive := fun _ => Nat) negative 0 (2 ^ signPos fmt) +
+      ((2 ^ fmt.expWidth - 1) * 2 ^ fmt.fracWidth + (2 ^ fmt.fracWidth - 1)))
+    (2 ^ signPos fmt)
+    (Bool.casesOn (motive := fun _ => Nat) negative 0 (2 ^ signPos fmt) + maxFinite fmt)
 
 /--
 Encoding of the result of a rounding in the direction `mode` that overflows with sign `negative`:
 the native overflow result when the direction carries the magnitude up, and the largest finite
-value otherwise (`Model.directedOverflow`).
+value otherwise, `Model.directedOverflow` (`roundOverflowWord_eq`).
 -/
 def roundOverflowWord (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (negative : Bool) :
     Nat :=
-  (Model.directedOverflow fmt negative (mode.overflowRoundsMagnitudeUp negative)).toNatBits
+  Bool.casesOn (motive := fun _ => Nat) (mode.overflowRoundsMagnitudeUp negative)
+    (Bool.casesOn (motive := fun _ => Nat) negative 0 (2 ^ signPos fmt) + maxFinite fmt)
+    (overflowWord fmt negative)
+
+kernel_constant overflowWord
+
+kernel_constant roundOverflowWord
 
 /--
 One when the quotient `q + r / den`, with `r < den`, rounds up to `q + 1` in the direction `mode`
@@ -129,6 +188,8 @@ def packRare (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (zeroSign manti
       (roundOverflowWord fmt mode true) (roundOverflowWord fmt mode false))
     (Bool.casesOn (motive := fun _ => Nat) (Nat.beq zeroSign 0)
       (zeroWord fmt true) (zeroWord fmt false))
+
+kernel_constant packRare
 
 /--
 Pack a rounded significand `mantissa` whose exponent field minus one is `t` (zero for a subnormal
@@ -455,6 +516,48 @@ theorem toNatBits_ofFields (fmt : FloatFormat) (negative : Bool) (exponent fract
     change 1 <<< signPos fmt ||| _ = _
     rw [← Nat.shiftLeft_add_eq_or_of_lt hlow, Nat.shiftLeft_eq, Nat.one_mul]
 
+/-- `overflowWord` is the encoding of the overflow result of the model, for every format and
+both signs. -/
+theorem overflowWord_eq (fmt : FloatFormat) (negative : Bool) :
+    overflowWord fmt negative = (Model.nativeOverflow fmt negative).toNatBits := by
+  have hE : fmt.expAllOnesNat < 2 ^ fmt.expWidth :=
+    Nat.sub_lt (Nat.two_pow_pos _) (by decide)
+  have hF : fmt.fracMaskNat < 2 ^ fmt.fracWidth :=
+    Nat.sub_lt (Nat.two_pow_pos _) (by decide)
+  unfold overflowWord Model.nativeOverflow
+  cases h : fmt.encoding
+  · cases negative
+    · simp only [Bool.false_eq_true, ite_false, Model.posInf, Model.ofBits, Model.toNatBits,
+        FloatFormat.expMask, FloatFormat.ofWordNat, BitVec.toNat_ofNat, FloatFormat.expMaskNat,
+        FloatFormat.expAllOnesNat]
+    · simp only [ite_true, Model.negInf, Model.ofBits, Model.toNatBits, FloatFormat.expMask,
+        FloatFormat.signMask, FloatFormat.ofWordNat, BitVec.toNat_or, BitVec.toNat_ofNat,
+        FloatFormat.expMaskNat, FloatFormat.expAllOnesNat, FloatFormat.signMaskNat_eq_two_pow]
+  · simp only [Model.propagatedNaN, h]
+    rw [toNatBits_ofFields fmt negative _ _ hE hF]
+    cases negative <;> rfl
+  · simp [Model.invalidResult, h, signPos, FloatFormat.signMaskNat_eq_two_pow]
+  · simp only [Model.maxFinite]
+    rw [toNatBits_ofFields fmt negative _ _ fmt.maxFiniteExpField_lt_two_pow
+      fmt.maxFiniteFracField_lt_two_pow]
+    cases negative <;> rfl
+
+/-- `roundOverflowWord` is the encoding of the directed overflow result of the model, for every
+format, rounding direction and sign. -/
+theorem roundOverflowWord_eq (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (negative : Bool) :
+    roundOverflowWord fmt mode negative =
+      (Model.directedOverflow fmt negative
+        (mode.overflowRoundsMagnitudeUp negative)).toNatBits := by
+  unfold roundOverflowWord Model.directedOverflow
+  cases mode.overflowRoundsMagnitudeUp negative
+  · simp only [Bool.false_eq_true, ite_false, Model.maxFinite]
+    rw [toNatBits_ofFields fmt negative _ _ fmt.maxFiniteExpField_lt_two_pow
+      fmt.maxFiniteFracField_lt_two_pow]
+    cases negative <;> rfl
+  · simp only [ite_true]
+    exact overflowWord_eq fmt negative
+
 /-- A word is at most `maxFinite` exactly when its fields are, in lexicographic order. -/
 theorem le_maxFinite_iff (fmt : FloatFormat) (exponent fraction : Nat)
     (hfraction : fraction < 2 ^ fmt.fracWidth) :
@@ -525,7 +628,7 @@ theorem packRoundedSubnormal_bits (fmt : FloatFormat) (negative : Bool) (mantiss
   unfold Model.packRoundedSubnormal
   simp only [beq_iff_eq, Model.pow2_eq_two_pow, ge_iff_le]
   by_cases h0 : mantissa = 0
-  · simp [h0, zeroWord]
+  · simp [h0, zeroWord_eq]
   · simp only [h0, ite_false]
     by_cases hfull : 2 ^ fmt.fracWidth ≤ mantissa
     · have heq : mantissa = 2 ^ fmt.fracWidth := by omega
@@ -705,7 +808,7 @@ theorem roundRatPolicy_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) 
       have := Nat.mul_le_mul_right (2 ^ fmt.fracWidth) ht'
       omega
     rw [ite_eq_left hover, ite_eq_right hM0, ite_eq_right hnle]
-    rfl
+    exact (roundOverflowWord_eq fmt mode negative).symm
   · rw [ite_eq_right hover]
     by_cases hsub : (L : Int) + ((Ep : Int) - Em + (1 - fmt.exponentBias - fmt.fracWidth)) <
         1 - fmt.exponentBias
@@ -749,7 +852,7 @@ theorem roundRatPolicy_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) 
         rw [ite_eq_left htiny]
         cases hdir : mode.roundsAwayFromZero negative
         · have hM0 : mantissa = 0 := by simpa [hdir] using hMval
-          simp [hM0, zeroWord]
+          simp [hM0, zeroWord_eq]
         · have hM1 : mantissa = 1 := by simpa [hdir] using hMval
           have hone : 1 < 2 ^ fmt.fracWidth :=
             Nat.one_lt_two_pow (by have := fmt.fracWidth_pos; omega)
@@ -768,7 +871,7 @@ theorem roundRatPolicy_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) 
         exact this.symm
     · -- In the normal range `fracWidth` bits are kept below the leading one.
       have hsr : t + Em - Ep = L - fmt.fracWidth := by omega
-      have hsl : Ep - (t + Em) = fmt.fracWidth - L := by omega
+      have hsl : Ep - (t + Em) = fmt.fracWidth - L := by lia
       rw [hsr, hsl] at hmantissa
       have hlow : 2 ^ fmt.fracWidth ≤ mantissa := by
         rw [hmantissa]
@@ -792,7 +895,7 @@ theorem roundRatPolicy_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) 
           _ ≤ 2 ^ (fmt.fracWidth + 1 + (L - fmt.fracWidth)) :=
               Nat.pow_le_pow_right (by decide) (by omega)
       have hM0 : mantissa ≠ 0 := by omega
-      rw [ite_eq_right hsub, ite_eq_right hM0]
+      rw [ite_eq_right hsub, ite_eq_right hM0, roundOverflowWord_eq]
       have hrounded : ∀ scaledNum scaledDen : Nat, 0 < scaledDen →
           scaledNum * 2 ^ (L - fmt.fracWidth) = mag * 2 ^ (fmt.fracWidth - L) * scaledDen →
           Model.Policy.roundQuot mode.toRoundingMode negative entropy scaledNum scaledDen =
@@ -817,10 +920,10 @@ theorem roundRatPolicy_bits (fmt : FloatFormat) (mode : Model.IEEERoundingMode) 
         rw [hrounded num (den <<< (a + 1)) (by rw [Nat.shiftLeft_eq]; positivity) (by
           rw [Nat.shiftLeft_eq]
           have := cross_of_balance (p := 0) (s := L - fmt.fracWidth) (q := fmt.fracWidth - L)
-            (r := a + 1) hscale (by rw [hK]; omega)
+            (r := a + 1) hscale (by rw [hK]; lia)
           rw [Nat.pow_zero, Nat.mul_one] at this
           exact this)]
-        exact packRoundedNormal_bits fmt negative _ t mantissa _ (by omega) hlow hhigh
+        exact packRoundedNormal_bits fmt negative _ t mantissa _ (by lia) hlow hhigh
 
 /-- A zero significand rounds to the zero of its sign in every direction. -/
 theorem roundDyadic_zero (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (negative : Bool)
@@ -933,7 +1036,7 @@ theorem round_eq (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
       intro den
       unfold roundUp
       cases mode <;> simp [div_def]
-    simp [roundDyadic_zero, hup, zeroWord]
+    simp [roundDyadic_zero, hup, zeroWord_eq]
   · have hexp' := hexp h0
     have hsign' := hsign h0
     subst hexp'

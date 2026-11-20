@@ -1,7 +1,7 @@
 theorem,path,seconds,runs,axioms
-sumTenth,kernel,0.0527,3,"propext, Classical.choice, Quot.sound"
-sumTenth,public,4.24,3,"propext, Classical.choice, Quot.sound"
-sum64,kernel,0.108,3,"propext, Classical.choice, Quot.sound"
-sum64,public,4.7,3,"propext, Classical.choice, Quot.sound"
-dot64,kernel,0.159,3,"propext, Classical.choice, Quot.sound"
-dot64,public,8.79,3,"propext, Classical.choice, Quot.sound"
+sumTenth,kernel,0.0526,3,"propext, Classical.choice, Quot.sound"
+sumTenth,public,4.33,3,"propext, Classical.choice, Quot.sound"
+sum64,kernel,0.1,3,"propext, Classical.choice, Quot.sound"
+sum64,public,4.46,3,"propext, Classical.choice, Quot.sound"
+dot64,kernel,0.152,3,"propext, Classical.choice, Quot.sound"
+dot64,public,8.25,3,"propext, Classical.choice, Quot.sound"

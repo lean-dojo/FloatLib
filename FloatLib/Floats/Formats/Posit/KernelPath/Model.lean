@@ -6,8 +6,12 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Plumbing
+public import FloatLib.Floats.Formats.Posit.Cast.Integer.Unsigned.Proof
 public import FloatLib.Floats.Formats.Posit.KernelPath.Flat
+public import FloatLib.Floats.Formats.Posit.KernelPath.Integer
 public import FloatLib.Floats.Formats.Posit.KernelPath.Standard
+public import FloatLib.Numerics.Kernel.ZProof
 public import FloatLib.Tactic.KernelOptimize
 
 /-!
@@ -29,7 +33,14 @@ width and every operand:
   `lt_iff_kernel` and `le_iff_kernel`: comparisons, equality and the order of words are tests
   on the encodings;
 * `roundRat_ratio_kernel`: the rounding of a ratio of natural numbers (§4.1), which the literal
-  rules of `Posit.Configured.KernelPath` use.
+  rules of `Posit.Configured.KernelPath` use;
+* `ofFixedInt_eq_kernel` and `ofUnsigned_eq_kernel` (§6.4): the conversion of a signed and of an
+  unsigned integer of any positive width is the flat rounding of the magnitude of its word, and
+  NaR for the word with only its most significant bit set. `fixedInt_toNatBits_ofNatBits` and
+  `fixedInt_toNatBits_ofInt` read the word of a fixed-width integer built from a number;
+* `toFixedInt_eq_kernel` and `toUnsigned_eq_kernel` (§6.4): the conversion to a signed and to
+  an unsigned integer of any positive width is the word that `Flat.toSigned` and
+  `Flat.toUnsigned` compute on the encoding (`KernelPath.Integer`).
 -/
 
 @[expose] public section
@@ -172,5 +183,143 @@ theorem roundRat_ratio_kernel (format : Format) (negative : Bool) (num den : Nat
     roundRat format ((if negative then -(num : Rat) else (num : Rat)) / (den : Rat)) =
       Model.ofNatBits (Flat.ofRatio format.payloadBits 2 (if negative then 1 else 0) num den) := by
   rw [Flat.ofRatio_eq, ofRatio_eq format negative num den hden]
+
+/-! ## Integers -/
+
+open FloatLib.Numerics.Representations in
+/-- The word of a fixed-width integer built from a natural number is its remainder, by the
+kernel's functions. -/
+@[kernel_optimize (cost := 2)] theorem fixedInt_toNatBits_ofNatBits {width : Nat} (n : Nat) :
+    (FixedInt.ofNatBits n : FixedInt width).toNatBits = Nat.mod n (Nat.pow 2 width) :=
+  BitVec.toNat_ofNat ..
+
+open FloatLib.Numerics.Representations FloatLib.Numerics.Kernel in
+/-- The word of a fixed-width integer built from an integer is its remainder, by the kernel
+arithmetic of `Int`. -/
+@[kernel_optimize (cost := 30)] theorem fixedInt_toNatBits_ofInt {width : Nat} (i : Int) :
+    (FixedInt.ofInt i : FixedInt width).toNatBits =
+      Z.toNat (Z.emod i (Int.ofNat (Nat.pow 2 width))) := by
+  rw [Z.toNat_eq, Z.emod_eq]
+  exact BitVec.toNat_ofInt i
+
+/-- NaR is the word of the kernel's NaR encoding. -/
+theorem nar_eq_ofNatBits (format : Format) :
+    Model.nar format = Model.ofNatBits (nar format.payloadBits) := by
+  rw [nar_eq]
+  rfl
+
+open FloatLib.Numerics.Representations in
+/-- Posit Standard (2022), §6.4: the conversion of a signed integer is NaR for the word with
+only its most significant bit set, and otherwise the flat rounding of the magnitude that the
+two's-complement word denotes, with its sign. It holds for every posit format and every
+positive integer width. -/
+@[kernel_optimize (cost := 150)] theorem ofFixedInt_eq_kernel (format : Format) {width : Nat}
+    (value : FixedInt width) (hwidth : 0 < width) :
+    Model.ofFixedInt format value hwidth =
+      Model.ofNatBits
+        (Bool.rec (motive := fun _ => Nat)
+          (Bool.rec (motive := fun _ => Nat)
+            (Flat.ofRatio format.payloadBits 2 0 value.toNatBits 1)
+            (Flat.ofRatio format.payloadBits 2 1 (Nat.sub (Nat.pow 2 width) value.toNatBits) 1)
+            (Nat.ble (Nat.pow 2 (Nat.sub width 1)) value.toNatBits))
+          (nar format.payloadBits)
+          (Nat.beq value.toNatBits (Nat.pow 2 (Nat.sub width 1)))) := by
+  have hlt : value.toNatBits < 2 ^ width := value.toNatBits_lt_modulus
+  have hpow : 2 ^ width = 2 * 2 ^ (width - 1) := by
+    rw [← Nat.pow_succ']
+    congr 1
+    omega
+  have hint : value.toInt =
+      if 2 * value.toNatBits < 2 ^ width then (value.toNatBits : Int)
+      else (value.toNatBits : Int) - ((2 ^ width : Nat) : Int) :=
+    BitVec.toInt_eq_toNat_cond value.bits
+  unfold Model.ofFixedInt
+  change _ = Model.ofNatBits
+    (Bool.rec (motive := fun _ => Nat)
+      (Bool.rec (motive := fun _ => Nat)
+        (Flat.ofRatio format.payloadBits 2 0 value.toNatBits 1)
+        (Flat.ofRatio format.payloadBits 2 1 (2 ^ width - value.toNatBits) 1)
+        (Nat.ble (2 ^ (width - 1)) value.toNatBits))
+      (nar format.payloadBits)
+      (Nat.beq value.toNatBits (2 ^ (width - 1))))
+  cases hb : Nat.beq value.toNatBits (2 ^ (width - 1))
+  · have hne : value ≠ FixedInt.minCode width := fun h => by
+      rw [h, integerSentinel_toNatBits hwidth, Nat.beq_refl] at hb
+      cases hb
+    rw [ite_eq_right hne]
+    cases hs : Nat.ble (2 ^ (width - 1)) value.toNatBits
+    · have ha : value.toNatBits < 2 ^ (width - 1) := Nat.lt_of_not_le fun h => by
+        rw [Nat.ble_eq_true_of_le h] at hs
+        cases hs
+      have h := roundRat_ratio_kernel format false value.toNatBits 1 Nat.one_ne_zero
+      simp only [Bool.false_eq_true, ite_false] at h
+      rw [← h, hint, ite_eq_left (by omega)]
+      simp
+    · have ha : 2 ^ (width - 1) ≤ value.toNatBits := Nat.le_of_ble_eq_true hs
+      have h := roundRat_ratio_kernel format true (2 ^ width - value.toNatBits) 1
+        Nat.one_ne_zero
+      simp only [ite_true] at h
+      rw [← h, hint, ite_eq_right (by omega)]
+      congr 1
+      rw [Nat.cast_sub (Nat.le_of_lt hlt)]
+      push_cast
+      ring
+  · have hmin : value = FixedInt.minCode width := by
+      rw [← FixedInt.ofNatBits_toNatBits value, Nat.eq_of_beq_eq_true hb,
+        ← integerSentinel_toNatBits hwidth, FixedInt.ofNatBits_toNatBits]
+    rw [ite_eq_left hmin]
+    exact nar_eq_ofNatBits format
+
+/-- Posit Standard (2022), §6.4: the conversion of an unsigned integer is NaR for the word with
+only its most significant bit set, and the flat rounding of the word otherwise. It holds for
+every posit format and every positive integer width. -/
+@[kernel_optimize (cost := 150)] theorem ofUnsigned_eq_kernel (format : Format) {width : Nat}
+    (value : BitVec width) (hwidth : 0 < width) :
+    Model.ofUnsigned format value hwidth =
+      Model.ofNatBits
+        (Bool.rec (motive := fun _ => Nat)
+          (Flat.ofRatio format.payloadBits 2 0 value.toNat 1)
+          (nar format.payloadBits)
+          (Nat.beq value.toNat (Nat.pow 2 (Nat.sub width 1)))) := by
+  unfold Model.ofUnsigned
+  change _ = Model.ofNatBits
+    (Bool.rec (motive := fun _ => Nat)
+      (Flat.ofRatio format.payloadBits 2 0 value.toNat 1)
+      (nar format.payloadBits)
+      (Nat.beq value.toNat (2 ^ (width - 1))))
+  cases hb : Nat.beq value.toNat (2 ^ (width - 1))
+  · have hne : value ≠ BitVec.intMin width := fun h => by
+      rw [h, BitVec.toNat_intMin_of_pos hwidth, Nat.beq_refl] at hb
+      cases hb
+    rw [ite_eq_right hne]
+    have h := roundRat_ratio_kernel format false value.toNat 1 Nat.one_ne_zero
+    simp only [Bool.false_eq_true, ite_false] at h
+    rw [← h]
+    simp
+  · have hmin : value = BitVec.intMin width :=
+      BitVec.eq_of_toNat_eq (by
+        rw [Nat.eq_of_beq_eq_true hb, BitVec.toNat_intMin_of_pos hwidth])
+    rw [ite_eq_left hmin]
+    exact nar_eq_ofNatBits format
+
+open FloatLib.Numerics.Representations in
+/-- Posit Standard (2022), §6.4: the conversion to a signed integer is the integer of the word
+that the flat conversion computes on the encoding. It holds for every posit format, every
+positive integer width and every word. -/
+@[kernel_optimize (cost := 150)] theorem toFixedInt_eq_kernel (width : Nat) (x : Model format)
+    (hwidth : 0 < width) :
+    Model.toFixedInt width x hwidth =
+      FixedInt.ofNatBits (Flat.toSigned format.payloadBits 2 width x.toNatBits) := by
+  rw [Flat.toSigned_eq, ← toFixedInt_toNatBits width x hwidth, FixedInt.ofNatBits_toNatBits]
+
+/-- Posit Standard (2022), §6.4: the conversion to an unsigned integer is the word that the
+flat conversion computes on the encoding. It holds for every posit format, every positive
+integer width and every word. -/
+@[kernel_optimize (cost := 150)] theorem toUnsigned_eq_kernel (width : Nat) (x : Model format)
+    (hwidth : 0 < width) :
+    Model.toUnsigned width x hwidth =
+      BitVec.ofNat width (Flat.toUnsigned format.payloadBits 2 width x.toNatBits) := by
+  rw [Flat.toUnsigned_eq, ← toUnsigned_toNat width x hwidth, BitVec.ofNat_toNat,
+    BitVec.setWidth_eq]
 
 end FloatLib.Floats.Formats.Posit.KernelPath

@@ -67,8 +67,9 @@ def boundValue? (type : Lean.Expr) : Option Lean.Expr :=
   else none
 
 /-- Whether a bound about `fact` may unify with a bound about `target` without evaluating code:
-their heads agree, and so do those of the values they decode. A metavariable, a local definition
-or one of the fact's own variables `bound` agrees with every head. -/
+their heads agree, and so do those of the values they decode, read under their imports
+(`importedValue`), since an import is the head of every value of its carrier. A metavariable, a
+local definition or one of the fact's own variables `bound` agrees with every head. -/
 def sameBoundValue (bound : Array Lean.Expr) (fact target : Lean.Expr) : MetaM Bool := do
   let head (value : Lean.Expr) : MetaM (Option Lean.Expr) := do
     match value.getAppFn with
@@ -85,7 +86,7 @@ def sameBoundValue (bound : Array Lean.Expr) (fact target : Lean.Expr) : MetaM B
   let decoders := #[``ExecFloat.Binary.toReal, ``Model.toReal]
   if decoders.any fact.isAppOf && decoders.any target.isAppOf then
     let (some left, some right) := (fact.getAppArgs.back?, target.getAppArgs.back?) | return true
-    return ← agree left right
+    return ← agree (← importedValue left) (← importedValue right)
   return true
 
 /-- The value of a closed natural-number or integer term, by kernel reduction. -/
@@ -232,6 +233,20 @@ def checkGeneratedConditions (pending : Array MVarId) : TacticM Unit := do
     if refuted?.isSome || (← refutesClosed condition) then
       throwError "roundoff: a required numerical condition is false: {condition}"
 
+/-- The head of `value` once the definitions that the analysis unfolds in the program are
+unfolded (`programCanUnfold`), as far as it tells two values apart: a variable, a constant
+without its universe levels, or a projection without the structure it reads, which is what an
+operator of a class is once its instance is exposed. `none` for any other head. Only the head is
+exposed, so no floating-point code is evaluated. -/
+def exposedHead? (session : Session) (value : Lean.Expr) : MetaM (Option Lean.Expr) := do
+  let value ← withCanUnfoldPred (programCanUnfold session.boundaries false) <|
+    withDefault (whnf value)
+  return match value.getAppFn with
+    | head@(.fvar _) => some head
+    | .const name _ => some (.const name [])
+    | .proj structureName index _ => some (.proj structureName index (.bvar 0))
+    | _ => none
+
 /-- Attempt inexpensive side conditions without hiding an unsolved premise. -/
 def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.withContext do
   let target ← instantiateMVars (← goal.getType)
@@ -242,12 +257,27 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
   -- same operations; unifying it with another would evaluate floating-point code. A decoded
   -- finiteness is compared as the finiteness it is by definition.
   let mut unrelated := #[]
+  -- A fact that classifies a value computed by another operation is related, and comparing it
+  -- with the target would unfold both operations, so `assumption` does not see it. Nor does a
+  -- search that could only use it as the premise of another fact, when no fact it sees has a
+  -- premise. The operations are compared after the program's own unfolding (`exposedHead?`): a
+  -- fact about a named part of the program, such as `isFinite (square x) = true` for
+  -- `square x := x * x`, is a fact about the operation that the name stands for. A head that is
+  -- not exposed hides nothing.
+  let mut others := #[]
+  let mut premises := false
+  let mut targetOperation? : Option (Option Lean.Expr) := none
+  -- Among them, a fact about an operation may still be the target in another spelling, such as
+  -- `ExecFloat.mul x y` for `x * y`, which only FloatLib's own definitions show. These are
+  -- compared last. A variable is no operation, and no operation is a variable.
+  let mut respelled : Array LocalDecl := #[]
   let targetHead ← assumptionHead target
   let foldedTarget ← if session.mixed && (target.find? (·.isAppOf ``Model.isFinite)).isSome then
       foldDecodedFinite target
     else pure target
   -- In absolute analysis a bound, such as an input error left open, follows by assumption only
-  -- from a bound about the same computation.
+  -- from a bound about the same computation. A hypothesis that bounds no value, such as a branch
+  -- condition, is kept for the premises of one that does, and states no bound itself.
   let targetValue := if session.mixed then none else boundValue? target
   for declaration in ← getLCtx do
     if declaration.isImplementationDetail then continue
@@ -256,33 +286,50 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
       goal.assign declaration.toExpr
       return true
     unless ← isProp type do continue
-    let related ← if session.mixed then
-        forallTelescopeReducing type fun _ body => do
+    -- Whether the hypothesis is seen, and whether its conclusion may be the target.
+    let (related, states) ← if session.mixed then
+        let related ← forallTelescopeReducing type fun _ body => do
           if sameRelation reads body target then return true
           let body ← if (body.find? (·.isAppOf ``Model.isFinite)).isSome then
               foldDecodedFinite body else pure body
           return sameRelation reads body foldedTarget
+        pure (related, related)
       else if let some value := targetValue then
         forallTelescopeReducing type fun bound body => do
-          let some fact := boundValue? body | return true
-          sameBoundValue bound fact value
-      else pure true
+          let some fact := boundValue? body | return (true, false)
+          let same ← sameBoundValue bound fact value
+          return (same, same)
+      else pure (true, true)
     if !related then
       unrelated := unrelated.push declaration.fvarId
-    -- Nor does a classification of a value computed by another operation.
-    else if !supplied && !(session.mixed && otherClassified type.getForallBody target) then
-      supplied := match ← assumptionHead type, targetHead with
-        | some source, some target => source == target
-        | _, _ => true
+    else
+      unless premises do premises := (← whnfR type).isForall
+      let other := otherClassified type.getForallBody target
+      if other && !type.isForall then
+        if let (some fact, some value) := (classified? type, classified? target) then
+          let targetOperation ← match targetOperation? with
+            | some operation => pure operation
+            | none => exposedHead? session value
+          targetOperation? := some targetOperation
+          if let (some left, some right) := (← exposedHead? session fact, targetOperation) then
+            if left != right then
+              others := others.push declaration.fvarId
+              unless left.isFVar || right.isFVar do respelled := respelled.push declaration
+      -- Nor does a classification of a value computed by another operation.
+      if states && !supplied && !(session.mixed && other) then
+        supplied := match ← assumptionHead type, targetHead with
+          | some source, some target => source == target
+          | _, _ => true
   -- Each tactic, with the hypotheses it does not see and its heartbeat budget; the inexpensive
   -- ones first. The conditions of a loop that hold at every step settle quickly when they hold,
   -- and otherwise expand the computations, so they get a smaller budget.
   let mut attempts : Array (Array FVarId × TSyntax `tactic × Nat) := #[]
-  if supplied then attempts := attempts.push (unrelated, ← `(tactic| assumption), 1000)
+  if supplied then attempts := attempts.push (unrelated ++ others, ← `(tactic| assumption), 1000)
   for helper in session.helpers do
     if ← helper.compatible target then attempts := attempts.push (#[], helper.tactic, 1000)
   if supplied then
-    attempts := attempts.push (unrelated, ← `(tactic| solve_by_elim (maxDepth := 3)), 1000)
+    attempts := attempts.push (if premises then unrelated else unrelated ++ others,
+      ← `(tactic| solve_by_elim (maxDepth := 3)), 1000)
   -- In mixed analysis the local facts prove a fact about one value, such as its finiteness, a zero
   -- test or a unit magnitude, by simplification only through a fact about every coordinate of the
   -- same relation, or a local equation that rewrites part of the target. A classification of a
@@ -356,9 +403,17 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
     if simplifyAt == some index then
       if (← attempt? 1000 (simpWithHypotheses session goal)).isSome then return true
     let some (cleared, attempt, budget) := attempts[index]? | continue
-    let solved? ← attempt? budget do
+    let solved? ← attempt? budget <| exported do
       let remaining ← Lean.Elab.Tactic.run (← goal.tryClearMany cleared) (evalTactic attempt)
       return if remaining.isEmpty then some () else none
+    if solved?.isSome then return true
+  if supplied && !respelled.isEmpty then
+    let solved? ← attempt? 1000 <| exported do
+      for fact in respelled do
+        if ← isDefEq (← instantiateMVars fact.type) target then
+          goal.assign fact.toExpr
+          return some ()
+      return none
     if solved?.isSome then return true
   -- A literal above one, such as `1.5` or `3e38` in binary32, needs the largest finite value.
   match arithmetic with
@@ -445,8 +500,8 @@ def dischargeCore (session : Session) (goal : MVarId) : TacticM Bool := goal.wit
       let (next, _) ← simpTarget goal (← semanticContext session)
       let some next := next | return some ()
       trace[roundoff] "normalized numerical budget: {← next.getType}"
-      let remaining ← Lean.Elab.Tactic.run next do
-        evalTactic (← `(tactic| apply le_refl))
+      let remaining ← exported do
+        Lean.Elab.Tactic.run next do evalTactic (← `(tactic| apply le_refl))
       return if remaining.isEmpty then some () else none
     if solved?.isSome then return true
   return false

@@ -14,8 +14,9 @@
 #    directions, against the operations of one format on every pair of encodings of the six-bit
 #    format, and across three formats against the rounded exact rational result.
 # 3. `oracle ieee2019 check`: decimal addition, subtraction, multiplication (the specification
-#    and the kernel path), the extrema and the decimal reductions `sum`, `sumAbs`, `sumSquare`
-#    and `dot` against Python's `decimal` (libmpdec); the augmented
+#    and the kernel path), the extrema, the decimal reductions `sum`, `sumAbs`, `sumSquare`
+#    and `dot`, the decimal scaled products, and the decimal reductions from left to right in
+#    an accumulator format against Python's `decimal` (libmpdec); the augmented
 #    operations, sumAbs, sumSquare and scaledProd on binary64 against exact rational arithmetic
 #    in Python; getPayload, setPayload and setPayloadSignaling on binary32 and binary64 against
 #    the C library (glibc 2.25 or later).
@@ -23,13 +24,18 @@
 # 4. With IEEE2019_PACKAGES set to a directory that holds the Python package `mpmath` (for
 #    example the target of `pip install --target DIR mpmath`): the recommended functions of
 #    clause 9.2 on binary formats, value and flags, against `mpmath` at high precision. Every
-#    encoding of an eight-bit format for the functions of one operand, every pair of a six-bit
-#    format for those of two, and COUNT / 1000 pseudo-random operands of binary16, binary32 and
-#    binary64 for each function, in the five rounding directions. Then the certified decimal
-#    functions of clause 9.2 against `mpmath`: COUNT / 1000 operands for each function in each
-#    of decimal32, decimal64 and decimal128. A decimal function returns a result only when an
-#    enclosure settles it: a case without a result is counted in a group `dfun-unsettled` and
-#    is not a failure. Without the variable this part is skipped with a notice.
+#    encoding of five eight-bit formats (an IEEE one, OCP E5M2 and E4M3, ONNX E4M3FNUZ and
+#    E5M2FNUZ) and of the four-bit E2M1 for the functions of one operand, `rootn` and `pown`,
+#    every pair of a six-bit format and of E2M1 for those of two, 50 * COUNT / 1000
+#    pseudo-random pairs of each eight-bit format, and COUNT / 1000 pseudo-random operands of
+#    binary16, binary32 and binary64 for each function, in the five rounding directions. The
+#    small formats are about 430,000 cases whatever COUNT is. Then the decimal functions of
+#    clause 9.2 against `mpmath`, COUNT / 1000 operands for each function in each of decimal32,
+#    decimal64 and decimal128: the total functions with their flags in the five rounding
+#    directions, and the certified functions to nearest-even. A certified function returns a
+#    result only when an enclosure settles it: a case without a result is counted in a group
+#    `dfun-unsettled` and is not a failure. Without the variable this part is skipped with a
+#    notice.
 #
 # The oracle runs in Lean's interpreter, so no executable has to be linked. Every `RESULT` line
 # reports the cases and the failures of one group, and the script fails when a group has one.
@@ -52,7 +58,8 @@ status=0
 oracle exhaustive || status=1
 oracle formatOf || status=1
 
-for kind in decimal extrema augmented reductions decimal-reductions; do
+for kind in decimal extrema augmented reductions decimal-reductions decimal-scaled \
+    decimal-ordered; do
   python3 -I "$here/ieee2019/reference.py" "$kind" "$count" "$seed" >> "$work/cases"
 done
 "${CC:-cc}" -O1 -o "$work/payload" "$here/ieee2019/payload.c" -lm

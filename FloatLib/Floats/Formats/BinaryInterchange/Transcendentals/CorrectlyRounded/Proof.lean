@@ -1263,19 +1263,15 @@ theorem expm1_eq_of_certified_expm1_eq_ok {input result : Model fmt}
 
 private theorem signBit_roundEndpoint (hfmt : fmt.isIEEE = true) (value : ℚ) (scale : ℤ) :
     signBit (Enclosure.roundEndpoint fmt value scale) = decide (value < 0) := by
-  have hround (sign : Bool) (num den : Nat) (exponent : Int) (hden : den ≠ 0) :
-      signBit (ieeeRoundRatScaled fmt sign num den exponent hfmt) = sign := by
-    unfold ieeeRoundRatScaled
-    simp only [beq_iff_eq, hden, ite_false]
-    split_ifs <;> (try split) <;> simp_all
-  rw [Enclosure.roundEndpoint, roundRatScaled, dite_eq_left hfmt, hround _ _ _ _ value.den_nz]
+  rw [Enclosure.roundEndpoint, roundRatScaled, dite_eq_left hfmt,
+    signBit_ieeeRoundRatScaled hfmt _ _ _ _ value.den_nz]
 
 /-- An accepted enclosure gives the sign of the value it contains, also to a zero result. -/
-private theorem signBit_of_round?_eq_some (hfmt : fmt.isIEEE = true)
+theorem signBit_of_round?_eq_some
     {interval : RationalInterval} {target : ℝ} {result : Model fmt}
     (hcontains : interval.Contains target) (hresult : Enclosure.round? fmt interval = some result) :
     signBit result = decide (target < 0) := by
-  obtain ⟨-, -, hlo, hhi⟩ := Enclosure.accepted hresult
+  obtain ⟨hfmt, -, hlo, hhi⟩ := Enclosure.accepted hresult
   by_cases hnegative : target < 0
   · rw [← hlo, signBit_roundEndpoint hfmt, decide_eq_true hnegative]
     exact decide_eq_true (by exact_mod_cast hcontains.1.trans_lt hnegative)
@@ -1284,7 +1280,7 @@ private theorem signBit_of_round?_eq_some (hfmt : fmt.isIEEE = true)
     exact decide_eq_false (not_lt.mpr (by exact_mod_cast hupper))
 
 /-- A zero from exact-comparison rounding carries the requested sign. -/
-private theorem signBit_round_of_toReal_eq_zero (hfmt : fmt.isIEEE = true) {sign : Bool}
+theorem signBit_round_of_toReal_eq_zero (hfmt : fmt.isIEEE = true) {sign : Bool}
     {compare : ℚ → Ordering} {target : ℝ} (hnonneg : 0 ≤ target)
     (hcompare : ∀ candidate : ℚ, compare candidate = cmp target (candidate : ℝ))
     (hfinite : isFinite (AlgebraicRounding.round fmt sign compare) = true)
@@ -1343,13 +1339,13 @@ theorem logRat_eq_of_certified_logRat_eq_ok {argument : ℚ} (hpositive : 0 < ar
   have hfinite' := isFinite_logRat hfmt hpositive hrange budget
   refine eq_of_toReal_eq hfinite' hfinite ((toReal_logRat hfmt hpositive hfinite').trans
     hvalue.symm) fun hzero => ?_
-  rw [signBit_of_round?_eq_some hfmt hcontains haccept]
+  rw [signBit_of_round?_eq_some hcontains haccept]
   cases hsearch : logSearch fmt argument budget with
   | some found =>
       obtain ⟨interval', hcontains', haccept'⟩ :=
         exists_enclosure_of_logSearch_eq_some hpositive hsearch
       simp only [logRat, hsearch]
-      exact signBit_of_round?_eq_some hfmt hcontains' haccept'
+      exact signBit_of_round?_eq_some hcontains' haccept'
   | none =>
       simp only [logRat, hsearch] at hfinite' hzero ⊢
       rw [signBit_round_of_toReal_eq_zero hfmt (abs_nonneg _)

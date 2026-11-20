@@ -103,11 +103,8 @@ def reduce (a : Interval α) : List (Interval α) → List (List (Interval α)) 
         | some rest => some (first :: rest)
   | _, _ => none
 
-/-- Whether an enclosure is the point zero. -/
-def isZero (I : Interval α) : Bool :=
-  match B.decode I.lo, B.decode I.hi with
-  | some lo, some hi => Kernel.Q.le 0 lo && Kernel.Q.le hi 0
-  | _, _ => false
+/-- Whether an enclosure is the point zero (`Backend.isZero`). -/
+def isZero (I : Interval α) : Bool := B.isZero I
 
 /--
 Whether every symmetric matrix in an interval matrix, given by the rows of its upper triangle, is
@@ -134,7 +131,7 @@ def definite (strict : Bool) : Nat → List (List (Interval α)) → Bool
 def encloseRow (intervals : List (Interval α)) : List Expr → Option (List (Interval α))
   | [] => some []
   | e :: es =>
-    match e.eval? B (fun i => Kernel.Seq.nth? intervals i) with
+    match e.evalZero? B (fun i => Kernel.Seq.nth? intervals i) with
     | none => none
     | some I =>
       match encloseRow intervals es with

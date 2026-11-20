@@ -295,31 +295,125 @@ theorem windowBelow_eq (k n : Nat) {other : Nat}
   · rw [decide_eq_false h]
     exact hother
 
+/-- The bits of a number below `2 ^ (s + t)` from position `s` on are a number below `2 ^ t`. -/
+theorem shiftRight_lt_two_pow {n B : Nat} (s t : Nat) (hn : n < 2 ^ B) (hB : s + t = B) :
+    n >>> s < 2 ^ t := by
+  subst hB
+  rw [Nat.shiftRight_eq_div_pow]
+  refine (Nat.div_lt_iff_lt_mul (Nat.two_pow_pos s)).2 ?_
+  rw [← Nat.pow_add, Nat.add_comm]
+  exact hn
+
+/--
+A bit length split at bit `s`: when `low` is the bit length of `n` for `n < 2 ^ s` and `high` the
+bit length of the upper part `n >>> s` when it is not zero, the test on the upper part selects
+the bit length of `n`.
+-/
+theorem lengthSplit_eq (n s : Nat) {low high : Nat}
+    (hlow : n < 2 ^ s → low = if n = 0 then 0 else n.log2 + 1)
+    (hhigh : n >>> s ≠ 0 → high = (n >>> s).log2 + 1) :
+    Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n s) 0) (Nat.add s high) low =
+      if n = 0 then 0 else n.log2 + 1 := by
+  rw [beq_shiftRight_zero n s]
+  by_cases h : n < 2 ^ s
+  · rw [decide_eq_true h]
+    exact hlow h
+  · rw [decide_eq_false h]
+    have hn : n ≠ 0 := by
+      rintro rfl
+      exact h (Nat.two_pow_pos s)
+    have hupper : n >>> s ≠ 0 := fun h0 => h (lt_two_pow_of_shiftRight_eq_zero h0)
+    change s + high = _
+    rw [hhigh hupper, ite_eq_right hn, log2_of_shiftRight hupper]
+    omega
+
+/-- `size128 n` is the bit length of every `n < 2 ^ 128`: zero for zero and `n.log2 + 1`
+otherwise. -/
+theorem size128_eq {n : Nat} (hn : n < 2 ^ 128) :
+    size128 n = if n = 0 then 0 else n.log2 + 1 :=
+  lengthSplit_eq n 64 (fun h => laneLength_eq h)
+    (fun h => (laneLength_eq (shiftRight_lt_two_pow 64 64 hn rfl)).trans (ite_eq_right h))
+
+/-- `size256 n` is the bit length of every `n < 2 ^ 256`: zero for zero and `n.log2 + 1`
+otherwise. -/
+theorem size256_eq {n : Nat} (hn : n < 2 ^ 256) :
+    size256 n = if n = 0 then 0 else n.log2 + 1 :=
+  lengthSplit_eq n 128 (fun h => size128_eq h)
+    (fun h => (size128_eq (shiftRight_lt_two_pow 128 128 hn rfl)).trans (ite_eq_right h))
+
+/-- `size512 n` is the bit length of every `n < 2 ^ 512`: zero for zero and `n.log2 + 1`
+otherwise. -/
+theorem size512_eq {n : Nat} (hn : n < 2 ^ 512) :
+    size512 n = if n = 0 then 0 else n.log2 + 1 :=
+  lengthSplit_eq n 256 (fun h => size256_eq h)
+    (fun h => (size256_eq (shiftRight_lt_two_pow 256 256 hn rfl)).trans (ite_eq_right h))
+
+/-- `sizeAbove n` is the bit length `n.log2 + 1` of every `n` with `2 ^ 256 ≤ n`. -/
+theorem sizeAbove_eq {n : Nat} (hn : 2 ^ 256 ≤ n) : sizeAbove n = n.log2 + 1 := by
+  have hn0 : n ≠ 0 := by
+    have := Nat.two_pow_pos 256
+    omega
+  have h256 : n >>> 256 ≠ 0 := fun h =>
+    absurd (lt_two_pow_of_shiftRight_eq_zero h) (Nat.not_lt.2 hn)
+  unfold sizeAbove
+  rw [beq_shiftRight_zero n 512, beq_shiftRight_zero n 1024, beq_shiftRight_zero n 4096]
+  by_cases h512 : n < 2 ^ 512
+  · rw [decide_eq_true h512]
+    change 256 + size256 (n >>> 256) = _
+    rw [size256_eq (shiftRight_lt_two_pow 256 256 h512 rfl), ite_eq_right h256,
+      log2_of_shiftRight h256]
+    omega
+  · rw [decide_eq_false h512]
+    have hupper : n >>> 512 ≠ 0 := fun h => h512 (lt_two_pow_of_shiftRight_eq_zero h)
+    by_cases h1024 : n < 2 ^ 1024
+    · rw [decide_eq_true h1024]
+      change 512 + size512 (n >>> 512) = _
+      rw [size512_eq (shiftRight_lt_two_pow 512 512 h1024 rfl), ite_eq_right hupper,
+        log2_of_shiftRight hupper]
+      omega
+    · rw [decide_eq_false h1024]
+      by_cases h4096 : n < 2 ^ 4096
+      · rw [decide_eq_true h4096]
+        have hwindow : n < 2 ^ (128 * 2 ^ 5) := by
+          rw [show 128 * 2 ^ 5 = 4096 from rfl]
+          exact h4096
+        change windowLength 128 5 n 0 = _
+        rw [windowLength_eq 128 5 n 0 hwindow, Nat.zero_add, ite_eq_right hn0]
+      · rw [decide_eq_false h4096]
+        exact (windowBelow_eq 7 n (windowBelow_eq 10 n (windowBelow_eq 17 n
+          (windowBelow_eq 25 n (by rw [ite_eq_right hn0]))))).trans (ite_eq_right hn0)
+
 /--
 `size n` is the bit length of `n`: zero for zero, and one more than the position `n.log2` of the
 leading bit otherwise. There is no bound on `n`.
 -/
 theorem size_eq_log2 (n : Nat) : size n = if n = 0 then 0 else n.log2 + 1 := by
   unfold size
-  rw [beq_shiftRight_zero n 64, beq_shiftRight_zero n 256, beq_shiftRight_zero n 128]
+  rw [beq_shiftRight_zero n 64, beq_shiftRight_zero n 128, beq_shiftRight_zero n 256]
   by_cases h64 : n < 2 ^ 64
   · rw [decide_eq_true h64]
     exact laneLength_eq h64
   · rw [decide_eq_false h64]
-    by_cases h256 : n < 2 ^ 256
-    · rw [decide_eq_true h256]
-      by_cases h128 : n < 2 ^ 128
-      · rw [decide_eq_true h128]
-        exact laneLength_eq h128
-      · rw [decide_eq_false h128]
-        exact laneLength_eq h256
-    · rw [decide_eq_false h256]
-      have hn : n ≠ 0 := by
-        rintro rfl
-        exact h64 (Nat.two_pow_pos 64)
-      exact windowBelow_eq 2 n (windowBelow_eq 3 n (windowBelow_eq 5 n (windowBelow_eq 7 n
-        (windowBelow_eq 10 n (windowBelow_eq 17 n (windowBelow_eq 25 n
-          (by rw [ite_eq_right hn])))))))
+    have hn : n ≠ 0 := by
+      rintro rfl
+      exact h64 (Nat.two_pow_pos 64)
+    have hupper : n >>> 64 ≠ 0 := fun h => h64 (lt_two_pow_of_shiftRight_eq_zero h)
+    by_cases h128 : n < 2 ^ 128
+    · rw [decide_eq_true h128]
+      change 64 + laneLength 64 (n >>> 64) = _
+      rw [laneLength_eq (shiftRight_lt_two_pow 64 64 h128 rfl), ite_eq_right hupper,
+        ite_eq_right hn, log2_of_shiftRight hupper]
+      omega
+    · rw [decide_eq_false h128, ite_eq_right hn]
+      have htop : n >>> 128 ≠ 0 := fun h => h128 (lt_two_pow_of_shiftRight_eq_zero h)
+      by_cases h256 : n < 2 ^ 256
+      · rw [decide_eq_true h256]
+        change 128 + size128 (n >>> 128) = _
+        rw [size128_eq (shiftRight_lt_two_pow 128 128 h256 rfl), ite_eq_right htop,
+          log2_of_shiftRight htop]
+        omega
+      · rw [decide_eq_false h256]
+        exact sizeAbove_eq (Nat.not_lt.1 h256)
 
 /-- `size n` is Mathlib's `Nat.size n`, the number of bits of `n`. -/
 theorem size_eq (n : Nat) : size n = Nat.size n := by

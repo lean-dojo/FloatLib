@@ -292,18 +292,27 @@ def forward (r : Recursor) (observe split : Lean.Expr) (app : MatcherApp) (fuel 
   for index in [0:app.alts.size] do
     let (arm, isMixed) ← withArm app patterns index fun parameters facts _ body => do
       let observed : Q(ℝ) := (mkApp observe body).headBeta
-      let estimate ← r.analyze observed fuel
-      -- In mixed analysis each alternative also proves its decoded value finite, as a branch.
-      let finite? ← match estimate.finite?, decodedValue? observed with
-        | some finite, _ => pure (some finite)
-        | none, some decoded =>
+      -- An absolute budget that the identities of zero and one reduce to zero is stated as zero
+      -- (`Session.zeroBudget`), so that exact alternatives share one budget.
+      let estimate ← session.zeroBudget (← r.analyze observed fuel)
+      -- In mixed analysis each alternative also proves its decoded value finite, as a branch. The
+      -- finiteness its estimate derived may be stated on another form of the value, such as the
+      -- producer of a read unfolded at its coordinate. The case distinction compares each case
+      -- with its alternative as written, so the finiteness is proved for that value.
+      let finite? ← match decodedValue? observed with
+        | some decoded =>
             if session.mixed && observed.isAppOf ``ExecFloat.Binary.toReal then
-              let goal ← mkFreshExprMVar (← mkEq
-                (← mkAppM ``ExecFloat.Binary.isFinite #[decoded]) (mkConst ``Bool.true))
-              if ← r.proveFinite goal.mvarId! fuel then pure (some (← instantiateMVars goal))
-              else pure none
-            else pure none
-        | none, none => pure none
+              let wanted ← mkEq (← mkAppM ``ExecFloat.Binary.isFinite #[decoded])
+                (mkConst ``Bool.true)
+              let stated ← match estimate.finite? with
+                | some finite => pure ((← instantiateMVars (← inferType finite)) == wanted)
+                | none => pure false
+              if stated then pure estimate.finite? else
+                let goal ← mkFreshExprMVar wanted
+                if ← r.proveFinite goal.mvarId! fuel then pure (some (← instantiateMVars goal))
+                else pure none
+            else pure estimate.finite?
+        | none => pure estimate.finite?
       let localGoals := (← get).pending.extract initial.pending.size (← get).pending.size
       withConditions localGoals session.comparisons fun condition evidence => do
         let inner := facts.push evidence

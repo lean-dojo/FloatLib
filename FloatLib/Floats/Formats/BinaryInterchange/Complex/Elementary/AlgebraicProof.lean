@@ -63,11 +63,11 @@ theorem compareHalfRoot_eq_real (x normSq scale : Rat) (hnorm : x * x ≤ normSq
     have hlt : √(normSq : ℝ) < 2 * scale * boundary * boundary - x ↔
         √((√(normSq : ℝ) + x) / (2 * scale)) < boundary := by
       rw [← pow_lt_pow_iff_left₀ (Real.sqrt_nonneg _) hb two_ne_zero, hsq, div_lt_iff₀ hs]
-      constructor <;> intro h <;> nlinarith
+      constructor <;> intro h <;> linarith
     have hgt : 2 * scale * boundary * boundary - x < √(normSq : ℝ) ↔
         (boundary : ℝ) < √((√(normSq : ℝ) + x) / (2 * scale)) := by
       rw [← pow_lt_pow_iff_left₀ hb (Real.sqrt_nonneg _) two_ne_zero, hsq, lt_div_iff₀ hs]
-      constructor <;> intro h <;> nlinarith
+      constructor <;> intro h <;> linarith
     simp only [cmp, cmpUsing, hlt, hgt]
 
 /-- The modulus of a complex number with rational parts is the root of a rational. -/
@@ -103,10 +103,10 @@ theorem sqrtCore_denotes {z : ExecComplex fmt} (hz : isFinite z = true)
     exact Model.toReal_nonneg_of_signBit_eq_false him
   simp only [sqrtCore, himInf, hreNaN, hreInf, hx, hy, Bool.false_eq_true, ↓reduceIte]
   refine ⟨⟨_, rfl, fun q => ?_⟩, ⟨_, rfl, fun q => ?_⟩⟩
-  · rw [compareHalfRoot_eq_real _ _ 1 (by nlinarith [mul_self_nonneg y]) one_pos,
+  · rw [compareHalfRoot_eq_real _ _ 1 (by linarith [mul_self_nonneg y]) one_pos,
       Complex.cpow_inv_two_re, hw, norm_mk_ratCast]
     simp
-  · rw [compareHalfRoot_eq_real _ _ 1 (by nlinarith [mul_self_nonneg y]) one_pos,
+  · rw [compareHalfRoot_eq_real _ _ 1 (by linarith [mul_self_nonneg y]) one_pos,
       Complex.cpow_inv_two_im_eq_sqrt (by rw [hw]; exact hy0), hw, norm_mk_ratCast]
     simp [sub_eq_add_neg]
 
@@ -161,7 +161,7 @@ theorem rsqrtCore_denotes {z : ExecComplex fmt} (hz : isFinite z = true)
       exact absurd (by rw [hw, hx0, hy0]; simp [Complex.ext_iff]) hne
   have hnormReal : (0 : ℝ) < ((x * x + y * y : Rat) : ℝ) := by exact_mod_cast hnorm
   have habs : |(x : ℝ)| ≤ √((x * x + y * y : Rat) : ℝ) :=
-    Real.abs_le_sqrt (by push_cast; nlinarith [mul_self_nonneg (y : ℝ)])
+    Real.abs_le_sqrt (by push_cast; linarith [mul_self_nonneg (y : ℝ)])
   have hre := Complex.cpow_inv_two_re (toComplex z)
   have himag := Complex.cpow_inv_two_im_eq_sqrt (x := toComplex z) (by rw [hw]; exact hy0)
   rw [hw, norm_mk_ratCast] at hre himag
@@ -174,14 +174,14 @@ theorem rsqrtCore_denotes {z : ExecComplex fmt} (hz : isFinite z = true)
   simp only [rsqrtCore, himInf, hreNaN, hreInf, himNaN, hzero, hx, hy, Bool.false_eq_true,
     Bool.or_self, ↓reduceIte]
   refine ⟨⟨_, rfl, fun q => ?_⟩, ?_⟩
-  · rw [compareHalfRoot_eq_real _ _ _ (by nlinarith [mul_self_nonneg y]) hnorm, hw,
+  · rw [compareHalfRoot_eq_real _ _ _ (by linarith [mul_self_nonneg y]) hnorm, hw,
       Complex.inv_re, hnormSq, hre]
     rw [sqrt_div_normSq hnormReal (by linarith [neg_abs_le (x : ℝ)])]
   · have hpart : (Part.real (fmt := fmt) (compareHalfRoot (-x) (x * x + y * y) (x * x + y * y))
         false).Denotes (√((√((x * x + y * y : Rat) : ℝ) - x) / 2) /
           √((x * x + y * y : Rat) : ℝ)) false := by
       refine ⟨_, rfl, fun q => ?_⟩
-      rw [compareHalfRoot_eq_real _ _ _ (by nlinarith [mul_self_nonneg y]) hnorm, Rat.cast_neg,
+      rw [compareHalfRoot_eq_real _ _ _ (by linarith [mul_self_nonneg y]) hnorm, Rat.cast_neg,
         sqrt_div_normSq hnormReal (by linarith [le_abs_self (x : ℝ)]), ← sub_eq_add_neg]
     have hneg := hpart.neg
     rw [hw, Complex.inv_im, hnormSq, himag]

@@ -58,9 +58,9 @@ open FloatLib.Floats
 example : (1.5 : Binary32) + 2.25 = 3.75 := by float_decide
 ```
 
-On a 1,000-term binary64 dot product, Lean's kernel checked the loop in 159 ms, compared
+On a 1,000-term binary64 dot product, Lean's kernel checked the loop in 152 ms, compared
 with 730 ms for Flocq under Rocq's `vm_compute`. On a separate integer square-root proof,
-FloatLib's exact arithmetic took 11.7 ms with `decide +kernel` and 12.9 ms with
+FloatLib's exact arithmetic took 11.5 ms with `decide +kernel` and 13.1 ms with
 `native_decide`. See the [floating-point timings](benchmarks/results/kernel/README.md#three-theorems-about-loops-of-1000-steps)
 and [exact arithmetic timings](benchmarks/results/exact/native.md).
 
@@ -68,7 +68,11 @@ and [exact arithmetic timings](benchmarks/results/exact/native.md).
 
 - **Proof by computation.** `float_decide` proves closed, decidable statements by rewriting
   supported operations to equivalent computations on their encodings. For example, the kernel
-  can check a binary addition together with its rounding flags. `lane_decide` proves equalities
+  can check a binary addition together with its rounding flags. The rules reach nearly every
+  operation of IEEE 754-2019 on binary and decimal formats, the conversions to and from
+  character sequences, the augmented operations and the reductions among them. They also
+  cover posit arithmetic, the P3109 operations and the OCP MX and NVFP4 quantizers. The
+  certified functions of clause 9.2 are the main exception. `lane_decide` proves equalities
   of supported natural-number expressions over all pairs of small finite indices. It evaluates
   each side once with all input pairs packed together. The
   [guide](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation) gives examples
@@ -101,12 +105,19 @@ and [exact arithmetic timings](benchmarks/results/exact/native.md).
 - **Posits and quires.** Pick a total width with `ExecFloat.Posit (bits := n)`. Its quire,
   `ExecFloat.Posit.Quire (bits := n)`, is an exact accumulator: it adds up products with no
   rounding as long as they fit its capacity, and rounds once at the end. We follow the 2022
-  posit standard, and the operations carry its names.
+  posit standard, and the operations carry its names. The standard fixes two exponent bits.
+  The operations on encodings underneath take that number as a parameter and are proved for
+  every value of it, so the kernel also computes with posits of another exponent size, such
+  as SoftPosit's 8-bit and 16-bit types.
 - **Small and custom formats.** FP8, FP6, FP4, fixed point, logarithmic and codebook
   representations all share the same numerical interfaces. Block-scaled formats are one
   definition with OCP MX, NVFP4 and Four Over Six as instances, for any element format, scale
   format, block shape and scale-selection rule, and the executable OCP MX and NVFP4 quantizers
-  are proved to compute the real formats the theorems are about. OCP's two FP8 formats are
+  are proved to compute the real formats the theorems are about. A deployed NVFP4 quantizer
+  works in binary32 instead of exact rationals, so `Block.nvfp4Working` is that computation on
+  binary32 encodings, in torchao's order of operations, with theorems for the stored scale and
+  elements that need no premise about overflow. It is one instance of a quantizer for any
+  block and any binary working format. OCP's two FP8 formats are
   `E4M3` and `E5M2`, as OFP8 spells them, with saturating and non-saturating conversion. An MX
   dot product can keep its intermediates exact or run in a finite accumulator you name, and the
   second comes with an error bound. Fixed point follows Embedded C (ISO/IEC TR 18037), as one
@@ -146,10 +157,14 @@ and [exact arithmetic timings](benchmarks/results/exact/native.md).
   proves that a set of constraints has no point: the goal `False` from hypotheses,
   `¬ ∃ x, P x`, or any combination by `∧`, `∨`, `¬` and `→` of comparisons. A compiled search
   writes a tree of boxes and the kernel checks it in one evaluation, and quadratic forms decide
-  the points where a margin is zero, such as the equilibrium of a Lyapunov function. On the 169
-  goals of four projects' test suites it closes 161. Affine quantization has a real-valued
-  specification with a rounding rule you supply, plus a proof connecting nearest-even
-  quantization to the executable rational implementation. See the
+  the points where a margin is zero, such as the equilibrium of a Lyapunov function. A variable
+  bounded on one side only has a range with an infinite end, and the enclosures work on it. A
+  comparison in one variable whose two sides meet at an end of the range, such as
+  `1 + x ≤ Real.exp x` at zero, is decided by the sign of a derivative, and `∃ x : ℝ, P x` by
+  a witness that the tactic finds. On the 169 goals of four projects' test suites it
+  closes 161. Affine quantization has a real-valued specification with a rounding rule you
+  supply, plus a proof connecting nearest-even quantization to the executable rational
+  implementation. See the
   [guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/how-to-prove-that-constraints-have-no-common-point).
 - **Bounds from coefficients.** The same `interval` tactic proves bounds over a whole domain
   from coefficients: trigonometric polynomials with cosine and sine terms on the circle, power
@@ -177,9 +192,17 @@ and [exact arithmetic timings](benchmarks/results/exact/native.md).
   `Configured.CorrectlyRounded` and you get total `ExecFloat.Binary.CorrectlyRounded.exp`,
   `log`, `expm1`, `logp1` and `expMul`, correctly rounded on IEEE formats with no premise on the
   search budget, plus the other functions that IEEE 754-2019 recommends (`exp2`, `log10`,
-  `sinPi`, `atan2`, `powr`, `compound` and the rest). For finite inputs in the theorem's
-  domain, each finite nearest-even result equals the real function rounded once. The upward
-  and downward results enclose the real value. `Configured.Transcendentals` brings deterministic approximations for a
+  `sinPi`, `atan2`, `pow`, `powr`, `compound` and the rest). For finite inputs in the theorem's
+  domain, each result is the real function rounded once in the rounding direction you ask for,
+  in all five IEEE directions, so the upward and downward results are the closest representable
+  values on their side. On configured values that theorem is stated for the functions of one
+  argument. `atan2`, `atan2Pi`, `pow`, `powr` and `compound` are the descriptor-model functions
+  through the storage codec, and their theorems are stated on the descriptor model. The
+  descriptor model has every function of clause 9.2 in this form,
+  `exp`, `log`, `rSqrt`, `hypot`, `rootn` and `pown` included, with exception flags, and the
+  theorem also holds for the eight-bit formats OCP E5M2 and E4M3. Decimal formats have the same
+  functions with flags in five directions, and P3109 formats in every rounding and saturation
+  mode. `Configured.Transcendentals` brings deterministic approximations for a
   wider set of binary functions. We haven't proved general error bounds for those approximation
   kernels, but they match MPFR on every case of the elementary-function test tiers. Sine and
   cosine can return an invalid result if they run out of argument-reduction budget. For
@@ -203,6 +226,44 @@ mathematical sources, scope, and key results. It also says how we used AI: we sp
 months planning the library and building its foundations, and Codex helped us finish some of
 the proofs and optimize the arithmetic backends.
 
+## Limitations
+
+FloatLib has every operation that the notes of the 754 working group list for IEEE 754-2019,
+for binary and for decimal formats, and
+[the table in the guide](https://lean-dojo.github.io/FloatLib/#/chapter/ieee-binary-formats/where-is-each-operation-of-ieee-754-2019)
+names the theorems of each. The conformance predicate `is754version2019` still answers `false`,
+because these parts are tested against references and not proved:
+
+- **The special cases of the functions of clause 9.2.** On binary formats the value in every
+  rounding direction, its sign and the overflow result are proved at finite operands in the
+  domain. So are the five flags, for every function, `cbrt` as the `rootn` of degree three that
+  it is: `inexact` for a finite result, `invalid` and `divideByZero` clear, and where the real
+  value is not zero `overflow` by the rule of clause 7.4 and `underflow` by the rule of clause
+  7.5 with tininess detected after rounding. Tininess is stated by the boundary of each
+  direction, the one of the arithmetic operations, and is not derived from a rounding function
+  with an unbounded exponent range. Where the real value is zero the result is proved to be a
+  zero, and `overflow` and `underflow` have no theorem there. The results at infinities, NaNs
+  and outside the domains are definitions without a theorem. For decimal formats the theorem
+  covers the five flags at finite operands in the domain, and the same special cases are
+  definitions.
+- **The formatOf operations across formats.** In one format they are proved to be the
+  operations of that format for every operand, with flags and ternary value. Across formats the
+  value is proved for finite operands: in every direction for addition, subtraction,
+  multiplication and fusedMultiplyAdd when the exact result is in the range of the destination,
+  and to nearest-even for division. The quotient in the other directions, the flags and the
+  special cases across formats are compared with the rules of the standard on every pair of
+  encodings of a six-bit format. The formatOf square root is proved correctly rounded in every
+  direction, and its flags other than `inexact` are compared the same way.
+- **Configured values.** `ExecFloat.Binary.CorrectlyRounded` has the 30 recommended functions
+  and `pow`. The forms with flags of `exp`, `expm1`, `log`, `logp1`, `rSqrt`, `hypot`, `rootn`
+  and `pown` in every direction are functions of the descriptor model
+  (`Model.Transcendentals.Directed`, `Model.Algebraic.Directed`).
+- **Alternate exception handling.** FloatLib returns the exception flags as data. The
+  attributes of clause 8 for alternate exception handling are not implemented.
+- **P3109 extensions.** `Exp10`, `Log10`, `Cbrt`, `Rootn`, `Pown`, `Pow`, `Powr`, `Compound` and
+  their siblings on P3109 formats are outside the interim report. They follow its conventions:
+  one zero, one NaN, and NaN at a pole at zero.
+
 ## Speed and independent checks
 
 We've put a lot of work into making the proved arithmetic fast, because we want MPFR's speed
@@ -214,9 +275,9 @@ kernels and wider limb algorithms, and every certified choice has to prove that 
 the same specification. You can set the backend policy yourself, too. There's also a host-FPU
 path, but it's unchecked and you have to call it by name.
 
-For a single operation, rewriting brought kernel checking time down to 84 to 164 microseconds
-on normal binary64 operands. At 4,096 bits, all six operations took at most 295 microseconds
-on the measured inputs. The [chapter on kernel computation](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation)
+For a single operation, rewriting brought kernel checking time down to 72 to 141 microseconds
+on normal binary64 operands. At 4,096 bits, all six operations took at most 283 microseconds
+on normal operands. The [chapter on kernel computation](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation)
 gives the timings by operation and compares proof checkers.
 
 On ordinary binary64 calls, FloatLib's proved addition, subtraction and multiplication beat

@@ -29,7 +29,9 @@ These checks run the exact rational-power comparator and the reciprocal, offset 
   orderings come from 150-digit decimal evaluation. Exponents `2^-1074` and `±2^1023` check that
   huge exponent denominators and numerators create no large integers.
 * Agreement: for small bases and exponents, equality and ordering agree with the comparison that
-  clears the exponent denominator, and the integer kernels agree with direct evaluation.
+  clears the exponent denominator, for `compare` and for its search alone (`searched`), and the
+  integer kernels agree with direct evaluation.
+* Short powers: `direct` holds where both powers are short, and not for a long one.
 * Posit regressions: `pow`, `exp2`, `exp10`, their `Minus1` forms, `log2`, `log10` and their
   `Plus1` forms give the same codes as before the comparator change. The posit8 tables, and the
   digests of the posit16, posit32 and posit8 `pow` samples, were recorded with the previous
@@ -69,6 +71,16 @@ exponent denominator and compare exact rational powers.
 -/
 def referenceCompare (base exponent target : ℚ) : Ordering :=
   if target ≤ 0 then .gt else cmp (base ^ exponent.num) (target ^ exponent.den)
+
+/--
+The search of `compare` alone, for a positive base and target: equality first, then the logarithm
+enclosures. `compare` itself decides the small cases of this module by direct exponentiation.
+-/
+def searched (base exponent target : ℚ) : Ordering :=
+  if hbase : 0 < base then
+    if htarget : 0 < target then searchCompare base exponent target hbase htarget
+    else compare base exponent target
+  else compare base exponent target
 
 /-- Whether a small natural number is a perfect power, by search. -/
 def isPerfectPower (degree value : Nat) : Bool :=
@@ -163,6 +175,14 @@ def hardFailures : Thunk Nat := ⟨fun _ =>
     , compare (1 / 3) (1 / 2 ^ 1074) 1 == .lt
     , compare 3 (2 ^ 1023) (2 ^ 1024) == .gt
     , compare 3 (-2 ^ 1023) (1 / 2 ^ 1074) == .lt
+    -- Short powers are formed and compared; a long one is never formed.
+    , direct 4 (1 / 2) (2 + 1 / 2 ^ 60)
+    , direct x 3 middle2
+    , !direct 3 (1 / 2 ^ 1074) 1
+    , !direct nearOne large low1
+    , direct 2 root2 low3
+    , searched 4 (1 / 2) (2 - 1 / 2 ^ 60) == .gt
+    , searched (9 / 4) (3 / 2) (27 / 8) == .eq
     ]⟩
 
 /-- Bases `p / q` with `1 ≤ p, q ≤ 9`. -/
@@ -204,6 +224,7 @@ def smallFailures : Thunk Nat := ⟨fun _ => Id.run do
       for target in targets do
         let expected := referenceCompare base exponent target
         failures := failures + failureCount (compare base exponent target == expected)
+        failures := failures + failureCount (searched base exponent target == expected)
         failures := failures + failureCount (powEq base exponent target == (expected == .eq))
   return failures⟩
 

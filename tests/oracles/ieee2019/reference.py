@@ -16,8 +16,18 @@ Every reference is independent of FloatLib:
   rounding in a `decimal` context of 26,000 digits, and the exact sum is rounded once, with its
   flags, by the interchange context.
 
+* the decimal scaled products `scaledProd`, `scaledProdSum` and `scaledProdDiff`: the factors
+  and their product are formed without rounding in such a context, the scale factor is the
+  adjusted exponent of the exact product, and the scaled product is rounded once by the
+  interchange context. The special cases (NaN, infinite and invalid factors) follow ISO/IEC TS
+  18661-4 F.10.10a.5 to F.10.10a.7 directly;
+* the decimal reductions from left to right in an accumulator format: a chain of additions of
+  `decimal` in the accumulator's interchange context, whose flags accumulate, and a conversion
+  to the destination's context.
+
 usage: reference.py KIND COUNT SEED
-       (KIND: decimal | extrema | augmented | reductions | decimal-reductions)
+       (KIND: decimal | extrema | augmented | reductions | decimal-reductions | decimal-scaled
+        | decimal-ordered)
 
 Line formats (fields separated by one space):
 
@@ -28,6 +38,10 @@ Line formats (fields separated by one space):
   red scaledprod N X1 ... XN PR SF
   dred OP PRECISION MODE N X1 ... XN R FLAGS          OP sum|sumabs|sumsq
   dred dot PRECISION MODE N X1 ... XN Y1 ... YN R FLAGS
+  dsp scaledprod PRECISION MODE N X1 ... XN PR SF FLAGS
+  dsp OP PRECISION MODE N X1 ... XN Y1 ... YN PR SF FLAGS     OP scaledprodsum|scaledproddiff
+  dord OP ACCUMULATOR PRECISION MODE N X1 ... XN R FLAGS      OP sum|sumabs|sumsq
+  dord dot ACCUMULATOR PRECISION MODE N X1 ... XN Y1 ... YN R FLAGS
 
 A decimal datum is `f,SIGN,COEFFICIENT,EXPONENT`, `i,SIGN` or `n,SIGN,SIGNALING,PAYLOAD`.
 FLAGS is the sum of invalid 1, divideByZero 2, overflow 4, underflow 8 and inexact 16.
@@ -337,11 +351,144 @@ def decimal_reduction_cases(count, rng):
         print("dred", name, precision, mode, size, *operands, datum(result), flags(ctx))
 
 
+def exact_context(mode):
+    """A context that adds and multiplies decimal128 data without rounding."""
+    return decimal.Context(prec=80000, rounding=MODES[mode], Emin=-999999999, Emax=999999999,
+                           traps=[])
+
+
+def scaled_factor(exact, name, x, y):
+    """One factor of a scaled product: ("nan", datum, signaling), ("invalid",), ("inf", sign)
+    or ("finite", value)."""
+    operands = [x] if name == "scaledprod" else [x, y]
+    nans = [operand for operand in operands if operand.is_nan()]
+    if nans:
+        return ("nan", nans[0], any(operand.is_snan() for operand in nans))
+    if name == "scaledproddiff":
+        operands[1] = operands[1].copy_negate()
+    infinite = [operand for operand in operands if operand.is_infinite()]
+    if len(infinite) == 2 and infinite[0].is_signed() != infinite[1].is_signed():
+        return ("invalid",)
+    if infinite:
+        return ("inf", infinite[0].is_signed())
+    return ("finite", operands[0] if len(operands) == 1 else exact.add(*operands))
+
+
+def decimal_scaled_cases(count, rng):
+    for index in range(count):
+        precision = rng.choice([7, 16, 34])
+        mode = rng.choice("EAZUD")
+        name = rng.choice(["scaledprod", "scaledprodsum", "scaledproddiff"])
+        size = rng.randrange(0, 6)
+        xs = [random_finite(rng, precision) for _ in range(size)]
+        ys = [random_finite(rng, precision) for _ in range(size)]
+        low, high = -(FORMATS[precision][0] + precision - 2), FORMATS[precision][0] - precision + 1
+        if index % 3 == 0:
+            # Exponents of a pair close together, so that a sum keeps digits of both operands.
+            for position in range(size):
+                sign, digits, _ = ys[position].as_tuple()
+                shifted = xs[position].as_tuple().exponent + rng.randrange(-precision, precision + 1)
+                ys[position] = decimal.Decimal((sign, digits, min(max(shifted, low), high)))
+        if index % 12 == 0 and size:
+            # One factor that is an exact zero by cancellation.
+            ys[0] = xs[0] if name == "scaledproddiff" else xs[0].copy_negate()
+        if index % 7 == 0 and size:
+            xs[rng.randrange(size)] = random_special(rng, precision)
+        if index % 11 == 0 and size:
+            ys[rng.randrange(size)] = random_special(rng, precision)
+        exact = exact_context(mode)
+        factors = [scaled_factor(exact, name, x, y) for x, y in zip(xs, ys)]
+        finite = [factor[1] for factor in factors if factor[0] == "finite"]
+        product = decimal.Decimal(1)
+        for value in finite:
+            product = exact.multiply(product, value)
+        if exact.flags[decimal.Inexact] or exact.flags[decimal.Rounded]:
+            raise SystemExit("the exact context rounded a product")
+        negative = product.is_signed()
+        for factor in factors:
+            if factor[0] == "inf":
+                negative ^= factor[1]
+        infinite = any(factor[0] == "inf" for factor in factors)
+        invalid = any(factor[0] == "invalid" for factor in factors) or (infinite and product.is_zero())
+        nans = [factor for factor in factors if factor[0] == "nan"]
+        ctx = context(precision, mode)
+        scale = 0
+        if nans:
+            sign, digits, _ = nans[0][1].as_tuple()
+            payload = int("".join(map(str, digits)) or "0")
+            result = f"n,{sign},0,{payload}"
+            status = 1 if invalid or any(factor[2] for factor in nans) else 0
+        elif invalid:
+            result, status = "n,0,0,0", 1
+        elif infinite:
+            result, status = f"i,{int(negative)}", 0
+        elif product.is_zero():
+            result, status = datum(ctx.plus(product).copy_sign(product)), flags(ctx)
+        else:
+            scale = product.adjusted()
+            result = datum(ctx.plus(exact.scaleb(product, -scale)))
+            status = flags(ctx)
+        operands = [datum(x) for x in xs] + ([] if name == "scaledprod" else [datum(y) for y in ys])
+        print("dsp", name, precision, mode, size, *operands, result, scale, status)
+
+
+def convert(ctx, value):
+    """Conversion of a datum into the format of a context, with its flags."""
+    result = ctx.plus(value)
+    # `plus` is `0 + value`, which makes a zero positive.
+    return result.copy_sign(value) if value.is_zero() else result
+
+
+def decimal_ordered_cases(count, rng):
+    for index in range(count):
+        accumulator = rng.choice([7, 16, 34])
+        precision = rng.choice([7, 16, 34])
+        mode = rng.choice("EAZUD")
+        name = rng.choice(["sum", "sumabs", "sumsq", "dot"])
+        size = rng.randrange(0, 7)
+        source = rng.choice([7, 16, 34])
+        xs = [random_finite(rng, source) for _ in range(size)]
+        ys = [random_finite(rng, source) for _ in range(size)]
+        low, high = -(FORMATS[source][0] + source - 2), FORMATS[source][0] - source + 1
+        if index % 2 == 0 and size > 1:
+            # Exponents close to the first operand, so that the additions round.
+            for values in (xs, ys):
+                for position in range(1, size):
+                    sign, digits, _ = values[position].as_tuple()
+                    shifted = xs[0].as_tuple().exponent + rng.randrange(-source, source + 1)
+                    values[position] = decimal.Decimal((sign, digits, min(max(shifted, low), high)))
+            if index % 8 == 0:
+                xs[-1] = xs[0].copy_negate()
+        if index % 13 == 0 and size:
+            xs[rng.randrange(size)] = decimal.Decimal((rng.randrange(2), (), "F"))
+        acc = context(accumulator, mode)
+        out = context(precision, mode)
+        if name == "sum":
+            terms = [convert(acc, x) for x in xs]
+        elif name == "sumabs":
+            terms = [convert(acc, x.copy_abs()) for x in xs]
+        elif name == "sumsq":
+            terms = [acc.multiply(convert(acc, x), convert(acc, x)) for x in xs]
+        else:
+            terms = [acc.multiply(convert(acc, x), convert(acc, y)) for x, y in zip(xs, ys)]
+        if terms:
+            total = terms[0]
+            for term in terms[1:]:
+                total = acc.add(total, term)
+            result = convert(out, total)
+        else:
+            result = decimal.Decimal(0)
+        operands = [datum(x) for x in xs] + ([datum(y) for y in ys] if name == "dot" else [])
+        print("dord", name, accumulator, precision, mode, size, *operands, datum(result),
+              flags(acc) | flags(out))
+
+
 def main():
     kind, count, seed = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
     rng = random.Random(seed)
     {"decimal": decimal_cases, "extrema": extrema_cases, "augmented": augmented_cases,
-     "reductions": reduction_cases, "decimal-reductions": decimal_reduction_cases}[kind](count, rng)
+     "reductions": reduction_cases, "decimal-reductions": decimal_reduction_cases,
+     "decimal-scaled": decimal_scaled_cases, "decimal-ordered": decimal_ordered_cases}[kind](count, rng)
 
 
 if __name__ == "__main__":

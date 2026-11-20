@@ -196,6 +196,57 @@ def cases : List (String × Bool) :=
         (0x7C00, 0)),
     ("powr 1 qNaN is the NaN", result (CorrectlyRounded.powr (b16 0x3C00) (b16 0x7E00)) ==
         (0x7E00, 0)),
+    ("pow 4 1/2 is 2", result (CorrectlyRounded.pow (b16 0x4400) (b16 0x3800)) == (0x4000, 0)),
+    ("pow -2 3 is -8", result (CorrectlyRounded.pow (b16 0xC000) (b16 0x4200)) == (0xC800, 0)),
+    ("pow -2 2 is 4", result (CorrectlyRounded.pow (b16 0xC000) (b16 0x4000)) == (0x4400, 0)),
+    ("pow -2 -1 is -1/2", result (CorrectlyRounded.pow (b16 0xC000) (b16 0xBC00)) == (0xB800, 0)),
+    ("pow -2 1/2 is invalid", result (CorrectlyRounded.pow (b16 0xC000) (b16 0x3800)) ==
+        (0x7E00, 1)),
+    ("pow qNaN -0 is 1", result (CorrectlyRounded.pow (b16 0x7E00) (b16 0x8000)) == (0x3C00, 0)),
+    ("pow sNaN +0 is invalid", result (CorrectlyRounded.pow (b16 0x7D00) (b16 0x0000)) ==
+        (0x7F00, 1)),
+    ("pow 1 qNaN is 1", result (CorrectlyRounded.pow (b16 0x3C00) (b16 0x7E00)) == (0x3C00, 0)),
+    ("pow 1 sNaN is invalid", result (CorrectlyRounded.pow (b16 0x3C00) (b16 0x7D00)) ==
+        (0x7F00, 1)),
+    ("pow -inf +0 is 1", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0x0000)) == (0x3C00, 0)),
+    ("pow -0 -3 is -inf, divideByZero",
+      result (CorrectlyRounded.pow (b16 0x8000) (b16 0xC200)) == (0xFC00, 2)),
+    ("pow -0 -2 is +inf, divideByZero",
+      result (CorrectlyRounded.pow (b16 0x8000) (b16 0xC000)) == (0x7C00, 2)),
+    ("pow +0 -1/2 is +inf, divideByZero",
+      result (CorrectlyRounded.pow (b16 0x0000) (b16 0xB800)) == (0x7C00, 2)),
+    ("pow -0 -inf is +inf", result (CorrectlyRounded.pow (b16 0x8000) (b16 0xFC00)) ==
+        (0x7C00, 0)),
+    ("pow -0 +inf is +0", result (CorrectlyRounded.pow (b16 0x8000) (b16 0x7C00)) == (0x0000, 0)),
+    ("pow -0 3 is -0", result (CorrectlyRounded.pow (b16 0x8000) (b16 0x4200)) == (0x8000, 0)),
+    ("pow -0 2 is +0", result (CorrectlyRounded.pow (b16 0x8000) (b16 0x4000)) == (0x0000, 0)),
+    ("pow -1 +inf is 1", result (CorrectlyRounded.pow (b16 0xBC00) (b16 0x7C00)) == (0x3C00, 0)),
+    ("pow -1 -inf is 1", result (CorrectlyRounded.pow (b16 0xBC00) (b16 0xFC00)) == (0x3C00, 0)),
+    ("pow 1/2 +inf is +0", result (CorrectlyRounded.pow (b16 0x3800) (b16 0x7C00)) == (0x0000, 0)),
+    ("pow -1/2 -inf is +inf", result (CorrectlyRounded.pow (b16 0xB800) (b16 0xFC00)) ==
+        (0x7C00, 0)),
+    ("pow -2 +inf is +inf", result (CorrectlyRounded.pow (b16 0xC000) (b16 0x7C00)) ==
+        (0x7C00, 0)),
+    ("pow 2 -inf is +0", result (CorrectlyRounded.pow (b16 0x4000) (b16 0xFC00)) == (0x0000, 0)),
+    ("pow +inf -1 is +0", result (CorrectlyRounded.pow (b16 0x7C00) (b16 0xBC00)) == (0x0000, 0)),
+    ("pow +inf 1/2 is +inf", result (CorrectlyRounded.pow (b16 0x7C00) (b16 0x3800)) ==
+        (0x7C00, 0)),
+    ("pow -inf -3 is -0", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0xC200)) == (0x8000, 0)),
+    ("pow -inf -2 is +0", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0xC000)) == (0x0000, 0)),
+    ("pow -inf 3 is -inf", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0x4200)) ==
+        (0xFC00, 0)),
+    ("pow -inf 1/2 is +inf", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0x3800)) ==
+        (0x7C00, 0)),
+    ("pow -inf +inf is +inf", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0x7C00)) ==
+        (0x7C00, 0)),
+    ("pow -inf -inf is +0", result (CorrectlyRounded.pow (b16 0xFC00) (b16 0xFC00)) ==
+        (0x0000, 0)),
+    ("pow -3 3 toward positive is -27",
+      result (CorrectlyRounded.pow (b16 0xC200) (b16 0x4200) .up) == (0xCEC0, 0)),
+    ("pow -2 17 toward zero is the negative largest finite value, overflow",
+      result (CorrectlyRounded.pow (b16 0xC000) (b16 0x4C40) .towardZero) == (0xFBFF, 20)),
+    ("pow -2 17 toward negative is -inf, overflow",
+      result (CorrectlyRounded.pow (b16 0xC000) (b16 0x4C40) .down) == (0xFC00, 20)),
     ("compound 1 3 is 8", result (CorrectlyRounded.compound (b16 0x3C00) 3) == (0x4800, 0)),
     ("compound -1 -2 is +inf, divideByZero",
       result (CorrectlyRounded.compound (b16 0xBC00) (-2)) == (0x7C00, 2)),
@@ -292,7 +343,7 @@ open Model.Transcendentals.CorrectlyRounded in
 The enclosure hint does not change an outcome: for every member of `Function` and ten binary16
 operands (subnormal, small, near one, large, of both signs), `Function.apply`, which tries an
 enclosure first, delivers the value, the flags and the ternary value of the comparisons alone,
-and so do `atan2`, `atan2Pi`, `powr` and `compound` on ten pairs of these operands.
+and so do `atan2`, `atan2Pi`, `powr`, `pow` and `compound` on ten pairs of these operands.
 -/
 def hintCases : List (String × Bool) :=
   let operands : List (Model FloatFormat.binary16) :=
@@ -314,6 +365,8 @@ def hintCases : List (String × Bool) :=
           modelResult (Model.ComparisonRounding.binary (angleRule true levels) x y)),
       (s!"powr of the encodings {x.toNatBits} and {y.toNatBits}",
         modelResult (powr x y) == modelResult (Model.ComparisonRounding.binary powrRule x y)),
+      (s!"pow of the encodings {x.toNatBits} and {y.toNatBits}",
+        modelResult (pow x y) == modelResult (Model.ComparisonRounding.binary powRule x y)),
       (s!"compound of the encoding {x.toNatBits} with exponent 3",
         modelResult (compound x 3) ==
           modelResult (Model.ComparisonRounding.unary (compoundRule 3) x))]
@@ -376,6 +429,211 @@ example (hy : Model.toRat? y = some q) (hx : Model.toRat? x = some p) (hne : q �
       (Complex.arg ⟨(p : ℝ), (q : ℝ)⟩ : EReal) ≤ Model.toEReal (atan2 y x .up).value :=
   atan2_encloses rfl hy hx hne
 
+/--
+Every rounding direction: when the rounding of the real function in that direction is at most
+the largest finite magnitude, the result is finite and is that rounding.
+-/
+example (mode : Model.IEEERoundingMode) (hq : Model.toRat? x = some q) (hne : Real.sinh q ≠ 0)
+    (hrange : |Model.roundAt FloatFormat.binary64 (Real.sinh q) mode| ≤
+      Model.toReal (Model.posMaxFinite FloatFormat.binary64)) :
+    Model.isFinite (sinh x mode).value = true ∧
+      Model.toReal (sinh x mode).value = Model.roundAt FloatFormat.binary64 (Real.sinh q) mode :=
+  (Function.apply_roundsTo .sinh hq trivial hne).finite hrange
+
+/-- Toward zero, a real value beyond the largest finite magnitude gives the largest finite
+value of its sign, and toward positive infinity a positive one gives `+∞`. -/
+example (hq : Model.toRat? x = some q)
+    (hover : Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+      |Model.roundAt FloatFormat.binary64 ((2 : ℝ) ^ (q : ℝ)) .towardZero|) :
+    (exp2 x .towardZero).value = Model.maxFinite FloatFormat.binary64 false := by
+  have hpos : (0 : ℝ) < (2 : ℝ) ^ (q : ℝ) := Real.rpow_pos_of_pos (by norm_num) _
+  have h := (Function.apply_roundsTo (mode := .towardZero) .exp2 hq trivial
+    hpos.ne').overflow hover
+  rw [show decide (Function.real .exp2 q < 0) = false from
+    decide_eq_false (not_lt.mpr hpos.le)] at h
+  exact h
+
+/-- In a format with signed zeros the result has the sign of the real function, also when it
+is a zero. -/
+example (mode : Model.IEEERoundingMode) (hq : Model.toRat? x = some q) (hneg : Real.sin q < 0) :
+    Model.signBit (sin x mode).value = true :=
+  ((Function.apply_roundsTo .sin hq trivial hneg.ne).signBit rfl).trans
+    (decide_eq_true hneg)
+
+/-- A real value of zero gives a zero in every direction. -/
+example (mode : Model.IEEERoundingMode) (hq : Model.toRat? x = some q) (hdomain : 0 < q)
+    (hzero : Real.logb 2 q = 0) : Model.isZero (log2 x mode).value = true :=
+  Function.isZero_apply .log2 hq hdomain hzero mode
+
+/-- The functions of two operands in every direction. -/
+example (mode : Model.IEEERoundingMode) (hx : Model.toRat? x = some p)
+    (hy : Model.toRat? y = some q) (hp : 0 < p) :
+    Model.RoundsTo FloatFormat.binary64 mode ((p : ℝ) ^ (q : ℝ)) false (powr x y mode).value :=
+  powr_roundsTo hx hy hp
+
+example (mode : Model.IEEERoundingMode) (hx : Model.toRat? x = some p)
+    (hy : Model.toRat? y = some q) (hp : 0 < p) :
+    Model.RoundsTo FloatFormat.binary64 mode ((p : ℝ) ^ (q : ℝ)) false (pow x y mode).value :=
+  pow_roundsTo_of_pos hx hy hp
+
+example (mode : Model.IEEERoundingMode) (n : ℤ) (hx : Model.toRat? x = some p)
+    (hy : Model.toRat? y = some (n : ℚ)) (hp : p < 0) :
+    Model.RoundsTo FloatFormat.binary64 mode ((p : ℝ) ^ n) (decide ((p : ℝ) ^ n < 0))
+      (pow x y mode).value :=
+  pow_roundsTo_of_neg hx hy hp
+
+example (mode : Model.IEEERoundingMode) (hx : Model.toRat? x = some q) (hq : -1 < q) (n : ℤ) :
+    Model.RoundsTo FloatFormat.binary64 mode ((1 + (q : ℝ)) ^ (n : ℝ)) false
+      (compound x n mode).value :=
+  compound_roundsTo hx hq n
+
+example (mode : Model.IEEERoundingMode) (hy : Model.toRat? y = some q)
+    (hx : Model.toRat? x = some p) (hne : q ≠ 0) :
+    Model.RoundsTo FloatFormat.binary64 mode (Complex.arg ⟨(p : ℝ), (q : ℝ)⟩) (decide (q < 0))
+      (atan2 y x mode).value :=
+  atan2_roundsTo hy hx hne
+
+example (mode : Model.IEEERoundingMode) (hy : Model.toRat? y = some q)
+    (hx : Model.toRat? x = some p) (hne : q ≠ 0) :
+    Model.RoundsTo FloatFormat.binary64 mode (Complex.arg ⟨(p : ℝ), (q : ℝ)⟩ / Real.pi)
+      (decide (q < 0)) (atan2Pi y x mode).value :=
+  atan2Pi_roundsTo hy hx hne
+
+/--
+The overflow flag is the overflow of IEEE 754-2019 §7.4 in every direction: it is raised exactly
+when the rounding of the real value with an unbounded exponent range exceeds the largest finite
+value in magnitude.
+-/
+example (mode : Model.IEEERoundingMode) (hq : Model.toRat? x = some q) :
+    (exp2 x mode).status.overflow = true ↔
+      Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+        |Model.roundAt FloatFormat.binary64 ((2 : ℝ) ^ (q : ℝ)) mode| :=
+  Function.overflow_apply_iff .exp2 hq trivial
+    (Real.rpow_pos_of_pos (by norm_num) _).ne' mode
+
+example (mode : Model.IEEERoundingMode) (n : ℤ) {w : Model FloatFormat.binary64} {r : ℚ}
+    (hx : Model.toRat? x = some p) (hy : Model.toRat? y = some q)
+    (hinteger : Model.toRat? y = some (n : ℚ)) (hw : Model.toRat? w = some r) (hp : 0 < p)
+    (hr : r < 0) :
+    ((powr x y mode).status.overflow = true ↔
+        Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+          |Model.roundAt FloatFormat.binary64 ((p : ℝ) ^ (q : ℝ)) mode|) ∧
+      ((pow x y mode).status.overflow = true ↔
+        Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+          |Model.roundAt FloatFormat.binary64 ((p : ℝ) ^ (q : ℝ)) mode|) ∧
+      ((compound x n mode).status.overflow = true ↔
+        Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+          |Model.roundAt FloatFormat.binary64 ((1 + (p : ℝ)) ^ (n : ℝ)) mode|) ∧
+      ((pow w y mode).status.overflow = true ↔
+        Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+          |Model.roundAt FloatFormat.binary64 ((r : ℝ) ^ n) mode|) :=
+  ⟨powr_overflow_iff hx hy hp mode, pow_overflow_iff_of_pos hx hy hp mode,
+    compound_overflow_iff hx (by linarith) n mode, pow_overflow_iff_of_neg hw hinteger hr mode⟩
+
+/-- A finite operand in the domain raises neither `invalid` nor `divideByZero`. -/
+example (mode : Model.IEEERoundingMode) (hx : Model.toRat? x = some p)
+    (hy : Model.toRat? y = some q) (hp : 0 < p) :
+    ((atanh x mode).status.invalid = false ∨ ¬Function.atanh.Domain p) ∧
+      (powr x y mode).status.divideByZero = false :=
+  ⟨Classical.byCases
+      (fun hdomain : Function.atanh.Domain p =>
+        .inl (Function.invalid_divideByZero_apply .atanh hx hdomain mode).1) .inr,
+    (Model.ComparisonRounding.binary_invalid_divideByZero powrRule hx hy (locates_powr _ _ hp)
+      mode _).2⟩
+
+example (mode : Model.IEEERoundingMode) (hy : Model.toRat? y = some q)
+    (hx : Model.toRat? x = some p) (hne : q ≠ 0) :
+    (atan2 y x mode).status.overflow = true ↔
+      Model.toReal (Model.posMaxFinite FloatFormat.binary64) <
+        |Model.roundAt FloatFormat.binary64 (Complex.arg ⟨(p : ℝ), (q : ℝ)⟩) mode| :=
+  (atan2_overflow_iff hy hx hne mode).1
+
+/--
+The underflow flag is the underflow of IEEE 754-2019 §7.5 in every direction: it is raised
+exactly when the result is inexact and the magnitude of the real value is tiny after rounding.
+-/
+example (mode : Model.IEEERoundingMode) (hq : Model.toRat? x = some q) :
+    (exp2 x mode).status.underflow = true ↔
+      (exp2 x mode).status.inexact = true ∧
+        Model.AlgebraicRounding.TinyAfterRounding FloatFormat.binary64
+          (mode.magnitudeRounding (decide ((2 : ℝ) ^ (q : ℝ) < 0))) |(2 : ℝ) ^ (q : ℝ)| :=
+  Function.underflow_apply_iff .exp2 hq trivial
+    (Real.rpow_pos_of_pos (by norm_num) _).ne' mode
+
+example (mode : Model.IEEERoundingMode) (n : ℤ) {w : Model FloatFormat.binary64} {r : ℚ}
+    (hx : Model.toRat? x = some p) (hy : Model.toRat? y = some q)
+    (hinteger : Model.toRat? y = some (n : ℚ)) (hw : Model.toRat? w = some r) (hp : 0 < p)
+    (hr : r < 0) (hne : q ≠ 0) :
+    ((powr x y mode).status.underflow = true → (powr x y mode).status.inexact = true) ∧
+      ((pow x y mode).status.underflow = true → (pow x y mode).status.inexact = true) ∧
+      ((compound x n mode).status.underflow = true →
+        (compound x n mode).status.inexact = true) ∧
+      ((pow w y mode).status.underflow = true → (pow w y mode).status.inexact = true) ∧
+      ((atan2 y x mode).status.underflow = true → (atan2 y x mode).status.inexact = true) ∧
+      ((atan2Pi y x mode).status.underflow = true → (atan2Pi y x mode).status.inexact = true) :=
+  ⟨fun h => ((powr_underflow_iff hx hy hp mode).mp h).1,
+    fun h => ((pow_underflow_iff_of_pos hx hy hp mode).mp h).1,
+    fun h => ((compound_underflow_iff hx (by linarith) n mode).mp h).1,
+    fun h => ((pow_underflow_iff_of_neg hw hinteger hr mode).mp h).1,
+    fun h => (((atan2_underflow_iff hy hx hne mode).1).mp h).1,
+    fun h => (((atan2_underflow_iff hy hx hne mode).2).mp h).1⟩
+
+/-- The functions of two arguments raise neither `invalid` nor `divideByZero` at finite
+operands in the domain. -/
+example (mode : Model.IEEERoundingMode) (n : ℤ) {w : Model FloatFormat.binary64} {r : ℚ}
+    (hx : Model.toRat? x = some p) (hy : Model.toRat? y = some q)
+    (hinteger : Model.toRat? y = some (n : ℚ)) (hw : Model.toRat? w = some r) (hp : 0 < p)
+    (hr : r < 0) (hne : q ≠ 0) :
+    (powr x y mode).status.invalid = false ∧ (pow x y mode).status.invalid = false ∧
+      (compound x n mode).status.divideByZero = false ∧
+      (pow w y mode).status.invalid = false ∧ (atan2 y x mode).status.invalid = false ∧
+      (atan2Pi y x mode).status.divideByZero = false :=
+  ⟨(powr_invalid_divideByZero hx hy hp mode).1,
+    (pow_invalid_divideByZero_of_pos hx hy hp mode).1,
+    (compound_invalid_divideByZero hx (by linarith) n mode).2,
+    (pow_invalid_divideByZero_of_neg hw hinteger hr mode).1,
+    (atan2_invalid_divideByZero hy hx hne mode).1.1,
+    (atan2_invalid_divideByZero hy hx hne mode).2.2⟩
+
+/-- The functions of two arguments raise `inexact` exactly when a finite result is not the real
+value. -/
+example (mode : Model.IEEERoundingMode) (n : ℤ) {w : Model FloatFormat.binary64} {r : ℚ}
+    (hx : Model.toRat? x = some p) (hy : Model.toRat? y = some q)
+    (hinteger : Model.toRat? y = some (n : ℚ)) (hw : Model.toRat? w = some r) (hp : 0 < p)
+    (hr : r < 0) (hne : q ≠ 0)
+    (hpowr : Model.isFinite (powr x y mode).value = true)
+    (hpow : Model.isFinite (pow x y mode).value = true)
+    (hcompound : Model.isFinite (compound x n mode).value = true)
+    (hnegative : Model.isFinite (pow w y mode).value = true)
+    (hangle : Model.isFinite (atan2 y x mode).value = true)
+    (hturn : Model.isFinite (atan2Pi y x mode).value = true) :
+    ((powr x y mode).status.inexact = true ↔
+        Model.toReal (powr x y mode).value ≠ (p : ℝ) ^ (q : ℝ)) ∧
+      ((pow x y mode).status.inexact = true ↔
+        Model.toReal (pow x y mode).value ≠ (p : ℝ) ^ (q : ℝ)) ∧
+      ((compound x n mode).status.inexact = true ↔
+        Model.toReal (compound x n mode).value ≠ (1 + (p : ℝ)) ^ (n : ℝ)) ∧
+      ((pow w y mode).status.inexact = true ↔
+        Model.toReal (pow w y mode).value ≠ (r : ℝ) ^ n) ∧
+      ((atan2 y x mode).status.inexact = true ↔
+        Model.toReal (atan2 y x mode).value ≠ Complex.arg ⟨(p : ℝ), (q : ℝ)⟩) ∧
+      ((atan2Pi y x mode).status.inexact = true ↔
+        Model.toReal (atan2Pi y x mode).value ≠ Complex.arg ⟨(p : ℝ), (q : ℝ)⟩ / Real.pi) :=
+  ⟨powr_inexact_iff hx hy hp mode hpowr, pow_inexact_iff_of_pos hx hy hp mode hpow,
+    compound_inexact_iff hx (by linarith) n mode hcompound,
+    pow_inexact_iff_of_neg hw hinteger hr mode hnegative,
+    atan2_inexact_iff hy hx hne mode hangle, atan2Pi_inexact_iff hy hx hne mode hturn⟩
+
+/-- The comparator-level statement, with a comparator that exists: the one of a rational. -/
+example (mode : Model.IEEERoundingMode) :
+    Model.RoundsTo FloatFormat.binary64 mode (((1 / 3 : ℚ) : ℝ)) false
+      (Model.ComparisonRounding.round FloatFormat.binary64
+        (fun candidate => cmp (1 / 3 : ℚ) candidate) mode) := by
+  have h := Model.ComparisonRounding.round_roundsTo (fmt := FloatFormat.binary64) (mode := mode)
+    _ (by norm_num) (Model.ComparisonRounding.Rule.locates_rational (1 / 3))
+  have hsign : decide ((((1 / 3 : ℚ) : ℝ)) < 0) = false := decide_eq_false (by norm_num)
+  rwa [hsign] at h
+
 /-- The enclosure search is right about the function, so the theorems apply to its results. -/
 example (negative : Bool) (hq : (0 : ℚ) < q) :
     Model.ComparisonRounding.Hint.Sound
@@ -434,6 +692,12 @@ example (hy : Model.toRat? y = some q) (hx : Model.toRat? x = some p) (hne : q �
       Model.roundAt FloatFormat.binary64 (Complex.arg ⟨(p : ℝ), (q : ℝ)⟩ / Real.pi) :=
   toReal_atan2Pi rfl hy hx hne hfinite
 
+/-- The enclosure search gives a value with the sign of the function, a zero included. -/
+example (negative : Bool) (hq : (0 : ℚ) < q) :
+    Model.ComparisonRounding.Hint.Signed
+      (Function.hint FloatFormat.binary64 .log2 (.finite negative q)) (Real.logb 2 q) :=
+  Function.hint_signed .log2 negative hq
+
 /-- A comparison with a power of two that is read off `powerBounds` is the comparator's answer. -/
 example (compare : ℚ → Ordering) (target : ℝ)
     (hcompare : ∀ candidate : ℚ, compare candidate = cmp target (candidate : ℝ)) (exponent : ℤ) :
@@ -457,6 +721,17 @@ example {value : Binary64} (hvalue : ExecFloat.Binary.toRat? value = some q)
     ExecFloat.Binary.toReal (CorrectlyRounded.cosh value).value =
       Model.roundAt FloatFormat.binary64 (Real.cosh q) :=
   CorrectlyRounded.toReal_apply .cosh hvalue trivial hfinite
+
+/-- The configured form in every direction. -/
+example {value : Binary64} (mode : Model.IEEERoundingMode)
+    (hvalue : ExecFloat.Binary.toRat? value = some q) :
+    Model.RoundsTo FloatFormat.binary64 mode (Real.cosh q) false
+      (ExecFloat.Binary.toModel (CorrectlyRounded.cosh value mode).value) := by
+  have hpos : 0 < Real.cosh q := Real.cosh_pos _
+  have h := CorrectlyRounded.apply_roundsTo .cosh hvalue trivial hpos.ne' mode
+  rw [show decide (Function.real .cosh q < 0) = false from
+    decide_eq_false (not_lt.mpr hpos.le)] at h
+  exact h
 
 end Contracts
 

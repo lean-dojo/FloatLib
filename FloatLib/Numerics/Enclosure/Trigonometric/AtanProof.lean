@@ -96,7 +96,7 @@ theorem atan_unit_identity (x : ℚ) (hx : 0 ≤ x) :
       Real.arctan (x : ℝ) := by
   have hreal : (0 : ℝ) ≤ x := by exact_mod_cast hx
   have h := Real.arctan_add (x := (x : ℝ)) (y := -1)
-    (show (x : ℝ) * -1 < 1 by nlinarith)
+    (show (x : ℝ) * -1 < 1 by linarith)
   simp only [Real.arctan_neg, Real.arctan_one, mul_neg_one, sub_neg_eq_add,
     ← sub_eq_add_neg] at h
   push_cast

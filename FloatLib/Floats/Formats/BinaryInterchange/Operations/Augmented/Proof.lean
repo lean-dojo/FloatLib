@@ -23,7 +23,7 @@ For a conventional IEEE descriptor (`fmt.isIEEE = true`, any width) and all oper
 * `toReal_augmentedAddition_head`, `toReal_augmentedMultiplication_head`: a finite head denotes
   the exact sum or product rounded to nearest with ties toward zero (`roundTiesTowardZeroAt`).
 * `toReal_augmentedAddition_add`: with a finite head, head and tail of a sum add up to the exact
-  sum, and `augmentedAddition_status`: no flag is raised. This is the error-free transformation
+  sum, the tail is finite and no flag is raised. This is the error-free transformation
   of IEEE 754-2019 §9.5, for every tie rule's representable error (`add_round_error_generic`).
 * `toReal_augmentedSubtraction_sub`: the same for a difference.
 * `toReal_augmentedMultiplication_tail`: a finite tail of a product denotes the error of the

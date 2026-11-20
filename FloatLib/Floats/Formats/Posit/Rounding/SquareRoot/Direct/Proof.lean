@@ -94,7 +94,7 @@ private theorem predFraction_square_gt_pred_square
         mul_le_mul_of_nonneg_right (by linarith) hδ.le
       _ = 1 / 2 := hcap
   change r * r + 2 * r < (r + 1 - δ) * (r + 1 - δ)
-  nlinarith only [hdiff]
+  linarith only [hdiff]
 
 /-- For an inexact integer root, the lower witness's square is below the scaled radicand. -/
 private theorem lowerFraction_square_lt_scaled

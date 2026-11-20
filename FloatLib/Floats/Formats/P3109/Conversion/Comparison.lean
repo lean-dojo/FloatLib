@@ -84,12 +84,12 @@ theorem compareDyadic_eq_compare (negative : Bool) (numerator denominator : Nat)
       hv, hs, RationalRounding.signed, positive, Numerics.Dyadic.toRat,
       Numerics.Dyadic.signedSignificand] using hc
   · have hlt : -((value.significand : Rat) * (2 : Rat) ^ value.exponent) <
-        (numerator : Rat) / denominator := by nlinarith
+        (numerator : Rat) / denominator := by linarith
     simp [RationalBinary.compareDyadic?, RationalBinary.compareDyadicScaled?, hd, hn,
       hv, hs, RationalRounding.signed, Numerics.Dyadic.toRat,
       Numerics.Dyadic.signedSignificand, compare_gt_iff_gt.mpr hlt]
   · have hlt : -((numerator : Rat) / denominator) <
-        (value.significand : Rat) * (2 : Rat) ^ value.exponent := by nlinarith
+        (value.significand : Rat) * (2 : Rat) ^ value.exponent := by linarith
     simp [RationalBinary.compareDyadic?, RationalBinary.compareDyadicScaled?, hd, hn,
       hv, hs, RationalRounding.signed, Numerics.Dyadic.toRat,
       Numerics.Dyadic.signedSignificand, compare_lt_iff_lt.mpr hlt]

@@ -32,6 +32,10 @@ have instances, and evaluates some values in Lean's kernel.
 * A finite argument and a certified power exist: the kernel evaluates `sqrt (-3 + 4 i)`,
   `exp (1 + i)`, `(3 + 4 i) ^ 2` and `(-4) ^ (1 / 4)` rounded up in binary32, and the
   certificate of `(1.5 + 2.5 i) ^ (0.5 + 0.25 i)`, whose parts are decided by enclosures.
+* The kernel evaluates certified powers of the other kinds in binary32 as well:
+  `(-1 + 2 ^ -100 i) ^ (3 / 2)` next to the negative real axis, `(3 + 4 i) ^ 32768` beyond the
+  largest finite number, `(3 + 4 i) ^ (-32768 + 12288 i)` below the least positive one, and
+  `(1 + i) ^ (2 ^ 40)` on the real axis.
 
 The instances are single values. The theorems they instantiate hold for all arguments.
 -/
@@ -82,7 +86,7 @@ example (z : ExecComplex FloatFormat.bfloat16) (hz : isFinite z = true)
 example (z w : ExecComplex FloatFormat.binary16) (hz : isFinite z = true)
     (hw : isFinite w = true) (hne : toComplex z ≠ 0) (mode : Model.IEEERoundingMode)
     (h : powCertified z w mode = true) : pow z w mode = (powExact z w).round _ mode :=
-  pow_eq (by decide) hz hw hne mode 4 h
+  pow_eq (by decide) hz hw hne mode _ h
 
 /-- In binary16 `sqrt` rounds a square root of the argument, the principal one where the
 imaginary sign bit is clear. -/
@@ -374,6 +378,23 @@ example : exp (fmt := FloatFormat.binary32)
       ⟨Model.ofNatBits 0x3FBBFE2A, Model.ofNatBits 0x40126407⟩ := by
   decide +kernel
 
+/-- A subnormal argument of binary32: `(3 + 5 i) * 2 ^ -149`. -/
+def tiny : ExecComplex FloatFormat.binary32 := ⟨Model.ofNatBits 3, Model.ofNatBits 5⟩
+
+/-- At a subnormal argument each part lies next to a part of the argument, and a directed
+rounding tells on which side: `sinh z = z + z³ / 6`, `expm1 z = z + z² / 2`,
+`log1p z = z - z² / 2`, `atan z = z - z³ / 3`, `asinh z = z - z³ / 6` and
+`tanh z = z - z³ / 3` to the next order. The enclosures of a small argument decide each of them
+with no exact comparison. -/
+example :
+    sinh tiny .towardZero = ⟨Model.ofNatBits 2, Model.ofNatBits 5⟩ ∧
+      expm1 tiny .up = ⟨Model.ofNatBits 3, Model.ofNatBits 6⟩ ∧
+      log1p tiny .down = ⟨Model.ofNatBits 3, Model.ofNatBits 4⟩ ∧
+      atan tiny .towardZero = ⟨Model.ofNatBits 3, Model.ofNatBits 4⟩ ∧
+      asinh tiny .up = ⟨Model.ofNatBits 4, Model.ofNatBits 5⟩ ∧
+      tanh tiny .towardZero = ⟨Model.ofNatBits 3, Model.ofNatBits 4⟩ := by
+  decide +kernel
+
 /-- `(3 + 4 i) ^ 2 = -7 + 24 i`, certified. -/
 example : powChecked (fmt := FloatFormat.binary32)
     ⟨Model.ofNatBits 0x40400000, Model.ofNatBits 0x40800000⟩
@@ -393,6 +414,50 @@ example : powChecked (fmt := FloatFormat.binary32)
 example : powCertified (fmt := FloatFormat.binary32)
     ⟨Model.ofNatBits 0x3FC00000, Model.ofNatBits 0x40200000⟩
     ⟨Model.ofNatBits 0x3F000000, Model.ofNatBits 0x3E800000⟩ = true := by
+  decide +kernel
+
+/-- `(-1 + 2 ^ -100 i) ^ (3 / 2)` rounded down, certified. The base lies next to the negative
+real axis, so the real part of the power lies next to zero, `-(3 / 2) 2 ^ -100` and a relative
+`2 ^ -200` more, and the imaginary part as close below one in magnitude: the angle from the
+nearest axis keeps the relative accuracy that decides both. -/
+example : powChecked (fmt := FloatFormat.binary32)
+    ⟨Model.ofNatBits 0xBF800000, Model.ofNatBits 0x0D800000⟩
+    ⟨Model.ofNatBits 0x3FC00000, Model.ofNatBits 0⟩ .down =
+      (⟨Model.ofNatBits 0x8DC00001, Model.ofNatBits 0xBF800000⟩, true) := by
+  decide +kernel
+
+/-- `(3 + 4 i) ^ 32768` toward zero is the largest finite number in both parts, certified:
+the power is too long to form, and its exponent `32768 log 5` alone puts it beyond the range. -/
+example : powChecked (fmt := FloatFormat.binary32)
+    ⟨Model.ofNatBits 0x40400000, Model.ofNatBits 0x40800000⟩
+    ⟨Model.ofNatBits 0x47000000, Model.ofNatBits 0⟩ .towardZero =
+      (⟨Model.ofNatBits 0x7F7FFFFF, Model.ofNatBits 0x7F7FFFFF⟩, true) := by
+  decide +kernel
+
+/-- `(3 + 4 i) ^ (-32768 + 12288 i)` has two negative parts below every positive number of the
+format: rounded down they are the least negative number, and rounded up the negative zero. -/
+example :
+    powChecked (fmt := FloatFormat.binary32)
+        ⟨Model.ofNatBits 0x40400000, Model.ofNatBits 0x40800000⟩
+        ⟨Model.ofNatBits 0xC7000000, Model.ofNatBits 0x46400000⟩ .down =
+          (⟨Model.ofNatBits 0x80000001, Model.ofNatBits 0x80000001⟩, true) ∧
+      powChecked (fmt := FloatFormat.binary32)
+        ⟨Model.ofNatBits 0x40400000, Model.ofNatBits 0x40800000⟩
+        ⟨Model.ofNatBits 0xC7000000, Model.ofNatBits 0x46400000⟩ .up =
+          (⟨Model.ofNatBits 0x80000000, Model.ofNatBits 0x80000000⟩, true) := by
+  decide +kernel
+
+/-- `(1 + i) ^ (2 ^ 40) = 2 ^ (2 ^ 39)`, certified: the base lies on a diagonal and the exponent
+is even, so the power is real. Its real part overflows and its imaginary part is the zero. -/
+example :
+    powChecked (fmt := FloatFormat.binary32)
+        ⟨Model.ofNatBits 0x3F800000, Model.ofNatBits 0x3F800000⟩
+        ⟨Model.ofNatBits 0x53800000, Model.ofNatBits 0⟩ =
+          (⟨Model.ofNatBits 0x7F800000, Model.ofNatBits 0⟩, true) ∧
+      powChecked (fmt := FloatFormat.binary32)
+        ⟨Model.ofNatBits 0x3F800000, Model.ofNatBits 0x3F800000⟩
+        ⟨Model.ofNatBits 0x53800000, Model.ofNatBits 0⟩ .towardZero =
+          (⟨Model.ofNatBits 0x7F7FFFFF, Model.ofNatBits 0⟩, true) := by
   decide +kernel
 
 end FloatLibTests.Conformance.BinaryInterchange.ComplexElementary

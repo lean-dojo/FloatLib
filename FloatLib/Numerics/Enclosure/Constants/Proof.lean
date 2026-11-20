@@ -106,7 +106,7 @@ theorem LowerApprox.shiftRight {c : ℝ} {precision value : Nat}
         calc (2 : ℝ) = 2 ^ 1 := (pow_one 2).symm
           _ ≤ 2 ^ k := pow_le_pow_right₀ (one_le_two) hk
       have hlt : c * 2 ^ bits * 2 ^ k < (((value / 2 ^ k : ℕ) : ℝ) + 2) * 2 ^ k := by
-        nlinarith
+        linarith
       exact lt_of_mul_lt_mul_right hlt hpow.le
 
 /--
@@ -129,7 +129,7 @@ theorem LowerApprox.abs_round_sub_lt {c : ℝ} {bits value : Nat}
   rw [hscale] at hlo hhi
   push_cast at hceil
   rw [abs_lt]
-  constructor <;> nlinarith
+  constructor <;> linarith
 
 /-! ## Machin's enclosure of π/4 -/
 
@@ -274,7 +274,7 @@ theorem LowerApprox.of_div {c lo hi : ℝ} {bits numerator denominator : Nat}
   have hpow : (0 : ℝ) ≤ 2 ^ bits := by positivity
   constructor
   · exact hfloor.trans (mul_le_mul_of_nonneg_right hlo hpow)
-  · nlinarith [mul_le_mul_of_nonneg_right hhi hpow]
+  · linarith [mul_le_mul_of_nonneg_right hhi hpow]
 
 /-- A numerator whose quotient `value` is positive has `toNat` equal to `value * denominator`. -/
 private theorem natCast_toNat_of_div {numerator : Int} {denominator : Nat} {value : ℚ}
@@ -482,7 +482,7 @@ theorem ln2Fixed_spec (bits : Nat) : LowerApprox (Real.log 2) bits (ln2Fixed bit
   have hpos : (0 : ℝ) < (logSeries 2 (ln2Degree bits)).lo := by
     have : (2 : ℝ) / 3 ^ ln2Degree bits ≤ 1 / 2 := by
       rw [div_le_div_iff₀ hpow (two_pos)]
-      nlinarith
+      linarith
     linarith
   have hcast := natCast_toNat_of_div hden hlower (by exact_mod_cast hpos)
   apply LowerApprox.of_div hden (lo := ((logSeries 2 (ln2Degree bits)).lo : ℝ))

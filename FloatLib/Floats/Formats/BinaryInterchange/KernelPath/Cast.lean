@@ -45,6 +45,8 @@ def payloadMask (fmt : FloatFormat) : Nat :=
   | .ieee => 2 ^ (fmt.fracWidth - 1) - 1
   | .finiteMaxNaN | .finiteUnsignedZero | .finite => 0
 
+kernel_constant payloadMask
+
 /--
 Encoding of the NaN of `fmt` with sign `sign` and payload `payload`, `Model.propagatedNaN`
 (`nanWord_eq`). A payload that does not fit below the quiet bit is dropped.
@@ -61,6 +63,8 @@ def nanWord (fmt : FloatFormat) (sign payload : Nat) : Nat :=
         (fmt.expAllOnesNat * 2 ^ fmt.fracWidth + fmt.fracMaskNat)
   | .finiteUnsignedZero | .finite => invalidWord fmt
 
+kernel_constant nanWord
+
 /--
 The cast of a word of `src` that is not finite: a NaN gives `nanWord` with its sign and payload,
 an infinity the overflow result of `dst` with its sign.
@@ -72,6 +76,8 @@ def castSpecial (src dst : FloatFormat) (a : Nat) : Nat :=
       (Bool.casesOn (motive := fun _ => Nat) (Nat.beq sa 0)
         (overflowWord dst true) (overflowWord dst false)))
     (Nat.shiftRight a (signPos src)) (Nat.land a (magnitudeMask src))
+
+kernel_constant castSpecial
 
 /--
 Encoding in `dst` of the value that `a` encodes in `src`, rounded in the direction `mode`
@@ -109,7 +115,9 @@ theorem nanWord_eq (fmt : FloatFormat) (negative : Bool) (payload : Nat) :
   have hsign : signNat negative * 2 ^ signPos fmt = if negative then 2 ^ signPos fmt else 0 := by
     cases negative <;> simp [signNat]
   have hpos := Nat.two_pow_pos (fmt.fracWidth - 1)
-  unfold nanWord Model.propagatedNaN invalidWord Model.invalidResult
+  unfold nanWord Model.propagatedNaN
+  simp only [invalidWord_eq]
+  unfold Model.invalidResult
   cases hencoding : fmt.encoding <;> simp only [Nat.add_eq, Nat.mul_eq, Nat.sub_eq]
   · rw [toNatBits_ofFields fmt _ _ _ hexp (by split <;> omega), hsign]
     by_cases hfit : payload < 2 ^ (fmt.fracWidth - 1)
@@ -222,6 +230,7 @@ theorem castSpecial_eq {src dst : FloatFormat} (mode : Model.IEEERoundingMode) (
       cases mode <;>
         simp [Model.cast, Model.Internal.Directed.cast, Model.Internal.Nearest.cast, hnan, hinf]
     rw [hcast]
+    simp only [overflowWord_eq]
     cases Model.signBit x <;> rfl
   · rw [Model.cast_of_isNaN x hnan mode, ← nanWord_eq, payload_eq x hnan]
     cases Model.signBit x <;> rfl

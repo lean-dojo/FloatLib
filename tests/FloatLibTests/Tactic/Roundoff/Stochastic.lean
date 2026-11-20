@@ -254,7 +254,7 @@ theorem winner_confidence :
         have := Real.log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 1 / (1 / 1000))
         norm_num at this ⊢
         linarith
-      exact (Real.sqrt_le_one.mpr (by nlinarith)).trans (by norm_num))
+      exact (Real.sqrt_le_one.mpr (by linarith)).trans (by norm_num))
   simpa using h
 
 #check sum_generated

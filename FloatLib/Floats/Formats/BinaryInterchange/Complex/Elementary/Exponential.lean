@@ -32,6 +32,11 @@ Each part is a product of an unbounded and a bounded factor:
 unbounded factor, so `exp (a + i b)` is finite whenever its parts round to finite values, however
 large `exp a` alone is, and an overflowing part is decided as cheaply as an ordinary one. The
 products are irrational except at the exact values `0` and `1`, which the code returns directly.
+
+One enclosure of each product answers the comparisons away from it. At a small argument, where
+a part of `sinh`, `sin` or `expm1` lies next to a part of the argument and a part of `cosh`,
+`cos` or `exp` next to one, it is the Taylor enclosure `smallProduct?` of `Small`, which
+separates the two.
 -/
 
 @[expose] public section
@@ -90,18 +95,20 @@ def growthCap (fmt : FloatFormat) : Nat :=
   4 * ((Model.AlgebraicRounding.upperExponent fmt).toNat + fmt.fracWidth + 64)
 
 /--
-One enclosure of `growth a * trig b` for `|a| ≤ growthCap fmt`. The unbounded factor comes from
-the grid exponential, on a grid finer by the number of bits that `exp (-|a|)` lies below one, so
-that a small result keeps its relative accuracy. The bounded factor comes from
+One enclosure of `growth a * trig b` for `|a| ≤ growthCap fmt`. At a small argument it is the
+Taylor enclosure `smallProduct?`. Elsewhere the unbounded factor comes from the grid
+exponential, on a grid finer by the number of bits that `exp (-|a|)` lies below one, so that a
+small result keeps its relative accuracy, and the bounded factor from
 `ProductComparison.trigBounds?`, which keeps its relative accuracy at an angle of any size.
 -/
 def productEnclosure? (fmt : FloatFormat) (growth : Growth) (trig : Trig) (a b : Rat) :
     Option RationalInterval :=
-  if |a| ≤ growthCap fmt then
-    refineTwice fmt fun precision =>
-      (ProductComparison.trigBounds? trig ⟨b, b⟩ precision).map
-        (growthBounds growth a (precision + ⌈|a| * 3 / 2⌉₊)).mul
-  else none
+  smallProduct? fmt growth trig a b <|>
+    if |a| ≤ growthCap fmt then
+      refineTwice fmt fun precision =>
+        (ProductComparison.trigBounds? trig ⟨b, b⟩ precision).map
+          (growthBounds growth a (precision + ⌈|a| * 3 / 2⌉₊)).mul
+    else none
 
 /--
 The part `growth a * trig b`, as an exact comparator. Where the product is rational it is

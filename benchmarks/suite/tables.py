@@ -81,12 +81,16 @@ def kernel_binary(out: Path, lines: list) -> None:
             " The `base` rows are the same run in a checkout of the commit this work started"
             " from." if base else ""),
         "",
-        "| format | bits | operands | commit | add | sub | mul | div | sqrt | fma |",
-        "| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    # The column that tells the two runs apart is there only when there are two.
+    label = (lambda text: f" {text} |") if base else (lambda text: "")
+    lines += [
+        "| format | bits | operands |" + label("commit") + " add | sub | mul | div | sqrt | fma |",
+        "| --- | ---: | --- |" + label("---") + " ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for (name, operands), values in now.items():
         row = " | ".join(number(values[op]) for op in OPS)
-        lines.append(f"| {name} | {BITS.get(name, '')} | {operands} | now | {row} |")
+        lines.append(f"| {name} | {BITS.get(name, '')} | {operands} |{label('now')} {row} |")
         if (name, operands) in base:
             row = " | ".join(number(base[(name, operands)][op]) for op in OPS)
             lines.append(f"| {name} | {BITS.get(name, '')} | {operands} | base | {row} |")

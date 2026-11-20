@@ -122,14 +122,6 @@ private theorem roundRatEven_of_nonneg {x : ℚ} (hx : 0 ≤ x) (s : Bool) :
   simp [roundRatEven, not_lt.mpr hn, roundMagnitude_eq_roundQuotientEven,
     habs]
 
-private theorem roundRatEven_neg (x : ℚ) : roundRatEven (-x) = -roundRatEven x := by
-  by_cases hx : x = 0
-  · simp [hx, roundRatEven, roundQuotientEven]
-  · have hn : x.num ≠ 0 := by simpa using hx
-    simp only [roundRatEven, Rat.num_neg_eq_neg_num, Rat.den_neg_eq_den,
-      Int.natAbs_neg, neg_lt_zero]
-    split_ifs <;> omega
-
 /-- The real specification agrees with exact rational rounding at the selected quantum, zero
 included. -/
 theorem roundAt_ratCast (f : Format) (x : ℚ) :

@@ -57,7 +57,7 @@ private theorem expMaskNat_lt_two_pow_bitWidth (fmt : FloatFormat) :
     mul_pos (Nat.pow_pos (by decide)) hfracPos
   rw [show 2 ^ (1 + fmt.expWidth + fmt.fracWidth) =
     2 * 2 ^ fmt.expWidth * 2 ^ fmt.fracWidth by ring]
-  nlinarith
+  linarith
 
 /-- Packing and unpacking an infinity preserves its sign. -/
 @[simp] theorem unpack_pack_infinity (spec : Format) (sign : Sign) :

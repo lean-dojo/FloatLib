@@ -112,7 +112,7 @@ theorem ofRatio_eq_directed (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
     rw [hspec]
     unfold divCore roundQuotient
     simp only [pack_eq]
-    simp [invalidWord]
+    simp [invalidWord_eq]
   · have hguard : 1 - den = 0 := by omega
     rw [hguard, ite_eq_right hden]
     have hWden : den.log2 + 1 ≤
@@ -124,7 +124,7 @@ theorem ofRatio_eq_directed (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
       rw [directedRat_zero fmt mode negative den hden]
       simp only [ite_true, Nat.zero_shiftLeft] at hnb ⊢
       rw [divCore_eq fmt mode negative _ (signNat negative) 0 _ _ _ _ rfl (Or.inl rfl) hnb]
-      simp [zeroWord]
+      simp [zeroWord_eq]
     · rw [ite_eq_right hnum] at hnb ⊢
       have hWnum : num.log2 + 1 ≤ num.log2 + 1 + (den.log2 + 1 - (num.log2 + 1)) := by omega
       have hna := shiftLeft_normalized hnum hWnum

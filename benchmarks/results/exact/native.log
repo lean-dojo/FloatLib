@@ -1,13 +1,13 @@
-KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 255 - 19|kernel ns=14162750 errors=false
-KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 255 - 19|native ns=13713772 errors=false
-KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 1279 - 1|kernel ns=29940213 errors=false
-KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 1279 - 1|native ns=18142679 errors=false
-KCMD native/the square root of 2 ^ 2001 + 12345, checked|kernel ns=11749747 errors=false
-KCMD native/the square root of 2 ^ 2001 + 12345, checked|native ns=12880734 errors=false
-KCMD native/sum of 1 / k ^ 2 for k ≤ 40 below 1.63, on fractions|kernel ns=4300537 errors=false
-KCMD native/sum of 1 / k ^ 2 for k ≤ 40 below 1.63, on fractions|native ns=3696009 errors=false
-KCMD native/exp (7/5) ≤ 4.0553 on the grid, degree 20, 64 bits|kernel ns=9050722 errors=false
-KCMD native/exp (7/5) ≤ 4.0553 on the grid, degree 20, 64 bits|native ns=4883101 errors=false
-KCMD native/packed row product of 256 lanes with its guards and norm|kernel ns=6365342 errors=false
+KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 255 - 19|kernel ns=13209821 errors=false
+KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 255 - 19|native ns=14219888 errors=false
+KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 1279 - 1|kernel ns=30046095 errors=false
+KCMD native/3 ^ (p - 1) % p = 1 for p = 2 ^ 1279 - 1|native ns=17696084 errors=false
+KCMD native/the square root of 2 ^ 2001 + 12345, checked|kernel ns=11499075 errors=false
+KCMD native/the square root of 2 ^ 2001 + 12345, checked|native ns=13110255 errors=false
+KCMD native/sum of 1 / k ^ 2 for k ≤ 40 below 1.63, on fractions|kernel ns=4116841 errors=false
+KCMD native/sum of 1 / k ^ 2 for k ≤ 40 below 1.63, on fractions|native ns=3335303 errors=false
+KCMD native/exp (7/5) ≤ 4.0553 on the grid, degree 20, 64 bits|kernel ns=9292155 errors=false
+KCMD native/exp (7/5) ≤ 4.0553 on the grid, degree 20, 64 bits|native ns=4534102 errors=false
+KCMD native/packed row product of 256 lanes with its guards and norm|kernel ns=6133502 errors=false
 Native.lean:46:209: error: Tactic `native_decide` failed. Error: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'rowU256', which is 'noncomputable'
-KCMD native/packed row product of 256 lanes with its guards and norm|native ns=6055303 errors=true
+KCMD native/packed row product of 256 lanes with its guards and norm|native ns=5792698 errors=true

@@ -152,6 +152,59 @@ theorem decimalLength_eq_log (c : Nat) : decimalLength c = Nat.log 10 c + 1 := b
     rfl
   · exact decimalLength_eq hc
 
+/-- A power `a ^ b` is at most `c ^ y` when `a ^ p ≤ c ^ q` and `q * b ≤ p * y`: the comparison
+of two logarithms by one known pair of powers. -/
+private theorem pow_le_pow_of_mul_le {a c p q b y : Nat} (hbase : a ^ p ≤ c ^ q) (hp : p ≠ 0)
+    (hc : 0 < c) (h : q * b ≤ p * y) : a ^ b ≤ c ^ y := by
+  refine (Nat.pow_le_pow_iff_left hp).1 ?_
+  calc (a ^ b) ^ p = (a ^ p) ^ b := by rw [← Nat.pow_mul, ← Nat.pow_mul, Nat.mul_comm]
+    _ ≤ (c ^ q) ^ b := Nat.pow_le_pow_left hbase b
+    _ = c ^ (q * b) := (Nat.pow_mul ..).symm
+    _ ≤ c ^ (p * y) := Nat.pow_le_pow_right hc h
+    _ = (c ^ y) ^ p := by rw [← Nat.pow_mul, Nat.mul_comm]
+
+/-- Every natural number is below ten to the power `digitBound`: it has at most that many
+decimal digits. -/
+theorem lt_ten_pow_digitBound (c : Nat) : c < 10 ^ digitBound c := by
+  have hsize : c < 2 ^ Numerics.Kernel.size c := by
+    rw [Numerics.Kernel.size_eq]
+    exact Nat.lt_size_self c
+  have hbound : digitBound c = Numerics.Kernel.size c * 1234 / 2 ^ 12 + 1 :=
+    congrArg Nat.succ (Nat.shiftRight_eq_div_pow (Numerics.Kernel.size c * 1234) 12)
+  refine Nat.lt_of_lt_of_le hsize
+    (pow_le_pow_of_mul_le (p := 4096) (q := 1234) (by decide +kernel) (by decide) (by decide) ?_)
+  rw [hbound]
+  omega
+
+/-- A quotient scaled by a power of ten has that many more digits, when it is not zero. -/
+theorem decimalLength_mul_pow_div {num den : Nat} (hden : 0 < den) (hq : 0 < num / den)
+    (c : Nat) : decimalLength (num * 10 ^ c / den) = decimalLength (num / den) + c := by
+  have hpow : 0 < 10 ^ c := Nat.pow_pos (by decide)
+  have hlow : num / den * 10 ^ c ≤ num * 10 ^ c / den := by
+    rw [Nat.le_div_iff_mul_le hden, Nat.mul_right_comm]
+    exact Nat.mul_le_mul_right _ (Nat.div_mul_le_self num den)
+  have hhigh : num * 10 ^ c / den < (num / den + 1) * 10 ^ c := by
+    rw [Nat.div_lt_iff_lt_mul hden, Nat.mul_right_comm]
+    exact Nat.mul_lt_mul_of_pos_right
+      ((Nat.lt_mul_div_succ num hden).trans_eq (Nat.mul_comm ..)) hpow
+  have hk1 : 10 ^ Nat.log 10 (num / den) ≤ num / den := Nat.pow_log_le_self 10 hq.ne'
+  have hk2 : num / den < 10 ^ (Nat.log 10 (num / den) + 1) :=
+    Nat.lt_pow_succ_log_self (by decide) _
+  have hlog : Nat.log 10 (num * 10 ^ c / den) = Nat.log 10 (num / den) + c := by
+    apply Nat.log_eq_of_pow_le_of_lt_pow
+    · calc 10 ^ (Nat.log 10 (num / den) + c) = 10 ^ Nat.log 10 (num / den) * 10 ^ c :=
+            Nat.pow_add ..
+        _ ≤ num / den * 10 ^ c := Nat.mul_le_mul_right _ hk1
+        _ ≤ _ := hlow
+    · calc num * 10 ^ c / den < (num / den + 1) * 10 ^ c := hhigh
+        _ ≤ 10 ^ (Nat.log 10 (num / den) + 1) * 10 ^ c := Nat.mul_le_mul_right _ hk2
+        _ = 10 ^ (Nat.log 10 (num / den) + c + 1) := by
+            rw [← Nat.pow_add]
+            congr 1
+            omega
+  rw [decimalLength_eq_log, decimalLength_eq_log, hlog]
+  omega
+
 /-- Multiplying by a power of ten adds its exponent to the decimal logarithm. -/
 private theorem log_mul_pow {c : Nat} (hc : c ≠ 0) (a : Nat) :
     Nat.log 10 (c * 10 ^ a) = Nat.log 10 c + a := by

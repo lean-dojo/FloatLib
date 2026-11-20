@@ -486,7 +486,7 @@ private theorem toReal_posMaxFinite_lt_overflowMidpoint (fmt : FloatFormat) :
   change M * bpow E < ((2 * (pow2 fmt.fracWidth + fmt.maxFiniteFracField) + 1 : Nat) : ℝ) *
     bpow (E - 1)
   rw [hcast, hsplit]
-  nlinarith
+  linarith
 
 /-- The overflow limit lies strictly above the largest finite value. -/
 private theorem toReal_posMaxFinite_lt_overflowLimit (fmt : FloatFormat) :

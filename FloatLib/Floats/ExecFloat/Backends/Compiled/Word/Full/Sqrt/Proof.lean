@@ -173,7 +173,7 @@ private theorem shiftedRadicand_toNat
         mantissa.toNat <<< (shift - 64) < 2 ^ 64 := by
       rw [Nat.shiftLeft_eq] at hfit ⊢
       rw [hpow] at hfit
-      nlinarith [show 0 < 2 ^ 64 by positivity]
+      linarith [show 0 < 2 ^ 64 by positivity]
     have hhi :
         (mantissa <<< UInt64.ofNat (shift - 64)).toNat =
           mantissa.toNat <<< (shift - 64) := by
@@ -243,7 +243,7 @@ private theorem digitsValue_53_eq_toNat
   have hhigh : radicand.hi.toNat < 2 ^ 42 := by
     unfold FloatLib.Numerics.FixedWord.UInt128.toNat at hfit
     norm_num at hfit ⊢
-    nlinarith [radicand.lo.toNat.zero_le]
+    linarith [radicand.lo.toNat.zero_le]
   rw [show 53 = 32 + 21 by omega,
     digitsValue_high radicand 21 (by omega),
     wordDigits_eq_mod radicand.hi 21 (by omega),

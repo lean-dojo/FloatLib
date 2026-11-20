@@ -136,15 +136,19 @@ ties to the even multiple, with the given sign.
 The initial grid comes from the interval width and `1233 / 4096 < log₁₀ 2`. Descent allows for
 the estimate's error, then climbing finds the coarsest grid that meets the interval. Both loop
 bounds come from the exact integers' bit lengths, without a fixed precision or exponent limit.
+
+The binary logarithm is the argument `log2`: `search` passes core's `Nat.log2`, and the form
+that Lean's kernel evaluates passes a logarithm that the kernel computes from the bit length.
 -/
-def search (range : Range) (target : Nat) (negative : Bool) : Option DecimalText.Decimal :=
-  let q := (((range.high - range.low).log2 : Int) + range.scale) * 1233 / 4096
+@[specialize] def searchWith (log2 : Nat → Nat) (range : Range) (target : Nat)
+    (negative : Bool) : Option DecimalText.Decimal :=
+  let q := ((log2 (range.high - range.low) : Int) + range.scale) * 1233 / 4096
   let (num, den) := step range.scale q
-  match descend range (num.log2 + 2) q num den with
+  match descend range (log2 num + 2) q num den with
   | none => none
   | some (q, num, den, lowFloor, lowCeil, highFloor, highCeil) =>
       let (steps, first, last) :=
-        climb range (highCeil.log2 + 2) 0 lowFloor lowCeil highFloor highCeil
+        climb range (log2 highCeil + 2) 0 lowFloor lowCeil highFloor highCeil
       let scaled := target * den
       let quotient := scaled / num
       let remainder := scaled % num
@@ -156,6 +160,13 @@ def search (range : Range) (target : Nat) (negative : Bool) : Option DecimalText
         else 2 * rest > power ∨ (2 * rest = power ∧ (remainder ≠ 0 ∨ n % 2 = 1))
       let nearest := if up then n + 1 else n
       some { negative, significand := max first (min last nearest), exponent := q + steps }
+
+/--
+The multiple of the coarsest decimal grid in the interval that is nearest to `target * 2^scale`,
+ties to the even multiple, with the given sign: `searchWith` with core's binary logarithm.
+-/
+def search (range : Range) (target : Nat) (negative : Bool) : Option DecimalText.Decimal :=
+  searchWith Nat.log2 range target negative
 
 /--
 The number of significant decimal digits that always identify a value of the format, one more

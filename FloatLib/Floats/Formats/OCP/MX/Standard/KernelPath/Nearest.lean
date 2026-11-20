@@ -9,6 +9,7 @@ module
 public meta import FloatLib.Tactic.KernelRefl
 public import FloatLib.Floats.Formats.OCP.MX.Standard.KernelPath.Scan
 public import FloatLib.Numerics.Kernel.Bisection
+public import FloatLib.Numerics.Kernel.Bits
 import Mathlib.Tactic.Linarith.Frontend
 
 /-!
@@ -30,6 +31,11 @@ the result for `float_decide`.
   signs, and the result is the least of two entries.
 * `nearestAll` is `nearest` and `int8Nearest` with the constants of each profile in place: the
   form that the kernel evaluates.
+* `nearestGuessed` and `int8NearestGuessed` take a guess of the field that the bisection finds
+  (`fieldGuess`: the quotient of the input, read as an exponent and a fraction; `int8Guess`:
+  the quotient itself) and confirm it with two tests, so that the bisection runs only when the
+  guess is wrong (`nearestGuessed_eq`, `int8NearestGuessed_eq`, from
+  `Numerics.Kernel.guarded_eq`). `nearestFast` is their flat form.
 
 What is proved, for all six profiles and every input:
 
@@ -279,6 +285,83 @@ def nearest (profile : Profile) (sp neg ap q : Nat) : Nat :=
   nearestWith (below profile (Nat.mul ap (denominator profile)) q) (finiteCode profile)
     (entry profile sp neg ap q) (signValue profile) (Nat.sub profile.width 1) sp
 
+/-- The test of the bisection is downward closed. -/
+theorem below_down (profile : Profile) (h : twosComplement profile = false) (apD q : Nat) :
+    ∀ i j, i ≤ j → below profile apD q j = true → below profile apD q i = true := by
+  intro i j hij hbj
+  rw [below_iff] at hbj ⊢
+  obtain ⟨hj, hfj, hmj⟩ := hbj
+  rcases Nat.lt_or_eq_of_le hij with hlt | rfl
+  · obtain ⟨hfi, hmi⟩ := finite_of_lt profile h j hj hfj i hlt
+    exact ⟨Nat.lt_trans hlt hj, hfi,
+      Nat.le_trans (Nat.mul_le_mul_right q (Nat.le_of_lt hmi)) hmj⟩
+  · exact ⟨hj, hfj, hmj⟩
+
+/-- The test of the bisection holds at the magnitude field zero. -/
+theorem below_zero (profile : Profile) (h : twosComplement profile = false) (apD q : Nat) :
+    below profile apD q 0 = true := by
+  obtain ⟨-, -, hfinite0, hmag0⟩ := layout profile h
+  rw [below_iff]
+  exact ⟨signValue_pos profile, hfinite0, by rw [hmag0, Nat.zero_mul]; exact Nat.zero_le _⟩
+
+/-- The test of the bisection fails beyond the magnitude fields. -/
+theorem below_up (profile : Profile) (apD q : Nat) :
+    ∀ j, 0 + 2 ^ (profile.width - 1) ≤ j → below profile apD q j = false := by
+  intro j hj
+  cases hb : below profile apD q j
+  · rfl
+  · rw [below_iff] at hb
+    have hlt : j < 2 ^ (profile.width - 1) := hb.1
+    omega
+
+/--
+The skeleton of `nearest` at the magnitude field `j`: the least of the entries of the code with
+sign `sp` and field `j`, of the zero of the other sign, and of the code with sign `sp` and field
+`j + 1` when that field is below `half` and `finite`.
+-/
+def nearestAt (finite : Nat → Bool) (entry : Nat → Nat) (half sp j : Nat) : Nat :=
+  (fun first =>
+    Bool.casesOn (motive := fun _ => Nat)
+      (Bool.casesOn (motive := fun _ => Bool) (Nat.blt (Nat.succ j) half) false
+        (finite (Nat.succ j)))
+      first
+      (least first (entry (Nat.add (Nat.mul sp half) (Nat.succ j)))))
+    (least (entry (Nat.add (Nat.mul sp half) j)) (entry (Nat.mul (Nat.sub 1 sp) half)))
+
+/--
+A guess of the largest finite magnitude field whose magnitude times `q` is at most `apD`, from
+the quotient `t = apD / q`: the field whose exponent is the bit length of `t` above the fraction
+bits and whose fraction is the leading bits of `t`, at most the largest finite field. The guess
+does not have to be right: `nearestGuessed` confirms it with two tests.
+-/
+def fieldGuess (profile : Profile) (apD q : Nat) : Nat :=
+  (fun t f =>
+    (fun s =>
+      Numerics.Kernel.minNat (Nat.add (Nat.shiftLeft s f) (Nat.shiftRight t s))
+        (Numerics.Kernel.minNat (Nat.sub (signValue profile) 1)
+          (Nat.sub (Nat.shiftLeft (nonFiniteMask profile) (nonFiniteShift profile)) 1)))
+      (Nat.sub (Nat.sub (Numerics.Kernel.size t) f) 1))
+    (Nat.div apD q) (fractionBits profile)
+
+/--
+`nearest` without the bisection when the guess of `fieldGuess` is the field that the bisection
+finds, which two tests confirm, and `other` when it is not (`nearestGuessed_eq`).
+-/
+def nearestGuessed (profile : Profile) (sp neg ap q other : Nat) : Nat :=
+  Numerics.Kernel.guarded (below profile (Nat.mul ap (denominator profile)) q)
+    (fieldGuess profile (Nat.mul ap (denominator profile)) q)
+    (nearestAt (finiteCode profile) (entry profile sp neg ap q) (signValue profile) sp) other
+
+/-- With `nearest` as the alternative, the guessed form is `nearest`, for every sign-magnitude
+profile and every input. -/
+theorem nearestGuessed_eq (profile : Profile) (h : twosComplement profile = false)
+    (sp neg ap q : Nat) :
+    nearestGuessed profile sp neg ap q (nearest profile sp neg ap q) =
+      nearest profile sp neg ap q :=
+  Numerics.Kernel.guarded_eq _ (below_down profile h _ q) (profile.width - 1)
+    (below_zero profile h _ q) (below_up profile _ q) _
+    (nearestAt (finiteCode profile) (entry profile sp neg ap q) (signValue profile) sp)
+
 /-- The scan of all codes of a sign-magnitude profile is the entry that the bisection finds. -/
 theorem scan_eq_nearest (profile : Profile) (h : twosComplement profile = false)
     (sp neg ap q : Nat) (hsp : sp ≤ 1) (hneg : neg ≤ 1) (hq : 0 < q) :
@@ -286,27 +369,9 @@ theorem scan_eq_nearest (profile : Profile) (h : twosComplement profile = false)
   have hpos := signValue_pos profile
   obtain ⟨hlayout, -, hfinite0, hmag0⟩ := layout profile h
   -- the bisection
-  have hdown : ∀ i j, i ≤ j → below profile (ap * denominator profile) q j = true →
-      below profile (ap * denominator profile) q i = true := by
-    intro i j hij hbj
-    rw [below_iff] at hbj ⊢
-    obtain ⟨hj, hfj, hmj⟩ := hbj
-    rcases Nat.lt_or_eq_of_le hij with hlt | rfl
-    · obtain ⟨hfi, hmi⟩ := finite_of_lt profile h j hj hfj i hlt
-      exact ⟨Nat.lt_trans hlt hj, hfi,
-        Nat.le_trans (Nat.mul_le_mul_right q (Nat.le_of_lt hmi)) hmj⟩
-    · exact ⟨hj, hfj, hmj⟩
-  have hzero : below profile (ap * denominator profile) q 0 = true := by
-    rw [below_iff]
-    exact ⟨hpos, hfinite0, by rw [hmag0, Nat.zero_mul]; exact Nat.zero_le _⟩
-  have hup : ∀ j, 0 + 2 ^ (profile.width - 1) ≤ j →
-      below profile (ap * denominator profile) q j = false := by
-    intro j hj
-    cases hb : below profile (ap * denominator profile) q j
-    · rfl
-    · rw [below_iff] at hb
-      have hlt : j < 2 ^ (profile.width - 1) := hb.1
-      omega
+  have hdown := below_down profile h (ap * denominator profile) q
+  have hzero := below_zero profile h (ap * denominator profile) q
+  have hup := below_up profile (ap * denominator profile) q
   obtain ⟨hstar, hmax⟩ := Numerics.Kernel.bisect_spec _ hdown (profile.width - 1) 0 hzero hup
   have hnearest : nearest profile sp neg ap q =
       (fun j =>
@@ -600,25 +665,71 @@ def int8Nearest (sp neg ap q : Nat) : Nat :=
   int8NearestWith (int8Below sp (Nat.mul ap 64) q)
     (fun i => entry .int8 sp neg ap q (int8Code sp i)) sp
 
+/-- The test of the INT8 bisection is downward closed. -/
+theorem int8Below_down (sp apD q : Nat) :
+    ∀ i j, i ≤ j → int8Below sp apD q j = true → int8Below sp apD q i = true := by
+  intro i j hij hbj
+  rw [int8Below_iff] at hbj ⊢
+  exact ⟨by omega, Nat.le_trans (Nat.mul_le_mul_right q hij) hbj.2⟩
+
+/-- The test of the INT8 bisection holds at the magnitude zero. -/
+theorem int8Below_zero (sp apD q : Nat) : int8Below sp apD q 0 = true := by
+  rw [int8Below_iff]
+  exact ⟨by omega, by rw [Nat.zero_mul]; exact Nat.zero_le _⟩
+
+/-- The test of the INT8 bisection fails beyond the magnitudes, for a sign bit `sp`. -/
+theorem int8Below_up {sp : Nat} (hsp : sp ≤ 1) (apD q : Nat) :
+    ∀ j, 0 + 2 ^ 8 ≤ j → int8Below sp apD q j = false := by
+  intro j hj
+  cases hb : int8Below sp apD q j
+  · rfl
+  · rw [int8Below_iff] at hb
+    have : (2 : Nat) ^ 8 = 256 := by decide
+    omega
+
+/--
+The skeleton of `int8Nearest` at the magnitude `i`: the least of the entry of `i` and of the
+entry of `i + 1` when that magnitude exists for the sign `sp`.
+-/
+def int8NearestAt (entry : Nat → Nat) (sp i : Nat) : Nat :=
+  (fun first =>
+    Bool.casesOn (motive := fun _ => Nat) (Nat.blt (Nat.succ i) (Nat.add 128 sp)) first
+      (least first (entry (Nat.succ i))))
+    (entry i)
+
+/-- A guess of the largest magnitude of the sign `sp` that is at most the input: the quotient
+`apD / q`, at most the largest magnitude of that sign. -/
+def int8Guess (sp apD q : Nat) : Nat :=
+  Numerics.Kernel.minNat (Nat.div apD q) (Nat.add 127 sp)
+
+/--
+`int8Nearest` without the bisection when the guess of `int8Guess` is the magnitude that the
+bisection finds, which two tests confirm, and `other` when it is not or when `sp` is not a
+sign bit (`int8NearestGuessed_eq`).
+-/
+def int8NearestGuessed (sp neg ap q other : Nat) : Nat :=
+  Bool.casesOn (motive := fun _ => Nat) (Nat.ble sp 1) other
+    (Numerics.Kernel.guarded (int8Below sp (Nat.mul ap 64) q) (int8Guess sp (Nat.mul ap 64) q)
+      (int8NearestAt (fun i => entry .int8 sp neg ap q (int8Code sp i)) sp) other)
+
+/-- With `int8Nearest` as the alternative, the guessed form is `int8Nearest`, for every
+input. -/
+theorem int8NearestGuessed_eq (sp neg ap q : Nat) :
+    int8NearestGuessed sp neg ap q (int8Nearest sp neg ap q) = int8Nearest sp neg ap q := by
+  unfold int8NearestGuessed
+  cases hsp : Nat.ble sp 1
+  · rfl
+  · exact Numerics.Kernel.guarded_eq _ (int8Below_down sp _ q) 8 (int8Below_zero sp _ q)
+      (int8Below_up (Nat.le_of_ble_eq_true hsp) _ q) _
+      (int8NearestAt (fun i => entry .int8 sp neg ap q (int8Code sp i)) sp)
+
 /-- The scan of all codes of INT8 is the entry that the bisection finds. -/
 theorem scan_eq_int8Nearest (sp neg ap q : Nat) (hsp : sp ≤ 1) (hneg : neg ≤ 1) (hq : 0 < q) :
     scan .int8 sp neg ap q 256 = some (int8Nearest sp neg ap q) := by
   -- the bisection
-  have hdown : ∀ i j, i ≤ j → int8Below sp (ap * 64) q j = true →
-      int8Below sp (ap * 64) q i = true := by
-    intro i j hij hbj
-    rw [int8Below_iff] at hbj ⊢
-    exact ⟨by omega, Nat.le_trans (Nat.mul_le_mul_right q hij) hbj.2⟩
-  have hzero : int8Below sp (ap * 64) q 0 = true := by
-    rw [int8Below_iff]
-    exact ⟨by omega, by rw [Nat.zero_mul]; exact Nat.zero_le _⟩
-  have hup : ∀ j, 0 + 2 ^ 8 ≤ j → int8Below sp (ap * 64) q j = false := by
-    intro j hj
-    cases hb : int8Below sp (ap * 64) q j
-    · rfl
-    · rw [int8Below_iff] at hb
-      have : (2 : Nat) ^ 8 = 256 := by decide
-      omega
+  have hdown := int8Below_down sp (ap * 64) q
+  have hzero := int8Below_zero sp (ap * 64) q
+  have hup := int8Below_up hsp (ap * 64) q
   obtain ⟨hstar, hmax⟩ := Numerics.Kernel.bisect_spec _ hdown 8 0 hzero hup
   have hnearest : int8Nearest sp neg ap q =
       (fun i =>

@@ -38,8 +38,12 @@ Unfold every stage of a status computation and of the general operation whose re
 -/
 macro "inline_status% " body:term : term =>
   `(kernel_inline% [KernelPath.addStatus, KernelPath.subStatus, KernelPath.mulStatus,
-      KernelPath.fmaStatus, KernelPath.divStatus, KernelPath.divideByZeroStatus,
-      KernelPath.infinityTernary, KernelPath.castStatus, KernelPath.cast,
+      KernelPath.fmaStatus, KernelPath.divStatus, KernelPath.addStatusWith,
+      KernelPath.subStatusWith, KernelPath.mulStatusWith, KernelPath.fmaStatusWith,
+      KernelPath.divStatusWith, KernelPath.roundToIntegralStatusWith,
+      KernelPath.divideByZeroStatus,
+      KernelPath.infinityTernary, KernelPath.castStatus, KernelPath.castStatusWith,
+      KernelPath.cast,
       KernelPath.div, KernelPath.divCore, KernelPath.roundToIntegralStatus,
       KernelPath.roundToIntegral, KernelPath.shiftRound, KernelPath.roundStatus,
       KernelPath.overflowFlag, KernelPath.tinyFlag,

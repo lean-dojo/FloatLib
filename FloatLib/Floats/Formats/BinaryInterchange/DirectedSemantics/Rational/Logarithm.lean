@@ -256,6 +256,7 @@ theorem floorLog2_bounds
         numerator denominator (lowerExponent + 1) hdenominator).1 htrue
   have hfloor :
       Numerics.RationalBinary.floorLog2 numerator denominator = lowerExponent := by
+    rw [Numerics.RationalBinary.floorLog2_eq_log2]
     change (if Numerics.RationalBinary.atLeastPowerOfTwo
       numerator denominator (lowerExponent + 1) then lowerExponent + 1 else lowerExponent) = _
     simp [hfinalFalse]

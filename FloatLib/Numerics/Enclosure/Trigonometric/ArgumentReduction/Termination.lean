@@ -96,7 +96,7 @@ theorem exists_accepting_window {m : ℕ} (e : ℤ) (bits : ℕ) :
     rw [abs_of_nonneg hη] at this
     rw [herror] at hηlt
     push_cast at hηlt
-    nlinarith
+    linarith
   have hnat : q.error * 2 ^ (bits + 1) ≤ q.fraction.natAbs := by
     have : ((q.error * 2 ^ (bits + 1) : ℕ) : ℝ) ≤ (q.fraction.natAbs : ℝ) := by
       rw [Nat.cast_natAbs, Int.cast_abs, herror]

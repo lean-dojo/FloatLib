@@ -41,7 +41,16 @@ The carrier is `BitVec fmt.bitWidth`, and every stored bit is part of the format
 structure Model (fmt : FloatFormat) where
   /-- Raw binary storage pattern. -/
   bits : FloatFormat.ExecWord fmt
-  deriving DecidableEq
+
+/--
+Two values are equal exactly when their storage words are, and the decision is the comparison
+of the two words. Lean's kernel reduces it by evaluating both words. A derived instance returns
+its answer through a rewrite along the proof that the words are equal, and to reduce that
+rewrite the kernel compares the two computations of the words as terms.
+-/
+instance {fmt : FloatFormat} : DecidableEq (Model fmt) := fun x y =>
+  if h : x.bits = y.bits then isTrue (congrArg Model.mk h)
+  else isFalse fun hxy => h (congrArg Model.bits hxy)
 
 namespace Model
 

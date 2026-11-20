@@ -13,7 +13,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.TotalOrder.Ru
 public import FloatLib.Floats.Formats.BinaryInterchange.KernelPath.Value -- shake: keep
 
 /-!
-# The `outcome_rule` command
+# The `outcome_rule` and `outcome_with_rule` commands
 
 This frontend generates the declarations documented below. Its expansions are checked
 in the importing mathematical module.
@@ -64,5 +64,41 @@ macro "outcome_rule " name:ident " for " format:term:max " [" args:ident* "]" : 
       simp only [$valueOf:ident, $ofModel:ident, $toModel:ident, $statusLift:ident,
         $ternaryLift:ident, $valueLift:ident]
       rfl)
+
+open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
+/--
+`outcome_with_rule name for format [args] cost n` declares `name_outcome_eq_with`: the rule of
+`outcome_rule` with the status number taken as a function of the word of the kernel value
+(`Flat.nameStatusWith`), so that Lean's kernel computes the value once for the value, the flags
+and the ternary value. `n` is its declared kernel cost in microseconds, which puts it in front of
+`name_outcome_eq`.
+-/
+macro "outcome_with_rule " name:ident " for " format:term:max " [" args:ident* "]"
+    &" cost " microseconds:num : command => do
+  let ruleName := Lean.mkIdent (name.getId.appendAfter "_outcome_eq_with")
+  let withoutWord := Lean.mkIdent (name.getId.appendAfter "_outcome_eq")
+  let model := Lean.mkIdent (`Model ++ name.getId)
+  let value := Lean.mkIdent (`KernelPath.Value ++ name.getId)
+  let statusWith :=
+    Lean.mkIdent (`KernelPath.Value ++ name.getId.appendAfter "_status_eq_with")
+  let flat := Lean.mkIdent (`KernelPath.Flat ++ name.getId.appendAfter "StatusWith")
+  let models ← args.mapM fun arg => `(FloatLib.Floats.ExecFloat.Binary.toModel $arg)
+  let nats ← args.mapM fun arg => `(KernelPath.toNat $arg)
+  `(/--
+    The outcome of the configured operation with `status := true`: the kernel value, with the
+    exception flags and the ternary value decoded from the status number at the word of that
+    value.
+    -/
+    @[kernel_optimize (cost := $microseconds)] theorem $ruleName {plan : StoragePlan $format}
+        (mode : Model.IEEERoundingMode)
+        ($args* : FloatLib.Floats.ExecFloat (Family $format (Code plan) plan)) :
+        FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.ofModel (plan := plan) (code := Code plan)
+            ($model $models* (mode := mode) (status := true)) =
+          { value := $value mode $args*
+            status := KernelPath.decodeStatus
+              ($flat $format mode $nats* (KernelPath.toNat ($value mode $args*)))
+            ternary := KernelPath.decodeTernary
+              ($flat $format mode $nats* (KernelPath.toNat ($value mode $args*))) } := by
+      rw [$withoutWord:ident, $statusWith:ident])
 
 end FloatLib.Floats.Formats.BinaryInterchange.Configured

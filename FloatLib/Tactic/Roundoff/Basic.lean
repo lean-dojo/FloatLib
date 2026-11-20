@@ -45,6 +45,88 @@ it as the proposition it states. -/
 def ruleType (rule : Lean.Expr) : MetaM Lean.Expr := do
   return (← inferType rule).replace fun e => if e.isAutoParam then some e.appFn!.appArg! else none
 
+/-- Whether `name` is a private declaration of an imported `module`. A `module` that imports it
+cannot unfold it. A plain file loads its body, and there Mathlib's private definitions of the
+arithmetic and the order of the reals unfold, so that comparing two real numerals evaluates them
+until Lean's recursion limit. -/
+def isImportedPrivate (environment : Environment) (name : Name) : Bool :=
+  isPrivateName name && (environment.getModuleIdxFor? name).any fun index =>
+    environment.header.moduleData[index.toNat]?.any (·.isModule)
+
+/-- `canUnfoldDefault` without the private declarations of imported modules
+(`isImportedPrivate`): what a `module` can unfold, in a plain file too. -/
+def canUnfoldExported (config : Meta.Config) (info : ConstantInfo) : CoreM Bool := do
+  if isImportedPrivate (← getEnv) info.name then return false
+  canUnfoldDefault config info
+
+/-- Run the proof search `action` unfolding what a `module` can unfold (`canUnfoldExported`), so
+that a side condition is proved or left open alike in a `module` and in a plain file. In a
+`module` this is `action` itself. -/
+def exported {α : Type} (action : TacticM α) : TacticM α := do
+  if (← getEnv).header.isModule then action else withCanUnfoldPred canUnfoldExported action
+
+/-- Abstract the parameters of a theorem that are left after some were assigned: the unassigned
+ones among `arguments`, in their order and with their binders, around `proof`. -/
+partial def closeRuleArguments (arguments : Array Lean.Expr) (binders : Array BinderInfo)
+    (index : Nat) (opened : Array Lean.Expr) (proof : Lean.Expr) : MetaM Lean.Expr := do
+  if index == arguments.size then
+    return ← mkLambdaFVars opened (← instantiateMVars proof)
+  let argument ← instantiateMVars arguments[index]!
+  unless argument.isMVar do
+    return ← closeRuleArguments arguments binders (index + 1) opened proof
+  let goal := argument.mvarId!
+  let declaration ← goal.getDecl
+  let type ← instantiateMVars declaration.type
+  withLocalDecl declaration.userName binders[index]! type fun value => do
+    goal.assign value
+    closeRuleArguments arguments binders (index + 1) (opened.push value) proof
+
+/-- `expression` with each instance argument that mentions no variable replaced by the instance
+that type class resolution finds for its class, when the two agree by definition: the
+dictionaries in which elaboration writes the same term. -/
+def canonicalInstances (expression : Lean.Expr) : MetaM Lean.Expr :=
+  Meta.transform expression (pre := fun term => do
+    unless term.isApp && term.getAppFn.isConst do return .continue
+    let arguments := term.getAppArgs
+    let info ← getFunInfoNArgs term.getAppFn arguments.size
+    let mut canonical := arguments
+    for h : index in [:arguments.size] do
+      let argument := arguments[index]
+      unless info.paramInfo[index]?.any (·.isInstance) do continue
+      if argument.hasFVar || argument.hasMVar then continue
+      let some found ← observing? (synthInstance (← inferType argument)) | continue
+      if found != argument && (← withDefault (isDefEq argument found)) then
+        canonical := canonical.set! index found
+    return .continue (mkAppN term.getAppFn canonical))
+
+/-- `rule` at the reals, when it bounds an absolute error over an open carrier, as `add_error`
+does over an ordered ring `K`: the carrier is the reals, its instance parameters are those of the
+reals, and the statement is written in the dictionaries of real arithmetic
+(`canonicalInstances`), as a theorem stated over the reals is. The analysis then matches it as
+one, where the dictionaries of an open carrier would be unfolded at every use. Any other rule,
+and one whose carrier lacks an instance at the reals, is returned as it is. -/
+def realForm (rule : Lean.Expr) : MetaM Lean.Expr := do
+  let saved ← saveState
+  let (arguments, binders, conclusion) ← forallMetaTelescopeReducing (← inferType rule)
+  let specialized? ← observing? do
+    unless conclusion.isAppOfArity ``LE.le 4 && conclusion.getAppArgs[2]!.isAppOf ``abs do
+      throwError "roundoff: no absolute error bound"
+    let carrier := conclusion.getAppArgs[0]!
+    unless carrier.isMVar && arguments.contains carrier do
+      throwError "roundoff: a fixed carrier"
+    unless ← isDefEq carrier q(ℝ) do throwError "roundoff: the carrier is not a type of reals"
+    for argument in arguments, binder in binders do
+      unless binder.isInstImplicit && (← instantiateMVars argument).isMVar do continue
+      let found ← synthInstance (← instantiateMVars (← inferType argument))
+      unless ← isDefEq argument found do throwError "roundoff: another instance"
+    let closed ← closeRuleArguments arguments binders 0 #[] (mkAppN rule arguments)
+    mkExpectedTypeHint closed (← canonicalInstances (← inferType closed))
+  match specialized? with
+  | some specialized => return specialized
+  | none =>
+      saved.restore
+      return rule
+
 /-- FloatLib's exact configured operations. Mixed analysis tries them before any rounding rule,
 and their selection premises must be proved rather than left to the caller. Registered exact
 operations follow. -/
@@ -237,7 +319,8 @@ def Estimate.closeFinite (estimate : Estimate) (goal : MVarId) : TacticM Bool :=
   unless derived.getAppFn == wanted.getAppFn do return false
   -- Program definitions may be kept folded by the surrounding analysis; unfold them here. Such a
   -- comparison settles quickly when it succeeds.
-  let matched? ← attempt? 200 <| withCanUnfoldPred (fun _ _ => pure true) <| withDefault do
+  let matched? ← attempt? 200 <| withCanUnfoldPred
+      (fun _ info => return !isImportedPrivate (← getEnv) info.name) <| withDefault do
     return if ← isDefEq given type then some () else none
   if matched?.isNone then return false
   goal.assign finite
@@ -624,6 +707,115 @@ instance : BEq Rule :=
 def Rule.instantiate (rule : Rule) : MetaM Lean.Expr :=
   return (← openAbstractMVarsResult rule.prepared).2.2
 
+/-- What `Session.index` reads off a rule: the path of its computation in a discrimination tree,
+its entry there, the heads of the computation and of the value it observes (`Session.ruled`), and
+the observation whose operands its reference reads (`Session.observations`). -/
+structure IndexedRule where
+  /-- The path of the computation (`DiscrTree.mkPath`); empty for a rule that has no entry. -/
+  keys : Array DiscrTree.Key
+  /-- The entry. -/
+  rule : Rule
+  /-- The heads of the computation and of the value it observes. -/
+  heads : Array Name := #[]
+  /-- The observation whose operands the reference reads, for a rule that has one. -/
+  observation? : Option Name := none
+
+/-- Insert the entry where `DiscrTree.insertIfSpecific` does: under a path that is more than a
+variable or an equation of variables. -/
+def IndexedRule.insertInto (entry : IndexedRule) (tree : DiscrTree Rule) : DiscrTree Rule :=
+  if entry.keys.isEmpty || entry.keys == #[.star] ||
+      entry.keys == #[.const ``Eq 3, .star, .star, .star] then tree
+  else tree.insertKeyValue entry.keys entry.rule
+
+/-- Whether the entry is the same in every declaration that has its rule: it has no local
+variable and no metavariable, and every constant of its proof but the rule is one of an imported
+module. A constant of this file, such as an instance that preparing the rule found, need not
+exist in the declaration that reads the entry next. -/
+def IndexedRule.portable (entry : IndexedRule) : CoreM Bool := do
+  let proof := entry.rule.prepared.expr
+  if proof.hasFVar || proof.hasMVar then return false
+  let environment ← getEnv
+  return proof.getUsedConstants.all fun name =>
+    name == entry.rule.name || (environment.getModuleIdxFor? name).isSome
+
+/-- The number of rule sets (`rulesHash`) of which a process keeps what it prepared. An editor
+that elaborates a file again after a change to one of its rules prepares a new set. A set beyond
+this number replaces the kept ones, which are prepared again where they are used. -/
+def keptRuleSets : Nat := 16
+
+/-- The rules indexed in this process, by `rulesHash`, then by name and the tree the entry goes
+to. A rule whose statement reads no container is prepared without the goal, so every `roundoff`
+of a file after the first finds its entry here: `some none` for a rule that has no entry. `none`
+is a rule that every call prepares: its preparation reads the goal, or its entry is not
+portable (`IndexedRule.portable`). An entry stays as the first call prepared it: a later change
+of the reducibility or of the instances that preparing it read does not change it. -/
+initialize indexedRules :
+    IO.Ref (Std.HashMap UInt64 (Std.HashMap (Name × Nat) (Option (Option IndexedRule)))) ←
+  IO.mkRef {}
+
+/-- A hash of what preparing a rule reads beside the goal: the statement of every registered
+rule, in the order of their registration, and whether it is a `@[csimp]` theorem, the
+declarations of the registered extensions, and the declarations of this file that these use,
+through each other. A declaration of an imported
+module stays as it is while the process lives. One of this file changes when an editor
+elaborates the file again, so a rule or an extension that uses it gets another hash. A proof is
+not read: preparing a rule reads statements and definitions. -/
+def rulesHash : CoreM UInt64 := do
+  let environment ← getEnv
+  let body (info : ConstantInfo) : Option Lean.Expr :=
+    if info matches .thmInfo _ then none else info.value?
+  let constant (seed : UInt64) (name : Name) (info : ConstantInfo) : UInt64 :=
+    mixHash (mixHash seed (hash name)) (mixHash info.type.hash ((body info).map (·.hash) |>.getD 0))
+  let mut seed : UInt64 := 7
+  let mut queued : NameSet := {}
+  let mut pending : Array Name := #[]
+  for name in roundoffRules.getState environment ++ (extensions.getState environment).names do
+    let some info := environment.find? name | do
+      seed := mixHash seed (hash name)
+      continue
+    seed := constant seed name info
+    if Lean.Compiler.hasCSimpAttribute environment name then seed := mixHash seed 11
+    if (environment.getModuleIdxFor? name).isNone && !queued.contains name then
+      queued := queued.insert name
+      pending := pending.push name
+  while let some name := pending.back? do
+    pending := pending.pop
+    let some info := environment.find? name | continue
+    for other in info.type.getUsedConstants ++ ((body info).map (·.getUsedConstants) |>.getD #[]) do
+      if queued.contains other || (environment.getModuleIdxFor? other).isSome then continue
+      let some otherInfo := environment.find? other | continue
+      seed := constant seed other otherInfo
+      queued := queued.insert other
+      pending := pending.push other
+  return seed
+
+/-- What the process keeps of rule `name` for the tree `kind` under `seed` (`indexedRules`). -/
+def keptRule? (seed : UInt64) (name : Name) (kind : Nat) :
+    CoreM (Option (Option (Option IndexedRule))) :=
+  return ((← indexedRules.get).get? seed).bind (·.get? (name, kind))
+
+/-- The entry of rule `name` in the tree `kind`: the one kept for `seed` (`indexedRules`), or
+the one that `compute` returns. That one is kept unless preparing the rule reads the goal
+(`contextual`) or the entry is not portable (`IndexedRule.portable`): then every call prepares
+the rule. Nothing is kept once the heartbeat budget is spent: a step may then have failed for
+lack of it, and a nested tactic reports that as an ordinary failure. -/
+def indexedRule (seed : UInt64) (name : Name) (kind : Nat) (contextual : CoreM Bool)
+    (compute : MetaM (Option IndexedRule)) : MetaM (Option IndexedRule) := do
+  match ← keptRule? seed name kind with
+  | some (some entry?) => return entry?
+  | some none => compute
+  | none =>
+      let entry? ← compute
+      let portable ← match entry? with
+        | some entry => entry.portable
+        | none => pure true
+      let value := if portable && !(← contextual) then some entry? else none
+      Core.checkSystem "roundoff"
+      indexedRules.modify fun sets =>
+        (if sets.size ≥ keptRuleSets && !sets.contains seed then {} else sets).alter seed
+          fun rules? => some ((rules?.getD {}).insert (name, kind) value)
+      return entry?
+
 /-- A lemma tried on simple side conditions: the tactic applying it, and the head and index of
 its conclusion. -/
 structure Helper where
@@ -683,13 +875,9 @@ def mentions (term : Lean.Expr) (wanted : FVarId → Bool) : Bool :=
       | .fvar id => if wanted id then .found else .done
       | _ => .visit).isSome
 
-/-- The observer of a bounded value and the head of the value it observes, which a hypothesis
-bound must share with a computation to apply to it. -/
+/-- The observer of a bounded value and the head of the value it observes, under the imports
+that value applies, which a hypothesis bound must share with a computation to apply to it. -/
 abbrev BoundHeads := Option Name × Option (Option Name)
-
-/-- The heads of `value` (`BoundHeads`). -/
-def boundHeads (value : Lean.Expr) : BoundHeads :=
-  (value.getAppFn.constName?, value.getAppArgs.back?.map (·.getAppFn.constName?))
 
 /-- How a hypothesis bounds a value, read once per local variable: whether it is a proposition,
 the producer of the value it concludes finite with a mixed bound when it is stated like a
@@ -754,9 +942,12 @@ structure Session where
   semantic : SimpTheorems
   /-- The semantic lemmas, also decoding Boolean classifiers of fresh propositions. -/
   classifiers : SimpTheorems
-  /-- `programStep`, `observeBranch`, `readSum` when a sum is read entrywise, and the registered
-  procedures (`Extension.procedures`), which every normalizer except the semantic ones runs. -/
+  /-- The selection of a branch by its simplified guard (`branchProcedures`), then `programStep`,
+  `observeBranch`, `readSum` when a sum is read entrywise, and the registered procedures
+  (`Extension.procedures`), which every normalizer except the semantic ones runs. -/
   procedures : Simp.SimprocsArray
+  /-- `rulesHash` of the environment the session was prepared in. -/
+  seed : UInt64 := 0
   /-- Registered numerical bounds and observations, indexed by their computation pattern. -/
   bounds : DiscrTree Rule := {}
   /-- Whether estimates are mixed bounds rather than absolute ones. -/

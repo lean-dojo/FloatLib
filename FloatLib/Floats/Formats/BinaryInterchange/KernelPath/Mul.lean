@@ -31,6 +31,8 @@ open FloatLib.Numerics
 def mulBits (fmt : FloatFormat) : Nat :=
   2 * fmt.fracWidth + 2
 
+kernel_constant mulBits
+
 /--
 The product of two words that are not both finite, by the rules of `Model.Spec.mul`: a NaN
 operand gives `nanChoice`, an infinity times a zero gives the invalid result, and an infinity
@@ -56,6 +58,8 @@ def mulSpecial (fmt : FloatFormat) (a b : Nat) : Nat :=
       (infFlag fmt ua) (infFlag fmt ub) (nanFlag fmt sa ua) (nanFlag fmt sb ub))
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
+
+kernel_constant mulSpecial
 
 /--
 Encoding of the product of the values encoded by `a` and `b`, rounded in the direction `mode`
@@ -104,7 +108,7 @@ theorem mulSpecial_eq {fmt : FloatFormat} (x y : Model fmt)
   rw [hspec]
   refine (chooseNaN2_getD_bits x y _ _ ?_).symm
   intro _ _
-  simp only [bne]
+  simp only [bne, invalidWord_eq, overflowWord_eq]
   cases Model.isInfinite x <;> cases Model.isInfinite y <;> cases Model.isZero x <;>
     cases Model.isZero y <;> cases (Model.signBit x == Model.signBit y) <;> rfl
 

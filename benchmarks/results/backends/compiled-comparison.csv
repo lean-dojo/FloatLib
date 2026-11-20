@@ -1,289 +1,289 @@
 bits,operation,implementation,nanoseconds
-2,add,FloatLib posit,21.2
+2,add,FloatLib posit,20.9
 2,div,FloatLib posit,21.0
-2,fma,FloatLib posit,82.5
-2,mul,FloatLib posit,21.4
-2,sqrt,FloatLib posit,20.9
-2,sub,FloatLib posit,21.0
-3,add,FloatLib posit,21.0
-3,div,FloatLib posit,21.1
-3,fma,FloatLib posit,94.3
-3,mul,FloatLib posit,21.1
+2,fma,FloatLib posit,78.3
+2,mul,FloatLib posit,21.2
+2,sqrt,FloatLib posit,21.3
+2,sub,FloatLib posit,22.0
+3,add,FloatLib posit,21.5
+3,div,FloatLib posit,21.0
+3,fma,FloatLib posit,96.1
+3,mul,FloatLib posit,21.4
 3,sqrt,FloatLib posit,20.9
-3,sub,FloatLib posit,20.9
-4,add,FloatLib,170.7
-4,add,FloatLib posit,21.0
-4,add,MPFR,34.4
-4,div,FloatLib,201.9
+3,sub,FloatLib posit,21.0
+4,add,FloatLib,170.1
+4,add,FloatLib posit,21.1
+4,add,MPFR,33.4
+4,div,FloatLib,179.6
 4,div,FloatLib posit,21.0
-4,div,MPFR,34.4
-4,fma,FloatLib,151.2
-4,fma,FloatLib posit,105.9
-4,fma,MPFR,72.5
-4,mul,FloatLib,171.3
+4,div,MPFR,34.3
+4,fma,FloatLib,151.0
+4,fma,FloatLib posit,106.7
+4,fma,MPFR,73.0
+4,mul,FloatLib,168.8
 4,mul,FloatLib posit,21.0
-4,mul,MPFR,30.3
-4,sqrt,FloatLib,82.2
-4,sqrt,FloatLib posit,21.2
-4,sqrt,MPFR,40.2
-4,sub,FloatLib,169.7
-4,sub,FloatLib posit,20.9
+4,mul,MPFR,30.4
+4,sqrt,FloatLib,83.6
+4,sqrt,FloatLib posit,21.1
+4,sqrt,MPFR,38.8
+4,sub,FloatLib,167.8
+4,sub,FloatLib posit,21.1
 4,sub,MPFR,31.7
-5,add,FloatLib,191.2
-5,add,FloatLib posit,23.1
+5,add,FloatLib,188.7
+5,add,FloatLib posit,20.9
 5,add,MPFR,40.9
-5,div,FloatLib,199.0
-5,div,FloatLib posit,25.8
-5,div,MPFR,58.3
-5,fma,FloatLib,189.8
-5,fma,FloatLib posit,117.3
-5,fma,MPFR,92.9
-5,mul,FloatLib,203.6
+5,div,FloatLib,201.3
+5,div,FloatLib posit,21.0
+5,div,MPFR,59.3
+5,fma,FloatLib,190.4
+5,fma,FloatLib posit,133.0
+5,fma,MPFR,93.2
+5,mul,FloatLib,188.3
 5,mul,FloatLib posit,21.0
 5,mul,MPFR,41.7
-5,sqrt,FloatLib,80.7
-5,sqrt,FloatLib posit,21.8
-5,sqrt,MPFR,51.5
-5,sub,FloatLib,195.1
-5,sub,FloatLib posit,20.9
-5,sub,MPFR,38.6
-6,add,FloatLib,227.3
-6,add,FloatLib posit,22.3
-6,add,MPFR,35.4
-6,div,FloatLib,221.0
+5,sqrt,FloatLib,82.8
+5,sqrt,FloatLib posit,21.2
+5,sqrt,MPFR,51.4
+5,sub,FloatLib,192.6
+5,sub,FloatLib posit,21.1
+5,sub,MPFR,38.5
+6,add,FloatLib,217.4
+6,add,FloatLib posit,21.3
+6,add,MPFR,35.5
+6,div,FloatLib,222.9
 6,div,FloatLib posit,21.0
-6,div,MPFR,37.5
-6,fma,FloatLib,221.7
-6,fma,FloatLib posit,117.2
-6,fma,MPFR,59.5
-6,mul,FloatLib,203.7
-6,mul,FloatLib posit,21.1
-6,mul,MPFR,37.2
-6,sqrt,FloatLib,83.3
-6,sqrt,FloatLib posit,22.1
-6,sqrt,MPFR,39.3
-6,sub,FloatLib,213.6
+6,div,MPFR,39.9
+6,fma,FloatLib,220.4
+6,fma,FloatLib posit,120.1
+6,fma,MPFR,58.0
+6,mul,FloatLib,204.3
+6,mul,FloatLib posit,21.3
+6,mul,MPFR,39.4
+6,sqrt,FloatLib,81.5
+6,sqrt,FloatLib posit,21.2
+6,sqrt,MPFR,41.4
+6,sub,FloatLib,215.2
 6,sub,FloatLib posit,21.1
-6,sub,MPFR,34.3
-7,add,FloatLib,241.8
-7,add,FloatLib posit,21.0
-7,add,MPFR,36.4
-7,div,FloatLib,225.0
-7,div,FloatLib posit,21.5
-7,div,MPFR,36.3
-7,fma,FloatLib,219.1
-7,fma,FloatLib posit,118.4
-7,fma,MPFR,58.7
-7,mul,FloatLib,215.7
-7,mul,FloatLib posit,21.1
-7,mul,MPFR,39.4
-7,sqrt,FloatLib,79.7
-7,sqrt,FloatLib posit,21.0
-7,sqrt,MPFR,40.8
-7,sub,FloatLib,234.7
-7,sub,FloatLib posit,21.1
-7,sub,MPFR,36.5
-8,add,FloatLib,235.7
-8,add,FloatLib posit,21.2
-8,add,MPFR,35.7
-8,div,FloatLib,219.4
-8,div,FloatLib posit,21.5
-8,div,MPFR,37.5
-8,fma,FloatLib,1568.9
-8,fma,FloatLib posit,122.6
-8,fma,MPFR,55.9
-8,mul,FloatLib,209.8
-8,mul,FloatLib posit,21.7
+6,sub,MPFR,33.9
+7,add,FloatLib,243.7
+7,add,FloatLib posit,20.9
+7,add,MPFR,35.9
+7,div,FloatLib,223.2
+7,div,FloatLib posit,21.2
+7,div,MPFR,36.1
+7,fma,FloatLib,219.4
+7,fma,FloatLib posit,115.2
+7,fma,MPFR,56.0
+7,mul,FloatLib,206.1
+7,mul,FloatLib posit,22.3
+7,mul,MPFR,39.6
+7,sqrt,FloatLib,79.1
+7,sqrt,FloatLib posit,20.9
+7,sqrt,MPFR,39.4
+7,sub,FloatLib,235.2
+7,sub,FloatLib posit,22.1
+7,sub,MPFR,35.4
+8,add,FloatLib,237.9
+8,add,FloatLib posit,20.9
+8,add,MPFR,36.5
+8,div,FloatLib,219.9
+8,div,FloatLib posit,21.0
+8,div,MPFR,36.7
+8,fma,FloatLib,1312.1
+8,fma,FloatLib posit,121.4
+8,fma,MPFR,55.5
+8,mul,FloatLib,203.0
+8,mul,FloatLib posit,21.1
 8,mul,MPFR,35.4
-8,sqrt,FloatLib,79.3
+8,sqrt,FloatLib,80.5
 8,sqrt,FloatLib posit,21.0
-8,sqrt,MPFR,49.8
-8,sub,FloatLib,247.7
-8,sub,FloatLib posit,20.9
-8,sub,MPFR,36.2
-16,add,FloatLib,150.2
-16,add,FloatLib posit,126.7
-16,add,MPFR,36.4
-16,div,FloatLib,156.6
-16,div,FloatLib posit,240.4
-16,div,MPFR,36.1
-16,fma,FloatLib,136.7
-16,fma,FloatLib posit,135.3
-16,fma,MPFR,57.6
-16,mul,FloatLib,88.6
-16,mul,FloatLib posit,92.0
-16,mul,MPFR,33.5
-16,sqrt,FloatLib,90.1
-16,sqrt,FloatLib posit,203.9
-16,sqrt,MPFR,39.5
-16,sub,FloatLib,128.2
-16,sub,FloatLib posit,171.5
+8,sqrt,MPFR,39.8
+8,sub,FloatLib,235.8
+8,sub,FloatLib posit,23.6
+8,sub,MPFR,36.0
+16,add,FloatLib,150.0
+16,add,FloatLib posit,123.6
+16,add,MPFR,37.9
+16,div,FloatLib,156.4
+16,div,FloatLib posit,243.2
+16,div,MPFR,35.7
+16,fma,FloatLib,137.5
+16,fma,FloatLib posit,137.5
+16,fma,MPFR,55.9
+16,mul,FloatLib,101.2
+16,mul,FloatLib posit,90.6
+16,mul,MPFR,34.4
+16,sqrt,FloatLib,91.5
+16,sqrt,FloatLib posit,200.9
+16,sqrt,MPFR,39.8
+16,sub,FloatLib,134.0
+16,sub,FloatLib posit,120.2
 16,sub,MPFR,35.3
-32,add,FloatLib,160.9
+32,add,FloatLib,164.1
 32,add,FloatLib posit,119.7
-32,add,MPFR,33.5
-32,add,SoftFloat,22.9
+32,add,MPFR,37.2
+32,add,SoftFloat,22.8
 32,add,native FPU,8.4
-32,div,FloatLib,148.3
-32,div,FloatLib posit,256.7
-32,div,MPFR,36.5
-32,div,SoftFloat,25.2
-32,div,native FPU,10.3
-32,fma,FloatLib,145.2
-32,fma,FloatLib posit,139.9
-32,fma,MPFR,55.5
-32,fma,SoftFloat,26.8
-32,fma,native FPU,8.7
-32,mul,FloatLib,95.9
-32,mul,FloatLib posit,91.5
-32,mul,MPFR,32.6
-32,mul,SoftFloat,17.6
+32,div,FloatLib,157.1
+32,div,FloatLib posit,307.1
+32,div,MPFR,39.7
+32,div,SoftFloat,25.7
+32,div,native FPU,10.6
+32,fma,FloatLib,150.8
+32,fma,FloatLib posit,138.3
+32,fma,MPFR,57.5
+32,fma,SoftFloat,29.6
+32,fma,native FPU,8.9
+32,mul,FloatLib,97.2
+32,mul,FloatLib posit,92.0
+32,mul,MPFR,33.1
+32,mul,SoftFloat,17.8
 32,mul,native FPU,8.4
-32,sqrt,FloatLib,82.3
-32,sqrt,FloatLib posit,247.4
-32,sqrt,MPFR,40.7
-32,sqrt,SoftFloat,25.5
+32,sqrt,FloatLib,82.9
+32,sqrt,FloatLib posit,252.4
+32,sqrt,MPFR,41.0
+32,sqrt,SoftFloat,26.2
 32,sqrt,native FPU,10.5
-32,sub,FloatLib,143.4
-32,sub,FloatLib posit,122.4
-32,sub,MPFR,35.4
-32,sub,SoftFloat,22.6
-32,sub,native FPU,8.4
-64,add,FloatLib,377.2
-64,add,FloatLib posit,125.0
-64,add,MPFR,38.0
+32,sub,FloatLib,142.5
+32,sub,FloatLib posit,127.1
+32,sub,MPFR,35.5
+32,sub,SoftFloat,22.9
+32,sub,native FPU,8.6
+64,add,FloatLib,393.5
+64,add,FloatLib posit,122.4
+64,add,MPFR,36.5
 64,add,SoftFloat,21.7
-64,add,native FPU,8.3
-64,div,FloatLib,415.9
-64,div,FloatLib posit,309.9
-64,div,MPFR,35.4
-64,div,SoftFloat,33.7
-64,div,native FPU,11.2
-64,fma,FloatLib,494.9
-64,fma,FloatLib posit,237.9
-64,fma,MPFR,61.1
-64,fma,SoftFloat,26.9
-64,fma,native FPU,8.6
-64,mul,FloatLib,407.8
-64,mul,FloatLib posit,162.7
-64,mul,MPFR,34.4
-64,mul,SoftFloat,17.6
+64,add,native FPU,8.4
+64,div,FloatLib,398.3
+64,div,FloatLib posit,311.9
+64,div,MPFR,35.3
+64,div,SoftFloat,33.5
+64,div,native FPU,11.5
+64,fma,FloatLib,489.8
+64,fma,FloatLib posit,241.0
+64,fma,MPFR,58.9
+64,fma,SoftFloat,27.4
+64,fma,native FPU,9.2
+64,mul,FloatLib,321.9
+64,mul,FloatLib posit,163.1
+64,mul,MPFR,32.3
+64,mul,SoftFloat,17.7
 64,mul,native FPU,8.3
-64,sqrt,FloatLib,160.9
-64,sqrt,FloatLib posit,521.7
-64,sqrt,MPFR,44.5
+64,sqrt,FloatLib,162.5
+64,sqrt,FloatLib posit,521.9
+64,sqrt,MPFR,44.3
 64,sqrt,SoftFloat,27.5
-64,sqrt,native FPU,12.5
-64,sub,FloatLib,349.6
-64,sub,FloatLib posit,121.6
-64,sub,MPFR,36.1
-64,sub,SoftFloat,21.5
+64,sqrt,native FPU,12.6
+64,sub,FloatLib,354.9
+64,sub,FloatLib posit,119.6
+64,sub,MPFR,38.0
+64,sub,SoftFloat,21.4
 64,sub,native FPU,8.3
 128,add,FloatLib,74.1
-128,add,FloatLib posit,942.1
-128,add,MPFR,37.8
-128,div,FloatLib,191.2
-128,div,FloatLib posit,4947.3
-128,div,MPFR,45.3
-128,fma,FloatLib,131.9
-128,fma,FloatLib posit,5056.6
-128,fma,MPFR,91.9
-128,mul,FloatLib,44.9
-128,mul,FloatLib posit,997.2
-128,mul,MPFR,37.0
-128,sqrt,FloatLib,266.8
-128,sqrt,FloatLib posit,6419.2
-128,sqrt,MPFR,54.3
-128,sub,FloatLib,73.4
-128,sub,FloatLib posit,941.1
-128,sub,MPFR,37.6
-256,add,FloatLib,1828.7
-256,add,FloatLib posit,4751.9
-256,add,MPFR,52.1
-256,div,FloatLib,1884.1
-256,div,FloatLib posit,6385.8
-256,div,MPFR,131.9
-256,fma,FloatLib,2300.0
-256,fma,FloatLib posit,6186.7
-256,fma,MPFR,101.4
-256,mul,FloatLib,1700.2
-256,mul,FloatLib posit,4794.7
-256,mul,MPFR,58.0
-256,sqrt,FloatLib,4731.7
-256,sqrt,FloatLib posit,7379.3
-256,sqrt,MPFR,172.0
-256,sub,FloatLib,1780.7
-256,sub,FloatLib posit,4468.3
-256,sub,MPFR,51.3
-512,add,FloatLib,1940.7
-512,add,FloatLib posit,4944.3
-512,add,MPFR,57.3
-512,div,FloatLib,2129.6
-512,div,FloatLib posit,6107.6
-512,div,MPFR,195.3
-512,fma,FloatLib,2403.9
-512,fma,FloatLib posit,6092.4
-512,fma,MPFR,141.4
-512,mul,FloatLib,1788.9
-512,mul,FloatLib posit,4717.0
-512,mul,MPFR,93.9
-512,sqrt,FloatLib,5378.0
-512,sqrt,FloatLib posit,9001.6
-512,sqrt,MPFR,333.9
-512,sub,FloatLib,1884.0
-512,sub,FloatLib posit,4545.5
-512,sub,MPFR,55.6
-1024,add,FloatLib,1988.3
-1024,add,FloatLib posit,5119.8
-1024,add,MPFR,66.4
-1024,div,FloatLib,2222.6
-1024,div,FloatLib posit,8736.6
-1024,div,MPFR,350.6
-1024,fma,FloatLib,2742.9
-1024,fma,FloatLib posit,6765.9
-1024,fma,MPFR,278.0
-1024,mul,FloatLib,1973.1
-1024,mul,FloatLib posit,5311.9
-1024,mul,MPFR,173.1
-1024,sqrt,FloatLib,6777.9
-1024,sqrt,FloatLib posit,13396.2
-1024,sqrt,MPFR,520.5
-1024,sub,FloatLib,1949.8
-1024,sub,FloatLib posit,4781.1
-1024,sub,MPFR,60.9
-2048,add,FloatLib,2085.8
-2048,add,FloatLib posit,5456.2
-2048,add,MPFR,84.1
-2048,div,FloatLib,2851.0
-2048,div,FloatLib posit,8065.0
-2048,div,MPFR,794.0
-2048,fma,FloatLib,3314.6
-2048,fma,FloatLib posit,7561.3
-2048,fma,MPFR,722.4
-2048,mul,FloatLib,2563.1
-2048,mul,FloatLib posit,6216.1
-2048,mul,MPFR,439.6
-2048,sqrt,FloatLib,9119.7
-2048,sqrt,FloatLib posit,27423.4
-2048,sqrt,MPFR,1268.5
-2048,sub,FloatLib,2100.4
-2048,sub,FloatLib posit,5162.1
-2048,sub,MPFR,114.1
-4096,add,FloatLib,2386.0
-4096,add,FloatLib posit,6210.9
-4096,add,MPFR,124.6
-4096,div,FloatLib,4569.6
-4096,div,FloatLib posit,12018.5
-4096,div,MPFR,2383.8
-4096,fma,FloatLib,5063.8
-4096,fma,FloatLib posit,10677.0
-4096,fma,MPFR,1874.3
-4096,mul,FloatLib,4304.2
-4096,mul,FloatLib posit,8291.4
-4096,mul,MPFR,1314.9
-4096,sqrt,FloatLib,14059.9
-4096,sqrt,FloatLib posit,71724.1
-4096,sqrt,MPFR,1872.0
-4096,sub,FloatLib,2354.2
-4096,sub,FloatLib posit,5662.1
-4096,sub,MPFR,125.1
+128,add,FloatLib posit,956.4
+128,add,MPFR,38.6
+128,div,FloatLib,190.0
+128,div,FloatLib posit,5270.4
+128,div,MPFR,46.7
+128,fma,FloatLib,132.9
+128,fma,FloatLib posit,5000.8
+128,fma,MPFR,87.6
+128,mul,FloatLib,45.3
+128,mul,FloatLib posit,996.7
+128,mul,MPFR,36.9
+128,sqrt,FloatLib,213.6
+128,sqrt,FloatLib posit,6383.3
+128,sqrt,MPFR,55.6
+128,sub,FloatLib,72.9
+128,sub,FloatLib posit,958.1
+128,sub,MPFR,38.4
+256,add,FloatLib,1860.2
+256,add,FloatLib posit,4894.9
+256,add,MPFR,52.8
+256,div,FloatLib,1893.6
+256,div,FloatLib posit,5437.0
+256,div,MPFR,134.7
+256,fma,FloatLib,2305.7
+256,fma,FloatLib posit,6014.6
+256,fma,MPFR,101.6
+256,mul,FloatLib,1757.4
+256,mul,FloatLib posit,4521.5
+256,mul,MPFR,60.7
+256,sqrt,FloatLib,4577.7
+256,sqrt,FloatLib posit,7334.2
+256,sqrt,MPFR,171.6
+256,sub,FloatLib,1812.9
+256,sub,FloatLib posit,4402.5
+256,sub,MPFR,51.8
+512,add,FloatLib,1878.8
+512,add,FloatLib posit,5085.1
+512,add,MPFR,57.7
+512,div,FloatLib,2050.1
+512,div,FloatLib posit,5593.7
+512,div,MPFR,189.6
+512,fma,FloatLib,2506.8
+512,fma,FloatLib posit,6146.8
+512,fma,MPFR,145.6
+512,mul,FloatLib,1831.7
+512,mul,FloatLib posit,4717.4
+512,mul,MPFR,97.7
+512,sqrt,FloatLib,5459.9
+512,sqrt,FloatLib posit,9052.2
+512,sqrt,MPFR,324.4
+512,sub,FloatLib,1867.3
+512,sub,FloatLib posit,4677.7
+512,sub,MPFR,54.9
+1024,add,FloatLib,1940.5
+1024,add,FloatLib posit,5127.0
+1024,add,MPFR,66.3
+1024,div,FloatLib,2298.2
+1024,div,FloatLib posit,6378.7
+1024,div,MPFR,329.4
+1024,fma,FloatLib,2798.7
+1024,fma,FloatLib posit,7162.8
+1024,fma,MPFR,282.7
+1024,mul,FloatLib,2018.4
+1024,mul,FloatLib posit,5344.9
+1024,mul,MPFR,174.2
+1024,sqrt,FloatLib,6761.6
+1024,sqrt,FloatLib posit,13255.9
+1024,sqrt,MPFR,523.4
+1024,sub,FloatLib,1934.8
+1024,sub,FloatLib posit,4885.1
+1024,sub,MPFR,61.0
+2048,add,FloatLib,2083.4
+2048,add,FloatLib posit,5460.4
+2048,add,MPFR,85.8
+2048,div,FloatLib,2878.5
+2048,div,FloatLib posit,7620.4
+2048,div,MPFR,739.1
+2048,fma,FloatLib,3448.4
+2048,fma,FloatLib posit,7723.6
+2048,fma,MPFR,710.9
+2048,mul,FloatLib,2792.7
+2048,mul,FloatLib posit,5967.3
+2048,mul,MPFR,439.4
+2048,sqrt,FloatLib,8743.3
+2048,sqrt,FloatLib posit,26006.9
+2048,sqrt,MPFR,909.0
+2048,sub,FloatLib,2115.2
+2048,sub,FloatLib posit,5197.4
+2048,sub,MPFR,77.8
+4096,add,FloatLib,2511.6
+4096,add,FloatLib posit,6285.9
+4096,add,MPFR,120.8
+4096,div,FloatLib,4455.0
+4096,div,FloatLib posit,12025.6
+4096,div,MPFR,2110.8
+4096,fma,FloatLib,4989.7
+4096,fma,FloatLib posit,9925.2
+4096,fma,MPFR,1800.6
+4096,mul,FloatLib,4281.8
+4096,mul,FloatLib posit,8078.9
+4096,mul,MPFR,1322.4
+4096,sqrt,FloatLib,14398.9
+4096,sqrt,FloatLib posit,83493.1
+4096,sqrt,MPFR,1870.2
+4096,sub,FloatLib,2548.1
+4096,sub,FloatLib posit,6271.0
+4096,sub,MPFR,108.8

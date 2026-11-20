@@ -85,7 +85,7 @@ theorem sumFoldStep_le (u : ℝ) (hu : 0 ≤ u) (step : α → β → α) (p c :
           add_le_add (mul_le_mul_of_nonneg_left hsum hu)
             (mul_le_mul_of_nonneg_left (by linarith) (by linarith))
       _ ≤ ((1 + u) ^ (k + 1) - 1) * (A + |p v|) + (1 + u) ^ (k + 1) * (C + c v) := by
-          rw [hk]; rw [hk] at hp hcc; nlinarith
+          rw [hk]; rw [hk] at hp hcc; linarith
 
 /-- The reference component of the recurrence of a summation loop is the plain sum. -/
 theorem sumFoldStep_reference (u : ℝ) (step : α → β → α) (p c : β → ℝ) (initial : α)
@@ -222,10 +222,16 @@ theorem allSteps_sumFold_of_abs_le (u η b M : ℝ) (hu : 0 ≤ u) (hη : 0 ≤ 
         mul_le_mul_of_nonneg_left hCb hP0
       have h2 : (1 + u) ^ l.length * (k * η) ≤ 2 * (k * η) :=
         mul_le_mul_of_nonneg_right hg0 (mul_nonneg hk0 hη)
-      nlinarith
-    have hcvb : c v ≤ b + η := by nlinarith [abs_nonneg (p v)]
-    have hM : 2 * (k + 1) * (b + η) ≤ M := by nlinarith
-    refine ⟨by nlinarith, ?_⟩
-    nlinarith
+      have h3 : (1 + u) * (1 + u) ^ l.length * A ≤ 2 * A :=
+        mul_le_mul_of_nonneg_right (hpow.symm.le.trans hg1) hA0
+      linarith
+    have hcvb : c v ≤ b + η := by
+      linarith [mul_le_of_le_one_left (abs_nonneg (p v)) hu1]
+    have hM : 2 * (k + 1) * (b + η) ≤ M := by
+      linarith [mul_le_mul_of_nonneg_right (show k + 1 ≤ (input.length : ℝ) + 1 by linarith)
+        (add_nonneg hb hη)]
+    have hkb : 0 ≤ k * (b + η) := mul_nonneg hk0 (add_nonneg hb hη)
+    refine ⟨by linarith, ?_⟩
+    linarith
 
 end List

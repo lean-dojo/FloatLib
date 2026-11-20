@@ -2,9 +2,12 @@
 
 `measure(raw, jobs, threads, only)` runs the benchmark runners that already live under
 `benchmarks/` (they do the measuring: `Lean.Kernel.whnf`, Lean's profiler, `IO.monoNanosNow`,
-`/usr/bin/time`), at most `jobs` at a time, and writes their logs under `raw`, outside the
-checkout. Nothing is measured in Python. `figures.py` then turns the logs into the CSV files of
-the figures.
+`/usr/bin/time`) and writes their logs under `raw`, outside the checkout. The kernel sections
+(`QUIET`) run first, one at a time, and the others after them, at most `jobs` at a time. Where
+the kernel has core scheduling (`own_core`), a section runs with a cookie of its own, and the
+section `functions` gives one to each of its processes: no other task then runs on the second
+hardware thread of a core while a measurement runs on the first. The section in `SHARED` has
+none. Nothing is measured in Python. `figures.py` then turns the logs into the CSV files of the figures.
 
 The runners call Lake through `tests/lib/lake.sh`, which holds one build lock per build
 directory for as long as a command runs, so two measurements would wait for each other. The
@@ -19,6 +22,7 @@ from __future__ import annotations
 import os
 import shlex
 import subprocess
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -51,33 +55,46 @@ case "$command" in
 esac
 '''
 
+# `$own` is empty or the stand-in `own-core`, which gives the process it starts a cookie of its
+# own: the four processes that run side by side at 1,024 and 4,096 bits then never share a core.
 FUNCTIONS = r"""
 source tests/lib/lake.sh
 exe="$(floatlib_build_path bin/execFloatIEEE2019)"
+own="${FIGURES_OWN_CORE:-}"
 : > @LOG@
 for format in e4f3 binary16 binary32 binary64 binary128; do
-  timeout 600 "$exe" functions "$format" 8 >> @LOG@ 2>&1 || echo "FAILED $format" >> @LOG@
+  $own timeout 600 "$exe" functions "$format" 8 >> @LOG@ 2>&1 || echo "FAILED $format" >> @LOG@
 done
-timeout 900 "$exe" functions binary256 2 >> @LOG@ 2>&1 || echo "FAILED binary256" >> @LOG@
+$own timeout 900 "$exe" functions binary256 2 >> @LOG@ 2>&1 || echo "FAILED binary256" >> @LOG@
 names="$(grep '^binary,binary16,' @LOG@ | cut -d, -f4)"
 for format in binary1024 binary4096; do
   printf '%s\n' $names | xargs -P 4 -I{} bash -c \
-    'timeout "${FIGURES_FUNCTION_TIMEOUT:-120}" "$1" functions "$2" 1 "$3" 2>&1 || echo "NORESULT $2 $3"' \
-    _ "$exe" "$format" {} >> @LOG@
+    '$4 timeout "${FIGURES_FUNCTION_TIMEOUT:-120}" "$1" functions "$2" 1 "$3" 2>&1 || echo "NORESULT $2 $3"' \
+    _ "$exe" "$format" {} "$own" >> @LOG@
 done
 grep -c '^binary,' @LOG@
 """
 
-# The order in which sections start. The short kernel sections go first, while the machine is
-# still quiet: their cells are differences of a few microseconds. The long sections queue
-# behind them, the longest first, so that a run takes about as long as its longest section.
+# The order in which sections start. The kernel sections go first, and the long sections queue
+# behind them, the longest first, so that they take about as long as the longest of them.
 START_ORDER = ["kernel-binary", "kernel-public", "kernel-spec", "kernel-public-64", "kernel-spec-64",
                "kernel-64", "matched", "families", "blocks", "extras", "loops", "exhaustive",
-               "exact-native", "compiled-comparison", "ieee2019-wide", "ieee2019", "functions",
-               "compiled", "ieee2019-compiled", "exact", "exact-compiled"]
+               "exact-native", "exact", "ieee2019", "compiled-comparison", "ieee2019-wide", "functions",
+               "compiled", "ieee2019-compiled", "exact-compiled"]
+# The sections that run one at a time, before any other starts. Their cells are differences of
+# two kernel times of microseconds to milliseconds. With a second section on the machine a whole
+# cell can come out half as slow again, and a slow fold that only reads its operands makes the
+# cells of its table too small.
+QUIET = frozenset(["kernel-binary", "kernel-public", "kernel-spec", "kernel-public-64", "kernel-spec-64",
+                   "kernel-64", "matched", "families", "blocks", "extras", "loops", "exhaustive",
+                   "exact-native", "exact", "ieee2019"])
 BINARY_FORMATS = ("e4m3 e5m2 binary16 bfloat16 e8f15 binary32 binary64 e15f64 binary128 binary256 "
                   "binary512 binary1024 binary4096")
 IEEE_FORMATS = "e4f3 binary16 binary32 binary64 binary128 binary256 decimal32 decimal64 decimal128"
+# Seconds that one row of the formats of 1,024 and 4,096 bits may take (`FIGURES_ROW_TIMEOUT`),
+# and a row of a certified function of clause 9.2 (`FIGURES_FUNCTION_ROW_TIMEOUT`).
+ROW_SECONDS = 600
+FUNCTION_ROW_SECONDS = 5400
 
 
 def sections(raw: Path) -> list:
@@ -107,10 +124,13 @@ def sections(raw: Path) -> list:
         ("kernel-64", 1200, f"KERNEL_BENCH_OUT={kernel}/triples64 benchmarks/kernel/run.sh kernel 64 5"),
         # IEEE 754-2019 clauses 5 and 9 under the standard's names, binary and decimal.
         ("ieee2019", 3000, f"KERNEL_BENCH_OUT={ieee} benchmarks/kernel/ieee2019.sh 4 3 {IEEE_FORMATS}"),
-        # At 1,024 and 4,096 bits every row runs in its own Lean process with a limit of 60
-        # seconds, eight at a time: a row that needs longer has no value (`n/a`).
-        ("ieee2019-wide", 3000,
-         f"KERNEL_BENCH_OUT={wide} KERNEL_BENCH_ROW_TIMEOUT=${{FIGURES_ROW_TIMEOUT:-60}} "
+        # At 1,024 and 4,096 bits every row runs in its own Lean process with a limit of
+        # `ROW_SECONDS` seconds, a certified function of clause 9.2 with `FUNCTION_ROW_SECONDS`,
+        # eight at a time: a row that needs longer has no value (`n/a`).
+        ("ieee2019-wide", 18000,
+         f"KERNEL_BENCH_OUT={wide} KERNEL_BENCH_ROW_TIMEOUT=${{FIGURES_ROW_TIMEOUT:-{ROW_SECONDS}}} "
+         "KERNEL_BENCH_FUNCTION_ROW_TIMEOUT="
+         f"${{FIGURES_FUNCTION_ROW_TIMEOUT:-{FUNCTION_ROW_SECONDS}}} "
          "KERNEL_BENCH_JOBS=${FIGURES_ROW_JOBS:-8} benchmarks/kernel/ieee2019.sh 4 3 binary1024 binary4096"),
         # Status flags, comparisons, conversions, casts and literals in binary32 and binary64.
         ("extras", 2400, f"KERNEL_BENCH_OUT={kernel} benchmarks/kernel/extras.sh 64 5"),
@@ -154,11 +174,58 @@ def sections(raw: Path) -> list:
     ]
 
 
-def shell(command: str, *, env: dict, log: Path, seconds: int, cwd: Path = ROOT) -> tuple:
-    """Exit code and wall seconds of one command; its own process group is killed on timeout."""
+# The section that starts several measuring processes at a time from inside its runner (the
+# rows of 1,024 and 4,096 bits of the IEEE table, eight at a time). It gets no cookie: two
+# processes with one cookie may share a core.
+SHARED = frozenset(["ieee2019-wide"])
+
+# A process with a core-scheduling cookie (Linux `prctl(PR_SCHED_CORE)`, kernels built with
+# `CONFIG_SCHED_CORE`) shares the two hardware threads of a core only with processes that have
+# the same cookie. A busy second thread makes a single-threaded measurement 1.5 to 2 times
+# slower, so on a machine that other jobs share it decides whether a cell is right. The cookie
+# is created in the child, which then becomes the section's shell; its children inherit it.
+# 62 is PR_SCHED_CORE, 1 PR_SCHED_CORE_CREATE, and the scope 1 is the thread group.
+COOKIE = r"""
+import ctypes, os, sys
+try:
+    made = ctypes.CDLL(None, use_errno=True).prctl(62, 1, 0, 1, 0) == 0
+except (OSError, AttributeError):
+    made = False
+if sys.argv[1] == "--probe":
+    sys.exit(0 if made else 1)
+os.execvp("bash", ["bash", "-c", sys.argv[1]])
+"""
+
+# The same for one command: `own-core COMMAND ARGUMENT...` (a stand-in next to `lake`).
+OWN_CORE = r"""#!/usr/bin/env python3
+import ctypes, os, sys
+try:
+    ctypes.CDLL(None, use_errno=True).prctl(62, 1, 0, 1, 0)
+except (OSError, AttributeError):
+    pass
+os.execvp(sys.argv[1], sys.argv[1:])
+"""
+
+
+def own_core() -> bool:
+    """Whether a process can have a core-scheduling cookie on this machine."""
+    if not hasattr(own_core, "known"):
+        try:
+            own_core.known = subprocess.run([sys.executable, "-I", "-c", COOKIE, "--probe"],
+                                            timeout=60).returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            own_core.known = False
+    return own_core.known
+
+
+def shell(command: str, *, env: dict, log: Path, seconds: int, cwd: Path = ROOT,
+          cookie: bool = False) -> tuple:
+    """Exit code and wall seconds of one command; its own process group is killed on timeout.
+    With `cookie` the command runs with a core-scheduling cookie of its own."""
     start = time.monotonic()
+    argv = [sys.executable, "-I", "-c", COOKIE, command] if cookie else ["bash", "-c", command]
     with log.open("w") as stream:
-        process = subprocess.Popen(["bash", "-c", command], cwd=cwd, env=env, stdout=stream,
+        process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=stream,
                                    stderr=subprocess.STDOUT, start_new_session=True)
         try:
             code = process.wait(timeout=seconds)
@@ -227,9 +294,9 @@ def prepare(raw: Path, build: Path, reuse: bool, log) -> dict:
             if name and name not in ("LAKE", "_", "SHLVL", "PWD", "OLDPWD") and base.get(name) != value:
                 lines.append(f"export {name}={shlex.quote(value)}")
         (tools / "lake-env.sh").write_text("\n".join(lines) + "\n")
-    shim = tools / "lake"
-    shim.write_text(SHIM)
-    shim.chmod(0o755)
+    for name, text in (("lake", SHIM), ("own-core", OWN_CORE)):
+        (tools / name).write_text(text)
+        (tools / name).chmod(0o755)
     return base
 
 
@@ -243,6 +310,10 @@ def measure(raw: Path, jobs: int, threads: int, only: list, log, reuse: bool = F
     if unknown:
         raise SystemExit(f"no timing section named {', '.join(sorted(unknown))}")
     chosen.sort(key=lambda s: START_ORDER.index(s[0]) if s[0] in START_ORDER else len(START_ORDER))
+    cores = own_core()
+    log("a measuring process has its cores to itself (core scheduling), the rows of ieee2019-wide excepted"
+        if cores else
+        "no core scheduling on this machine: a job on the second thread of a core shows in the cells")
 
     def run(section) -> tuple:
         name, seconds, command = section
@@ -250,16 +321,20 @@ def measure(raw: Path, jobs: int, threads: int, only: list, log, reuse: bool = F
         if alias.is_symlink():
             alias.unlink()
         alias.symlink_to(build)
+        share = threads if name in QUIET else max(1, threads // max(1, jobs))
         env = {**base, "LAKE": str(tools / "lake"), "FIGURES_LAKE_ENV": str(tools / "lake-env.sh"),
                "FIGURES_BUILD": str(build), "FLOATLIB_BUILD_DIR": str(alias),
-               "LEAN_NUM_THREADS": str(max(1, threads // max(1, jobs)))}
-        code, spent = shell(command, env=env, log=raw / f"{name}.out", seconds=seconds)
-        log(f"{name}: exit {code}, {spent:.0f} s")
+               "LEAN_NUM_THREADS": str(share),
+               "FIGURES_OWN_CORE": str(tools / "own-core") if cores else ""}
+        code, spent = shell(command, env=env, log=raw / f"{name}.out", seconds=seconds,
+                            cookie=cores and name not in SHARED)
+        log(f"{name}: exit {code}, {spent:.0f} s" + (", alone" if name in QUIET else ""))
         return name, code, spent
 
     (raw / "suite").mkdir(exist_ok=True)
+    done = [run(section) for section in chosen if section[0] in QUIET]
     with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
-        done = list(pool.map(run, chosen))
+        done += list(pool.map(run, [section for section in chosen if section[0] not in QUIET]))
     if any(name in ("kernel-binary", "matched", "families", "exhaustive", "compiled", "compiled-comparison")
            for name, _, _ in done):
         code, spent = shell(f"python3 -I benchmarks/suite/tables.py {shlex.quote(str(raw / 'suite'))}",

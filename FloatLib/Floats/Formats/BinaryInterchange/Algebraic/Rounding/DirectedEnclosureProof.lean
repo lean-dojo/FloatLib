@@ -50,6 +50,7 @@ theorem roundReal_eq_of_mem_Icc (hfmt : fmt.isIEEE = true) (mode : IEEERoundingM
     {lo hi x : ℝ} (hlo : lo ≤ x) (hhi : x ≤ hi) (hsign : 0 < lo ∨ hi < 0)
     (h : roundReal fmt mode lo = roundReal fmt mode hi) :
     roundReal fmt mode x = roundReal fmt mode lo := by
+  have hsigned := FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt
   have hlo0 : lo ≠ 0 := by
     rcases hsign with hs | hs
     · exact hs.ne'
@@ -62,9 +63,9 @@ theorem roundReal_eq_of_mem_Icc (hfmt : fmt.isIEEE = true) (mode : IEEERoundingM
     rcases hsign with hs | hs
     · exact (hs.trans_le hlo).ne'
     · exact (hhi.trans_lt hs).ne
-  have ha := roundReal_roundsTo hfmt mode hlo0
-  have hb := roundReal_roundsTo hfmt mode hhi0
-  have hxr := roundReal_roundsTo hfmt mode hx0
+  have ha := roundReal_roundsTo (fmt := fmt) mode hlo0
+  have hb := roundReal_roundsTo (fmt := fmt) mode hhi0
+  have hxr := roundReal_roundsTo (fmt := fmt) mode hx0
   have hAX := roundAt_mono fmt hlo mode
   have hXB := roundAt_mono fmt hhi mode
   rcases hsign with hpos | hneg
@@ -95,7 +96,7 @@ theorem roundReal_eq_of_mem_Icc (hfmt : fmt.isIEEE = true) (mode : IEEERoundingM
                 simp [toReal_maxFinite]
           linarith
       exact eq_of_toReal_eq hfinite hfa (hvalue.trans hvalueLo.symm)
-        (fun _ => by rw [hxr.signBit, ha.signBit, hsx, hsa])
+        (fun _ => by rw [hxr.signBit hsigned, ha.signBit hsigned, hsx, hsa])
     · have hX : toReal (posMaxFinite fmt) < roundAt fmt x mode := by
         have hgt := not_le.mp hrange
         rwa [abs_of_nonneg hX0] at hgt
@@ -128,7 +129,7 @@ theorem roundReal_eq_of_mem_Icc (hfmt : fmt.isIEEE = true) (mode : IEEERoundingM
                 simp [toReal_maxFinite]
           linarith
       exact eq_of_toReal_eq hfinite hfb (hvalue.trans hvalueLo.symm)
-        (fun _ => by rw [hxr.signBit, ha.signBit, hsx, hsa])
+        (fun _ => by rw [hxr.signBit hsigned, ha.signBit hsigned, hsx, hsa])
     · have hX : roundAt fmt x mode < -toReal (posMaxFinite fmt) := by
         have hgt := not_le.mp hrange
         rw [abs_of_nonpos hX0] at hgt

@@ -24,7 +24,8 @@ The theorem is `Packed.lane_table` with one closed check that Lean's kernel eval
 program of `f` runs once on rows of `n * n` lanes, which gives the table of `f` with the lanes
 of the run, and the literal is compared with that row by halving both (`Packed.differences`).
 No value of `f` is computed one pair at a time. The run uses lanes of 16, 32 or 64 bits, the
-narrowest of `Reify.frames` on which no lane has an error.
+narrowest of `Reify.frames` on which no lane has an error. A frame whose check the kernel
+rejects leaves no declaration in the environment.
 
 The command fails when a lane has an error with lanes of 64 bits (a value that does not fit 63
 bits, a shift count of 64 or more, a function without a `@[lane_call]` replacement) or when a
@@ -121,11 +122,15 @@ def elabLaneTable : CommandElab := fun stx => do
           widthProof, depthProof, program, f, sound, denotes,
           mkApp2 (mkConst ``Eq.refl [Level.one]) (mkConst ``Bool) (mkConst ``Bool.true)]
       let (statement, proof) := ShareCommon.shareCommon' (← statementOf tableValue, proof)
+      let environment ← getEnv
       try
         let lemmaName ← withOptions (Elab.async.set · false) do mkAuxLemma [] statement proof
         found := some (entries, lemmaName)
         break
       catch error =>
+        -- Lean keeps a declaration that its kernel rejects as an axiom, so that later uses of
+        -- its name still elaborate. The table of a frame that is too narrow is no axiom.
+        setEnv environment
         failure := m!"a lane has an error (a value that does not fit {laneBits - 1} bits, a \
           shift count of {laneBits} or more, a function without a replacement)\n\
           {error.toMessageData}"

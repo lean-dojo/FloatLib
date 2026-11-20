@@ -79,6 +79,7 @@ theorem logB_eq_spec {fmt : FloatFormat} (x : Model fmt) :
     · have hspec : Model.logB x = Model.nativeOverflow fmt true := by
         rw [← Model.value_logB, Model.logB_status_of_zero x d hexact hzero]
       rw [hspec, hzero]
+      simp only [overflowWord_eq]
       rfl
     · have hbeq : Nat.beq d.significand 0 = false := by
         rw [← Bool.not_eq_true, Nat.beq_eq]
@@ -128,7 +129,7 @@ theorem logB_eq_spec {fmt : FloatFormat} (x : Model fmt) :
         rw [← Model.value_logB, Model.logB_status_of_infinity x (Model.signBit x)
           (by simp [Model.exactValue, hnone, hinf])]
       rw [hspec]
-      rfl
+      simp only [overflowWord_eq]
     · rw [hnan] at hinf
       have hspec : Model.logB x = Model.quietNaN x := by
         rw [← Model.value_logB, Model.logB_status_of_nan x (Model.signBit x)

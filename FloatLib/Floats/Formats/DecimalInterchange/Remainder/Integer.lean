@@ -106,14 +106,14 @@ theorem remainderQuotient_nearest (a b : Nat) (n : Int) :
     have hlo := neg_abs_le ((a : ℚ) - (remainderQuotient a b : ℚ) * b)
     have hprod := mul_le_mul_of_nonneg_right hn' hb'.le
     have ht := le_abs_self ((a : ℚ) - (n : ℚ) * b)
-    nlinarith
+    linarith
   · simp [hn]
   · have hn' : (remainderQuotient a b : ℚ) + 1 ≤ (n : ℚ) := by
       exact_mod_cast hn
     have hhi := le_abs_self ((a : ℚ) - (remainderQuotient a b : ℚ) * b)
     have hprod := mul_le_mul_of_nonneg_right hn' hb'.le
     have ht := neg_le_abs ((a : ℚ) - (n : ℚ) * b)
-    nlinarith
+    linarith
 
 end Arithmetic
 end FloatLib.Floats.Formats.DecimalInterchange

@@ -82,9 +82,13 @@ def sqrtSpecial (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat) : 
             (invalidWord fmt) (sqrtReference fmt mode a)))))
     (Nat.shiftRight a (signPos fmt)) (Nat.land a (magnitudeMask fmt))
 
+kernel_constant sqrtSpecial
+
 /-- Zero when `fracWidth + 1 ≤ exponentBias`, the formats whose roots are all normal. -/
 def sqrtSlow (fmt : FloatFormat) : Nat :=
   Nat.sub (Nat.succ fmt.fracWidth) fmt.exponentBias
+
+kernel_constant sqrtSlow
 
 /-- One Newton step toward the integer square root of `N`. -/
 def newton (N x : Nat) : Nat :=
@@ -308,7 +312,7 @@ theorem sqrtPositiveDyadic_bits (fmt : FloatFormat) (m scale : Nat) (hm : m ≠ 
   have hshiftEq : (Int.ofNat scale - Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1) -
       2 * (Int.ofNat (num / 2) - Int.ofNat fmt.exponentBias - fmt.fracWidth)).toNat = shift := by
     simp only [Int.ofNat_eq_natCast]
-    omega
+    lia
   have hpow2 : Model.pow2 fmt.fracWidth = 2 ^ fmt.fracWidth := Model.pow2_eq_two_pow _
   have hpow2' : Model.pow2 (fmt.fracWidth + 1) = 2 ^ (fmt.fracWidth + 1) :=
     Model.pow2_eq_two_pow _
@@ -325,24 +329,15 @@ theorem sqrtPositiveDyadic_bits (fmt : FloatFormat) (m scale : Nat) (hm : m ≠ 
   by_cases hieee : fmt.isIEEE = true
   · have hbiasEq := FloatFormat.exponentBias_eq_bias_of_isIEEE fmt hieee
     have hmax := maxFiniteExpField_of_isIEEE fmt hieee
-    have hpowNat : 2 ^ (fmt.expWidth - 1) = fmt.bias + 1 := by
-      unfold FloatFormat.bias
-      have := Nat.one_le_two_pow (n := fmt.expWidth - 1)
-      omega
-    have hpowInt : (2 : Int) ^ (fmt.expWidth - 1) = (fmt.bias : Int) + 1 := by
-      exact_mod_cast hpowNat
-    rw [hbiasEq] at key hshiftEq hbias
+    rw [hbiasEq] at hshiftEq hbias
     have htarget :
         min ((Int.ofNat scale - Int.ofNat (fmt.bias + fmt.fracWidth - 1)).ediv 2)
             ((FloatFormat.toModel fmt).targetExponent
               ((Float.Model.totalExponent m
                 (Int.ofNat scale - Int.ofNat (fmt.bias + fmt.fracWidth - 1)) + 1).ediv 2)) =
           Int.ofNat (num / 2) - Int.ofNat fmt.bias - fmt.fracWidth := by
-      simp only [Float.Model.Format.targetExponent, Float.Model.Format.mantissaBits,
-        Float.Model.Format.minExponent, Float.Model.totalExponent, FloatFormat.toModel, hpowInt,
-        Int.ofNat_eq_natCast, ← Int.div_def] at key ⊢
-      rw [Int.max_def, Int.min_def] at key ⊢
-      split_ifs at key ⊢ <;> omega
+      rw [Model.NativeSmallWordSqrt.target_exponent_eq fmt hbias m scale hleading,
+        show (m.log2 + scale + (fmt.bias + 1 - fmt.fracWidth)) / 2 = num / 2 by lia]
     have hfields := Model.ofModel_sqrt_finite_positive_eq_ofFields fmt m shift (num / 2)
       (Int.ofNat scale - Int.ofNat (fmt.bias + fmt.fracWidth - 1)) (Nat.pos_of_ne_zero hm)
       hshiftLower hshiftUpper hqpos (by omega) htarget hshiftEq
@@ -370,16 +365,13 @@ theorem sqrtPositiveDyadic_bits (fmt : FloatFormat) (m scale : Nat) (hm : m ≠ 
           Int.ofNat (num / 2) - Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth := by
       simp only [Model.FiniteSqrt.targetExponent, FloatFormat.minSubnormalExponent,
         FloatFormat.minNormalExponent, Int.ofNat_eq_natCast, ← Int.div_def] at key ⊢
-      rw [Int.max_def, Int.min_def] at key
-      rw [Int.max_def]
-      split_ifs at key ⊢ <;> omega
+      lia
     have hrootExp : min ((Int.ofNat scale -
           Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1)).ediv 2)
         (Int.ofNat (num / 2) - Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth) =
           Int.ofNat (num / 2) - Int.ofNat fmt.exponentBias - Int.ofNat fmt.fracWidth := by
       simp only [Int.ofNat_eq_natCast, ← Int.div_def]
-      rw [Int.min_def]
-      split_ifs <;> omega
+      lia
     simp only [hfalse, Bool.false_eq_true, ite_false, Model.FiniteSqrt.sqrtGeneral_eq_unscaled,
       beq_iff_eq, hm, hfinal, hrootExp, Int.sub_self, Int.toNat_zero]
     rw [show (Int.ofNat scale - Int.ofNat (fmt.exponentBias + fmt.fracWidth - 1) -
@@ -644,6 +636,7 @@ theorem sqrtSpecial_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x : 
   have href : sqrtReference fmt mode x.toNatBits = (Model.sqrt x (mode := mode)).toNatBits := by
     rw [sqrtReference, Model.ofNatBits_toNatBits, referenceRoot_eq]
   rw [href]
+  simp only [invalidWord_eq, overflowWord_eq]
   cases Model.isInfinite x <;> cases Model.isZero x <;> cases Model.signBit x <;> rfl
 
 /--

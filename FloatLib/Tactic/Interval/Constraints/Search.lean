@@ -319,33 +319,34 @@ def oracle {α : Type} (B : Backend α) (box : Box) : Option Oracle := do
   let intervals ← box.enclose? B
   pure {
     range := fun e => do
-      let I ← e.eval? B (fun i => intervals[i]?)
+      let I ← e.evalZero? B (fun i => intervals[i]?)
       let lo ← B.decode I.lo
       let hi ← B.decode I.hi
       pure ⟨lo, hi⟩
     definite := fun strict f => f.definiteOn B strict box
     excluded := fun f => f.excluded box }
 
+/-- The registrations of `Functions` whose real function is a unary operation of the expression
+language, with that operation. -/
+def unaryRegistrations : List (Name × UnaryOp) :=
+  [ (``exp_extension_sound, .exp), (``log_extension_sound, .log)
+  , (``sin_extension_sound, .sin), (``cos_extension_sound, .cos)
+  , (``tan_extension_sound, .tan), (``arcsin_extension_sound, .asin)
+  , (``arccos_extension_sound, .acos), (``arctan_extension_sound, .atan)
+  , (``sinh_extension_sound, .sinh), (``cosh_extension_sound, .cosh)
+  , (``tanh_extension_sound, .tanh), (``sqrt_extension_sound, .sqrt) ]
+
 /-- The executable enclosure of each registration of `Functions`, for the search. -/
 def compiledExtension? (registration : Name) : Option Extension :=
-  [ (``exp_extension_sound, Backend.elementaryExtension .exp)
-  , (``log_extension_sound, Backend.elementaryExtension .log)
-  , (``sin_extension_sound, Backend.elementaryExtension .sin)
-  , (``cos_extension_sound, Backend.elementaryExtension .cos)
-  , (``tan_extension_sound, Backend.elementaryExtension .tan)
-  , (``arcsin_extension_sound, Backend.elementaryExtension .asin)
-  , (``arccos_extension_sound, Backend.elementaryExtension .acos)
-  , (``arctan_extension_sound, Backend.elementaryExtension .atan)
-  , (``sinh_extension_sound, Backend.elementaryExtension .sinh)
-  , (``cosh_extension_sound, Backend.elementaryExtension .cosh)
-  , (``tanh_extension_sound, Backend.elementaryExtension .tanh)
-  , (``sqrt_extension_sound, Backend.elementaryExtension .sqrt)
-  , (``arsinh_extension_sound, Backend.asinhExtension)
-  , (``arcosh_extension_sound, Backend.acoshExtension)
-  , (``artanh_extension_sound, Backend.atanhExtension)
-  , (``rpow_extension_sound, Backend.rpowExtension)
-  , (``logb_extension_sound, Backend.logbExtension)
-  ].lookup registration
+  match unaryRegistrations.lookup registration with
+  | some op => some (Backend.elementaryExtension op)
+  | none =>
+    [ (``arsinh_extension_sound, Backend.asinhExtension)
+    , (``arcosh_extension_sound, Backend.acoshExtension)
+    , (``artanh_extension_sound, Backend.atanhExtension)
+    , (``rpow_extension_sound, Backend.rpowExtension)
+    , (``logb_extension_sound, Backend.logbExtension)
+    ].lookup registration
 
 /-! ## Messages -/
 

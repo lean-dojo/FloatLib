@@ -45,7 +45,7 @@ theorem addTrunc_eq (M d k e : ℕ) (hM : 0 < M) (hd : 0 < d)
   have hlt : k * M + e * d < 2 * (d * M) := by
     have h₁ := Nat.mul_le_mul_right M hk
     have h₂ := Nat.mul_lt_mul_of_pos_right he hd
-    nlinarith
+    linarith
   unfold addTrunc
   split_ifs with h
   · have h₁ : 1 ≤ (k * M + e * d) / (d * M) :=

@@ -191,10 +191,11 @@ theorem roundPositiveCode_mono (format : Format) :
   unfold roundPositiveCode
   dsimp only
   rcases hlower.lt_or_eq with hlt | heq
-  · split_ifs <;> first | omega | (exfalso; linarith)
+  · repeat' split
+    all_goals first | omega | (exfalso; linarith)
   · rw [heq]
-    split_ifs <;>
-      first | omega | (exfalso; linarith) | (have := hminimum ‹_›; omega)
+    repeat' split
+    all_goals first | omega | (exfalso; linarith) | (have := hminimum ‹_›; omega)
 
 /-- Real rounding agrees with rational rounding after exact coercion. -/
 theorem roundPositiveCode_ratCast (format : Format) (target : Rat) :

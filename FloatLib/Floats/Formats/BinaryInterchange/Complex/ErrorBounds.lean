@@ -234,7 +234,8 @@ private theorem sq_add_sq_le_of_cases {m n s t u η D E : ℝ} (hn : 0 ≤ n) (h
           linarith [sq_nonneg (s - t)]
         have h3 : (2 * m - n) * (m + n) ≤ 2 * (m + n) ^ 2 := by
           linarith [mul_nonneg hn (add_nonneg hm hn)]
-        have h4 : 8 * u + 4 * u ^ 2 ≤ 3 / 7 := by nlinarith
+        have h4 : 8 * u + 4 * u ^ 2 ≤ 3 / 7 := by
+          linarith [mul_le_mul_of_nonneg_left hu' hu]
         have e1 := mul_le_mul_of_nonneg_left h3 (by positivity : 0 ≤ 4 * u)
         have e2 := mul_le_mul_of_nonneg_left h2 (by positivity : 0 ≤ 8 * u + 4 * u ^ 2)
         have e3 := mul_le_mul_of_nonneg_right h4 hNsq0
@@ -249,7 +250,7 @@ private theorem sq_add_sq_le_of_cases {m n s t u η D E : ℝ} (hn : 0 ≤ n) (h
   -- The two components, squared.
   have hX : D ^ 2 ≤ (u * A + c * η) ^ 2 := pow_le_pow_left₀ hD hDA 2
   have hY : E ^ 2 ≤ (2 * u * (s + t) + 4 * η) ^ 2 := pow_le_pow_left₀ hE hE' 2
-  have hc2 : c ^ 2 + 16 ≤ 25 := by nlinarith
+  have hc2 : c ^ 2 + 16 ≤ 25 := by linarith [mul_le_mul_of_nonneg_left hc hc0]
   -- Cauchy–Schwarz for the cross term.
   have hCS : c * A + 8 * (s + t) ≤ 5 * K := by
     have hsq : (c * A + 8 * (s + t)) ^ 2 ≤ (5 * K) ^ 2 := by
@@ -378,13 +379,17 @@ private theorem sq_add_sq_le_fused {R I β₁ β₂ N u η D E : ℝ} (hN : 0 �
   -- Cauchy–Schwarz, and each pair of components against the norm.
   have hcross : R * β₁ + I * β₂ ≤ N ^ 2 := by
     have hsq : (R * β₁ + I * β₂) ^ 2 ≤ (N ^ 2) ^ 2 := by
-      nlinarith [sq_nonneg (R * β₂ - I * β₁), mul_le_mul_of_nonneg_left hβ (sq_nonneg N)]
+      have hmul : (R ^ 2 + I ^ 2) * (β₁ ^ 2 + β₂ ^ 2) = N ^ 2 * (β₁ ^ 2 + β₂ ^ 2) := by
+        rw [hRI]
+      linarith [sq_nonneg (R * β₂ - I * β₁), mul_le_mul_of_nonneg_left hβ (sq_nonneg N)]
     exact (abs_le_of_sq_le_sq' hsq (sq_nonneg N)).2
   have hsum : R + I ≤ 3 / 2 * N := by
-    have hsq : (R + I) ^ 2 ≤ (3 / 2 * N) ^ 2 := by nlinarith [sq_nonneg (R - I)]
+    have hsq : (R + I) ^ 2 ≤ (3 / 2 * N) ^ 2 := by
+      linarith [sq_nonneg (R - I), sq_nonneg N]
     exact (abs_le_of_sq_le_sq' hsq (by positivity)).2
   have hβsum : β₁ + β₂ ≤ 3 / 2 * N := by
-    have hsq : (β₁ + β₂) ^ 2 ≤ (3 / 2 * N) ^ 2 := by nlinarith [sq_nonneg (β₁ - β₂)]
+    have hsq : (β₁ + β₂) ^ 2 ≤ (3 / 2 * N) ^ 2 := by
+      linarith [sq_nonneg (β₁ - β₂), sq_nonneg N]
     exact (abs_le_of_sq_le_sq' hsq (by positivity)).2
   have e1 := mul_le_mul_of_nonneg_left hcross (by positivity : 0 ≤ 2 * u ^ 2)
   have e2 := mul_le_mul_of_nonneg_left hsum (by positivity : 0 ≤ 6 * u * η)
@@ -392,7 +397,7 @@ private theorem sq_add_sq_le_fused {R I β₁ β₂ N u η D E : ℝ} (hN : 0 �
   have e4 := mul_le_mul_of_nonneg_left hβ (sq_nonneg u)
   have e5 : u ^ 2 * (R ^ 2 + I ^ 2) = u ^ 2 * N ^ 2 := by rw [hRI]
   have e6 := mul_nonneg (mul_nonneg hu hη) hN
-  nlinarith [sq_nonneg η]
+  linarith [sq_nonneg η]
 
 /--
 **The normwise error of the complex product with fused multiply-adds** (Jeannerod, Kornerup,
@@ -427,7 +432,7 @@ theorem norm_roundedMulFma_sub_le (x y : ℂ) :
     hre him
   · rw [sq_abs, sq_abs, sq_norm_eq, Complex.mul_re, Complex.mul_im]
   · rw [sq_abs, sq_abs, sq_norm_eq, Complex.mul_re, Complex.mul_im]
-    nlinarith [sq_nonneg (x.re * y.re), sq_nonneg (x.re * y.im)]
+    linarith [sq_nonneg (x.re * y.re), sq_nonneg (x.re * y.im)]
 
 /--
 The normwise error of the executable product with fused multiply-adds: for an IEEE descriptor
@@ -493,7 +498,7 @@ theorem pow_four_div_pow_three_sub_one_le {u : ℝ} (hu : 0 ≤ u) (hu7 : 7 * u 
   have h7 : 0 < 1 - 7 * u := by positivity
   have hone : 1 + u ≤ 1 / (1 - u) := by
     rw [le_div_iff₀ hlo]
-    nlinarith [sq_nonneg u]
+    linarith [sq_nonneg u]
   have hbern : 1 - 7 * u ≤ (1 - u) ^ 7 := by
     simpa only [Nat.cast_ofNat, mul_neg, ← sub_eq_add_neg] using
       one_add_mul_le_pow (show -2 ≤ -u by linarith) 7

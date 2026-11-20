@@ -78,9 +78,9 @@ theorem quotient_mem (num den : ℕ) (hd : 0 < den) :
   have hr : ((num % den : ℕ) : ℝ) < den := Nat.cast_lt.mpr (Nat.mod_lt num hd)
   constructor
   · apply (le_div_iff₀ hdr).mpr
-    nlinarith
+    linarith
   · apply (div_le_iff₀ hdr).mpr
-    nlinarith
+    linarith
 
 /-- With an exact residue law, the executable quotient realizes the ideal cell contract. -/
 theorem roundQuot_cell (sign : Bool) (M num den : ℕ)
@@ -99,7 +99,7 @@ theorem roundQuot_cell (sign : Bool) (M num den : ℕ)
     rw [hp]
     have hdr : (den : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hd.ne'
     field_simp
-    nlinarith
+    linarith
   unfold cellLaw upProb
   convert h using 2
   congr 1

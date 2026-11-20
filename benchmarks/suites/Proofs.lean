@@ -3,12 +3,16 @@ Copyright (c) 2026 FloatLib. All rights reserved.
 Released under MIT license as described in the file LICENSE.
 Authors: FloatLib Team
 -/
-import Lean.Util.CollectAxioms
+module
+
 import FloatLib.Tactic.Interval
 import FloatLib.Tactic.Roundoff
 import FloatLib.Floats.Formats.BinaryInterchange.Configured
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
 import FloatLib.Floats.Formats.BinaryInterchange.Complex.Core
+public meta import Lean.Util.CollectAxioms
+public meta import Lean.Elab.Command
+public meta import Lean.Elab.Tactic
 
 /-!
 # Sequential proof benchmark runner
@@ -21,6 +25,11 @@ it cannot produce a successful row or contaminate the next case.
 
 The Python driver hashes the input plan and every source dependency before running this file.
 This is a benchmark of elaboration, not a persistent library declaration or a trusted data import.
+
+The runner is a `module`, so each case elaborates as it does in a module of the library: with
+the exported declarations of its imports. A plain file also loads their private ones, which
+takes about twice the memory, and it can unfold Mathlib's private definitions of the arithmetic
+and the order of the reals, so a unification of two real numerals recurses until Lean's limit.
 -/
 
 open Lean Elab Command
@@ -60,7 +69,7 @@ elab "suite_range" : tactic => do
        suite_format <;> interval)
     | (suite_format <;> interval)))
 
-private def field (json : Json) (key : String) : CommandElabM String :=
+private meta def field (json : Json) (key : String) : CommandElabM String :=
   match json.getObjValAs? String key with
   | .ok value => pure value
   | .error error => throwError "{error}"
@@ -99,7 +108,10 @@ run_cmd do
       unless messages.isEmpty do
         let errors ← messages.mapM (fun msg => msg.data.toString)
         throwError "{String.intercalate "\n" errors}"
-      let name := declaration.toName
+      -- A declaration of a module is private to it unless its command says otherwise.
+      let stated := declaration.toName
+      let environment ← getEnv
+      let name := if environment.contains stated then stated else mkPrivateName environment stated
       let some (.thmInfo info) := (← getEnv).find? name
         | throwError "Expected theorem {declaration}"
       let axioms ← collectAxioms name

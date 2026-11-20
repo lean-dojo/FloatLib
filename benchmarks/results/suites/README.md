@@ -1,24 +1,24 @@
 # Standard suites: results
 
-Written by `benchmarks/suites/summarize.py` from one run of `benchmarks/suites/run.sh`. The CSV files next to this file have one short row per case; `counts.csv` has every number of the tables below; `provenance.json` has the toolchain and the size and SHA-256 of each full result file, which is not in the repository. The suite READMEs say what each outcome means.
+Written by `benchmarks/suites/summarize.py` from the results of `benchmarks/suites/run.sh`. Each section gives the time of its run: a suite can be run again alone, and the others keep their results. The CSV files next to this file have one short row per case; `counts.csv` has every number of the tables below; `provenance.json` has the toolchain and the size and SHA-256 of each full result file, which is not in the repository. The suite READMEs say what each outcome means.
 
-The run of 2026-11-17 (Lean v4.36.0): eight Lean processes at a time, three threads each, on a shared 96-thread Xeon Platinum 8275CL. Limits per process: FPBench 60 seconds and 4 GB (`lean -M 4096`) for a conditional and for a numerical proof; inequalities 20 seconds and 4 GB; TestFloat 900 seconds per campaign. Hard-to-round inputs: 16,384 sampled CORE-MATH cases per function, and the binary32 screens.
+FPBench and the inequalities ran on 2026-11-20, the hard-to-round inputs, TestFloat and the external FPBench tools on 2026-11-17 (Lean v4.36.0): eight Lean processes at a time, three threads each, on a shared 96-thread Xeon Platinum 8275CL. Limits per process: FPBench 60 seconds and 4 GB (`lean -M 4096`) for a conditional and for a numerical proof; inequalities 20 seconds and 4 GB, one goal per process; TestFloat 900 seconds per campaign. Hard-to-round inputs: 16,384 sampled CORE-MATH cases per function, and the binary32 screens.
 
 ## FPBench with `roundoff`
 
-Measured 2026-11-17T23:13:13Z to 2026-11-17T23:24:07Z with Lean 4.36.0.
+Measured 2026-11-20T11:24:20Z to 2026-11-20T11:32:47Z with Lean 4.36.0.
 
 | theorem | proved | refused | over the time limit | out of memory | not attempted | not translated |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| forward, conditional theorem | 165 | 23 | 0 | 0 | 0 | 84 |
-| forward, numerical bound | 25 | 43 | 13 | 15 | 12 | 164 |
-| closed, conditional theorem | 156 | 32 | 0 | 0 | 0 | 84 |
-| closed, numerical bound | 12 | 46 | 15 | 19 | 16 | 164 |
+| forward, conditional theorem | 184 | 4 | 0 | 0 | 0 | 84 |
+| forward, numerical bound | 33 | 71 | 0 | 0 | 4 | 164 |
+| closed, conditional theorem | 180 | 8 | 0 | 0 | 0 | 84 |
+| closed, numerical bound | 18 | 82 | 2 | 0 | 6 | 164 |
 | backward, conditional theorem | 22 | 166 | 0 | 0 | 0 | 84 |
 
 `out of memory` is a Lean process that stopped at its 4 GB limit (`lean -M 4096`); `not attempted` is a numerical bound whose conditional theorem was not proved.
 
-Of these, proved within 20 seconds of process time: forward, conditional theorem 165, forward, numerical bound 22, closed, conditional theorem 155, closed, numerical bound 10, backward, conditional theorem 22.
+Of these, proved within 20 seconds of process time: forward, conditional theorem 184, forward, numerical bound 33, closed, conditional theorem 174, closed, numerical bound 18, backward, conditional theorem 22.
 
 | external tool, run on the same exported program | bounded | export_refusal | exported | loaded_no_bound | no_bound | timeout | tool_refusal | tool_unavailable |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -29,30 +29,28 @@ Of these, proved within 20 seconds of process time: forward, conditional theorem
 | smtlib | 0 | 130 | 142 | 0 | 0 | 0 | 0 | 0 |
 | sollya | 0 | 10 | 0 | 262 | 0 | 0 | 0 | 0 |
 
-Programs and default precisions with a numerical bound from both sides: 30; from another tool only: 99; from FloatLib only: 0; from neither: 143.
+Programs and default precisions with a numerical bound from both sides: 41; from another tool only: 88; from FloatLib only: 0; from neither: 143.
 
 | FloatLib's bound over the bound of | ratios | smallest | median | largest |
 | --- | ---: | ---: | ---: | ---: |
-| fptaylor | 13 | 2.133 | 2.562 | 6.984e+05 |
-| gappa | 9 | 1.039 | 1.542 | 1.939 |
+| fptaylor | 23 | 2.133 | 3.2 | 6.984e+05 |
+| gappa | 14 | 1.039 | 1.542 | 1.939 |
 
 ## Real inequalities with `interval`
 
-Measured 2026-11-17T22:02:41Z to 2026-11-17T22:26:49Z with Lean 4.36.0.
+Measured 2026-11-20T11:44:50Z to 2026-11-20T12:03:31Z with Lean 4.36.0.
 
-| suite and route | proved | refused | timeout | runner error | translation refusal |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| flyspeck, constraint | 5 | 3 | 8 | 4 | 144 |
-| flyspeck, interval | 2 | 18 | 0 | 0 | 144 |
-| metitarski, constraint | 184 | 418 | 189 | 7 | 150 |
-| metitarski, interval | 92 | 691 | 15 | 0 | 150 |
+| suite and route | proved | refused | timeout | translation refusal |
+| --- | ---: | ---: | ---: | ---: |
+| flyspeck, constraint | 6 | 11 | 3 | 144 |
+| flyspeck, interval | 3 | 17 | 0 | 144 |
+| metitarski, constraint | 340 | 394 | 64 | 150 |
+| metitarski, interval | 124 | 674 | 0 | 150 |
 
 | goals | proved by at least one route | by neither |
 | --- | ---: | ---: |
-| flyspeck, either route | 5 | 159 |
-| metitarski, either route | 188 | 760 |
-
-`runner error` is a Lean process that stopped at its 4 GB memory limit (`lean -M 4096`) in the interpreter; `inequalities.csv` marks those rows in `memory_refusal`.
+| flyspeck, either route | 6 | 158 |
+| metitarski, either route | 340 | 608 |
 
 ## Hard-to-round inputs
 
@@ -83,13 +81,13 @@ All: 210 campaigns, 127,741,704 vectors, 0 value mismatches, 0 flag mismatches.
 
 The captions, alt texts, notes and CSV columns of these figures are in [FIGURES.md](../FIGURES.md).
 
-![Two panels. Left: five stacked horizontal bars, one per kind of theorem, split into programs proved, not proved and not translated. Right: three rows of dots on a logarithmic axis, one dot per program for the ratio of FloatLib's bound to another tool's, with a tick at the median of a row that has three ratios or more, and a vertical line at ratio one.](../figures/suites-fpbench.png "FPBench: what FloatLib's roundoff tactic proves, and its proved bounds against FPTaylor and Gappa. Panel (a) counts the 136 programs of twelve FPBench suite files, each in binary32 and in binary64, by outcome for each kind of theorem; panel (b) is FloatLib's proved numerical bound divided by the other tool's bound on the same program, on a logarithmic axis where 1 is equal and above 1 is looser. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-17).")
+![Two panels. Left: five stacked horizontal bars, one per kind of theorem, split into programs proved, not proved and not translated. Right: three rows of dots on a logarithmic axis, one dot per program for the ratio of FloatLib's bound to another tool's, with a tick at the median of a row that has three ratios or more, and a vertical line at ratio one.](../figures/suites-fpbench.png "FPBench: what FloatLib's roundoff tactic proves, and its proved bounds against FPTaylor and Gappa. Panel (a) counts the 136 programs of twelve FPBench suite files, each in binary32 and in binary64, by outcome for each kind of theorem; panel (b) is FloatLib's proved numerical bound divided by the other tool's bound on the same program, on a logarithmic axis where 1 is equal and above 1 is looser. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20).")
 
-**Figure 1.** FPBench: what FloatLib's roundoff tactic proves, and its proved bounds against FPTaylor and Gappa. Panel (a) counts the 136 programs of twelve FPBench suite files, each in binary32 and in binary64, by outcome for each kind of theorem; panel (b) is FloatLib's proved numerical bound divided by the other tool's bound on the same program, on a logarithmic axis where 1 is equal and above 1 is looser. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-17).
+**Figure 1.** FPBench: what FloatLib's roundoff tactic proves, and its proved bounds against FPTaylor and Gappa. Panel (a) counts the 136 programs of twelve FPBench suite files, each in binary32 and in binary64, by outcome for each kind of theorem; panel (b) is FloatLib's proved numerical bound divided by the other tool's bound on the same program, on a logarithmic axis where 1 is equal and above 1 is looser. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20).
 
-![Two panels with the same four rows, MetiTarski and Flyspeck each with interval alone and with the constraint engine. Left: stacked horizontal bars of goals proved, not proved and not translated. Right: one dot per proved goal on a logarithmic time axis, with a tick at the median of a row that has three goals or more.](../figures/suites-inequalities.png "MetiTarski and Flyspeck inequalities given to FloatLib's interval tactic, alone and with the constraint engine. Panel (a) counts the goals by outcome (948 MetiTarski goals and 164 Flyspeck records, one tactic call each); panel (b) is the time Lean took to elaborate each proved goal, without the imports of its file, on a logarithmic axis where lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-17).")
+![Two panels with the same four rows, MetiTarski and Flyspeck each with interval alone and with the constraint engine. Left: stacked horizontal bars of goals proved, not proved and not translated. Right: one dot per proved goal on a logarithmic time axis, with a tick at the median of a row that has three goals or more.](../figures/suites-inequalities.png "MetiTarski and Flyspeck inequalities given to FloatLib's interval tactic, alone and with the constraint engine. Panel (a) counts the goals by outcome (948 MetiTarski goals and 164 Flyspeck records, one tactic call each); panel (b) is the time Lean took to elaborate each proved goal, without the imports of its file, on a logarithmic axis where lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20).")
 
-**Figure 2.** MetiTarski and Flyspeck inequalities given to FloatLib's interval tactic, alone and with the constraint engine. Panel (a) counts the goals by outcome (948 MetiTarski goals and 164 Flyspeck records, one tactic call each); panel (b) is the time Lean took to elaborate each proved goal, without the imports of its file, on a logarithmic axis where lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-17).
+**Figure 2.** MetiTarski and Flyspeck inequalities given to FloatLib's interval tactic, alone and with the constraint engine. Panel (a) counts the goals by outcome (948 MetiTarski goals and 164 Flyspeck records, one tactic call each); panel (b) is the time Lean took to elaborate each proved goal, without the imports of its file, on a logarithmic axis where lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20).
 
 ![Two panels with the same 24 rows, one per function, format and source of inputs. Left: horizontal bars of the number of inputs whose result equals the reference. Right: the median time per call on a logarithmic axis, a filled circle for FloatLib, a diamond for MPFR and a grey cross for CORE-MATH; the complex rows have the FloatLib mark only.](../figures/suites-hard-cases.png "Hard-to-round inputs of exp, expm1, log and log1p: the results of FloatLib against MPFR, CORE-MATH and GNU MPC, and the time per call. Panel (a) counts the inputs whose result word from FloatLib equals the reference (107,199 real results and 214,396 parts of complex results, a complex input counting once per part); panel (b) is the median time of one compiled call, on a logarithmic axis where lower is faster. These are tests on listed inputs, not proofs. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-17).")
 

@@ -396,11 +396,11 @@ theorem add256_value_toNat (x y : UInt256) :
   have := second2.value.toNat_lt
   have hcarry1 : carry1.toNat = first1.carry.toNat + second1.carry.toNat := by
     rw [UInt64.toNat_add]
-    omega
+    lia
   have hcarry2 : carry2.toNat =
       first2.carry.toNat + second2.carry.toNat + third2.carry.toNat := by
     rw [UInt64.toNat_add, UInt64.toNat_add]
-    omega
+    lia
   have hexpand : x.toNat * y.toNat =
       x.lo.toNat * y.lo.toNat + (x.lo.toNat * y.hi.toNat + x.hi.toNat * y.lo.toNat) * 2 ^ 64 +
         x.hi.toNat * y.hi.toNat * 2 ^ 128 := by
@@ -415,7 +415,7 @@ theorem add256_value_toNat (x y : UInt256) :
     calc x.toNat * y.toNat < 2 ^ 128 * 2 ^ 128 := Nat.mul_lt_mul'' x.toNat_lt y.toNat_lt
       _ = 2 ^ 256 := by norm_num
   have htopFit : p11.hi.toNat + carry2.toNat < 2 ^ 64 := by
-    omega
+    lia
   have htop : (p11.hi + carry2).toNat = p11.hi.toNat + carry2.toNat :=
     uint64_add_toNat_of_lt _ _ htopFit
   change p00.lo.toNat + second1.value.toNat * 2 ^ 64 + third2.value.toNat * 2 ^ 128 +

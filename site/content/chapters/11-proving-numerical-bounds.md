@@ -286,7 +286,7 @@ $$a - b = \sum_k M_{kk}(x)\,d_k^2 + 2\sum_{k<l} M_{kl}(x)\,d_k d_l,\qquad d_k = 
 
 where the entries of the matrix $M(x)$ are whatever is left of each term: numbers, other variables, function values. `ring` proves the identity. If $M(x)$ is positive definite for every $x$ in a box around $c$, the form is positive there except at $c$, so $a \le b$ leaves only the point $c$, and the other constraints are checked at that point. The kernel checks definiteness with intervals, in any dimension, by eliminating one coordinate at a time ([[FloatLib.Numerics.Interval.Form.definiteOn]], with [[FloatLib.Numerics.Interval.Form.vanishes_of_definiteOn]] as the theorem behind it). In the example the matrix has the entries $2 + y^2/5$, $0$ and $2$.
 
-The same idea decides a strict comparison whose form is only semidefinite, a sum of nonnegative terms that a comparison bounds by zero, two comparisons that touch at a point when one combination $a - b + \mu\,(c - d)$ with a rational $\mu > 0$ is definite, a quotient whose comparison holds with equality at a point, and values of the sine, the cosine, the hyperbolic tangent and the arctangent that vanish at the point. It doesn't decide two sets that touch when the multiplier is irrational, as it is when a level is given with $\pi$, a zero margin that needs three or more constraints at once unless products of pairs decide it, or one where an exponential, a logarithm or a square root vanishes with the form.
+The same idea decides a strict comparison whose form is only semidefinite, a sum of nonnegative terms that a comparison bounds by zero, two comparisons that touch at a point when one combination $a - b + \mu\,(c - d)$ with a rational $\mu > 0$ is definite, a quotient whose comparison holds with equality at a point, and values of the sine, the cosine, the hyperbolic tangent and the arctangent that vanish at the point. When a level is given with $\pi$, as for a disc of radius $\pi/4$ against a half-plane, the multiplier is a rational times $\pi$: the tactic then multiplies the comparisons by $\pi$ and takes $\pi$ for one more coordinate, so the matrix is rational again. It doesn't decide two sets that touch when the multiplier is irrational in another way, as for the unit disc and the half-plane $x + y > \sqrt 2$, a zero margin that needs three or more constraints at once unless products of pairs decide it, or one where an exponential, a logarithm or a square root vanishes with the form.
 
 An inequality goal still goes to the boxes of the first section. When they don't prove it, the tactic tries the constraint that the inequality fails, which is how $x(1-x) \le 1/4$ on $[0,1]$ is proved: the bound is attained at $x = 1/2$, and the form $(x - 1/2)^2$ decides it.
 
@@ -305,12 +305,57 @@ example (x y : ℝ) (h : 3 / 2 * x ^ 2 - x * y + y ^ 2 ≤ 3 / 20)
   interval
 ```
 
-Bounds also come from `|t| ≤ r`, `max` and `min`, from comparisons that are affine in the variable, and from a comparison with an expression in bounded variables, such as $y \le e^x$. A variable that still has no bounds is an error that names it. Half-lines aren't boxes, because the enclosures need both ends. A set that is unbounded in a variable is decided only by arithmetic on the comparisons, through `linarith`, products of the linear comparisons and `nlinarith`, which is enough for polynomial comparisons such as this one:
+Bounds also come from `|t| ≤ r`, `max` and `min`, from comparisons that are affine in the variable, and from a comparison with an expression in bounded variables, such as $y \le e^x$. A variable with a bound on one side only still has a range, one with an infinite end, and the enclosures work on such ranges: $e^{-x}$ is in $[0, 1]$ for every $x \ge 0$. When the constraints fail on the whole range, the goal is closed. When they fail on a tail, the variable gets the bound that it lacked. Below, the left side is under $2$ for every $x \ge 2$, so the tactic proves $x < 2$ and goes on with the box $[0, 2]$:
+
+```lean
+example (x : ℝ) (hx : 0 ≤ x) :
+    -(173 / 250) * Real.exp (-(13 / 10) * x) + 319 / 100 - x - Real.exp (-(11 / 10) * x) < 2 := by
+  interval
+```
+
+The search never cuts a range with an infinite end, so a comparison whose two sides grow together, such as $x e^{-x} \le 1$, isn't decided this way, and a variable that still has no bounds is an error that names it. What is left for a set that is unbounded in a variable is arithmetic on the comparisons, through `linarith`, products of the linear comparisons and `nlinarith`, which is enough for polynomial comparisons such as this one:
 
 ```lean
 example {x y : ℝ} (hx : x ≤ -2) (hy : 3 ≤ y) : 16 ≤ x ^ 4 ∧ x ^ 3 ≤ -8 ∧ 6 ≤ -x * y := by
   interval
 ```
+
+### What if the two sides are equal at an end of the range?
+
+Then no box separates them there, and often no form does either: $1 + x \le e^x$ holds with equality at $0$, and so does every bound that was made to be sharp there. What decides such a comparison is a derivative. The difference of the two sides is zero at the end, and if its derivative is nonnegative beyond, the difference is nonnegative too. So when everything above has failed and the goal is one comparison in one variable, with bounds that have no variables, the tactic differentiates the difference by the rules for the elementary functions, proves its sign at the end of the range, and hands the sign of the derivative to itself as a new goal. That goal may need the next derivative in the same way, up to five in a row, and the goals of one call together have one and a half times the heartbeats of `maxHeartbeats`, so a larger `(maxHeartbeats := 80000)` lets a long chain end.
+
+```lean
+example (x : ℝ) (hx : 0 ≤ x) : (x + 4) ^ 4 / 256 ≤ Real.exp x := by
+  interval
+
+example (x : ℝ) (hx : 0 ≤ x) : 2 * x / (2 + x) ≤ Real.log (1 + x) := by
+  interval
+```
+
+The first takes three derivatives: the difference and its first derivative are zero at $0$, the second is $1/4$ there, and the third, $e^x - 3(x+4)/32$, is positive for every $x \ge 0$ by the tangent of the exponential. In the second the derivative is a quotient of polynomials, and the arithmetic steps prove its sign. A derivative may keep its sign only near the end. So the tactic evaluates it at four points of the range first, and where the sign turns it cuts the range before that point: the derivative decides the part at the end, and boxes the rest, where the two sides are apart.
+
+```lean
+example (x : ℝ) (hx : 0 ≤ x) (hx' : x ≤ 4) : x * Real.cos x ≤ Real.sin x := by
+  interval
+```
+
+Here the derivative of the difference is $x \sin x$, which is negative beyond $\pi$. The tactic cuts the range at $2$.
+
+Both ends of a range are tried, the lower one first, and a bound $|a| \le b$ is taken as the two comparisons of $a$ and of $-a$ with $b$. This doesn't prove a comparison in two variables, or one whose sides meet inside the range, as $\log x \le x/e$ does at $x = e$. The theorems are [[FloatLib.Numerics.Interval.le_of_deriv_nonneg]] and [[FloatLib.Numerics.Interval.lt_of_deriv_pos]], with [[FloatLib.Numerics.Interval.le_of_deriv_nonpos]] and [[FloatLib.Numerics.Interval.lt_of_deriv_neg]] from an upper end.
+
+### What about a goal that says something exists?
+
+The negation of $\exists x,\ P(x)$ says something about every $x$, and that isn't a set of constraints. So for such a goal the tactic looks for a witness. It tries the real variables in sight, also shifted by one, and then rational values, the simplest first: zero, the powers of two from $2^{-20}$ to $2^{20}$ with both signs, and the numbers that the statement itself names, each with its two neighbours at distance one and the mean of each two. So $5 < x \land x < 7$ finds $6$. It proves $P$ at the first value where its enclosures find it true. There's one limit. At a value above $2^{10}$ in size, a statement that takes the exponential of a number that large is passed over, because that enclosure is long.
+
+```lean
+example : ∃ x : ℝ, Real.cosh x > 2000000 := by
+  interval
+
+example : ∃ x y : ℝ, y + Real.log x < Real.log y := by
+  interval
+```
+
+The first witness is $16$, and the second is the pair $(1/4, 1)$. A statement whose witnesses all lie outside the list, such as $\tan x > 651800$, isn't proved this way. Give the witness yourself and let `interval` prove the rest.
 
 ### Which hints can you give?
 
@@ -325,7 +370,7 @@ example (x y : ℝ) (h : x ^ 2 + y ^ 2 + Real.cos x ≤ 2) (h' : x * y > 4) : Fa
   interval (box := [(x, -2, 2), (y, -2, 2)]) (facts := [sq_nonneg x, sq_nonneg y])
 ```
 
-When the tactic fails, the message names the box where the search stopped, the constraints that are undecided there with the enclosures that fail to exclude them, and the limit that stopped it. If every constraint holds on a whole box, it says so: the set isn't empty and the goal is false as stated, unless some hypothesis was not read as a constraint, in which case the message lists those. A failed call leaves the goal as it was, and `set_option trace.interval.constraints true` lists the steps it took.
+When the tactic fails, the message names the box where the search stopped, the constraints that are undecided there with the enclosures that fail to exclude them, and the limit that stopped it. You get the same report when the declaration is about to run out of heartbeats: the tactic stops while there is still time to say where it stands. If every constraint holds on a whole box, it says so: the set isn't empty and the goal is false as stated, unless some hypothesis was not read as a constraint, in which case the message lists those. A failed call leaves the goal as it was, and `set_option trace.interval.constraints true` lists the steps it took.
 
 ### How much does `interval` prove on other projects' goals?
 
@@ -1040,7 +1085,10 @@ those input intervals, and every backend supplies the same
 
 For a goal $a\le b$, the checker encloses $a-b$ and asks whether its upper endpoint is nonpositive,
 or strictly negative for a strict goal, and [[FloatLib.Numerics.Interval.Expr.check_sound]] carries
-the enclosure theorem through subdivision. The tactic proves its translation of the Lean expression
+the enclosure theorem through subdivision. The tactic runs this check with one more rule in the
+evaluation: a product with a factor that is exactly zero needs no enclosure of the other factor
+(`Expr.evalZero?`, and [[FloatLib.Numerics.Interval.Expr.checkZero_sound]] is the theorem for it).
+The tactic proves its translation of the Lean expression
 and builds the input membership proof from the hypotheses. Then it verifies the closed Boolean check
 with `decide +kernel`, which has the kernel run the yes-or-no test itself, and Lean checks the
 resulting proof term.

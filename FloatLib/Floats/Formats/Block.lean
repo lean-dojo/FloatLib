@@ -13,6 +13,7 @@ public import FloatLib.Floats.Formats.Block.CodedDot
 public import FloatLib.Kernels.Block.Maximum
 public import FloatLib.Floats.Formats.Block.Stored
 public import FloatLib.Floats.Formats.Block.Working
+public import FloatLib.Floats.Formats.Block.Working.KernelPath
 
 /-!
 # Block-scaled numerical formats
@@ -31,7 +32,10 @@ outer scales. One theory covers every such format:
 * `Block.Stored`: the stored formats and policies of OCP MX variants, NVFP4 and Four Over Six;
 * `Block.Working`: quantizers that compute the scaled input in a working arithmetic (binary32
   for the reference implementations): their error budget and their agreement with the exact
-  quantizer, for every block-scaled format, with NVFP4 as the instance.
+  quantizer, for every block-scaled format, with NVFP4 as the instance;
+* `Block.Working.Binary`, `Block.Working.KernelPath`: the quantizer on the encodings of a binary
+  working format in the order of torchao's `nvfp4_quantize`, what it stores when an operation
+  overflows and when none does, and its kernel rules. `Block.nvfp4Working` is NVFP4 in binary32.
 
 Kernel-checked instances on explicit data are in the test module
 `FloatLibTests.Conformance.Formats.BlockExamples`.

@@ -198,7 +198,7 @@ theorem isFinite_expm1xRat_of_le_posMaxFinite (hfmt : fmt.isIEEE = true) {argume
     isFinite (expm1xRat fmt argument mode) = true := by
   have hreal : (argument : ℝ) ≠ 0 := by exact_mod_cast hargument
   have hlt := lt_overflowThreshold_of_le_posMaxFinite hfmt hrange
-  have hup := (AlgebraicRounding.roundUp_finite_roundAt_of_le_posMaxFinite fmt hfmt _ _
+  have hup := (AlgebraicRounding.roundUp_finite_roundAt_of_le_posMaxFinite fmt _ _
     (exp_sub_one_sub_pos hreal) (compareExpm1x_eq_real argument) hrange).1
   cases mode with
   | nearest => exact isFinite_expm1xRat hfmt argument rfl hlt

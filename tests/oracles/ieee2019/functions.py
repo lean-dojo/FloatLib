@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reference results for the recommended functions of IEEE 754-2019 clause 9.2 on binary formats.
+"""Reference results for the functions of IEEE 754-2019 clause 9.2 on binary formats.
 
 usage: functions.py PACKAGES COUNT SEED
 
@@ -9,34 +9,52 @@ PACKAGES is a directory that holds the Python package `mpmath` (for example the 
 
     fun NAME FORMAT MODE X Y EXPECTED FLAGS
 
-NAME is the name of the function in the standard. FORMAT is `e3f2`, `e4f3`, `binary16`,
-`binary32` or `binary64`. MODE is the rounding direction: `E` to nearest with ties to even, `A`
-to nearest with ties away from zero, `Z` toward zero, `U` toward positive and `D` toward
-negative infinity. X is the encoding of the first operand in hexadecimal. Y is `-` for a
-function of one operand, the encoding of the second operand for `atan2`, `atan2Pi` and `powr`
-(in the order of the call: `atan2 y x`, `powr x y`), and the integer `n` for `compound`.
+NAME is the name of the function in the standard (`cbrt` is `rootn` of degree three). FORMAT is
+`e3f2`, `e4f3`, `e5m2`, `e4m3`, `e4m3fnuz`, `e5m2fnuz`, `e2m1`, `binary16`, `binary32` or
+`binary64`. MODE is the rounding direction: `E` to nearest with ties to even, `A` to nearest
+with ties away from zero, `Z` toward zero, `U` toward positive and `D` toward negative
+infinity. X is the encoding of the first operand in hexadecimal. Y is `-` for a function of one
+operand, the encoding of the second operand for `atan2`, `atan2Pi`, `powr`, `pow` and `hypot`
+(in the order of the call: `atan2 y x`, `powr x y`, `pow x y`), and the integer `n` for
+`compound`, `rootn` and `pown`.
 EXPECTED is the encoding of the result, or `nan` for any quiet NaN. FLAGS is the sum of
 invalid 1, divideByZero 2, overflow 4, underflow 8 and inexact 16.
 
-The cases are: every encoding of the eight-bit format `e4f3` for each function of one operand
-in each of the five directions, every pair of encodings of the six-bit format `e3f2` for the
-functions of two operands in each direction, every encoding of `e3f2` with thirteen exponents
-for `compound` in each direction, and COUNT pseudo-random operands for each function in each of
-binary16, binary32 and binary64, in a pseudo-random direction. For `sin`, `cos` and `tan` the
-pseudo-random operands are below `2^400`, and with COUNT at least 100 three binary64 operands
-beyond that are added, each of which takes FloatLib about a minute.
+The formats. `e3f2` and `e4f3` are IEEE formats of six and eight bits. `e5m2` and `e4m3` are
+the two formats of the OCP 8-bit Floating Point Specification (OFP8) revision 1.0, 5.1: E5M2 is
+an IEEE format, and E4M3 has no infinity, uses its largest exponent for finite values, and has
+the NaN `S.1111.111`. `e4m3fnuz` and `e5m2fnuz` are the ONNX formats with bias 8 and 16, one
+zero and the single NaN `0x80`. `e2m1` is the four-bit format of the OCP Microscaling Formats
+Specification 1.0, 5.3.3, in which every encoding is finite. A format without an infinity
+delivers its NaN where an IEEE format delivers an infinity (a pole, or an overflow in a
+direction that rounds away), and a format without a NaN delivers its largest finite value of
+that sign there and `+0` for an invalid operation. A format with one zero delivers it for a
+zero of either sign.
+
+The cases are: every encoding of each small format for each function of one operand in each of
+the five directions, with eight degrees for `rootn` and eight exponents for `pown`; every pair
+of encodings of `e3f2` and of `e2m1` for the functions of two operands in each direction and
+50 * COUNT pseudo-random pairs of each eight-bit format; every encoding of `e3f2` with thirteen
+exponents for `compound` in each direction; and COUNT pseudo-random operands for each function
+in each of binary16, binary32 and binary64, in a pseudo-random direction. For `sin`, `cos` and
+`tan` the pseudo-random operands are below `2^400`, and with COUNT at least 100 three binary64
+operands beyond that are added, each of which takes FloatLib about a minute.
 
 How the expected results are computed. The results at NaNs, infinities, zeros and outside the
-domains are written here from the special cases of ISO/IEC 9899:2024 F.10.1 to F.10.4, and for
-the infinite operands of `powr` from its formula `exp (y * log x)`. Every other result is the
+domains are written here from the special cases of ISO/IEC 9899:2024 F.10.1 to F.10.4, for
+the infinite operands of `powr` from its formula `exp (y * log x)`, and for `pow`, `rSqrt`,
+`hypot`, `rootn` and `pown` from IEEE 754-2019 9.2.1. Every other result is the
 value that `mpmath` computes with a working precision far above the format (at least 300 bits
 more than three times the largest exponent of an operand, so that `sin x` and `x` differ
 visibly for the smallest subnormal `x`), rounded here in the direction of the case with exact
-rational arithmetic. `compound` is computed exactly with rationals. A result is taken to be exact when
-the high-precision value is itself a value of the format. `tanh`, `exp2m1` and `exp10m1`
-approach a representable limit faster than any fixed precision, so their precision grows with
-the operand, and a result that is the limit itself is inexact, since no finite operand reaches
-it.
+rational arithmetic. `compound` and `pown` are computed exactly with rationals, and so are the
+roots of `rSqrt`, `rootn` and `hypot`: a root is exact when integer roots of the numerator and
+the denominator are, and otherwise integers bracket it between two neighbours of a grid finer
+than the format, whatever the sizes of the two terms of `x^2 + y^2`. Any other result is taken
+to be exact when the high-precision value is itself a value of the format. `tanh`, `expm1`, `exp2m1`
+and `exp10m1` approach a representable limit faster than any fixed precision, so their
+precision grows with the operand, and a result that is the limit itself is inexact, since no
+finite operand reaches it.
 """
 import random
 import sys
@@ -45,29 +63,49 @@ from fractions import Fraction
 sys.path.insert(0, sys.argv[1])
 import mpmath  # noqa: E402
 
-FORMATS = {"e3f2": (3, 2), "e4f3": (4, 3), "binary16": (5, 10), "binary32": (8, 23), "binary64": (11, 52)}
+FORMATS = {"e3f2": (3, 2, "ieee"), "e4f3": (4, 3, "ieee"), "e5m2": (5, 2, "ieee"),
+           "e4m3": (4, 3, "maxnan"), "e4m3fnuz": (4, 3, "fnuz"), "e5m2fnuz": (5, 2, "fnuz"),
+           "e2m1": (2, 1, "finite"), "binary16": (5, 10, "ieee"), "binary32": (8, 23, "ieee"),
+           "binary64": (11, 52, "ieee")}
 INVALID, DIVIDE_BY_ZERO, OVERFLOW, UNDERFLOW, INEXACT = 1, 2, 4, 8, 16
 
 
 class Format:
+    """A binary format: `ieee` (infinities and NaNs in the largest exponent), `maxnan` (no
+    infinity, the largest encoding of each sign is a NaN), `fnuz` (bias one more, no infinity,
+    one zero, the encoding of minus zero is the NaN) or `finite` (every encoding is finite)."""
+
     def __init__(self, name):
         self.name = name
         self.mode = "E"
-        self.ew, self.fw = FORMATS[name]
-        self.bias = (1 << (self.ew - 1)) - 1
+        self.ew, self.fw, self.kind = FORMATS[name]
+        self.bias = (1 << (self.ew - 1)) - (0 if self.kind == "fnuz" else 1)
         self.emin = 1 - self.bias
         self.width = 1 + self.ew + self.fw
-        self.max_finite = (Fraction(2) - Fraction(1, 1 << self.fw)) * Fraction(2) ** self.bias
+        top = (1 << self.ew) - 1
+        if self.kind == "ieee":
+            largest = ((top - 1) << self.fw) | ((1 << self.fw) - 1)
+        elif self.kind == "maxnan":
+            largest = (top << self.fw) | ((1 << self.fw) - 2)
+        else:
+            largest = (top << self.fw) | ((1 << self.fw) - 1)
+        self.largest = largest
+        self.max_finite = self.decode(largest)[2]
 
     def decode(self, bits):
         """('nan', signaling), ('inf', negative) or ('fin', negative, value)."""
         negative = bool(bits >> (self.ew + self.fw))
         exponent = (bits >> self.fw) & ((1 << self.ew) - 1)
         fraction = bits & ((1 << self.fw) - 1)
-        if exponent == (1 << self.ew) - 1:
+        top = (1 << self.ew) - 1
+        if self.kind == "ieee" and exponent == top:
             if fraction == 0:
                 return ("inf", negative)
             return ("nan", not (fraction >> (self.fw - 1)))
+        if self.kind == "maxnan" and exponent == top and fraction == (1 << self.fw) - 1:
+            return ("nan", False)
+        if self.kind == "fnuz" and bits == 1 << (self.ew + self.fw):
+            return ("nan", False)
         if exponent == 0:
             magnitude = Fraction(fraction) * Fraction(2) ** (self.emin - self.fw)
         else:
@@ -75,10 +113,18 @@ class Format:
         return ("fin", negative, -magnitude if negative else magnitude)
 
     def zero(self, negative):
+        if self.kind == "fnuz":
+            return 0
         return int(negative) << (self.ew + self.fw)
 
     def infinity(self, negative):
-        return self.zero(negative) | (((1 << self.ew) - 1) << self.fw)
+        """What the format delivers for an infinite result: its infinity, its NaN, or its
+        largest finite value of that sign."""
+        if self.kind == "ieee":
+            return (int(negative) << (self.ew + self.fw)) | (((1 << self.ew) - 1) << self.fw)
+        if self.kind == "finite":
+            return (int(negative) << (self.ew + self.fw)) | self.largest
+        return "nan"
 
     def round(self, value, mode=None, zero_negative=False):
         """Encoding and flags of the rounding of a rational in the direction `mode`, which is the
@@ -114,12 +160,11 @@ class Format:
         rounded = rounded_at(max(exponent, self.emin))
         inexact = rounded != magnitude
         if unbounded > self.max_finite:
-            # An overflow: an infinity, or the largest finite value when the direction rounds
-            # this magnitude down.
+            # An overflow: what the format has for an infinity, or the largest finite value when
+            # the direction rounds this magnitude down.
             if mode in ("E", "A") or upward:
                 return self.infinity(negative), OVERFLOW | INEXACT
-            largest = self.round(-self.max_finite if negative else self.max_finite, "E")[0]
-            return largest, OVERFLOW | INEXACT
+            return (int(negative) << (self.ew + self.fw)) | self.largest, OVERFLOW | INEXACT
         flags = (INEXACT if inexact else 0) | (UNDERFLOW if tiny and inexact else 0)
         if rounded == 0:
             return self.zero(negative), flags
@@ -131,7 +176,7 @@ class Format:
         else:
             field = exponent + self.bias
             fraction = int(rounded / Fraction(2) ** (exponent - self.fw)) - (1 << self.fw)
-        return self.zero(negative) | (field << self.fw) | fraction, flags
+        return (int(negative) << (self.ew + self.fw)) | (field << self.fw) | fraction, flags
 
 
 def to_fraction(value):
@@ -155,6 +200,7 @@ def half_turn_tangent(x):
 
 
 REAL = {
+    "exp": mpmath.exp, "expm1": mpmath.expm1, "log": mpmath.log, "logp1": mpmath.log1p,
     "exp2": lambda x: mpmath.power(2, x), "exp2m1": lambda x: mpmath.power(2, x) - 1,
     "exp10": lambda x: mpmath.power(10, x), "exp10m1": lambda x: mpmath.power(10, x) - 1,
     "log2": lambda x: mpmath.log(x, 2), "log10": lambda x: mpmath.log(x, 10),
@@ -167,10 +213,12 @@ REAL = {
     "sinh": mpmath.sinh, "cosh": mpmath.cosh, "tanh": mpmath.tanh,
     "asinh": mpmath.asinh, "acosh": mpmath.acosh, "atanh": mpmath.atanh,
 }
-UNARY = list(REAL)
-ODD_AT_ZERO = {"exp2m1", "exp10m1", "log2p1", "log10p1", "sin", "tan", "sinPi", "tanPi", "asin", "atan", "asinPi",
-               "atanPi", "sinh", "tanh", "asinh", "atanh"}
-SATURATING = {"tanh", "exp2m1", "exp10m1"}
+UNARY = list(REAL) + ["rSqrt", "cbrt"]
+ODD_AT_ZERO = {"expm1", "exp2m1", "exp10m1", "logp1", "log2p1", "log10p1", "sin", "tan", "sinPi", "tanPi", "asin",
+               "atan", "asinPi", "atanPi", "sinh", "tanh", "asinh", "atanh"}
+SATURATING = {"tanh", "expm1", "exp2m1", "exp10m1"}
+DEGREES = (-3, -2, -1, 0, 1, 2, 3, 5)
+EXPONENTS = (-3, -2, -1, 0, 1, 2, 3, 7)
 
 
 def exact_value(fmt, function, operands, name=""):
@@ -239,17 +287,119 @@ def nan():
     return "nan"
 
 
+def floor_root(value, degree):
+    """The largest integer `r` with `r ^ degree <= value`, for a nonnegative integer."""
+    if value < 2:
+        return value
+    low, high = 0, 1 << (value.bit_length() // degree + 1)
+    while low < high:
+        middle = (low + high + 1) // 2
+        if middle ** degree <= value:
+            low = middle
+        else:
+            high = middle - 1
+    return low
+
+
+def integer_root(value, degree):
+    """The nonnegative integer `r` with `r ^ degree = value`, or None."""
+    root = floor_root(value, degree)
+    return root if root ** degree == value else None
+
+
+def root_value(fmt, radicand, degree):
+    """A rational that rounds like the positive `degree`-th root of a positive rational in
+    every direction: the root itself when it is rational. An irrational root lies strictly
+    between two neighbours of a binary grid that has every value of the format near the root
+    and every midpoint of two of them, with the unbounded exponent range too, so the midpoint
+    of the two neighbours rounds like the root. The neighbours are found with integers, so the
+    radicand `x^2 + y^2` of `hypot` keeps a term of any size."""
+    numerator = integer_root(radicand.numerator, degree)
+    denominator = integer_root(radicand.denominator, degree)
+    if numerator is not None and denominator is not None:
+        return Fraction(numerator, denominator)
+    magnitude = radicand.numerator.bit_length() - radicand.denominator.bit_length()
+    shift = max(0, fmt.fw + 8 - magnitude // degree)
+    below = floor_root((radicand.numerator << (degree * shift)) // radicand.denominator, degree)
+    return Fraction(2 * below + 1, 1 << (shift + 1))
+
+
+def rsqrt(fmt, operand):
+    if operand[0] == "nan":
+        return nan(), INVALID if operand[1] else 0
+    if operand[0] == "inf":
+        return (nan(), INVALID) if operand[1] else (fmt.zero(False), 0)
+    _, negative, q = operand
+    if q == 0:
+        return fmt.infinity(negative), DIVIDE_BY_ZERO
+    if q < 0:
+        return nan(), INVALID
+    return fmt.round(root_value(fmt, 1 / q, 2))
+
+
+def rootn(fmt, operand, degree):
+    if operand[0] == "nan":
+        return nan(), INVALID if operand[1] else 0
+    if degree == 0:
+        return nan(), INVALID
+    odd = degree % 2 == 1
+    negative = operand[1] and odd
+    if operand[0] == "inf":
+        if operand[1] and not odd:
+            return nan(), INVALID
+        return (fmt.zero(negative), 0) if degree < 0 else (fmt.infinity(negative), 0)
+    q = operand[2]
+    if q == 0:
+        return (fmt.infinity(negative), DIVIDE_BY_ZERO) if degree < 0 else (fmt.zero(negative), 0)
+    if q < 0 and not odd:
+        return nan(), INVALID
+    magnitude = root_value(fmt, 1 / abs(q) if degree < 0 else abs(q), abs(degree))
+    return fmt.round(-magnitude if q < 0 else magnitude)
+
+
+def pown(fmt, operand, exponent):
+    if operand[0] == "nan":
+        if exponent == 0 and not operand[1]:
+            return fmt.round(Fraction(1))
+        return nan(), INVALID if operand[1] else 0
+    if exponent == 0:
+        return fmt.round(Fraction(1))
+    negative = operand[1] and exponent % 2 == 1
+    if operand[0] == "inf":
+        return (fmt.zero(negative), 0) if exponent < 0 else (fmt.infinity(negative), 0)
+    q = operand[2]
+    if q == 0:
+        return (fmt.infinity(negative), DIVIDE_BY_ZERO) if exponent < 0 else (fmt.zero(negative), 0)
+    return fmt.round(q ** exponent)
+
+
+def hypot(fmt, x, y):
+    if (x[0] == "nan" and x[1]) or (y[0] == "nan" and y[1]):
+        return nan(), INVALID
+    if x[0] == "inf" or y[0] == "inf":
+        return fmt.infinity(False), 0
+    if x[0] == "nan" or y[0] == "nan":
+        return nan(), 0
+    if x[2] == 0 and y[2] == 0:
+        return fmt.zero(False), 0
+    return fmt.round(root_value(fmt, x[2] * x[2] + y[2] * y[2], 2))
+
+
 def unary(fmt, name, operand):
     """Expected (result, flags) of a function of one operand."""
+    if name == "rSqrt":
+        return rsqrt(fmt, operand)
+    if name == "cbrt":
+        return rootn(fmt, operand, 3)
     if operand[0] == "nan":
         return nan(), INVALID if operand[1] else 0
     if operand[0] == "inf":
         negative = operand[1]
-        if name in ("exp2", "exp10"):
+        if name in ("exp", "exp2", "exp10"):
             return (fmt.zero(False), 0) if negative else (fmt.infinity(False), 0)
-        if name in ("exp2m1", "exp10m1"):
+        if name in ("expm1", "exp2m1", "exp10m1"):
             return fmt.round(Fraction(-1)) if negative else (fmt.infinity(False), 0)
-        if name in ("log2", "log10", "log2p1", "log10p1", "acosh"):
+        if name in ("log", "log2", "log10", "logp1", "log2p1", "log10p1", "acosh"):
             return (nan(), INVALID) if negative else (fmt.infinity(False), 0)
         if name in ("sinh", "asinh"):
             return fmt.infinity(negative), 0
@@ -266,12 +416,12 @@ def unary(fmt, name, operand):
     _, negative, q = operand
     if q == 0 and name in ODD_AT_ZERO:
         return fmt.zero(negative), 0
-    if name in ("log2", "log10"):
+    if name in ("log", "log2", "log10"):
         if q == 0:
             return fmt.infinity(True), DIVIDE_BY_ZERO
         if q < 0:
             return nan(), INVALID
-    if name in ("log2p1", "log10p1"):
+    if name in ("logp1", "log2p1", "log10p1"):
         if q == -1:
             return fmt.infinity(True), DIVIDE_BY_ZERO
         if q < -1:
@@ -368,18 +518,57 @@ def powr(fmt, x, y):
         if base == 1:
             return nan(), INVALID
         return (fmt.infinity(False), 0) if (base > 1) != y_negative else (fmt.zero(False), 0)
-    value = exact_value(fmt, mpmath.power, [base, y[2]])
+    return fmt.round(positive_power(fmt, base, y[2]))
+
+
+def positive_power(fmt, base, exponent):
+    """A rational that rounds like `base ^ exponent` in every direction, for a positive base."""
+    value = exact_value(fmt, mpmath.power, [base, exponent])
     # `base ^ (a / 2^j)` is a value `r` of the format exactly when `base ^ a = r ^ (2^j)`. The
     # candidate is the value nearest to the computed power.
-    exponent = y[2]
     j = exponent.denominator.bit_length() - 1
     nearest, flags = fmt.round(value, "E")
-    candidate = fmt.decode(nearest)
-    if (flags & OVERFLOW) == 0 and candidate[0] == "fin" and candidate[2] > 0 and j <= 12 and \
-            abs(exponent.numerator) <= 4096:
-        if base ** exponent.numerator == candidate[2] ** (1 << j):
-            return fmt.round(candidate[2])
-    return fmt.round(value)
+    # An overflow is not a value of the format, and a format without an infinity has no encoding
+    # to decode for it.
+    if (flags & OVERFLOW) == 0 and j <= 12 and abs(exponent.numerator) <= 4096:
+        candidate = fmt.decode(nearest)
+        if candidate[0] == "fin" and candidate[2] > 0 and \
+                base ** exponent.numerator == candidate[2] ** (1 << j):
+            return candidate[2]
+    return value
+
+
+def power(fmt, x, y):
+    """pow (x, y) with the special cases of IEEE 754-2019 9.2.1."""
+    x_signaling = x[0] == "nan" and x[1]
+    y_signaling = y[0] == "nan" and y[1]
+    if is_zero(y) and not x_signaling:
+        return fmt.round(Fraction(1))
+    if x[0] == "fin" and x[2] == 1 and not y_signaling:
+        return fmt.round(Fraction(1))
+    if x[0] == "nan" or y[0] == "nan":
+        return nan(), INVALID if x_signaling or y_signaling else 0
+    y_negative = sign_of(y) if y[0] == "inf" else y[2] < 0
+    y_odd = y[0] == "fin" and y[2].denominator == 1 and y[2].numerator % 2 == 1
+    if x[0] == "inf":
+        negative = sign_of(x) and y_odd
+        return (fmt.zero(negative), 0) if y_negative else (fmt.infinity(negative), 0)
+    base = x[2]
+    if base == 0:
+        if y[0] == "inf":
+            return (fmt.infinity(False), 0) if y_negative else (fmt.zero(False), 0)
+        negative = sign_of(x) and y_odd
+        return (fmt.infinity(negative), DIVIDE_BY_ZERO) if y_negative else (fmt.zero(negative), 0)
+    if y[0] == "inf":
+        if abs(base) == 1:
+            return fmt.round(Fraction(1))
+        return (fmt.infinity(False), 0) if (abs(base) > 1) != y_negative else (fmt.zero(False), 0)
+    if base > 0:
+        return fmt.round(positive_power(fmt, base, y[2]))
+    if y[2].denominator != 1:
+        return nan(), INVALID
+    magnitude = positive_power(fmt, -base, y[2])
+    return fmt.round(-magnitude if y_odd else magnitude)
 
 
 def compound(fmt, x, n):
@@ -409,6 +598,9 @@ def show(result):
 
 def emit(name, fmt, x, y, expected):
     result, flags = expected
+    if result == "nan" and fmt.kind == "finite":
+        # A format without a NaN delivers `+0` for an invalid operation.
+        result = 0
     print(f"fun {name} {fmt.name} {fmt.mode} {x:x} {y} {show(result)} {flags}")
 
 
@@ -428,22 +620,53 @@ def random_operand(rng, fmt, moderate, limit=None):
 LARGE = (0x6490000000000000, 0xF1F123456789ABCD, 0x7FEFFFFFFFFFFFFF)
 
 
+def binary_cases(fmt, a, b):
+    """The functions of two operands at one pair of encodings."""
+    x, y = fmt.decode(a), fmt.decode(b)
+    emit("atan2", fmt, a, format(b, "x"), angle(fmt, False, x, y))
+    emit("atan2Pi", fmt, a, format(b, "x"), angle(fmt, True, x, y))
+    emit("powr", fmt, a, format(b, "x"), powr(fmt, x, y))
+    emit("pow", fmt, a, format(b, "x"), power(fmt, x, y))
+    emit("hypot", fmt, a, format(b, "x"), hypot(fmt, x, y))
+
+
+def integer_cases(fmt, bits):
+    """`rootn` and `pown` at one encoding."""
+    for degree in DEGREES:
+        emit("rootn", fmt, bits, degree, rootn(fmt, fmt.decode(bits), degree))
+    for exponent in EXPONENTS:
+        emit("pown", fmt, bits, exponent, pown(fmt, fmt.decode(bits), exponent))
+
+
 def main():
     count, seed = int(sys.argv[2]), int(sys.argv[3])
     rng = random.Random(seed)
-    small, tiny = Format("e4f3"), Format("e3f2")
+    tiny = Format("e3f2")
+    small = [Format(name) for name in ("e4f3", "e5m2", "e4m3", "e4m3fnuz", "e5m2fnuz", "e2m1")]
     for mode in "EAZUD":
-        small.mode = tiny.mode = mode
-        for name in UNARY:
-            for bits in range(1 << small.width):
-                emit(name, small, bits, "-", unary(small, name, small.decode(bits)))
+        tiny.mode = mode
+        for fmt in small:
+            fmt.mode = mode
+            for bits in range(1 << fmt.width):
+                for name in UNARY:
+                    emit(name, fmt, bits, "-", unary(fmt, name, fmt.decode(bits)))
+                integer_cases(fmt, bits)
+        for fmt in (tiny, small[-1]):
+            fmt.mode = mode
+            for a in range(1 << fmt.width):
+                for b in range(1 << fmt.width):
+                    binary_cases(fmt, a, b)
         for a in range(1 << tiny.width):
-            for b in range(1 << tiny.width):
-                emit("atan2", tiny, a, format(b, "x"), angle(tiny, False, tiny.decode(a), tiny.decode(b)))
-                emit("atan2Pi", tiny, a, format(b, "x"), angle(tiny, True, tiny.decode(a), tiny.decode(b)))
-                emit("powr", tiny, a, format(b, "x"), powr(tiny, tiny.decode(a), tiny.decode(b)))
+            integer_cases(tiny, a)
             for n in (-40, -7, -3, -2, -1, 0, 1, 2, 3, 5, 8, 21, 60):
                 emit("compound", tiny, a, n, compound(tiny, tiny.decode(a), n))
+    for fmt in small[:-1]:
+        for index in range(50 * count):
+            fmt.mode = "EAZUD"[rng.randrange(5)]
+            binary_cases(fmt, rng.getrandbits(fmt.width), rng.getrandbits(fmt.width))
+            a = rng.getrandbits(fmt.width)
+            n = rng.randint(-12, 12)
+            emit("compound", fmt, a, n, compound(fmt, fmt.decode(a), n))
     for format_name in ("binary16", "binary32", "binary64"):
         fmt = Format(format_name)
         for name in UNARY:
@@ -463,11 +686,13 @@ def main():
             fmt.mode = "EAZUD"[rng.randrange(5)]
             a = random_operand(rng, fmt, index % 2 == 0)
             b = random_operand(rng, fmt, index % 4 < 2)
-            emit("atan2", fmt, a, format(b, "x"), angle(fmt, False, fmt.decode(a), fmt.decode(b)))
-            emit("atan2Pi", fmt, a, format(b, "x"), angle(fmt, True, fmt.decode(a), fmt.decode(b)))
-            emit("powr", fmt, a, format(b, "x"), powr(fmt, fmt.decode(a), fmt.decode(b)))
+            binary_cases(fmt, a, b)
             n = rng.randint(-60, 60)
             emit("compound", fmt, a, n, compound(fmt, fmt.decode(a), n))
+            degree = rng.randint(-9, 9)
+            emit("rootn", fmt, a, degree, rootn(fmt, fmt.decode(a), degree))
+            exponent = rng.randint(-40, 40)
+            emit("pown", fmt, a, exponent, pown(fmt, fmt.decode(a), exponent))
 
 
 if __name__ == "__main__":

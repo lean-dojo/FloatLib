@@ -11,7 +11,9 @@ import Lean.Replay
 `lean --run tests/checks/KernelReplay.lean M` reads the compiled module `M`, builds the environment
 of its imports, and gives every constant that `M` adds to Lean's kernel once more. It prints the
 number of constants and fails if the kernel rejects one. A declaration that was put into the
-environment without the kernel's check is found this way.
+environment without the kernel's check is found this way. It also fails if one of the constants
+is an axiom: the library declares none, and Lean keeps a declaration that its kernel rejected as
+an axiom.
 
 One process replays one module, so a run needs the memory of one module and its imports, and
 `tests/checks/kernel-replay.sh` starts this file once for each module of the library, several at
@@ -36,8 +38,8 @@ def moduleFiles (module : Name) : IO (Array System.FilePath) := do
     return #[exported, server, «private»]
   return #[exported, server]
 
-/-- Check the constants that `module` adds again, in the environment of its imports. Returns how
-many there are. -/
+/-- Check the constants that `module` adds again, in the environment of its imports, and that
+none of them is an axiom. Returns how many there are. -/
 def replayModule (module : Name) : IO Nat := do
   let parts ← readModuleDataParts (← moduleFiles module)
   let some (first, _) := parts[0]? | throw <| IO.userError s!"module {module} has no data"
@@ -49,6 +51,8 @@ def replayModule (module : Name) : IO Nat := do
   let env ← finalizeImport state first.imports {} 0 false false (level := level)
   let mut added : Std.HashMap Name ConstantInfo := {}
   for name in last.constNames, info in last.constants do
+    if info matches .axiomInfo _ then
+      throw <| IO.userError s!"module {module} adds the axiom {name}"
     added := added.insert name info
   discard <| env.toKernelEnv.replay added
   return added.size

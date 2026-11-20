@@ -141,6 +141,56 @@ structure FormData where
   /-- The entries `(k, l)` with `k ≤ l`. -/
   entries : Std.HashMap (Nat × Nat) Poly
 
+/-- Where the monomials of a polynomial go in the matrix of its form: the shifted generators,
+the index of the constant one, and for each shifted generator the lowest degree that it has in a
+monomial without another shifted generator. -/
+structure Layout where
+  /-- Generator of a shifted atom ↦ the atom and its center. -/
+  shifted : Std.HashMap Nat (Nat × ℚ)
+  /-- The index that stands for the constant one: past every generator. -/
+  one : Nat
+  /-- The lowest degree of each shifted generator in a monomial that has no other. -/
+  lowest : Std.HashMap Nat Nat
+
+/-- The layout of the form of a polynomial. It depends on the monomials of the polynomial and
+not on their coefficients. -/
+def Layout.of (generators : Generators) (p : Poly) : Layout := Id.run do
+  let shifted : Std.HashMap Nat (Nat × ℚ) := generators.shifted.fold (init := {})
+    fun acc atom (center, index) => acc.insert index (atom, center)
+  let mut lowest : Std.HashMap Nat Nat := {}
+  for (monomial, _) in p.monomials do
+    if let [(i, e)] := monomial.filter fun (i, _) => shifted.contains i then
+      lowest := lowest.insert i (min e (lowest.getD i e))
+  return { shifted, one := generators.terms.size, lowest }
+
+/-- The power of a shifted generator that is its coordinate. -/
+def Layout.power (layout : Layout) (i : Nat) : Nat := max 1 ((layout.lowest.getD i 2 + 1) / 2)
+
+/-- The entry of the matrix that a monomial goes to, as two generators or the constant one, and
+what is left of the monomial there. -/
+def Layout.place (layout : Layout) (monomial : Monomial) : (Nat × Nat) × Monomial :=
+  let coordinates := monomial.filter fun (i, e) =>
+    layout.shifted.contains i && layout.power i ≤ e
+  let (k, l) : Nat × Nat :=
+    match coordinates.find? fun (i, e) => 2 * layout.power i ≤ e with
+    | some (i, _) => (i, i)
+    | none =>
+      match coordinates with
+      | (i, _) :: (j, _) :: _ => (i, j)
+      | [(i, _)] => (i, layout.one)
+      | [] => (layout.one, layout.one)
+  let remove (m : Monomial) (i : Nat) : Monomial := m.filterMap fun (j, e) =>
+    if j == i then (if e ≤ layout.power i then none else some (j, e - layout.power i))
+    else some (j, e)
+  ((k, l), remove (remove monomial k) l)
+
+/-- The generators and the constant one that some entries of a matrix use, in increasing order,
+so that the constant one is last. -/
+def Layout.used {α : Type} (raw : Std.HashMap (Nat × Nat) α) : Array Nat :=
+  (raw.fold (init := #[]) fun acc (k, l) _ =>
+    let acc := if acc.contains k then acc else acc.push k
+    if acc.contains l then acc else acc.push l).qsort (· < ·)
+
 /--
 Write a polynomial as a quadratic form in powers of the shifted generators. The coordinate of a
 shifted generator `d` is `d ^ p`, where `2 * p` is the lowest degree of `d` in the monomials that
@@ -151,40 +201,18 @@ counts it twice), and one with fewer to the row of the constant one. What is lef
 is the entry. Coordinates that no monomial uses are left out.
 -/
 def FormData.ofPoly (generators : Generators) (p : Poly) : FormData := Id.run do
-  -- generator of a shifted atom ↦ the atom and its center
-  let shifted : Std.HashMap Nat (Nat × ℚ) := generators.shifted.fold (init := {})
-    fun acc atom (center, index) => acc.insert index (atom, center)
-  let one := generators.terms.size
-  -- the power of each shifted generator that is its coordinate
-  let mut lowest : Std.HashMap Nat Nat := {}
-  for (monomial, _) in p.monomials do
-    if let [(i, e)] := monomial.filter fun (i, _) => shifted.contains i then
-      lowest := lowest.insert i (min e (lowest.getD i e))
-  let power (i : Nat) : Nat := max 1 ((lowest.getD i 2 + 1) / 2)
+  let layout := Layout.of generators p
   let mut raw : Std.HashMap (Nat × Nat) Poly := {}
   for (monomial, coefficient) in p.monomials do
-    let coordinates := monomial.filter fun (i, e) => shifted.contains i && power i ≤ e
-    let (k, l) : Nat × Nat :=
-      match coordinates.find? fun (i, e) => 2 * power i ≤ e with
-      | some (i, _) => (i, i)
-      | none =>
-        match coordinates with
-        | (i, _) :: (j, _) :: _ => (i, j)
-        | [(i, _)] => (i, one)
-        | [] => (one, one)
-    let remove (m : Monomial) (i : Nat) : Monomial := m.filterMap fun (j, e) =>
-      if j == i then (if e ≤ power i then none else some (j, e - power i)) else some (j, e)
-    let rest := remove (remove monomial k) l
+    let ((k, l), rest) := layout.place monomial
     let share := if k == l then coefficient else coefficient / 2
     raw := raw.insert (k, l) ((raw.getD (k, l) {}).addMonomial rest share)
   -- the coordinates in use, the constant one last
-  let used := (raw.fold (init := #[]) fun acc (k, l) _ =>
-    let acc := if acc.contains k then acc else acc.push k
-    if acc.contains l then acc else acc.push l).qsort (· < ·)
+  let used := Layout.used raw
   let position (i : Nat) : Nat := used.findIdx? (· == i) |>.getD 0
   let entries := raw.fold (init := {}) fun acc (k, l) q => acc.insert (position k, position l) q
-  return { coordinates := used.map fun i => shifted[i]?.map fun (atom, center) =>
-    (atom, center, power i - 1), entries }
+  return { coordinates := used.map fun i => layout.shifted[i]?.map fun (atom, center) =>
+    (atom, center, layout.power i - 1), entries }
 
 /-- The enclosure of a polynomial from enclosures of its generators, by the exact rational
 operations of the interval layer; there is none when a generator of the polynomial has none. -/
@@ -232,6 +260,133 @@ def FormData.screen (data : FormData) (ranges : Array (Option (Interval ℚ))) (
     Bool :=
   0 < data.margin ranges strict
 
+/-- The enclosure of a monomial from enclosures of its generators, by the exact rational
+operations of the interval layer. -/
+def monomialRange (ranges : Array (Option (Interval ℚ))) (monomial : Monomial) :
+    Option (Interval ℚ) := do
+  let B := Backend.rational {}
+  let mut product : Interval ℚ := ⟨1, 1⟩
+  for (i, exponent) in monomial do
+    let factor ← B.unary? (.pow exponent) (← (ranges[i]?).join)
+    product ← B.binary? .mul product factor
+  return product
+
+/--
+What the margin of definiteness of the form of `p + μ * q` needs at every `μ`, given enclosures
+of the generators. A search for a multiplier asks for the margin at some two hundred values of
+`μ`, so what does not depend on `μ` is computed once: the layout of the form, which is that of
+the monomials of `p` and of `q` together as long as none of them cancels, and the enclosure of
+what each monomial leaves in its entry. An entry is then a sum of these enclosures with the
+coefficients `c + μ * d`.
+-/
+structure Margins where
+  /-- The generators of `p` and `q`. -/
+  generators : Generators
+  /-- The polynomial that the multiplier does not scale. -/
+  p : Poly
+  /-- The polynomial that the multiplier scales. -/
+  q : Poly
+  /-- The enclosures of the generators. -/
+  ranges : Array (Option (Interval ℚ))
+  /-- Whether the form has to be positive definite, or semidefinite only. -/
+  strict : Bool
+  /-- The upper triangle of the matrix by rows: each entry as the monomials that are left in it,
+  with their coefficients in `p` and in `q` and their enclosures. -/
+  rows : List (List (Array (ℚ × ℚ × Option (Interval ℚ))))
+  /-- The coefficients of the monomials that `p` and `q` share: these cancel at some `μ`. -/
+  shared : Array (ℚ × ℚ)
+
+/-- The table for the margins of the forms of `p + μ * q`. -/
+def Margins.of (generators : Generators) (p q : Poly) (ranges : Array (Option (Interval ℚ)))
+    (strict : Bool) : Margins :=
+  let union : Poly := q.fold (init := p.fold (init := {}) fun acc m _ => acc.insert m 1)
+    fun acc m _ => acc.insert m 1
+  let layout := Layout.of generators union
+  -- each entry: what its monomials leave, with the coefficients in `p` and in `q`
+  let raw : Std.HashMap (Nat × Nat) (Std.HashMap Monomial (ℚ × ℚ)) :=
+    union.fold (init := {}) fun acc m _ =>
+      let (key, rest) := layout.place m
+      let share (c : ℚ) : ℚ := if key.1 == key.2 then c else c / 2
+      let terms := acc.getD key {}
+      let (c, d) := terms.getD rest (0, 0)
+      acc.insert key (terms.insert rest (c + share (p.getD m 0), d + share (q.getD m 0)))
+  let used := Layout.used raw
+  let n := used.size
+  { generators, p, q, ranges, strict
+    rows := (List.range n).map fun k => (List.range (n - k)).map fun offset =>
+      ((raw.getD (used.getD k 0, used.getD (k + offset) 0) {}).toArray.map fun (rest, c, d) =>
+        (c, d, monomialRange ranges rest))
+    shared := p.fold (init := #[]) fun acc m c =>
+      match q[m]? with
+      | some d => acc.push (c, d)
+      | none => acc }
+
+/-- The margin of definiteness of the form of `p + μ * q`:
+`(FormData.ofPoly generators (p.add (q.scale μ))).margin ranges strict`. At a `μ` where a
+monomial cancels, and at zero, the form is built as it is defined; elsewhere its entries are
+read off the table. -/
+def Margins.at (table : Margins) (μ : ℚ) : ℚ :=
+  if μ == 0 || table.shared.any (fun (c, d) => c + μ * d == 0) then
+    (FormData.ofPoly table.generators (table.p.add (table.q.scale μ))).margin table.ranges
+      table.strict
+  else
+    let entry (terms : Array (ℚ × ℚ × Option (Interval ℚ))) : Option (Interval ℚ) := do
+      let B := Backend.rational {}
+      let mut sum : Interval ℚ := ⟨0, 0⟩
+      for (c, d, range?) in terms do
+        let coefficient := c + μ * d
+        if coefficient == 0 then continue
+        let product ← B.binary? .mul ⟨coefficient, coefficient⟩ (← range?)
+        sum ← B.binary? .add sum product
+      return sum
+    match table.rows.mapM fun row => row.mapM entry with
+    | some rows => pivotMargin table.strict rows
+    | none => -(10 : ℚ) ^ 30
+
+/--
+The multipliers between `lower` and `upper` that a search need look at: the range of the `μ`
+that give every diagonal entry of the matrix a nonnegative lower end, or `none` when there is no
+such `μ`. A pivot is at most its diagonal entry, so outside this range no form of `p + μ * q`
+passes the test of definiteness. The lower end of a diagonal entry is a concave function of
+`μ`, linear between the values at which a coefficient `c + μ * d` changes its sign, so its sign
+is read off at these values. The range is the whole of `[lower, upper]` when an enclosure is
+missing, and when a monomial cancels at some `μ` of it, where the form has another layout.
+-/
+def Margins.admits (table : Margins) (lower : ℚ := 1 / 2 ^ 12) (upper : ℚ := 2 ^ 12) :
+    Option (ℚ × ℚ) := Id.run do
+  if table.shared.any fun (c, d) => d != 0 && lower ≤ -c / d && -c / d ≤ upper then
+    return some (lower, upper)
+  -- the values of `μ` that the diagonal entries admit so far
+  let mut low := lower
+  let mut high := upper
+  for row in table.rows do
+    let some terms := row.head? | continue
+    if terms.any fun (c, d, range?) => range?.isNone && (c != 0 || d != 0) then
+      return some (lower, upper)
+    let value (μ : ℚ) : ℚ := terms.foldl (init := 0) fun sum (c, d, range?) =>
+      match range? with
+      | some I =>
+        let coefficient := c + μ * d
+        sum + (if 0 ≤ coefficient then coefficient * I.lo else coefficient * I.hi)
+      | none => sum
+    let inside := (terms.filterMap fun (c, d, _) =>
+      if d == 0 then none
+      else if low < -c / d && -c / d < high then some (-c / d) else none).qsort (· < ·)
+    let points := (#[low] ++ inside).push high
+    let values := points.map value
+    -- where the lower end passes zero between two neighbours, the first of which is negative
+    let crossing (i j : Nat) : ℚ :=
+      let (p, q, v, w) := (points.getD i 0, points.getD j 0, values.getD i 0, values.getD j 0)
+      p + (q - p) * (-v) / (w - v)
+    let some first := (List.range points.size).find? fun i => 0 ≤ values.getD i 0
+      | return none
+    let some last := (List.range points.size).reverse.find? fun i => 0 ≤ values.getD i 0
+      | return none
+    low := if first == 0 then points.getD 0 low else crossing (first - 1) first
+    high := if last + 1 == points.size then points.getD last high else crossing (last + 1) last
+    if high < low then return none
+  return some (low, high)
+
 /-- The rational of least denominator in a closed interval of rationals. -/
 partial def simplest (lo hi : ℚ) : ℚ :=
   if lo ≤ 0 ∧ 0 ≤ hi then 0
@@ -244,35 +399,54 @@ partial def simplest (lo hi : ℚ) : ℚ :=
       floor + (simplest (hi - floor)⁻¹ (lo - floor)⁻¹)⁻¹
 
 /--
-A multiplier `μ > 0` at which a margin is positive, if the search finds one: the best of the
-powers `2 ^ (k / 4)` between `2 ^ (-12)` and `2 ^ 12`, refined between its neighbours by ternary
-search. For two quadratics the set of such `μ` is an interval, which may be narrow, and one
-point when the two sets touch: the simplest rational that the search leaves is tried last.
+A multiplier `μ > 0` at which a margin is positive, if the search finds one in the given range:
+the best of the powers `2 ^ (k / 4)` between `2 ^ (-12)` and `2 ^ 12` that the range holds (or
+its middle, when it holds none), refined between its neighbours by ternary search. For two
+quadratics the set of such `μ` is an interval, which may be narrow, and one point when the two
+sets touch: the simplest rational that the search leaves is tried after 48 steps of the
+refinement, and again every 16 steps up to 112, by when the bracket has singled out a rational
+with a denominator of five digits. The refinement ends early when its values do not come
+closer to zero as the bracket narrows: sixteen steps narrow it 650 times, and a margin whose
+maximum is zero or more gains more than a factor of 64 from that.
 -/
-def bestMultiplier (value : ℚ → ℚ) : Option ℚ := Id.run do
+def bestMultiplier (value : ℚ → ℚ) (range : ℚ × ℚ := (1 / 2 ^ 12, 2 ^ 12)) : Option ℚ :=
+    Id.run do
   -- quarter powers of two as rationals: 2 ^ (k / 4) is about 2 ^ ⌊k / 4⌋ times 1, 1.19, 1.41, 1.68
-  let grid : List ℚ := (List.range 97).map fun k =>
+  let powers : List ℚ := (List.range 97).map fun k =>
     (2 : ℚ) ^ ((k / 4 : Nat) - 12 : ℤ) * [1, 19 / 16, 181 / 128, 27 / 16].getD (k % 4) 1
-  let mut best : ℚ := 1
-  let mut bestValue : ℚ := value 1
-  let mut index := 48
-  for μ in grid, k in [0:97] do
+  let inside := powers.filter fun μ => range.1 ≤ μ && μ ≤ range.2
+  let grid := if inside.isEmpty then [(range.1 + range.2) / 2] else inside
+  -- the multiplier one first, as long as the range holds it
+  let mut index := (grid.findIdx? (· == 1)).getD 0
+  let mut best : ℚ := grid.getD index 1
+  let mut bestValue : ℚ := value best
+  for μ in grid, k in [0:grid.length] do
     let v := value μ
     if bestValue < v then
       best := μ
       bestValue := v
       index := k
   if 0 < bestValue then return some best
-  let mut low := grid.getD (index - 1) best
-  let mut high := grid.getD (index + 1) best
-  for _ in [0:48] do
+  let mut low := if index == 0 then range.1 else grid.getD (index - 1) best
+  let mut high := if index + 1 == grid.length then range.2 else grid.getD (index + 1) best
+  let mut reference : Option ℚ := none
+  for step in [0:112] do
+    -- Two sets that touch admit one multiplier only: the simplest rational that is left, tried
+    -- after 48 steps and then every 16, as the bracket leaves out more of the simpler ones.
+    if 48 ≤ step && step % 16 == 0 then
+      let last := simplest low high
+      if 0 < value last then return some last
     let first := (2 * low + high) / 3
     let second := (low + 2 * high) / 3
     let (vFirst, vSecond) := (value first, value second)
     if 0 < vFirst then return some first
     if 0 < vSecond then return some second
+    -- values that stay where they were sixteen steps ago are those of a negative maximum
+    if step % 16 == 0 then
+      let current := max vFirst vSecond
+      if reference.any fun previous => current * 64 < previous then return none
+      reference := some current
     if vFirst < vSecond then low := first else high := second
-  -- Two sets that touch admit one multiplier only: the simplest rational that is left.
   let last := simplest low high
   if 0 < value last then return some last
   return none
@@ -352,6 +526,12 @@ def Expansion.of (atoms : Array Q(ℝ)) (first : Literal) (second : Option Liter
 def Expansion.data (expansion : Expansion) (multiplier : ℚ) : FormData :=
   FormData.ofPoly expansion.generators
     (expansion.firstPoly.add (expansion.secondPoly.scale multiplier))
+
+/-- The table for the margins of definiteness of the forms of `a - b + μ * (c - d)`, given
+enclosures of the generators: `Margins.at` is the margin of `expansion.data μ`. -/
+def Expansion.margins (expansion : Expansion) (ranges : Array (Option (Interval ℚ)))
+    (strict : Bool) : Margins :=
+  Margins.of expansion.generators expansion.firstPoly expansion.secondPoly ranges strict
 
 /-- Whether a difference is a bound on one generator: it has no product of generators and at
 most one generator. -/

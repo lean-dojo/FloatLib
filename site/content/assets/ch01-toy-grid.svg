@@ -659,13 +659,13 @@ L 603.936 218.155855
    </g>
   </g>
   <g id="patch_4">
-   <path d="M 26.939326 100.45577
-Q 19.949663 146.87171 12.96 193.28765
+   <path d="M 26.939326 108.126158
+Q 19.949663 150.706904 12.96 193.28765
 " style="fill: none; stroke: #c9c9c6; stroke-width: 0.8; stroke-linecap: round"/>
   </g>
   <g id="patch_5">
-   <path d="M 61.88764 100.45577
-Q 348.46382 146.87171 635.04 193.28765
+   <path d="M 61.88764 108.126158
+Q 348.46382 150.706904 635.04 193.28765
 " style="fill: none; stroke: #c9c9c6; stroke-width: 0.8; stroke-linecap: round"/>
   </g>
  </g>

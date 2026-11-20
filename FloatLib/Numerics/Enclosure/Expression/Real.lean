@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Numerics.Enclosure.Expression.Basic
 public import FloatLib.Numerics.Enclosure.Interval.Real
+public import FloatLib.Numerics.Kernel.QProof
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 
@@ -177,6 +178,163 @@ structure Backend.Sound {α : Type*} (B : Backend α)
     List.Forall₂ (fun I x => I.ContainsReal B.decode x) inputs values →
     output.ContainsReal B.decode (functions index values)
 
+/-- A real inside an enclosure that is the point zero is zero. -/
+theorem Backend.eq_zero_of_isZero {α : Type*} {B : Backend α} {I : Interval α} {x : ℝ}
+    (hx : I.ContainsReal B.decode x) (h : B.isZero I = true) : x = 0 := by
+  obtain ⟨a, b, ha, hb, hax, hxb⟩ := hx
+  unfold Backend.isZero at h
+  cases hlo : B.decode I.lo with
+  | none => simp [hlo] at h
+  | some lo =>
+    cases hhi : B.decode I.hi with
+    | none => simp [hlo, hhi] at h
+    | some hi =>
+      simp only [hlo, hhi, Bool.and_eq_true, Kernel.Q.le_iff] at h
+      have hlo' : (lo : ℝ) = a := by simpa [hlo] using ha
+      have hhi' : (hi : ℝ) = b := by simpa [hhi] using hb
+      have h0 : (0 : ℝ) ≤ lo := by exact_mod_cast h.1
+      have h1 : (hi : ℝ) ≤ 0 := by exact_mod_cast h.2
+      exact le_antisymm (hxb.trans (hhi' ▸ h1)) ((hlo' ▸ h0).trans hax)
+
+/-- An enclosure from `Expr.zeroOperand?` contains the value of the operation: the operand that
+is the point zero is zero, and then so is the product or the quotient. -/
+theorem Expr.containsReal_zeroOperand? {α : Type*} {B : Backend α} {op : BinaryOp}
+    {left right : Option (Interval α)} {x y : ℝ}
+    (hx : ∀ I, left = some I → I.ContainsReal B.decode x)
+    (hy : ∀ J, right = some J → J.ContainsReal B.decode y) {K : Interval α}
+    (h : Expr.zeroOperand? B op left right = some K) : K.ContainsReal B.decode (op.eval x y) := by
+  have first : ∀ I, left = some I → B.isZero I = true → I.ContainsReal B.decode (x * y) ∧
+      I.ContainsReal B.decode (x / y) := by
+    intro I hI hzero
+    have hx0 := Backend.eq_zero_of_isZero (hx I hI) hzero
+    have hmul : x * y = x := by rw [hx0, zero_mul]
+    have hdiv : x / y = x := by rw [hx0, zero_div]
+    rw [hmul, hdiv]
+    exact ⟨hx I hI, hx I hI⟩
+  have second : ∀ J, right = some J → B.isZero J = true → J.ContainsReal B.decode (x * y) := by
+    intro J hJ hzero
+    have hy0 := Backend.eq_zero_of_isZero (hy J hJ) hzero
+    have hmul : x * y = y := by rw [hy0, mul_zero]
+    rw [hmul]
+    exact hy J hJ
+  cases op with
+  | mul =>
+    cases left with
+    | none =>
+      cases right with
+      | none => simp [Expr.zeroOperand?] at h
+      | some J =>
+        simp only [Expr.zeroOperand?] at h
+        split_ifs at h with hJ
+        rw [← Option.some.inj h]
+        exact second J rfl hJ
+    | some I =>
+      cases right with
+      | none =>
+        simp only [Expr.zeroOperand?] at h
+        split_ifs at h with hI
+        rw [← Option.some.inj h]
+        exact (first I rfl hI).1
+      | some J =>
+        simp only [Expr.zeroOperand?] at h
+        split_ifs at h with hI hJ
+        · rw [← Option.some.inj h]
+          exact (first I rfl hI).1
+        · rw [← Option.some.inj h]
+          exact second J rfl hJ
+  | div =>
+    cases left with
+    | none => simp [Expr.zeroOperand?] at h
+    | some I =>
+      simp only [Expr.zeroOperand?] at h
+      split_ifs at h with hI
+      rw [← Option.some.inj h]
+      exact (first I rfl hI).2
+  | add => simp [Expr.zeroOperand?] at h
+  | sub => simp [Expr.zeroOperand?] at h
+  | min => simp [Expr.zeroOperand?] at h
+  | max => simp [Expr.zeroOperand?] at h
+
+/--
+A successful evaluation with the zero rule encloses the exact real value throughout the input
+box: where a factor is exactly zero, the product is zero whatever the other factor is.
+
+Only variables actually supplied by the interval environment need a membership proof. A missing
+variable prevents successful evaluation, so it cannot create an unproved assumption.
+-/
+theorem Expr.containsReal_evalZero? {α : Type*} (e : Expr) {B : Backend α}
+    {functions : Nat → List ℝ → ℝ} (hB : B.Sound functions)
+    {env : Nat → Option (Interval α)} {values : Nat → ℝ}
+    (henv : ∀ i I, env i = some I → I.ContainsReal B.decode (values i))
+    {I : Interval α} (h : e.evalZero? B env = some I) :
+    I.ContainsReal B.decode (e.eval values functions) := by
+  revert I
+  refine Expr.rec
+    (motive_1 := fun e => ∀ {I}, e.evalZero? B env = some I →
+      I.ContainsReal B.decode (e.eval values functions))
+    (motive_2 := fun args => ∀ {inputs},
+      Expr.evalZeroArgs? args B env = some inputs →
+      List.Forall₂ (fun I x => I.ContainsReal B.decode x) inputs
+        (Expr.evalArgs args values functions))
+    ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ e
+  · intro q I h
+    simpa only [eval] using hB.const (by simpa only [Expr.evalZero?_const] using h)
+  · intro i I h
+    simpa only [eval] using henv i I (by simpa only [Expr.evalZero?_var] using h)
+  · intro op a ha I h
+    cases harg : a.evalZero? B env with
+    | none => simp [Expr.evalZero?_unary, harg] at h
+    | some J =>
+      simpa only [eval] using hB.unary (by simpa [Expr.evalZero?_unary, harg] using h) (ha harg)
+  · intro op a b ha hb I h
+    rw [Expr.evalZero?_binary] at h
+    simp only [eval]
+    have zero : Expr.zeroOperand? B op (a.evalZero? B env) (b.evalZero? B env) = some I →
+        I.ContainsReal B.decode (op.eval (a.eval values functions) (b.eval values functions)) :=
+      Expr.containsReal_zeroOperand? (fun _ hJ => ha hJ) (fun _ hJ => hb hJ)
+    cases hleft : a.evalZero? B env with
+    | none =>
+      rw [hleft] at h zero
+      exact zero h
+    | some J =>
+      cases hright : b.evalZero? B env with
+      | none =>
+        rw [hleft, hright] at h zero
+        exact zero h
+      | some K =>
+        rw [hleft, hright] at h zero
+        cases hop : B.binary? op J K with
+        | none => exact zero (by simpa only [Expr.zeroBinary?, hop] using h)
+        | some L =>
+          have hL : L = I := by simpa only [Expr.zeroBinary?, hop, Option.some.injEq] using h
+          exact hL ▸ hB.binary hop (ha hleft) (hb hright)
+  · intro op a b c ha hb hc I h
+    cases hfirst : a.evalZero? B env with
+    | none => simp [Expr.evalZero?_ternary, hfirst] at h
+    | some J =>
+      cases hsecond : b.evalZero? B env with
+      | none => simp [Expr.evalZero?_ternary, hfirst, hsecond] at h
+      | some K =>
+        cases hthird : c.evalZero? B env with
+        | none => simp [Expr.evalZero?_ternary, hfirst, hsecond, hthird] at h
+        | some L =>
+          simpa only [eval] using
+            hB.ternary (by simpa [Expr.evalZero?_ternary, hfirst, hsecond, hthird] using h)
+            (ha hfirst) (hb hsecond) (hc hthird)
+  · intro index args ha I h
+    simp only [Expr.evalZero?_call, Option.bind_eq_some_iff] at h
+    obtain ⟨inputs, hinputs, hcall⟩ := h
+    simpa only [eval] using hB.call hcall (ha hinputs)
+  · intro inputs h
+    simp only [Expr.evalZeroArgs?_nil, Option.some.injEq] at h
+    subst inputs
+    exact .nil
+  · intro arg args ha hat inputs h
+    simp only [Expr.evalZeroArgs?_cons, Option.bind_eq_bind, Option.bind_eq_some_iff,
+      Option.pure_def, Option.some.injEq] at h
+    obtain ⟨head, hhead, tail, htail, rfl⟩ := h
+    exact .cons (ha hhead) (hat htail)
+
 /--
 A successful expression evaluation encloses the exact real value throughout the input box.
 
@@ -188,59 +346,7 @@ theorem Expr.containsReal_eval? {α : Type*} (e : Expr) {B : Backend α}
     {env : Nat → Option (Interval α)} {values : Nat → ℝ}
     (henv : ∀ i I, env i = some I → I.ContainsReal B.decode (values i))
     {I : Interval α} (h : e.eval? B env = some I) :
-    I.ContainsReal B.decode (e.eval values functions) := by
-  revert I
-  refine Expr.rec
-    (motive_1 := fun e => ∀ {I}, e.eval? B env = some I →
-      I.ContainsReal B.decode (e.eval values functions))
-    (motive_2 := fun args => ∀ {inputs},
-      Expr.evalArgs? args B env = some inputs →
-      List.Forall₂ (fun I x => I.ContainsReal B.decode x) inputs
-        (Expr.evalArgs args values functions))
-    ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ e
-  · intro q I h
-    simpa only [eval] using hB.const (by simpa only [Expr.eval?_const] using h)
-  · intro i I h
-    simpa only [eval] using henv i I (by simpa only [Expr.eval?_var] using h)
-  · intro op a ha I h
-    cases harg : a.eval? B env with
-    | none => simp [Expr.eval?_unary, harg] at h
-    | some J =>
-      simpa only [eval] using hB.unary (by simpa [Expr.eval?_unary, harg] using h) (ha harg)
-  · intro op a b ha hb I h
-    cases hleft : a.eval? B env with
-    | none => simp [Expr.eval?_binary, hleft] at h
-    | some J =>
-      cases hright : b.eval? B env with
-      | none => simp [Expr.eval?_binary, hleft, hright] at h
-      | some K =>
-        simpa only [eval] using
-          hB.binary (by simpa [Expr.eval?_binary, hleft, hright] using h) (ha hleft) (hb hright)
-  · intro op a b c ha hb hc I h
-    cases hfirst : a.eval? B env with
-    | none => simp [Expr.eval?_ternary, hfirst] at h
-    | some J =>
-      cases hsecond : b.eval? B env with
-      | none => simp [Expr.eval?_ternary, hfirst, hsecond] at h
-      | some K =>
-        cases hthird : c.eval? B env with
-        | none => simp [Expr.eval?_ternary, hfirst, hsecond, hthird] at h
-        | some L =>
-          simpa only [eval] using
-            hB.ternary (by simpa [Expr.eval?_ternary, hfirst, hsecond, hthird] using h)
-            (ha hfirst) (hb hsecond) (hc hthird)
-  · intro index args ha I h
-    simp only [Expr.eval?_call, Option.bind_eq_some_iff] at h
-    obtain ⟨inputs, hinputs, hcall⟩ := h
-    simpa only [eval] using hB.call hcall (ha hinputs)
-  · intro inputs h
-    simp only [Expr.evalArgs?_nil, Option.some.injEq] at h
-    subst inputs
-    exact .nil
-  · intro arg args ha hat inputs h
-    simp only [Expr.evalArgs?_cons, Option.bind_eq_bind, Option.bind_eq_some_iff,
-      Option.pure_def, Option.some.injEq] at h
-    obtain ⟨head, hhead, tail, htail, rfl⟩ := h
-    exact .cons (ha hhead) (hat htail)
+    I.ContainsReal B.decode (e.eval values functions) :=
+  e.containsReal_evalZero? hB henv (e.evalZero?_of_eval? B env h)
 
 end FloatLib.Numerics.Interval

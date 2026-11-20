@@ -115,7 +115,7 @@ theorem pi_lt_overflowThreshold (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) :
       _ ≤ 2 ^ (m - 2) := zpow_le_zpow_right₀ (by norm_num) (by omega)
   have hpi := Real.pi_lt_d2
   rw [hsplit]
-  nlinarith
+  linarith
 
 /-- `Model.pi` is finite in every IEEE descriptor. -/
 theorem isFinite_pi (fmt : FloatFormat) (hfmt : fmt.isIEEE = true) : isFinite (pi fmt) = true := by

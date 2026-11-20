@@ -1004,19 +1004,6 @@ theorem sqrt_eq_spec (x : Model format) :
 
 /-! ## Order and neighbours -/
 
-/-- The comparison key of an encoding below the modulus: the encoding plus the sign bit below
-the sign bit, and minus it from the sign bit on. -/
-theorem signedKey_eq {p a : Nat} (ha : a < 2 ^ (p + 1)) :
-    signedKey p a = if a < 2 ^ p then a + 2 ^ p else a - 2 ^ p := by
-  have hpos := Nat.two_pow_pos p
-  unfold signedKey nar
-  kernel_notation
-  rw [Nat.pow_succ] at ha ⊢
-  split_ifs with h
-  · exact Nat.mod_eq_of_lt (by omega)
-  · rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
-    omega
-
 /-- The comparison key of a word is its signed code plus the sign bit. -/
 theorem signedKey_toNatBits (x : Model format) :
     ((signedKey format.payloadBits x.toNatBits : Nat) : Int) =

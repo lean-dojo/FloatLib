@@ -396,7 +396,7 @@ theorem mixedError_toReal_foldl_add_step (hfmt : fmt.isIEEE = true)
   · rw [max_eq_left hR, pow_succ]
     ring
   · rw [pow_succ]
-    nlinarith [mul_nonneg (mul_nonneg (by linarith : 0 ≤ 1 + unitRoundoffAt fmt) he)
+    linarith [mul_nonneg (mul_nonneg (by linarith : 0 ≤ 1 + unitRoundoffAt fmt) he)
       (sub_nonneg.2 hpow)]
 
 /-- `mixedError_toReal_foldl_add` from an accumulator that already carries `n` additions. -/
@@ -538,7 +538,7 @@ theorem mixedError_toReal_foldl_add_absolute_step (hfmt : fmt.isIEEE = true)
   refine ((mixedError_toReal_add hfmt hout ex ey).absolute_of_abs_le
     (Numerics.Backward.abs_add_le_add hA le_rfl)).mono le_rfl ?_
   rw [pow_succ]
-  nlinarith
+  linarith
 
 /--
 `mixedError_toReal_foldl_add_absolute` from an accumulator that already carries `n` additions.

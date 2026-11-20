@@ -12,13 +12,19 @@ public meta import Lean.Elab.Command
 public meta import Lean.Meta.Basic
 public meta import Lean.Util.CollectAxioms
 public import FloatLib
+public import FloatLib.Examples
 public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.PowerProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.ValueProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Roundoff
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.SquareRoot.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.KernelPath
 public import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.Proof
 public import FloatLib.Floats.Formats.Block.Roundoff
+public import FloatLib.Floats.Formats.DecimalInterchange.Reduction.Schedule.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof
+public import FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.CorrectlyRounded.Proof
 public import FloatLibTests.Conformance.BinaryInterchange.BoundaryCases
 public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
 public import FloatLibTests.Conformance.BinaryInterchange.MixedError
@@ -45,6 +51,7 @@ import all FloatLib.Floats.ExecFloat.Backends.Compiled.Word.NormalPair.Proof
 import all FloatLib.Floats.ExecFloat.Backends.Compiled.Word.ProductRound.Proof
 import all FloatLib.Floats.ExecFloat.Backends.Compiled.Word.Small.Fma.Proof
 import all FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.Packing.Internal
+import all FloatLib.Floats.Formats.OCP.FP8.KernelTables
 import all FloatLib.Floats.Formats.Posit.Model.Decode
 import all FloatLib.Kernels.FixedWord.CheckedSqrt.Compiler
 import all FloatLib.Kernels.FixedWord.IntegerSquareRoot.Compiler
@@ -64,10 +71,13 @@ import all FloatLibTests.Tactic.Roundoff.Stochastic
 
 At build time, collect the transitive axioms of every declaration of a `FloatLib` module that this
 environment holds, private declarations included. Only propositional extensionality, quotient
-soundness, and classical choice are accepted. The imports cover the public root, the optional
-binary and decimal transcendental proofs, the complex elementary functions, the `roundoff`
-analysis, its block-format rules,
-and the stochastic-rounding families. All four stochastic test modules and the exact-kernel
+soundness, and classical choice are accepted. The imports reach every module of the library but
+the opt-in `NativeFPU.Unchecked`: the public root, the examples, the optional binary and decimal
+transcendental proofs, the correctly rounded decimal functions, the `formatOf` square root, the
+reduction schedules, the complex elementary functions and their `roundoff` rules, the `roundoff`
+analysis, its block-format rules, the packed FP8 tables, and the stochastic-rounding families.
+`tests/checks/trust-surface.sh` follows the imports through the sources and fails on a library
+module that they miss. All four stochastic test modules and the exact-kernel
 conformance modules (including complex balls, twins, packed dots and interval constraints) are
 loaded with `import all` and every declaration they hold is audited separately.
 
@@ -75,10 +85,12 @@ This file reaches the library through public imports, so it holds what each modu
 declaration it does not hold is checked through the declarations that use it, whose collected
 axioms include its own. The modules that every client imports privately, such as the quotient,
 integer square root and checked square root compiler certificates and four backend proof modules,
-are loaded with `import all` so that their declarations are checked directly. A declaration that is
-neither held nor used, mostly compiler-generated auxiliaries and a few unused private lemmas, is
-outside this check; the source scan of `tests/checks/trust-surface.sh` still rejects `sorry` and
-`axiom` there. Unimported modules are outside this check. Symbolic certificate, quire, native-model,
+are loaded with `import all` so that their declarations are checked directly, and so is the module
+of the packed FP8 tables, whose table command gives proofs to the kernel by itself. A declaration
+that is neither held nor used, mostly compiler-generated auxiliaries and a few unused private
+lemmas, is outside this check. `tests/checks/trust-surface.sh` rejects `sorry` and `axiom` in its
+source, and loads every level of every library module to check that the kernel holds no constant
+of the library as an axiom. Symbolic certificate, quire, native-model,
 packed-row and coefficient-bound regression declarations are checked separately because they belong
 to `FloatLibTests`.
 
@@ -101,7 +113,8 @@ to `T.ctorIdx`; like the rest of code generation it is trusted to the compiler.
 `tests/checks/trust-surface.sh` inventories source uses of native proof evaluation,
 `@[implemented_by]`, `@[extern]`, and unchecked host imports. Neither audit verifies generated
 machine code or the external numerical libraries. The opt-in `NativeFPU.Unchecked` API is outside
-the configured arithmetic refinement theorems and this import closure.
+the configured arithmetic refinement theorems and outside these imports. It is the only library
+module that is.
 
 The axiom traversal uses the pinned Lean implementation of `Lean.collectAxioms` in
 `Lean.Util.CollectAxioms`. See also mathlib's `Mathlib.Util.AssertNoSorry`.

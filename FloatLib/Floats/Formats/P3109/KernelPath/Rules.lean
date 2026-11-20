@@ -13,28 +13,45 @@ public import FloatLib.Floats.Formats.P3109.Arithmetic.Sqrt.Report
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Kernel
 public import FloatLib.Tactic.ReferencePaths
 
-public import FloatLib.Floats.Formats.P3109.KernelPath.Arithmetic
+public import FloatLib.Floats.Formats.P3109.KernelPath.Selection
+public import FloatLib.Floats.Formats.P3109.KernelPath.Root
+public import FloatLib.Floats.Formats.P3109.KernelPath.Queries
+public import FloatLib.Floats.Formats.P3109.Arithmetic.Square
 public import FloatLib.Floats.Formats.P3109.KernelPath.Flat
+public import FloatLib.Floats.Formats.P3109.KernelPath.Mixed
 public import FloatLib.Floats.Formats.P3109.Arithmetic.Instances
 public import FloatLib.Tactic.KernelOptimize
 
 /-!
 # Kernel rules for P3109 arithmetic
 
-P3109 Interim Report v4.1 (14 September 2026), §§4.7 and 4.10, an unapproved draft. These are
-the equations that `float_decide` rewrites a P3109 computation with, so that Lean's kernel
-evaluates it on natural-number encodings and builds no rational. Each holds for every valid
-descriptor of every operand and of the destination, every rounding mode with every supplied
-random word, every saturation mode and every operand:
+P3109 Interim Report v4.1 (14 September 2026), §§4.7, 4.10 to 4.13 and 4.16, an unapproved
+draft. These are the equations that `float_decide` rewrites a P3109 computation with, so that
+Lean's kernel evaluates it on natural-number encodings and builds no rational. Each holds for
+every valid descriptor of every operand and of the destination, every rounding mode with every
+supplied random word, every saturation mode and every operand:
 
 * `Add_eq_kernel`, `Subtract_eq_kernel`, `Multiply_eq_kernel`, `Divide_eq_kernel`,
-  `FMA_eq_kernel`, `Negate_eq_kernel`, `Abs_eq_kernel`: the public operation is the value that
-  stores the flat operation of `KernelPath.Flat` on the encodings;
-* `reference_add`, `reference_sub`, `reference_mul`, `reference_div`, `reference_fma`: the
-  reference operation of a format, which `x + y` and its siblings are rewritten to, is the public
-  operation into the same format under the default policy (nearest-even, no saturation);
+  `FMA_eq_kernel`, `FAA_eq_kernel`, `Recip_eq_kernel`, `CopySign_eq_kernel`, `Negate_eq_kernel`,
+  `Abs_eq_kernel`, `Sqrt_eq_kernel`, `RSqrt_eq_kernel`, `Hypot_eq_kernel`, `square_eq_kernel`:
+  the public operation is the value that stores the flat operation of `KernelPath.Flat` on the
+  encodings;
+* `Minimum_eq_kernel` to `MaximumFinite_eq_kernel`, the ten extrema of §4.11, which one command
+  declares from the proof that each selects an operand, and `Clamp_eq_kernel`;
+* `CompareLess_eq_kernel` to `CompareGreaterEqual_eq_kernel` and `compare_eq_kernel`: the
+  comparisons of §4.12 and the order behind `==` and `<` are the flat comparisons;
+* `isZero_eq`, `IsNaN_eq_kernel` to `IsOne_eq_kernel`, `NextGreaterThan_eq_kernel`,
+  `NextLessThan_eq_kernel`: the queries of §4.13 and the neighbours of §4.16 are flat tests and
+  codes, and the zero test is its own rule;
+* `reference_add`, `reference_sub`, `reference_mul`, `reference_div`, `reference_fma`,
+  `reference_sqrt`: the reference operation of a format, which `x + y` and its siblings are
+  rewritten to, is the public operation into the same format under the default policy
+  (nearest-even, no saturation);
 * `convert_eq_kernel`: the projection of the exact value of a code of one format into another
   format is the flat conversion of the encoding;
+* `Convert_binary_eq_kernel`: the mixed conversion of a value of a binary interchange format
+  into a P3109 format is the flat conversion of the binary word, for every binary descriptor.
+  The rules of the mixed arithmetic on operands of any kinds are in `P3109.KernelPath.Mixed`;
 * `ofRat_eq_kernel`: the projection of a rational is the flat projection of its numerator and
   denominator, and `ofNat_eq_kernel` and `ofScientific_eq_kernel` project a natural-number
   literal and a decimal literal as they are written, with no normalization of the ratio;
@@ -144,6 +161,285 @@ that the kernel computes. -/
           (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation) 2
           x.toNatBits) := by
   rw [Flat.convert_eq, abs_eq]
+
+/-- P3109 interim report v4.1, §4.10.8: `Recip` is the flat reciprocal on the encoding. -/
+@[kernel_optimize (cost := 300)] theorem Recip_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.Recip x target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.recip leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+          (exOf leftFormat) target.bitWidth target.precision (sgOf target) (exOf target)
+          (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation)
+          x.toNatBits) := by
+  rw [Flat.recip_eq, recip_eq]
+
+/-- P3109 interim report v4.1, §4.10.7: `FAA` is the flat fused add-add on the encodings. -/
+@[kernel_optimize (cost := 400)] theorem FAA_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) (z : ExecFloat.P3109 thirdFormat) (target : Format)
+    (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.FAA x y z target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.faa leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+          thirdFormat.bitWidth thirdFormat.precision (sgOf thirdFormat) (exOf thirdFormat)
+          target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
+          (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits y.toNatBits
+          z.toNatBits) := by
+  rw [Flat.faa_eq, faa_eq]
+
+/-- P3109 interim report v4.1, §4.10.2: `CopySign` is the flat copy of a sign on the
+encodings. -/
+@[kernel_optimize (cost := 300)] theorem CopySign_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    ExecFloat.P3109.CopySign x y target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.copySign leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+          (exOf leftFormat) rightFormat.bitWidth rightFormat.precision (sgOf rightFormat)
+          (exOf rightFormat) target.bitWidth target.precision (sgOf target) (exOf target)
+          (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits
+          y.toNatBits) := by
+  rw [Flat.copySign_eq, copySign_eq]
+
+/-- P3109 interim report v4.1, §4.10.8: `Sqrt` is the flat square root on the encoding. -/
+@[kernel_optimize (cost := 340)] theorem Sqrt_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.Sqrt x target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.sqrt leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+          (exOf leftFormat) target.bitWidth target.precision (sgOf target) (exOf target)
+          (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation)
+          x.toNatBits) := by
+  rw [Flat.sqrt_eq, sqrt_eq]
+
+/-- P3109 interim report v4.1, §4.10.8: `RSqrt` is the flat reciprocal square root on the
+encoding. -/
+@[kernel_optimize (cost := 340)] theorem RSqrt_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.RSqrt x target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.rsqrt leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+          (exOf leftFormat) target.bitWidth target.precision (sgOf target) (exOf target)
+          (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation)
+          x.toNatBits) := by
+  rw [Flat.rsqrt_eq, rsqrt_eq]
+
+/-- P3109 interim report v4.1, §4.10.14: `Hypot` is the flat hypotenuse on the encodings. -/
+@[kernel_optimize (cost := 380)] theorem Hypot_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    ExecFloat.P3109.Hypot x y target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.hypot leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+          (exOf leftFormat) rightFormat.bitWidth rightFormat.precision (sgOf rightFormat)
+          (exOf rightFormat) target.bitWidth target.precision (sgOf target) (exOf target)
+          (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits
+          y.toNatBits) := by
+  rw [Flat.hypot_eq, hypot_eq]
+
+/-- P3109 interim report v4.1, §4.12: `CompareLess` is the flat strict comparison of the
+encodings. -/
+@[kernel_optimize (cost := 150)] theorem CompareLess_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) :
+    ExecFloat.P3109.CompareLess x y =
+      Flat.less leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+        rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+        x.toNatBits y.toNatBits := by
+  rw [Flat.less_eq, compareLess_eq]
+
+/-- P3109 interim report v4.1, §4.12: `CompareEqual` is the flat equality of the encodings. -/
+@[kernel_optimize (cost := 150)] theorem CompareEqual_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) :
+    ExecFloat.P3109.CompareEqual x y =
+      Flat.equal leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+        rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+        x.toNatBits y.toNatBits := by
+  rw [Flat.equal_eq, compareEqual_eq]
+
+/-- P3109 interim report v4.1, §4.12: `CompareLessEqual` is the flat comparison of the
+encodings. -/
+@[kernel_optimize (cost := 160)] theorem CompareLessEqual_eq_kernel
+    (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat) :
+    ExecFloat.P3109.CompareLessEqual x y =
+      Flat.lessEqual leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+        (exOf leftFormat) rightFormat.bitWidth rightFormat.precision (sgOf rightFormat)
+        (exOf rightFormat) x.toNatBits y.toNatBits := by
+  rw [Flat.lessEqual_eq, compareLessEqual_eq]
+
+/-- P3109 interim report v4.1, §4.12: `CompareGreater` is the flat strict comparison with the
+encodings exchanged. -/
+@[kernel_optimize (cost := 150)] theorem CompareGreater_eq_kernel
+    (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat) :
+    ExecFloat.P3109.CompareGreater x y =
+      Flat.less rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+        leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+        y.toNatBits x.toNatBits := by
+  rw [Flat.less_eq, compareGreater_eq]
+
+/-- P3109 interim report v4.1, §4.12: `CompareGreaterEqual` is the flat comparison with the
+encodings exchanged. -/
+@[kernel_optimize (cost := 160)] theorem CompareGreaterEqual_eq_kernel
+    (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat) :
+    ExecFloat.P3109.CompareGreaterEqual x y =
+      Flat.lessEqual rightFormat.bitWidth rightFormat.precision (sgOf rightFormat)
+        (exOf rightFormat) leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+        (exOf leftFormat) y.toNatBits x.toNatBits := by
+  rw [Flat.lessEqual_eq, compareGreaterEqual_eq]
+
+/-- The order behind `==` and `<` on P3109 values (§4.12) is the flat comparisons of the
+encodings. -/
+@[kernel_optimize (cost := 450)] theorem compare_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) :
+    ExecFloat.P3109.compare x y =
+      Bool.casesOn (motive := fun _ => Option Ordering)
+        (Flat.less leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+          x.toNatBits y.toNatBits)
+        (Bool.casesOn (motive := fun _ => Option Ordering)
+          (Flat.less rightFormat.bitWidth rightFormat.precision (sgOf rightFormat)
+            (exOf rightFormat) leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+            (exOf leftFormat) y.toNatBits x.toNatBits)
+          (Bool.casesOn (motive := fun _ => Option Ordering)
+            (Flat.equal leftFormat.bitWidth leftFormat.precision (sgOf leftFormat)
+              (exOf leftFormat) rightFormat.bitWidth rightFormat.precision (sgOf rightFormat)
+              (exOf rightFormat) x.toNatBits y.toNatBits)
+            none (some Ordering.eq))
+          (some Ordering.gt))
+        (some Ordering.lt) := by
+  rw [Flat.less_eq, Flat.less_eq, Flat.equal_eq, compare_eq]
+
+attribute [kernel_optimize (cost := 20)] isZero_eq
+
+/-- P3109 interim report v4.1, §4.13: `IsNaN` is the flat test of the NaN code. -/
+@[kernel_optimize (cost := 30)] theorem IsNaN_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsNaN = Flat.isNaN format.bitWidth (sgOf format) x.toNatBits := by
+  rw [Flat.isNaN_eq, isNaN_eq]
+
+/-- P3109 interim report v4.1, §4.13: `IsInfinite` is the flat test of the infinity codes. -/
+@[kernel_optimize (cost := 40)] theorem IsInfinite_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsInfinite = Flat.isInfinite format.bitWidth (sgOf format) (exOf format) x.toNatBits := by
+  rw [Flat.isInfinite_eq, isInfinite_eq]
+
+/-- P3109 interim report v4.1, §4.13: `IsFinite` is the flat test of the code. -/
+@[kernel_optimize (cost := 50)] theorem IsFinite_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsFinite = Flat.isFinite format.bitWidth (sgOf format) (exOf format) x.toNatBits := by
+  rw [Flat.isFinite_eq, isFinite_eq]
+
+/-- P3109 interim report v4.1, §4.13: `IsSignMinus` is the flat test of the sign half. -/
+@[kernel_optimize (cost := 30)] theorem IsSignMinus_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsSignMinus = Flat.isSignMinus format.bitWidth (sgOf format) x.toNatBits := by
+  rw [Flat.isSignMinus_eq, isSignMinus_eq]
+
+/-- P3109 interim report v4.1, §4.13: `IsNormal` is the flat test of the magnitude code. -/
+@[kernel_optimize (cost := 70)] theorem IsNormal_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsNormal =
+      Flat.isNormal format.bitWidth format.precision (sgOf format) (exOf format)
+        x.toNatBits := by
+  rw [Flat.isNormal_eq, isNormal_eq]
+
+/-- P3109 interim report v4.1, §4.13: `IsSubnormal` is the flat test of the magnitude code. -/
+@[kernel_optimize (cost := 70)] theorem IsSubnormal_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsSubnormal =
+      Flat.isSubnormal format.bitWidth format.precision (sgOf format) (exOf format)
+        x.toNatBits := by
+  rw [Flat.isSubnormal_eq, isSubnormal_eq]
+
+/-- P3109 interim report v4.1, §4.13: `IsOne` is the flat comparison of the numerator and the
+denominator of the code. -/
+@[kernel_optimize (cost := 80)] theorem IsOne_eq_kernel (x : ExecFloat.P3109 format) :
+    x.IsOne =
+      Flat.isOne format.bitWidth format.precision (sgOf format) (exOf format) x.toNatBits := by
+  rw [Flat.isOne_eq, isOne_eq]
+
+/-- P3109 interim report v4.1, §4.16: `NextGreaterThan` stores the flat successor of the
+code. -/
+@[kernel_optimize (cost := 60)] theorem NextGreaterThan_eq_kernel
+    (x : ExecFloat.P3109 format) :
+    x.NextGreaterThan =
+      ExecFloat.P3109.ofNatBits (Flat.nextUp format.bitWidth (sgOf format) x.toNatBits) := by
+  rw [Flat.nextUp_eq, nextGreaterThan_eq]
+
+/-- P3109 interim report v4.1, §4.16: `NextLessThan` stores the flat predecessor of the code. -/
+@[kernel_optimize (cost := 60)] theorem NextLessThan_eq_kernel (x : ExecFloat.P3109 format) :
+    x.NextLessThan =
+      ExecFloat.P3109.ofNatBits (Flat.nextDown format.bitWidth (sgOf format) x.toNatBits) := by
+  rw [Flat.nextDown_eq, nextLessThan_eq]
+
+/-- The square of a value is the flat multiplication of its encoding by itself. -/
+@[kernel_optimize (cost := 320)] theorem square_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.square x target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.mul leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
+          (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits x.toNatBits) := by
+  rw [Flat.mul_eq, ← mul_eq]
+  rfl
+
+/-- P3109 interim report v4.1, §4.9.1: the conversion of a binary interchange value into a
+P3109 format is the flat `convertBinary` on its encoding. -/
+@[kernel_optimize (cost := 300)] theorem Convert_binary_eq_kernel
+    {fmt : BinaryInterchange.FloatFormat} (x : BinaryInterchange.Model fmt) (target : Format)
+    (mode : RoundingMode) (saturation : SaturationMode) :
+    Arithmetic.Mixed.Convert (Arithmetic.Destination.p3109 target) x mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.convertBinary fmt target.bitWidth target.precision (sgOf target) (exOf target)
+          (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation)
+          x.toNatBits) := by
+  rw [Flat.convertBinary_eq, convertBinary_eq]
+
+set_option hygiene false in
+/-- `extremum_rule Name Op mx mag var selects` declares the kernel rule `Name` of the extremum
+`Op` of §4.11 from the proof `selects` that it selects with the options `mx`, `mag` and
+`var`. -/
+local macro "extremum_rule " name:ident op:ident mx:num mag:num var:num selects:term : command =>
+  `(/-- P3109 interim report v4.1, §4.11: this extremum of two values of independent formats is
+    the flat `extremum`, with its three options, on the encodings, projected once into the
+    destination. -/
+    @[kernel_optimize (cost := 330)] theorem $name (x : ExecFloat.P3109 leftFormat)
+        (y : ExecFloat.P3109 rightFormat) (target : Format) (mode : RoundingMode)
+        (saturation : SaturationMode) :
+        $op x y target mode saturation =
+          ExecFloat.P3109.ofNatBits
+            (Flat.extremum $mx $mag $var leftFormat.bitWidth leftFormat.precision
+              (sgOf leftFormat) (exOf leftFormat) rightFormat.bitWidth rightFormat.precision
+              (sgOf rightFormat) (exOf rightFormat) target.bitWidth target.precision
+              (sgOf target) (exOf target) (modeIndex mode) (modeWidth mode) (modeRandom mode)
+              (satIndex saturation) x.toNatBits y.toNatBits) := by
+      rw [Flat.extremum_eq]
+      exact binary_eq_extremum $selects x y target mode saturation)
+
+extremum_rule Minimum_eq_kernel ExecFloat.P3109.Minimum 0 0 0 minimum_selects
+extremum_rule Maximum_eq_kernel ExecFloat.P3109.Maximum 1 0 0 maximum_selects
+extremum_rule MinimumNumber_eq_kernel ExecFloat.P3109.MinimumNumber 0 0 1 minimum_selects.number
+extremum_rule MaximumNumber_eq_kernel ExecFloat.P3109.MaximumNumber 1 0 1 maximum_selects.number
+extremum_rule MinimumMagnitude_eq_kernel ExecFloat.P3109.MinimumMagnitude 0 1 0
+  minimumMagnitude_selects
+extremum_rule MaximumMagnitude_eq_kernel ExecFloat.P3109.MaximumMagnitude 1 1 0
+  maximumMagnitude_selects
+extremum_rule MinimumMagnitudeNumber_eq_kernel ExecFloat.P3109.MinimumMagnitudeNumber 0 1 1
+  minimumMagnitude_selects.number
+extremum_rule MaximumMagnitudeNumber_eq_kernel ExecFloat.P3109.MaximumMagnitudeNumber 1 1 1
+  maximumMagnitude_selects.number
+extremum_rule MinimumFinite_eq_kernel ExecFloat.P3109.MinimumFinite 0 0 2
+  minimum_selects.number.finite
+extremum_rule MaximumFinite_eq_kernel ExecFloat.P3109.MaximumFinite 1 0 2
+  maximum_selects.number.finite
+
+/-- P3109 interim report v4.1, §4.11.4: `Clamp` is the flat clamp on the encodings. -/
+@[kernel_optimize (cost := 420)] theorem Clamp_eq_kernel (x : ExecFloat.P3109 leftFormat)
+    (y : ExecFloat.P3109 rightFormat) (z : ExecFloat.P3109 thirdFormat) (target : Format)
+    (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.Clamp x y z target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (Flat.clamp leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+          thirdFormat.bitWidth thirdFormat.precision (sgOf thirdFormat) (exOf thirdFormat)
+          target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
+          (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits y.toNatBits
+          z.toNatBits) := by
+  rw [Flat.clamp_eq, clamp_eq]
 
 /-- P3109 interim report v4.1, §4.7.3: the projection of a rational is the flat projection of
     the ratio of its
@@ -295,6 +591,13 @@ Reference: P3109 Interim Report v4.1 (unapproved draft), §§4.7 and 4.10.3–4.
 -/
 @[kernel_optimize] theorem reference_fma [Backend.Portfolio (P3109.Plan.reference format .fma)]
     (x y z : ExecFloat.P3109 format) : Spec.fma x y z = P3109.FMA x y z := rfl
+
+/-- The reference square root of a P3109 format is `Sqrt` into it, nearest-even, no saturation.
+
+Reference: P3109 Interim Report v4.1 (unapproved draft), §4.10.8.
+-/
+@[kernel_optimize] theorem reference_sqrt [Backend.Portfolio (P3109.Plan.reference format .sqrt)]
+    (x : ExecFloat.P3109 format) : Spec.sqrt x = P3109.Sqrt x := rfl
 
 end Reference
 

@@ -31,9 +31,13 @@ open FloatLib.Numerics
 def fmaGap (fmt : FloatFormat) : Nat :=
   3 * fmt.fracWidth + 6
 
+kernel_constant fmaGap
+
 /-- Bound on the bit length of an aligned sum of an exact product and an addend of `fmt`. -/
 def fmaBits (fmt : FloatFormat) : Nat :=
   5 * fmt.fracWidth + 9
+
+kernel_constant fmaBits
 
 /--
 The fused multiply-add of three words that are not all finite, by the rules of `Model.Spec.fma`:
@@ -64,6 +68,8 @@ def fmaSpecial (fmt : FloatFormat) (a b c : Nat) : Nat :=
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.shiftRight c (signPos fmt)) (Nat.land a (magnitudeMask fmt))
     (Nat.land b (magnitudeMask fmt)) (Nat.land c (magnitudeMask fmt))
+
+kernel_constant fmaSpecial
 
 /--
 Encoding of `x * y + z` rounded once in the direction `mode`, for the values encoded by `a`, `b`
@@ -128,6 +134,7 @@ theorem fmaSpecial_eq {fmt : FloatFormat} (x y z : Model fmt)
   rw [hspec]
   refine (chooseNaN3_getD_bits x y z _ _ ?_).symm
   intro _ _ _
+  simp only [invalidWord_eq, overflowWord_eq]
   cases Model.isInfinite x <;> cases Model.isInfinite y <;> cases Model.isInfinite z <;>
     cases Model.isZero x <;> cases Model.isZero y <;>
     cases Model.signBit x <;> cases Model.signBit y <;> cases Model.signBit z <;> rfl

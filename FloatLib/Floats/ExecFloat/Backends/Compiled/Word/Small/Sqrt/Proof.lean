@@ -34,7 +34,7 @@ private theorem two_pow_expWidth_sub_one (fmt : FloatFormat) :
   omega
 
 /-- The rounding exponent of the logical square root is the kernel's root exponent. -/
-private theorem target_exponent_eq (fmt : FloatFormat) (hbias : fmt.fracWidth + 1 ≤ fmt.bias)
+theorem target_exponent_eq (fmt : FloatFormat) (hbias : fmt.fracWidth + 1 ≤ fmt.bias)
     (m scale : Nat) (hleading : m.log2 ≤ fmt.fracWidth) :
     min ((Int.ofNat scale - Int.ofNat (fmt.bias + fmt.fracWidth - 1)).ediv 2)
         ((FloatFormat.toModel fmt).targetExponent
@@ -52,8 +52,7 @@ private theorem target_exponent_eq (fmt : FloatFormat) (hbias : fmt.fracWidth + 
   simp only [Float.Model.Format.targetExponent, Float.Model.Format.mantissaBits,
     Float.Model.Format.minExponent, Float.Model.totalExponent, FloatFormat.toModel, hpowInt,
     Int.ofNat_eq_natCast, ← Int.div_def] at key ⊢
-  rw [Int.max_def, Int.min_def] at key ⊢
-  split_ifs at key ⊢ <;> omega
+  lia
 
 /-- The radicand shift of the logical square root is the kernel's shift. -/
 private theorem shift_eq (fmt : FloatFormat) (hbias : fmt.fracWidth + 1 ≤ fmt.bias)

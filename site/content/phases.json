@@ -9,7 +9,9 @@
     "FloatLib.Floats.Formats.BinaryInterchange.Analysis.MixedError.Rounding",
     "FloatLib.Tactic.Roundoff",
     "FloatLib.Floats.Formats.Block.Roundoff",
-    "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof"
+    "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof",
+    "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.CorrectlyRounded.Proof",
+    "FloatLib.Floats.Formats.DecimalInterchange.Reduction.Schedule.Proof"
   ],
   "phases": [
     {
@@ -704,7 +706,14 @@
         "FloatLib.Numerics.Interval.Constraint.refutes_sound",
         "FloatLib.Numerics.Interval.Form.definiteOn",
         "FloatLib.Numerics.Interval.Form.vanishes_of_definiteOn",
-        "FloatLib.Numerics.Interval.Refutation"
+        "FloatLib.Numerics.Interval.Refutation",
+        "FloatLib.Numerics.Interval.Expr.checkZero_sound",
+        "FloatLib.Numerics.Interval.Expr.contains_range",
+        "FloatLib.Numerics.Interval.Constraint.not_holds_of_failsOn",
+        "FloatLib.Numerics.Interval.le_of_deriv_nonneg",
+        "FloatLib.Numerics.Interval.lt_of_deriv_pos",
+        "FloatLib.Numerics.Interval.le_of_deriv_nonpos",
+        "FloatLib.Numerics.Interval.lt_of_deriv_neg"
       ]
     },
     {
@@ -819,10 +828,20 @@
           "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.pow_eq",
           "title": "A certified complex power is correctly rounded"
         },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.contains_smallProduct?",
+          "title": "Taylor enclosures of a product at a small argument"
+        },
+        {
+          "name": "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.powExtreme?_eq",
+          "title": "A part of a power that leaves the range is correctly rounded"
+        },
         "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.abs_roundedMagnitude_sub_le",
         "FloatLib.Floats.Formats.BinaryInterchange.ExecComplex.norm_roundedDiv_sub_le",
         "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.apply_encloses",
-        "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.toReal_apply"
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.toReal_apply",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.Function.apply_roundsTo",
+        "FloatLib.Floats.Formats.BinaryInterchange.Model.Transcendentals.CorrectlyRounded.pow_roundsTo_of_pos"
       ]
     },
     {
@@ -1411,7 +1430,11 @@
           "name": "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_logp1_eq_some",
           "title": "Certified decimal log-plus-one"
         },
-        "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_apply_eq_some"
+        "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.toReal_of_apply_eq_some",
+        "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.CorrectlyRounded.apply_roundsTo",
+        "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.CorrectlyRounded.atan2_roundsTo",
+        "FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.scaledProd_eq_project",
+        "FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.abs_reduceAlong_sub_le"
       ]
     },
     {

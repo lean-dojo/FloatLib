@@ -93,6 +93,19 @@ theorem bias_eq_mul (p es : Nat) : bias p es = 8 * (p + 1) * 2 ^ es := by
   unfold bias regimeBias
   kernel_notation
 
+/-- The comparison key of an encoding below the modulus: the encoding plus the sign bit below
+the sign bit, and minus it from the sign bit on. -/
+theorem signedKey_eq {p a : Nat} (ha : a < 2 ^ (p + 1)) :
+    signedKey p a = if a < 2 ^ p then a + 2 ^ p else a - 2 ^ p := by
+  have hpos := Nat.two_pow_pos p
+  unfold signedKey nar
+  kernel_notation
+  rw [Nat.pow_succ] at ha ⊢
+  split_ifs with h
+  · exact Nat.mod_eq_of_lt (by omega)
+  · rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
+    omega
+
 end FloatLib.Floats.Formats.Posit.KernelPath
 
 namespace FloatLib.Floats.Formats.Posit.General

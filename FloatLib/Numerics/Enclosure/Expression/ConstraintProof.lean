@@ -15,7 +15,7 @@ public import FloatLib.Numerics.Enclosure.Expression.Constraint
 `Constraint.Holds` is the real meaning of a constraint at an assignment of its variables, and
 `Constraint.refutes_sound` says that a certificate accepted by `Constraint.refutes` excludes every
 real assignment of the box: the constraint holds at none of them. The proof is one induction on
-the certificate. A leaf is `Expr.check_sound`, and a cut covers its box whatever the cut point.
+the certificate. A leaf is `Expr.checkZero_sound`, and a cut covers its box whatever the cut point.
 -/
 
 @[expose] public section
@@ -197,7 +197,8 @@ theorem Constraint.refutes_sound {α : Type*} {B : Backend α} (hB : B.Sound fun
   induction r generalizing c box with
   | atom depth =>
     cases c with
-    | fails relation e => exact fun hc => hc (e.check_sound hB (by simpa [refutes] using h) hbox)
+    | fails relation e =>
+      exact fun hc => hc (e.checkZero_sound hB (by simpa [refutes] using h) hbox)
     | _ => simp [refutes] at h
   | left r ih =>
     cases c with

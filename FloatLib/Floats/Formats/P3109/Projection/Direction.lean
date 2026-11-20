@@ -427,12 +427,12 @@ theorem roundFiniteToPrecision_up
       rw [hY, hX, hsig, hneg]
       simp only [signRat, Bool.false_eq_true, ite_false, one_mul]
       push_cast
-      constructor <;> nlinarith
+      constructor <;> linarith
     · simp only [roundAway, beq_iff_eq, hremZero, ↓reduceIte, hneg, Bool.not_true,
       Bool.false_eq_true] at hsig
       rw [hY, hX, hsig, hneg]
       simp only [signRat, ite_true]
-      constructor <;> nlinarith
+      constructor <;> linarith
 
 /-- Negation does not change the quantum of a dyadic. -/
 private theorem quantumExponent_neg (format : Format) (value : Numerics.Dyadic) :
@@ -548,7 +548,7 @@ theorem roundFiniteToPrecision_nearestAway_tie
   rw [hY, hX, hsig, abs_signRat_mul _ _ _ hu, abs_signRat_mul _ _ _ hu]
   push_cast
   rw [abs_of_nonneg (by positivity), abs_of_nonneg (by positivity)]
-  nlinarith
+  linarith
 
 open Internal in
 /-- `nearest` rounds to within half a quantum of the input. -/

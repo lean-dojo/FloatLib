@@ -218,7 +218,7 @@ theorem inbetween_step_high {start step x : ℝ} {steps k : ℤ}
   have hindexR : (steps : ℝ) < 2 * (k : ℝ) := by exact_mod_cast hcell
   have hscaled := mul_lt_mul_of_pos_right hindexR hstep
   have hafterMid : ((steps : ℝ) / 2) * step < (k : ℝ) * step := by
-    nlinarith
+    linarith
   have hafterMidStart :
       start + ((steps : ℝ) / 2) * step < start + (k : ℝ) * step := by
     simpa [add_comm] using add_lt_add_left hafterMid start

@@ -9,6 +9,7 @@ module
 import FloatLib.Floats.Formats.OCP.MX.Standard.Compiled
 
 import FloatLib.Floats.Formats.Block.Stored
+import FloatLib.Floats.Formats.Block.Working
 import FloatLib.Floats.Formats.Block.CodedDot
 import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
@@ -37,8 +38,8 @@ The cases are:
 * `nvfp4 single VARIANT`: blocks of 16 without an outer scale. `VARIANT` is `exact` or `clamp`,
   which keeps the ideal scale at least `2 ^ -6` as torchao does.
 * `nvfp4 two VARIANT`: the first word of a line is the outer scale and the rest are blocks of 16.
-* `nvfp4f32 single` and `nvfp4f32 two`: the same tensors through binary32 arithmetic in the order
-  of torchao's `nvfp4_quantize`, as a model of that implementation and not of the format.
+* `nvfp4f32 single` and `nvfp4f32 two`: the same tensors through `Block.nvfp4Working`, the
+  library's quantizer on binary32 encodings in the order of torchao's `nvfp4_quantize`.
 * `cast FORMAT MODE`: element conversion of each word, with `MODE` `native` or `saturate`.
 
 An output line has the scale codes, a bar, the element codes, a bar, and the decoded values as
@@ -185,50 +186,21 @@ def runNvfp4Two (variant : String) (words : Array Nat) : Option String := do
   let outer ← inputValue (← words[0]?)
   runNvfp4 variant outer.value (← (words.extract 1 words.size).mapM inputValue)
 
-/-! ## A binary32 model of torchao's NVFP4 quantizer -/
+/-! ## NVFP4 in binary32: the library's working quantizer -/
 
 def word (bits : Nat) : F32 :=
   Model.ofNatBits bits
 
-def constant (value : ℚ) : F32 :=
-  Model.roundRat FloatFormat.binary32 (value.num < 0) value.num.natAbs value.den
-
-def rational (x : F32) : ℚ :=
-  (Model.toRat? x).getD 0
-
-/-- `torch.clamp` on finite binary32 words. -/
-def clamp (low high x : F32) : F32 :=
-  if rational x < rational low then low else if rational high < rational x then high else x
-
-/-- The largest magnitude of a block, as a binary32 word. -/
-def blockMax (block : Array F32) : F32 :=
-  block.foldl (fun best x => if |rational best| < |rational x| then Model.abs x else best)
-    (constant 0)
-
-/-- Elements of one block in torchao's order: multiply by the reciprocal scale, clamp to `±6`,
-round to E2M1. -/
-def elementsF32 (reciprocal : F32) (block : Array F32) : Array Nat :=
-  block.map fun x =>
-    (Model.cast FloatFormat.binary32 FloatFormat.e2m1
-      (clamp (constant (-6)) (constant 6) (Model.mul x reciprocal))).toNatBits
-
+/-- Blocks of 16 through `Block.nvfp4Working`, the quantizer on binary32 encodings in the order
+of torchao's `nvfp4_quantize`. Without an outer scale the outer scale is one. -/
 def runNvfp4F32 (twoLevel : Bool) (words : Array Nat) : Option String := do
-  let outer : F32 := if twoLevel then word (words.getD 0 0) else constant 1
+  let outer : F32 := if twoLevel then word (words.getD 0 0) else Model.posOne _
   let data := (if twoLevel then words.extract 1 words.size else words).map word
-  let blocks := (List.range (data.size / 16)).map fun block => data.extract (16 * block)
-      (16 * block + 16)
-  let results := blocks.map fun block =>
-    let ideal := Model.div (blockMax block) (constant 6)
-    let scaled := if twoLevel then Model.div ideal outer else ideal
-    let stored := Model.cast FloatFormat.binary32 FloatFormat.e4m3
-      (clamp (constant (1 / 64)) (constant 448) scaled)
-    let back := Model.cast FloatFormat.e4m3 FloatFormat.binary32 stored
-    let reciprocal :=
-      if twoLevel then Model.div (Model.div (constant 1) outer) back
-      else Model.div (constant 1) back
-    (stored.toNatBits, elementsF32 reciprocal block)
-  let scales := results.map (·.1)
-  let codes := results.flatMap fun result => result.2.toList
+  let blocks := (List.range (data.size / 16)).map fun block =>
+    (data.extract (16 * block) (16 * block + 16)).toList
+  let results := blocks.map (Block.nvfp4Working.block outer)
+  let scales := results.map (·.1.toNatBits)
+  let codes := results.flatMap fun result => result.2.map (·.toNatBits)
   pure s!"{joinNat scales} | {joinNat codes} |"
 
 /-! ## Element conversion -/

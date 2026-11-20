@@ -57,7 +57,7 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
       simp only [Datum.finiteValue, Bool.false_eq_true, ↓reduceIte, one_mul]
       constructor
       · rw [← he, Nat.cast_add, Nat.cast_one]
-        nlinarith
+        linarith
       · intro t e u hu hlt
         have hu' := (Datum.valid_quantum_iff ..).mp hu
         have hn : 0 ≤ (e : ℚ) * (10 : ℚ) ^ u :=
@@ -66,7 +66,7 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
         · simp only [Bool.false_eq_true, ↓reduceIte, one_mul] at hlt ⊢
           exact neighbor_gap f a e b u hfull hu'.1 hu'.2.1 (by rwa [he])
         · simp only [↓reduceIte, neg_mul, one_mul] at hlt
-          nlinarith [mul_nonneg han hpb.le]
+          linarith [mul_nonneg han hpb.le]
     · simp only [↓reduceIte] at hout
       obtain ⟨d, r, hv, _, hdfull, hstep⟩ :=
         neighborBelow_spec f a b ha hapos hbmin hbmax hfull
@@ -80,7 +80,7 @@ theorem nextUp_finite_adjacent (f : Format) (s : Bool) (c : Nat) (q : Int)
       rw [hv']
       simp only [Datum.finiteValue, ↓reduceIte, neg_mul, one_mul]
       constructor
-      · nlinarith [hstep']
+      · linarith [hstep']
       · intro t e u hu hlt
         have hu' := (Datum.valid_quantum_iff ..).mp hu
         have hn : 0 ≤ (e : ℚ) * (10 : ℚ) ^ u :=

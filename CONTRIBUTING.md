@@ -39,6 +39,12 @@ in a namespace that states the contract, such as `ExecFloat.Mixed.mul` or
 rename a declaration, update every use along with it. Finished proofs should have no
 `sorry`, `admit`, or new project-local axioms.
 
+The kernel number types under `FloatLib/Numerics/Kernel`, the packed rows, the core kernel
+paths of posits and P3109 and a few tactic modules import nothing beyond Lean itself, so a
+file that checks a certificate with them loads in a fraction of a second. Please keep Mathlib
+out of their imports (`python3 tests/checks/core-only.py` prints these modules), and put a
+proof that needs Mathlib in a module beside them, as `FracProof` is to `Frac`.
+
 An optimized backend needs a proof that it agrees with the reference specification,
 rounding and exceptional values included, and the
 [backend guide](FloatLib/Floats/ExecFloat/Backends/README.md) explains how to connect such

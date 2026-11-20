@@ -269,7 +269,7 @@ def build (r : Recursor) (actual : Q(ℝ)) (fuel : Nat) : AnalyzeM Estimate := d
       trace[roundoff] "contract reference kept at the computed argument: {bound.reference}"
       return bound
     if input.bound.isExact then return bound
-    return ← (← read).simplify (← compose (← bound.inMode mixed) input)
+    return ← (← read).simplify (← compose actual (← bound.inMode mixed) input)
   -- A loop that keeps a registered step relation, such as Kahan's, is read through it before its
   -- operations are taken apart.
   if let some estimate ← relationBound? actual then return estimate
@@ -316,7 +316,7 @@ def build (r : Recursor) (actual : Q(ℝ)) (fuel : Nat) : AnalyzeM Estimate := d
     if propagatesInputs || estimate.reference == actual then
       return ← (← read).simplify estimate
     let inputEstimate ← r.analyze estimate.reference fuel
-    return ← (← read).simplify (← compose estimate inputEstimate)
+    return ← (← read).simplify (← compose actual estimate inputEstimate)
   -- An observation of an input or a literal is exact as a real value. The rounding when that
   -- literal was encoded is not silently identified with its unrounded source spelling.
   let observed ← if (← read).observations.contains name then

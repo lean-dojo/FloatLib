@@ -56,6 +56,26 @@ private theorem negative_lt_positiveFinite (format : Format) (left right : Nat)
   have hr := positiveFinite_nonneg format right
   linarith
 
+/--
+Closes one case of `less_decodeNat_iff_orderIndex`: the decoder and the index are unfolded at
+the facts of the case, and the comparison of two finite values is that of their codes.
+-/
+local macro "order_case" : tactic =>
+  `(tactic| (
+    simp_all only [decodeNat, orderIndex, nanBits, positiveInfinityBits, negativeInfinityBits,
+      reduceCtorEq, true_and, false_and, ite_true, ite_false,
+      Arithmetic.toRat, Arithmetic.CompareLess, Dyadic.neg_toRat,
+      decide_eq_true_eq, Bool.false_eq_true, neg_lt_neg_iff,
+      (decodePositiveFinite_strictMono _).lt_iff_lt, positiveFinite_lt_negative,
+      true_iff, false_iff] <;>
+    first
+    | omega
+    | constructor
+      · intro; omega
+      · intro
+        apply negative_lt_positiveFinite
+        omega))
+
 /-- Exact decoded strict order is the integer-index order on every pair of non-NaN codes. -/
 theorem less_decodeNat_iff_orderIndex (format : Format) (left right : Nat)
     (hleft : left < format.modulus) (hright : right < format.modulus)
@@ -65,25 +85,30 @@ theorem less_decodeNat_iff_orderIndex (format : Format) (left right : Nat)
         format.orderIndex left < format.orderIndex right := by
   have hmodulus := format.modulus_eq_two_mul_signBoundary
   have hboundary := format.one_lt_signBoundary
-  cases hs : format.signedness <;> cases hd : format.domain <;>
-    (by_cases hls : format.signBoundary < left) <;>
-    (by_cases hrs : format.signBoundary < right) <;>
-    (by_cases hlp : left = format.positiveInfinityBits) <;>
-    (by_cases hrp : right = format.positiveInfinityBits) <;>
-    (by_cases hln : left = format.negativeInfinityBits) <;>
-    (by_cases hrn : right = format.negativeInfinityBits) <;>
-    simp_all only [decodeNat, orderIndex, nanBits, positiveInfinityBits, negativeInfinityBits,
-      reduceCtorEq, true_and, false_and, ite_true, ite_false,
-      Arithmetic.toRat, Arithmetic.CompareLess, Dyadic.neg_toRat,
-      decide_eq_true_eq, Bool.false_eq_true, neg_lt_neg_iff,
-      format.decodePositiveFinite_strictMono.lt_iff_lt, positiveFinite_lt_negative,
-      true_iff, false_iff] <;>
-    first
-    | omega
-    | constructor
-      · intro; omega
-      · intro
-        apply negative_lt_positiveFinite
-        omega
+  -- A code of a signed extended format is positive infinity, negative infinity, another code of
+  -- the negative half, or a code of the nonnegative half.
+  have classes (bits : Nat) (hs : format.signedness = .signed) :
+      (bits = format.positiveInfinityBits ∧ bits ≠ format.negativeInfinityBits ∧
+          ¬format.signBoundary < bits) ∨
+        (bits ≠ format.positiveInfinityBits ∧ bits = format.negativeInfinityBits ∧
+          format.signBoundary < bits) ∨
+        (bits ≠ format.positiveInfinityBits ∧ bits ≠ format.negativeInfinityBits ∧
+          format.signBoundary < bits) ∨
+        (bits ≠ format.positiveInfinityBits ∧ bits ≠ format.negativeInfinityBits ∧
+          ¬format.signBoundary < bits) := by
+    simp only [positiveInfinityBits, negativeInfinityBits, hs]
+    omega
+  cases hs : format.signedness
+  · cases hd : format.domain
+    · by_cases hls : format.signBoundary < left <;>
+        by_cases hrs : format.signBoundary < right <;> order_case
+    · rcases classes left hs with ⟨hlp, hln, hls⟩ | ⟨hlp, hln, hls⟩ | ⟨hlp, hln, hls⟩ |
+          ⟨hlp, hln, hls⟩ <;>
+        rcases classes right hs with ⟨hrp, hrn, hrs⟩ | ⟨hrp, hrn, hrs⟩ | ⟨hrp, hrn, hrs⟩ |
+          ⟨hrp, hrn, hrs⟩ <;> order_case
+  · cases hd : format.domain
+    · order_case
+    · by_cases hlp : left = format.positiveInfinityBits <;>
+        by_cases hrp : right = format.positiveInfinityBits <;> order_case
 
 end FloatLib.Floats.Formats.P3109.Format

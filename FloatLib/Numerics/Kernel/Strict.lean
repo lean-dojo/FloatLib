@@ -6,8 +6,6 @@ Authors: FloatLib Team
 
 module
 
-public import Mathlib.Init -- Standard source linters.
-
 /-!
 # Strict application for Lean's kernel
 

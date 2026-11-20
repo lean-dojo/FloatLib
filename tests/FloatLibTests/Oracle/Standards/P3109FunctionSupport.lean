@@ -1,6 +1,7 @@
 module
 
 public import FloatLib.Floats.Formats.P3109.Functions.Runtime
+public import FloatLib.Floats.Formats.P3109.Functions.Recommended.Runtime
 
 /-! Shared corpus policies and exact-expression observations for scalar and block functions. -/
 

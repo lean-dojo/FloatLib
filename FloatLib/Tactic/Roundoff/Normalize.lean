@@ -74,7 +74,7 @@ def programCanUnfold (intact : NameSet) (conditionals : Bool) (config : Meta.Con
       (!conditionals && (info.name == ``ite || info.name == ``dite)) ||
       (`FloatLib).isPrefixOf info.name ||
       (← extension).storage.any (·.isPrefixOf info.name) then return false
-  canUnfoldDefault config info
+  canUnfoldExported config info
 
 /-- Reduce control flow only when its actual discriminant computes. Selected branches keep their
 numerical operations, and unknown options and flags never become fresh exact inputs. -/
@@ -514,12 +514,12 @@ def addProgramRewrites (theorems : SimpTheorems) (rewrites : Array (Name × Bool
       option.get found = option.getD (0 : Rat)) :=
     q(fun option found => @Option.get_eq_getD Rat 0 option found)
   theorems ← theorems.add (.decl ``Option.get_eq_getD) #[] ratGet (post := false)
-  -- Simplify logical guards and identity transports before exposing their implementation.
+  -- Simplify logical guards and identity transports before exposing their implementation. A
+  -- branch whose guard simplifies to `True` or `False` is selected by `branchProcedures`.
   for name in #[``eq_self, ``not_false_eq_true, ``not_true_eq_false,
       ``Bool.and_false, ``Bool.and_true, ``Bool.false_and, ``Bool.true_and,
       ``Bool.or_false, ``Bool.or_true, ``Bool.false_or, ``Bool.true_or,
       ``Bool.not_false, ``Bool.not_true, ``bne_self_eq_false,
-      ``ite_eq_left, ``ite_eq_right, ``dite_eq_left, ``dite_eq_right,
       ``ite_apply, ``dite_apply] do
     theorems ← theorems.addConst name (post := false)
   -- Registered program rewrites, such as reading a cast container one axis at a time.
@@ -542,6 +542,17 @@ def addProgramRewrites (theorems : SimpTheorems) (rewrites : Array (Name × Bool
         let declaration ← getConstInfo name
         theorems ← theorems.add (.decl name) declaration.levelParams.toArray proof (post := false)
   return theorems
+
+/-- Lean's `reduceIte` and `reduceDIte`, before a branch is entered: a branch whose guard
+simplifies to `True` or `False` is its selected case, and the other case is not simplified. They
+simplify the guard once, in the caches of the normalizer. The conditional rewrites `ite_eq_left`
+and `ite_eq_right` select the same case, but each simplifies the guard for its own premise in a
+cache that `simp` then discards, so a guard nested in guards is simplified again at every level. -/
+def branchProcedures : CoreM Simp.Simprocs := do
+  let mut procedures : Simp.Simprocs := {}
+  for name in #[``reduceIte, ``reduceDIte] do
+    procedures ← procedures.add name (post := false)
+  return procedures
 
 /-- Container-observation laws that read coordinates without unfolding buffers or dictionaries:
 the registered ones, such as the laws reading an entry through the producer that computes it. -/
@@ -628,13 +639,37 @@ def semanticTheorems (decodeClassifiers : Bool) : MetaM SimpTheorems := do
     theorems ← theorems.addConst ``Configured.Family.toModel_ofModel (post := false)
   theorems ← theorems.addConst ``ExecFloat.Binary.toReal_zero (post := false)
   return theorems
+/-- What `programRules` computes from the registered rules: names, which every declaration of
+a file reads alike. The lemma sets of the normalizers are built by every call: a set with a
+rewrite applied in reverse holds an auxiliary lemma of the declaration that built it. -/
+structure Prepared where
+  /-- The program rewrites, each with whether it applies in reverse. -/
+  rewrites : Array (Name × Bool)
+  /-- The producers that stay folded. -/
+  boundaries : NameSet
+
+/-- The program rules classified in this process, by `rulesHash`: every `roundoff` of a file
+after the first reads them here. At most `keptRuleSets` are kept, and none that was computed
+when the heartbeat budget was spent (`indexedRule`). -/
+initialize preparedRules : IO.Ref (Std.HashMap UInt64 Prepared) ← IO.mkRef {}
+
 /-- Classify the registered rules and build every normalizer's environment lemmas. -/
 def Session.prepare : MetaM Session := do
   if (caughtDepths.getState (← getEnv)).isNone then
     let count ← IO.mkRef 0
     modifyEnv (caughtDepths.setState · (some count))
   let containerFree ← IO.mkRef {}
-  let (rewrites, boundaries) ← programRules containerFree
+  let seed ← rulesHash
+  let prepared ← match (← preparedRules.get).get? seed with
+    | some prepared => pure prepared
+    | none => do
+        let (rewrites, boundaries) ← programRules containerFree
+        Core.checkSystem "roundoff"
+        preparedRules.modify fun sets =>
+          (if sets.size ≥ keptRuleSets then {} else sets).insert seed { rewrites, boundaries }
+        pure { rewrites, boundaries }
+  let rewrites := prepared.rewrites
+  let boundaries := prepared.boundaries
   let mut containerProducers : NameSet := {}
   for name in boundaries do
     if let some info := (← getEnv).find? name then
@@ -684,6 +719,7 @@ def Session.prepare : MetaM Session := do
   for name in (← extension).readRewrites do
     budget ← budget.addConst name
   return {
+    seed
     budget
     boundaries
     containerProducers
@@ -714,7 +750,7 @@ def Session.prepare : MetaM Session := do
     hypothesisSimp := (← IO.mkRef {})
     normalized := (← IO.mkRef {})
     memoized
-    procedures := #[procedures]
+    procedures := #[← branchProcedures, procedures]
     coordinate := (← coordinateTheorems rewrites)
     fold := (← foldTheorems rewrites)
     decoding

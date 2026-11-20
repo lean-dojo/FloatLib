@@ -157,9 +157,10 @@ def addTwins (root : Name) (scopes : Array Name) (ns : Name) : MetaM TwinReport 
 definition `g` that `f` depends on in the modules whose name starts with one of `M₁ M₂ …` and
 whose body the `@[kernel_optimize]` rules change, with the kernel-checked theorem
 `N.g.twin_eq : g = N.g`. A statement about `f` is then proved by evaluating `N.f` in the kernel:
-`rw [N.f.twin_eq]; decide +kernel`. The originals are not changed.
+`rw [N.f.twin_eq]; decide +kernel`. The originals are not changed. The command does not reserve
+the word `within`: it stays a name that definitions and variables may have.
 -/
-elab "kernel_twin " root:ident " within " scopes:(ppSpace colGt ident)+ : command => do
+elab "kernel_twin " root:ident &" within " scopes:(ppSpace colGt ident)+ : command => do
   let ns ← getCurrNamespace
   if ns.isAnonymous then
     throwError "kernel_twin: open a namespace first; the twins are declared in it"

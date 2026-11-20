@@ -15,8 +15,10 @@ meta import FloatLib.Tactic.Interval.Constraints
 Each example is one instance of what the constraint route of `interval` does, and says so. The
 sections follow the route: the shapes of goals and constraints it reads, the functions it
 evaluates, coordinates of several types, the points and sets where a margin vanishes, sets
-without a box, the hints, the failures with their messages, and the trace. The last section
-checks the certificate checker itself on certificates written by hand.
+without a box, ranges with infinite ends, existential statements, comparisons whose sides meet
+at an end of the range, the hints, the failures with their messages, and the trace. The last
+section checks the certificate checker itself on certificates written by hand, and the
+evaluation on ranges.
 -/
 
 @[expose] public section
@@ -233,6 +235,14 @@ theorem tangent (x : Fin 3 → ℝ) (hx : ∀ i, x i ∈ Set.Icc (-1 : ℝ) 1)
     (h2 : 1027 / 816 - x 0 + x 1 ≥ 0) : False := by
   interval
 
+/-- A disc whose radius is given with `π` and a half-plane that touch at a point with irrational
+coordinates: the multiplier of their combination is `80000 / 39999 * π⁻¹`, so the half-plane is
+multiplied by `π`, and the form in `x`, `y` and `π` has a matrix of rational numbers. -/
+theorem irrational (x y : ℝ)
+    (h : 39999 / 640000 * Real.pi ^ 2 - x ^ 2 - y ^ 2 - 1 / 100 * x * y ≥ 0)
+    (h' : y < -(1 / 4 * Real.pi)) : False := by
+  interval
+
 /-- The level of a sublevel set may be an expression in atoms with bounds, such as `π`. -/
 theorem level_pi (x y : ℝ)
     (h : 39999 / 640000 * Real.pi ^ 2 - x ^ 2 - y ^ 2 - 1 / 100 * x * y ≥ 0)
@@ -287,6 +297,197 @@ theorem nonpositive (x y z : ℝ) (hx : x ≤ 0) (hy : y ≤ 0) (hz : z ≤ 0)
     (h : 2 - Real.exp (x + z) - Real.exp (x + y + z) < 0) : False := by
   interval
 
+/-! ## Ranges with infinite ends -/
+
+/-- One evaluation on a half-line: `Real.exp (-x)` is in `[0, 1]` and `1 / (1 + x ^ 2)` in
+`[0, 1 / 2]` there. -/
+theorem halfLine (x : ℝ) (hx : 1 ≤ x)
+    (h : Real.exp (-x) > 1 / 2 ∨ 1 / (1 + x ^ 2) > 1 / 2 ∨ Real.log x < 0) : False := by
+  interval
+
+/-- The whole line: the ranges of the hyperbolic tangent, the square root and the arctangent,
+and a sum of exponentials that is at least one of them. -/
+theorem wholeLine (x : ℝ) :
+    Real.tanh x < 2 ∧ 0 ≤ Real.sqrt x ∧ Real.arctan x < 2 ∧ 0 ≤ Real.exp x + Real.exp (-x) := by
+  interval
+
+/-- Two variables with one bound each: a product of ranges by the signs of their ends. -/
+theorem quadrant (x y : ℝ) (hx : 0 ≤ x) (hy : y ≤ 0) (h : Real.exp y * (1 + x) ≥ 2 + x) :
+    False := by
+  interval
+
+/-- A tail gives the bound that the variable lacks: the left side is below `2` where `x ≥ 2`,
+and a box decides the rest. -/
+theorem tail (x : ℝ) (hx : 0 ≤ x) :
+    -(173 / 250) * Real.exp (-(13 / 10) * x) + 319 / 100 - x - Real.exp (-(11 / 10) * x) < 2 := by
+  interval
+
+/-- A tail on each side of a variable without any bound. -/
+theorem tails (x : ℝ) (h : x ^ 2 + Real.cosh x ≤ 3) : Real.sin x + x ^ 2 / 4 ≤ 3 / 2 := by
+  interval
+
+/-- The value of a function is kept while a tail bounds its argument: with the sine as a free
+variable in `[-1, 1]` the two sides would meet at `x = 0`. -/
+theorem coupled (x : ℝ) (hx : 0 ≤ x) (h : 2 + Real.sin x ≤ Real.exp (-x) - x) : False := by
+  interval
+
+/--
+trace: [interval.constraints] derived the bounds [x < 2] from the tails on which the constraints fail
+[interval.constraints] closed by a certificate of 7 boxes
+-/
+#guard_msgs in
+set_option trace.interval.constraints true in
+example (x : ℝ) (hx : 0 ≤ x)
+    (h : 2 ≤ -(173 / 250) * Real.exp (-(13 / 10) * x) + 319 / 100 - x -
+      Real.exp (-(11 / 10) * x)) : False := by
+  interval
+
+/-- A factor that the hypotheses pin to zero decides a product whose other factor has no
+enclosure on the box. -/
+example (x y : ℝ) (hy : -1 ≤ y ∧ y ≤ 1) (hx : x = 0) : x * (1 / y) ≤ 1 / 2 := by
+  interval
+
+/-! ## Existential statements -/
+
+/-- A rational witness: `16` for the hyperbolic cosine, `1 / 512` for the logarithm, and `-1`
+where the sine is above its argument. -/
+example : (∃ x : ℝ, Real.cosh x > 2000000) ∧ (∃ x : ℝ, Real.log x < -6) ∧
+    ∃ x : ℝ, Real.sin x > x := by
+  refine ⟨?_, ?_, ?_⟩ <;> interval
+
+/-- Two quantifiers are proved one after the other: the pair `(1 / 4, 1)`. -/
+example : ∃ x y : ℝ, y + Real.log x < Real.log y := by
+  interval
+
+/-- A variable of the context, shifted by one, and a variable as it is. -/
+example (a : ℝ) : (∃ x : ℝ, x > a) ∧ ∃ x : ℝ, Real.exp x > a := by
+  constructor <;> interval
+
+/-- A statement about every `y` at the witness is proved by the rest of the tactic. -/
+example : ∃ x : ℝ, ∀ y : ℝ, y ≤ 1 → y < x * x - 1 := by
+  interval
+
+/--
+trace: [interval.constraints] proved with the witness 128
+-/
+#guard_msgs in
+set_option trace.interval.constraints true in
+example : ∃ x : ℝ, Real.exp x > 10 ^ 50 := by
+  interval
+
+/-- Values that the statement names: the mean of two of its constants, also where they are
+fractions or negative, and a constant with one added or taken off. -/
+example : (∃ x : ℝ, 5 < x ∧ x < 7) ∧ (∃ x : ℝ, 100 < x ∧ x < 120) ∧
+    (∃ x : ℝ, x < -5 ∧ -7 < x) ∧ (∃ x : ℝ, 1 / 3 < x ∧ x < 2 / 5) ∧
+    (∃ x : ℝ, 0 < x ∧ x < 1 / 1000) ∧ (∃ x : ℝ, 1 / 200 < x ∧ x < 1 / 100) ∧
+    (∃ x : ℝ, x > 2000) ∧ ∃ x : ℝ, x < -1000 := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> interval
+
+/--
+trace: [interval.constraints] closed by a certificate of 1 boxes
+[interval.constraints] proved with the witness 6
+-/
+#guard_msgs in
+set_option trace.interval.constraints true in
+example : ∃ x : ℝ, 5 < x ∧ x < 7 := by
+  interval
+
+/-- Powers of two on both sides of one: `2048` and `1 / 2048` for the logarithm, `512`
+between two bounds, `-256` for a cube, and numbers near a million. -/
+example : (∃ x : ℝ, Real.log x > 7) ∧ (∃ x : ℝ, Real.log x < -7) ∧
+    (∃ x : ℝ, 500 < x ∧ x < 1000 ∧ Real.log x < 13 / 2) ∧
+    (∃ x : ℝ, x ^ 3 < -10 ^ 7) ∧ (∃ x : ℝ, x > 1000000) ∧
+    ∃ x : ℝ, Real.log x > 13 := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ <;> interval
+
+
+/-! The values of a statement: zero and the units, then by the larger of the numerator and the
+denominator, with the constants of the statement, their neighbours and their means among the
+powers of two, and nothing above `2 ^ 20`. -/
+
+#guard (FloatLib.Numerics.Interval.Tactic.Constraints.witnessCandidates #[5, 7]).take 16 ==
+  #[0, 1, -1, 2, -2, 1 / 2, -1 / 2, 4, -4, 1 / 4, -1 / 4, 5, 6, 7, 8, -8]
+
+#guard (FloatLib.Numerics.Interval.Tactic.Constraints.witnessCandidates
+    #[2000000, 1 / 5000000]).size ==
+  (FloatLib.Numerics.Interval.Tactic.Constraints.witnessCandidates).size
+
+#guard (FloatLib.Numerics.Interval.Tactic.Constraints.witnessCandidates).size == 83
+
+/--
+error: interval found no witness of the statement among the values that it tries: the real variables of the context, also shifted by one, and the rationals: zero, the powers of two from 2 ^ -20 to 2 ^ 20 with both signs, and the first 8 rational constants of the statement, each with the two numbers at distance one from it, and the mean of each two, without the numbers whose numerator or denominator is above 2 ^ 20; a value above 2 ^ 10 in size only where the statement takes no exponential of a number of that size
+-/
+#guard_msgs in
+example : ∃ x : ℝ, x ^ 2 < 0 := by
+  interval
+
+/-! A value above `2 ^ 10` in size is passed over where the statement takes the exponential of
+a number of that size: the evaluation that selects the values finds the hyperbolic cosine of
+`2048` above two million, and with the guard it has no enclosure of it. -/
+
+open Lean Elab Term FloatLib.Numerics.Interval.Tactic.Constraints in
+#eval show TermElabM Unit from do
+  let statement ← elabTerm (← `(Real.cosh (2048 : ℝ) > 2000000)) none
+  let plain ← holdsByEvaluation statement 64 16
+  let guarded ← holdsByEvaluation statement 64 16 (guard := some 10)
+  unless plain == some true && guarded == some false do
+    throwError "the evaluation gives {plain}, and {guarded} with the guard"
+
+/-! ## Two sides that meet at an end of the range -/
+
+/-- The two sides are equal at `0`, where no box separates them. The difference vanishes there,
+and its derivative `Real.exp x - 2 * (x + 2) / 4` is nonnegative beyond, by the tangent of the
+exponential. -/
+theorem squareBelowExp (x : ℝ) (hx : 0 ≤ x) : (x + 2) ^ 2 / 4 ≤ Real.exp x := by
+  interval
+
+/-- Three derivatives in a row: the difference and its derivative vanish at `0`, the second
+derivative is positive there, and the third is positive for `0 < x` by the tangent of the
+exponential. -/
+theorem fourthPowerBelowExp (x : ℝ) (hx : 0 ≤ x) : (x + 4) ^ 4 / 256 ≤ Real.exp x := by
+  interval
+
+/-- A quotient and a logarithm: the denominator and the argument are positive on the range, and
+the derivative is a quotient of polynomials. -/
+theorem logAbove (x : ℝ) (hx : 0 ≤ x) : 2 * x / (2 + x) ≤ Real.log (1 + x) := by
+  interval
+
+/-- From the upper end of the range: the two sides are equal at `1`, and the derivative of
+their difference is nonpositive before. The range is open at `0`, where the quotient has no
+value. -/
+theorem logAboveBeforeOne (x : ℝ) (hx : 0 < x) (hx' : x ≤ 1) : 1 - 1 / x ≤ Real.log x := by
+  interval
+
+/-- A derivative that changes its sign in the range: `x * Real.sin x` is negative beyond `π`.
+The range is cut at `2`, the derivative decides `[0, 2]`, and boxes the rest. -/
+theorem sineAboveProduct (x : ℝ) (hx : 0 ≤ x) (hx' : x ≤ 4) : x * Real.cos x ≤ Real.sin x := by
+  interval
+
+/-- An absolute value around one side: the two comparisons of the argument and of its negative
+with the other side are proved one after the other. -/
+theorem logNearArgument (x : ℝ) (hx : 0 ≤ x) : |Real.log (1 + x) - x| ≤ x ^ 2 := by
+  interval
+
+/--
+trace: [interval.constraints] closed by linarith, without a box
+[interval.constraints] the difference of the two sides has a sign at x = 0, and its derivative Real.exp x -
+      (1 + 2 * x / 2) has one beyond
+-/
+#guard_msgs in
+set_option trace.interval.constraints true in
+example (x : ℝ) (hx : 0 ≤ x) (h : Real.exp x < 1 + x + x ^ 2 / 2) : False := by
+  interval
+
+/-- The theorem of the step, applied by hand to a square. -/
+example (x : ℝ) (hx : 0 ≤ x) : (fun t : ℝ => t ^ 2) 0 ≤ (fun t : ℝ => t ^ 2) x :=
+  le_of_deriv_nonneg (f' := fun t => 2 * t) hx
+    (fun t _ _ => by simpa using hasDerivAt_pow 2 t) (fun t ht _ => by positivity)
+
+/-- The theorem from an upper end, for a function that decreases. -/
+example (x : ℝ) (hx : x < 0) : (fun t : ℝ => -t) 0 < (fun t : ℝ => -t) x :=
+  lt_of_deriv_neg (f' := fun _ => -1) hx
+    (fun t _ _ => (hasDerivAt_id' t).neg) (fun _ _ _ => by norm_num)
+
 /-! ## Hints -/
 
 /-- Cut points. -/
@@ -314,9 +515,9 @@ the linear comparisons lack. -/
 theorem facts (x y : ℝ) (hx : 0 ≤ x) (hy : 0 ≤ y) (h : x + y ≤ 1) : x * y ≤ 1 / 4 := by
   interval (facts := [sq_nonneg (x - y)])
 
-/-- A disc whose radius is given with `π` and a half-plane that touch: the multiplier of their
-combination is irrational, and two facts let `nlinarith` decide. -/
-theorem irrational (x y : ℝ)
+/-- Facts for a comparison that no step of the route reaches by itself: here two facts let
+`nlinarith` decide where a disc and a half-plane touch. -/
+theorem hinted (x y : ℝ)
     (h : 39999 / 640000 * Real.pi ^ 2 - x ^ 2 - y ^ 2 - 1 / 100 * x * y ≥ 0)
     (h' : y < -(1 / 4 * Real.pi)) : False := by
   interval (facts := [sq_nonneg (x + y / 200), Real.pi_pos])
@@ -464,6 +665,15 @@ example (x y : ℝ) (hx : 0 ≤ x) (hx' : x ≤ 1) (hy : 0 ≤ y) (h : x * y ≥
     False := by
   interval
 
+/--
+The route stopped there, with its later steps untried: it had used
+-/
+#guard_msgs (substring := true) in
+set_option maxHeartbeats 20000 in
+example (x y : ℝ) (h0 : 0 < x) (h1 : x < y) (h2 : y < Real.pi / 2)
+    (h : 1 / 2000 + Real.sin x / Real.sin y < x / y) : False := by
+  interval
+
 /-! ## The trace of the route -/
 
 /--
@@ -514,5 +724,93 @@ example : Form.definiteOn (Backend.rational {}) false
     Form.definiteOn (Backend.rational {}) true
     ⟨[.var 0 0 0, .var 1 0 0], [[.const 1, .const 1], [.const 1]]⟩ [] = false := by
   decide +kernel
+
+/-- The range of `Real.exp (-x)` on `x ≥ 0` is `[0, 1]`, and that of `0 * (1 / x)` is the point
+zero whatever `x` is. -/
+example : (Expr.unary .exp (.unary .neg (.var 0))).range (Backend.rational {}) []
+      (Range.env [⟨some 0, none⟩]) = ⟨some 0, some 1⟩ ∧
+    (Expr.binary .mul (.const 0) (.binary .div (.const 1) (.var 0))).range (Backend.rational {}) []
+      (Range.env [Range.whole]) = ⟨some 0, some 0⟩ := by
+  decide +kernel
+
+/-- A product with a factor that is exactly zero is zero where the other factor has no
+enclosure, here `1 / x` on a box that contains `x = 0`, and so is a quotient with such a
+numerator: the evaluation with the zero rule has the enclosure of zero. In `Expr.eval?` a
+failed operand fails the operation, so it has none. -/
+example : (Expr.binary .mul (.const 0) (.binary .div (.const 1) (.var 0))).evalZero?
+      (Backend.rational {}) (fun _ => some ⟨-1, 1⟩) = some ⟨0, 0⟩ ∧
+    (Expr.binary .div (.const 0) (.var 0)).evalZero? (Backend.rational {})
+      (fun _ => some ⟨-1, 1⟩) = some ⟨0, 0⟩ ∧
+    (Expr.binary .mul (.const 2) (.binary .div (.const 1) (.var 0))).evalZero?
+      (Backend.rational {}) (fun _ => some ⟨-1, 1⟩) = none ∧
+    (Expr.binary .mul (.const 0) (.binary .div (.const 1) (.var 0))).eval?
+      (Backend.rational {}) (fun _ => some ⟨-1, 1⟩) = none := by
+  decide +kernel
+
+/-- The equation of `Expr.eval?` at a binary operation: the operands in order, then the
+backend's operation. -/
+example (a b : Expr) (env : Nat → Option (Interval ℚ)) :
+    (Expr.binary .mul a b).eval? (Backend.rational {}) env =
+      (a.eval? (Backend.rational {}) env).bind fun I =>
+        (b.eval? (Backend.rational {}) env).bind fun J =>
+          (Backend.rational {}).binary? .mul I J :=
+  Expr.eval?_binary (Backend.rational {}) env .mul a b
+
+/-- An operation that the backend encloses evaluates to that enclosure
+(`Expr.eval?_binary_of_some`), and the evaluation with the zero rule has every enclosure of
+`Expr.eval?` (`Expr.evalZero?_of_eval?`). -/
+example : (Expr.binary .add (.const 1) (.const 2)).evalZero? (Backend.rational {})
+    (fun _ => none) = some ⟨3, 3⟩ :=
+  Expr.evalZero?_of_eval? (Backend.rational {}) (fun _ => none) _
+    (Expr.eval?_binary_of_some (Backend.rational {}) (fun _ => none) (I := ⟨1, 1⟩) (J := ⟨2, 2⟩)
+      (by decide +kernel) (by decide +kernel) (by decide +kernel))
+
+/-- `0 * (1 / x) - 1 < 0` on `[-1, 1]`: the check with the zero rule passes, the check on
+`Expr.eval?` does not, and a certificate whose leaf is that atom refutes `0 * (1 / x) ≥ 1`. -/
+def zeroTimes : Expr :=
+  .binary .sub (.binary .mul (.const 0) (.binary .div (.const 1) (.var 0))) (.const 1)
+
+example : zeroTimes.checkZero (Backend.rational {}) .negative [⟨-1, 1⟩] 0 = true ∧
+    zeroTimes.check (Backend.rational {}) .negative [⟨-1, 1⟩] 3 = false ∧
+    (Constraint.fails .negative zeroTimes).refutes (Backend.rational {}) (.atom 0) [⟨-1, 1⟩] =
+      true := by
+  decide +kernel
+
+/-- The soundness theorem of the check with the zero rule, and a box that the check on
+`Expr.eval?` passes passes it too. -/
+example (x : ℝ) (h0 : -1 ≤ x) (h1 : x ≤ 1) :
+    Relation.negative.Holds (zeroTimes.eval (fun _ => x) fun _ _ => 0) := by
+  have hbox : Box.ContainsReal [⟨-1, 1⟩] (fun _ => x) := by
+    refine Box.containsReal_cons ⟨?_, ?_⟩ (Box.containsReal_nil _) <;> simpa
+  exact zeroTimes.checkZero_sound (Backend.rational_sound {}) (depth := 0) (by decide +kernel)
+    hbox
+
+example : (Expr.binary .sub (.var 0) (.const 2)).checkZero (Backend.rational {}) .negative
+    [⟨0, 1⟩] 0 = true :=
+  Expr.checkZero_of_check _ (by decide +kernel)
+
+/-- The check on `Expr.eval?` keeps its theorems: the leaf in the ordinary notation, which
+fails here because the quotient has no enclosure, and the soundness of the adaptive check. -/
+example : zeroTimes.checkBox (Backend.rational {}) .negative [⟨-1, 1⟩] = false := by
+  rw [Expr.checkBox_def]
+  decide +kernel
+
+example (x : ℝ) (h0 : 0 ≤ x) (h1 : x ≤ 1) :
+    Relation.negative.Holds ((Expr.binary .sub (.var 0) (.const 2)).eval (fun _ => x)
+      fun _ _ => 0) := by
+  have hbox : Box.ContainsReal [⟨0, 1⟩] (fun _ => x) := by
+    refine Box.containsReal_cons ⟨?_, ?_⟩ (Box.containsReal_nil _) <;> simpa
+  exact Expr.check_sound _ (Backend.rational_sound {}) (depth := 0) (by decide +kernel) hbox
+
+/-- `x ≥ 1` and `Real.exp (-x) ≥ 1 / 2` have no common point: the check on the half-line, and
+its soundness theorem. -/
+def decays : Constraint :=
+  .fails .negative (.binary .sub (.unary .exp (.unary .neg (.var 0))) (.const (1 / 2)))
+
+example (x : ℝ) (hx : 1 ≤ x) : ¬ decays.Holds (fun _ => x) := by
+  have hbox : Range.BoxContains [⟨some 1, none⟩] (fun _ => x) :=
+    Range.boxContains_cons (Range.contains_lower (by simpa using hx)) (Range.boxContains_nil _)
+  exact Constraint.not_holds_of_failsOn (Backend.rational_sound {}) (fun _ => rfl)
+    (names := []) (fun _ _ h => by simp at h) (by decide +kernel) hbox
 
 end FloatLibTests.Conformance.Numerics.Constraints

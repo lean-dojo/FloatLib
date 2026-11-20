@@ -885,12 +885,15 @@ def nestedFlagGate (table : Vector Value 2) (xs ys : List Value) : Value :=
           decide ((if outer.2.2 then inner.1 else inner.1 + y) < y))) (0, true)).1,
       table[(if x * x < x then 0 else 1 : Fin 2)], decide (outer.2.1 < 0))) (0, 0, true)).1
 
+-- The refusal has 72,000 heartbeats: the finiteness of a sum is not compared with the finiteness
+-- facts of other values, which unfolds the sum once for each of them.
 /--
 error: roundoff: a test of the rounded state, (if discrete✝ = true then accumulator else accumulator
 + value) < value, is in a loop inside another loop's step, whose state the test of the references
 could read, so it gets no agreement premise
 -/
 #guard_msgs (whitespace := lax) in
+set_option maxHeartbeats 72000 in
 roundoff mixed theorem nested_flag_gate_mixedError :=
   fun (table : Vector Value 2) (xs ys : List Value) (hformat : format.isIEEE = true) =>
     ExecFloat.Binary.toReal (nestedFlagGate table xs ys)

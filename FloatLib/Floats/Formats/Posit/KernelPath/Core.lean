@@ -39,10 +39,14 @@ same way, which is how a literal is rounded. NaR is `2 ^ p`, and a negative valu
 magnitude in `p + 1` bits. `neg`, `abs`, `next` and `prior` are the negation, the absolute
 value and the neighbouring encodings, `signedKey`, `lt` and `le` the comparison key (the
 encoding plus the sign bit modulo the width, so that keys are ordered like values and NaR is
-the least) and its two tests, and `cast` the change of width.
+the least) and its two tests, and `cast` the change of width. `toSigned` and `toUnsigned` are
+the words of the conversions to a signed and to an unsigned integer of `w` bits (§6.4), with
+`nearestNat` the nearest integer of a decoded value.
 
 `FloatLib.Floats.Formats.Posit.KernelPath.Standard` proves each of them equal to the reference
-operation at `es = 2`, for every width and every operand.
+operation at `es = 2`, for every width and every operand, and
+`FloatLib.Floats.Formats.Posit.General` proves each of them against a specification on values
+for every `es`.
 
 Reference: Standard for Posit Arithmetic (2022), §§3.3, 4.1 and 5.2–5.7.
 -/
@@ -348,5 +352,68 @@ def cast (p es q es' a : Nat) : Nat :=
         (magnitude p a) (Nat.succ (Nat.shiftRight (bias p es) es')))
       0)
     (nar q)
+
+/--
+The natural number nearest to `M * 2 ^ (E - B)`, ties to even: the significand shifted up when
+the exponent is at least the bias, and otherwise its quotient by the power of two, rounded by
+the remainder.
+-/
+def nearestNat (M E B : Nat) : Nat :=
+  Bool.casesOn (motive := fun _ => Nat) (Nat.ble B E)
+    ((fun den =>
+      (fun q r =>
+        Nat.add q
+          (Bool.casesOn (motive := fun _ => Nat) (Nat.ble (Nat.succ (Nat.mul 2 r)) den)
+            (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.mul 2 r) den) 1 (Nat.mod q 2))
+            0))
+        (Nat.div M den) (Nat.mod M den))
+      (Nat.shiftLeft 1 (Nat.sub B E)))
+    (Nat.shiftLeft M (Nat.sub E B))
+
+/--
+The word of the signed integer of `w` bits that the value encoded by `a` converts to: the word
+with only its most significant bit set for NaR and for a rounded value outside the range, zero
+for zero, and otherwise the nearest integer of the value, ties to even, in two's complement.
+-/
+def toSigned (p es w a : Nat) : Nat :=
+  (fun half =>
+    Bool.casesOn (motive := fun _ => Nat) (Nat.beq a (nar p))
+      (Bool.casesOn (motive := fun _ => Nat) (Nat.beq a 0)
+        ((fun m =>
+          (fun z =>
+            (fun n =>
+              Bool.casesOn (motive := fun _ => Nat) (Nat.ble (nar p) a)
+                (Bool.casesOn (motive := fun _ => Nat) (Nat.ble (Nat.succ n) half) half n)
+                (Bool.casesOn (motive := fun _ => Nat) (Nat.ble n half) half
+                  (Nat.mod (Nat.sub (Nat.shiftLeft 1 w) n) (Nat.shiftLeft 1 w))))
+              (nearestNat (significand es m z) (exponent p es m z) (bias p es)))
+            (tailLength p m))
+          (magnitude p a))
+        0)
+      half)
+    (Nat.shiftLeft 1 (Nat.sub w 1))
+
+/--
+The word of the unsigned integer of `w` bits that the value encoded by `a` converts to: the
+word with only its most significant bit set for NaR and for a rounded value outside the range,
+and otherwise the nearest integer of the value, ties to even.
+-/
+def toUnsigned (p es w a : Nat) : Nat :=
+  (fun half =>
+    Bool.casesOn (motive := fun _ => Nat) (Nat.beq a (nar p))
+      (Bool.casesOn (motive := fun _ => Nat) (Nat.beq a 0)
+        ((fun m =>
+          (fun z =>
+            (fun n =>
+              Bool.casesOn (motive := fun _ => Nat) (Nat.ble (nar p) a)
+                (Bool.casesOn (motive := fun _ => Nat)
+                  (Nat.ble (Nat.succ n) (Nat.shiftLeft 1 w)) half n)
+                (Bool.casesOn (motive := fun _ => Nat) (Nat.beq n 0) half 0))
+              (nearestNat (significand es m z) (exponent p es m z) (bias p es)))
+            (tailLength p m))
+          (magnitude p a))
+        0)
+      half)
+    (Nat.shiftLeft 1 (Nat.sub w 1))
 
 end FloatLib.Floats.Formats.Posit.KernelPath

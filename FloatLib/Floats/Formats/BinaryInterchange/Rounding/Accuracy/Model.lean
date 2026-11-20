@@ -63,7 +63,7 @@ theorem accuracyRepresents_bounds
           norm_num
         · rw [h]
           norm_num
-      · constructor <;> nlinarith [h.1, h.2]
+      · constructor <;> linarith [h.1, h.2]
 
 /-- A value represented over a nonzero truncated mantissa is positive. -/
 theorem pos_of_accuracyRepresents
@@ -133,16 +133,16 @@ theorem accuracyRepresents_shiftRightOne
     cases roundBit <;> cases stickyBit
     · change AccuracyRepresents (mantissa / 2) .exact (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      nlinarith [hmantissa]
+      linarith [hmantissa]
     · change AccuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      constructor <;> nlinarith [hmantissa]
+      constructor <;> linarith [hmantissa]
     · change AccuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      constructor <;> nlinarith [hmantissa]
+      constructor <;> linarith [hmantissa]
     · change AccuracyRepresents (mantissa / 2) (.inexact .lt) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      constructor <;> nlinarith [hmantissa]
+      constructor <;> linarith [hmantissa]
   · have hmantissa : (mantissa : Real) = 2 * (mantissa / 2 : Nat) + 1 := by
       exact_mod_cast (by omega : mantissa = 2 * (mantissa / 2) + 1)
     have hshift :
@@ -153,16 +153,16 @@ theorem accuracyRepresents_shiftRightOne
     cases roundBit <;> cases stickyBit
     · change AccuracyRepresents (mantissa / 2) (.inexact .eq) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      nlinarith [hmantissa]
+      linarith [hmantissa]
     · change AccuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      constructor <;> nlinarith [hmantissa]
+      constructor <;> linarith [hmantissa]
     · change AccuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      constructor <;> nlinarith [hmantissa]
+      constructor <;> linarith [hmantissa]
     · change AccuracyRepresents (mantissa / 2) (.inexact .gt) (value / 2)
       simp only [ExtendedMantissa.accuracy, AccuracyRepresents] at h ⊢
-      constructor <;> nlinarith [hmantissa]
+      constructor <;> linarith [hmantissa]
 
 /-- Repeated model right shifts preserve the certificate at the correspondingly divided scale. -/
 theorem accuracyRepresents_shift

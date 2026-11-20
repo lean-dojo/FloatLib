@@ -25,10 +25,12 @@ public import FloatLib.Tactic.LaneCall
 
 It reads a lane program off each side (`read`). The sides may use the kernel's natural-number
 operations (`Nat.add`, `Nat.sub`, `Nat.mul`, `Nat.land`, `Nat.lor`, `Nat.xor`, both shifts,
-`Nat.succ`, `Nat.pow 2`, and `Bool.casesOn` on `Nat.beq`, `Nat.ble` or `Nat.blt`), numerals,
-terms without `a` and `b` (which become constants), applied functions (whose arguments become
-shared bindings), and any definition that unfolds to these. `Nat.div`, `Nat.mod` and loops whose
-length depends on a lane have no lane step, and a term that uses them is refused.
+`Nat.succ`, `Nat.pow 2`, `Nat.mod` by a power of two, which is a mask, and `Bool.casesOn` or
+`Bool.rec` on `Nat.beq`, `Nat.ble` or `Nat.blt`), numerals, terms without `a` and `b` (which
+become constants), applied functions (whose arguments become shared bindings), and any
+definition that unfolds to these. So the kernel shape of a definition (`kernel_shape`) is read
+as it is. `Nat.div`, `Nat.mod` by another number and loops whose length depends on a lane have no
+lane step, and a term that uses them is refused.
 
 A function that does not unfold to these operations can be given a replacement with
 `@[lane_call]`: a theorem `∀ v, v < limit → replacement v = function v` (after its parameters),
@@ -238,6 +240,29 @@ partial def read (scope : Scope) (env e : Lean.Expr) : MetaM Result := do
              denotes := mkAppN (denotation node)
                #[env, mkRawNatLit bound, x.program, y.program, a, b, x.denotes, y.denotes]
              bits := min (x.bits + y.bits) 64 }
+  -- A remainder by a power of two keeps the low bits: the mask `2 ^ width - 1`.
+  if let some (a, divisor) := operands? e ``Nat.mod ``HMod.hMod then
+    unless divisor.hasAnyFVar isLane do
+      if let some modulus ← closedValue? divisor then
+        if modulus != 0 && modulus &&& (modulus - 1) == 0 then
+          let x ← read scope env a
+          let width := modulus.log2
+          -- `a &&& 2 ^ width - 1 = a % 2 ^ width`, whose right side is `e` by evaluation.
+          let masks := mkApp2 (mkConst ``Nat.and_two_pow_sub_one_eq_mod) a (mkRawNatLit width)
+          let some (_, masked, _) := (← inferType masks).eq?
+            | throwError "lane program: no mask for the remainder{indentExpr e}"
+          let mask := masked.appArg!
+          let maskProgram := mkApp (packedExpr `const) mask
+          let program := mkApp2 (packedExpr `land) x.program maskProgram
+          let land := mkApp2 (mkConst ``Nat.land) a mask
+          return { program
+                   sound := andIntro (soundOf x.program) (soundOf maskProgram) x.sound
+                     (mkConst ``True.intro)
+                   denotes := eqTrans (evalOf program env) land e
+                     (mkAppN (denotation `land) #[env, x.program, maskProgram, a, mask, x.denotes,
+                       mkApp2 (mkConst ``FloatLib.Numerics.Packed.Expr.eval_const) env mask])
+                     masks
+                   bits := min x.bits width }
   for (function, operator, node, fixed) in
       [(``Nat.shiftLeft, ``HShiftLeft.hShiftLeft, `shiftLeft, `shiftLeftBy),
         (``Nat.shiftRight, ``HShiftRight.hShiftRight, `shiftRight, `shiftRightBy)] do
@@ -262,11 +287,13 @@ partial def read (scope : Scope) (env e : Lean.Expr) : MetaM Result := do
                denotes := mkAppN (mkConst ``FloatLib.Numerics.Packed.Expr.eval_pow2)
                  #[env, count.program, e.appArg!, count.denotes]
                bits := if count.bits ≤ 6 then 2 ^ count.bits else 64 }
-  -- A case distinction on a comparison of two numbers, or on a condition without lane variables.
-  if e.isAppOfArity ``Bool.casesOn 4 then
-    let condition := e.getArg! 1
-    let whenFalse := e.getArg! 2
-    let whenTrue := e.getArg! 3
+  -- A case distinction on a comparison of two numbers, or on a condition without lane variables,
+  -- written with `Bool.casesOn` or with the recursor it abbreviates.
+  let distinction? : Option (Lean.Expr × Lean.Expr × Lean.Expr) :=
+    if e.isAppOfArity ``Bool.casesOn 4 then some (e.getArg! 1, e.getArg! 2, e.getArg! 3)
+    else if e.isAppOfArity ``Bool.rec 4 then some (e.getArg! 3, e.getArg! 1, e.getArg! 2)
+    else none
+  if let some (condition, whenFalse, whenTrue) := distinction? then
     unless condition.hasAnyFVar isLane do
       let value ← whnf condition
       if value.isConstOf ``Bool.true then return ← read scope env whenTrue

@@ -210,9 +210,30 @@ structure ReifiedBox where
   membership : Q(Box.ContainsReal $box (fun i => $reals[i]?.getD 0))
 
 /--
-Select the strongest endpoints and prove membership, without an intermediate coordinate. The
-endpoints come from `bounds`, from zero below a nonnegative real, and from `constantBounds` for a
-constant such as `π`. The terms of `rest` follow those of the box in the environment and get no
+The strongest lower and upper endpoint of a term, where it has them. The endpoints come from
+`bounds`, from zero below a nonnegative real, and from `constantBounds` for a constant such as
+`π`.
+-/
+def strongestBounds (bounds : Array Bound) (term : Q(ℝ)) :
+    MetaM (Option Bound × Option Bound) := do
+  -- The nonnegative-real carrier supplies a lower endpoint without a local hypothesis.
+  let mut lower : Option Bound ← match term with
+    | ~q((($x : NNReal) : ℝ)) => do
+      return (← boundsOfLE q(NNReal.coe_nonneg $x)).find? (·.lower)
+    | _ => pure none
+  let mut upper : Option Bound := none
+  -- A constant such as `π` has its endpoints without a local hypothesis as well.
+  for bound in (← constantBounds #[term]) ++ bounds do
+    unless ← withReducible (isDefEq term bound.term) do continue
+    if bound.lower then
+      if lower.all (·.value < bound.value) then lower := some bound
+    else
+      if upper.all (bound.value < ·.value) then upper := some bound
+  return (lower, upper)
+
+/--
+Select the strongest endpoints and prove membership, without an intermediate coordinate
+(`strongestBounds`). The terms of `rest` follow those of the box in the environment and get no
 interval, so the box constrains a prefix of the coordinates.
 -/
 def reifyBoxWithTail (bounds : Array Bound) (terms : List Q(ℝ)) (rest : Q(List ℝ)) :
@@ -223,19 +244,7 @@ def reifyBoxWithTail (bounds : Array Bound) (terms : List Q(ℝ)) (rest : Q(List
     let membership : Lean.Expr := q(Box.containsReal_nil (fun i => $rest[i]?.getD 0))
     return ⟨box, rest, membership⟩
   | term :: tail => do
-    -- The nonnegative-real carrier supplies a lower endpoint without a local hypothesis.
-    let mut lower : Option Bound ← match term with
-      | ~q((($x : NNReal) : ℝ)) => do
-        return (← boundsOfLE q(NNReal.coe_nonneg $x)).find? (·.lower)
-      | _ => pure none
-    let mut upper : Option Bound := none
-    -- A constant such as `π` has its endpoints without a local hypothesis as well.
-    for bound in (← constantBounds #[term]) ++ bounds do
-      unless ← withReducible (isDefEq term bound.term) do continue
-      if bound.lower then
-        if lower.all (·.value < bound.value) then lower := some bound
-      else
-        if upper.all (bound.value < ·.value) then upper := some bound
+    let (lower, upper) ← strongestBounds bounds term
     let some lowerBound := lower
       | throwError "interval needs a rational lower bound for {term}"
     let some upperBound := upper

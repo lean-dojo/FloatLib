@@ -6,8 +6,6 @@ Authors: FloatLib Team
 
 module
 
-public import Mathlib.Init -- Standard source linters.
-
 /-!
 # Bit length, bits and ceilings in few kernel steps
 
@@ -18,11 +16,11 @@ Lean's kernel computes `Nat.add`, `Nat.sub`, `Nat.mul`, `Nat.div`, `Nat.mod`, `N
 because they are unfolded through instances and recursion. This module computes the same values
 from the fast operations alone. Large powers of two are written as shifts of one: the kernel
 computes both, and Lean's elaborator, which a tactic may use to evaluate the same definitions,
-refuses `Nat.pow` with an exponent above 256. It imports `Mathlib.Init` only, for the source
-linters, so a module that only checks numbers can import it without loading the rest of Mathlib.
+refuses `Nat.pow` with an exponent above 256. It imports nothing beyond core Lean, so a module
+that only checks numbers can import it without loading Mathlib or Lean's own elaborator.
 
-`compiled_as f := g by lemma`, declared here, is the command by which the proof modules give a
-kernel-shaped definition the compiled code of the ordinary function it equals.
+`compiled_as f := g by lemma` (`FloatLib.Tactic.CompiledAs`) is the command by which the proof
+modules give a kernel-shaped definition the compiled code of the ordinary function it equals.
 
 ## Bit length
 
@@ -41,10 +39,13 @@ which the lane programs of the small formats use.
 and for `384 < B ≤ 2 ^ 24` the search down to a window of 128 bits, with as many steps as
 `(B - 1) / 128` has bits, so that its cost grows with the logarithm of the width.
 
-`size n` needs no bound. It picks the lanes of 64, 128 or 256 bits when `n` is below that, and
-otherwise the search down to a window of 128 bits with 2, 3, 5, 7, 10, 17 or 25 steps, whichever
-is the first that covers `n`. A number of `2 ^ 32` bits or more, which the kernel cannot hold,
-falls back on `Nat.log2`.
+`size n` needs no bound. Below `2 ^ 64` it is the lanes of 64 bits, below `2 ^ 128` the lanes
+of 64 bits on the upper half, and below `2 ^ 256` the same two cases on the upper 128 bits
+(`size128`), so that the common sizes multiply by a constant of 4,096 bits only. `sizeAbove n`
+takes the rest: below `2 ^ 1024` the same halving of the upper 256 or 512 bits (`size256`,
+`size512`), and otherwise the search down to a window of 128 bits with 5, 7, 10, 17 or 25 steps,
+whichever is the first that covers `n`. A number of `2 ^ 32` bits or more, which the kernel
+cannot hold, falls back on `Nat.log2`.
 
 ## Bits and ceilings
 
@@ -137,17 +138,63 @@ def windowBelow (k n other : Nat) : Nat :=
     other (windowLength 128 k n 0)
 
 /--
+The bit length of `n` for `n < 2 ^ 128` (`size128_eq`): the `laneLength` of 64 bits of `n`, or
+of its upper 64 bits plus 64.
+-/
+def size128 (n : Nat) : Nat :=
+  (fun upper =>
+    Bool.casesOn (motive := fun _ => Nat) (Nat.beq upper 0)
+      (Nat.add 64 (laneLength 64 upper)) (laneLength 64 n))
+    (Nat.shiftRight n 64)
+
+/--
+The bit length of `n` for `n < 2 ^ 256` (`size256_eq`): `size128` of `n`, or of its upper 128
+bits plus 128.
+-/
+def size256 (n : Nat) : Nat :=
+  (fun upper =>
+    Bool.casesOn (motive := fun _ => Nat) (Nat.beq upper 0)
+      (Nat.add 128 (size128 upper)) (size128 n))
+    (Nat.shiftRight n 128)
+
+/--
+The bit length of `n` for `n < 2 ^ 512` (`size512_eq`): `size256` of `n`, or of its upper 256
+bits plus 256.
+-/
+def size512 (n : Nat) : Nat :=
+  (fun upper =>
+    Bool.casesOn (motive := fun _ => Nat) (Nat.beq upper 0)
+      (Nat.add 256 (size256 upper)) (size256 n))
+    (Nat.shiftRight n 256)
+
+/--
+The bit length `n.log2 + 1` of `n` for `2 ^ 256 ≤ n` (`sizeAbove_eq`): below `2 ^ 512` it is
+`size256` of the upper 256 bits plus 256, below `2 ^ 1024` `size512` of the upper 512 bits plus
+512, and above a `windowLength` of 5, 7, 10, 17 or 25 steps down to a window of 128 bits.
+-/
+def sizeAbove (n : Nat) : Nat :=
+  Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 512) 0)
+    (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 1024) 0)
+      (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 4096) 0)
+        (windowBelow 7 n (windowBelow 10 n (windowBelow 17 n (windowBelow 25 n
+          (Nat.succ (Nat.log2 n))))))
+        (windowLength 128 5 n 0))
+      (Nat.add 512 (size512 (Nat.shiftRight n 512))))
+    (Nat.add 256 (size256 (Nat.shiftRight n 256)))
+
+/--
 The bit length of `n`: zero for zero and `n.log2 + 1` otherwise (`size_eq`, `size_eq_log2`), for
-every `n`. Below `2 ^ 256` it is one `laneLength`; above, a `windowLength` of 2, 3, 5, 7, 10, 17
-or 25 steps down to a window of 128 bits.
+every `n`. Below `2 ^ 64` it is one `laneLength`, below `2 ^ 128` the `laneLength` of the upper
+64 bits plus 64, below `2 ^ 256` `size128` of the upper 128 bits plus 128, and `sizeAbove n`
+beyond.
 -/
 def size (n : Nat) : Nat :=
   Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 64) 0)
-    (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 256) 0)
-      (windowBelow 2 n (windowBelow 3 n (windowBelow 5 n (windowBelow 7 n (windowBelow 10 n
-        (windowBelow 17 n (windowBelow 25 n (Nat.succ (Nat.log2 n)))))))))
-      (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 128) 0)
-        (laneLength 256 n) (laneLength 128 n)))
+    (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 128) 0)
+      (Bool.casesOn (motive := fun _ => Nat) (Nat.beq (Nat.shiftRight n 256) 0)
+        (sizeAbove n)
+        (Nat.add 128 (size128 (Nat.shiftRight n 128))))
+      (Nat.add 64 (laneLength 64 (Nat.shiftRight n 64))))
     (laneLength 64 n)
 
 /-- Bit `i` of `n`, as zero or one (`bit_eq`). One shift and one mask. -/

@@ -521,4 +521,18 @@ does not signal `inexact`, is its kernel form, for every format, rounding direct
   rw [roundToIntegralExact_eq, quantizeAt_quiet]
   rfl
 
+/-! ## Kernel shapes -/
+
+kernel_shape roundAtQuantum
+kernel_shape droppedAt
+kernel_shape signedInteger
+kernel_shape inRange
+kernel_shape convertToInteger
+kernel_shape fits
+kernel_shape quantizeAt
+kernel_shape deliverRounded
+kernel_shape quantize
+kernel_shape nonnegative
+kernel_shape roundToIntegral
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

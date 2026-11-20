@@ -37,31 +37,72 @@ def infMagnitude (fmt : FloatFormat) : Nat :=
   | .ieee => fmt.expAllOnesNat * 2 ^ fmt.fracWidth
   | .finiteMaxNaN | .finiteUnsignedZero | .finite => 2 ^ signPos fmt
 
+kernel_constant infMagnitude
+
 /-- The quiet bit of a NaN, and zero in an encoding without signaling NaNs. -/
 def quietMask (fmt : FloatFormat) : Nat :=
   match fmt.encoding with
   | .ieee => fmt.quietBitNat
   | .finiteMaxNaN | .finiteUnsignedZero | .finite => 0
 
-/-- The encoding of the result of an invalid operation: `Model.invalidResult`. -/
+kernel_constant quietMask
+
+/--
+The encoding of the result of an invalid operation, `Model.invalidResult` (`invalidWord_eq`), by
+the encoding: the quiet NaN with an empty payload, the largest pattern, the word of the sign
+bit, and zero for a format without a NaN. It is written on the two widths, so that Lean's
+kernel computes it without unpacking a word of the model.
+-/
 def invalidWord (fmt : FloatFormat) : Nat :=
-  (Model.invalidResult fmt).toNatBits
+  FloatFormat.Encoding.casesOn (motive := fun _ => Nat) fmt.encoding
+    ((2 ^ fmt.expWidth - 1) * 2 ^ fmt.fracWidth % 2 ^ fmt.bitWidth |||
+      2 ^ (fmt.fracWidth - 1) % 2 ^ fmt.bitWidth)
+    ((2 ^ fmt.expWidth - 1) * 2 ^ fmt.fracWidth + (2 ^ fmt.fracWidth - 1))
+    (2 ^ signPos fmt)
+    0
+
+/-- `invalidWord` is the encoding of the invalid-operation result of the model, for every
+format. -/
+theorem invalidWord_eq (fmt : FloatFormat) :
+    invalidWord fmt = (Model.invalidResult fmt).toNatBits := by
+  have hE : fmt.expAllOnesNat < 2 ^ fmt.expWidth :=
+    Nat.sub_lt (Nat.two_pow_pos _) (by decide)
+  have hF : fmt.fracMaskNat < 2 ^ fmt.fracWidth :=
+    Nat.sub_lt (Nat.two_pow_pos _) (by decide)
+  unfold invalidWord Model.invalidResult
+  cases h : fmt.encoding
+  · simp only [Model.canonicalNaN, Model.ofBits, Model.toNatBits, FloatFormat.expMask,
+      FloatFormat.quietBit, FloatFormat.ofWordNat, BitVec.toNat_or, BitVec.toNat_ofNat,
+      FloatFormat.expMaskNat, FloatFormat.expAllOnesNat, FloatFormat.quietBitNat]
+  · rw [toNatBits_ofFields fmt false _ _ hE hF]
+    simp only [Bool.false_eq_true, ite_false, Nat.zero_add]
+    rfl
+  · simp [signPos, FloatFormat.signMaskNat_eq_two_pow]
+  · simp
+
+kernel_constant invalidWord
 
 /-- One when the exponent and fraction fields `magnitude` are those of an infinity. -/
 def infFlag (fmt : FloatFormat) (magnitude : Nat) : Nat :=
   Nat.sub 1
     (Nat.add (Nat.sub magnitude (infMagnitude fmt)) (Nat.sub (infMagnitude fmt) magnitude))
 
+kernel_constant infFlag
+
 /-- One when a word is a NaN: it is not finite and not an infinity. -/
 def nanFlag (fmt : FloatFormat) (sign magnitude : Nat) : Nat :=
   Nat.mul (Nat.sub 1 (Nat.sub 1 (nonFinite fmt sign magnitude)))
     (Nat.sub 1 (infFlag fmt magnitude))
+
+kernel_constant nanFlag
 
 /-- For a NaN word `a`: one when it is signaling, that is, the encoding has a quiet bit and it
 is clear in `a`. -/
 def signalingFlag (fmt : FloatFormat) (a : Nat) : Nat :=
   Nat.sub (Nat.sub 1 (Nat.sub 1 (quietMask fmt)))
     (Nat.sub 1 (Nat.sub 1 (Nat.land a (quietMask fmt))))
+
+kernel_constant signalingFlag
 
 /--
 The NaN that an operation on the words `a` and `b` returns when one of them is a NaN: `a` if it
@@ -74,6 +115,8 @@ def nanChoice (fmt : FloatFormat) (a b signalingA signalingB nanA : Nat) : Nat :
       (Bool.casesOn (motive := fun _ => Nat) (Nat.beq signalingB 0) b
         (Bool.casesOn (motive := fun _ => Nat) (Nat.beq nanA 0) a b)))
     (quietMask fmt)
+
+kernel_constant nanChoice
 
 /--
 The NaN that an operation on the words `a`, `b` and `c` returns when one of them is a NaN: the
@@ -89,9 +132,13 @@ def nanChoice3 (fmt : FloatFormat) (a b c signalingA signalingB signalingC nanA 
             (Bool.casesOn (motive := fun _ => Nat) (Nat.beq nanB 0) b c)))))
     (quietMask fmt)
 
+kernel_constant nanChoice3
+
 /-- One when a word with sign `sign` and fields `magnitude` is a zero. -/
 def zeroFlag (fmt : FloatFormat) (sign magnitude : Nat) : Nat :=
   Nat.mul (Nat.sub 1 magnitude) (Nat.sub 1 (Nat.mul (negZeroNaN fmt) sign))
+
+kernel_constant zeroFlag
 
 /-! ## Classification of a word by its fields -/
 

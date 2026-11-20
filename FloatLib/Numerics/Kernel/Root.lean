@@ -18,8 +18,10 @@ above the root, with a count of steps taken from the bit length, and the caller 
 
 `isqrt n` does both for square roots. It returns the Newton result when `isRoot` accepts it and
 core's `Nat.sqrt n` otherwise, so `isqrt n = Nat.sqrt n` holds for every `n` whatever the
-iteration does (`isqrt_eq` in `RootProof`), and the kernel takes the checked branch.
-`FloatLib.Numerics.IntegerRoot.newton` is defined the same way for every degree.
+iteration does (`isqrt_eq` in `RootProof`), and the kernel takes the checked branch. For a
+number of at most 384 bits it first tries `sqrtGuess`, eight Newton steps written out: a step of
+the recursion of `rootGuess` costs the kernel about twelve microseconds, a written-out step
+about three. `FloatLib.Numerics.IntegerRoot.newton` is defined the same way for every degree.
 
 These functions branch with `Bool.casesOn`, which has compiled code, so they also run compiled.
 -/
@@ -48,10 +50,31 @@ def rootGuess (k n : Nat) : Nat :=
     (size n)
 
 /--
-The floor of the square root of `n` (`isqrt_eq`): the Newton result when it passes `isRoot`, and
-core's `Nat.sqrt n` otherwise.
+Eight steps of Newton's iteration for the square root of `n`, a number of `bits` bits, from
+`2 ^ ⌈bits / 2⌉`, which is above the root: `x ← min x ((x + n / x) / 2)`, a step that never
+increases the value. They are written out, with no recursion, and reach the floor of the root of
+a number of up to 384 bits. The result is meant to be checked with `isRoot`.
+-/
+def sqrtGuess (n bits : Nat) : Nat :=
+  (fun step => step (step (step (step (step (step (step (step
+      (Nat.shiftLeft 1 (ceilDiv bits 2))))))))))
+    (fun x => minNat x (Nat.shiftRight (Nat.add x (Nat.div n x)) 1))
+
+/--
+The floor of the square root of `n` (`isqrt_eq`). For `n` of at most 384 bits it is the result of
+the eight written-out Newton steps `sqrtGuess` when that passes `isRoot`. Otherwise it is the
+result of the full iteration `rootGuess` when that passes `isRoot`, and core's `Nat.sqrt n` when
+it does not.
 -/
 def isqrt (n : Nat) : Nat :=
-  (fun r => Bool.casesOn (motive := fun _ => Nat) (isRoot 2 r n) (Nat.sqrt n) r) (rootGuess 2 n)
+  (fun general =>
+    (fun bits =>
+      Bool.casesOn (motive := fun _ => Nat) (Nat.ble bits 384)
+        general
+        ((fun r => Bool.casesOn (motive := fun _ => Nat) (isRoot 2 r n) general r)
+          (sqrtGuess n bits)))
+      (size n))
+    ((fun r => Bool.casesOn (motive := fun _ => Nat) (isRoot 2 r n) (Nat.sqrt n) r)
+      (rootGuess 2 n))
 
 end FloatLib.Numerics.Kernel

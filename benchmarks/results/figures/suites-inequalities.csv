@@ -1,300 +1,490 @@
 source,outcome_or_measure,value
-MetiTarski: interval,done,92
-MetiTarski: interval,failed,706
+MetiTarski: interval,done,124
+MetiTarski: interval,failed,674
 MetiTarski: interval,not expressible,150
 MetiTarski: interval,not run,0
-"MetiTarski: interval, constraint engine",done,184
-"MetiTarski: interval, constraint engine",failed,614
+"MetiTarski: interval, constraint engine",done,340
+"MetiTarski: interval, constraint engine",failed,458
 "MetiTarski: interval, constraint engine",not expressible,150
 "MetiTarski: interval, constraint engine",not run,0
-Flyspeck: interval,done,2
-Flyspeck: interval,failed,18
+Flyspeck: interval,done,3
+Flyspeck: interval,failed,17
 Flyspeck: interval,not expressible,144
 Flyspeck: interval,not run,0
-"Flyspeck: interval, constraint engine",done,5
-"Flyspeck: interval, constraint engine",failed,15
+"Flyspeck: interval, constraint engine",done,6
+"Flyspeck: interval, constraint engine",failed,14
 "Flyspeck: interval, constraint engine",not expressible,144
 "Flyspeck: interval, constraint engine",not run,0
-MetiTarski: interval,seconds,0.783471
-MetiTarski: interval,seconds,0.759845
-MetiTarski: interval,seconds,0.737112
-MetiTarski: interval,seconds,0.699179
-MetiTarski: interval,seconds,0.698052
-MetiTarski: interval,seconds,0.7252580000000001
-MetiTarski: interval,seconds,0.720329
-MetiTarski: interval,seconds,0.729088
-MetiTarski: interval,seconds,0.690689
-MetiTarski: interval,seconds,0.7180230000000001
-MetiTarski: interval,seconds,0.705619
-MetiTarski: interval,seconds,0.734703
-MetiTarski: interval,seconds,0.7025990000000001
-MetiTarski: interval,seconds,0.715347
-MetiTarski: interval,seconds,0.712521
-MetiTarski: interval,seconds,0.686397
-MetiTarski: interval,seconds,0.452868
-MetiTarski: interval,seconds,0.32796499999999995
-MetiTarski: interval,seconds,0.703611
-MetiTarski: interval,seconds,0.11388200000000001
-MetiTarski: interval,seconds,0.17843299999999998
-MetiTarski: interval,seconds,0.156529
-MetiTarski: interval,seconds,0.548876
-MetiTarski: interval,seconds,0.11959600000000001
-MetiTarski: interval,seconds,0.155938
-MetiTarski: interval,seconds,0.12030800000000001
-MetiTarski: interval,seconds,0.117975
-MetiTarski: interval,seconds,0.268423
-MetiTarski: interval,seconds,0.113114
-MetiTarski: interval,seconds,0.116899
-MetiTarski: interval,seconds,0.116461
-MetiTarski: interval,seconds,0.11779300000000001
-MetiTarski: interval,seconds,0.151847
-MetiTarski: interval,seconds,0.311592
-MetiTarski: interval,seconds,0.066384
-MetiTarski: interval,seconds,0.130712
-MetiTarski: interval,seconds,0.171891
-MetiTarski: interval,seconds,0.243287
-MetiTarski: interval,seconds,0.203294
-MetiTarski: interval,seconds,0.236375
-MetiTarski: interval,seconds,0.079928
-MetiTarski: interval,seconds,0.088009
-MetiTarski: interval,seconds,0.087982
-MetiTarski: interval,seconds,0.09222499999999999
-MetiTarski: interval,seconds,0.08737099999999999
-MetiTarski: interval,seconds,0.086173
-MetiTarski: interval,seconds,0.127411
-MetiTarski: interval,seconds,0.147666
-MetiTarski: interval,seconds,0.090016
-MetiTarski: interval,seconds,0.090114
-MetiTarski: interval,seconds,0.085774
-MetiTarski: interval,seconds,0.46930900000000003
-MetiTarski: interval,seconds,0.47482100000000005
-MetiTarski: interval,seconds,0.5194930000000001
-MetiTarski: interval,seconds,0.280377
-MetiTarski: interval,seconds,0.063676
-MetiTarski: interval,seconds,0.11680700000000001
-MetiTarski: interval,seconds,0.138293
-MetiTarski: interval,seconds,0.063466
-MetiTarski: interval,seconds,0.116997
-MetiTarski: interval,seconds,0.081516
-MetiTarski: interval,seconds,0.089953
-MetiTarski: interval,seconds,0.108282
-MetiTarski: interval,seconds,0.043545
-MetiTarski: interval,seconds,0.050241
-MetiTarski: interval,seconds,0.08034000000000001
-MetiTarski: interval,seconds,0.078736
-MetiTarski: interval,seconds,0.061951
-MetiTarski: interval,seconds,0.086322
-MetiTarski: interval,seconds,0.086091
-MetiTarski: interval,seconds,0.058317
-MetiTarski: interval,seconds,0.081564
-MetiTarski: interval,seconds,0.060791
-MetiTarski: interval,seconds,0.094158
-MetiTarski: interval,seconds,0.057280000000000005
-MetiTarski: interval,seconds,0.081213
-MetiTarski: interval,seconds,0.08359399999999999
-MetiTarski: interval,seconds,0.059292000000000004
-MetiTarski: interval,seconds,0.054883
-MetiTarski: interval,seconds,0.043182000000000005
-MetiTarski: interval,seconds,0.051595
-MetiTarski: interval,seconds,0.053749000000000005
-MetiTarski: interval,seconds,0.653798
-MetiTarski: interval,seconds,0.38275099999999995
-MetiTarski: interval,seconds,0.057128
-MetiTarski: interval,seconds,0.053262000000000004
-MetiTarski: interval,seconds,0.566374
-MetiTarski: interval,seconds,0.346094
-MetiTarski: interval,seconds,0.18572
-MetiTarski: interval,seconds,0.36573500000000003
-MetiTarski: interval,seconds,0.420987
-MetiTarski: interval,seconds,0.24909299999999998
-"MetiTarski: interval, constraint engine",seconds,0.7086330000000001
-"MetiTarski: interval, constraint engine",seconds,0.7672380000000001
-"MetiTarski: interval, constraint engine",seconds,0.795471
-"MetiTarski: interval, constraint engine",seconds,0.812012
-"MetiTarski: interval, constraint engine",seconds,0.935885
-"MetiTarski: interval, constraint engine",seconds,0.859472
-"MetiTarski: interval, constraint engine",seconds,0.752534
-"MetiTarski: interval, constraint engine",seconds,0.761207
-"MetiTarski: interval, constraint engine",seconds,0.72172
-"MetiTarski: interval, constraint engine",seconds,0.744186
-"MetiTarski: interval, constraint engine",seconds,0.753811
-"MetiTarski: interval, constraint engine",seconds,0.768156
-"MetiTarski: interval, constraint engine",seconds,0.822682
-"MetiTarski: interval, constraint engine",seconds,0.713816
-"MetiTarski: interval, constraint engine",seconds,0.47791300000000003
-"MetiTarski: interval, constraint engine",seconds,0.28460700000000005
-"MetiTarski: interval, constraint engine",seconds,4.1245519999999996
-"MetiTarski: interval, constraint engine",seconds,0.6001299999999999
-"MetiTarski: interval, constraint engine",seconds,0.117833
-"MetiTarski: interval, constraint engine",seconds,8.320666
-"MetiTarski: interval, constraint engine",seconds,0.18227000000000002
-"MetiTarski: interval, constraint engine",seconds,8.845804
-"MetiTarski: interval, constraint engine",seconds,0.11917
-"MetiTarski: interval, constraint engine",seconds,8.764708
-"MetiTarski: interval, constraint engine",seconds,0.495636
-"MetiTarski: interval, constraint engine",seconds,0.11613899999999999
-"MetiTarski: interval, constraint engine",seconds,9.806124
-"MetiTarski: interval, constraint engine",seconds,0.17926
-"MetiTarski: interval, constraint engine",seconds,9.197699
-"MetiTarski: interval, constraint engine",seconds,0.176646
-"MetiTarski: interval, constraint engine",seconds,8.464782999999999
-"MetiTarski: interval, constraint engine",seconds,0.19231600000000001
-"MetiTarski: interval, constraint engine",seconds,8.223895
-"MetiTarski: interval, constraint engine",seconds,0.26419099999999995
-"MetiTarski: interval, constraint engine",seconds,0.118667
-"MetiTarski: interval, constraint engine",seconds,9.013072
-"MetiTarski: interval, constraint engine",seconds,0.118505
-"MetiTarski: interval, constraint engine",seconds,8.51519
-"MetiTarski: interval, constraint engine",seconds,0.119037
-"MetiTarski: interval, constraint engine",seconds,8.668304000000001
-"MetiTarski: interval, constraint engine",seconds,0.118196
-"MetiTarski: interval, constraint engine",seconds,0.167075
-"MetiTarski: interval, constraint engine",seconds,0.33328199999999997
-"MetiTarski: interval, constraint engine",seconds,0.153702
-"MetiTarski: interval, constraint engine",seconds,11.522515
-"MetiTarski: interval, constraint engine",seconds,0.21771600000000002
-"MetiTarski: interval, constraint engine",seconds,0.9405650000000001
-"MetiTarski: interval, constraint engine",seconds,0.222892
-"MetiTarski: interval, constraint engine",seconds,2.3474079999999997
-"MetiTarski: interval, constraint engine",seconds,0.14544200000000002
-"MetiTarski: interval, constraint engine",seconds,2.218295
-"MetiTarski: interval, constraint engine",seconds,2.529992
-"MetiTarski: interval, constraint engine",seconds,2.516956
-"MetiTarski: interval, constraint engine",seconds,0.47151499999999996
-"MetiTarski: interval, constraint engine",seconds,1.855081
-"MetiTarski: interval, constraint engine",seconds,2.610051
-"MetiTarski: interval, constraint engine",seconds,1.766125
-"MetiTarski: interval, constraint engine",seconds,1.831203
-"MetiTarski: interval, constraint engine",seconds,1.784623
-"MetiTarski: interval, constraint engine",seconds,1.897534
-"MetiTarski: interval, constraint engine",seconds,1.7271489999999998
-"MetiTarski: interval, constraint engine",seconds,2.143463
-"MetiTarski: interval, constraint engine",seconds,1.687176
-"MetiTarski: interval, constraint engine",seconds,2.3057420000000004
-"MetiTarski: interval, constraint engine",seconds,0.656555
-"MetiTarski: interval, constraint engine",seconds,0.29572699999999996
-"MetiTarski: interval, constraint engine",seconds,2.250812
-"MetiTarski: interval, constraint engine",seconds,0.49477499999999996
-"MetiTarski: interval, constraint engine",seconds,0.336955
-"MetiTarski: interval, constraint engine",seconds,1.016189
-"MetiTarski: interval, constraint engine",seconds,0.358859
-"MetiTarski: interval, constraint engine",seconds,0.286012
-"MetiTarski: interval, constraint engine",seconds,2.0639279999999998
-"MetiTarski: interval, constraint engine",seconds,0.412677
-"MetiTarski: interval, constraint engine",seconds,0.546898
-"MetiTarski: interval, constraint engine",seconds,2.2701819999999997
-"MetiTarski: interval, constraint engine",seconds,1.0680589999999999
-"MetiTarski: interval, constraint engine",seconds,0.200555
-"MetiTarski: interval, constraint engine",seconds,0.207447
-"MetiTarski: interval, constraint engine",seconds,0.243125
-"MetiTarski: interval, constraint engine",seconds,3.6671810000000002
-"MetiTarski: interval, constraint engine",seconds,0.07952500000000001
-"MetiTarski: interval, constraint engine",seconds,2.596003
-"MetiTarski: interval, constraint engine",seconds,3.228371
-"MetiTarski: interval, constraint engine",seconds,2.83786
-"MetiTarski: interval, constraint engine",seconds,2.291302
-"MetiTarski: interval, constraint engine",seconds,3.1446370000000003
-"MetiTarski: interval, constraint engine",seconds,0.091142
-"MetiTarski: interval, constraint engine",seconds,0.09065999999999999
-"MetiTarski: interval, constraint engine",seconds,0.139181
-"MetiTarski: interval, constraint engine",seconds,0.13234800000000002
-"MetiTarski: interval, constraint engine",seconds,0.096027
-"MetiTarski: interval, constraint engine",seconds,0.09137999999999999
-"MetiTarski: interval, constraint engine",seconds,0.138815
-"MetiTarski: interval, constraint engine",seconds,0.08954000000000001
-"MetiTarski: interval, constraint engine",seconds,0.097023
-"MetiTarski: interval, constraint engine",seconds,0.102218
-"MetiTarski: interval, constraint engine",seconds,0.473733
-"MetiTarski: interval, constraint engine",seconds,0.595757
-"MetiTarski: interval, constraint engine",seconds,0.562528
-"MetiTarski: interval, constraint engine",seconds,0.705519
-"MetiTarski: interval, constraint engine",seconds,0.298037
-"MetiTarski: interval, constraint engine",seconds,1.263213
-"MetiTarski: interval, constraint engine",seconds,1.066873
-"MetiTarski: interval, constraint engine",seconds,0.085521
-"MetiTarski: interval, constraint engine",seconds,0.9637
-"MetiTarski: interval, constraint engine",seconds,1.214627
-"MetiTarski: interval, constraint engine",seconds,0.14823
-"MetiTarski: interval, constraint engine",seconds,0.14471199999999998
-"MetiTarski: interval, constraint engine",seconds,0.82573
-"MetiTarski: interval, constraint engine",seconds,1.763508
-"MetiTarski: interval, constraint engine",seconds,0.09024599999999999
-"MetiTarski: interval, constraint engine",seconds,0.12330100000000001
-"MetiTarski: interval, constraint engine",seconds,0.099684
-"MetiTarski: interval, constraint engine",seconds,0.132614
-"MetiTarski: interval, constraint engine",seconds,0.153072
-"MetiTarski: interval, constraint engine",seconds,0.22622499999999998
-"MetiTarski: interval, constraint engine",seconds,3.937198
-"MetiTarski: interval, constraint engine",seconds,0.8653379999999999
-"MetiTarski: interval, constraint engine",seconds,0.888639
-"MetiTarski: interval, constraint engine",seconds,0.29228899999999997
-"MetiTarski: interval, constraint engine",seconds,0.341307
-"MetiTarski: interval, constraint engine",seconds,1.160904
-"MetiTarski: interval, constraint engine",seconds,1.362455
-"MetiTarski: interval, constraint engine",seconds,0.067619
-"MetiTarski: interval, constraint engine",seconds,0.064425
-"MetiTarski: interval, constraint engine",seconds,0.06311800000000001
-"MetiTarski: interval, constraint engine",seconds,0.06461
-"MetiTarski: interval, constraint engine",seconds,0.09155500000000001
-"MetiTarski: interval, constraint engine",seconds,0.08447700000000001
-"MetiTarski: interval, constraint engine",seconds,0.063037
-"MetiTarski: interval, constraint engine",seconds,0.094675
-"MetiTarski: interval, constraint engine",seconds,0.088151
-"MetiTarski: interval, constraint engine",seconds,0.37878300000000004
-"MetiTarski: interval, constraint engine",seconds,0.045427999999999996
-"MetiTarski: interval, constraint engine",seconds,0.10573600000000001
-"MetiTarski: interval, constraint engine",seconds,0.059453000000000006
-"MetiTarski: interval, constraint engine",seconds,0.088771
-"MetiTarski: interval, constraint engine",seconds,0.079238
-"MetiTarski: interval, constraint engine",seconds,0.077269
-"MetiTarski: interval, constraint engine",seconds,0.076739
-"MetiTarski: interval, constraint engine",seconds,0.046098999999999994
-"MetiTarski: interval, constraint engine",seconds,0.082625
-"MetiTarski: interval, constraint engine",seconds,0.057265
-"MetiTarski: interval, constraint engine",seconds,0.354016
-"MetiTarski: interval, constraint engine",seconds,0.502746
-"MetiTarski: interval, constraint engine",seconds,0.6559740000000001
-"MetiTarski: interval, constraint engine",seconds,0.395181
-"MetiTarski: interval, constraint engine",seconds,0.460217
-"MetiTarski: interval, constraint engine",seconds,0.796036
-"MetiTarski: interval, constraint engine",seconds,1.160895
-"MetiTarski: interval, constraint engine",seconds,1.3617270000000001
-"MetiTarski: interval, constraint engine",seconds,0.92372
-"MetiTarski: interval, constraint engine",seconds,0.37345
-"MetiTarski: interval, constraint engine",seconds,0.181917
-"MetiTarski: interval, constraint engine",seconds,1.154145
-"MetiTarski: interval, constraint engine",seconds,1.479867
-"MetiTarski: interval, constraint engine",seconds,1.0642429999999998
-"MetiTarski: interval, constraint engine",seconds,0.482948
-"MetiTarski: interval, constraint engine",seconds,9.024651
-"MetiTarski: interval, constraint engine",seconds,1.3283209999999999
-"MetiTarski: interval, constraint engine",seconds,5.934722
-"MetiTarski: interval, constraint engine",seconds,5.6472929999999995
-"MetiTarski: interval, constraint engine",seconds,0.090497
-"MetiTarski: interval, constraint engine",seconds,0.074465
-"MetiTarski: interval, constraint engine",seconds,0.404994
-"MetiTarski: interval, constraint engine",seconds,0.337052
-"MetiTarski: interval, constraint engine",seconds,0.27754399999999996
-"MetiTarski: interval, constraint engine",seconds,0.12167499999999999
-"MetiTarski: interval, constraint engine",seconds,0.336449
-"MetiTarski: interval, constraint engine",seconds,0.382481
-"MetiTarski: interval, constraint engine",seconds,0.292322
-"MetiTarski: interval, constraint engine",seconds,0.728508
-"MetiTarski: interval, constraint engine",seconds,0.456459
-"MetiTarski: interval, constraint engine",seconds,0.566256
-"MetiTarski: interval, constraint engine",seconds,0.763559
-"MetiTarski: interval, constraint engine",seconds,0.6262770000000001
-"MetiTarski: interval, constraint engine",seconds,1.378615
-"MetiTarski: interval, constraint engine",seconds,0.483194
-"MetiTarski: interval, constraint engine",seconds,0.24974100000000002
-"MetiTarski: interval, constraint engine",seconds,0.8919819999999999
-"MetiTarski: interval, constraint engine",seconds,1.2464469999999999
-"MetiTarski: interval, constraint engine",seconds,1.33403
-"MetiTarski: interval, constraint engine",seconds,1.224964
-Flyspeck: interval,seconds,0.10793699999999999
-Flyspeck: interval,seconds,0.11222599999999999
-"Flyspeck: interval, constraint engine",seconds,0.164403
-"Flyspeck: interval, constraint engine",seconds,4.613436
-"Flyspeck: interval, constraint engine",seconds,2.812373
-"Flyspeck: interval, constraint engine",seconds,0.117071
-"Flyspeck: interval, constraint engine",seconds,5.458354
+MetiTarski: interval,seconds,0.99048
+MetiTarski: interval,seconds,1.140959
+MetiTarski: interval,seconds,0.782121
+MetiTarski: interval,seconds,1.1267660000000002
+MetiTarski: interval,seconds,0.721976
+MetiTarski: interval,seconds,0.701446
+MetiTarski: interval,seconds,0.701955
+MetiTarski: interval,seconds,1.122809
+MetiTarski: interval,seconds,1.075144
+MetiTarski: interval,seconds,1.028749
+MetiTarski: interval,seconds,0.748549
+MetiTarski: interval,seconds,0.7474339999999999
+MetiTarski: interval,seconds,0.901548
+MetiTarski: interval,seconds,0.849279
+MetiTarski: interval,seconds,0.737987
+MetiTarski: interval,seconds,1.164576
+MetiTarski: interval,seconds,1.0197960000000001
+MetiTarski: interval,seconds,0.5766979999999999
+MetiTarski: interval,seconds,0.435847
+MetiTarski: interval,seconds,0.6161760000000001
+MetiTarski: interval,seconds,2.180186
+MetiTarski: interval,seconds,0.112388
+MetiTarski: interval,seconds,0.179178
+MetiTarski: interval,seconds,0.111513
+MetiTarski: interval,seconds,0.742447
+MetiTarski: interval,seconds,0.112098
+MetiTarski: interval,seconds,0.110143
+MetiTarski: interval,seconds,0.157078
+MetiTarski: interval,seconds,0.118255
+MetiTarski: interval,seconds,0.28766
+MetiTarski: interval,seconds,0.11569700000000001
+MetiTarski: interval,seconds,0.11722400000000001
+MetiTarski: interval,seconds,0.11468099999999999
+MetiTarski: interval,seconds,0.11463
+MetiTarski: interval,seconds,0.15917699999999999
+MetiTarski: interval,seconds,0.361166
+MetiTarski: interval,seconds,0.07207899999999999
+MetiTarski: interval,seconds,0.203921
+MetiTarski: interval,seconds,0.135185
+MetiTarski: interval,seconds,0.636008
+MetiTarski: interval,seconds,0.701142
+MetiTarski: interval,seconds,0.379031
+MetiTarski: interval,seconds,0.396697
+MetiTarski: interval,seconds,0.382498
+MetiTarski: interval,seconds,0.613598
+MetiTarski: interval,seconds,0.402574
+MetiTarski: interval,seconds,0.455064
+MetiTarski: interval,seconds,0.37942200000000004
+MetiTarski: interval,seconds,0.235563
+MetiTarski: interval,seconds,0.5415890000000001
+MetiTarski: interval,seconds,0.544346
+MetiTarski: interval,seconds,0.20562
+MetiTarski: interval,seconds,0.30407
+MetiTarski: interval,seconds,0.156708
+MetiTarski: interval,seconds,0.505019
+MetiTarski: interval,seconds,0.16396
+MetiTarski: interval,seconds,0.757441
+MetiTarski: interval,seconds,0.158061
+MetiTarski: interval,seconds,0.196078
+MetiTarski: interval,seconds,0.20999500000000001
+MetiTarski: interval,seconds,0.255519
+MetiTarski: interval,seconds,0.083091
+MetiTarski: interval,seconds,0.093426
+MetiTarski: interval,seconds,0.12412999999999999
+MetiTarski: interval,seconds,0.091568
+MetiTarski: interval,seconds,0.146679
+MetiTarski: interval,seconds,0.090077
+MetiTarski: interval,seconds,0.09032299999999999
+MetiTarski: interval,seconds,0.093903
+MetiTarski: interval,seconds,0.092188
+MetiTarski: interval,seconds,0.090147
+MetiTarski: interval,seconds,0.088447
+MetiTarski: interval,seconds,0.460159
+MetiTarski: interval,seconds,0.492075
+MetiTarski: interval,seconds,0.513796
+MetiTarski: interval,seconds,0.27568200000000004
+MetiTarski: interval,seconds,0.058926
+MetiTarski: interval,seconds,1.050559
+MetiTarski: interval,seconds,0.110847
+MetiTarski: interval,seconds,0.096891
+MetiTarski: interval,seconds,1.7005270000000001
+MetiTarski: interval,seconds,0.05853
+MetiTarski: interval,seconds,0.081923
+MetiTarski: interval,seconds,0.072615
+MetiTarski: interval,seconds,0.114816
+MetiTarski: interval,seconds,0.070321
+MetiTarski: interval,seconds,0.084617
+MetiTarski: interval,seconds,0.08160099999999999
+MetiTarski: interval,seconds,0.099165
+MetiTarski: interval,seconds,0.045476
+MetiTarski: interval,seconds,0.053142
+MetiTarski: interval,seconds,0.058266
+MetiTarski: interval,seconds,0.053951
+MetiTarski: interval,seconds,0.060031
+MetiTarski: interval,seconds,0.05767
+MetiTarski: interval,seconds,0.061654
+MetiTarski: interval,seconds,0.059946
+MetiTarski: interval,seconds,0.075893
+MetiTarski: interval,seconds,0.07542
+MetiTarski: interval,seconds,0.042373
+MetiTarski: interval,seconds,0.06530200000000001
+MetiTarski: interval,seconds,0.057079
+MetiTarski: interval,seconds,0.0567
+MetiTarski: interval,seconds,0.05399
+MetiTarski: interval,seconds,0.058273000000000005
+MetiTarski: interval,seconds,0.056415
+MetiTarski: interval,seconds,0.044687
+MetiTarski: interval,seconds,0.050796
+MetiTarski: interval,seconds,0.055375999999999995
+MetiTarski: interval,seconds,0.681064
+MetiTarski: interval,seconds,0.385363
+MetiTarski: interval,seconds,0.063281
+MetiTarski: interval,seconds,0.05511
+MetiTarski: interval,seconds,0.083714
+MetiTarski: interval,seconds,0.575316
+MetiTarski: interval,seconds,0.345638
+MetiTarski: interval,seconds,0.195519
+MetiTarski: interval,seconds,0.37090300000000004
+MetiTarski: interval,seconds,0.28098399999999996
+MetiTarski: interval,seconds,2.36877
+MetiTarski: interval,seconds,1.615674
+MetiTarski: interval,seconds,0.57668
+MetiTarski: interval,seconds,1.14584
+MetiTarski: interval,seconds,0.253009
+"MetiTarski: interval, constraint engine",seconds,0.839226
+"MetiTarski: interval, constraint engine",seconds,0.748084
+"MetiTarski: interval, constraint engine",seconds,0.754606
+"MetiTarski: interval, constraint engine",seconds,0.774971
+"MetiTarski: interval, constraint engine",seconds,0.724649
+"MetiTarski: interval, constraint engine",seconds,1.11384
+"MetiTarski: interval, constraint engine",seconds,0.747995
+"MetiTarski: interval, constraint engine",seconds,0.732146
+"MetiTarski: interval, constraint engine",seconds,0.7086
+"MetiTarski: interval, constraint engine",seconds,0.7378060000000001
+"MetiTarski: interval, constraint engine",seconds,0.791428
+"MetiTarski: interval, constraint engine",seconds,0.9460890000000001
+"MetiTarski: interval, constraint engine",seconds,0.7501950000000001
+"MetiTarski: interval, constraint engine",seconds,0.771738
+"MetiTarski: interval, constraint engine",seconds,0.732285
+"MetiTarski: interval, constraint engine",seconds,0.7348210000000001
+"MetiTarski: interval, constraint engine",seconds,0.836371
+"MetiTarski: interval, constraint engine",seconds,0.500804
+"MetiTarski: interval, constraint engine",seconds,0.28111200000000003
+"MetiTarski: interval, constraint engine",seconds,6.232853
+"MetiTarski: interval, constraint engine",seconds,0.34083600000000003
+"MetiTarski: interval, constraint engine",seconds,0.6366900000000001
+"MetiTarski: interval, constraint engine",seconds,2.044148
+"MetiTarski: interval, constraint engine",seconds,1.364411
+"MetiTarski: interval, constraint engine",seconds,0.115664
+"MetiTarski: interval, constraint engine",seconds,0.520045
+"MetiTarski: interval, constraint engine",seconds,0.10782299999999999
+"MetiTarski: interval, constraint engine",seconds,0.527058
+"MetiTarski: interval, constraint engine",seconds,0.10632
+"MetiTarski: interval, constraint engine",seconds,0.5206430000000001
+"MetiTarski: interval, constraint engine",seconds,0.494103
+"MetiTarski: interval, constraint engine",seconds,0.902712
+"MetiTarski: interval, constraint engine",seconds,0.10699299999999999
+"MetiTarski: interval, constraint engine",seconds,0.609619
+"MetiTarski: interval, constraint engine",seconds,0.10957299999999999
+"MetiTarski: interval, constraint engine",seconds,0.54342
+"MetiTarski: interval, constraint engine",seconds,0.11368600000000001
+"MetiTarski: interval, constraint engine",seconds,0.7762279999999999
+"MetiTarski: interval, constraint engine",seconds,0.110536
+"MetiTarski: interval, constraint engine",seconds,0.5268229999999999
+"MetiTarski: interval, constraint engine",seconds,0.238542
+"MetiTarski: interval, constraint engine",seconds,2.478118
+"MetiTarski: interval, constraint engine",seconds,0.136781
+"MetiTarski: interval, constraint engine",seconds,0.530783
+"MetiTarski: interval, constraint engine",seconds,0.124962
+"MetiTarski: interval, constraint engine",seconds,0.532281
+"MetiTarski: interval, constraint engine",seconds,0.108015
+"MetiTarski: interval, constraint engine",seconds,0.5861580000000001
+"MetiTarski: interval, constraint engine",seconds,0.11579900000000001
+"MetiTarski: interval, constraint engine",seconds,0.15251699999999999
+"MetiTarski: interval, constraint engine",seconds,0.32799900000000004
+"MetiTarski: interval, constraint engine",seconds,0.068413
+"MetiTarski: interval, constraint engine",seconds,0.5393490000000001
+"MetiTarski: interval, constraint engine",seconds,0.210371
+"MetiTarski: interval, constraint engine",seconds,0.202291
+"MetiTarski: interval, constraint engine",seconds,0.10331699999999999
+"MetiTarski: interval, constraint engine",seconds,0.13817500000000002
+"MetiTarski: interval, constraint engine",seconds,0.130388
+"MetiTarski: interval, constraint engine",seconds,0.133406
+"MetiTarski: interval, constraint engine",seconds,0.13514199999999998
+"MetiTarski: interval, constraint engine",seconds,0.128853
+"MetiTarski: interval, constraint engine",seconds,0.890842
+"MetiTarski: interval, constraint engine",seconds,0.17152799999999999
+"MetiTarski: interval, constraint engine",seconds,0.504582
+"MetiTarski: interval, constraint engine",seconds,11.097046
+"MetiTarski: interval, constraint engine",seconds,0.37293400000000004
+"MetiTarski: interval, constraint engine",seconds,0.423659
+"MetiTarski: interval, constraint engine",seconds,0.380809
+"MetiTarski: interval, constraint engine",seconds,0.366639
+"MetiTarski: interval, constraint engine",seconds,0.361858
+"MetiTarski: interval, constraint engine",seconds,0.191862
+"MetiTarski: interval, constraint engine",seconds,0.372329
+"MetiTarski: interval, constraint engine",seconds,0.35358
+"MetiTarski: interval, constraint engine",seconds,0.363564
+"MetiTarski: interval, constraint engine",seconds,0.391834
+"MetiTarski: interval, constraint engine",seconds,0.686523
+"MetiTarski: interval, constraint engine",seconds,0.144174
+"MetiTarski: interval, constraint engine",seconds,0.48471600000000004
+"MetiTarski: interval, constraint engine",seconds,0.34598700000000004
+"MetiTarski: interval, constraint engine",seconds,0.159265
+"MetiTarski: interval, constraint engine",seconds,0.15347300000000003
+"MetiTarski: interval, constraint engine",seconds,0.653344
+"MetiTarski: interval, constraint engine",seconds,0.16292199999999998
+"MetiTarski: interval, constraint engine",seconds,0.485634
+"MetiTarski: interval, constraint engine",seconds,0.873683
+"MetiTarski: interval, constraint engine",seconds,0.164168
+"MetiTarski: interval, constraint engine",seconds,0.48545900000000003
+"MetiTarski: interval, constraint engine",seconds,0.164583
+"MetiTarski: interval, constraint engine",seconds,0.196128
+"MetiTarski: interval, constraint engine",seconds,0.204596
+"MetiTarski: interval, constraint engine",seconds,0.245275
+"MetiTarski: interval, constraint engine",seconds,0.5090830000000001
+"MetiTarski: interval, constraint engine",seconds,0.123234
+"MetiTarski: interval, constraint engine",seconds,0.141024
+"MetiTarski: interval, constraint engine",seconds,0.1704
+"MetiTarski: interval, constraint engine",seconds,0.138738
+"MetiTarski: interval, constraint engine",seconds,0.13996799999999998
+"MetiTarski: interval, constraint engine",seconds,0.142505
+"MetiTarski: interval, constraint engine",seconds,0.091626
+"MetiTarski: interval, constraint engine",seconds,0.091598
+"MetiTarski: interval, constraint engine",seconds,0.093447
+"MetiTarski: interval, constraint engine",seconds,0.08673900000000001
+"MetiTarski: interval, constraint engine",seconds,0.08811100000000001
+"MetiTarski: interval, constraint engine",seconds,0.109601
+"MetiTarski: interval, constraint engine",seconds,0.09198300000000001
+"MetiTarski: interval, constraint engine",seconds,0.092757
+"MetiTarski: interval, constraint engine",seconds,0.092914
+"MetiTarski: interval, constraint engine",seconds,0.129378
+"MetiTarski: interval, constraint engine",seconds,0.180014
+"MetiTarski: interval, constraint engine",seconds,0.282163
+"MetiTarski: interval, constraint engine",seconds,0.08688
+"MetiTarski: interval, constraint engine",seconds,0.09845999999999999
+"MetiTarski: interval, constraint engine",seconds,0.255208
+"MetiTarski: interval, constraint engine",seconds,0.088214
+"MetiTarski: interval, constraint engine",seconds,0.061883
+"MetiTarski: interval, constraint engine",seconds,0.058497
+"MetiTarski: interval, constraint engine",seconds,0.181468
+"MetiTarski: interval, constraint engine",seconds,0.084213
+"MetiTarski: interval, constraint engine",seconds,0.27587
+"MetiTarski: interval, constraint engine",seconds,0.376302
+"MetiTarski: interval, constraint engine",seconds,0.062759
+"MetiTarski: interval, constraint engine",seconds,0.054905999999999996
+"MetiTarski: interval, constraint engine",seconds,0.060174
+"MetiTarski: interval, constraint engine",seconds,0.299875
+"MetiTarski: interval, constraint engine",seconds,0.349589
+"MetiTarski: interval, constraint engine",seconds,0.06677
+"MetiTarski: interval, constraint engine",seconds,0.564616
+"MetiTarski: interval, constraint engine",seconds,0.6525610000000001
+"MetiTarski: interval, constraint engine",seconds,2.383916
+"MetiTarski: interval, constraint engine",seconds,0.9853010000000001
+"MetiTarski: interval, constraint engine",seconds,6.311996
+"MetiTarski: interval, constraint engine",seconds,0.138316
+"MetiTarski: interval, constraint engine",seconds,0.5271269999999999
+"MetiTarski: interval, constraint engine",seconds,0.583388
+"MetiTarski: interval, constraint engine",seconds,1.812139
+"MetiTarski: interval, constraint engine",seconds,0.768659
+"MetiTarski: interval, constraint engine",seconds,2.053607
+"MetiTarski: interval, constraint engine",seconds,1.799241
+"MetiTarski: interval, constraint engine",seconds,0.472117
+"MetiTarski: interval, constraint engine",seconds,0.47921199999999997
+"MetiTarski: interval, constraint engine",seconds,1.8374670000000002
+"MetiTarski: interval, constraint engine",seconds,1.7567739999999998
+"MetiTarski: interval, constraint engine",seconds,3.175207
+"MetiTarski: interval, constraint engine",seconds,0.514926
+"MetiTarski: interval, constraint engine",seconds,13.824371
+"MetiTarski: interval, constraint engine",seconds,0.696226
+"MetiTarski: interval, constraint engine",seconds,0.278914
+"MetiTarski: interval, constraint engine",seconds,1.4241089999999998
+"MetiTarski: interval, constraint engine",seconds,1.558362
+"MetiTarski: interval, constraint engine",seconds,1.4505540000000001
+"MetiTarski: interval, constraint engine",seconds,2.287721
+"MetiTarski: interval, constraint engine",seconds,2.273206
+"MetiTarski: interval, constraint engine",seconds,0.126854
+"MetiTarski: interval, constraint engine",seconds,3.9262669999999997
+"MetiTarski: interval, constraint engine",seconds,2.592779
+"MetiTarski: interval, constraint engine",seconds,1.144941
+"MetiTarski: interval, constraint engine",seconds,0.059514000000000004
+"MetiTarski: interval, constraint engine",seconds,1.135953
+"MetiTarski: interval, constraint engine",seconds,0.587532
+"MetiTarski: interval, constraint engine",seconds,1.058065
+"MetiTarski: interval, constraint engine",seconds,0.807233
+"MetiTarski: interval, constraint engine",seconds,0.108833
+"MetiTarski: interval, constraint engine",seconds,0.09677899999999999
+"MetiTarski: interval, constraint engine",seconds,0.904186
+"MetiTarski: interval, constraint engine",seconds,17.151825000000002
+"MetiTarski: interval, constraint engine",seconds,4.514025999999999
+"MetiTarski: interval, constraint engine",seconds,12.896666999999999
+"MetiTarski: interval, constraint engine",seconds,1.7900319999999998
+"MetiTarski: interval, constraint engine",seconds,10.714739
+"MetiTarski: interval, constraint engine",seconds,0.611523
+"MetiTarski: interval, constraint engine",seconds,1.133258
+"MetiTarski: interval, constraint engine",seconds,3.110805
+"MetiTarski: interval, constraint engine",seconds,5.704127000000001
+"MetiTarski: interval, constraint engine",seconds,1.561446
+"MetiTarski: interval, constraint engine",seconds,1.305315
+"MetiTarski: interval, constraint engine",seconds,0.068475
+"MetiTarski: interval, constraint engine",seconds,0.10029099999999999
+"MetiTarski: interval, constraint engine",seconds,0.08645399999999999
+"MetiTarski: interval, constraint engine",seconds,0.092293
+"MetiTarski: interval, constraint engine",seconds,0.07215600000000001
+"MetiTarski: interval, constraint engine",seconds,1.907926
+"MetiTarski: interval, constraint engine",seconds,0.229857
+"MetiTarski: interval, constraint engine",seconds,0.128714
+"MetiTarski: interval, constraint engine",seconds,0.152001
+"MetiTarski: interval, constraint engine",seconds,0.3584
+"MetiTarski: interval, constraint engine",seconds,0.498647
+"MetiTarski: interval, constraint engine",seconds,0.224158
+"MetiTarski: interval, constraint engine",seconds,1.788996
+"MetiTarski: interval, constraint engine",seconds,1.15188
+"MetiTarski: interval, constraint engine",seconds,1.742446
+"MetiTarski: interval, constraint engine",seconds,2.521675
+"MetiTarski: interval, constraint engine",seconds,0.08682
+"MetiTarski: interval, constraint engine",seconds,0.082444
+"MetiTarski: interval, constraint engine",seconds,0.123529
+"MetiTarski: interval, constraint engine",seconds,1.884732
+"MetiTarski: interval, constraint engine",seconds,1.163607
+"MetiTarski: interval, constraint engine",seconds,3.0813260000000002
+"MetiTarski: interval, constraint engine",seconds,2.86011
+"MetiTarski: interval, constraint engine",seconds,1.1829749999999999
+"MetiTarski: interval, constraint engine",seconds,2.774041
+"MetiTarski: interval, constraint engine",seconds,4.268052
+"MetiTarski: interval, constraint engine",seconds,0.891383
+"MetiTarski: interval, constraint engine",seconds,2.953011
+"MetiTarski: interval, constraint engine",seconds,3.373091
+"MetiTarski: interval, constraint engine",seconds,2.97344
+"MetiTarski: interval, constraint engine",seconds,3.129605
+"MetiTarski: interval, constraint engine",seconds,1.554994
+"MetiTarski: interval, constraint engine",seconds,1.232285
+"MetiTarski: interval, constraint engine",seconds,3.5472689999999996
+"MetiTarski: interval, constraint engine",seconds,0.045482
+"MetiTarski: interval, constraint engine",seconds,0.053603000000000005
+"MetiTarski: interval, constraint engine",seconds,0.061743
+"MetiTarski: interval, constraint engine",seconds,0.058301
+"MetiTarski: interval, constraint engine",seconds,0.065356
+"MetiTarski: interval, constraint engine",seconds,0.092594
+"MetiTarski: interval, constraint engine",seconds,0.06467400000000001
+"MetiTarski: interval, constraint engine",seconds,0.062386000000000004
+"MetiTarski: interval, constraint engine",seconds,0.08143399999999999
+"MetiTarski: interval, constraint engine",seconds,0.08206100000000001
+"MetiTarski: interval, constraint engine",seconds,0.047223
+"MetiTarski: interval, constraint engine",seconds,0.06940600000000001
+"MetiTarski: interval, constraint engine",seconds,0.065678
+"MetiTarski: interval, constraint engine",seconds,0.060712
+"MetiTarski: interval, constraint engine",seconds,0.059185
+"MetiTarski: interval, constraint engine",seconds,0.059349
+"MetiTarski: interval, constraint engine",seconds,0.062804
+"MetiTarski: interval, constraint engine",seconds,0.049418
+"MetiTarski: interval, constraint engine",seconds,0.054887
+"MetiTarski: interval, constraint engine",seconds,0.057021
+"MetiTarski: interval, constraint engine",seconds,15.2667
+"MetiTarski: interval, constraint engine",seconds,2.305349
+"MetiTarski: interval, constraint engine",seconds,2.378289
+"MetiTarski: interval, constraint engine",seconds,1.592633
+"MetiTarski: interval, constraint engine",seconds,3.724173
+"MetiTarski: interval, constraint engine",seconds,1.5380070000000001
+"MetiTarski: interval, constraint engine",seconds,3.3307800000000003
+"MetiTarski: interval, constraint engine",seconds,1.630681
+"MetiTarski: interval, constraint engine",seconds,3.900293
+"MetiTarski: interval, constraint engine",seconds,0.857897
+"MetiTarski: interval, constraint engine",seconds,2.961024
+"MetiTarski: interval, constraint engine",seconds,0.107569
+"MetiTarski: interval, constraint engine",seconds,1.117008
+"MetiTarski: interval, constraint engine",seconds,0.10462
+"MetiTarski: interval, constraint engine",seconds,0.209778
+"MetiTarski: interval, constraint engine",seconds,0.465639
+"MetiTarski: interval, constraint engine",seconds,0.547067
+"MetiTarski: interval, constraint engine",seconds,0.390077
+"MetiTarski: interval, constraint engine",seconds,5.066973
+"MetiTarski: interval, constraint engine",seconds,0.762257
+"MetiTarski: interval, constraint engine",seconds,2.469913
+"MetiTarski: interval, constraint engine",seconds,2.186551
+"MetiTarski: interval, constraint engine",seconds,1.972909
+"MetiTarski: interval, constraint engine",seconds,2.216413
+"MetiTarski: interval, constraint engine",seconds,0.288325
+"MetiTarski: interval, constraint engine",seconds,0.269141
+"MetiTarski: interval, constraint engine",seconds,0.483452
+"MetiTarski: interval, constraint engine",seconds,0.787205
+"MetiTarski: interval, constraint engine",seconds,0.37794099999999997
+"MetiTarski: interval, constraint engine",seconds,0.236894
+"MetiTarski: interval, constraint engine",seconds,0.141995
+"MetiTarski: interval, constraint engine",seconds,4.193398
+"MetiTarski: interval, constraint engine",seconds,1.145552
+"MetiTarski: interval, constraint engine",seconds,4.54114
+"MetiTarski: interval, constraint engine",seconds,3.760076
+"MetiTarski: interval, constraint engine",seconds,1.181573
+"MetiTarski: interval, constraint engine",seconds,1.012613
+"MetiTarski: interval, constraint engine",seconds,11.795388999999998
+"MetiTarski: interval, constraint engine",seconds,3.133261
+"MetiTarski: interval, constraint engine",seconds,5.813216000000001
+"MetiTarski: interval, constraint engine",seconds,7.321692
+"MetiTarski: interval, constraint engine",seconds,1.0096209999999999
+"MetiTarski: interval, constraint engine",seconds,0.959927
+"MetiTarski: interval, constraint engine",seconds,0.8699589999999999
+"MetiTarski: interval, constraint engine",seconds,0.378035
+"MetiTarski: interval, constraint engine",seconds,0.774753
+"MetiTarski: interval, constraint engine",seconds,1.2014639999999999
+"MetiTarski: interval, constraint engine",seconds,0.598449
+"MetiTarski: interval, constraint engine",seconds,0.347605
+"MetiTarski: interval, constraint engine",seconds,3.220202
+"MetiTarski: interval, constraint engine",seconds,0.779777
+"MetiTarski: interval, constraint engine",seconds,1.067104
+"MetiTarski: interval, constraint engine",seconds,1.01596
+"MetiTarski: interval, constraint engine",seconds,2.3930149999999997
+"MetiTarski: interval, constraint engine",seconds,0.061789000000000004
+"MetiTarski: interval, constraint engine",seconds,3.5546260000000003
+"MetiTarski: interval, constraint engine",seconds,4.113224
+"MetiTarski: interval, constraint engine",seconds,1.771312
+"MetiTarski: interval, constraint engine",seconds,1.6169369999999998
+"MetiTarski: interval, constraint engine",seconds,0.054659
+"MetiTarski: interval, constraint engine",seconds,0.090992
+"MetiTarski: interval, constraint engine",seconds,0.589521
+"MetiTarski: interval, constraint engine",seconds,3.156993
+"MetiTarski: interval, constraint engine",seconds,3.768393
+"MetiTarski: interval, constraint engine",seconds,0.336401
+"MetiTarski: interval, constraint engine",seconds,6.452628
+"MetiTarski: interval, constraint engine",seconds,0.081778
+"MetiTarski: interval, constraint engine",seconds,0.065026
+"MetiTarski: interval, constraint engine",seconds,2.465651
+"MetiTarski: interval, constraint engine",seconds,0.18635200000000002
+"MetiTarski: interval, constraint engine",seconds,1.4608679999999998
+"MetiTarski: interval, constraint engine",seconds,1.457519
+"MetiTarski: interval, constraint engine",seconds,4.740467
+"MetiTarski: interval, constraint engine",seconds,5.233037
+"MetiTarski: interval, constraint engine",seconds,0.397478
+"MetiTarski: interval, constraint engine",seconds,0.31182
+"MetiTarski: interval, constraint engine",seconds,0.616592
+"MetiTarski: interval, constraint engine",seconds,3.457893
+"MetiTarski: interval, constraint engine",seconds,1.6309749999999998
+"MetiTarski: interval, constraint engine",seconds,12.820753
+"MetiTarski: interval, constraint engine",seconds,6.394354999999999
+"MetiTarski: interval, constraint engine",seconds,0.391567
+"MetiTarski: interval, constraint engine",seconds,0.524398
+"MetiTarski: interval, constraint engine",seconds,0.9225639999999999
+"MetiTarski: interval, constraint engine",seconds,0.392549
+"MetiTarski: interval, constraint engine",seconds,0.818894
+"MetiTarski: interval, constraint engine",seconds,0.795218
+"MetiTarski: interval, constraint engine",seconds,0.587373
+"MetiTarski: interval, constraint engine",seconds,1.141916
+"MetiTarski: interval, constraint engine",seconds,6.997363
+"MetiTarski: interval, constraint engine",seconds,0.235152
+"MetiTarski: interval, constraint engine",seconds,0.792421
+"MetiTarski: interval, constraint engine",seconds,0.929898
+"MetiTarski: interval, constraint engine",seconds,1.4853409999999998
+"MetiTarski: interval, constraint engine",seconds,1.688518
+"MetiTarski: interval, constraint engine",seconds,1.319567
+"MetiTarski: interval, constraint engine",seconds,0.9710850000000001
+"MetiTarski: interval, constraint engine",seconds,0.955033
+"MetiTarski: interval, constraint engine",seconds,1.393319
+"MetiTarski: interval, constraint engine",seconds,1.7056120000000001
+"MetiTarski: interval, constraint engine",seconds,1.82765
+"MetiTarski: interval, constraint engine",seconds,0.27425099999999997
+"MetiTarski: interval, constraint engine",seconds,3.0338789999999998
+"MetiTarski: interval, constraint engine",seconds,3.11376
+"MetiTarski: interval, constraint engine",seconds,3.1632130000000003
+"MetiTarski: interval, constraint engine",seconds,1.5866120000000001
+"MetiTarski: interval, constraint engine",seconds,1.553461
+"MetiTarski: interval, constraint engine",seconds,5.901415
+"MetiTarski: interval, constraint engine",seconds,5.821555
+"MetiTarski: interval, constraint engine",seconds,7.165766
+"MetiTarski: interval, constraint engine",seconds,7.873155
+Flyspeck: interval,seconds,0.116533
+Flyspeck: interval,seconds,0.150801
+Flyspeck: interval,seconds,0.83068
+"Flyspeck: interval, constraint engine",seconds,0.11547
+"Flyspeck: interval, constraint engine",seconds,2.8727020000000003
+"Flyspeck: interval, constraint engine",seconds,1.43322
+"Flyspeck: interval, constraint engine",seconds,9.885729999999999
+"Flyspeck: interval, constraint engine",seconds,0.11260200000000001
+"Flyspeck: interval, constraint engine",seconds,0.787788

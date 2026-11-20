@@ -9,16 +9,23 @@ module
 public import FloatLib.Tactic.Interval.Constraints.Slopes
 public import FloatLib.Numerics.Enclosure.Expression.ConstraintProof
 public import Mathlib.Analysis.Real.Pi.Bounds
+public import FloatLib.Tactic.Interval.Constraints.Ranges
+public import FloatLib.Tactic.Interval.Constraints.Monotone
 public meta import FloatLib.Tactic.Interval.Constraints.Derive
+public meta import FloatLib.Tactic.Interval.Constraints.Monotone
+public meta import FloatLib.Tactic.Interval.Constraints.Ranges
 public meta import FloatLib.Tactic.Interval.Constraints.Slopes
+public meta import FloatLib.Tactic.Interval.Constraints.Witness
 public meta import Lean.Elab.Tactic.FalseOrByContra
 
 /-!
 # Refuting sets of real constraints with `interval`
 
 On a goal that is not one inequality, `interval` proves that the real constraints of the goal and
-of the local context have no common point. An inequality that the route of `Interval` does not
-prove is tried in the same way, as the constraint that it fails. The goal may be `False`, a
+of the local context have no common point. A goal `∃ x : ℝ, P x` is the exception: it is
+proved by a witness among simple values and the constants of `P` (`Constraints.Witness`). An
+inequality that the route of `Interval` does not prove is refuted in the same way, as the
+constraint that it fails. The goal may be `False`, a
 negation such as `¬ ∃ x, P x`, an implication to `False` under any binders, or any other
 proposition, which is proved by refuting its negation. The constraints are the hypotheses that
 are combinations by `∧`, `∨`, `¬` and `→` of `≤`, `<`, `=` and `≠` between real expressions that
@@ -52,6 +59,9 @@ is unfolded.
 
 For an atom that still has no bounds, these steps are tried in order.
 
+* The constraints are evaluated once on the ranges of the atoms, in which an atom has an infinite
+  end where it has no bound: `Real.exp (-x)` is in `[0, 1]` for every `x ≥ 0`. When they fail
+  on these ranges the goal is closed (`Constraints.closeOnRanges`).
 * A comparison whose form has a constant positive definite matrix is refuted without a box.
 * A comparison that is affine in the atom bounds it through the bounds of the others
   (`affineBound`), a comparison of the atom with an expression that has an enclosure bounds it by
@@ -59,6 +69,9 @@ For an atom that still has no bounds, these steps are tried in order.
   inside (`latticeBounds`), and a comparison
   that confines the atoms without bounds to a sublevel set of a quadratic bounds each of them
   (`sublevelBound`), after its nonnegative terms of higher degree are dropped (`truncated`).
+* An atom that lacks a side gets it from a tail: when the constraints fail on the ranges with
+  the atom beyond some `M`, the atom is on this side of `M`, and the route goes on with that
+  bound (`Constraints.tailBounds`).
 * A value of the sine, the cosine, the hyperbolic tangent or the arctangent at an argument
   without bounds becomes a variable with the range of the function
   (`Constraints.generalizeValues`).
@@ -71,8 +84,8 @@ For an atom that still has no bounds, these steps are tried in order.
 * The goal is split at the disjunctions among its hypotheses, and each case is refuted on its own
   (`Constraints.splitCases`).
 
-Any other atom without bounds is an error that names it. An interval has two rational ends, so a
-half-line is not a box.
+Any other atom without bounds is an error that names it. The search cuts boxes, whose intervals
+have two rational ends: a range with an infinite end is evaluated as a whole and is not cut.
 
 ## The search and what follows it
 
@@ -94,16 +107,45 @@ the arctangent is written with a slope (`Real.sin y = y - y ^ 3 * r` with `r` be
 `1 / 6`, `Constraints.Slopes`), which gives the comparisons a form where the function vanishes
 at the point. Then the combinations `a - b + μ * (c - d)` of two comparisons with a rational
 `μ > 0` are tried in the same way, which refutes two constraints that no box separates; when the
-two sets touch, `μ` is the one rational that makes the form semidefinite. Then `linarith` with
+two sets touch, `μ` is the one rational that makes the form semidefinite. Where they touch at a
+point that a constant such as `π` gives, the multiplier is a rational times that constant: the
+comparisons are multiplied by the constant and the constant is a coordinate of the form
+(`Constraints.scaledCombinations`). Then `linarith` with
 the products of the linear comparisons and `nlinarith` are tried, the comparisons with quotients
 are multiplied by their denominators, and the absolute
 values are opened into the cases of their signs (`Constraints.openAbsoluteValues`). As a last
 step the goal is split at the disjunctions among its hypotheses, since in a case the comparisons
 of its disjunct can be combined with the others.
 
+## Two sides that meet at an end of the range
+
+No box separates the two sides of a comparison where they are equal, and the steps above decide
+this only where a form or a slope does. When the route has failed and the hypotheses are one
+comparison in one real variable with bounds of that variable by terms without variables, the
+comparison is tried by the sign of a derivative (`Constraints.byDerivative`): the difference of
+the two sides has a sign at an end of the range, and its derivative has one beyond. The
+derivative is computed by the rules of the elementary functions, and its sign is a goal for the
+route again, which may pass to the next derivative: `(x + 4) ^ 4 / 256 ≤ Real.exp x` for
+`0 ≤ x` takes three. Where the derivative keeps its sign only near the end, the range is cut
+there, once, and the rest is left to the route, where the two sides are apart. The route passes
+to a derivative five times in a row at most, and on the goals of this step it leaves out the
+combinations, which the next derivative replaces, and has half the heartbeats of the arithmetic
+steps at each pass. Where the comparison has quotients that `field_simp` clears, the step is
+tried on the cleared comparison first. A call hands at most 40 goals to the route in this way,
+a goal that has failed is not tried again, and the goals have one and a half times the
+heartbeats of `maxHeartbeats` together: the route stops on such a goal when they are used, and
+none is started then, or with less than an eighth of the heartbeats of the declaration left.
+A call with the hints `box`, `ball` or `form` does what they say, and the step is not tried
+there.
+
 A failure names the box where the search stopped, the constraints that are undecided there with
-the enclosures that fail to exclude them, and the limit that stopped it. The trace class
-`interval.constraints` reports the steps that the route took.
+the enclosures that fail to exclude them, and the limit that stopped it. The same report comes
+when the declaration is about to run out of heartbeats: the route does not start the steps that
+follow a search with less than an eighth of them left, and a timeout inside a later step is
+replaced by the report of the last search. The trace class `interval.constraints` reports the
+steps that the route took, and with `set_option trace.profiler true` the class
+`interval.constraints.time` gives the time of the searches and of the steps around them, and
+the heartbeats of the call.
 
 ## Options
 
@@ -111,7 +153,10 @@ the enclosures that fail to exclude them, and the limit that stopped it. The tra
 the cuts along one branch (default 40) and `(boxes := n)` the boxes that the search evaluates
 (default 20000); the search has no other limit, so it does not depend on the heartbeats of the
 surrounding declaration. The kernel check of a certificate has `maxHeartbeats` (default 20000)
-and 200 more for each of its boxes. The other options are hints:
+and 200 more for each of its boxes. The steps of polynomial arithmetic that may not end have
+heartbeats of their own: `nlinarith` has `maxHeartbeats`, `linarith` with the products of the
+slacks a quarter of that, and in one call the two run twice at most. The other options are
+hints:
 
 * `(cut := [(x, 0), (y, 1 / 2)])` cuts the box at the given points of the given atoms before the
   search starts.
@@ -135,8 +180,12 @@ it leads to.
 * `Constraints.vanishingTerms`, `Constraints.substitutePinned`, `Constraints.sublevelBound`,
   `Constraints.affineBound`, `Constraints.enclosureBound` (in `Constraints.Derive`) and
   `Constraints.clearDenominators`: the steps that give the constraints equations and bounds.
+* `Constraints.closeOnRanges`, `Constraints.tailBounds` (in `Constraints.Ranges`): the steps on
+  ranges with infinite ends.
 * `Constraints.formsAt`, `Constraints.combinations`: the forms that join the constraints after a
   search has stopped.
+* `Constraints.byDerivative` (in `Constraints.Monotone`): the sign of a comparison in one
+  variable from the sign of a derivative.
 -/
 
 public meta section
@@ -144,6 +193,68 @@ public meta section
 open Lean Elab Tactic Meta Qq
 
 namespace FloatLib.Numerics.Interval.Tactic.Constraints
+
+/-- What a call of the route has used and where its last search stopped, for the limit of its
+effort and for its report. -/
+structure Ledger where
+  /-- Heartbeats of the searches, which the limit of the declaration does not pay for. -/
+  searched : IO.Ref Nat
+  /-- Heartbeats of the steps of linear and polynomial arithmetic with a budget of their own. -/
+  calculated : IO.Ref Nat
+  /-- The heartbeats of the thread when the route started. -/
+  start : Nat
+  /-- The report of the box where the last search stopped. -/
+  stuck : IO.Ref (Option MessageData)
+  /-- What failed and need not be tried again on the same facts: the signs of function
+  arguments that `linarith` did not prove (`signedFacts`), and the steps of
+  `Ledger.unlessFailed`. -/
+  failed : IO.Ref (Std.HashSet UInt64)
+
+/-- A ledger for a call that starts now. -/
+def Ledger.new : BaseIO Ledger := do
+  return { searched := ← IO.mkRef 0, calculated := ← IO.mkRef 0, start := ← IO.getNumHeartbeats
+           stuck := ← IO.mkRef none, failed := ← IO.mkRef {} }
+
+/-- Run a step on some facts, unless a step of this kind has failed in this call on facts with
+the same statements: a later pass that reaches the same comparisons does not repeat it. A
+failure is remembered. -/
+def Ledger.unlessFailed (ledger : Option Ledger) (kind : UInt64) (facts : Array Lean.Expr)
+    (step : TacticM Bool) : TacticM Bool := do
+  let some ledger := ledger | step
+  let key ← facts.foldlM (init := kind) fun code proof =>
+    return mixHash code (← instantiateMVars (← inferType proof)).hash
+  if (← ledger.failed.get).contains key then return false
+  let done ← step
+  unless done do ledger.failed.modify (·.insert key)
+  return done
+
+/-- The heartbeats of the declaration that are used and that it may use, in thousands, or
+`none` when the declaration has no limit. -/
+def declarationHeartbeats : CoreM (Option (Nat × Nat)) := do
+  let context ← read
+  if context.maxHeartbeats == 0 then return none
+  return some (((← IO.getNumHeartbeats) - context.initHeartbeats) / 1000,
+    context.maxHeartbeats / 1000)
+
+/-- What the report of a stuck box says when the route stops for the limit of the declaration:
+how much of it is used, and how to raise it. -/
+def limitNote (used limit : Nat) : MessageData :=
+  m!"The route stopped there, with its later steps untried: it had used {used} of the {limit} \
+    thousand heartbeats of the declaration; `set_option maxHeartbeats` raises the limit."
+
+/-- What the derivative step has done in one call of the route, for its limits: the step hands
+at most 40 goals to the route, none twice after it has failed, and the goals have one and a
+half times the heartbeats of `maxHeartbeats` together (`Settings.left`). -/
+structure Passes where
+  /-- The goals that the step has handed to the route. -/
+  count : Nat := 0
+  /-- The goals that failed, by the hash of their statement. -/
+  failed : Std.HashSet UInt64 := {}
+  /-- The heartbeats of the declaration when the step started. -/
+  start : Nat := 0
+  /-- The heartbeats of the searches and of the arithmetic steps of the goals, which the
+  declaration does not pay for. -/
+  hidden : Nat := 0
 
 /-- The settings of a refutation: the limits of its checks, the limits of its search, and the
 hints. -/
@@ -162,6 +273,43 @@ structure Settings extends Limits where
   bounds : Array (Term × Term × Term) := #[]
   /-- Terms that `linarith` and `nlinarith` may use, for those bounds and in the route. -/
   facts : Array Term := #[]
+  /-- The ledger of the call: `Constraints.run` opens it. -/
+  ledger : Option Ledger := none
+  /-- How many times in a row the route may pass from a comparison to the sign of a derivative
+  (`byDerivative`). -/
+  derivatives : Nat := 5
+  /-- Whether the derivative step may cut the range of the variable: the goals that the step
+  hands to the route are not cut again. -/
+  split : Bool := true
+  /-- Whether the combinations of two comparisons are tried where a search stops at a zero
+  margin: the goals of the derivative step leave them out, since the next derivative decides a
+  zero margin there. -/
+  margins : Bool := true
+  /-- What the derivative step has done in this call. `Constraints.run` opens it. -/
+  passes : Option (IO.Ref Passes) := none
+  /-- The heartbeats of `nlinarith` in the arithmetic steps, in thousands, where they are not
+  `maxHeartbeats`: the goals of the derivative step have half as many at each pass. -/
+  arithmetic : Option Nat := none
+
+/-- The heartbeats, in thousands, that the goals of the derivative step may still use in this
+call: one and a half times `maxHeartbeats` for all of them together, less what they have used,
+with the searches and the arithmetic steps of the goal that is running. `none` outside such a
+goal. -/
+def Settings.left (settings : Settings) : BaseIO (Option Nat) := do
+  let some passes := settings.passes | return none
+  let done ← passes.get
+  let mut used := (← IO.getNumHeartbeats) - done.start + done.hidden
+  if let some ledger := settings.ledger then
+    used := used + (← ledger.searched.get) + (← ledger.calculated.get)
+  return some ((1500 * settings.maxHeartbeats - used) / 1000)
+
+/-- The heartbeats of `nlinarith` in an arithmetic step, in thousands: `arithmetic`, or
+`maxHeartbeats`, and on a goal of the derivative step no more than such goals have left. -/
+def Settings.arithmeticBudget (settings : Settings) : BaseIO Nat := do
+  let budget := settings.arithmetic.getD settings.maxHeartbeats
+  return match ← settings.left with
+    | some left => min budget left
+    | none => budget
 
 /-- What the route has done to the goal so far: each step that starts the route again is taken
 a bounded number of times. -/
@@ -323,10 +471,12 @@ The forms of the comparisons that are undecided at a box where the search stoppe
 matrix is positive definite on that box, or semidefinite for a strict comparison. The form is
 taken around the simplest rational point of the box, and failing that around the simplest point
 of the box that the search started from, where a form that vanishes on a whole line or plane has
-no linear part.
+no linear part. With `screen`, the oracle of the enclosures that `definite` uses on the box, a
+form is built only when the screening test with exact arithmetic on these enclosures accepts
+its matrix: a matrix that it rejects is rejected by `definite` as well.
 -/
 def formsAt (atoms : Array Q(ℝ)) (literals : Array Literal) (stuck : Stuck) (root : Box)
-    (widths : Array ℚ) (definite : Bool → Form → Box → Bool) :
+    (widths : Array ℚ) (definite : Bool → Form → Box → Bool) (screen : Option Oracle := none) :
     StateRefT ReifyState MetaM (Array FormPiece) := do
   let undecided := stuck.work.undecided.map (·.1.source)
   let mut found := #[]
@@ -338,17 +488,91 @@ def formsAt (atoms : Array Q(ℝ)) (literals : Array Literal) (stuck : Stuck) (r
     for centers in [centersOf stuck.box widths, centersOf root widths] do
       let expansion ← Expansion.of atoms literal none centers
       if expansion.isBound then break
+      -- the screening test first: the identity of a form that fails it need not be proved
+      if let some onBox := screen then
+        unless (expansion.data 0).screen (← expansion.ranges onBox) (!literal.strict) do continue
       let some piece ← formPiece atoms expansion 0 | continue
       if definite (!literal.strict) piece.form stuck.box then
         found := found.push piece
         break
   return found
 
+/-- A comparison multiplied by a positive term: `κ * a ≤ κ * b` from `a ≤ b`, and the same for
+`<`. -/
+def Literal.scaled (literal : Literal) (κ : Q(ℝ)) (positive : Q(0 < $κ)) : Literal :=
+  have a : Q(ℝ) := literal.lhs
+  have b : Q(ℝ) := literal.rhs
+  { literal with
+    lhs := q($κ * $a)
+    rhs := q($κ * $b)
+    proof := if literal.strict then
+        (have h : Q($a < $b) := literal.proof; q(mul_lt_mul_of_pos_left $h $positive))
+      else
+        (have h : Q($a ≤ $b) := literal.proof
+         q(mul_le_mul_of_nonneg_left $h (le_of_lt $positive))) }
+
+/--
+The forms of combinations whose multiplier is a rational times a constant. Two sets that touch
+at a point with irrational coordinates, such as a disc of radius `π / 4` and a half-plane, have
+no rational multiplier: the multiplier is a multiple of a constant of the comparisons, as `π`
+is. The atoms that the box confines to a negligible interval, and that `positivity` proves
+positive, are taken for such constants. With them among the coordinates, at the center zero
+like every other atom, a comparison whose difference is homogeneous of degree one in the
+coordinates is multiplied by a constant, which brings it to degree two, and the combination of
+two comparisons of degree two with a rational multiplier has a matrix of rational numbers. Its
+form vanishes where the sets touch, so it is semidefinite at most, which rational endpoints
+decide exactly. At most `limit` forms are returned.
+-/
+def scaledCombinations (atoms : Array Q(ℝ)) (candidates : Array Literal) (box : Box)
+    (onBox : Oracle) (limit : Nat) : StateRefT ReifyState MetaM (Array FormPiece) := do
+  -- the constants: atoms of negligible width that are positive
+  let widths := significantWidths box
+  let mut positives : Array (Q(ℝ) × Lean.Expr) := #[]
+  for (atom : Q(ℝ)) in atoms, i in [0:atoms.size] do
+    unless widths.getD i 1 == 0 do continue
+    if let some positive ← positivityProof? q(0 < $atom) then
+      positives := positives.push (atom, positive)
+  if positives.isEmpty then return #[]
+  let centers := (Array.range atoms.size).map fun i => (i, (0 : ℚ))
+  -- each comparison at degree two: as it is, or multiplied by a constant
+  let mut scaled : Array (Literal × Literal × Option Q(ℝ)) := #[]
+  for literal in candidates do
+    let expansion ← Expansion.of atoms literal none centers
+    let coordinates := expansion.generators.shifted.fold (init := #[]) fun acc _ (_, g) =>
+      acc.push g
+    let degrees := expansion.firstPoly.monomials.map fun (monomial, _) =>
+      if monomial.all fun (g, _) => coordinates.contains g then
+        some (monomial.foldl (fun degree (_, e) => degree + e) 0)
+      else none
+    if degrees.all (· == some 2) then scaled := scaled.push (literal, literal, none)
+    else if degrees.all (· == some 1) then
+      for (κ, positive) in positives do
+        scaled := scaled.push (literal, literal.scaled κ positive, some κ)
+  let mut found := #[]
+  for (firstSource, first, firstScale) in scaled do
+    for (secondSource, second, secondScale) in scaled do
+      if firstSource.proof == secondSource.proof then continue
+      if found.size ≥ limit then return found
+      -- with no constant in either comparison the multiplier is that of `combinations`
+      if firstScale.isNone && secondScale.isNone then continue
+      let expansion ← Expansion.of atoms first (some second) centers
+      let table := expansion.margins (← expansion.ranges onBox) (!first.strict)
+      let some range := table.admits | continue
+      let some μ := bestMultiplier table.at range | continue
+      if !first.strict && (expansion.data μ).coordinates.isEmpty then continue
+      if let some piece ← formPiece atoms expansion μ then
+        trace[interval.constraints] "combination with the multiplier {μ} of\n  \
+          {first.lhs} {if first.strict then "<" else "≤"} {first.rhs}\n  \
+          {second.lhs} {if second.strict then "<" else "≤"} {second.rhs}"
+        found := found.push piece
+  return found
+
 /--
 The forms of combinations `a - b + μ * (c - d)` of two comparisons that are not bounds, for a
 multiplier `μ > 0` at which the screening test finds the matrix positive definite on the whole
-box, or failing that at its simplest point (`bestMultiplier`). At most `limit` forms are
-returned.
+box, or failing that at its simplest point (`bestMultiplier`). When no rational multiplier is
+found, the comparisons multiplied by constants are tried (`scaledCombinations`). At most
+`limit` forms are returned.
 -/
 def combinations (atoms : Array Q(ℝ)) (literals : Array Literal) (box : Box)
     (widths : Array ℚ) (oracle : Box → Option Oracle) (limit : Nat := 2) :
@@ -362,15 +586,22 @@ def combinations (atoms : Array Q(ℝ)) (literals : Array Literal) (box : Box)
     unless (← Expansion.of atoms literal none centers).isBound do
       candidates := candidates.push literal
   let mut found := #[]
+  -- the expansion of a pair serves both passes
+  let mut expansions : Std.HashMap (Nat × Nat) Expansion := {}
   for wholeBox in [true, false] do
-    for first in candidates do
-      for second in candidates do
+    for first in candidates, i in [0:candidates.size] do
+      for second in candidates, j in [0:candidates.size] do
         if first.proof == second.proof then continue
         if found.size ≥ limit then return found
-        let expansion ← Expansion.of atoms first (some second) centers
+        let expansion ← match expansions[(i, j)]? with
+          | some known => pure known
+          | none => Expansion.of atoms first (some second) centers
+        expansions := expansions.insert (i, j) expansion
         let ranges ← expansion.ranges (if wholeBox then whole else atPoint)
-        let some μ := bestMultiplier fun μ => (expansion.data μ).margin ranges (!first.strict)
-          | continue
+        -- the margins at every multiplier from one table, and no search where none can pass
+        let table := expansion.margins ranges (!first.strict)
+        let some range := table.admits | continue
+        let some μ := bestMultiplier table.at range | continue
         -- a combination that is identically zero refutes a strict comparison only
         if !first.strict && (expansion.data μ).coordinates.isEmpty then continue
         if let some piece ← formPiece atoms expansion μ then
@@ -379,7 +610,8 @@ def combinations (atoms : Array Q(ℝ)) (literals : Array Literal) (box : Box)
             {second.lhs} {if second.strict then "<" else "≤"} {second.rhs}"
           found := found.push piece
     unless found.isEmpty do return found
-  return found
+  -- no rational multiplier: one that is a rational times a constant of the comparisons
+  scaledCombinations atoms candidates box whole limit
 
 /-- Close the main goal `False` by `linarith` from the given facts, the comparisons that hold
 outright, or with `products` by `nlinarith`, which also multiplies them in pairs. The first
@@ -457,14 +689,24 @@ def slackProducts (atoms : Array Q(ℝ)) (literals : Array Literal) (limit : Nat
 
 /-- Run a step with a limit of heartbeats of its own, in thousands, which the limit of the
 declaration neither bounds nor pays for. The result is that of the step, or `false` when the
-step ran out of them or failed, and then the proof state is as before. -/
-def withinBudget (budget : Nat) (step : TacticM Bool) : TacticM Bool := do
+step ran out of them or failed, and then the proof state is as before. With a ledger, the steps
+of one call have `total` thousand heartbeats together: a step gets what is left of that, and
+none runs once it is used. -/
+def withinBudget (budget : Nat) (step : TacticM Bool) (ledger : Option Ledger := none)
+    (total : Nat := 4 * budget) : TacticM Bool := do
   let saved ← saveState
   let before ← IO.getNumHeartbeats
+  let mut allowed := budget * 1000
+  if let some ledger := ledger then
+    allowed := min allowed (total * 1000 - (← ledger.calculated.get))
+    if allowed == 0 then
+      trace[interval.constraints] "an arithmetic step is left out: the steps of this call have \
+        used their {total} thousand heartbeats"
+      return false
   try
     let done ← tryCatchRuntimeEx
       (withTheReader Core.Context
-        (fun context => { context with maxHeartbeats := budget * 1000, initHeartbeats := before })
+        (fun context => { context with maxHeartbeats := allowed, initHeartbeats := before })
         step)
       fun error => do
         if error.isInterrupt then throw error
@@ -472,18 +714,27 @@ def withinBudget (budget : Nat) (step : TacticM Bool) : TacticM Bool := do
     unless done do saved.restore
     return done
   finally
+    if let some ledger := ledger then
+      ledger.calculated.modify (· + ((← IO.getNumHeartbeats) - before))
     IO.setNumHeartbeats before
 
 /--
 The steps of polynomial arithmetic on the comparisons that hold outright: `linarith` with the
-products of the slacks of the linear comparisons, then `nlinarith`, each within the budget of
-heartbeats. The result names the step that closed the goal.
+products of the slacks of the linear comparisons, within a quarter of the budget of heartbeats,
+then `nlinarith` within the budget. The two have twice that together in one call. The result
+names the step that closed the goal. A step that has failed on the same facts in this call is
+not run again.
 -/
 def polynomially (atoms : Array Q(ℝ)) (literals : Array Literal) (facts : Array Lean.Expr)
-    (budget : Nat) : TacticM (Option String) := do
-  if ← withinBudget budget (do linearly (facts ++ (← slackProducts atoms literals))) then
+    (budget : Nat) (ledger : Option Ledger := none) : TacticM (Option String) := do
+  -- two rounds of the two steps at most, in one call
+  let total := 2 * (budget / 4 + budget)
+  if ← Ledger.unlessFailed ledger 2 facts (withinBudget (budget / 4)
+      (do linearly (facts ++ (← slackProducts atoms literals))) ledger total) then
     return some "linarith with products of the linear comparisons"
-  if ← withinBudget budget (linearly facts true) then return some "nlinarith"
+  if ← Ledger.unlessFailed ledger 3 facts
+      (withinBudget budget (linearly facts true) ledger total) then
+    return some "nlinarith"
   return none
 
 /-- Refute each of the goals that a split of the main goal left, by the given route; a failure
@@ -568,7 +819,8 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
   for decl in ← getLCtx do
     if decl.isImplementationDetail then continue
     unless ← isProp decl.type do continue
-    let (piece?, next) ← (reifyProp progress.rewrites true decl.type).run cache
+    let (piece?, next) ← timed "reading a hypothesis"
+      ((reifyProp progress.rewrites true decl.type).run cache)
     if let some piece := piece? then
       cache := next
       pieces := pieces.push (piece, decl.toExpr)
@@ -589,10 +841,12 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
       catch error =>
         if error.isInterrupt || error.isRuntime then throw error
         saved.restore
-    return facts ++ (← signedFacts sides (literals.map (·.proof) ++ facts))
+    return facts ++ (← signedFacts sides (literals.map (·.proof) ++ facts)
+      (settings.ledger.map (·.failed)))
   let mut forms : Array FormPiece := #[]
   let mut combined := false
   let mut fallbacks := false
+  let combinationState ← IO.mkRef (none : Option (Array FormPiece × ReifyState))
   let configValue : Backend.Config := ⟨settings.precision, settings.degree⟩
   have precision : Q(Nat) := mkNatLit settings.precision
   have degree : Q(Nat) := mkNatLit settings.degree
@@ -623,6 +877,14 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
       | throwError "interval found no real constraint among the hypotheses: it refutes \
         combinations by ∧, ∨ and ¬ of ≤, <, = and ≠ between real expressions"
     have constraint : Q(Constraint) := constraint
+    -- The comparisons that hold outright with the facts for linear arithmetic, computed once in
+    -- a round and only when a step asks for them.
+    let known ← IO.mkRef (none : Option (Array Lean.Expr))
+    let outright : TacticM (Array Lean.Expr) := do
+      if let some facts ← known.get then return facts
+      let facts := literals.map (·.proof) ++ (← general atoms literals)
+      known.set (some facts)
+      return facts
     -- The bounds that the user stated are proved first, and the route starts again with them.
     unless settings.bounds.isEmpty do
       let (_, goal) ← (← getMainGoal).assertHypotheses (← statedBounds settings literals)
@@ -685,7 +947,7 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
     for literal in literals do
       bounds := bounds ++ (← boundsOfProofFor atoms literal.proof)
     -- An atom that the bounds pin to one value is replaced by that value.
-    if ← substitutePinned atoms bounds (literals.map (·.proof) ++ (← general atoms literals)) then
+    if ← substitutePinned atoms bounds outright then
       return some (settings, progress)
     -- Atoms without bounds: unfold those that are definitions and start again.
     let missing ← unbounded bounds atoms
@@ -696,6 +958,21 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
           if let some unfolded ← exposeAtom atom then exposed := exposed.push (atom, unfolded)
       if exposed.size > progress.rewrites.size then
         return some (settings, { progress with rewrites := exposed })
+    -- What the steps on ranges with infinite ends need: the constraint and the exact backend.
+    let decodes : Lean.Expr :=
+      have registered : Q(List Extension) := tables.extensions
+      q(Backend.decode_rational $config $registered)
+    let called ← nameTable cache.extensions
+    let ranged : RangeContext := {
+      constraint, tree, values, functions, holds, decodes
+      backend := quotedExact, backendValue := exactBackend, sound := exactSound
+      names := called.names, namesValue := called.value, named := called.sound
+      heartbeats := settings.maxHeartbeats }
+    -- The constraints may fail on the whole box of ranges, whatever ends the atoms lack.
+    unless missing.isEmpty do
+      if ← closeOnRanges ranged atoms bounds then
+        trace[interval.constraints] "closed on the ranges of the atoms, without a box"
+        return none
     -- A comparison whose form has a constant matrix may fail without a box.
     unless missing.isEmpty do
       let origin := (Array.range atoms.size).map fun j => (j, (0 : ℚ))
@@ -725,8 +1002,7 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
           if ← withReducible (isDefEq (atoms.getD i q(0)) bound.term) then
             if bound.lower then lower := true else upper := true
         for literal in literals do
-          if let some (type, proof, isUpper) ← affineBound atoms bounds
-              (literals.map (·.proof) ++ (← general atoms literals)) literal i then
+          if let some (type, proof, isUpper) ← affineBound atoms bounds outright literal i then
             unless if isUpper then upper else lower do
               facts := facts.push { userName := `bound, type, value := proof }
             if isUpper then upper := true else lower := true
@@ -754,6 +1030,15 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
         replaceMainGoal [goal]
         trace[interval.constraints] "derived the bounds {facts.map (·.type)}"
         return some (settings, { progress with derived := progress.derived + 1 })
+    -- An atom that still lacks a side gets it from a tail on which the constraints fail.
+    unless missing.isEmpty do
+      let facts ← tailBounds ranged atoms bounds missing
+      unless facts.isEmpty do
+        let (_, goal) ← (← getMainGoal).assertHypotheses facts
+        replaceMainGoal [goal]
+        trace[interval.constraints] "derived the bounds {facts.map (·.type)} from the tails \
+          on which the constraints fail"
+        return some (settings, progress)
     unless missing.isEmpty do
       -- A value of a bounded function at an argument without bounds becomes a variable.
       if ← generalizeValues (missing.filterMap fun i => atoms[i]?) then
@@ -765,11 +1050,12 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
           return some (settings, { progress with cleared := true })
       -- Without a box, linear comparisons may still be decided, and polynomial ones that have
       -- a certificate of degree two.
-      let facts := literals.map (·.proof) ++ (← general atoms literals)
+      let facts ← outright
       if ← linearly facts then
         trace[interval.constraints] "closed by linarith, without a box"
         return none
-      if let some step ← polynomially atoms literals facts settings.maxHeartbeats then
+      if let some step ← polynomially atoms literals facts
+          (← settings.arithmeticBudget) settings.ledger then
         trace[interval.constraints] "closed by {step}, without a box"
         return none
       -- The cases of the disjunctions among the hypotheses may each have a box or a certificate.
@@ -809,7 +1095,8 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
     -- Forms that are definite on the whole box join the constraints before the first search.
     if round == 0 then
       if let some atRoot := oracle gridBackend boxValue then
-        let (found, next) ← (rootForms atoms literals boxValue atRoot).run cache
+        let (found, next) ← timed "forms on the whole box"
+          ((rootForms atoms literals boxValue atRoot).run cache)
         unless found.isEmpty do
           cache := next
           forms := forms ++ found
@@ -832,22 +1119,36 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
         withOptions (fun options => Lean.maxHeartbeats.set options 0) <|
           withCurrHeartbeats (attempt.run' 0).run
       finally
+        if let some ledger := settings.ledger then
+          ledger.searched.modify (· + ((← IO.getNumHeartbeats) - before))
         IO.setNumHeartbeats before
     let finish (certificate : Refutation) (useGrid : Bool) : TacticM Unit :=
       close constraint holds box membership certificate useGrid
     let pins := tree.pins
-    match ← run ⟨oracle gridBackend, settings.boxes, pins, widths⟩ settings.depth with
+    match ← timed "search on the binary grid"
+        (run ⟨oracle gridBackend, settings.boxes, pins, widths⟩ settings.depth) with
     | .ok certificate =>
-      finish certificate true
+      timed "kernel check of the certificate" (finish certificate true)
       trace[interval.constraints] "closed by a certificate of {leaves certificate} boxes"
       return none
     | .error stuck =>
       trace[interval.constraints] "the search stopped at {if stuck.box.isEmpty then
         m!"constraints without atoms" else boxText atoms stuck.box}"
+      trace[interval.constraints.time] "stop: {match stuck.reason with
+        | .satisfied => "satisfied" | .depth => "depth" | .budget => "budget"
+        | .point => "point"} after {stuck.boxes} boxes, {stuck.cuts} cuts"
+      -- The report of this box is kept for a stop at the limit of the declaration, and the
+      -- steps that follow are not started with less than an eighth of its heartbeats left.
+      let report := stuckMessage atoms stuck settings.depth settings.boxes unread
+      if let some ledger := settings.ledger then ledger.stuck.set (some report)
+      if let some (used, limit) ← declarationHeartbeats then
+        if limit ≤ used + limit / 8 then throwError "{report}\n{limitNote used limit}"
+      -- A goal of the derivative step ends here once such goals have used their heartbeats.
+      if (← settings.left) == some 0 then throwError "{report}"
       -- Rational endpoints decide what holds with equality at a rational point or matrix.
-      if let .ok certificate ←
-          run ⟨oracle exactBackend, min settings.boxes 256, pins, widths⟩
-            (min settings.depth 12) then
+      if let .ok certificate ← timed "search with rational endpoints"
+          (run ⟨oracle exactBackend, min settings.boxes 256, pins, widths⟩
+            (min settings.depth 12)) then
         finish certificate false
         trace[interval.constraints] "closed by a certificate of {leaves certificate} boxes \
           with rational endpoints"
@@ -864,14 +1165,15 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
       unless fallbacks do
         fallbacks := true
         -- Comparisons that are linear need no boxes: `linarith` decides their conjunction.
-        if ← linearly (literals.map (·.proof) ++ (← general atoms literals)) then
+        if ← Ledger.unlessFailed settings.ledger 1 (← outright) (do linearly (← outright)) then
           trace[interval.constraints] "closed by linarith"
           return none
       -- Forms of the comparisons that are undecided where the search stopped.
       let known (piece : FormPiece) : Bool :=
         forms.any fun old => old.piece.constraint == piece.piece.constraint
-      let (found, next) ← (formsAt atoms literals stuck boxValue widths
-        fun strict form box => form.definiteOn gridBackend strict box).run cache
+      let (found, next) ← timed "forms at the stuck box" ((formsAt atoms literals stuck boxValue
+        widths (fun strict form box => form.definiteOn gridBackend strict box)
+        (oracle gridBackend stuck.box)).run cache)
       cache := next
       let mut fresh := found.filter (!known ·)
       unless fresh.isEmpty do
@@ -879,22 +1181,34 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
       -- Slopes of the values of the sine, the cosine, the hyperbolic tangent and the
       -- arctangent, once, and the route starts again.
       if fresh.isEmpty && !progress.sloped then
-        let slopes ← introduceSlopes literals
+        let slopes ← timed "slopes" (introduceSlopes literals)
         unless slopes.isEmpty do
           trace[interval.constraints] "slopes for {slopes.size} values of the sine, the cosine, \
             the hyperbolic tangent or the arctangent"
           return some (settings, { progress with sloped := true, slopes })
       if fresh.isEmpty && !combined then
         combined := true
-        let (found, next) ←
-          (combinations atoms literals boxValue widths (oracle gridBackend)).run cache
-        cache := next
+        -- not again for the same comparisons on the same box, where they gave no form
+        let place := boxValue.foldl (init := (4 : UInt64)) fun code I =>
+          mixHash (mixHash code (hash I.lo.num)) (mixHash (hash I.lo.den)
+            (mixHash (hash I.hi.num) (hash I.hi.den)))
+        let mut found := #[]
+        if settings.margins then
+          if ← Ledger.unlessFailed settings.ledger place (literals.map (·.proof)) (do
+              let (made, next) ← timed "combinations of two comparisons"
+                ((combinations atoms literals boxValue widths (oracle gridBackend)).run cache)
+              combinationState.set (some (made, next))
+              return !made.isEmpty) then
+            if let some (made, next) ← combinationState.get then
+              cache := next
+              found := made
         fresh := found.filter (!known ·)
         -- Polynomial comparisons may have a certificate without any box: a combination of
         -- products of the linear comparisons, or of products of pairs of comparisons.
         if fresh.isEmpty then
-          let facts := literals.map (·.proof) ++ (← general atoms literals)
-          if let some step ← polynomially atoms literals facts settings.maxHeartbeats then
+          let facts ← outright
+          if let some step ← polynomially atoms literals facts
+              (← settings.arithmeticBudget) settings.ledger then
             trace[interval.constraints] "closed by {step}"
             return none
       -- Comparisons with quotients are multiplied by their denominators, and absolute values
@@ -917,8 +1231,7 @@ def refuteOnce (recurse : Settings → Progress → TacticM Unit) (settings : Se
           refuteCases cases "the disjunctions among the hypotheses"
             (recurse settings { progress with split := true })
           return none
-      if fresh.isEmpty then
-        throwError "{stuckMessage atoms stuck settings.depth settings.boxes unread}"
+      if fresh.isEmpty then throwError "{report}"
       forms := forms ++ fresh
   throwError "interval: the constraints were not refuted after six rounds of quadratic forms"
 
@@ -1004,15 +1317,101 @@ def settingsOf (option : Array Ident) (value : Array Term) : TacticM Settings :=
         form, box or facts for a goal that is a set of constraints"
   return settings
 
-/-- Refute the constraints of the main goal and of its context. A failure restores the proof
-state. -/
-def run (settings : Settings) : TacticM Unit := do
+/-- Refute the constraints of the main goal and of its context. Where the route fails, a
+comparison in one variable is tried by the sign of its derivative (`byDerivative`), which hands
+its own goals to the route again, at most `Settings.derivatives` times in a row. A failure
+restores the proof state. -/
+partial def run (settings : Settings) : TacticM Unit := do
   let saved ← saveState
+  let ledger ← Ledger.new
   discard <| tryFinally'
     (do
       liftMetaTactic1 fun goal => some <$> prepare goal
-      refute settings)
-    (fun result => unless result.isSome do saved.restore)
+      let prepared ← saveState
+      -- At the limit of heartbeats of the declaration, the report of the last search that
+      -- stopped says more than the timeout.
+      try
+        tryCatchRuntimeEx (refute { settings with ledger := some ledger }) fun error => do
+          if error.isMaxHeartbeat then
+            if let (some report, some (used, limit)) :=
+                (← ledger.stuck.get, ← declarationHeartbeats) then
+              throwError "{report}\n{limitNote used limit}"
+          throw error
+      catch error =>
+        if error.isInterrupt || error.isRuntime || settings.derivatives == 0 then throw error
+        -- a hint that states a bound or a form is what the call was asked to use
+        unless settings.bounds.isEmpty && settings.ball.isEmpty && settings.form.isEmpty do
+          throw error
+        if let some (used, limit) ← declarationHeartbeats then
+          if limit ≤ used + limit / 8 then throw error
+        prepared.restore
+        let passes ← match settings.passes with
+          | some passes => pure passes
+          | none => IO.mkRef { start := ← IO.getNumHeartbeats }
+        -- the goals of the derivative step have no part in the options that name atoms
+        let inner : Settings := { settings with
+          derivatives := settings.derivatives - 1
+          split := false
+          margins := false
+          passes := some passes
+          arithmetic := some ((settings.arithmetic.getD settings.maxHeartbeats) / 2)
+          cuts := #[], ball := #[], form := #[], bounds := #[], facts := #[] }
+        let prove (goal : MVarId) : TacticM Bool := timed "a goal of the derivative step" do
+          -- a goal that has failed in this call is not tried again, a call has a limit of
+          -- goals, and none is started near the limit of the declaration
+          let key ← goal.withContext do
+            return (← mkForallFVars (← getLCtx).getFVars
+              (← instantiateMVars (← goal.getType))).hash
+          let done ← passes.get
+          if done.count ≥ 40 || done.failed.contains key || (← inner.left) == some 0 then
+            return false
+          if let some (used, limit) ← declarationHeartbeats then
+            if limit ≤ used + limit / 8 then return false
+          passes.modify fun done => { done with count := done.count + 1 }
+          let state ← saveState
+          try
+            let remaining ← Lean.Elab.Tactic.run goal do
+              liftMetaTactic1 fun goal => return some (← goal.intros).2
+              run inner
+            if remaining.isEmpty then return true
+          catch failure =>
+            if failure.isInterrupt || failure.isRuntime then throw failure
+          state.restore
+          passes.modify fun done => { done with failed := done.failed.insert key }
+          return false
+        -- at the limit of the declaration the report of the route says more than the timeout
+        let step := byDerivative prove settings.precision settings.degree settings.split
+        let proved ← tryCatchRuntimeEx
+          (do
+            try
+              -- without quotients first, where they can be cleared: the derivative of a
+              -- quotient is a larger one, and a pole ends a range
+              if ← clearDenominators then
+                if (← getUnsolvedGoals).isEmpty || (← step) then pure true
+                else
+                  prepared.restore
+                  step
+              else step
+            catch failure =>
+              if failure.isInterrupt then throw failure
+              pure false) fun failure => do
+            if failure.isMaxHeartbeat then
+              if let some (used, limit) ← declarationHeartbeats then
+                throwError "{error.toMessageData}\n{limitNote used limit}"
+            throw failure
+        let done ← passes.get
+        trace[interval.constraints.time] "the derivative step: {done.count} goals, \
+          {((← IO.getNumHeartbeats) - done.start + done.hidden) / 1000} thousand heartbeats"
+        unless proved do throw error)
+    (fun result => do
+      trace[interval.constraints.time] "heartbeats: {((← IO.getNumHeartbeats) - ledger.start) /
+        1000} of the declaration, {(← ledger.searched.get) / 1000} of the searches, \
+        {(← ledger.calculated.get) / 1000} of the arithmetic steps"
+      -- a goal of the derivative step reports what the declaration does not pay for
+      if let some passes := settings.passes then
+        let hidden := (← ledger.searched.get) + (← ledger.calculated.get)
+        passes.modify fun done => { done with hidden := done.hidden + hidden }
+      unless result.isSome do saved.restore)
 
 end FloatLib.Numerics.Interval.Tactic.Constraints
 
@@ -1020,14 +1419,28 @@ end FloatLib.Numerics.Interval.Tactic.Constraints
 One inequality goes to the route of `Interval` first. When that fails, and the options are not
 its coefficient certificates, the constraints of the negated goal are tried with a small budget;
 an inequality with an option of the constraint route goes there at once. The message of a double
-failure is the one of the route of `Interval`.
+failure is the one of the route of `Interval`. A goal `∃ x : ℝ, P x` is tried with a witness
+first (`Constraints.proveByWitness`).
 -/
 open FloatLib.Numerics.Interval.Tactic in
 @[no_fallback] elab_rules : tactic
   | `(tactic| interval $[($option:ident := $value:term)]*) => do
     let keys := option.map (·.getId.eraseMacroScopes)
     if ← Constraints.isConstraintGoal (← getMainGoal) then
-      Constraints.run (← Constraints.settingsOf option value)
+      let settings ← Constraints.settingsOf option value
+      -- an existential statement over the reals is proved by a witness
+      match ← Constraints.proveByWitness
+          (do evalTactic (← `(tactic| intros; interval $[($option:ident := $value:term)]*)))
+          settings.precision settings.degree with
+      | some true => return
+      | some false =>
+        try Constraints.run settings
+        catch error =>
+          if error.isInterrupt || error.isRuntime then throw error
+          throwError "interval found no witness of the statement among the values that it \
+            tries: the real variables of the context, also shifted by one, and the rationals: \
+            {Constraints.witnessDescription}"
+      | none => Constraints.run settings
     else if keys.any [`boxes, `cut, `ball, `form, `box, `facts].contains then
       Constraints.run (← Constraints.settingsOf option value)
     else

@@ -1,10 +1,10 @@
 # Compiled and kernel time of the operations of IEEE 754-2019
 
-Every operation of IEEE 754-2019 clauses 5 and 9 that FloatLib provides, under its name in the standard, at the binary widths 8, 16, 32, 64, 128, 256, 1,024 and 4,096 bits and at the three decimal formats. Written by the timing mode of `benchmarks/plots/figures.py` on one shared machine (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs); `../figures/measured.json` has the exit code and the time of every section. `n/a` is a cell without a result, and `< 1` a kernel cell under half a microsecond: the difference of two folds, which for the cheapest operations can come out at zero or below on a busy machine (the CSV keeps the number).
+Every operation of IEEE 754-2019 clauses 5 and 9 that FloatLib provides, under its name in the standard, at the binary widths 8, 16, 32, 64, 128, 256, 1,024 and 4,096 bits and at the three decimal formats. Written by the timing mode of `benchmarks/plots/figures.py` on one shared machine (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs); `../figures/measured.json` has the exit code and the time of every section. `n/a` is a cell without a result, and `< 1` a kernel cell under half a microsecond. A kernel cell is the difference of two folds, and the fold that is subtracted reads and stores its operand, so an operation that reads less of it (`radix`, `isCanonical`, a test of the class of a decimal datum) comes out at zero or below (the CSV keeps the number).
 
-* Compiled time (`compiled.csv`), measured on 2026-11-18 (Lean v4.36.0): `execFloatIEEE2019` (`benchmarks/lean/FloatLibBenchmarks/Public/IEEE2019.lean`), nanoseconds for one call on the descriptor model `Model fmt` or on a decimal `Datum`, the fastest of five trials of at least 20 ms over 64 operand triples. The reductions take eight elements or pairs.
-* The rows `exp2` to `rootn` of the binary compiled table, measured on 2026-11-18 (Lean v4.36.0): the recommended functions of clause 9.2 (`execFloatIEEE2019 functions FORMAT`), one pass over eight operands up to 128 bits, two operands at 256 bits and one at 1,024 and at 4,096 bits, where each function runs alone and has no result after 120 seconds.
-* Kernel time (`kernel.csv`), measured on 2026-11-18 (Lean v4.36.0), the formats of 1,024 and 4,096 bits on 2026-11-18 (Lean v4.36.0): `benchmarks/kernel/ieee2019.sh 4 3`, microseconds for one evaluation by Lean's kernel on the configured type `ExecFloat.Binary` or on a decimal `Datum`: as written, and after the rewrite of `float_decide` with the rules tagged `@[kernel_optimize]`. A cell is the time of a fold over four operand triples minus the time of a fold that only reads and stores an operand, divided by four, the fastest of three. The reductions take three elements or two pairs. The decimal operands have full coefficients, so sums and products drop digits. At 1,024 and 4,096 bits every row runs in its own Lean process with a limit of 60 seconds, and a row that needs longer has none. The payload rows subtract their preparation.
+* Compiled time (`compiled.csv`), measured on 2026-11-20 (Lean v4.36.0): `execFloatIEEE2019` (`benchmarks/lean/FloatLibBenchmarks/Public/IEEE2019.lean`), nanoseconds for one call on the descriptor model `Model fmt` or on a decimal `Datum`, the fastest of five trials of at least 20 ms over 64 operand triples. The reductions take eight elements or pairs.
+* The rows `exp2` to `rootn` of the binary compiled table, measured on 2026-11-20 (Lean v4.36.0): the recommended functions of clause 9.2 (`execFloatIEEE2019 functions FORMAT`), one pass over eight operands up to 128 bits, two operands at 256 bits and one at 1,024 and at 4,096 bits, where each function runs alone and has no result after 120 seconds.
+* Kernel time (`kernel.csv`), measured on 2026-11-20 (Lean v4.36.0), the formats of 1,024 and 4,096 bits on 2026-11-20 (Lean v4.36.0): `benchmarks/kernel/ieee2019.sh 4 3`, microseconds for one evaluation by Lean's kernel on the configured type `ExecFloat.Binary` or on a decimal `Datum`: as written, and after the rewrite of `float_decide` with the rules tagged `@[kernel_optimize]`. A cell is the time of a fold over four operand triples minus the time of a fold that only reads and stores an operand, divided by four, the fastest of three. The reductions take three elements or two pairs. The decimal operands have full coefficients, so sums and products drop digits. At 1,024 and 4,096 bits every row runs in its own Lean process with a limit of 600 seconds, a certified function of clause 9.2 with a limit of 5,400 seconds, and a row that needs longer has none. The payload rows subtract their preparation.
 
 The 8-bit format `e4f3` is the IEEE layout with four exponent bits and three fraction bits; `binary1024` and `binary4096` are the IEEE layouts with 27 and 35 exponent bits. The figure `kernel-ieee2019` of [`../FIGURES.md`](../FIGURES.md) draws the kernel tables by family, and `correctly-rounded` the recommended functions.
 
@@ -12,830 +12,830 @@ The 8-bit format `e4f3` is the IEEE layout with four exponent bits and three fra
 
 | operation | e4f3 | binary16 | binary32 | binary64 | binary128 | binary256 | binary1024 | binary4096 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| roundToIntegralTiesToEven | 1,106 | 1,137 | 1,136 | 1,675 | 2,682 | 2,594 | 2,824 | 3,965 |
-| roundToIntegralTiesToAway | 1,117 | 1,136 | 1,138 | 1,669 | 2,463 | 2,559 | 2,791 | 4,166 |
-| roundToIntegralTowardZero | 1,041 | 1,057 | 1,061 | 1,573 | 2,194 | 2,215 | 2,519 | 3,816 |
-| roundToIntegralTowardPositive | 1,296 | 1,315 | 1,322 | 1,844 | 3,019 | 2,855 | 3,374 | 5,153 |
-| roundToIntegralTowardNegative | 1,657 | 1,674 | 1,684 | 2,479 | 3,119 | 3,470 | 3,506 | 5,368 |
-| roundToIntegralExact | 2,208 | 2,243 | 2,264 | 3,261 | 4,354 | 4,489 | 4,958 | 6,525 |
-| nextUp | 1,673 | 1,506 | 1,542 | 2,526 | 2,623 | 2,695 | 2,818 | 3,354 |
-| nextDown | 1,748 | 1,486 | 1,518 | 2,872 | 2,629 | 2,642 | 2,849 | 3,329 |
-| remainder | 1,519 | 1,551 | 1,575 | 2,333 | 4,220 | 4,287 | 4,770 | 6,626 |
-| scaleB | 1,494 | 1,038 | 1,047 | 1,648 | 2,388 | 2,465 | 2,658 | 4,331 |
-| logB | 1,555 | 1,008 | 1,014 | 1,482 | 2,258 | 2,312 | 2,416 | 3,658 |
-| addition | 393 | 302 | 48 | 424 | 1,422 | 4,188 | 4,535 | 5,298 |
-| subtraction | 298 | 301 | 48 | 419 | 1,474 | 4,694 | 5,266 | 6,004 |
-| multiplication | 284 | 290 | 41 | 517 | 1,373 | 4,130 | 4,592 | 7,089 |
-| division | 340 | 348 | 77 | 441 | 1,893 | 4,319 | 4,806 | 13,324 |
-| squareRoot | 2,040 | 2,040 | 755 | 1,693 | 2,532 | 7,737 | 9,822 | 30,714 |
-| fusedMultiplyAdd | 307 | 308 | 60 | 569 | 1,685 | 3,712 | 4,157 | 9,856 |
-| formatOfAddition | 3,012 | 3,028 | 3,422 | 4,483 | 4,981 | 5,054 | 5,170 | 9,272 |
-| formatOfSubtraction | 3,193 | 3,236 | 3,583 | 4,911 | 5,459 | 5,502 | 5,700 | 11,213 |
-| formatOfMultiplication | 2,881 | 2,891 | 3,822 | 4,275 | 4,932 | 4,914 | 5,569 | 9,343 |
-| formatOfDivision | 4,134 | 4,457 | 4,282 | 6,408 | 6,380 | 6,581 | 6,819 | 16,665 |
-| formatOfFusedMultiplyAdd | 3,766 | 3,439 | 4,347 | 5,742 | 6,099 | 6,183 | 6,576 | 10,393 |
-| convertFromInt | 1,051 | 1,053 | 1,111 | 1,433 | 2,135 | 2,198 | 2,380 | 3,348 |
-| convertToIntegerTiesToEven | 3,528 | 3,537 | 3,531 | 3,715 | 4,291 | 4,338 | 4,407 | 5,818 |
-| convertToIntegerTiesToAway | 3,516 | 3,510 | 3,505 | 3,688 | 4,259 | 4,744 | 4,363 | 5,527 |
-| convertToIntegerTowardZero | 3,486 | 3,483 | 3,476 | 3,663 | 4,212 | 4,230 | 4,299 | 6,624 |
-| convertToIntegerTowardPositive | 3,487 | 3,486 | 3,685 | 3,661 | 4,201 | 4,220 | 4,299 | 6,681 |
-| convertToIntegerTowardNegative | 3,537 | 3,517 | 3,518 | 3,705 | 4,236 | 4,257 | 4,321 | 6,210 |
-| convertToIntegerExactTiesToEven | 3,620 | 3,648 | 3,617 | 3,801 | 4,567 | 4,603 | 4,686 | 7,622 |
-| convertToIntegerExactTiesToAway | 3,589 | 3,592 | 3,590 | 3,769 | 5,547 | 4,554 | 4,669 | 11,117 |
-| convertToIntegerExactTowardZero | 3,570 | 3,556 | 3,567 | 3,748 | 4,463 | 4,475 | 4,576 | 5,217 |
-| convertToIntegerExactTowardPositive | 3,562 | 3,558 | 3,570 | 3,751 | 4,474 | 4,485 | 4,585 | 5,224 |
-| convertToIntegerExactTowardNegative | 3,603 | 3,598 | 3,605 | 3,788 | 4,505 | 4,539 | 4,618 | 5,230 |
-| convertFormat (to binary32) | 1,214 | 1,214 | 688 | 1,504 | 1,952 | 1,958 | 2,307 | 2,658 |
-| convertFromDecimalCharacter | 1,991 | 2,138 | 2,307 | 4,235 | 11,088 | 26,992 | 130,225 | 598,874 |
-| convertToDecimalCharacter | 2,308 | 3,906 | 4,819 | 9,012 | 31,317 | 61,842 | 264,834 | 1,377,345 |
-| convertFromHexCharacter | 1,515 | 1,472 | 1,666 | 2,585 | 8,502 | 21,899 | 106,886 | 492,024 |
-| convertToHexCharacter | 571 | 665 | 764 | 1,298 | 11,086 | 34,517 | 189,887 | 1,068,601 |
-| copy | 19 | 19 | 19 | 184 | 156 | 166 | 174 | 290 |
-| negate | 244 | 245 | 250 | 686 | 613 | 624 | 678 | 832 |
-| abs | 710 | 710 | 802 | 1,572 | 1,438 | 1,496 | 1,548 | 2,736 |
-| copySign | 792 | 796 | 816 | 1,670 | 1,612 | 1,622 | 1,782 | 3,061 |
-| compareQuietEqual | 2,676 | 2,687 | 2,728 | 3,500 | 4,263 | 4,321 | 4,523 | 7,625 |
-| compareQuietNotEqual | 2,693 | 2,688 | 2,729 | 3,503 | 4,285 | 4,312 | 4,518 | 7,122 |
-| compareQuietGreater | 2,692 | 2,701 | 2,732 | 3,504 | 4,264 | 4,313 | 4,520 | 5,777 |
-| compareQuietGreaterEqual | 2,700 | 2,699 | 2,738 | 3,517 | 4,276 | 4,321 | 4,532 | 5,854 |
-| compareQuietLess | 2,692 | 2,700 | 2,727 | 3,522 | 4,274 | 4,311 | 4,525 | 7,507 |
-| compareQuietLessEqual | 2,701 | 2,711 | 2,739 | 3,505 | 4,275 | 4,319 | 4,524 | 9,560 |
-| compareQuietUnordered | 2,689 | 2,698 | 2,746 | 3,499 | 4,262 | 4,309 | 4,517 | 9,505 |
-| compareQuietOrdered | 2,688 | 2,698 | 2,747 | 3,498 | 4,262 | 4,308 | 4,516 | 8,731 |
-| compareQuietLessUnordered | 3,133 | 2,699 | 2,745 | 3,500 | 4,261 | 4,311 | 4,517 | 7,593 |
-| compareQuietNotGreater | 2,956 | 2,700 | 2,745 | 3,501 | 4,264 | 4,323 | 4,529 | 7,445 |
-| compareQuietNotLess | 2,690 | 2,698 | 2,745 | 3,499 | 4,266 | 4,317 | 4,525 | 5,763 |
-| compareQuietGreaterUnordered | 2,689 | 2,698 | 2,747 | 3,500 | 4,290 | 4,312 | 4,520 | 5,765 |
-| compareSignalingEqual | 2,672 | 2,684 | 3,403 | 3,523 | 4,275 | 4,321 | 4,527 | 5,782 |
-| compareSignalingNotEqual | 2,677 | 2,689 | 2,728 | 3,528 | 4,281 | 4,321 | 4,533 | 5,776 |
-| compareSignalingGreater | 2,673 | 2,684 | 2,730 | 3,529 | 4,275 | 4,322 | 4,527 | 5,775 |
-| compareSignalingGreaterEqual | 2,681 | 2,696 | 2,736 | 3,551 | 4,288 | 4,327 | 4,533 | 5,797 |
-| compareSignalingLess | 2,673 | 2,684 | 2,730 | 3,548 | 4,275 | 4,321 | 4,528 | 5,907 |
-| compareSignalingLessEqual | 2,682 | 2,695 | 2,743 | 3,507 | 4,280 | 4,335 | 4,541 | 5,783 |
-| compareSignalingLessUnordered | 2,672 | 2,685 | 2,727 | 3,509 | 4,275 | 4,322 | 4,524 | 5,772 |
-| compareSignalingNotGreater | 2,672 | 2,773 | 2,729 | 3,506 | 4,273 | 4,309 | 4,530 | 5,777 |
-| compareSignalingNotLess | 2,673 | 2,685 | 2,727 | 3,516 | 4,276 | 4,310 | 4,534 | 5,777 |
-| compareSignalingGreaterUnordered | 2,672 | 2,684 | 2,726 | 3,511 | 4,271 | 4,309 | 4,518 | 5,774 |
-| class | 1,453 | 1,458 | 1,491 | 2,039 | 2,083 | 2,114 | 2,209 | 2,529 |
-| isSignMinus | 32 | 27 | 27 | 65 | 85 | 86 | 88 | 94 |
-| isNormal | 568 | 568 | 577 | 719 | 781 | 936 | 780 | 864 |
-| isFinite | 346 | 347 | 353 | 431 | 439 | 443 | 456 | 498 |
-| isZero | 247 | 247 | 274 | 330 | 336 | 471 | 355 | 395 |
-| isSubnormal | 246 | 246 | 252 | 329 | 335 | 497 | 352 | 393 |
-| isInfinite | 348 | 347 | 354 | 432 | 439 | 449 | 457 | 589 |
-| isNaN | 344 | 345 | 350 | 431 | 505 | 443 | 456 | 499 |
-| isSignaling | 343 | 344 | 351 | 431 | 493 | 444 | 459 | 499 |
-| isCanonical | 19 | 19 | 19 | 22 | 23 | 23 | 25 | 26 |
-| radix | 19 | 19 | 19 | 23 | 23 | 23 | 23 | 23 |
-| totalOrder | 744 | 802 | 753 | 1,185 | 1,785 | 1,797 | 1,908 | 2,903 |
-| totalOrderMag | 757 | 766 | 778 | 1,165 | 1,826 | 1,826 | 1,939 | 2,932 |
-| sum (8 elements) | 10,933 | 10,969 | 11,113 | 18,315 | 20,855 | 21,172 | 23,095 | 29,036 |
-| dot (8 pairs) | 33,265 | 33,211 | 38,089 | 47,497 | 55,489 | 56,441 | 63,596 | 89,791 |
-| sumSquare (8 elements) | 49,704 | 37,316 | 41,055 | 50,006 | 58,867 | 59,419 | 66,108 | 92,154 |
-| sumAbs (8 elements) | 26,179 | 21,377 | 21,759 | 32,549 | 37,357 | 42,906 | 43,188 | 52,498 |
-| scaledProd (8 elements) | 6,845 | 7,594 | 8,352 | 12,046 | 16,760 | 17,282 | 24,034 | 82,268 |
-| scaledProdSum (8 pairs) | 12,214 | 12,950 | 15,641 | 19,856 | 28,206 | 28,852 | 40,013 | 100,042 |
-| scaledProdDiff (8 pairs) | 13,813 | 14,608 | 15,363 | 23,742 | 32,105 | 32,926 | 45,195 | 106,106 |
-| sumInOrder (8 elements) | 11,248 | 11,249 | 8,067 | 12,576 | 23,353 | 42,093 | 46,574 | 52,168 |
-| sumAbsInOrder (8 elements) | 15,983 | 16,015 | 13,388 | 21,191 | 31,958 | 52,557 | 58,875 | 65,131 |
-| sumSquareInOrder (8 elements) | 16,419 | 13,016 | 8,298 | 12,769 | 32,938 | 74,230 | 84,610 | 106,869 |
-| dotInOrder (8 pairs) | 20,766 | 19,793 | 14,974 | 23,356 | 41,167 | 84,951 | 97,381 | 118,785 |
-| sumAlong (8 elements in pairs) | 9,451 | 9,325 | 7,823 | 11,507 | 19,442 | 39,038 | 43,098 | 47,804 |
-| augmentedAddition | 2,859 | 2,929 | 2,942 | 4,876 | 6,709 | 6,869 | 7,464 | 11,809 |
-| augmentedSubtraction | 3,006 | 3,093 | 3,080 | 5,012 | 7,239 | 7,236 | 7,945 | 12,518 |
-| augmentedMultiplication | 2,776 | 2,911 | 3,446 | 5,381 | 7,438 | 7,609 | 8,303 | 14,699 |
-| minimum | 2,638 | 2,645 | 2,693 | 3,599 | 4,378 | 4,423 | 4,656 | 5,958 |
-| minimumNumber | 3,277 | 3,284 | 3,342 | 4,374 | 5,195 | 5,256 | 5,509 | 6,884 |
-| maximum | 2,649 | 2,650 | 2,699 | 3,638 | 4,390 | 5,227 | 4,654 | 5,953 |
-| maximumNumber | 3,859 | 3,287 | 3,348 | 4,420 | 5,214 | 5,665 | 5,502 | 6,891 |
-| minimumMagnitude | 3,449 | 3,416 | 3,610 | 5,124 | 6,287 | 6,415 | 6,701 | 8,512 |
-| minimumMagnitudeNumber | 3,459 | 3,424 | 3,498 | 5,129 | 6,272 | 6,419 | 6,691 | 8,496 |
-| maximumMagnitude | 3,455 | 3,418 | 3,498 | 5,108 | 6,268 | 6,571 | 6,691 | 8,496 |
-| maximumMagnitudeNumber | 3,457 | 3,418 | 3,503 | 5,115 | 6,268 | 6,390 | 7,512 | 8,488 |
-| getPayload | 2,004 | 2,372 | 2,415 | 2,805 | 4,776 | 4,862 | 5,260 | 6,615 |
-| setPayload | 3,496 | 4,138 | 4,181 | 5,273 | 8,389 | 8,622 | 9,283 | 12,342 |
-| setPayloadSignaling | 2,865 | 3,450 | 3,219 | 4,128 | 6,461 | 6,715 | 7,222 | 9,878 |
-| exp2 | 177,660 | 245,792 | 258,001 | 401,324 | 761,401 | 2,665,472 | 314,947,768 | 4,660,519,679 |
-| exp2m1 | 176,172 | 262,322 | 256,870 | 516,129 | 756,262 | 2,519,560 | 314,700,644 | 4,685,694,349 |
-| exp10 | 632,546 | 382,773 | 389,701 | 789,418 | 1,043,629 | 2,733,865 | 1,849,125,169 | 18,144,455,619 |
-| exp10m1 | 651,912 | 498,423 | 388,160 | 789,791 | 1,039,373 | 2,630,543 | 1,575,045,117 | 17,717,129,165 |
-| log2 | 136,665 | 339,229 | 303,460 | 789,701 | 1,936,112 | 11,493,590 | 503,594,355 | 17,312,842,274 |
-| log10 | 159,674 | 399,366 | 341,803 | 869,007 | 2,020,121 | 11,371,703 | 499,588,648 | 17,580,865,018 |
-| log2p1 | 125,408 | 248,456 | 303,730 | 769,578 | 1,903,074 | 11,106,699 | 518,730,564 | 16,854,381,431 |
-| log10p1 | 153,680 | 265,072 | 342,442 | 837,866 | 1,983,877 | 11,243,948 | 496,983,422 | 16,893,424,337 |
-| sin | 210,828 | 254,894 | 349,023 | 940,045 | 132,180 | 416,379 | 1,728,070,803 | 48,274,579,066 |
-| cos | 208,041 | 254,038 | 352,151 | 946,013 | 131,715 | 384,554 | 1,842,660,196 | 48,196,553,672 |
-| tan | 893,361 | 1,036,310 | 1,309,901 | 3,351,191 | 910,618 | 3,043,151 | 5,454,685,179 | n/a |
-| sinPi | 824,251 | 1,214,005 | 1,369,874 | 5,336,930 | 6,262,935 | 809,517 | 1,674,016,178 | 48,562,616,894 |
-| cosPi | 828,820 | 1,226,081 | 1,389,171 | 4,062,834 | 6,320,430 | 767,460 | 1,825,456,136 | 49,160,585,495 |
-| tanPi | 1,789,178 | 3,694,605 | 4,246,173 | 14,152,542 | 21,124,793 | 4,129,290 | 5,503,279,195 | n/a |
-| asin | 312,642 | 319,612 | 427,793 | 1,077,087 | 2,290,110 | 11,986,308 | 422,832,208 | 90,410,543,267 |
-| acos | 374,610 | 414,241 | 541,527 | 1,288,016 | 2,535,694 | 12,508,497 | 471,437,712 | 92,420,634,090 |
-| atan | 112,099 | 145,754 | 200,092 | 500,628 | 630,126 | 3,156,628 | 230,221,818 | 7,087,319,352 |
-| asinPi | 385,450 | 425,118 | 547,517 | 1,334,077 | 2,484,987 | 12,300,090 | 428,652,818 | 89,094,687,850 |
-| acosPi | 469,132 | 513,609 | 650,821 | 1,523,912 | 2,719,864 | 12,787,054 | 435,072,421 | 90,228,649,929 |
-| atanPi | 201,845 | 239,186 | 308,938 | 861,591 | 822,076 | 3,445,137 | 208,370,253 | 7,037,986,829 |
-| sinh | 112,216 | 73,609 | 116,353 | 358,906 | 330,105 | 1,012,755 | 191,171,388 | 2,477,141,842 |
-| cosh | 87,435 | 70,214 | 106,016 | 349,085 | 320,436 | 1,002,840 | 195,057,324 | 2,413,103,420 |
-| tanh | 57,397 | 96,897 | 195,974 | 1,015,309 | 1,222,170 | 3,249,530 | 4,371,927,437 | 52,257,712,299 |
-| asinh | 476,144 | 575,676 | 824,705 | 2,658,786 | 4,805,255 | 26,506,338 | 1,044,661,750 | 34,898,343,823 |
-| acosh | 520,595 | 628,852 | 905,761 | 2,762,008 | 4,984,636 | 27,441,660 | 1,109,755,704 | 34,618,231,085 |
-| atanh | 430,173 | 509,607 | 745,965 | 2,412,253 | 4,693,702 | 26,477,181 | 1,048,725,803 | 35,033,233,186 |
-| atan2 | 967,480 | 1,046,099 | 1,307,214 | 2,913,769 | 5,749,170 | 25,134,217 | 673,711,347 | 20,027,999,621 |
-| atan2Pi | 1,059,864 | 1,145,674 | 1,423,658 | 3,038,418 | 6,055,189 | 25,535,788 | 681,620,247 | 20,105,904,578 |
-| powr | 575,338 | 292,717 | 469,093 | 1,128,517 | 2,526,612 | 13,203,985 | 1,993,633,900 | 26,299,263,950 |
-| compound | 191,425 | 259,814 | 395,160 | 1,320,071 | 2,534,392 | 13,534,862 | 591,221,442 | 20,021,894,153 |
-| exp | 48,637 | 28,027 | 36,084 | 87,147 | 57,875 | 87,069 | 384,977 | 3,245,824 |
-| expm1 | 70,741 | 32,961 | 40,025 | 90,475 | 61,845 | 80,560 | 385,677 | 3,236,257 |
-| log | 10,386 | 12,007 | 23,404 | 84,425 | 60,492 | 513,896 | 1,383,237 | 7,650,363 |
-| logp1 | 10,530 | 12,219 | 29,239 | 84,618 | 59,190 | 204,201 | 1,335,521 | 6,913,285 |
-| pow | 30,757 | 47,293 | 85,767 | 198,596 | 153,585 | 205,373 | 2,035,697 | 14,255,019 |
-| rSqrt | 4,561 | 4,736 | 5,448 | 15,147 | 11,145 | 24,424 | 45,320 | 88,217 |
-| hypot | 4,880 | 4,956 | 5,111 | 14,945 | 10,157 | 18,471 | 50,524 | 61,500 |
-| pown | 3,310 | 4,117 | 4,213 | 10,923 | 7,386 | 14,998 | 53,796 | 76,691 |
-| rootn | 10,752 | 11,850 | 26,276 | 120,528 | 173,758 | 175,882 | 374,401 | 1,324,452 |
+| roundToIntegralTiesToEven | 1,137 | 1,147 | 1,142 | 1,680 | 2,472 | 2,599 | 2,822 | 3,916 |
+| roundToIntegralTiesToAway | 1,120 | 1,142 | 1,146 | 1,673 | 2,468 | 2,579 | 2,831 | 4,154 |
+| roundToIntegralTowardZero | 1,074 | 1,084 | 1,083 | 1,590 | 2,220 | 2,252 | 2,565 | 3,797 |
+| roundToIntegralTowardPositive | 1,333 | 1,439 | 1,349 | 1,876 | 3,040 | 2,904 | 3,413 | 5,137 |
+| roundToIntegralTowardNegative | 1,694 | 1,702 | 1,704 | 2,507 | 3,117 | 3,500 | 3,513 | 5,415 |
+| roundToIntegralExact | 2,227 | 2,283 | 2,303 | 3,340 | 4,377 | 4,520 | 4,886 | 6,563 |
+| nextUp | 1,531 | 1,543 | 1,575 | 2,589 | 2,701 | 2,775 | 2,933 | 3,418 |
+| nextDown | 1,535 | 1,534 | 1,562 | 2,679 | 2,701 | 2,804 | 2,941 | 3,374 |
+| remainder | 1,529 | 1,578 | 1,591 | 2,344 | 4,202 | 4,282 | 4,631 | 6,658 |
+| scaleB | 1,032 | 1,047 | 1,042 | 1,647 | 2,509 | 2,489 | 2,678 | 3,885 |
+| logB | 1,015 | 1,033 | 1,051 | 1,491 | 2,259 | 2,323 | 2,445 | 3,680 |
+| addition | 299 | 308 | 47 | 423 | 1,420 | 4,180 | 4,475 | 5,271 |
+| subtraction | 311 | 308 | 45 | 420 | 1,445 | 4,661 | 5,002 | 5,952 |
+| multiplication | 295 | 293 | 41 | 516 | 1,277 | 4,165 | 6,291 | 7,157 |
+| division | 355 | 355 | 74 | 441 | 1,566 | 4,440 | 4,831 | 8,936 |
+| squareRoot | 2,779 | 2,095 | 767 | 1,721 | 2,546 | 7,992 | 9,966 | 20,269 |
+| fusedMultiplyAdd | 965 | 310 | 58 | 561 | 1,684 | 3,713 | 4,171 | 6,828 |
+| formatOfAddition | 3,023 | 3,058 | 3,481 | 4,482 | 5,009 | 5,094 | 5,235 | 6,507 |
+| formatOfSubtraction | 3,236 | 3,300 | 3,601 | 4,907 | 5,502 | 5,547 | 5,726 | 7,236 |
+| formatOfMultiplication | 2,898 | 3,002 | 3,855 | 4,282 | 4,954 | 4,942 | 5,308 | 8,295 |
+| formatOfDivision | 4,161 | 4,277 | 4,324 | 6,355 | 6,337 | 6,537 | 6,834 | 8,429 |
+| formatOfFusedMultiplyAdd | 3,539 | 3,476 | 4,367 | 5,195 | 6,118 | 6,175 | 6,587 | 10,453 |
+| convertFromInt | 1,100 | 1,068 | 1,118 | 1,439 | 2,111 | 2,202 | 2,381 | 3,307 |
+| convertToIntegerTiesToEven | 3,998 | 3,627 | 3,614 | 3,779 | 4,386 | 4,400 | 4,478 | 5,042 |
+| convertToIntegerTiesToAway | 3,721 | 3,596 | 3,584 | 3,766 | 4,340 | 4,350 | 4,427 | 4,984 |
+| convertToIntegerTowardZero | 3,623 | 3,590 | 3,553 | 3,716 | 4,257 | 4,257 | 4,364 | 4,908 |
+| convertToIntegerTowardPositive | 3,587 | 3,601 | 3,555 | 3,749 | 4,271 | 4,258 | 4,383 | 4,933 |
+| convertToIntegerTowardNegative | 3,642 | 3,708 | 3,568 | 3,759 | 4,295 | 4,313 | 4,408 | 4,951 |
+| convertToIntegerExactTiesToEven | 3,731 | 3,787 | 3,685 | 3,862 | 4,678 | 4,708 | 4,802 | 5,422 |
+| convertToIntegerExactTiesToAway | 3,715 | 3,665 | 3,652 | 3,836 | 4,636 | 4,665 | 4,752 | 5,366 |
+| convertToIntegerExactTowardZero | 5,624 | 3,684 | 3,614 | 3,853 | 4,534 | 4,555 | 4,797 | 5,275 |
+| convertToIntegerExactTowardPositive | 7,157 | 3,656 | 3,613 | 3,811 | 4,549 | 4,559 | 4,683 | 5,295 |
+| convertToIntegerExactTowardNegative | 3,633 | 3,704 | 3,681 | 3,847 | 4,586 | 4,610 | 4,700 | 5,315 |
+| convertFormat (to binary32) | 1,213 | 1,243 | 703 | 1,501 | 1,943 | 1,959 | 2,065 | 2,634 |
+| convertFromDecimalCharacter | 1,983 | 2,136 | 2,304 | 4,268 | 10,931 | 26,862 | 129,502 | 594,447 |
+| convertToDecimalCharacter | 2,370 | 4,053 | 5,022 | 9,273 | 33,046 | 62,507 | 264,575 | 1,376,951 |
+| convertFromHexCharacter | 1,294 | 1,437 | 1,647 | 2,551 | 8,474 | 21,826 | 106,165 | 490,694 |
+| convertToHexCharacter | 579 | 677 | 787 | 1,318 | 11,174 | 34,643 | 190,444 | 1,066,280 |
+| copy | 19 | 20 | 19 | 182 | 157 | 158 | 198 | 210 |
+| negate | 246 | 249 | 252 | 697 | 630 | 632 | 717 | 831 |
+| abs | 718 | 724 | 743 | 1,615 | 1,514 | 1,533 | 1,615 | 1,944 |
+| copySign | 799 | 806 | 831 | 1,685 | 1,680 | 1,650 | 1,846 | 2,291 |
+| compareQuietEqual | 2,748 | 2,768 | 2,807 | 3,584 | 4,378 | 4,404 | 4,622 | 5,832 |
+| compareQuietNotEqual | 2,752 | 2,768 | 2,812 | 3,578 | 4,352 | 4,410 | 4,619 | 5,814 |
+| compareQuietGreater | 2,758 | 2,771 | 2,807 | 3,577 | 4,369 | 4,412 | 4,630 | 5,820 |
+| compareQuietGreaterEqual | 2,844 | 2,777 | 2,816 | 3,588 | 4,369 | 4,425 | 4,645 | 5,824 |
+| compareQuietLess | 2,800 | 2,769 | 2,803 | 3,605 | 4,378 | 4,418 | 4,640 | 5,816 |
+| compareQuietLessEqual | 2,939 | 2,775 | 2,813 | 3,581 | 4,378 | 4,422 | 4,657 | 5,828 |
+| compareQuietUnordered | 2,758 | 2,766 | 2,801 | 3,582 | 4,349 | 4,416 | 4,648 | 5,828 |
+| compareQuietOrdered | 2,791 | 2,766 | 2,802 | 3,613 | 4,344 | 4,418 | 4,638 | 5,829 |
+| compareQuietLessUnordered | 2,762 | 2,768 | 2,800 | 3,582 | 4,350 | 4,415 | 4,637 | 5,814 |
+| compareQuietNotGreater | 2,796 | 2,777 | 2,803 | 3,577 | 4,358 | 4,418 | 4,624 | 5,825 |
+| compareQuietNotLess | 2,760 | 2,777 | 2,810 | 3,585 | 4,383 | 4,420 | 4,621 | 5,815 |
+| compareQuietGreaterUnordered | 2,832 | 2,773 | 2,807 | 3,573 | 4,357 | 4,417 | 4,634 | 5,821 |
+| compareSignalingEqual | 2,786 | 2,771 | 2,803 | 3,576 | 4,531 | 4,426 | 4,627 | 5,821 |
+| compareSignalingNotEqual | 2,806 | 2,773 | 2,807 | 3,596 | 4,338 | 4,417 | 4,635 | 5,817 |
+| compareSignalingGreater | 2,794 | 2,776 | 2,811 | 3,578 | 4,335 | 4,418 | 4,639 | 5,827 |
+| compareSignalingGreaterEqual | 2,776 | 2,784 | 2,848 | 3,585 | 4,374 | 4,428 | 4,653 | 5,837 |
+| compareSignalingLess | 2,767 | 2,771 | 2,807 | 3,626 | 4,351 | 4,423 | 4,661 | 5,827 |
+| compareSignalingLessEqual | 2,774 | 2,788 | 2,849 | 3,583 | 4,358 | 4,428 | 4,637 | 5,834 |
+| compareSignalingLessUnordered | 2,756 | 2,774 | 2,804 | 3,587 | 4,514 | 4,413 | 4,785 | 5,813 |
+| compareSignalingNotGreater | 2,758 | 2,774 | 2,838 | 3,698 | 4,352 | 4,410 | 4,643 | 5,814 |
+| compareSignalingNotLess | 2,774 | 2,782 | 2,802 | 3,637 | 4,364 | 4,414 | 4,638 | 5,818 |
+| compareSignalingGreaterUnordered | 2,756 | 2,772 | 2,810 | 3,582 | 4,384 | 4,414 | 8,460 | 5,817 |
+| class | 1,482 | 1,486 | 1,529 | 2,080 | 2,160 | 2,156 | 2,269 | 2,577 |
+| isSignMinus | 26 | 25 | 25 | 64 | 85 | 85 | 87 | 92 |
+| isNormal | 588 | 582 | 590 | 743 | 756 | 769 | 795 | 877 |
+| isFinite | 355 | 350 | 356 | 445 | 504 | 449 | 463 | 505 |
+| isZero | 261 | 251 | 257 | 336 | 395 | 349 | 362 | 402 |
+| isSubnormal | 254 | 252 | 257 | 347 | 385 | 347 | 359 | 429 |
+| isInfinite | 354 | 353 | 360 | 451 | 516 | 452 | 466 | 507 |
+| isNaN | 358 | 353 | 358 | 448 | 482 | 448 | 462 | 504 |
+| isSignaling | 354 | 352 | 356 | 439 | 499 | 450 | 466 | 509 |
+| isCanonical | 20 | 19 | 19 | 23 | 25 | 23 | 23 | 23 |
+| radix | 20 | 19 | 19 | 22 | 26 | 23 | 23 | 23 |
+| totalOrder | 763 | 762 | 762 | 1,136 | 2,046 | 1,809 | 1,923 | 2,928 |
+| totalOrderMag | 765 | 772 | 781 | 1,187 | 2,013 | 1,842 | 1,950 | 2,912 |
+| sum (8 elements) | 11,066 | 11,089 | 11,219 | 18,237 | 23,651 | 21,045 | 22,197 | 28,831 |
+| dot (8 pairs) | 33,756 | 33,860 | 38,019 | 47,739 | 58,168 | 55,963 | 59,940 | 89,162 |
+| sumSquare (8 elements) | 37,593 | 37,983 | 41,341 | 50,337 | 60,920 | 59,555 | 63,570 | 93,121 |
+| sumAbs (8 elements) | 21,657 | 21,713 | 22,067 | 33,057 | 42,405 | 37,885 | 39,788 | 49,509 |
+| scaledProd (8 elements) | 6,926 | 7,660 | 8,412 | 12,103 | 22,334 | 17,272 | 23,010 | 83,569 |
+| scaledProdSum (8 pairs) | 12,445 | 13,036 | 13,756 | 19,963 | 33,797 | 29,029 | 35,289 | 101,365 |
+| scaledProdDiff (8 pairs) | 14,239 | 14,947 | 15,644 | 23,853 | 36,839 | 33,066 | 39,644 | 105,497 |
+| sumInOrder (8 elements) | 11,701 | 11,499 | 8,183 | 12,691 | 25,807 | 41,775 | 44,141 | 51,495 |
+| sumAbsInOrder (8 elements) | 16,341 | 16,363 | 13,650 | 21,541 | 35,028 | 52,973 | 55,931 | 65,365 |
+| sumSquareInOrder (8 elements) | 16,618 | 13,159 | 8,266 | 12,820 | 32,701 | 74,782 | 80,469 | 106,907 |
+| dotInOrder (8 pairs) | 20,938 | 19,955 | 15,068 | 23,864 | 43,398 | 85,600 | 91,006 | 119,912 |
+| sumAlong (8 elements in pairs) | 9,580 | 9,483 | 7,928 | 11,676 | 19,475 | 39,035 | 41,150 | 47,974 |
+| augmentedAddition | 2,885 | 2,962 | 2,961 | 4,894 | 6,694 | 6,888 | 7,385 | 11,779 |
+| augmentedSubtraction | 3,049 | 3,125 | 3,113 | 5,076 | 7,263 | 7,272 | 7,874 | 12,621 |
+| augmentedMultiplication | 2,836 | 2,946 | 3,471 | 5,411 | 7,546 | 7,656 | 8,374 | 14,786 |
+| minimum | 2,692 | 2,703 | 2,739 | 3,714 | 4,454 | 4,505 | 4,696 | 5,969 |
+| minimumNumber | 3,359 | 3,359 | 3,442 | 4,435 | 5,274 | 5,342 | 5,568 | 6,921 |
+| maximum | 2,725 | 2,701 | 2,746 | 3,671 | 4,397 | 4,470 | 4,706 | 5,943 |
+| maximumNumber | 3,444 | 3,363 | 3,412 | 4,461 | 5,232 | 5,324 | 5,595 | 6,889 |
+| minimumMagnitude | 3,570 | 3,533 | 3,604 | 5,263 | 6,400 | 6,575 | 6,886 | 8,671 |
+| minimumMagnitudeNumber | 3,578 | 3,529 | 3,619 | 5,291 | 6,410 | 6,578 | 6,913 | 8,658 |
+| maximumMagnitude | 3,649 | 3,529 | 3,645 | 5,282 | 6,393 | 6,540 | 6,874 | 8,670 |
+| maximumMagnitudeNumber | 3,637 | 3,528 | 3,613 | 5,345 | 6,401 | 6,592 | 6,954 | 8,665 |
+| getPayload | 2,084 | 2,423 | 2,464 | 2,866 | 4,813 | 4,905 | 5,358 | 6,667 |
+| setPayload | 3,578 | 4,211 | 4,245 | 5,369 | 8,473 | 8,714 | 9,592 | 12,353 |
+| setPayloadSignaling | 2,902 | 3,256 | 3,265 | 4,152 | 6,515 | 6,723 | 7,305 | 9,859 |
+| exp2 | 175,591 | 194,883 | 259,054 | 385,660 | 757,712 | 2,596,756 | 396,166,853 | 4,836,456,561 |
+| exp2m1 | 178,028 | 194,869 | 258,581 | 383,398 | 767,204 | 2,458,326 | 320,515,423 | 4,862,465,477 |
+| exp10 | 561,615 | 273,771 | 384,711 | 586,561 | 1,032,674 | 2,644,036 | 1,461,354,114 | 17,847,597,445 |
+| exp10m1 | 563,127 | 272,507 | 385,481 | 587,311 | 1,071,510 | 2,599,190 | 1,539,562,740 | 17,817,850,219 |
+| log2 | 134,006 | 187,551 | 302,181 | 635,229 | 1,938,648 | 11,165,616 | 511,576,295 | 17,245,575,683 |
+| log10 | 158,255 | 220,310 | 341,288 | 673,518 | 2,069,717 | 11,887,469 | 524,267,898 | 17,209,480,166 |
+| log2p1 | 125,239 | 184,042 | 303,438 | 614,304 | 1,914,465 | 11,842,138 | 501,503,256 | 17,246,791,181 |
+| log10p1 | 154,159 | 218,072 | 341,521 | 671,976 | 2,129,958 | 11,293,455 | 499,179,969 | 17,697,091,191 |
+| sin | 208,879 | 254,352 | 348,654 | 753,620 | 143,298 | 412,146 | 1,672,599,557 | 49,014,690,964 |
+| cos | 207,098 | 253,784 | 351,289 | 786,041 | 131,321 | 383,093 | 1,698,456,621 | 48,945,301,545 |
+| tan | 891,784 | 1,023,198 | 1,303,145 | 2,682,014 | 981,087 | 3,044,843 | 5,334,717,120 | n/a |
+| sinPi | 821,773 | 1,210,494 | 1,371,960 | 3,603,405 | 6,290,279 | 781,457 | 1,681,862,909 | 48,708,838,893 |
+| cosPi | 827,725 | 1,224,162 | 1,387,812 | 3,634,752 | 6,362,841 | 761,027 | 1,666,615,108 | 48,887,853,357 |
+| tanPi | 1,787,324 | 3,687,835 | 4,218,592 | 11,455,109 | 20,419,914 | 4,088,163 | 5,252,553,436 | n/a |
+| asin | 311,999 | 314,580 | 425,735 | 793,135 | 2,284,284 | 11,922,090 | 427,695,077 | 88,604,222,481 |
+| acos | 372,170 | 413,894 | 536,373 | 938,385 | 2,530,288 | 13,067,815 | 447,387,180 | 90,115,636,504 |
+| atan | 111,516 | 142,882 | 198,074 | 349,741 | 630,390 | 3,126,504 | 208,599,968 | 6,913,590,783 |
+| asinPi | 382,760 | 425,344 | 544,983 | 929,864 | 2,482,259 | 12,337,549 | 424,916,062 | 94,443,756,685 |
+| acosPi | 467,852 | 512,728 | 643,105 | 1,068,626 | 2,716,860 | 12,694,906 | 443,106,251 | 93,081,585,062 |
+| atanPi | 203,372 | 238,828 | 303,205 | 489,323 | 824,189 | 3,415,071 | 213,432,129 | 6,994,471,986 |
+| sinh | 112,541 | 73,131 | 106,833 | 191,413 | 329,158 | 1,002,341 | 179,115,016 | 2,566,238,494 |
+| cosh | 87,005 | 70,630 | 104,955 | 184,740 | 321,294 | 995,176 | 181,422,009 | 2,586,744,393 |
+| tanh | 57,193 | 96,395 | 194,848 | 619,953 | 1,223,992 | 3,245,974 | 4,148,727,872 | 58,737,037,665 |
+| asinh | 474,268 | 570,206 | 818,983 | 1,617,775 | 4,854,022 | 26,637,298 | 1,096,952,013 | 35,408,483,109 |
+| acosh | 519,802 | 623,594 | 906,707 | 1,687,251 | 5,230,060 | 27,362,048 | 1,061,313,255 | 35,705,515,929 |
+| atanh | 431,218 | 503,999 | 741,547 | 1,509,251 | 4,716,302 | 26,439,971 | 1,052,678,199 | 38,650,553,765 |
+| atan2 | 963,015 | 1,041,320 | 1,296,979 | 2,111,049 | 5,580,843 | 24,996,478 | 619,835,971 | 20,558,370,129 |
+| atan2Pi | 1,053,262 | 1,138,260 | 1,404,222 | 2,264,485 | 5,764,802 | 25,287,303 | 634,886,372 | 20,837,060,559 |
+| powr | 259,816 | 288,887 | 445,289 | 875,717 | 2,532,526 | 13,132,621 | 1,958,447,561 | 26,476,474,516 |
+| compound | 193,165 | 256,456 | 392,790 | 804,541 | 2,436,634 | 13,470,994 | 587,730,011 | 20,200,255,236 |
+| exp | 48,656 | 27,908 | 35,752 | 42,952 | 54,653 | 87,544 | 478,438 | 3,222,048 |
+| expm1 | 70,723 | 32,909 | 37,928 | 45,616 | 56,502 | 78,430 | 578,333 | 3,271,048 |
+| log | 10,394 | 11,983 | 23,277 | 43,190 | 54,888 | 513,769 | 1,406,912 | 7,702,281 |
+| logp1 | 10,423 | 12,219 | 23,282 | 43,824 | 55,340 | 197,800 | 1,317,392 | 7,048,006 |
+| pow | 30,923 | 47,641 | 80,876 | 109,178 | 139,356 | 204,526 | 2,020,761 | 14,456,510 |
+| rSqrt | 4,592 | 4,713 | 5,550 | 8,300 | 10,597 | 20,941 | 45,616 | 86,005 |
+| hypot | 4,915 | 5,117 | 5,222 | 8,157 | 9,645 | 19,434 | 43,258 | 62,792 |
+| pown | 3,356 | 4,218 | 4,245 | 5,936 | 6,812 | 12,935 | 64,257 | 76,207 |
+| rootn | 10,783 | 11,963 | 15,372 | 20,882 | 33,488 | 60,163 | 287,808 | 6,550,968 |
 
 ## Binary formats, kernel as written (microseconds)
 
 | operation | e4f3 | binary16 | binary32 | binary64 | binary128 | binary256 | binary1024 | binary4096 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| roundToIntegralTiesToEven | 3,279 | 3,296 | 3,673 | 6,078 | 6,353 | 10,482 | 42,781 | 245,501 |
-| roundToIntegralTiesToAway | 3,384 | 3,361 | 3,763 | 4,573 | 6,421 | 10,359 | 36,826 | 204,810 |
-| roundToIntegralTowardZero | 1,854 | 1,825 | 1,884 | 2,610 | 1,920 | 1,848 | 1,792 | 1,672 |
-| roundToIntegralTowardPositive | 1,956 | 1,949 | 1,928 | 3,141 | 1,979 | 1,951 | 1,954 | 1,833 |
-| roundToIntegralTowardNegative | 1,977 | 1,944 | 2,057 | 2,012 | 2,081 | 2,041 | 1,953 | 3,121 |
-| roundToIntegralExact | 3,216 | 3,364 | 3,888 | 4,502 | 6,502 | 10,417 | 37,496 | 293,320 |
-| nextUp | 692 | 710 | 711 | 660 | 750 | 654 | 673 | 474 |
-| nextDown | 665 | 653 | 655 | 601 | 691 | 625 | 632 | 419 |
-| remainder | 3,695 | 3,904 | 4,541 | 5,714 | 8,642 | 13,887 | 50,608 | 234,471 |
-| scaleB | 2,627 | 3,008 | 3,276 | 4,630 | 7,001 | 13,082 | 49,440 | 264,837 |
-| logB | 2,213 | 2,294 | 2,446 | 2,680 | 3,406 | 4,652 | 12,055 | 54,118 |
-| addition | 3,805 | 4,032 | 3,663 | 3,264 | 4,629 | 3,530 | 10,713 | 37,657 |
-| subtraction | 3,924 | 4,270 | 3,918 | 3,432 | 4,239 | 4,188 | 12,436 | 53,724 |
-| multiplication | 3,520 | 3,759 | 3,558 | 2,949 | 6,238 | 6,366 | 25,755 | 106,010 |
-| division | 4,354 | 6,197 | 5,093 | 12,852 | 18,588 | 2,581 | 2,508 | 2,341 |
-| squareRoot | 182,502 | 5,652 | 5,334 | 13,131 | 105,496 | 19,381 | 78,101 | 363,187 |
-| fusedMultiplyAdd | 2,523 | 5,082 | 4,580 | 5,620 | 11,823 | 5,723 | 17,655 | 85,462 |
-| formatOfAddition | 4,475 | 4,458 | 4,805 | 6,785 | 9,603 | 15,828 | 90,174 | 363,262 |
-| formatOfSubtraction | 4,656 | 4,570 | 5,010 | 7,172 | 10,830 | 19,991 | 83,453 | 419,104 |
-| formatOfMultiplication | 4,256 | 3,865 | 5,319 | 9,618 | 17,765 | 33,497 | 175,352 | 722,753 |
-| formatOfDivision | 2,926 | 2,863 | 3,179 | 4,242 | 5,198 | 8,011 | 26,697 | 114,784 |
-| formatOfFusedMultiplyAdd | 4,476 | 5,411 | 6,922 | 10,500 | 16,150 | 30,755 | 177,582 | 687,778 |
-| convertFromInt | 2,505 | 2,734 | 3,542 | 4,760 | 6,643 | 10,082 | 35,715 | 586,061 |
-| convertToIntegerTiesToEven | 822 | 819 | 870 | 805 | 807 | 820 | 837 | 596 |
-| convertToIntegerExactTiesToEven | 1,143 | 1,056 | 1,132 | 1,034 | 1,092 | 1,187 | 1,043 | 852 |
-| convertToIntegerTiesToAway | 692 | 678 | 724 | 641 | 687 | 720 | 672 | 492 |
-| convertToIntegerExactTiesToAway | 947 | 895 | 1,266 | 841 | 883 | 936 | 897 | 706 |
-| convertToIntegerTowardZero | 628 | 632 | 643 | 575 | 614 | 652 | 620 | 447 |
-| convertToIntegerExactTowardZero | 860 | 856 | 885 | 790 | 863 | 896 | 1,307 | 700 |
-| convertToIntegerTowardPositive | 656 | 657 | 667 | 610 | 672 | 666 | 683 | 496 |
-| convertToIntegerExactTowardPositive | 899 | 907 | 911 | 849 | 906 | 920 | 1,629 | 719 |
-| convertToIntegerTowardNegative | 684 | 701 | 706 | 648 | 692 | 699 | 703 | 970 |
-| convertToIntegerExactTowardNegative | 897 | 936 | 935 | 877 | 890 | 901 | 995 | 726 |
-| convertFormat | 3,267 | 3,477 | 613 | 5,128 | 10,190 | 21,266 | 110,790 | 404,508 |
-| convertToDecimalCharacter | 10,098 | 15,892 | 25,972 | 62,158 | 170,330 | 547,024 | n/a | n/a |
-| convertFromDecimalCharacter | 20,435 | 21,145 | 31,074 | 66,817 | 176,762 | 584,943 | n/a | n/a |
-| convertToHexCharacter | 10,454 | 17,410 | 26,605 | 58,010 | 154,762 | 506,125 | n/a | n/a |
-| convertFromHexCharacter | 16,457 | 24,359 | 35,299 | 71,899 | 170,332 | 537,301 | n/a | n/a |
-| copy | < 1 | < 1 | 1.4 | < 1 | 10 | < 1 | < 1 | < 1 |
-| negate | 274 | 584 | 265 | 372 | 313 | 222 | 218 | 22 |
-| abs | 436 | 430 | 428 | 360 | 490 | 394 | 392 | 191 |
-| copySign | 684 | 663 | 656 | 597 | 736 | 578 | 605 | 388 |
-| compareQuietEqual | 1,716 | 2,777 | 1,810 | 2,071 | 2,721 | 3,724 | 11,254 | 52,335 |
-| compareSignalingEqual | 1,692 | 2,744 | 1,805 | 2,205 | 2,822 | 3,816 | 11,756 | 50,663 |
-| compareQuietNotEqual | 1,656 | 1,658 | 1,760 | 2,114 | 2,665 | 3,779 | 12,197 | 50,932 |
-| compareSignalingNotEqual | 1,688 | 1,682 | 1,768 | 1,994 | 2,785 | 3,830 | 12,512 | 57,305 |
-| compareQuietGreater | 1,626 | 1,734 | 1,784 | 1,944 | 2,780 | 3,844 | 13,555 | 51,080 |
-| compareSignalingGreater | 1,747 | 1,838 | 1,799 | 1,918 | 2,770 | 3,821 | 12,370 | 48,296 |
-| compareQuietGreaterEqual | 2,034 | 1,941 | 1,895 | 2,158 | 2,850 | 3,999 | 11,380 | 52,872 |
-| compareSignalingGreaterEqual | 1,839 | 1,827 | 1,878 | 2,094 | 2,729 | 3,970 | 12,644 | 49,475 |
-| compareQuietLess | 1,644 | 1,750 | 1,827 | 2,034 | 2,702 | 3,826 | 12,520 | 48,253 |
-| compareSignalingLess | 1,647 | 1,706 | 1,852 | 2,132 | 2,712 | 3,674 | 12,453 | 52,901 |
-| compareQuietLessEqual | 1,691 | 1,692 | 1,867 | 2,140 | 2,758 | 3,750 | 11,919 | 54,397 |
-| compareSignalingLessEqual | 1,682 | 1,693 | 1,900 | 2,043 | 2,725 | 3,793 | 12,451 | 49,282 |
-| compareQuietUnordered | 511 | 518 | 525 | 458 | 572 | 474 | 476 | 294 |
-| compareQuietOrdered | 532 | 528 | 627 | 526 | 601 | 479 | 501 | 276 |
-| compareQuietLessUnordered | 1,662 | 1,758 | 2,024 | 2,084 | 2,796 | 3,742 | 11,781 | 48,095 |
-| compareSignalingLessUnordered | 1,706 | 1,728 | 2,060 | 2,138 | 2,884 | 3,872 | 12,155 | 48,459 |
-| compareQuietNotGreater | 1,631 | 1,698 | 2,005 | 2,143 | 2,742 | 3,921 | 19,442 | 57,134 |
-| compareSignalingNotGreater | 1,622 | 1,700 | 1,940 | 2,460 | 3,141 | 3,883 | 14,039 | 48,442 |
-| compareQuietNotLess | 1,697 | 1,731 | 1,971 | 2,749 | 2,777 | 3,835 | 12,048 | 51,312 |
-| compareSignalingNotLess | 1,681 | 1,714 | 1,937 | 2,714 | 2,797 | 3,865 | 14,182 | 48,330 |
-| compareQuietGreaterUnordered | 1,815 | 1,772 | 1,953 | 2,697 | 2,803 | 3,828 | 13,599 | 51,566 |
-| compareSignalingGreaterUnordered | 1,691 | 1,727 | 1,902 | 2,654 | 2,756 | 3,865 | 19,245 | 52,498 |
-| class | 432 | 438 | 452 | 587 | 460 | 435 | 432 | 358 |
-| isSignMinus | 119 | 136 | 128 | 198 | 145 | 127 | 121 | < 1 |
-| isNormal | 126 | 136 | 147 | 245 | 139 | 129 | 131 | < 1 |
-| isFinite | 115 | 118 | 124 | 181 | 120 | 110 | 120 | < 1 |
-| isZero | 127 | 137 | 143 | 167 | 150 | 121 | 135 | < 1 |
-| isSubnormal | 97 | 105 | 104 | 152 | 104 | 100 | 97 | < 1 |
-| isInfinite | 111 | 119 | 129 | 156 | 138 | 113 | 108 | < 1 |
-| isNaN | 111 | 128 | 126 | 178 | 132 | 120 | 116 | < 1 |
-| isSignaling | 123 | 127 | 133 | 158 | 126 | 126 | 120 | < 1 |
+| roundToIntegralTiesToEven | 3,176 | 3,448 | 3,560 | 4,472 | 6,534 | 13,054 | 38,400 | 243,556 |
+| roundToIntegralTiesToAway | 3,396 | 3,667 | 3,719 | 4,974 | 6,746 | 10,696 | 38,728 | 170,826 |
+| roundToIntegralTowardZero | 1,872 | 1,945 | 1,806 | 1,963 | 1,945 | 1,908 | 3,134 | 2,092 |
+| roundToIntegralTowardPositive | 1,971 | 2,166 | 2,121 | 2,102 | 2,060 | 1,978 | 2,067 | 1,993 |
+| roundToIntegralTowardNegative | 1,988 | 2,156 | 2,085 | 2,150 | 2,133 | 1,988 | 1,994 | 2,010 |
+| roundToIntegralExact | 3,249 | 3,842 | 4,075 | 4,942 | 6,722 | 11,600 | 39,871 | 302,972 |
+| nextUp | 710 | 712 | 732 | 742 | 742 | 689 | 1,259 | 670 |
+| nextDown | 692 | 684 | 687 | 691 | 713 | 637 | 1,200 | 629 |
+| remainder | 3,843 | 4,412 | 4,852 | 6,194 | 9,234 | 15,374 | 56,445 | 234,836 |
+| scaleB | 2,646 | 3,158 | 3,580 | 4,651 | 8,063 | 12,634 | 56,806 | 255,175 |
+| logB | 2,499 | 2,518 | 2,614 | 2,886 | 3,664 | 4,934 | 21,633 | 54,749 |
+| addition | 4,297 | 4,568 | 3,970 | 3,431 | 4,937 | 4,040 | 10,917 | 39,338 |
+| subtraction | 4,218 | 5,031 | 4,260 | 3,732 | 4,693 | 4,987 | 22,144 | 54,469 |
+| multiplication | 3,748 | 4,391 | 3,872 | 2,876 | 7,915 | 12,543 | 34,408 | 112,436 |
+| division | 4,444 | 7,538 | 5,200 | 13,011 | 21,475 | 2,959 | 4,193 | 3,573 |
+| squareRoot | 196,122 | 6,800 | 5,581 | 9,370 | 124,376 | 24,646 | 115,984 | 333,121 |
+| fusedMultiplyAdd | 2,674 | 5,740 | 5,055 | 5,237 | 13,189 | 7,045 | 32,871 | 90,025 |
+| formatOfAddition | 4,884 | 5,550 | 5,488 | 6,785 | 10,628 | 20,308 | 121,630 | 362,831 |
+| formatOfSubtraction | 4,981 | 5,769 | 5,290 | 6,823 | 12,744 | 24,280 | 126,264 | 461,262 |
+| formatOfMultiplication | 4,264 | 4,932 | 5,830 | 9,173 | 19,717 | 44,931 | 166,537 | 767,543 |
+| formatOfDivision | 2,987 | 3,485 | 3,032 | 3,131 | 3,336 | 3,687 | 3,155 | 3,214 |
+| formatOfFusedMultiplyAdd | 4,818 | 6,005 | 7,182 | 9,938 | 18,045 | 35,599 | 232,848 | 707,685 |
+| convertFromInt | 2,651 | 3,020 | 3,730 | 5,130 | 6,766 | 11,495 | 63,268 | 601,216 |
+| convertToIntegerTiesToEven | 856 | 871 | 857 | 843 | 864 | 841 | 934 | 816 |
+| convertToIntegerExactTiesToEven | 1,086 | 1,138 | 1,155 | 1,130 | 1,135 | 1,087 | 1,857 | 1,043 |
+| convertToIntegerTiesToAway | 680 | 729 | 693 | 736 | 781 | 736 | 1,120 | 1,321 |
+| convertToIntegerExactTiesToAway | 934 | 956 | 1,026 | 1,045 | 1,123 | 979 | 957 | 909 |
+| convertToIntegerTowardZero | 678 | 662 | 671 | 666 | 681 | 687 | 660 | 666 |
+| convertToIntegerExactTowardZero | 926 | 913 | 918 | 912 | 1,104 | 952 | 1,656 | 900 |
+| convertToIntegerTowardPositive | 704 | 686 | 707 | 694 | 782 | 813 | 1,300 | 686 |
+| convertToIntegerExactTowardPositive | 926 | 1,000 | 951 | 938 | 980 | 1,078 | 906 | 924 |
+| convertToIntegerTowardNegative | 708 | 698 | 805 | 693 | 760 | 804 | 702 | 653 |
+| convertToIntegerExactTowardNegative | 949 | 967 | 952 | 975 | 978 | 1,138 | 1,010 | 916 |
+| convertFormat | 3,556 | 3,780 | 771 | 5,661 | 11,159 | 21,843 | 139,582 | 433,142 |
+| convertToDecimalCharacter | 10,358 | 16,751 | 27,511 | 63,609 | 166,049 | 565,438 | 21,194,002 | n/a |
+| convertFromDecimalCharacter | 14,348 | 21,497 | 34,641 | 69,790 | 178,177 | 571,948 | 18,857,820 | n/a |
+| convertToHexCharacter | 10,650 | 19,400 | 31,752 | 59,878 | 154,832 | 508,683 | 16,128,118 | n/a |
+| convertFromHexCharacter | 20,362 | 25,550 | 39,957 | 70,354 | 174,857 | 553,308 | 19,401,026 | n/a |
+| copy | < 1 | < 1 | 7.9 | < 1 | 43 | 6.4 | 131 | 136 |
+| negate | 272 | 253 | 282 | 278 | 335 | 230 | 478 | 204 |
+| abs | 504 | 433 | 478 | 425 | 510 | 424 | 660 | 395 |
+| copySign | 708 | 658 | 702 | 657 | 811 | 596 | 916 | 999 |
+| compareQuietEqual | 1,710 | 1,757 | 1,928 | 2,048 | 2,846 | 5,495 | 18,397 | 87,869 |
+| compareSignalingEqual | 1,700 | 1,749 | 1,911 | 2,499 | 2,927 | 3,948 | 19,301 | 54,344 |
+| compareQuietNotEqual | 1,754 | 1,784 | 2,010 | 2,141 | 2,940 | 4,014 | 13,950 | 54,253 |
+| compareSignalingNotEqual | 1,771 | 1,815 | 2,029 | 2,155 | 3,164 | 3,992 | 19,062 | 54,651 |
+| compareQuietGreater | 1,762 | 1,835 | 2,095 | 2,498 | 3,276 | 4,138 | 12,855 | 55,228 |
+| compareSignalingGreater | 1,751 | 1,754 | 2,069 | 2,125 | 2,890 | 3,935 | 12,817 | 51,299 |
+| compareQuietGreaterEqual | 1,774 | 1,859 | 2,048 | 2,187 | 2,991 | 4,090 | 20,683 | 53,699 |
+| compareSignalingGreaterEqual | 1,777 | 1,851 | 2,088 | 2,269 | 3,037 | 3,965 | 22,059 | 53,382 |
+| compareQuietLess | 1,728 | 1,810 | 2,090 | 2,233 | 3,114 | 3,905 | 13,690 | 61,838 |
+| compareSignalingLess | 1,760 | 1,810 | 2,027 | 2,407 | 3,110 | 3,927 | 20,976 | 81,998 |
+| compareQuietLessEqual | 1,783 | 1,812 | 2,106 | 2,247 | 3,019 | 3,936 | 21,065 | 54,264 |
+| compareSignalingLessEqual | 1,802 | 1,813 | 2,072 | 2,085 | 3,032 | 3,903 | 20,589 | 52,548 |
+| compareQuietUnordered | 544 | 502 | 536 | 528 | 686 | 483 | 454 | 457 |
+| compareQuietOrdered | 542 | 503 | 551 | 550 | 601 | 489 | 787 | 492 |
+| compareQuietLessUnordered | 1,782 | 1,815 | 2,086 | 2,287 | 3,184 | 3,913 | 21,154 | 69,845 |
+| compareSignalingLessUnordered | 1,759 | 1,845 | 1,992 | 2,218 | 3,068 | 4,136 | 13,500 | 53,639 |
+| compareQuietNotGreater | 1,753 | 1,776 | 1,964 | 2,382 | 2,952 | 3,884 | 13,527 | 57,108 |
+| compareSignalingNotGreater | 1,742 | 1,803 | 1,975 | 2,307 | 2,921 | 3,902 | 13,870 | 58,248 |
+| compareQuietNotLess | 1,696 | 1,728 | 1,991 | 2,161 | 2,967 | 3,958 | 22,046 | 73,903 |
+| compareSignalingNotLess | 1,704 | 1,750 | 1,921 | 2,113 | 2,898 | 3,942 | 13,905 | 54,026 |
+| compareQuietGreaterUnordered | 1,821 | 1,867 | 1,960 | 2,636 | 3,002 | 4,141 | 22,657 | 54,167 |
+| compareSignalingGreaterUnordered | 1,766 | 1,859 | 1,924 | 2,159 | 3,042 | 4,191 | 21,160 | 52,183 |
+| class | 469 | 444 | 450 | 457 | 506 | 550 | 790 | 417 |
+| isSignMinus | 142 | 136 | 162 | 119 | 163 | 158 | 334 | 113 |
+| isNormal | 132 | 124 | 143 | 125 | 144 | 159 | 430 | 411 |
+| isFinite | 114 | 99 | 121 | 165 | 139 | 124 | 118 | 343 |
+| isZero | 129 | 100 | 160 | 109 | 116 | 120 | 115 | 140 |
+| isSubnormal | 93 | 88 | 108 | 105 | 113 | 100 | 89 | 88 |
+| isInfinite | 121 | 100 | 125 | 133 | 143 | 125 | 84 | 104 |
+| isNaN | 131 | 113 | 140 | 116 | 131 | 121 | 93 | 126 |
+| isSignaling | 119 | 128 | 128 | 124 | 135 | 128 | 252 | 127 |
 | isCanonical | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 |
 | radix | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 |
-| totalOrder | 1,400 | 1,452 | 1,572 | 2,239 | 2,455 | 3,469 | 12,578 | 58,606 |
-| totalOrderMag | 1,520 | 1,592 | 1,888 | 2,777 | 3,712 | 6,017 | 25,432 | 103,566 |
-| sum | 8,149 | 8,638 | 8,944 | 12,877 | 13,788 | 18,844 | 67,797 | 559,472 |
-| dot | 10,589 | 10,836 | 12,340 | 17,695 | 23,369 | 37,231 | 135,737 | 606,254 |
-| sumSquare | 15,526 | 16,754 | 17,617 | 21,018 | 30,048 | 45,793 | 173,662 | 1,389,676 |
-| sumAbs | 13,157 | 13,964 | 14,469 | 16,228 | 19,335 | 24,471 | 69,569 | 242,764 |
-| scaledProd | 10,276 | 8,834 | 11,360 | 16,748 | 32,295 | 61,147 | 262,238 | 1,190,408 |
-| scaledProdSum | 10,439 | 11,790 | 13,373 | 16,014 | 24,193 | 35,362 | 120,088 | 1,221,885 |
-| scaledProdDiff | 10,829 | 11,771 | 13,343 | 16,247 | 25,705 | 43,814 | 167,267 | 1,201,634 |
-| sumInOrder | 8,370 | 10,213 | 10,363 | 11,087 | 14,414 | 12,970 | 37,489 | 447,906 |
-| sumAbsInOrder | 9,383 | 10,524 | 11,181 | 11,506 | 15,468 | 14,296 | 43,295 | 195,232 |
-| sumSquareInOrder | 15,226 | 18,356 | 19,747 | 19,074 | 36,228 | 36,024 | 137,261 | n/a |
-| dotInOrder | 17,078 | 20,788 | 22,690 | 21,764 | 39,408 | 38,167 | 131,231 | 2,937,317 |
-| sumAlong | 6,920 | 8,166 | 8,311 | 8,818 | 10,759 | 9,126 | 25,202 | 95,548 |
-| augmentedAddition | 6,954 | 7,335 | 8,560 | 10,917 | 17,526 | 29,101 | 129,711 | 611,409 |
-| augmentedSubtraction | 6,151 | 7,371 | 8,728 | 9,063 | 13,498 | 22,988 | 84,825 | 594,008 |
-| augmentedMultiplication | 6,376 | 8,508 | 10,607 | 15,836 | 23,346 | 40,046 | 154,894 | 1,964,745 |
-| minimum | 1,905 | 2,093 | 2,413 | 2,210 | 3,169 | 4,001 | 13,613 | 86,662 |
-| minimumNumber | 1,951 | 2,132 | 2,300 | 2,240 | 3,251 | 4,041 | 12,528 | 46,481 |
-| maximum | 1,911 | 2,097 | 2,175 | 2,283 | 3,083 | 4,022 | 13,645 | 45,766 |
-| maximumNumber | 1,948 | 2,190 | 2,162 | 2,223 | 3,121 | 4,162 | 12,408 | 55,613 |
-| minimumMagnitude | 2,454 | 2,554 | 2,807 | 3,218 | 4,801 | 7,045 | 25,182 | 384,777 |
-| minimumMagnitudeNumber | 2,426 | 2,597 | 2,841 | 3,201 | 4,793 | 7,075 | 25,016 | 376,459 |
-| maximumMagnitude | 2,520 | 2,690 | 2,874 | 3,270 | 4,843 | 7,071 | 26,288 | 385,200 |
-| maximumMagnitudeNumber | 2,466 | 2,602 | 2,882 | 3,209 | 4,817 | 7,093 | 23,855 | 389,624 |
-| rSqrt | 6,416 | 7,229 | 8,481 | 10,422 | 16,250 | 27,062 | 101,148 | 1,055,524 |
-| hypot | 5,514 | 6,190 | 7,083 | 10,223 | 17,957 | 28,052 | 104,106 | 472,895 |
-| pown | 3,159 | 3,729 | 5,132 | 14,733 | 15,938 | 31,672 | 148,592 | 680,249 |
-| rootn | 4,858 | 5,215 | 6,203 | 12,894 | 11,593 | 18,609 | 73,920 | 284,141 |
-| exp | 12,073 | 12,632 | 14,438 | 25,696 | 23,198 | 32,979 | 175,897 | 1,648,690 |
-| expm1 | 12,518 | 13,125 | 15,239 | 29,493 | 26,016 | 39,474 | 236,079 | 1,439,490 |
-| log | 64,980 | 62,933 | 59,736 | 76,812 | 75,949 | 121,464 | 560,086 | 2,478,064 |
-| logp1 | 58,333 | 63,179 | 60,902 | 73,655 | 56,360 | 83,540 | 288,449 | 1,759,893 |
-| exp2 | 27,363 | 27,806 | 33,107 | 68,842 | 69,157 | 119,169 | 689,190 | n/a |
-| exp2m1 | 26,708 | 27,793 | 34,417 | 50,773 | 68,167 | 119,655 | 698,746 | n/a |
-| exp10 | 27,200 | 30,621 | 33,334 | 47,422 | 70,744 | 122,622 | 751,458 | n/a |
-| exp10m1 | 28,794 | 30,244 | 33,047 | 50,017 | 71,076 | 121,670 | 720,661 | n/a |
-| sin | 13,479 | 14,084 | 15,036 | 19,983 | 25,350 | 35,986 | 164,815 | 1,553,920 |
-| cos | 13,242 | 13,355 | 15,266 | 20,090 | 24,174 | 35,953 | 162,425 | 1,560,554 |
-| tan | 16,691 | 17,693 | 18,953 | 31,531 | 33,475 | 52,869 | 429,053 | n/a |
-| sinPi | 19,660 | 21,400 | 26,116 | 40,242 | 76,406 | 127,618 | 724,798 | n/a |
-| cosPi | 14,660 | 21,668 | 23,988 | 24,704 | 25,246 | 35,961 | 156,796 | 1,484,513 |
-| tanPi | 20,119 | 31,868 | 39,459 | 49,889 | 109,805 | 225,824 | 2,403,469 | n/a |
-| atan | 18,040 | 18,955 | 19,475 | 24,429 | 34,857 | 68,772 | 703,632 | n/a |
-| atanPi | 19,120 | 19,443 | 20,791 | 29,837 | 37,056 | 69,944 | 761,778 | n/a |
-| sinh | 18,695 | 19,464 | 21,166 | 30,194 | 36,551 | 63,519 | 373,021 | n/a |
-| cosh | 19,124 | 19,997 | 21,341 | 30,189 | 37,638 | 66,108 | 352,027 | n/a |
-| tanh | 15,244 | 15,700 | 17,479 | 24,204 | 30,414 | 57,676 | 593,334 | n/a |
-| asinh | 41,232 | 44,632 | 51,436 | 75,070 | 112,212 | 221,074 | 1,922,652 | n/a |
-| log2 | 27,968 | 30,848 | 38,785 | 89,251 | 207,287 | 412,949 | 3,737,582 | n/a |
-| log10 | 28,625 | 32,073 | 37,109 | 94,688 | 213,243 | 409,812 | 3,746,999 | n/a |
-| log2p1 | 28,512 | 33,129 | 37,226 | 53,589 | 75,104 | 143,339 | 1,277,617 | n/a |
-| log10p1 | 28,392 | 33,280 | 39,010 | 55,135 | 74,632 | 149,424 | 1,284,952 | n/a |
-| acosh | 38,016 | 46,626 | 54,354 | 100,607 | 316,570 | 722,866 | n/a | n/a |
-| asin | 30,533 | 34,340 | 38,169 | 51,150 | 60,637 | 132,682 | 1,345,052 | n/a |
-| acos | 33,259 | 35,671 | 40,557 | 58,334 | 67,694 | 147,921 | 1,378,274 | n/a |
-| asinPi | 33,024 | 36,609 | 41,004 | 49,354 | 68,445 | 151,806 | 1,352,615 | n/a |
-| acosPi | 34,571 | 38,780 | 40,774 | 51,418 | 69,499 | 154,731 | 1,407,022 | n/a |
-| atanh | 42,019 | 48,130 | 54,018 | 66,872 | 105,261 | 225,130 | 1,814,012 | n/a |
-| atan2 | 36,631 | 39,312 | 41,591 | 46,932 | 62,456 | 259,712 | 3,166,906 | n/a |
-| atan2Pi | 39,186 | 41,094 | 43,392 | 48,708 | 66,947 | 263,907 | 3,252,271 | n/a |
-| powr | 37,026 | 40,235 | 47,606 | 60,277 | 134,472 | 269,882 | 2,206,166 | n/a |
-| compound | 38,289 | 44,974 | 49,041 | 66,124 | 112,378 | 207,155 | 1,804,653 | n/a |
-| setPayload | 3,187 | 3,373 | 4,240 | 4,801 | 6,983 | 13,093 | 43,251 | 201,407 |
-| setPayloadSignaling | 3,162 | 3,443 | 4,522 | 4,637 | 6,792 | 11,986 | 49,730 | 212,634 |
-| getPayload | 2,331 | 2,759 | 3,478 | 4,403 | 7,000 | 12,734 | 50,742 | 246,360 |
+| totalOrder | 1,655 | 1,438 | 1,837 | 1,883 | 2,578 | 3,566 | 13,592 | 58,862 |
+| totalOrderMag | 1,552 | 1,704 | 2,178 | 2,297 | 3,937 | 6,121 | 42,563 | 113,773 |
+| sum | 8,253 | 10,504 | 9,764 | 10,458 | 14,310 | 20,638 | 88,964 | 583,488 |
+| dot | 10,942 | 12,932 | 13,260 | 16,000 | 23,916 | 42,224 | 145,923 | 583,965 |
+| sumSquare | 16,954 | 19,237 | 18,890 | 21,718 | 30,874 | 49,842 | 186,400 | 1,367,066 |
+| sumAbs | 14,136 | 14,906 | 16,450 | 15,543 | 20,118 | 25,443 | 64,280 | 238,208 |
+| scaledProd | 9,222 | 9,678 | 12,388 | 16,796 | 32,820 | 63,774 | 266,458 | 1,157,070 |
+| scaledProdSum | 11,567 | 12,473 | 14,589 | 16,530 | 24,150 | 36,920 | 121,707 | 1,231,676 |
+| scaledProdDiff | 11,749 | 13,053 | 14,285 | 16,880 | 26,777 | 46,539 | 154,810 | 1,231,636 |
+| sumInOrder | 9,156 | 11,159 | 11,374 | 12,045 | 15,471 | 13,515 | 64,412 | 448,599 |
+| sumAbsInOrder | 10,278 | 12,148 | 12,030 | 12,869 | 16,058 | 14,419 | 59,428 | 202,468 |
+| sumSquareInOrder | 16,328 | 21,108 | 21,258 | 20,922 | 37,969 | 38,717 | 128,891 | 5,944,372 |
+| dotInOrder | 18,373 | 23,949 | 23,794 | 23,089 | 41,407 | 39,361 | 199,052 | 3,016,519 |
+| sumAlong | 7,523 | 9,087 | 8,643 | 9,025 | 11,775 | 10,038 | 26,520 | 153,178 |
+| augmentedAddition | 7,412 | 8,293 | 9,192 | 10,828 | 18,313 | 30,931 | 136,583 | 597,508 |
+| augmentedSubtraction | 6,723 | 8,220 | 8,952 | 9,440 | 14,998 | 23,760 | 98,330 | 573,052 |
+| augmentedMultiplication | 7,124 | 9,539 | 10,612 | 15,431 | 25,933 | 41,790 | 207,605 | 2,016,418 |
+| minimum | 2,021 | 2,091 | 2,164 | 2,511 | 3,221 | 4,192 | 12,715 | 55,420 |
+| minimumNumber | 2,038 | 2,225 | 2,166 | 2,470 | 3,278 | 4,372 | 13,364 | 55,607 |
+| maximum | 1,979 | 2,092 | 2,095 | 2,466 | 3,960 | 4,079 | 19,032 | 53,127 |
+| maximumNumber | 2,071 | 2,149 | 2,114 | 2,455 | 3,467 | 4,362 | 14,893 | 87,595 |
+| minimumMagnitude | 2,623 | 2,804 | 2,854 | 3,495 | 6,080 | 7,720 | 25,172 | 425,014 |
+| minimumMagnitudeNumber | 2,708 | 2,940 | 2,980 | 3,488 | 5,198 | 7,879 | 40,701 | 405,136 |
+| maximumMagnitude | 2,662 | 2,909 | 3,019 | 3,499 | 5,203 | 7,576 | 41,387 | 381,226 |
+| maximumMagnitudeNumber | 2,601 | 2,720 | 3,085 | 3,620 | 5,171 | 7,922 | 25,917 | 367,873 |
+| rSqrt | 7,451 | 8,354 | 8,369 | 11,114 | 15,213 | 22,604 | 82,453 | 1,002,584 |
+| hypot | 6,034 | 6,883 | 7,512 | 11,668 | 18,762 | 28,996 | 114,561 | 509,808 |
+| pown | 3,251 | 3,264 | 3,186 | 3,358 | 3,513 | 3,457 | 6,173 | 6,109 |
+| rootn | 5,705 | 5,798 | 5,710 | 6,977 | 9,916 | 13,871 | 45,469 | 176,562 |
+| exp | 10,799 | 11,133 | 10,446 | 11,794 | 12,776 | 13,054 | 56,119 | 91,719 |
+| expm1 | 10,411 | 11,296 | 11,118 | 12,100 | 16,078 | 19,533 | 62,343 | 257,722 |
+| log | 64,099 | 63,651 | 63,825 | 45,190 | 63,634 | 100,001 | 464,068 | 1,056,803 |
+| logp1 | 59,002 | 64,096 | 61,347 | 41,569 | 44,994 | 59,712 | 161,055 | 635,093 |
+| exp2 | 25,777 | 26,415 | 30,647 | 37,915 | 59,632 | 109,320 | 656,246 | 11,571,877 |
+| exp2m1 | 25,744 | 26,580 | 29,480 | 38,666 | 61,790 | 101,742 | 649,575 | 11,554,788 |
+| exp10 | 25,612 | 27,228 | 29,224 | 38,945 | 60,331 | 104,760 | 761,121 | 11,144,998 |
+| exp10m1 | 26,175 | 27,311 | 33,809 | 39,231 | 60,554 | 107,574 | 702,220 | 11,557,888 |
+| sin | 11,097 | 10,914 | 10,229 | 11,882 | 14,358 | 19,091 | 82,764 | 1,258,784 |
+| cos | 11,052 | 10,607 | 10,713 | 11,602 | 13,751 | 18,520 | 131,223 | 1,228,347 |
+| tan | 14,176 | 14,780 | 13,748 | 16,878 | 22,084 | 34,522 | 426,255 | 7,899,192 |
+| sinPi | 17,385 | 19,451 | 20,962 | 28,402 | 54,446 | 85,597 | 563,037 | 9,568,112 |
+| cosPi | 13,226 | 18,429 | 19,455 | 16,747 | 22,081 | 27,981 | 113,525 | 1,395,291 |
+| tanPi | 18,674 | 29,815 | 33,864 | 36,591 | 86,482 | 191,055 | 2,480,031 | 56,639,147 |
+| atan | 14,959 | 14,809 | 15,442 | 18,817 | 25,026 | 47,338 | 656,430 | 17,423,010 |
+| atanPi | 17,238 | 17,334 | 17,529 | 20,119 | 29,441 | 52,544 | 651,578 | 17,427,294 |
+| sinh | 17,053 | 16,826 | 16,619 | 18,639 | 26,937 | 42,186 | 269,479 | 4,648,028 |
+| cosh | 17,755 | 17,697 | 16,400 | 19,584 | 27,175 | 46,529 | 300,401 | 4,910,109 |
+| tanh | 12,870 | 12,964 | 12,402 | 14,846 | 20,966 | 38,878 | 545,959 | 13,511,807 |
+| asinh | 42,304 | 43,674 | 47,478 | 64,652 | 109,106 | 205,858 | 1,918,494 | 45,384,198 |
+| log2 | 27,789 | 29,508 | 31,860 | 74,623 | 190,807 | 378,804 | 3,846,842 | 82,817,069 |
+| log10 | 27,193 | 29,682 | 31,784 | 75,247 | 190,376 | 373,455 | 3,728,631 | 81,775,454 |
+| log2p1 | 28,074 | 29,488 | 31,899 | 42,404 | 67,339 | 127,088 | 1,277,786 | 28,395,217 |
+| log10p1 | 27,724 | 29,900 | 31,439 | 42,332 | 66,588 | 131,667 | 1,236,553 | 28,789,425 |
+| acosh | 37,842 | 43,570 | 50,944 | 83,722 | 296,560 | 674,930 | 9,697,164 | 234,779,161 |
+| asin | 28,352 | 30,103 | 34,034 | 38,508 | 53,541 | 116,988 | 1,310,307 | 42,896,927 |
+| acos | 33,303 | 31,800 | 35,671 | 45,227 | 58,676 | 124,326 | 1,382,408 | 43,301,329 |
+| asinPi | 33,375 | 33,618 | 36,442 | 45,988 | 60,094 | 127,547 | 1,353,993 | 41,113,865 |
+| acosPi | 37,721 | 34,210 | 41,136 | 46,344 | 62,549 | 135,168 | 1,361,060 | 43,092,660 |
+| atanh | 45,623 | 46,197 | 51,573 | 61,765 | 102,666 | 186,888 | 2,736,026 | 40,740,841 |
+| atan2 | 39,916 | 35,973 | 38,510 | 42,806 | 53,287 | 217,013 | 3,359,336 | 83,276,755 |
+| atan2Pi | 44,039 | 38,046 | 38,571 | 44,191 | 57,494 | 234,931 | 3,173,154 | 85,229,807 |
+| powr | 41,825 | 37,439 | 42,437 | 54,118 | 125,775 | 245,978 | 2,153,280 | 46,034,741 |
+| compound | 43,913 | 39,438 | 47,478 | 60,326 | 103,391 | 192,511 | 1,784,925 | 38,401,870 |
+| setPayload | 3,394 | 3,358 | 3,702 | 4,490 | 7,541 | 12,406 | 44,755 | 155,624 |
+| setPayloadSignaling | 3,223 | 3,486 | 3,762 | 4,808 | 7,390 | 12,170 | 41,907 | 153,828 |
+| getPayload | 2,571 | 2,737 | 3,833 | 4,523 | 7,630 | 12,614 | 52,288 | 260,380 |
 
 ## Binary formats, kernel with the tagged rules (microseconds)
 
 | operation | e4f3 | binary16 | binary32 | binary64 | binary128 | binary256 | binary1024 | binary4096 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| roundToIntegralTiesToEven | 138 | 140 | 143 | 109 | 195 | 168 | 220 | 260 |
-| roundToIntegralTiesToAway | 135 | 137 | 140 | 164 | 150 | 156 | 357 | 245 |
-| roundToIntegralTowardZero | 134 | 139 | 138 | 220 | 148 | 161 | 417 | 242 |
-| roundToIntegralTowardPositive | 136 | 144 | 140 | 222 | 150 | 246 | 220 | 388 |
-| roundToIntegralTowardNegative | 136 | 139 | 179 | 105 | 166 | 157 | 229 | 244 |
-| roundToIntegralExact | 137 | 143 | 141 | 108 | 155 | 162 | 229 | 252 |
-| nextUp | 818 | 799 | 800 | 796 | 965 | 774 | 768 | 804 |
-| nextDown | 779 | 764 | 758 | 748 | 917 | 734 | 748 | 740 |
-| remainder | 3,654 | 4,093 | 4,684 | 5,888 | 8,794 | 14,465 | 54,080 | 265,641 |
-| scaleB | 180 | 184 | 196 | 157 | 200 | 218 | 263 | 286 |
-| logB | 293 | 299 | 298 | 276 | 303 | 304 | 365 | 301 |
-| addition | 142 | 164 | 152 | 108 | 151 | 158 | 194 | 210 |
-| subtraction | 149 | 137 | 150 | 137 | 148 | 147 | 147 | 156 |
-| multiplication | 117 | 117 | 164 | 146 | 126 | 118 | 128 | 127 |
-| division | 131 | 133 | 129 | 193 | 141 | 142 | 139 | 154 |
-| squareRoot | 149 | 146 | 144 | 125 | 163 | 162 | 291 | 649 |
-| fusedMultiplyAdd | 210 | 181 | 186 | 182 | 295 | 293 | 320 | 345 |
-| formatOfAddition | 4,519 | 4,327 | 5,338 | 6,830 | 9,396 | 15,702 | 78,485 | 370,864 |
-| formatOfSubtraction | 4,544 | 4,586 | 4,782 | 7,101 | 10,786 | 20,129 | 87,385 | 429,034 |
-| formatOfMultiplication | 4,178 | 3,940 | 5,392 | 9,394 | 18,185 | 53,915 | 167,963 | 724,638 |
-| formatOfDivision | 2,849 | 2,876 | 3,138 | 4,299 | 5,204 | 7,922 | 28,746 | 116,254 |
-| formatOfFusedMultiplyAdd | 4,355 | 5,182 | 6,886 | 10,025 | 16,182 | 29,304 | 183,292 | 691,478 |
-| convertFromInt | 2,488 | 2,664 | 3,392 | 4,865 | 6,035 | 11,019 | 39,646 | 169,942 |
-| convertToIntegerTiesToEven | 163 | 154 | 158 | 128 | 161 | 191 | 239 | 159 |
-| convertToIntegerExactTiesToEven | 1,321 | 1,257 | 1,321 | 1,261 | 1,369 | 1,262 | 1,195 | 1,756 |
-| convertToIntegerTiesToAway | 168 | 153 | 230 | 122 | 154 | 165 | 273 | 156 |
-| convertToIntegerExactTiesToAway | 1,108 | 1,074 | 1,100 | 1,054 | 1,219 | 1,082 | 1,052 | 1,070 |
-| convertToIntegerTowardZero | 154 | 153 | 153 | 120 | 154 | 153 | 157 | 157 |
-| convertToIntegerExactTowardZero | 1,039 | 1,018 | 1,051 | 1,022 | 1,154 | 1,036 | 1,075 | 1,035 |
-| convertToIntegerTowardPositive | 160 | 156 | 157 | 127 | 155 | 158 | 162 | 246 |
-| convertToIntegerExactTowardPositive | 1,091 | 1,120 | 1,109 | 1,077 | 1,196 | 1,102 | 1,070 | 1,794 |
-| convertToIntegerTowardNegative | 159 | 157 | 156 | 125 | 158 | 155 | 162 | 159 |
-| convertToIntegerExactTowardNegative | 1,099 | 1,096 | 1,103 | 1,060 | 1,193 | 1,078 | 1,137 | 1,108 |
-| convertFormat | 168 | 165 | 130 | 136 | 182 | 199 | 247 | 280 |
-| convertToDecimalCharacter | 11,567 | 16,406 | 27,118 | 61,249 | 163,267 | 540,413 | n/a | n/a |
-| convertFromDecimalCharacter | 13,926 | 21,254 | 31,033 | 68,881 | 180,665 | 580,311 | n/a | n/a |
-| convertToHexCharacter | 10,562 | 17,290 | 27,130 | 59,297 | 152,788 | 511,246 | n/a | n/a |
-| convertFromHexCharacter | 16,430 | 32,693 | 33,547 | 79,079 | 170,511 | 540,175 | n/a | n/a |
-| copy | 88 | 92 | 96 | 121 | 191 | 92 | 96 | 98 |
-| negate | 34 | 36 | 34 | 34 | 37 | 34 | 103 | 36 |
-| abs | 40 | 40 | 39 | 5.6 | 42 | 39 | 43 | 41 |
-| copySign | 47 | 110 | 44 | 15 | 46 | 46 | 47 | 46 |
-| compareQuietEqual | 145 | 266 | 142 | 111 | 149 | 143 | 146 | 182 |
-| compareSignalingEqual | 144 | 142 | 142 | 180 | 152 | 146 | 145 | 148 |
-| compareQuietNotEqual | 147 | 144 | 144 | 110 | 153 | 146 | 152 | 153 |
-| compareSignalingNotEqual | 149 | 144 | 147 | 117 | 155 | 148 | 154 | 329 |
-| compareQuietGreater | 184 | 181 | 142 | 109 | 156 | 145 | 146 | 147 |
-| compareSignalingGreater | 143 | 178 | 157 | 109 | 156 | 146 | 290 | 149 |
-| compareQuietGreaterEqual | 152 | 188 | 150 | 119 | 167 | 152 | 157 | 158 |
-| compareSignalingGreaterEqual | 150 | 190 | 151 | 116 | 163 | 154 | 162 | 156 |
-| compareQuietLess | 141 | 142 | 141 | 124 | 149 | 148 | 150 | 152 |
-| compareSignalingLess | 146 | 142 | 144 | 110 | 150 | 145 | 151 | 148 |
-| compareQuietLessEqual | 144 | 144 | 144 | 113 | 152 | 145 | 151 | 153 |
-| compareSignalingLessEqual | 142 | 142 | 145 | 112 | 149 | 145 | 148 | 150 |
-| compareQuietUnordered | 141 | 142 | 255 | 110 | 154 | 152 | 288 | 147 |
-| compareQuietOrdered | 146 | 145 | 146 | 119 | 153 | 144 | 149 | 147 |
-| compareQuietLessUnordered | 146 | 149 | 148 | 115 | 154 | 148 | 155 | 160 |
-| compareSignalingLessUnordered | 146 | 147 | 151 | 125 | 158 | 162 | 154 | 152 |
-| compareQuietNotGreater | 147 | 145 | 147 | 121 | 186 | 152 | 153 | 150 |
-| compareSignalingNotGreater | 146 | 146 | 150 | 194 | 153 | 150 | 150 | 149 |
-| compareQuietNotLess | 145 | 147 | 149 | 183 | 161 | 149 | 150 | 150 |
-| compareSignalingNotLess | 150 | 150 | 150 | 183 | 156 | 152 | 171 | 150 |
-| compareQuietGreaterUnordered | 141 | 141 | 140 | 151 | 150 | 144 | 156 | 147 |
-| compareSignalingGreaterUnordered | 141 | 141 | 147 | 177 | 155 | 146 | 146 | 146 |
-| class | 179 | 182 | 180 | 217 | 183 | 186 | 183 | 183 |
-| isSignMinus | 19 | 21 | 19 | 4.6 | 20 | 16 | 20 | 18 |
-| isNormal | 84 | 90 | 88 | 105 | 89 | 85 | 88 | 85 |
-| isFinite | 74 | 76 | 74 | 84 | 76 | 74 | 79 | 79 |
-| isZero | 51 | 52 | 51 | 72 | 52 | 50 | 99 | 68 |
-| isSubnormal | 42 | 46 | 44 | 44 | 47 | 42 | 44 | 46 |
-| isInfinite | 60 | 60 | 60 | 57 | 60 | 59 | 61 | 62 |
-| isNaN | 89 | 91 | 90 | 64 | 93 | 89 | 95 | 95 |
-| isSignaling | 102 | 102 | 104 | 95 | 105 | 104 | 105 | 104 |
-| isCanonical | 1.4 | 3.7 | < 1 | < 1 | 1.8 | < 1 | 23 | < 1 |
-| radix | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 |
-| totalOrder | 123 | 129 | 124 | 126 | 130 | 127 | 138 | 132 |
-| totalOrderMag | 180 | 181 | 186 | 189 | 190 | 190 | 194 | 190 |
-| sum | 8,059 | 8,352 | 8,874 | 11,823 | 13,522 | 18,460 | 59,258 | 259,636 |
-| dot | 10,068 | 12,169 | 12,096 | 15,061 | 23,364 | 36,625 | 132,332 | 830,843 |
-| sumSquare | 15,629 | 17,139 | 17,280 | 21,046 | 29,885 | 45,280 | 145,638 | 624,914 |
-| sumAbs | 12,986 | 13,441 | 14,054 | 15,933 | 19,680 | 24,387 | 64,412 | 500,792 |
-| scaledProd | 7,453 | 8,987 | 11,294 | 16,644 | 31,270 | 58,946 | 267,220 | n/a |
-| scaledProdSum | 11,954 | 12,376 | 14,083 | 16,486 | 23,842 | 34,768 | 137,599 | 539,630 |
-| scaledProdDiff | 10,458 | 11,462 | 13,308 | 16,394 | 25,822 | 43,379 | 175,282 | 2,524,597 |
-| sumInOrder | 8,192 | 9,652 | 10,363 | 11,130 | 14,910 | 12,801 | 39,716 | 169,759 |
-| sumAbsInOrder | 9,398 | 10,684 | 11,189 | 11,611 | 14,874 | 13,829 | 43,984 | 184,097 |
-| sumSquareInOrder | 15,338 | 17,738 | 19,342 | 19,629 | 36,069 | 35,442 | 148,557 | 1,178,142 |
-| dotInOrder | 16,576 | 20,197 | 22,741 | 22,757 | 38,318 | 36,525 | 208,330 | 1,430,975 |
-| sumAlong | 6,951 | 8,385 | 8,228 | 8,395 | 10,919 | 9,068 | 23,788 | 95,830 |
-| augmentedAddition | 6,547 | 7,263 | 8,578 | 11,315 | 17,012 | 28,291 | 112,447 | 554,660 |
-| augmentedSubtraction | 6,006 | 7,238 | 8,416 | 9,123 | 13,633 | 22,579 | 86,092 | 400,552 |
-| augmentedMultiplication | 6,254 | 8,161 | 10,519 | 13,561 | 23,144 | 38,970 | 155,644 | 1,288,596 |
-| minimum | 179 | 221 | 178 | 150 | 186 | 186 | 186 | 330 |
-| minimumNumber | 184 | 228 | 183 | 155 | 204 | 188 | 347 | 188 |
-| maximum | 175 | 176 | 173 | 143 | 181 | 184 | 179 | 180 |
-| maximumNumber | 180 | 178 | 174 | 144 | 187 | 181 | 186 | 185 |
-| minimumMagnitude | 171 | 188 | 170 | 138 | 187 | 181 | 188 | 181 |
-| minimumMagnitudeNumber | 174 | 177 | 176 | 140 | 183 | 179 | 358 | 181 |
-| maximumMagnitude | 178 | 181 | 175 | 141 | 187 | 181 | 182 | 180 |
-| maximumMagnitudeNumber | 175 | 174 | 174 | 139 | 181 | 186 | 388 | 178 |
-| rSqrt | 6,290 | 6,927 | 7,801 | 9,895 | 16,665 | 25,874 | 113,136 | 1,146,962 |
-| hypot | 5,434 | 6,330 | 7,054 | 18,312 | 16,905 | 27,921 | 124,060 | 597,468 |
-| pown | 3,273 | 3,866 | 5,242 | 14,065 | 15,902 | 31,993 | 139,801 | n/a |
-| rootn | 8,165 | 5,359 | 6,215 | 11,809 | 11,397 | 18,692 | 77,682 | 294,532 |
-| exp | 12,232 | 12,925 | 14,960 | 27,169 | 23,641 | 33,829 | 200,964 | 969,308 |
-| expm1 | 12,776 | 13,183 | 15,086 | 26,396 | 27,010 | 40,375 | 208,579 | 2,795,236 |
-| log | 65,214 | 62,286 | 59,966 | 77,306 | 74,998 | 119,867 | 537,651 | 2,407,069 |
-| logp1 | 58,157 | 62,407 | 60,987 | 74,177 | 56,242 | 82,211 | 277,574 | 1,066,132 |
-| exp2 | 25,769 | 27,553 | 32,236 | 71,020 | 67,660 | 119,522 | 699,649 | n/a |
-| exp2m1 | 26,299 | 27,836 | 32,473 | 45,650 | 68,178 | 119,829 | 699,248 | n/a |
-| exp10 | 27,785 | 29,158 | 33,576 | 49,362 | 70,494 | 120,998 | 754,742 | n/a |
-| exp10m1 | 28,569 | 29,996 | 33,772 | 48,860 | 70,238 | 124,276 | 719,905 | n/a |
-| sin | 13,677 | 13,834 | 16,158 | 20,140 | 25,125 | 36,669 | 163,487 | 1,586,561 |
-| cos | 13,222 | 13,966 | 14,874 | 20,383 | 25,481 | 35,496 | 160,888 | 1,577,521 |
-| tan | 16,538 | 17,126 | 19,458 | 26,244 | 31,900 | 51,856 | 430,920 | n/a |
-| sinPi | 19,480 | 22,646 | 24,211 | 38,936 | 77,226 | 129,585 | 879,774 | n/a |
-| cosPi | 14,930 | 21,752 | 24,739 | 25,259 | 25,201 | 35,516 | 165,270 | 1,514,393 |
-| tanPi | 20,191 | 33,570 | 38,404 | 49,475 | 109,336 | 228,830 | 2,413,469 | n/a |
-| atan | 18,140 | 18,451 | 19,618 | 25,278 | 35,138 | 69,146 | 718,563 | n/a |
-| atanPi | 18,695 | 19,369 | 22,413 | 30,598 | 37,776 | 70,797 | 736,715 | n/a |
-| sinh | 18,495 | 19,173 | 20,512 | 29,535 | 37,202 | 63,753 | 354,000 | n/a |
-| cosh | 21,685 | 19,665 | 20,971 | 30,101 | 37,256 | 65,087 | 342,508 | n/a |
-| tanh | 15,229 | 16,062 | 18,114 | 24,534 | 30,662 | 58,633 | 608,533 | n/a |
-| asinh | 41,509 | 43,171 | 53,103 | 74,094 | 109,084 | 220,384 | 1,936,240 | n/a |
-| log2 | 27,279 | 30,878 | 36,846 | 93,580 | 207,570 | 408,452 | 3,791,820 | n/a |
-| log10 | 27,183 | 31,633 | 36,339 | 94,430 | 217,132 | 402,604 | 3,750,336 | n/a |
-| log2p1 | 27,439 | 32,847 | 37,871 | 54,016 | 73,985 | 144,439 | 1,286,484 | n/a |
-| log10p1 | 27,764 | 32,709 | 40,473 | 54,105 | 75,027 | 146,471 | 1,262,684 | n/a |
-| acosh | 36,234 | 45,556 | 51,253 | 100,700 | 317,042 | 727,220 | n/a | n/a |
-| asin | 26,484 | 31,889 | 35,604 | 43,986 | 52,845 | 116,959 | 1,310,074 | n/a |
-| acos | 30,738 | 32,379 | 36,534 | 44,032 | 58,810 | 130,448 | 1,302,025 | n/a |
-| asinPi | 29,924 | 33,139 | 34,428 | 44,117 | 59,089 | 132,227 | 1,280,852 | n/a |
-| acosPi | 30,870 | 34,646 | 37,531 | 45,681 | 60,562 | 133,473 | 1,333,507 | n/a |
-| atanh | 37,939 | 43,716 | 52,049 | 61,505 | 95,419 | 196,299 | 1,775,071 | n/a |
-| atan2 | 35,707 | 40,319 | 41,441 | 45,520 | 63,260 | 253,415 | 3,243,560 | n/a |
-| atan2Pi | 36,776 | 41,352 | 44,340 | 49,297 | 67,317 | 267,058 | 3,210,064 | n/a |
-| powr | 37,171 | 39,802 | 46,387 | 59,306 | 136,404 | 264,127 | 2,195,338 | n/a |
-| compound | 36,425 | 40,645 | 43,950 | 62,331 | 100,704 | 191,160 | 1,729,152 | n/a |
-| setPayload | 3,481 | 3,673 | 3,932 | 4,778 | 6,965 | 11,031 | 38,759 | 162,103 |
-| setPayloadSignaling | 3,390 | 3,704 | 4,276 | 4,568 | 7,044 | 10,883 | 39,352 | 189,472 |
-| getPayload | 279 | 255 | 259 | 264 | 271 | 271 | 495 | 273 |
+| roundToIntegralTiesToEven | 108 | 111 | 110 | 115 | 121 | 136 | 310 | 374 |
+| roundToIntegralTiesToAway | 106 | 109 | 109 | 111 | 123 | 124 | 146 | 209 |
+| roundToIntegralTowardZero | 104 | 107 | 107 | 111 | 118 | 125 | 264 | 210 |
+| roundToIntegralTowardPositive | 107 | 110 | 110 | 114 | 121 | 129 | 282 | 207 |
+| roundToIntegralTowardNegative | 110 | 112 | 114 | 118 | 124 | 180 | 154 | 216 |
+| roundToIntegralExact | 108 | 114 | 112 | 122 | 140 | 131 | 146 | 396 |
+| nextUp | 167 | 168 | 165 | 178 | 174 | 195 | 134 | 174 |
+| nextDown | 148 | 146 | 160 | 153 | 156 | 172 | 174 | 187 |
+| remainder | 911 | 954 | 1,009 | 1,133 | 1,409 | 2,030 | 10,704 | 24,538 |
+| scaleB | 181 | 192 | 185 | 193 | 196 | 216 | 238 | 508 |
+| logB | 282 | 275 | 278 | 276 | 279 | 365 | 236 | 304 |
+| addition | 142 | 175 | 154 | 145 | 155 | 168 | 307 | 364 |
+| subtraction | 112 | 105 | 110 | 103 | 111 | 110 | 192 | 111 |
+| multiplication | 91 | 94 | 91 | 94 | 100 | 98 | 59 | 226 |
+| division | 106 | 108 | 106 | 111 | 117 | 119 | 158 | 128 |
+| squareRoot | 138 | 149 | 126 | 137 | 153 | 154 | 376 | 670 |
+| fusedMultiplyAdd | 167 | 254 | 156 | 183 | 248 | 272 | 456 | 547 |
+| formatOfAddition | 569 | 637 | 571 | 575 | 607 | 695 | 1,051 | 698 |
+| formatOfSubtraction | 565 | 578 | 576 | 634 | 619 | 664 | 1,104 | 1,125 |
+| formatOfMultiplication | 497 | 503 | 583 | 521 | 719 | 618 | 609 | 708 |
+| formatOfDivision | 508 | 514 | 507 | 514 | 524 | 567 | 953 | 754 |
+| formatOfFusedMultiplyAdd | 622 | 685 | 675 | 688 | 787 | 843 | 1,420 | 1,637 |
+| convertFromInt | 442 | 454 | 456 | 496 | 460 | 454 | 597 | 441 |
+| convertToIntegerTiesToEven | 154 | 168 | 156 | 158 | 159 | 163 | 256 | 159 |
+| convertToIntegerExactTiesToEven | 186 | 185 | 182 | 187 | 190 | 188 | 150 | 347 |
+| convertToIntegerTiesToAway | 158 | 162 | 155 | 161 | 210 | 158 | 224 | 157 |
+| convertToIntegerExactTiesToAway | 177 | 185 | 181 | 183 | 248 | 194 | 143 | 188 |
+| convertToIntegerTowardZero | 157 | 157 | 153 | 155 | 161 | 166 | 255 | 161 |
+| convertToIntegerExactTowardZero | 180 | 179 | 178 | 181 | 220 | 194 | 291 | 191 |
+| convertToIntegerTowardPositive | 155 | 177 | 169 | 162 | 166 | 192 | 119 | 156 |
+| convertToIntegerExactTowardPositive | 187 | 186 | 189 | 184 | 186 | 191 | 247 | 186 |
+| convertToIntegerTowardNegative | 158 | 157 | 157 | 162 | 160 | 168 | 198 | 159 |
+| convertToIntegerExactTowardNegative | 182 | 182 | 204 | 187 | 185 | 246 | 331 | 320 |
+| convertFormat | 128 | 132 | 110 | 132 | 138 | 160 | 316 | 227 |
+| convertToDecimalCharacter | 2,638 | 3,743 | 4,092 | 5,185 | 6,241 | 8,920 | 43,356 | 106,412 |
+| convertFromDecimalCharacter | 4,423 | 6,068 | 6,976 | 9,517 | 13,810 | 22,194 | 87,774 | 415,505 |
+| convertToHexCharacter | 584 | 752 | 912 | 1,325 | 2,417 | 4,348 | 30,046 | 79,484 |
+| convertFromHexCharacter | 2,441 | 2,847 | 3,531 | 4,847 | 8,101 | 13,918 | 55,400 | 226,212 |
+| copy | < 1 | 0.7 | < 1 | 2.6 | 12 | 0.8 | < 1 | 46 |
+| negate | 14 | 15 | 15 | 17 | 19 | 17 | 38 | 72 |
+| abs | 41 | 42 | 42 | 47 | 43 | 44 | < 1 | 42 |
+| copySign | 45 | 48 | 50 | 48 | 48 | 47 | 61 | 47 |
+| compareQuietEqual | 104 | 106 | 113 | 109 | 109 | 110 | 90 | 113 |
+| compareSignalingEqual | 104 | 107 | 105 | 111 | 114 | 113 | 174 | 218 |
+| compareQuietNotEqual | 111 | 111 | 111 | 114 | 114 | 111 | 73 | 116 |
+| compareSignalingNotEqual | 105 | 107 | 108 | 116 | 123 | 115 | 205 | 113 |
+| compareQuietGreater | 104 | 103 | 105 | 109 | 110 | 118 | 196 | 200 |
+| compareSignalingGreater | 106 | 106 | 108 | 107 | 111 | 109 | 190 | 251 |
+| compareQuietGreaterEqual | 110 | 108 | 108 | 115 | 120 | 112 | 208 | 204 |
+| compareSignalingGreaterEqual | 108 | 112 | 107 | 112 | 121 | 111 | 200 | 230 |
+| compareQuietLess | 108 | 104 | 106 | 115 | 192 | 107 | 177 | 110 |
+| compareSignalingLess | 101 | 103 | 102 | 116 | 111 | 116 | 68 | 240 |
+| compareQuietLessEqual | 105 | 106 | 105 | 108 | 116 | 109 | 67 | 110 |
+| compareSignalingLessEqual | 104 | 103 | 110 | 114 | 108 | 108 | 76 | 218 |
+| compareQuietUnordered | 102 | 106 | 104 | 106 | 113 | 110 | 70 | 218 |
+| compareQuietOrdered | 103 | 103 | 103 | 112 | 112 | 108 | 67 | 122 |
+| compareQuietLessUnordered | 107 | 108 | 108 | 113 | 121 | 119 | 185 | 128 |
+| compareSignalingLessUnordered | 119 | 111 | 108 | 121 | 122 | 120 | 200 | 115 |
+| compareQuietNotGreater | 113 | 108 | 117 | 111 | 115 | 112 | 77 | 240 |
+| compareSignalingNotGreater | 106 | 111 | 107 | 132 | 119 | 111 | 197 | 253 |
+| compareQuietNotLess | 106 | 112 | 118 | 109 | 121 | 112 | 126 | 180 |
+| compareSignalingNotLess | 106 | 107 | 111 | 111 | 112 | 112 | 71 | 229 |
+| compareQuietGreaterUnordered | 102 | 104 | 102 | 109 | 108 | 109 | 176 | 217 |
+| compareSignalingGreaterUnordered | 102 | 109 | 104 | 106 | 111 | 142 | 67 | 110 |
+| class | 181 | 182 | 180 | 180 | 180 | 195 | 142 | 334 |
+| isSignMinus | 19 | 21 | 20 | 21 | 22 | 21 | < 1 | 20 |
+| isNormal | 83 | 85 | 83 | 87 | 88 | 86 | 48 | 86 |
+| isFinite | 77 | 74 | 80 | 79 | 81 | 78 | 80 | 77 |
+| isZero | 50 | 51 | 52 | 61 | 52 | 53 | 11 | 53 |
+| isSubnormal | 44 | 47 | 42 | 45 | 57 | 44 | 2.8 | 53 |
+| isInfinite | 62 | 61 | 65 | 64 | 68 | 62 | 19 | 184 |
+| isNaN | 92 | 90 | 90 | 94 | 96 | 93 | 147 | 171 |
+| isSignaling | 103 | 103 | 114 | 110 | 105 | 106 | 185 | 108 |
+| isCanonical | 1.7 | 4.3 | 2.7 | 3.0 | 2.1 | 5.1 | 5.4 | 1.5 |
+| radix | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | < 1 | 8.4 |
+| totalOrder | 91 | 89 | 93 | 98 | 97 | 93 | 53 | 95 |
+| totalOrderMag | 162 | 170 | 166 | 170 | 171 | 170 | 140 | 271 |
+| sum | 1,242 | 1,357 | 1,274 | 1,286 | 1,484 | 1,511 | 1,352 | 1,390 |
+| dot | 1,739 | 1,994 | 1,886 | 1,872 | 2,105 | 1,921 | 3,268 | 1,972 |
+| sumSquare | 1,995 | 2,112 | 2,296 | 2,080 | 2,395 | 2,202 | 3,554 | 3,569 |
+| sumAbs | 1,662 | 1,744 | 1,742 | 1,739 | 1,901 | 1,758 | 1,871 | 1,837 |
+| scaledProd | 1,513 | 1,500 | 1,530 | 1,519 | 1,854 | 1,684 | 1,721 | 1,749 |
+| scaledProdSum | 2,176 | 2,203 | 2,180 | 2,168 | 2,489 | 2,364 | 4,120 | 2,532 |
+| scaledProdDiff | 2,221 | 2,232 | 2,185 | 2,176 | 2,469 | 2,312 | 3,684 | 4,231 |
+| sumInOrder | 506 | 483 | 485 | 468 | 501 | 515 | 513 | 573 |
+| sumAbsInOrder | 430 | 456 | 440 | 444 | 467 | 458 | 411 | 453 |
+| sumSquareInOrder | 534 | 547 | 564 | 502 | 528 | 517 | 477 | 531 |
+| dotInOrder | 647 | 608 | 608 | 619 | 653 | 666 | 655 | 743 |
+| sumAlong | 464 | 424 | 434 | 427 | 443 | 458 | 450 | 506 |
+| augmentedAddition | 1,194 | 1,252 | 1,245 | 1,245 | 1,376 | 1,392 | 2,498 | 1,920 |
+| augmentedSubtraction | 1,133 | 1,256 | 1,226 | 1,073 | 1,132 | 1,170 | 1,275 | 1,397 |
+| augmentedMultiplication | 1,205 | 1,432 | 1,362 | 1,420 | 1,526 | 1,649 | 1,767 | 1,724 |
+| minimum | 179 | 180 | 178 | 188 | 199 | 187 | 147 | 338 |
+| minimumNumber | 185 | 183 | 184 | 193 | 203 | 190 | 145 | 191 |
+| maximum | 180 | 177 | 175 | 178 | 184 | 178 | 137 | 282 |
+| maximumNumber | 185 | 188 | 177 | 184 | 207 | 185 | 141 | 322 |
+| minimumMagnitude | 177 | 187 | 174 | 184 | 183 | 183 | 147 | 182 |
+| minimumMagnitudeNumber | 173 | 174 | 179 | 180 | 184 | 181 | 140 | 185 |
+| maximumMagnitude | 174 | 178 | 174 | 185 | 186 | 184 | 290 | 182 |
+| maximumMagnitudeNumber | 173 | 178 | 172 | 178 | 187 | 181 | 150 | 183 |
+| rSqrt | 814 | 924 | 867 | 990 | 916 | 1,161 | 1,162 | 2,233 |
+| hypot | 966 | 929 | 927 | 971 | 1,051 | 1,248 | 2,356 | 1,682 |
+| pown | 373 | 385 | 393 | 467 | 483 | 623 | 1,140 | 809 |
+| rootn | 841 | 910 | 882 | 957 | 1,053 | 1,148 | 1,323 | 1,787 |
+| exp | 10,648 | 11,018 | 10,666 | 11,536 | 12,748 | 13,311 | 35,527 | 91,999 |
+| expm1 | 10,659 | 10,999 | 11,140 | 12,475 | 15,246 | 20,494 | 61,532 | 237,873 |
+| log | 63,503 | 63,641 | 62,724 | 44,652 | 59,644 | 93,929 | 506,857 | 677,804 |
+| logp1 | 58,958 | 63,057 | 61,048 | 40,167 | 44,548 | 59,677 | 241,003 | 644,980 |
+| exp2 | 25,383 | 26,599 | 31,244 | 38,203 | 64,069 | 102,740 | 653,194 | 11,388,763 |
+| exp2m1 | 26,236 | 26,748 | 30,184 | 38,133 | 62,033 | 106,886 | 704,671 | 11,458,181 |
+| exp10 | 26,250 | 27,187 | 30,965 | 37,884 | 61,078 | 104,604 | 682,676 | 11,559,009 |
+| exp10m1 | 26,665 | 27,995 | 29,329 | 37,868 | 61,377 | 114,198 | 651,935 | 11,138,633 |
+| sin | 11,027 | 11,328 | 10,579 | 11,565 | 13,934 | 19,226 | 82,015 | 1,190,969 |
+| cos | 10,747 | 10,465 | 10,237 | 11,740 | 13,984 | 17,614 | 85,681 | 1,281,244 |
+| tan | 14,359 | 14,423 | 15,332 | 16,809 | 22,000 | 34,477 | 340,825 | 7,905,035 |
+| sinPi | 17,333 | 18,492 | 19,533 | 27,560 | 58,365 | 85,111 | 561,701 | 9,256,218 |
+| cosPi | 13,182 | 17,981 | 19,271 | 17,133 | 23,754 | 28,910 | 118,090 | 1,420,494 |
+| tanPi | 18,586 | 29,987 | 34,561 | 36,807 | 85,740 | 184,138 | 2,399,000 | 62,128,732 |
+| atan | 14,943 | 14,729 | 15,141 | 18,178 | 25,059 | 46,621 | 616,290 | 17,625,723 |
+| atanPi | 17,329 | 17,351 | 17,096 | 20,870 | 28,864 | 54,628 | 660,286 | 17,971,597 |
+| sinh | 16,461 | 16,509 | 15,923 | 18,553 | 26,921 | 42,863 | 254,358 | 4,582,622 |
+| cosh | 17,262 | 17,675 | 16,356 | 20,250 | 27,718 | 44,822 | 290,315 | 4,724,675 |
+| tanh | 12,919 | 13,022 | 12,470 | 15,008 | 20,830 | 39,137 | 683,820 | 13,528,942 |
+| asinh | 42,869 | 43,847 | 48,364 | 61,731 | 104,349 | 218,274 | 2,125,877 | 44,646,891 |
+| log2 | 27,332 | 28,696 | 31,129 | 76,335 | 188,752 | 373,991 | 4,091,123 | 83,299,480 |
+| log10 | 27,028 | 28,337 | 31,762 | 71,228 | 202,362 | 376,111 | 4,055,491 | 81,785,813 |
+| log2p1 | 27,784 | 29,916 | 34,744 | 41,336 | 66,622 | 124,278 | 1,236,616 | 28,525,281 |
+| log10p1 | 26,838 | 29,370 | 32,341 | 40,685 | 67,061 | 129,338 | 1,256,722 | 28,610,472 |
+| acosh | 38,407 | 42,339 | 47,689 | 84,600 | 291,443 | 686,438 | 9,346,763 | 237,218,333 |
+| asin | 26,759 | 27,179 | 29,160 | 32,834 | 42,347 | 99,369 | 1,268,930 | 42,534,586 |
+| acos | 30,424 | 29,652 | 32,144 | 36,989 | 49,308 | 109,759 | 1,305,358 | 42,080,194 |
+| asinPi | 35,206 | 29,592 | 32,067 | 38,235 | 50,855 | 118,291 | 1,373,152 | 43,035,654 |
+| acosPi | 36,082 | 30,211 | 34,729 | 40,451 | 52,778 | 112,506 | 1,285,932 | 41,513,143 |
+| atanh | 42,060 | 42,151 | 46,563 | 55,326 | 92,089 | 171,193 | 1,770,038 | 39,916,990 |
+| atan2 | 37,898 | 35,174 | 37,503 | 42,065 | 54,462 | 217,687 | 3,139,866 | 84,534,366 |
+| atan2Pi | 43,752 | 37,638 | 39,008 | 44,183 | 57,405 | 232,860 | 3,156,162 | 84,863,733 |
+| powr | 39,710 | 37,578 | 41,780 | 54,586 | 124,825 | 241,051 | 2,141,488 | 46,422,609 |
+| compound | 38,919 | 37,106 | 41,469 | 54,525 | 94,002 | 176,463 | 1,674,508 | 38,292,362 |
+| setPayload | 600 | 607 | 604 | 600 | 634 | 610 | 618 | 898 |
+| setPayloadSignaling | 637 | 606 | 609 | 599 | 635 | 648 | 638 | 549 |
+| getPayload | 262 | 254 | 260 | 261 | 264 | 265 | 350 | 262 |
 
 ## Decimal formats, compiled (nanoseconds)
 
 | operation | decimal32 | decimal64 | decimal128 |
 | --- | ---: | ---: | ---: |
-| roundToIntegralTiesToEven | 2,291 | 3,594 | 4,173 |
-| roundToIntegralTiesToAway | 2,293 | 3,580 | 4,160 |
-| roundToIntegralTowardZero | 2,282 | 3,587 | 4,101 |
-| roundToIntegralTowardPositive | 2,288 | 3,586 | 4,131 |
-| roundToIntegralTowardNegative | 2,284 | 3,578 | 4,115 |
-| roundToIntegralExact | 2,301 | 3,598 | 4,221 |
-| nextUp | 5,211 | 8,129 | 58,808 |
-| nextDown | 5,234 | 8,157 | 58,489 |
-| remainder | 321 | 897 | 1,473 |
-| quantize | 2,087 | 3,449 | 4,012 |
-| quantum | 44 | 44 | 43 |
-| scaleB | 7,824 | 11,676 | 71,058 |
-| logB | 82 | 100 | 2,096 |
-| addition | 9,595 | 15,282 | 75,300 |
-| addition (kernel path) | 6,234 | 20,641 | 69,792 |
-| subtraction | 9,649 | 15,326 | 76,255 |
-| subtraction (kernel path) | 5,785 | 20,644 | 64,420 |
-| multiplication | 10,381 | 15,788 | 77,945 |
-| multiplication (kernel path) | 6,321 | 18,821 | 65,622 |
-| division | 10,269 | 16,727 | 69,144 |
-| squareRoot | 11,066 | 17,948 | 178,025 |
-| fusedMultiplyAdd | 12,280 | 18,691 | 82,097 |
-| convertFromInt | 6,739 | 10,666 | 71,026 |
-| convertToIntegerTiesToEven | 4,151 | 5,513 | 5,749 |
-| convertToIntegerTiesToAway | 4,160 | 6,025 | 5,674 |
-| convertToIntegerTowardZero | 4,175 | 5,905 | 5,623 |
-| convertToIntegerTowardPositive | 4,668 | 5,534 | 5,700 |
-| convertToIntegerTowardNegative | 4,133 | 5,572 | 5,592 |
-| convertToIntegerExactTiesToEven | 4,158 | 5,560 | 6,031 |
-| convertToIntegerExactTiesToAway | 4,166 | 5,551 | 5,670 |
-| convertToIntegerExactTowardZero | 4,157 | 5,541 | 5,596 |
-| convertToIntegerExactTowardPositive | 4,149 | 5,536 | 7,610 |
-| convertToIntegerExactTowardNegative | 4,153 | 5,546 | 7,516 |
-| convertFormat (to decimal32) | 7,986 | 9,890 | 14,467 |
-| convertFromDecimalCharacter | 8,312 | 13,002 | 105,565 |
-| convertToDecimalCharacter | 359 | 764 | 15,902 |
-| copy | 34 | 228 | 206 |
-| negate | 50 | 245 | 213 |
-| abs | 46 | 241 | 241 |
-| copySign | 47 | 275 | 169 |
-| encodeDecimal | 938 | 1,604 | 12,742 |
-| decodeDecimal | 1,122 | 1,969 | 12,297 |
-| encodeBinary | 636 | 1,101 | 1,770 |
-| decodeBinary | 1,264 | 2,836 | 3,859 |
-| compareQuietEqual | 2,345 | 4,062 | 4,139 |
-| compareQuietNotEqual | 2,346 | 4,063 | 3,740 |
-| compareQuietGreater | 2,345 | 4,077 | 3,747 |
-| compareQuietGreaterEqual | 2,348 | 4,066 | 3,743 |
-| compareQuietLess | 2,348 | 4,062 | 3,748 |
-| compareQuietLessEqual | 2,347 | 4,063 | 3,738 |
-| compareQuietUnordered | 2,347 | 4,070 | 3,750 |
-| compareQuietOrdered | 2,347 | 4,499 | 3,742 |
-| compareQuietLessUnordered | 2,347 | 8,135 | 3,756 |
-| compareQuietNotGreater | 2,345 | 4,072 | 3,743 |
-| compareQuietNotLess | 2,351 | 4,070 | 3,738 |
-| compareQuietGreaterUnordered | 2,346 | 4,418 | 3,739 |
-| compareSignalingEqual | 2,348 | 4,078 | 3,767 |
-| compareSignalingNotEqual | 2,349 | 4,071 | 3,778 |
-| compareSignalingGreater | 2,351 | 4,077 | 3,798 |
-| compareSignalingGreaterEqual | 2,349 | 4,077 | 4,296 |
-| compareSignalingLess | 2,350 | 5,706 | 3,740 |
-| compareSignalingLessEqual | 2,351 | 5,043 | 3,738 |
-| compareSignalingLessUnordered | 2,354 | 5,583 | 3,741 |
-| compareSignalingNotGreater | 2,351 | 5,685 | 3,736 |
-| compareSignalingNotLess | 2,350 | 5,851 | 3,739 |
-| compareSignalingGreaterUnordered | 2,351 | 5,509 | 3,740 |
-| class | 2,156 | 3,394 | 11,993 |
-| isSignMinus | 24 | 24 | 23 |
-| isNormal | 2,154 | 3,287 | 11,980 |
-| isFinite | 24 | 24 | 24 |
-| isZero | 24 | 24 | 25 |
-| isSubnormal | 2,151 | 3,590 | 12,056 |
-| isInfinite | 23 | 24 | 24 |
-| isNaN | 24 | 24 | 25 |
-| isSignaling | 23 | 24 | 26 |
-| isCanonical | 1,773 | 2,826 | 11,497 |
+| roundToIntegralTiesToEven | 2,303 | 3,605 | 4,084 |
+| roundToIntegralTiesToAway | 2,306 | 3,573 | 4,577 |
+| roundToIntegralTowardZero | 2,296 | 3,583 | 4,036 |
+| roundToIntegralTowardPositive | 2,303 | 3,666 | 4,062 |
+| roundToIntegralTowardNegative | 2,300 | 3,575 | 4,061 |
+| roundToIntegralExact | 2,303 | 3,564 | 4,128 |
+| nextUp | 5,151 | 8,285 | 58,709 |
+| nextDown | 5,211 | 8,313 | 59,686 |
+| remainder | 323 | 941 | 1,538 |
+| quantize | 2,097 | 3,326 | 3,926 |
+| quantum | 43 | 43 | 43 |
+| scaleB | 7,768 | 11,882 | 72,726 |
+| logB | 82 | 101 | 2,116 |
+| addition | 9,523 | 15,331 | 76,628 |
+| addition (kernel path) | 1,054 | 2,237 | 3,269 |
+| subtraction | 9,581 | 16,008 | 76,218 |
+| subtraction (kernel path) | 1,022 | 2,236 | 3,264 |
+| multiplication | 10,338 | 15,763 | 77,894 |
+| multiplication (kernel path) | 868 | 1,876 | 2,792 |
+| division | 10,168 | 16,773 | 69,609 |
+| squareRoot | 11,065 | 17,959 | 178,678 |
+| fusedMultiplyAdd | 12,200 | 18,688 | 91,253 |
+| convertFromInt | 6,713 | 10,451 | 71,258 |
+| convertToIntegerTiesToEven | 4,177 | 5,566 | 5,504 |
+| convertToIntegerTiesToAway | 4,166 | 5,521 | 5,515 |
+| convertToIntegerTowardZero | 4,148 | 5,568 | 5,754 |
+| convertToIntegerTowardPositive | 4,166 | 5,562 | 5,485 |
+| convertToIntegerTowardNegative | 4,173 | 5,526 | 6,173 |
+| convertToIntegerExactTiesToEven | 4,258 | 5,576 | 5,533 |
+| convertToIntegerExactTiesToAway | 4,211 | 5,550 | 5,521 |
+| convertToIntegerExactTowardZero | 4,195 | 5,514 | 5,414 |
+| convertToIntegerExactTowardPositive | 4,262 | 5,522 | 5,444 |
+| convertToIntegerExactTowardNegative | 4,199 | 5,551 | 5,580 |
+| convertFormat (to decimal32) | 7,929 | 9,774 | 11,001 |
+| convertFromDecimalCharacter | 8,245 | 12,765 | 79,551 |
+| convertToDecimalCharacter | 371 | 793 | 11,616 |
+| copy | 35 | 231 | 151 |
+| negate | 49 | 252 | 177 |
+| abs | 46 | 256 | 164 |
+| copySign | 47 | 247 | 164 |
+| encodeDecimal | 927 | 1,493 | 6,311 |
+| decodeDecimal | 1,130 | 1,995 | 5,961 |
+| encodeBinary | 634 | 1,095 | 1,737 |
+| decodeBinary | 1,267 | 2,115 | 3,626 |
+| compareQuietEqual | 2,374 | 4,191 | 3,778 |
+| compareQuietNotEqual | 2,372 | 4,164 | 3,761 |
+| compareQuietGreater | 2,371 | 4,140 | 3,760 |
+| compareQuietGreaterEqual | 2,373 | 4,468 | 3,761 |
+| compareQuietLess | 2,373 | 4,065 | 3,760 |
+| compareQuietLessEqual | 2,372 | 4,073 | 3,752 |
+| compareQuietUnordered | 2,370 | 4,176 | 3,749 |
+| compareQuietOrdered | 2,370 | 4,056 | 3,751 |
+| compareQuietLessUnordered | 2,371 | 4,083 | 3,752 |
+| compareQuietNotGreater | 2,374 | 4,104 | 3,752 |
+| compareQuietNotLess | 2,371 | 4,088 | 3,754 |
+| compareQuietGreaterUnordered | 2,373 | 4,056 | 3,754 |
+| compareSignalingEqual | 2,371 | 4,096 | 3,757 |
+| compareSignalingNotEqual | 2,370 | 4,083 | 3,760 |
+| compareSignalingGreater | 2,372 | 4,069 | 3,763 |
+| compareSignalingGreaterEqual | 2,370 | 4,073 | 3,766 |
+| compareSignalingLess | 2,372 | 4,163 | 3,760 |
+| compareSignalingLessEqual | 2,374 | 4,064 | 3,757 |
+| compareSignalingLessUnordered | 2,421 | 4,065 | 3,761 |
+| compareSignalingNotGreater | 2,437 | 4,085 | 3,763 |
+| compareSignalingNotLess | 2,398 | 4,081 | 3,758 |
+| compareSignalingGreaterUnordered | 2,386 | 4,068 | 3,758 |
+| class | 2,192 | 3,312 | 12,021 |
+| isSignMinus | 24 | 23 | 23 |
+| isNormal | 2,228 | 3,321 | 12,005 |
+| isFinite | 24 | 24 | 23 |
+| isZero | 24 | 25 | 25 |
+| isSubnormal | 2,193 | 3,387 | 12,003 |
+| isInfinite | 23 | 23 | 23 |
+| isNaN | 24 | 24 | 23 |
+| isSignaling | 24 | 48 | 24 |
+| isCanonical | 1,943 | 5,705 | 11,372 |
 | radix | 22 | 22 | 22 |
-| totalOrder | 2,344 | 5,497 | 3,716 |
-| totalOrderMag | 2,408 | 4,132 | 3,849 |
-| sameQuantum | 26 | 26 | 26 |
-| sum (8 elements) | 19,945 | 32,216 | 95,323 |
-| dot (8 pairs) | 36,774 | 56,990 | 122,530 |
-| sumSquare (8 elements) | 30,198 | 42,217 | 110,194 |
-| sumAbs (8 elements) | 20,985 | 33,391 | 95,506 |
-| rSqrt | 11,756 | 18,843 | 154,166 |
-| hypot | 14,393 | 27,243 | 191,035 |
-| pown | 10,402 | 16,239 | 84,742 |
-| rootn | 29,471 | 90,009 | 474,385 |
-| expm1 | 53,524 | 69,554 | 281,331 |
-| logp1 | 80,896 | 202,173 | 822,674 |
-| minimum | 2,362 | 4,190 | 3,865 |
-| minimumNumber | 2,357 | 4,187 | 3,863 |
-| maximum | 2,359 | 4,184 | 3,868 |
-| maximumNumber | 2,358 | 4,186 | 3,860 |
-| minimumMagnitude | 2,398 | 4,240 | 3,961 |
-| minimumMagnitudeNumber | 2,588 | 4,242 | 3,962 |
-| maximumMagnitude | 2,735 | 4,245 | 4,297 |
-| maximumMagnitudeNumber | 2,398 | 4,246 | 4,289 |
-| getPayload | 45 | 208 | 174 |
-| setPayload | 278 | 290 | 651 |
-| setPayloadSignaling | 278 | 338 | 653 |
-| exp2 | 333,702 | 404,833 | 973,409 |
-| exp2m1 | 269,916 | 409,829 | 977,984 |
-| exp10 | 317,786 | 477,298 | 1,095,519 |
-| exp10m1 | 320,405 | 474,418 | 1,097,686 |
-| log2 | 1,109,040 | 1,957,241 | 5,764,721 |
-| log10 | 1,093,491 | 2,006,664 | 5,859,609 |
-| log2p1 | 1,010,243 | 1,897,041 | 5,684,832 |
-| log10p1 | 1,064,329 | 1,955,144 | 5,778,323 |
-| sin | 79,953 | 121,165 | 340,417 |
-| cos | 78,882 | 104,069 | 330,613 |
-| tan | 250,141 | 412,576 | 1,126,649 |
-| sinPi | 197,966 | 256,236 | 541,190 |
-| cosPi | 196,232 | 255,182 | 538,529 |
-| tanPi | 370,882 | 788,276 | 1,320,901 |
-| asin | 1,422,978 | 2,301,639 | 6,043,348 |
-| acos | 1,539,913 | 2,455,816 | 6,307,671 |
-| atan | 533,840 | 724,922 | 2,012,417 |
-| asinPi | 1,544,781 | 2,448,618 | 6,251,232 |
-| acosPi | 1,651,635 | 2,596,224 | 6,493,541 |
-| atanPi | 863,402 | 875,931 | 2,223,007 |
-| sinh | 398,069 | 399,611 | 946,075 |
-| cosh | 380,560 | 395,896 | 936,150 |
-| tanh | 338,360 | 429,861 | 1,213,406 |
-| asinh | 971,521 | 1,828,267 | 5,567,153 |
-| acosh | 1,071,517 | 1,984,122 | 5,880,330 |
-| atanh | 1,013,440 | 1,877,677 | 5,718,395 |
-| exp | 127,470 | 188,140 | 508,317 |
-| log | 962,183 | 1,859,851 | 5,621,133 |
-| powr | 1,548,004 | 2,779,367 | 8,519,218 |
-| compound | 1,130,966 | 2,110,119 | 6,334,442 |
+| totalOrder | 2,358 | 4,032 | 3,735 |
+| totalOrderMag | 2,410 | 4,120 | 3,833 |
+| sameQuantum | 25 | 25 | 25 |
+| sum (8 elements) | 19,873 | 32,074 | 95,068 |
+| dot (8 pairs) | 36,725 | 56,637 | 124,764 |
+| sumSquare (8 elements) | 28,332 | 42,010 | 110,956 |
+| sumAbs (8 elements) | 20,923 | 33,199 | 98,560 |
+| rSqrt | 11,698 | 18,800 | 154,759 |
+| hypot | 14,429 | 23,145 | 190,986 |
+| pown | 10,247 | 15,793 | 85,128 |
+| rootn | 22,019 | 34,165 | 344,641 |
+| expm1 | 53,613 | 68,741 | 195,861 |
+| logp1 | 80,041 | 201,195 | 835,539 |
+| minimum | 2,373 | 4,194 | 3,875 |
+| minimumNumber | 2,376 | 4,222 | 3,879 |
+| maximum | 2,370 | 4,253 | 3,878 |
+| maximumNumber | 2,370 | 4,230 | 3,897 |
+| minimumMagnitude | 2,413 | 4,320 | 3,991 |
+| minimumMagnitudeNumber | 2,419 | 4,245 | 3,969 |
+| maximumMagnitude | 2,487 | 4,253 | 3,967 |
+| maximumMagnitudeNumber | 2,418 | 4,242 | 4,062 |
+| getPayload | 45 | 219 | 161 |
+| setPayload | 284 | 293 | 476 |
+| setPayloadSignaling | 292 | 300 | 483 |
+| exp2 | 271,432 | 405,883 | 967,410 |
+| exp2m1 | 270,249 | 411,803 | 970,508 |
+| exp10 | 316,696 | 467,957 | 1,089,119 |
+| exp10m1 | 318,355 | 469,691 | 1,092,729 |
+| log2 | 1,030,561 | 1,946,649 | 5,760,719 |
+| log10 | 1,088,683 | 2,002,507 | 5,860,933 |
+| log2p1 | 1,004,138 | 1,902,850 | 5,694,589 |
+| log10p1 | 1,045,682 | 1,941,242 | 5,795,744 |
+| sin | 78,321 | 106,284 | 332,251 |
+| cos | 73,557 | 102,078 | 322,961 |
+| tan | 245,996 | 408,411 | 1,127,357 |
+| sinPi | 196,737 | 254,887 | 538,836 |
+| cosPi | 195,684 | 253,480 | 536,310 |
+| tanPi | 369,634 | 557,263 | 1,317,336 |
+| asin | 1,423,750 | 2,295,888 | 6,058,770 |
+| acos | 1,533,763 | 2,450,977 | 6,326,252 |
+| atan | 532,907 | 723,610 | 2,013,223 |
+| asinPi | 1,543,623 | 2,442,968 | 6,254,879 |
+| acosPi | 1,651,332 | 2,593,965 | 6,513,135 |
+| atanPi | 650,849 | 873,246 | 2,788,490 |
+| sinh | 263,011 | 400,937 | 952,543 |
+| cosh | 259,858 | 396,260 | 935,604 |
+| tanh | 246,965 | 430,682 | 1,212,216 |
+| asinh | 959,570 | 1,827,433 | 5,567,481 |
+| acosh | 1,061,864 | 1,988,294 | 5,901,676 |
+| atanh | 1,000,691 | 1,880,981 | 5,796,854 |
+| exp | 126,019 | 187,979 | 510,512 |
+| log | 954,984 | 1,860,210 | 5,706,449 |
+| powr | 1,544,582 | 2,786,012 | 8,916,328 |
+| compound | 1,122,499 | 2,111,369 | 6,656,240 |
 
 ## Decimal formats, kernel as written (microseconds)
 
 | operation | decimal32 | decimal64 | decimal128 |
 | --- | ---: | ---: | ---: |
-| roundToIntegralTiesToEven | 1,212 | 1,241 | 1,269 |
-| roundToIntegralTiesToAway | 1,206 | 1,248 | 1,257 |
-| roundToIntegralTowardZero | 1,167 | 1,199 | 1,209 |
-| roundToIntegralTowardPositive | 1,217 | 1,237 | 1,254 |
-| roundToIntegralTowardNegative | 1,218 | 1,218 | 1,249 |
-| roundToIntegralExact | 1,223 | 1,240 | 1,269 |
-| nextUp | 2,615 | 2,858 | 3,431 |
-| nextDown | 2,664 | 2,925 | 3,523 |
-| remainder | 416 | 462 | 420 |
-| quantize | 1,481 | 1,482 | 1,518 |
-| quantum | < 1 | < 1 | < 1 |
-| scaleB | 3,770 | 4,258 | 6,350 |
-| logB | 403 | 480 | 541 |
-| addition | 4,520 | 5,091 | 7,010 |
-| subtraction | 4,518 | 4,964 | 7,082 |
-| multiplication | 4,510 | 4,591 | 5,573 |
-| division | 5,232 | 5,075 | 5,784 |
-| squareRoot | 5,437 | 6,515 | 8,926 |
-| fusedMultiplyAdd | 4,859 | 4,958 | 5,912 |
-| convertFromInt | 3,082 | 3,275 | 4,896 |
-| convertToIntegerTiesToEven | 1,782 | 1,862 | 1,908 |
-| convertToIntegerExactTiesToEven | 1,788 | 1,842 | 1,934 |
-| convertToIntegerTiesToAway | 1,740 | 1,819 | 1,872 |
-| convertToIntegerExactTiesToAway | 1,762 | 1,799 | 1,885 |
-| convertToIntegerTowardZero | 1,770 | 1,829 | 1,880 |
-| convertToIntegerExactTowardZero | 1,789 | 1,825 | 1,894 |
-| convertToIntegerTowardPositive | 1,941 | 1,852 | 1,910 |
-| convertToIntegerExactTowardPositive | 1,867 | 1,809 | 1,893 |
-| convertToIntegerTowardNegative | 1,866 | 1,922 | 1,884 |
-| convertToIntegerExactTowardNegative | 1,850 | 1,822 | 1,892 |
-| convertFormat | 4,572 | 3,682 | 3,844 |
-| convertToDecimalCharacter | 20,166 | 54,804 | 70,849 |
-| convertFromDecimalCharacter | 27,356 | 65,880 | 84,110 |
-| copy | < 1 | 2.1 | 0.8 |
-| negate | 17 | 19 | 18 |
-| abs | 25 | 23 | 23 |
-| copySign | 24 | 23 | 23 |
-| encodeDecimal | 880 | 1,467 | 2,833 |
-| decodeDecimal | 1,383 | 2,618 | 5,443 |
-| encodeBinary | 416 | 422 | 424 |
-| decodeBinary | 551 | 557 | 564 |
-| compareQuietEqual | 2,611 | 2,769 | 2,810 |
-| compareSignalingEqual | 2,663 | 2,837 | 3,802 |
-| compareQuietNotEqual | 2,656 | 2,710 | 4,991 |
-| compareSignalingNotEqual | 2,648 | 2,671 | 4,888 |
-| compareQuietGreater | 2,667 | 2,646 | 4,772 |
-| compareSignalingGreater | 2,617 | 2,645 | 2,841 |
-| compareQuietGreaterEqual | 2,615 | 2,658 | 2,782 |
-| compareSignalingGreaterEqual | 2,629 | 2,634 | 2,960 |
-| compareQuietLess | 2,647 | 2,634 | 2,932 |
-| compareSignalingLess | 2,587 | 2,602 | 4,184 |
-| compareQuietLessEqual | 2,799 | 2,806 | 3,598 |
-| compareSignalingLessEqual | 2,684 | 2,749 | 2,877 |
-| compareQuietUnordered | 140 | 149 | 147 |
-| compareQuietOrdered | 145 | 149 | 150 |
-| compareQuietLessUnordered | 2,648 | 2,708 | 2,822 |
-| compareSignalingLessUnordered | 2,632 | 2,729 | 2,779 |
-| compareQuietNotGreater | 2,630 | 2,676 | 2,747 |
-| compareSignalingNotGreater | 2,626 | 2,713 | 2,759 |
-| compareQuietNotLess | 2,837 | 2,771 | 2,755 |
-| compareSignalingNotLess | 2,849 | 2,708 | 2,794 |
-| compareQuietGreaterUnordered | 2,694 | 2,711 | 2,735 |
-| compareSignalingGreaterUnordered | 2,694 | 2,678 | 2,794 |
-| class | 1,250 | 1,242 | 1,272 |
-| isSignMinus | 1.8 | 4.8 | 2.8 |
-| isNormal | 1,140 | 1,146 | 1,164 |
-| isFinite | < 1 | 0.9 | < 1 |
-| isZero | 28 | 32 | 30 |
-| isSubnormal | 1,171 | 1,155 | 1,193 |
-| isInfinite | < 1 | < 1 | < 1 |
+| roundToIntegralTiesToEven | 1,284 | 1,306 | 1,241 |
+| roundToIntegralTiesToAway | 1,248 | 1,263 | 1,227 |
+| roundToIntegralTowardZero | 1,197 | 1,231 | 1,165 |
+| roundToIntegralTowardPositive | 1,210 | 1,218 | 1,202 |
+| roundToIntegralTowardNegative | 1,229 | 1,224 | 1,205 |
+| roundToIntegralExact | 1,248 | 1,242 | 1,258 |
+| nextUp | 2,864 | 2,932 | 3,327 |
+| nextDown | 2,930 | 3,060 | 3,404 |
+| remainder | 406 | 425 | 421 |
+| quantize | 1,552 | 1,507 | 1,493 |
+| quantum | 30 | < 1 | < 1 |
+| scaleB | 4,164 | 4,263 | 6,145 |
+| logB | 394 | 477 | 531 |
+| addition | 4,973 | 4,886 | 6,649 |
+| subtraction | 5,116 | 5,054 | 7,228 |
+| multiplication | 4,898 | 4,693 | 5,577 |
+| division | 5,080 | 5,107 | 6,569 |
+| squareRoot | 5,739 | 6,304 | 9,853 |
+| fusedMultiplyAdd | 5,213 | 5,030 | 6,378 |
+| convertFromInt | 3,311 | 3,372 | 5,283 |
+| convertToIntegerTiesToEven | 1,850 | 1,820 | 1,952 |
+| convertToIntegerExactTiesToEven | 1,873 | 1,846 | 1,964 |
+| convertToIntegerTiesToAway | 1,851 | 1,968 | 1,955 |
+| convertToIntegerExactTiesToAway | 1,879 | 2,016 | 2,028 |
+| convertToIntegerTowardZero | 1,815 | 1,790 | 1,964 |
+| convertToIntegerExactTowardZero | 1,815 | 1,808 | 1,920 |
+| convertToIntegerTowardPositive | 1,834 | 1,782 | 1,944 |
+| convertToIntegerExactTowardPositive | 1,843 | 1,795 | 1,960 |
+| convertToIntegerTowardNegative | 1,853 | 1,815 | 1,966 |
+| convertToIntegerExactTowardNegative | 1,848 | 1,819 | 1,976 |
+| convertFormat | 4,296 | 3,652 | 4,096 |
+| convertToDecimalCharacter | 21,616 | 57,564 | 73,537 |
+| convertFromDecimalCharacter | 29,820 | 64,016 | 89,399 |
+| copy | < 1 | 0.8 | < 1 |
+| negate | 31 | 17 | 11 |
+| abs | 14 | 27 | 24 |
+| copySign | 8.0 | 35 | 17 |
+| encodeDecimal | 906 | 1,486 | 2,884 |
+| decodeDecimal | 1,401 | 2,551 | 5,486 |
+| encodeBinary | 410 | 417 | 423 |
+| decodeBinary | 540 | 548 | 559 |
+| compareQuietEqual | 2,770 | 2,706 | 2,795 |
+| compareSignalingEqual | 2,789 | 2,732 | 2,854 |
+| compareQuietNotEqual | 2,891 | 2,634 | 2,802 |
+| compareSignalingNotEqual | 2,880 | 2,627 | 2,774 |
+| compareQuietGreater | 2,779 | 2,622 | 2,737 |
+| compareSignalingGreater | 2,741 | 2,664 | 2,752 |
+| compareQuietGreaterEqual | 2,740 | 2,810 | 2,766 |
+| compareSignalingGreaterEqual | 2,810 | 2,815 | 2,846 |
+| compareQuietLess | 2,807 | 2,715 | 2,846 |
+| compareSignalingLess | 2,819 | 2,699 | 2,795 |
+| compareQuietLessEqual | 2,996 | 2,787 | 2,915 |
+| compareSignalingLessEqual | 3,174 | 2,793 | 2,854 |
+| compareQuietUnordered | 127 | 149 | 136 |
+| compareQuietOrdered | 147 | 154 | 148 |
+| compareQuietLessUnordered | 2,791 | 2,700 | 2,815 |
+| compareSignalingLessUnordered | 2,932 | 2,748 | 2,824 |
+| compareQuietNotGreater | 2,916 | 2,706 | 2,769 |
+| compareSignalingNotGreater | 2,927 | 2,658 | 2,786 |
+| compareQuietNotLess | 2,914 | 2,741 | 2,822 |
+| compareSignalingNotLess | 2,925 | 2,634 | 2,784 |
+| compareQuietGreaterUnordered | 2,987 | 2,698 | 2,822 |
+| compareSignalingGreaterUnordered | 3,006 | 2,719 | 2,840 |
+| class | 1,321 | 1,262 | 1,291 |
+| isSignMinus | < 1 | 5.6 | < 1 |
+| isNormal | 1,281 | 1,135 | 1,186 |
+| isFinite | < 1 | < 1 | < 1 |
+| isZero | 13 | 33 | 26 |
+| isSubnormal | 1,217 | 1,167 | 1,214 |
+| isInfinite | < 1 | < 1 | 36 |
 | isNaN | < 1 | < 1 | < 1 |
-| isSignaling | 2.1 | 0.7 | < 1 |
+| isSignaling | < 1 | < 1 | < 1 |
 | radix | < 1 | < 1 | < 1 |
-| totalOrder | 2,379 | 2,333 | 2,445 |
-| totalOrderMag | 2,197 | 2,988 | 2,206 |
-| sameQuantum | 135 | 136 | 135 |
-| sum | 5,668 | 5,767 | 8,192 |
-| dot | 5,997 | 6,129 | 7,179 |
-| sumSquare | 6,000 | 5,990 | 6,918 |
-| sumAbs | 6,394 | 7,253 | 8,866 |
-| minimum | 2,635 | 2,714 | 2,755 |
-| minimumNumber | 2,646 | 2,702 | 2,732 |
-| maximum | 2,687 | 2,696 | 2,924 |
-| maximumNumber | 2,703 | 2,674 | 2,877 |
-| minimumMagnitude | 2,490 | 2,503 | 2,714 |
-| minimumMagnitudeNumber | 2,444 | 2,426 | 2,627 |
-| maximumMagnitude | 2,472 | 2,437 | 2,553 |
-| maximumMagnitudeNumber | 2,414 | 2,414 | 2,542 |
-| rSqrt | 5,723 | 6,799 | 8,797 |
-| hypot | 6,816 | 7,672 | 10,135 |
-| pown | 3,823 | 3,890 | 4,590 |
-| rootn | 5,297 | 5,311 | 6,496 |
-| exp | 22,066 | 24,657 | 32,486 |
-| exp2 | 34,704 | 44,329 | 66,568 |
-| exp2m1 | 36,458 | 44,710 | 202,734 |
-| exp10 | 35,500 | 45,916 | 66,916 |
-| exp10m1 | 35,205 | 46,174 | 205,218 |
-| sin | 17,575 | 21,939 | 47,260 |
-| cos | 16,753 | 19,023 | 20,658 |
-| tan | 20,842 | 24,275 | 77,542 |
-| sinPi | 21,757 | 23,598 | 64,874 |
-| cosPi | 20,090 | 24,934 | 27,562 |
-| tanPi | 24,097 | 30,764 | 96,576 |
-| asin | 40,346 | 47,373 | 136,451 |
-| acos | 41,236 | 48,730 | 56,375 |
-| atan | 27,171 | 35,341 | 119,756 |
-| asinPi | 40,851 | 49,373 | 162,386 |
-| acosPi | 40,486 | 50,621 | 55,937 |
-| atanPi | 28,498 | 36,834 | 139,723 |
-| sinh | 31,293 | 43,063 | 160,439 |
-| cosh | 32,277 | 45,278 | 52,062 |
-| tanh | 22,959 | 28,485 | 92,344 |
-| asinh | 56,589 | 67,347 | 310,143 |
-| atanh | 52,720 | 73,258 | 305,186 |
-| log | 50,685 | 70,514 | 319,747 |
-| log2 | 55,545 | 82,866 | 354,922 |
-| log10 | 58,042 | 83,618 | 359,062 |
-| log2p1 | 56,875 | 82,238 | 361,478 |
-| log10p1 | 53,963 | 81,941 | 358,570 |
-| setPayload | 161 | 165 | 157 |
-| setPayloadSignaling | 162 | 162 | 157 |
-| getPayload | < 1 | 16 | 20 |
+| totalOrder | 2,486 | 2,314 | 2,475 |
+| totalOrderMag | 2,267 | 2,168 | 2,313 |
+| sameQuantum | 117 | 132 | 128 |
+| sum | 6,555 | 5,934 | 8,417 |
+| dot | 7,208 | 6,177 | 7,396 |
+| sumSquare | 7,291 | 6,018 | 7,284 |
+| sumAbs | 7,725 | 6,739 | 9,294 |
+| minimum | 2,900 | 2,809 | 2,842 |
+| minimumNumber | 2,918 | 2,708 | 2,840 |
+| maximum | 2,865 | 2,785 | 2,877 |
+| maximumNumber | 2,830 | 2,748 | 2,816 |
+| minimumMagnitude | 2,806 | 2,540 | 2,570 |
+| minimumMagnitudeNumber | 2,747 | 2,506 | 2,584 |
+| maximumMagnitude | 2,583 | 2,482 | 2,608 |
+| maximumMagnitudeNumber | 2,865 | 2,478 | 2,613 |
+| rSqrt | 6,509 | 7,311 | 9,242 |
+| hypot | 7,396 | 7,958 | 10,552 |
+| pown | 4,108 | 4,003 | 4,670 |
+| rootn | 5,568 | 5,587 | 6,768 |
+| exp | 20,754 | 21,569 | 30,428 |
+| exp2 | 34,314 | 40,913 | 63,925 |
+| exp2m1 | 38,466 | 44,336 | 206,399 |
+| exp10 | 34,649 | 44,662 | 64,549 |
+| exp10m1 | 37,176 | 55,992 | 208,171 |
+| sin | 14,056 | 15,001 | 45,161 |
+| cos | 16,403 | 14,264 | 17,868 |
+| tan | 18,821 | 20,122 | 75,806 |
+| sinPi | 18,790 | 21,478 | 66,823 |
+| cosPi | 17,811 | 20,509 | 25,199 |
+| tanPi | 23,364 | 27,085 | 96,174 |
+| asin | 38,633 | 42,399 | 142,638 |
+| acos | 39,730 | 41,724 | 56,877 |
+| atan | 25,480 | 29,443 | 118,001 |
+| asinPi | 39,958 | 44,022 | 165,747 |
+| acosPi | 41,140 | 44,660 | 62,206 |
+| atanPi | 29,713 | 33,351 | 141,984 |
+| sinh | 32,279 | 42,950 | 163,848 |
+| cosh | 32,539 | 41,719 | 52,355 |
+| tanh | 21,634 | 24,967 | 93,130 |
+| asinh | 58,234 | 64,804 | 317,566 |
+| atanh | 56,367 | 69,824 | 309,844 |
+| log | 52,804 | 70,339 | 333,044 |
+| log2 | 59,987 | 77,446 | 380,109 |
+| log10 | 58,442 | 79,168 | 371,325 |
+| log2p1 | 57,292 | 75,668 | 370,522 |
+| log10p1 | 57,677 | 75,489 | 376,282 |
+| setPayload | 146 | 164 | 152 |
+| setPayloadSignaling | 147 | 162 | 153 |
+| getPayload | 22 | 21 | 19 |
 
 ## Decimal formats, kernel with the tagged rules (microseconds)
 
 | operation | decimal32 | decimal64 | decimal128 |
 | --- | ---: | ---: | ---: |
-| roundToIntegralTiesToEven | 134 | 133 | 135 |
-| roundToIntegralTiesToAway | 136 | 131 | 131 |
-| roundToIntegralTowardZero | 133 | 239 | 134 |
-| roundToIntegralTowardPositive | 142 | 138 | 140 |
-| roundToIntegralTowardNegative | 143 | 140 | 142 |
-| roundToIntegralExact | 134 | 130 | 134 |
-| nextUp | 213 | 206 | 209 |
-| nextDown | 247 | 247 | 248 |
-| remainder | 423 | 430 | 425 |
-| quantize | 152 | 153 | 154 |
-| quantum | 0.8 | 0.5 | < 1 |
-| scaleB | 150 | 148 | 152 |
-| logB | 137 | 138 | 138 |
-| addition | 283 | 324 | 171 |
-| subtraction | 289 | 308 | 178 |
-| multiplication | 249 | 266 | 272 |
-| division | 398 | 418 | 518 |
-| squareRoot | 481 | 544 | 788 |
-| fusedMultiplyAdd | 357 | 369 | 367 |
-| convertFromInt | 83 | 83 | 83 |
-| convertToIntegerTiesToEven | 126 | 130 | 129 |
-| convertToIntegerExactTiesToEven | 128 | 130 | 130 |
-| convertToIntegerTiesToAway | 126 | 128 | 129 |
-| convertToIntegerExactTiesToAway | 126 | 128 | 129 |
-| convertToIntegerTowardZero | 126 | 127 | 126 |
-| convertToIntegerExactTowardZero | 128 | 127 | 127 |
-| convertToIntegerTowardPositive | 134 | 139 | 134 |
-| convertToIntegerExactTowardPositive | 131 | 135 | 136 |
-| convertToIntegerTowardNegative | 133 | 133 | 133 |
-| convertToIntegerExactTowardNegative | 134 | 133 | 134 |
-| convertFormat | 97 | 224 | 218 |
-| convertToDecimalCharacter | 19,950 | 55,522 | 70,834 |
-| convertFromDecimalCharacter | 28,234 | 66,819 | 84,743 |
-| copy | 2.5 | 1.2 | 2.6 |
-| negate | 21 | 18 | 20 |
-| abs | 21 | 19 | 22 |
+| roundToIntegralTiesToEven | 104 | 99 | 101 |
+| roundToIntegralTiesToAway | 103 | 103 | 104 |
+| roundToIntegralTowardZero | 97 | 96 | 98 |
+| roundToIntegralTowardPositive | 102 | 106 | 102 |
+| roundToIntegralTowardNegative | 104 | 101 | 103 |
+| roundToIntegralExact | 98 | 99 | 100 |
+| nextUp | 148 | 144 | 149 |
+| nextDown | 178 | 181 | 183 |
+| remainder | 108 | 108 | 110 |
+| quantize | 119 | 119 | 120 |
+| quantum | < 1 | < 1 | 5.6 |
+| scaleB | 88 | 87 | 89 |
+| logB | 55 | 51 | 52 |
+| addition | 197 | 196 | 129 |
+| subtraction | 198 | 202 | 150 |
+| multiplication | 177 | 180 | 183 |
+| division | 204 | 205 | 226 |
+| squareRoot | 281 | 291 | 341 |
+| fusedMultiplyAdd | 231 | 231 | 238 |
+| convertFromInt | 68 | 65 | 69 |
+| convertToIntegerTiesToEven | 78 | 78 | 82 |
+| convertToIntegerExactTiesToEven | 78 | 77 | 83 |
+| convertToIntegerTiesToAway | 77 | 80 | 79 |
+| convertToIntegerExactTiesToAway | 76 | 76 | 80 |
+| convertToIntegerTowardZero | 76 | 76 | 78 |
+| convertToIntegerExactTowardZero | 74 | 74 | 81 |
+| convertToIntegerTowardPositive | 80 | 78 | 82 |
+| convertToIntegerExactTowardPositive | 77 | 78 | 82 |
+| convertToIntegerTowardNegative | 82 | 78 | 83 |
+| convertToIntegerExactTowardNegative | 80 | 83 | 83 |
+| convertFormat | 66 | 137 | 141 |
+| convertToDecimalCharacter | 823 | 1,296 | 1,512 |
+| convertFromDecimalCharacter | 2,632 | 3,929 | 4,736 |
+| copy | 0.8 | < 1 | 2.2 |
+| negate | 17 | 16 | 18 |
+| abs | 22 | 21 | 24 |
 | copySign | 22 | 22 | 23 |
-| encodeDecimal | 883 | 1,484 | 2,850 |
-| decodeDecimal | 1,380 | 2,618 | 5,506 |
-| encodeBinary | 420 | 422 | 425 |
-| decodeBinary | 544 | 543 | 552 |
-| compareQuietEqual | 200 | 239 | 202 |
-| compareSignalingEqual | 202 | 203 | 348 |
-| compareQuietNotEqual | 207 | 207 | 360 |
-| compareSignalingNotEqual | 207 | 206 | 359 |
-| compareQuietGreater | 201 | 202 | 203 |
-| compareSignalingGreater | 201 | 200 | 202 |
-| compareQuietGreaterEqual | 206 | 206 | 209 |
-| compareSignalingGreaterEqual | 206 | 206 | 258 |
-| compareQuietLess | 203 | 202 | 350 |
-| compareSignalingLess | 201 | 202 | 350 |
-| compareQuietLessEqual | 263 | 263 | 268 |
-| compareSignalingLessEqual | 262 | 263 | 269 |
-| compareQuietUnordered | 75 | 75 | 74 |
-| compareQuietOrdered | 82 | 83 | 82 |
-| compareQuietLessUnordered | 247 | 245 | 249 |
-| compareSignalingLessUnordered | 233 | 237 | 238 |
-| compareQuietNotGreater | 206 | 207 | 209 |
-| compareSignalingNotGreater | 225 | 208 | 210 |
-| compareQuietNotLess | 256 | 207 | 210 |
-| compareSignalingNotLess | 208 | 208 | 210 |
-| compareQuietGreaterUnordered | 232 | 234 | 236 |
-| compareSignalingGreaterUnordered | 235 | 236 | 236 |
-| class | 157 | 156 | 158 |
-| isSignMinus | 5.5 | 4.2 | 4.3 |
-| isNormal | 114 | 113 | 114 |
+| encodeDecimal | 392 | 577 | 966 |
+| decodeDecimal | 608 | 970 | 1,732 |
+| encodeBinary | 218 | 216 | 230 |
+| decodeBinary | 290 | 290 | 302 |
+| compareQuietEqual | 172 | 171 | 174 |
+| compareSignalingEqual | 173 | 174 | 176 |
+| compareQuietNotEqual | 181 | 177 | 180 |
+| compareSignalingNotEqual | 177 | 179 | 182 |
+| compareQuietGreater | 171 | 170 | 173 |
+| compareSignalingGreater | 173 | 174 | 177 |
+| compareQuietGreaterEqual | 179 | 176 | 177 |
+| compareSignalingGreaterEqual | 176 | 177 | 180 |
+| compareQuietLess | 171 | 172 | 173 |
+| compareSignalingLess | 172 | 172 | 174 |
+| compareQuietLessEqual | 253 | 242 | 235 |
+| compareSignalingLessEqual | 245 | 234 | 235 |
+| compareQuietUnordered | 67 | 61 | 63 |
+| compareQuietOrdered | 68 | 66 | 68 |
+| compareQuietLessUnordered | 206 | 206 | 206 |
+| compareSignalingLessUnordered | 220 | 207 | 206 |
+| compareQuietNotGreater | 177 | 177 | 181 |
+| compareSignalingNotGreater | 176 | 177 | 180 |
+| compareQuietNotLess | 189 | 187 | 189 |
+| compareSignalingNotLess | 176 | 176 | 179 |
+| compareQuietGreaterUnordered | 205 | 205 | 206 |
+| compareSignalingGreaterUnordered | 219 | 206 | 207 |
+| class | 120 | 116 | 116 |
+| isSignMinus | 3.5 | 2.7 | 3.4 |
+| isNormal | 77 | 77 | 74 |
 | isFinite | < 1 | < 1 | < 1 |
-| isZero | 31 | 31 | 31 |
-| isSubnormal | 109 | 108 | 109 |
+| isZero | 35 | 30 | 32 |
+| isSubnormal | 89 | 70 | 72 |
 | isInfinite | < 1 | < 1 | < 1 |
-| isNaN | < 1 | < 1 | < 1 |
+| isNaN | 24 | < 1 | < 1 |
 | isSignaling | < 1 | < 1 | < 1 |
 | radix | < 1 | < 1 | < 1 |
-| totalOrder | 118 | 115 | 116 |
-| totalOrderMag | 155 | 158 | 157 |
-| sameQuantum | 135 | 137 | 142 |
-| sum | 545 | 565 | 410 |
-| dot | 847 | 858 | 870 |
-| sumSquare | 672 | 690 | 700 |
-| sumAbs | 541 | 574 | 421 |
-| minimum | 204 | 208 | 207 |
-| minimumNumber | 203 | 208 | 206 |
-| maximum | 211 | 203 | 215 |
-| maximumNumber | 202 | 201 | 210 |
-| minimumMagnitude | 244 | 246 | 250 |
-| minimumMagnitudeNumber | 244 | 245 | 249 |
-| maximumMagnitude | 247 | 245 | 247 |
-| maximumMagnitudeNumber | 244 | 245 | 247 |
-| rSqrt | 507 | 558 | 791 |
-| hypot | 579 | 619 | 855 |
-| pown | 287 | 327 | 337 |
-| rootn | 5,523 | 5,308 | 6,398 |
-| exp | 21,088 | 24,747 | 32,043 |
-| exp2 | 35,155 | 41,794 | 67,541 |
-| exp2m1 | 35,911 | 45,981 | 201,793 |
-| exp10 | 36,467 | 46,938 | 67,608 |
-| exp10m1 | 36,253 | 48,846 | 206,161 |
-| sin | 16,623 | 21,602 | 47,632 |
-| cos | 16,502 | 18,980 | 20,644 |
-| tan | 22,058 | 24,118 | 76,048 |
-| sinPi | 20,882 | 24,983 | 63,781 |
-| cosPi | 20,291 | 25,127 | 27,827 |
-| tanPi | 25,859 | 30,810 | 97,239 |
-| asin | 39,067 | 45,720 | 136,413 |
-| acos | 39,800 | 48,532 | 54,539 |
-| atan | 27,597 | 34,808 | 121,820 |
-| asinPi | 40,668 | 49,913 | 160,667 |
-| acosPi | 41,417 | 49,810 | 58,479 |
-| atanPi | 28,159 | 36,393 | 137,146 |
-| sinh | 31,364 | 44,410 | 161,298 |
-| cosh | 32,674 | 44,267 | 53,716 |
-| tanh | 22,770 | 28,319 | 92,348 |
-| asinh | 54,242 | 65,851 | 305,180 |
-| atanh | 53,254 | 73,702 | 302,025 |
-| log | 50,737 | 71,458 | 324,292 |
-| log2 | 56,807 | 91,416 | 352,947 |
-| log10 | 58,281 | 81,194 | 351,087 |
-| log2p1 | 57,972 | 83,930 | 354,672 |
-| log10p1 | 53,371 | 82,867 | 359,684 |
-| setPayload | 156 | 157 | 156 |
-| setPayloadSignaling | 157 | 158 | 158 |
-| getPayload | 21 | 23 | 22 |
+| totalOrder | 86 | 80 | 85 |
+| totalOrderMag | 122 | 120 | 129 |
+| sameQuantum | 138 | 136 | 139 |
+| sum | 415 | 400 | 333 |
+| dot | 731 | 656 | 670 |
+| sumSquare | 449 | 443 | 446 |
+| sumAbs | 396 | 406 | 326 |
+| minimum | 209 | 167 | 170 |
+| minimumNumber | 171 | 167 | 170 |
+| maximum | 185 | 169 | 193 |
+| maximumNumber | 166 | 169 | 171 |
+| minimumMagnitude | 268 | 208 | 212 |
+| minimumMagnitudeNumber | 212 | 212 | 215 |
+| maximumMagnitude | 225 | 209 | 214 |
+| maximumMagnitudeNumber | 237 | 208 | 214 |
+| rSqrt | 315 | 285 | 328 |
+| hypot | 327 | 396 | 389 |
+| pown | 178 | 197 | 202 |
+| rootn | 470 | 578 | 896 |
+| exp | 21,145 | 21,931 | 32,584 |
+| exp2 | 33,757 | 41,346 | 63,627 |
+| exp2m1 | 36,453 | 45,092 | 203,667 |
+| exp10 | 34,492 | 45,378 | 63,187 |
+| exp10m1 | 37,239 | 50,936 | 219,061 |
+| sin | 14,024 | 14,988 | 43,451 |
+| cos | 14,007 | 14,226 | 18,562 |
+| tan | 18,858 | 21,657 | 77,154 |
+| sinPi | 18,719 | 20,808 | 64,781 |
+| cosPi | 18,428 | 22,665 | 25,085 |
+| tanPi | 23,340 | 26,878 | 95,843 |
+| asin | 38,858 | 42,292 | 142,325 |
+| acos | 40,181 | 42,358 | 57,401 |
+| atan | 25,382 | 28,530 | 121,238 |
+| asinPi | 39,590 | 43,664 | 162,771 |
+| acosPi | 41,063 | 44,774 | 59,102 |
+| atanPi | 29,128 | 36,883 | 142,476 |
+| sinh | 32,345 | 41,237 | 164,764 |
+| cosh | 32,064 | 40,878 | 52,357 |
+| tanh | 21,635 | 23,975 | 94,386 |
+| asinh | 55,914 | 70,445 | 319,618 |
+| atanh | 54,892 | 71,556 | 315,027 |
+| log | 51,379 | 68,536 | 337,274 |
+| log2 | 58,013 | 77,474 | 361,674 |
+| log10 | 58,537 | 74,473 | 376,768 |
+| log2p1 | 56,339 | 74,714 | 369,419 |
+| log10p1 | 57,437 | 73,580 | 378,881 |
+| setPayload | 156 | 160 | 160 |
+| setPayloadSignaling | 156 | 155 | 157 |
+| getPayload | 22 | 21 | 21 |
 
 <!-- figures: this section is written by benchmarks/plots/figures.py draw -->
 
@@ -843,12 +843,12 @@ The 8-bit format `e4f3` is the IEEE layout with four exponent bits and three fra
 
 The captions, alt texts, notes and CSV columns of these figures are in [FIGURES.md](../FIGURES.md).
 
-![16 small panels of lines, one per family of operations of the standard: kernel time against format width from 8 to 4,096 bits, with a dashed line and band for the operation as written and a solid line and band for the same operation with the kernel rules.](../figures/kernel-ieee2019.png "Kernel time of the operations of IEEE 754-2019 on binary formats, by family and format width, as written and with FloatLib's kernel rules. A line is the median over the operations of a family of the time Lean's kernel takes for one evaluation, and the band is their range; where the two lines coincide the family has no kernel rule. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18).")
+![16 small panels of lines, one per family of operations of the standard: kernel time against format width from 8 to 4,096 bits, with a dashed line and band for the operation as written and a solid line and band for the same operation with the kernel rules.](../figures/kernel-ieee2019.png "Kernel time of the operations of IEEE 754-2019 on binary formats, by family and format width, as written and with FloatLib's kernel rules. A line is the median over the operations of a family of the time Lean's kernel takes for one evaluation, at the widths at which every one of them has a time, and the band is their range; where the two lines coincide the family has no kernel rule. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20).")
 
-**Figure 1.** Kernel time of the operations of IEEE 754-2019 on binary formats, by family and format width, as written and with FloatLib's kernel rules. A line is the median over the operations of a family of the time Lean's kernel takes for one evaluation, and the band is their range; where the two lines coincide the family has no kernel rule. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18).
+**Figure 1.** Kernel time of the operations of IEEE 754-2019 on binary formats, by family and format width, as written and with FloatLib's kernel rules. A line is the median over the operations of a family of the time Lean's kernel takes for one evaluation, at the widths at which every one of them has a time, and the band is their range; where the two lines coincide the family has no kernel rule. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20).
 
-![Two panels of lines, real functions and complex functions: compiled time per call against format width, with one thin line per function and a thick line with markers for their median.](../figures/correctly-rounded.png "Compiled time of one call of each correctly rounded function of FloatLib by format width: 34 real functions and 18 complex functions. A thin line is one function, rounded to nearest even, and the thick line is the median over the functions. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18); the complex times were recorded on 2026-11-16 with Lean 4.35.0.")
+![Two panels of lines, real functions and complex functions: compiled time per call against format width, with one thin line per function and a thick line with markers for their median.](../figures/correctly-rounded.png "Compiled time of one call of each correctly rounded function of FloatLib by format width: 34 real functions and 18 complex functions. A thin line is one function, rounded to nearest even, and the thick line is the median over the functions. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20); the complex times were recorded on 2026-11-16 with Lean 4.35.0.")
 
-**Figure 2.** Compiled time of one call of each correctly rounded function of FloatLib by format width: 34 real functions and 18 complex functions. A thin line is one function, rounded to nearest even, and the thick line is the median over the functions. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-18); the complex times were recorded on 2026-11-16 with Lean 4.35.0.
+**Figure 2.** Compiled time of one call of each correctly rounded function of FloatLib by format width: 34 real functions and 18 complex functions. A thin line is one function, rounded to nearest even, and the thick line is the median over the functions. Both axes are logarithmic, and lower is faster. Measured with Lean v4.36.0 (Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs, 2026-11-20); the complex times were recorded on 2026-11-16 with Lean 4.35.0.
 
 <!-- end of figures -->

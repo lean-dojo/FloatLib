@@ -190,11 +190,11 @@ private def decodeRange (config : Backend.Config) (I : Interval Int) : Interval 
 private def checkedEval (e : Interval.Expr) (B : Backend Int)
     (env : Nat → Option (Interval Int)) : MetaM (Option (Interval Int)) := do
   checkSystem "interval diagnostics"
-  let result := e.eval? B env
+  let result := e.evalZero? B env
   checkSystem "interval diagnostics"
   return result
 
-/-- Descend in evaluation order, using `eval?` itself to distinguish rejected children. -/
+/-- Descend in evaluation order, using `evalZero?` itself to distinguish rejected children. -/
 private def firstObstruction (atoms : Array Lean.Expr) (config : Backend.Config)
     (env : Nat → Option (Interval Int)) (e : Interval.Expr) : MetaM (Interval.Expr × MessageData) :=
   withIncRecDepth do
@@ -240,8 +240,8 @@ private inductive SearchResult where
   | limited
 
 /--
-Mirror `Expr.check`'s short-circuit order with a bounded number of diagnostic box visits.
-The numerical decisions and the choice of split remain those of `checkBox` and `bisect?`.
+Mirror `Expr.checkZero`'s short-circuit order with a bounded number of diagnostic box visits.
+The numerical decisions and the choice of split remain those of `checkBoxZero` and `bisect?`.
 -/
 private def findLeaf (e : Interval.Expr) (B : Backend Int) (relation : Relation)
     (box : Box) (depth splits : Nat) : StateRefT Nat MetaM SearchResult :=
@@ -250,7 +250,7 @@ private def findLeaf (e : Interval.Expr) (B : Backend Int) (relation : Relation)
     let fuel ← get
     if fuel == 0 then return .limited
     set (fuel - 1)
-    let passed := e.checkBox B relation box
+    let passed := e.checkBoxZero B relation box
     checkSystem "interval diagnostics"
     if passed then return .certified
     match depth with
@@ -280,7 +280,7 @@ private def retryMessage (e : Interval.Expr) (obstruction : Option Interval.Expr
   for (setting, value, trial) in candidates do
     checkSystem "interval diagnostics"
     let B := Backend.binaryGrid trial
-    let passed := e.checkBox B relation box
+    let passed := e.checkBoxZero B relation box
     checkSystem "interval diagnostics"
     if passed then
       return some m!"A diagnostic retry passes on this box with {setting} := {value}; \
@@ -324,7 +324,7 @@ private def evalQuoted (backend : Q(Backend Int)) (inputs : Q(List (Interval Int
     (e : Q(Interval.Expr)) : MetaM (Option Q(Interval Int)) := do
   checkSystem "interval diagnostics"
   let result : Q(Option (Interval Int)) ← withTransparency .all
-    (whnf q(Interval.Expr.eval? $e $backend (fun i => $inputs[i]?)))
+    (whnf q(Interval.Expr.evalZero? $e $backend (fun i => $inputs[i]?)))
   match result with
   | ~q(some $I) => return some I
   | ~q(none) => return none
@@ -517,9 +517,9 @@ def preflightCheck (expression : Q(Interval.Expr)) (box : Q(Box))
     | .limited => none
 
 /--
-Explain a failed `Expr.check` from its quoted expression, box, binary-grid configuration, relation,
-and subdivision depth. The optional `atoms` array supplies the original real terms in variable index
-order, and without it variables are displayed as `x[i]`.
+Explain a failed `Expr.checkZero` from its quoted expression, box, binary-grid configuration,
+relation, and subdivision depth. The optional `atoms` array supplies the original real terms in
+variable index order, and without it variables are displayed as `x[i]`.
 
 Call it only after kernel verification fails. It returns advisory text and never proof evidence,
 restores Meta state even on exceptions, and propagates interrupts, heartbeat exhaustion, and

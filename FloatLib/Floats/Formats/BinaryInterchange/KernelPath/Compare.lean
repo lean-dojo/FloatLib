@@ -415,7 +415,7 @@ theorem compareCode_eq {fmt : FloatFormat} (x y : Model fmt) :
 /-! ## Classification -/
 
 /-- A flag that is zero or one equals one exactly when its Boolean is set. -/
-private theorem beq_flag (b : Bool) : Nat.beq (if b then 1 else 0) 1 = b := by
+theorem beq_flag (b : Bool) : Nat.beq (if b then 1 else 0) 1 = b := by
   cases b <;> rfl
 
 /-- `nanCode` is one exactly on the NaNs. -/

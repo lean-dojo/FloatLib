@@ -72,7 +72,7 @@ theorem rational_tan_pi_mem (argument value : ℚ)
     · exact Or.inr (Or.inr hone)
     · exact Or.inl hneg
   · have := (div_eq_iff hden).mp h
-    exact False.elim (rational_square_ne_three (3 * value) (by nlinarith))
+    exact False.elim (rational_square_ne_three (3 * value) (by linarith))
   · have := (div_eq_iff hden).mp h
     exact Or.inr (Or.inl (sq_eq_zero_iff.mp (show value ^ 2 = 0 by linarith)))
 

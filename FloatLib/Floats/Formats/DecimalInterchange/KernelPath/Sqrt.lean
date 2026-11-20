@@ -9,6 +9,7 @@ module
 public import FloatLib.Floats.Formats.DecimalInterchange.KernelPath.Quantum
 public import FloatLib.Floats.Formats.DecimalInterchange.Algebraic.Runtime
 public import FloatLib.Floats.Formats.DecimalInterchange.Sqrt.Runtime
+public import FloatLib.Numerics.Kernel.RootShape
 public import FloatLib.Numerics.Kernel.RootProof
 
 /-!
@@ -25,6 +26,13 @@ square root of the ratio at the square of that quantum, and comparisons of natur
 increment (`sqrtIncrement`), the `inexact` flag and the tininess. `sqrtRatio_eq` proves it equal
 to `sqrtMagnitude` for every format, rounding direction, numerator, nonzero denominator and
 preferred exponent.
+
+`sqrtScaled` is `sqrtRatio` of a numerator times a power of ten, given by its exponent
+(`sqrtScaled_eq`). The square of the least quantum puts a radicand eight hundred digits up in
+decimal64 and twelve thousand in decimal128, and all but the last few of those digits only move
+the rounding quantum of the root: `sqrtScaled` keeps the powers of ten that give the radicand
+twice the precision less one digits and adds half of the rest to the quantum (`sqrtCancelled`),
+so the integer square root is taken of a number of about twice the precision.
 
 Three operations are built on it, each tagged `@[kernel_optimize]` and proved equal to its
 specification for every format, rounding direction and datum:
@@ -206,6 +214,147 @@ theorem zpow_eq_ratio (f : Format) (e : Int) {a b : Nat}
   omega
 
 /--
+`sqrtRatio f mode (scaled × 100 ^ cancelled) den preferred` for a radicand `scaled / den` of at
+least twice the precision less one digits (`sqrtCancelled_eq`): the rounding quantum of the
+root is then at least `10 ^ cancelled`, so that power is never formed.
+-/
+def sqrtCancelled (f : Format) (mode : RoundingMode) (scaled den cancelled : Nat)
+    (preferred : Int) : Outcome :=
+  (fun shift =>
+    (fun scale =>
+      (fun lower =>
+        (fun rounded =>
+          deliverRounded f mode false rounded (Nat.add shift cancelled)
+            (Bool.not (Nat.beq (Nat.mul (Nat.pow rounded 2) scale) scaled)) false preferred)
+          (Nat.add lower (sqrtIncrement mode lower scaled scale)))
+        (isqrt (Nat.div scaled scale)))
+      (Nat.mul den (Nat.pow 100 shift)))
+    (Nat.sub (Nat.succ (Nat.div (Nat.pred (decimalLength (Nat.div scaled den))) 2))
+      (Nat.succ (Nat.mul 3 f.declets)))
+
+/--
+`sqrtRatio f mode (num × 10 ^ scale) den preferred` (`sqrtScaled_eq`) without the power
+`10 ^ scale` when it is large: `least` powers of ten (twice the precision less two, plus a bound
+on the digits of the denominator), or one more for the parity of `scale`, give the radicand
+twice the precision less one digits, and the other powers, an even number, only move the
+rounding quantum of the root.
+-/
+def sqrtScaled (f : Format) (mode : RoundingMode) (num den scale : Nat) (preferred : Int) :
+    Outcome :=
+  (fun least =>
+    Bool.casesOn (motive := fun _ => Outcome)
+      (Bool.and (Nat.ble 1 num) (Nat.ble least scale))
+      (sqrtRatio f mode (Nat.mul num (Nat.pow 10 scale)) den preferred)
+      ((fun kept =>
+          sqrtCancelled f mode (Nat.mul num (Nat.pow 10 kept)) den
+            (Nat.div (Nat.sub scale kept) 2) preferred)
+        (Nat.add least (Nat.mod (Nat.sub scale least) 2))))
+    (Nat.add (Nat.mul 6 f.declets) (digitBound den))
+
+/-- The increment of a root does not change when the radicand and its scale are multiplied by
+one positive number. -/
+theorem sqrtIncrement_mul (mode : RoundingMode) (lower n : Nat) {scale k : Nat}
+    (hscale : 0 < scale) (hk : 0 < k) :
+    sqrtIncrement mode lower (n * k) (scale * k) = sqrtIncrement mode lower n scale := by
+  have h1 := sqrtIncrement_eq mode lower (n * k) (Nat.mul_pos hscale hk)
+  have h2 := sqrtIncrement_eq mode lower n hscale
+  have hq : ((n * k : Nat) : ℚ) / ((scale * k : Nat) : ℚ) = (n : ℚ) / (scale : ℚ) := by
+    push_cast
+    exact mul_div_mul_right _ _ (by exact_mod_cast hk.ne')
+  rw [hq, h2] at h1
+  exact (Nat.add_left_cancel h1).symm
+
+/--
+`sqrtCancelled` is `sqrtRatio` of the radicand with the cancelled power of one hundred, when
+the radicand `scaled / den` has at least twice the precision less one digits.
+-/
+theorem sqrtCancelled_eq (f : Format) (mode : RoundingMode) {scaled den : Nat} (hden : 0 < den)
+    (hq : 100 ^ (3 * f.declets) ≤ scaled / den) (cancelled : Nat) (preferred : Int) :
+    sqrtCancelled f mode scaled den cancelled preferred =
+      sqrtRatio f mode (scaled * 100 ^ cancelled) den preferred := by
+  have hdivf : ∀ m n : Nat, Nat.div m n = m / n := fun _ _ => rfl
+  have hpow : 0 < 100 ^ cancelled := Nat.pow_pos (by decide)
+  have hpos : 0 < scaled / den := Nat.lt_of_lt_of_le (Nat.pow_pos (by decide)) hq
+  have hhundred : (100 : Nat) ^ cancelled = 10 ^ (2 * cancelled) := by
+    rw [Nat.pow_mul]
+  have hlength : decimalLength (scaled * 100 ^ cancelled / den) =
+      decimalLength (scaled / den) + 2 * cancelled := by
+    rw [hhundred]
+    exact decimalLength_mul_pow_div hden hpos _
+  have hdigits : 6 * f.declets + 1 ≤ decimalLength (scaled / den) := by
+    rw [decimalLength_eq_log]
+    refine Nat.succ_le_succ (Nat.le_log_of_pow_le (by decide) ?_)
+    rw [show 6 * f.declets = 2 * (3 * f.declets) by omega, Nat.pow_mul]
+    exact hq
+  unfold sqrtCancelled sqrtRatio
+  simp only [Nat.add_eq, Nat.sub_eq, Nat.mul_eq, Nat.pow_eq, Nat.succ_eq_add_one,
+    Nat.pred_eq_sub_one, hdivf]
+  rw [hlength]
+  generalize hshift : (decimalLength (scaled / den) - 1) / 2 + 1 - (3 * f.declets + 1) = shift
+  have hsum : (decimalLength (scaled / den) + 2 * cancelled - 1) / 2 + 1 - (3 * f.declets + 1) =
+      shift + cancelled := by omega
+  have hscale : den * 100 ^ (shift + cancelled) = den * 100 ^ shift * 100 ^ cancelled := by
+    rw [Nat.pow_add, Nat.mul_assoc]
+  have hS : 0 < den * 100 ^ shift := Nat.mul_pos hden (Nat.pow_pos (by decide))
+  have htiny : Nat.ble (scaled * 100 ^ cancelled + 1) (den * 100 ^ (3 * f.declets)) = false := by
+    apply Bool.eq_false_iff.mpr
+    intro h
+    have hle := Nat.le_of_ble_eq_true h
+    have h1 : den * 100 ^ (3 * f.declets) ≤ scaled :=
+      (Nat.mul_comm _ _).le.trans ((Nat.le_div_iff_mul_le hden).1 hq)
+    have h2 : scaled ≤ scaled * 100 ^ cancelled := Nat.le_mul_of_pos_right _ hpow
+    omega
+  have hexact : ∀ a : Nat,
+      Nat.beq (a * (den * 100 ^ shift * 100 ^ cancelled)) (scaled * 100 ^ cancelled) =
+        Nat.beq (a * (den * 100 ^ shift)) scaled := by
+    intro a
+    rw [← Nat.mul_assoc]
+    cases h : Nat.beq (a * (den * 100 ^ shift)) scaled
+    · exact Bool.eq_false_iff.mpr fun hb =>
+        Nat.ne_of_beq_eq_false h (Nat.eq_of_mul_eq_mul_right hpow (Nat.eq_of_beq_eq_true hb))
+    · rw [Nat.eq_of_beq_eq_true h]
+      exact Nat.beq_refl _
+  rw [hsum, hscale, Nat.mul_div_mul_right _ _ hpow, sqrtIncrement_mul mode _ scaled hS hpow,
+    hexact, htiny]
+
+/--
+`sqrtScaled` is `sqrtRatio` of the numerator with its power of ten, for every format, rounding
+direction, numerator, nonzero denominator, scale and preferred exponent.
+-/
+theorem sqrtScaled_eq (f : Format) (mode : RoundingMode) (num : Nat) {den : Nat}
+    (hden : den ≠ 0) (scale : Nat) (preferred : Int) :
+    sqrtScaled f mode num den scale preferred =
+      sqrtRatio f mode (num * 10 ^ scale) den preferred := by
+  unfold sqrtScaled
+  generalize hleast : Nat.add (Nat.mul 6 f.declets) (digitBound den) = least
+  beta_reduce
+  cases hnum : Nat.ble 1 num
+  · rfl
+  cases hle : Nat.ble least scale
+  · rfl
+  have hn : 0 < num := Nat.le_of_ble_eq_true hnum
+  have hls : least ≤ scale := Nat.le_of_ble_eq_true hle
+  have hd : 0 < den := Nat.pos_of_ne_zero hden
+  generalize hkept : least + (scale - least) % 2 = kept
+  have hks : kept + 2 * ((scale - kept) / 2) = scale := by omega
+  -- The kept power gives the radicand twice the precision less one digits.
+  have hq : 100 ^ (3 * f.declets) ≤ num * 10 ^ kept / den := by
+    have hk : least ≤ kept := by omega
+    rw [Nat.le_div_iff_mul_le hd, show (100 : Nat) = 10 ^ 2 from rfl, ← Nat.pow_mul]
+    calc 10 ^ (2 * (3 * f.declets)) * den
+        ≤ 10 ^ (2 * (3 * f.declets)) * 10 ^ digitBound den :=
+          Nat.mul_le_mul_left _ (lt_ten_pow_digitBound den).le
+      _ = 10 ^ least := by
+          rw [← Nat.pow_add, ← hleast, show 2 * (3 * f.declets) = 6 * f.declets by omega]
+          rfl
+      _ ≤ 10 ^ kept := Nat.pow_le_pow_right (by decide) hk
+      _ ≤ num * 10 ^ kept := Nat.le_mul_of_pos_left _ hn
+  change sqrtCancelled f mode (num * 10 ^ (least + (scale - least) % 2)) den
+    ((scale - (least + (scale - least) % 2)) / 2) preferred = _
+  rw [hkept, sqrtCancelled_eq f mode hd hq, Nat.mul_assoc, show (100 : Nat) = 10 ^ 2 from rfl,
+    ← Nat.pow_mul, ← Nat.pow_add, hks]
+
+/--
 Kernel form of `Arithmetic.sqrt` (`sqrt_eq`): the coefficient of a positive finite datum is put
 on the grid `10 ^ (2 × minQuantum)` as a ratio of natural numbers, and `sqrtRatio` rounds its
 root with half the quantum exponent, rounded down, as the preferred exponent. A zero, a
@@ -216,7 +365,7 @@ def sqrt (f : Format) (mode : RoundingMode) (x : Datum) : Outcome :=
     (fun s c q =>
       Bool.casesOn (motive := fun _ => Outcome) (Bool.or s (Nat.beq c 0))
         (offsets3 q f.bias f.bias fun above below =>
-          sqrtRatio f mode (Nat.mul c (Nat.pow 10 above)) (Nat.pow 10 below) (q / 2))
+          sqrtScaled f mode c (Nat.pow 10 below) above (q / 2))
         (Arithmetic.sqrt f mode x))
     (fun _ => Arithmetic.sqrt f mode x) (fun _ _ _ => Arithmetic.sqrt f mode x)
 
@@ -231,16 +380,17 @@ direction and datum: the same datum and the same flags.
   · rcases c with _ | c
     · rfl
     · change _ = offsets3 q f.bias f.bias fun above below =>
-        sqrtRatio f mode (Nat.mul (c + 1) (Nat.pow 10 above)) (Nat.pow 10 below) (q / 2)
+        sqrtScaled f mode (c + 1) (Nat.pow 10 below) above (q / 2)
       rw [offsets3_eq]
-      simp only [Nat.mul_eq, Nat.pow_eq]
+      simp only [Nat.pow_eq]
       generalize ha : (q + f.bias + f.bias).toNat = a
       generalize hb : (-(q + f.bias + f.bias)).toNat = b
       have hab : (a : Int) - (b : Int) = q + f.bias + f.bias := by omega
       have hspec : Arithmetic.sqrt f mode (.finite false (c + 1) q) =
           sqrtMagnitude f mode (((c + 1 : Nat) : ℚ) * (10 : ℚ) ^ q) (q / 2) := by
         simp [Arithmetic.sqrt]
-      rw [hspec, sqrtRatio_eq f mode _ (by positivity), zpow_eq_ratio f q hab]
+      rw [hspec, sqrtScaled_eq f mode _ (by positivity), sqrtRatio_eq f mode _ (by positivity),
+        zpow_eq_ratio f q hab]
       congr 1
       push_cast
       ring
@@ -257,7 +407,7 @@ def rSqrt (f : Format) (mode : RoundingMode) (x : Datum) : Outcome :=
     (fun s c q =>
       Bool.casesOn (motive := fun _ => Outcome) (Bool.or s (Nat.beq c 0))
         (offsets3 (-q) f.bias f.bias fun above below =>
-          sqrtRatio f mode (Nat.pow 10 above) (Nat.mul c (Nat.pow 10 below)) ((-q) / 2))
+          sqrtScaled f mode 1 (Nat.mul c (Nat.pow 10 below)) above ((-q) / 2))
         (Arithmetic.rSqrt f mode x))
     (fun _ => Arithmetic.rSqrt f mode x) (fun _ _ _ => Arithmetic.rSqrt f mode x)
 
@@ -272,7 +422,7 @@ direction and datum: the same datum and the same flags.
   · rcases c with _ | c
     · rfl
     · change _ = offsets3 (-q) f.bias f.bias fun above below =>
-        sqrtRatio f mode (Nat.pow 10 above) (Nat.mul (c + 1) (Nat.pow 10 below)) ((-q) / 2)
+        sqrtScaled f mode 1 (Nat.mul (c + 1) (Nat.pow 10 below)) above ((-q) / 2)
       rw [offsets3_eq]
       simp only [Nat.mul_eq, Nat.pow_eq]
       generalize ha : (-q + f.bias + f.bias).toNat = a
@@ -281,7 +431,9 @@ direction and datum: the same datum and the same flags.
       have hspec : Arithmetic.rSqrt f mode (.finite false (c + 1) q) =
           sqrtMagnitude f mode ((((c + 1 : Nat) : ℚ) * (10 : ℚ) ^ q)⁻¹) ((-q) / 2) := by
         simp [Arithmetic.rSqrt]
-      rw [hspec, sqrtRatio_eq f mode _ (Nat.mul_ne_zero (Nat.succ_ne_zero c) (by positivity)),
+      rw [hspec, sqrtScaled_eq f mode _ (Nat.mul_ne_zero (Nat.succ_ne_zero c) (by positivity)),
+        Nat.one_mul,
+        sqrtRatio_eq f mode _ (Nat.mul_ne_zero (Nat.succ_ne_zero c) (by positivity)),
         mul_inv, ← zpow_neg, zpow_eq_ratio f (-q) hab]
       congr 1
       push_cast
@@ -290,7 +442,7 @@ direction and datum: the same datum and the same flags.
 
 /--
 Kernel form of `Arithmetic.hypot` (`hypot_eq`): the exact sum of the squares of two finite data
-is a natural number at twice the smaller of the two quantum exponents, and `sqrtRatio` rounds
+is a natural number at twice the smaller of the two quantum exponents, and `sqrtScaled` rounds
 its root with that smaller exponent as the preferred exponent. An infinity and a NaN are left
 to the specification.
 -/
@@ -301,12 +453,10 @@ def hypot (f : Format) (mode : RoundingMode) (x y : Datum) : Outcome :=
         gaps qx qy fun a b =>
           (fun least =>
             offsets3 (Int.add least least) f.bias f.bias fun above below =>
-              sqrtRatio f mode
-                (Nat.mul
-                  (Nat.add (Nat.mul (Nat.pow cx 2) (Nat.pow 100 a))
-                    (Nat.mul (Nat.pow cy 2) (Nat.pow 100 b)))
-                  (Nat.pow 10 above))
-                (Nat.pow 10 below) least)
+              sqrtScaled f mode
+                (Nat.add (Nat.mul (Nat.pow cx 2) (Nat.pow 100 a))
+                  (Nat.mul (Nat.pow cy 2) (Nat.pow 100 b)))
+                (Nat.pow 10 below) above least)
             (Bool.casesOn (motive := fun _ => Int) (Nat.beq b 0) qx qy))
       (fun _ => Arithmetic.hypot f mode x y) (fun _ _ _ => Arithmetic.hypot f mode x y))
     (fun _ => Arithmetic.hypot f mode x y) (fun _ _ _ => Arithmetic.hypot f mode x y)
@@ -335,12 +485,10 @@ direction and pair of data: the same datum and the same flags.
     gaps qx qy fun a b =>
       (fun least =>
         offsets3 (Int.add least least) f.bias f.bias fun above below =>
-          sqrtRatio f mode
-            (Nat.mul
-              (Nat.add (Nat.mul (Nat.pow cx 2) (Nat.pow 100 a))
-                (Nat.mul (Nat.pow cy 2) (Nat.pow 100 b)))
-              (Nat.pow 10 above))
-            (Nat.pow 10 below) least)
+          sqrtScaled f mode
+            (Nat.add (Nat.mul (Nat.pow cx 2) (Nat.pow 100 a))
+              (Nat.mul (Nat.pow cy 2) (Nat.pow 100 b)))
+            (Nat.pow 10 below) above least)
         (Bool.casesOn (motive := fun _ => Int) (Nat.beq b 0) qx qy)
   rw [gaps_eq]
   dsimp only
@@ -363,8 +511,8 @@ direction and pair of data: the same datum and the same flags.
   have h100 : ∀ k : Nat, (100 : ℚ) ^ k = ((10 : ℚ) ^ k) ^ 2 := fun k => by
     rw [← pow_mul, mul_comm, pow_mul]
     norm_num
-  rw [sqrtRatio_eq f mode _ (by positivity), ← sq_abs, Datum.finiteValue_abs,
-    ← sq_abs (Datum.finiteValue sy cy qy), Datum.finiteValue_abs, hx, hy]
+  rw [sqrtScaled_eq f mode _ (by positivity), sqrtRatio_eq f mode _ (by positivity), ← sq_abs,
+    Datum.finiteValue_abs, ← sq_abs (Datum.finiteValue sy cy qy), Datum.finiteValue_abs, hx, hy]
   congr 1
   push_cast
   rw [h100 a, h100 b,
@@ -373,5 +521,15 @@ direction and pair of data: the same datum and the same flags.
       fun sum => by ring,
     ← hsquare]
   ring
+
+/-! ## Kernel shapes -/
+
+kernel_shape sqrtIncrement
+kernel_shape sqrtRatio
+kernel_shape sqrtCancelled
+kernel_shape sqrtScaled
+kernel_shape sqrt
+kernel_shape rSqrt
+kernel_shape hypot
 
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

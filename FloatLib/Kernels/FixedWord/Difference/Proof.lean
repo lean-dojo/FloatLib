@@ -366,7 +366,7 @@ theorem shiftLeft_toNat (value : UInt128) (shift : Nat)
       rw [hhighZero] at htotalFit
       simp only [UInt64.reduceToNat, zero_mul, add_zero] at htotalFit
       rw [hshiftEq, pow_add] at htotalFit
-      nlinarith
+      linarith
     have hlow :
         (value.lo <<< UInt64.ofNat inner).toNat =
           value.lo.toNat * 2 ^ inner := by

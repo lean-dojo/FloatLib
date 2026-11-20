@@ -30,6 +30,7 @@ public import FloatLib.Floats.Formats.P3109.Block.Operations
 public import FloatLib.Floats.Formats.P3109.Arithmetic.ScaledFunctionsProof
 public import FloatLib.Floats.Formats.P3109.Functions.Proof
 public import FloatLib.Floats.Formats.P3109.Functions.Domain
+public import FloatLib.Floats.Formats.P3109.Functions.Recommended.Proof
 public import FloatLib.Floats.Formats.P3109.Projection.Correctness
 public import FloatLib.Floats.Formats.P3109.Projection.Direction
 public import FloatLib.Floats.Formats.P3109.Projection.Rational.Proof
@@ -66,7 +67,11 @@ interface. Block square root, reciprocal square root, and hypotenuse normalize t
 before one destination rounding, zero, infinite, and negative result scales included.
 
 The standard-named API follows Interim Report v4.1, a working-group report not approved as an
-IEEE standard. The conversion indicators are FloatLib's own.
+IEEE standard. The conversion indicators are FloatLib's own. So are the functions of
+`Functions.Recommended`, the functions of IEEE 754-2019 clause 9.2 that the report does not
+list: `Exp10`, `Exp2MinusOne`, `Exp10MinusOne`, `Log10`, `Log2OnePlus`, `Log10OnePlus`, `Rootn`,
+`Cbrt`, `Pown`, `Pow`, `Powr` and `Compound`. Each is one projection of the real result, in
+every rounding and saturation mode and between independent descriptors.
 
 Finite values use binary scientific notation with `P - 1` stored trailing bits and an implicit
 leading bit for normal values. That sounds like IEEE 754, but P3109 needs a descriptor of its own:

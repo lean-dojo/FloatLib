@@ -7,6 +7,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.DecimalInterchange.Remainder.Integer
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # Remainder representability and exact value
@@ -111,8 +112,9 @@ theorem remainder_value (f : Format) (sx sy : Bool) (cx cy : Nat) (qx qy : Int)
     split at he <;> rename_i h
     all_goals
       simp only [h, ↓reduceIte, Bool.false_eq_true]
-      have he' := congrArg (fun t : ℚ => t * (10 : ℚ) ^ q) he
-      nlinarith [he']
+      first
+        | linear_combination (10 : ℚ) ^ q * he
+        | linear_combination -(10 : ℚ) ^ q * he
 
 /-- The delivered magnitude of a finite remainder is the unrounded integer residual on the common
 grid. A zero divisor gives a NaN, so a finite result has a nonzero divisor. -/

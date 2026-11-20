@@ -44,10 +44,12 @@ def roundToIntegralStatusReference (fmt : FloatFormat) (mode : Model.IEEERoundin
     (Model.Internal.Status.roundToIntegral (Model.ofNatBits (fmt := fmt) a) mode)
 
 /--
-The status number of the value encoded by `a` rounded to an integer in the direction `mode`
-(`roundToIntegralStatus_eq`). See the module documentation.
+The status number of the value encoded by `a` rounded to an integer in the direction `mode`,
+when `w` is the word of the rounded value. `roundToIntegralStatus` is this number at
+`roundToIntegral fmt mode a`.
 -/
-def roundToIntegralStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat) : Nat :=
+def roundToIntegralStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a w : Nat) :
+    Nat :=
   (fun s u =>
     Bool.casesOn (motive := fun _ => Nat) (Nat.beq (nonFinite fmt s u) 0)
       (invalidStatus (Nat.mul (nanFlag fmt s u) (signalingFlag fmt a)))
@@ -65,12 +67,18 @@ def roundToIntegralStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a
                       (Nat.sub (Nat.add fmt.exponentBias fmt.fracWidth) (Nat.succ h)))))))
               (Nat.mul 32
                 (Nat.shiftRight
-                  (roundStatus fmt mode s (Nat.shiftLeft m (Nat.add h 2)) 0
-                    (roundToIntegral fmt mode a))
+                  (roundStatus fmt mode s (Nat.shiftLeft m (Nat.add h 2)) 0 w)
                   5)))
             (Nat.sub u (Nat.shiftLeft h fmt.fracWidth)))
           (Nat.sub (Nat.shiftRight u fmt.fracWidth) 1))))
     (Nat.shiftRight a (signPos fmt)) (Nat.land a (magnitudeMask fmt))
+
+/--
+The status number of the value encoded by `a` rounded to an integer in the direction `mode`
+(`roundToIntegralStatus_eq`). See the module documentation.
+-/
+def roundToIntegralStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat) : Nat :=
+  roundToIntegralStatusWith fmt mode a (roundToIntegral fmt mode a)
 
 /-- `roundToIntegralStatusReference` is the status of the reference integral rounding. -/
 theorem roundToIntegralStatusReference_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode)
@@ -136,7 +144,7 @@ theorem roundToIntegralStatus_eq {fmt : FloatFormat} (mode : Model.IEEERoundingM
       (Model.Internal.Status.roundToIntegral x mode).status ∧
     decodeTernary (roundToIntegralStatus fmt mode x.toNatBits) =
       (Model.Internal.Status.roundToIntegral x mode).ternary
-  unfold roundToIntegralStatus
+  unfold roundToIntegralStatus roundToIntegralStatusWith
   simp only [Nat.shiftRight_eq', Nat.land_eq, Nat.shiftLeft_eq', Nat.sub_eq, Nat.add_eq,
     Nat.mul_eq, Nat.succ_eq_add_one, Nat.pow_eq, mod_def, sign_toNatBits, magnitude_toNatBits,
     fields_shiftRight _ _ _ hfx, fields_sub_shiftLeft, nanFlag_eq, nanFlag_mul_signalingFlag]

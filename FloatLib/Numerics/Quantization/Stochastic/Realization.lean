@@ -74,6 +74,6 @@ theorem subgaussian_of_cell [IsProbabilityMeasure ν]
 theorem second_moment_of_cell_le (h : HasLaw R (cellLaw a b x hab hx) ν) :
     ∫ e, (R e - x) ^ 2 ∂ν ≤ (b - a) ^ 2 / 4 := by
   rw [second_moment_of_cell h]
-  nlinarith [sq_nonneg (2 * x - a - b)]
+  linarith [sq_nonneg (2 * x - a - b)]
 
 end FloatLib.Numerics.Quantization.Stochastic

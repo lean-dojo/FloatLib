@@ -11,6 +11,7 @@ public meta import FloatLib.Tactic.FloatInfo.BinaryInterchange.Complex
 public meta import FloatLib.Tactic.FloatInfo.BinaryInterchange.Profile
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Homogeneous
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.SquareRoot.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Arithmetic.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Automation
@@ -22,9 +23,11 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.In
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Conversion.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.KernelPath
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Text.KernelPath
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion
 public import FloatLib.Floats.Formats.BinaryInterchange.Conversion.Cast.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.DType.Cast
+public import FloatLib.Floats.Formats.BinaryInterchange.DType.KernelPath
 public import FloatLib.Floats.Formats.BinaryInterchange.DType.Semantics
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.Backends
 public import FloatLib.Floats.Formats.BinaryInterchange.Descriptor.KernelPath
@@ -114,7 +117,13 @@ prove each one equal to its reference operation for every descriptor and lift th
 static-byte and descriptor values. The tactic `float_decide` rewrites a goal to these operations
 and lets the kernel decide it. `Configured.Recommended.KernelPath` adds, for configured values,
 the 22 comparisons of IEEE 754-2019 §5.11, the integral roundings and integer conversions under
-their names, `abs`, `copySign` and the eight minimum and maximum operations of §9.6.
+their names, `abs`, `copySign` and the eight minimum and maximum operations of §9.6, `nextUp`,
+`nextDown` and `remainder` of §5.3.1, `scaleB` and `logB`, the formatOf operations of §5.4.1,
+the reductions of §9.4, the augmented operations of §9.5, the payload operations of §9.7, and
+`pown`, `rootn`, `rSqrt` and `hypot` of §9.2. `Configured.Text.KernelPath` does the same for the
+conversions to and from character sequences, and `DType.KernelPath` and
+`Reduction.Schedule.KernelPath` for the integer conversions and the reductions of the
+descriptor model.
 
 Import `FloatLib.Floats.ExecFloat` for the universal capability API, or this module for
 descriptor-model execution. Import `FloatLib.Floats.Formats.BinaryInterchange.Semantics` for the

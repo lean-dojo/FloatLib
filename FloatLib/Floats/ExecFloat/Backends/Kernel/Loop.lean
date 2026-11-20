@@ -20,7 +20,8 @@ runs such a loop as a recursion on its length.
 
 `forall_fin_pairs` turns a statement about all pairs of indices below `n` into one such loop over
 the `n * n` pairs. `float_decide` uses it for goals of the form `∀ a b : Fin n, P a b`, an
-exhaustive check of a small format.
+exhaustive check of a small format. `forall_fin_pairs_test` is the same loop for a Boolean test,
+which the kernel runs without unfolding a `Decidable` instance at every pair.
 -/
 
 @[expose] public section
@@ -55,28 +56,26 @@ accumulator and the index `start + step * k`.
   | succ k ih => rw [List.range'_concat, List.foldl_append, ih]; rfl
 
 /--
-A decidable relation holds on all pairs of indices below `n` when one loop over the `n * n` pairs
+A Boolean test holds on all pairs of indices below `n` when one loop over the `n * n` pairs
 counts no failure. The loop is the recursor of the natural numbers on `count = n * n`, whose
-step decides the relation on the pair `(i / n, i % n)`, so Lean's kernel checks all pairs in
-`n * n` steps of a few natural-number operations each.
+step runs the test on the pair `(i / n, i % n)`, so Lean's kernel checks all pairs in `n * n`
+steps of a few natural-number operations each, with no `Decidable` instance to unfold.
 -/
-theorem forall_fin_pairs {n : Nat} {relation : Nat → Nat → Prop}
-    [decide : ∀ x y, Decidable (relation x y)] (count : Nat) (hcount : count = n * n)
+theorem forall_fin_pairs_test {n : Nat} (test : Nat → Nat → Bool) (count : Nat)
+    (hcount : count = n * n)
     (h : Nat.rec (motive := fun _ => Nat) 0
         (fun index failures =>
           Nat.add failures
-            (Bool.casesOn (motive := fun _ => Nat)
-              (Decidable.decide (relation (Nat.div index n) (Nat.mod index n))) 1 0))
+            (Bool.rec (motive := fun _ => Nat) 1 0 (test (Nat.div index n) (Nat.mod index n))))
         count = 0) :
-    ∀ a b : Fin n, relation a.val b.val := by
+    ∀ a b : Fin n, test a.val b.val = true := by
   have hloop : ∀ m : Nat,
       Nat.rec (motive := fun _ => Nat) 0
           (fun index failures =>
             Nat.add failures
-              (Bool.casesOn (motive := fun _ => Nat)
-                (Decidable.decide (relation (Nat.div index n) (Nat.mod index n))) 1 0))
+              (Bool.rec (motive := fun _ => Nat) 1 0 (test (Nat.div index n) (Nat.mod index n))))
           m = 0 →
-        ∀ index < m, relation (index / n) (index % n) := by
+        ∀ index < m, test (index / n) (index % n) = true := by
     intro m
     induction m with
     | zero => intro _ index hindex; exact absurd hindex (Nat.not_lt_zero _)
@@ -86,10 +85,10 @@ theorem forall_fin_pairs {n : Nat} {relation : Nat → Nat → Prop}
         rcases Nat.lt_succ_iff_lt_or_eq.1 hindex with hlt | rfl
         · exact ih hsplit.1 index hlt
         · have hlast := hsplit.2
-          cases hdecide : Decidable.decide (relation (Nat.div index n) (Nat.mod index n))
-          · rw [hdecide] at hlast
+          cases htest : test (Nat.div index n) (Nat.mod index n)
+          · rw [htest] at hlast
             exact absurd hlast (by decide)
-          · exact of_decide_eq_true hdecide
+          · rfl
   intro a b
   have hpos : 0 < n := Nat.lt_of_le_of_lt (Nat.zero_le _) a.isLt
   have hindex : a.val * n + b.val < count := by
@@ -104,5 +103,24 @@ theorem forall_fin_pairs {n : Nat} {relation : Nat → Nat → Prop}
     rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt b.isLt]
   rw [hdiv, hmod] at hpair
   exact hpair
+
+/--
+A decidable relation holds on all pairs of indices below `n` when one loop over the `n * n` pairs
+counts no failure. The loop is the recursor of the natural numbers on `count = n * n`, whose
+step decides the relation on the pair `(i / n, i % n)`, so Lean's kernel checks all pairs in
+`n * n` steps of a few natural-number operations each (`forall_fin_pairs_test` on the decision).
+-/
+theorem forall_fin_pairs {n : Nat} {relation : Nat → Nat → Prop}
+    [decide : ∀ x y, Decidable (relation x y)] (count : Nat) (hcount : count = n * n)
+    (h : Nat.rec (motive := fun _ => Nat) 0
+        (fun index failures =>
+          Nat.add failures
+            (Bool.casesOn (motive := fun _ => Nat)
+              (Decidable.decide (relation (Nat.div index n) (Nat.mod index n))) 1 0))
+        count = 0) :
+    ∀ a b : Fin n, relation a.val b.val :=
+  fun a b => of_decide_eq_true
+    (forall_fin_pairs_test (fun x y => @Decidable.decide (relation x y) (decide x y)) count
+      hcount h a b)
 
 end FloatLib.Floats.ExecFloat.KernelPath

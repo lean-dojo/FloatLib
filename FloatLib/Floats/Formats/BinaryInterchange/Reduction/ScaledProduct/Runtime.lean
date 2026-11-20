@@ -47,11 +47,12 @@ rounding. The scale factor is an unbounded integer, so it is never out of range.
 namespace FloatLib.Floats.Formats.BinaryInterchange
 
 /--
-A scaled product `product × 2 ^ scaleFactor` with the exceptions raised in computing it. The
-carrier `α` is `Model fmt` for the descriptor model and a configured type for stored values.
+A scaled product `product × β ^ scaleFactor` in the radix `β` of the carrier, with the
+exceptions raised in computing it. The carrier `α` is `Model fmt` for the binary descriptor
+model, a configured type for stored binary values, and a decimal `Datum`, whose radix is ten.
 -/
 structure ScaledProduct (α : Type) where
-  /-- The scaled product, `pr` in the standard: magnitude in `[1, 2]` for a finite nonzero
+  /-- The scaled product, `pr` in the standard: magnitude in `[1, β]` for a finite nonzero
   product. -/
   product : α
   /-- The scale factor, `sf` in the standard: zero for a zero, an infinity and a NaN. -/

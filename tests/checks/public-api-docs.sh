@@ -67,6 +67,7 @@ expected_groups = {
     "p3109",
     "specialized-formats",
     "interval",
+    "examples",
     "validation-only",
     "internal-backend",
 }

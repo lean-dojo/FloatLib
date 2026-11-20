@@ -246,21 +246,8 @@ theorem lower_le {I : Interval α} {x : ℝ} (hx : I.ContainsReal B.decode x) {l
 
 /-- A real inside an enclosure that is the point zero is zero. -/
 theorem eq_zero_of_isZero {I : Interval α} {x : ℝ} (hx : I.ContainsReal B.decode x)
-    (h : isZero B I = true) : x = 0 := by
-  obtain ⟨a, b, ha, hb, hax, hxb⟩ := hx
-  unfold isZero at h
-  cases hlo : B.decode I.lo with
-  | none => simp [hlo] at h
-  | some lo =>
-    cases hhi : B.decode I.hi with
-    | none => simp [hlo, hhi] at h
-    | some hi =>
-      simp only [hlo, hhi, Bool.and_eq_true, Kernel.Q.le_iff] at h
-      have hlo' : (lo : ℝ) = a := by simpa [hlo] using ha
-      have hhi' : (hi : ℝ) = b := by simpa [hhi] using hb
-      have h0 : (0 : ℝ) ≤ lo := by exact_mod_cast h.1
-      have h1 : (hi : ℝ) ≤ 0 := by exact_mod_cast h.2
-      exact le_antisymm (hxb.trans (hhi' ▸ h1)) ((hlo' ▸ h0).trans hax)
+    (h : isZero B I = true) : x = 0 :=
+  Backend.eq_zero_of_isZero hx h
 
 /-- Reals inside enclosures that are all the point zero are all zero. -/
 theorem all_zero_of_isZero {border : List (Interval α)} {reals : List ℝ}
@@ -378,7 +365,7 @@ theorem encloseRow_sound (hB : B.Sound functions) {intervals : List (Interval α
     exact .nil
   | cons e es ih =>
     rw [encloseRow] at h
-    cases he : e.eval? B (fun i => Kernel.Seq.nth? intervals i) with
+    cases he : e.evalZero? B (fun i => Kernel.Seq.nth? intervals i) with
     | none => simp [he] at h
     | some I =>
       cases hrest : encloseRow B intervals es with
@@ -386,7 +373,7 @@ theorem encloseRow_sound (hB : B.Sound functions) {intervals : List (Interval α
       | some rest =>
         simp only [he, hrest, Option.some.injEq] at h
         subst h
-        refine .cons (e.containsReal_eval? hB (fun i J hJ => henv i J ?_) he) (ih hrest)
+        refine .cons (e.containsReal_evalZero? hB (fun i J hJ => henv i J ?_) he) (ih hrest)
         simpa [Kernel.Seq.nth?_eq] using hJ
 
 /-- The enclosures of the rows contain the real values of their entries. -/

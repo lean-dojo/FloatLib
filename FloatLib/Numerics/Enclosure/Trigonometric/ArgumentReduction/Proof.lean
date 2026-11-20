@@ -190,7 +190,7 @@ theorem abs_fraction_reduceWindow_le (m : ℕ) (e : ℤ) {window : ℕ} (hwindow
   rw [show 2 * 2 ^ (window - 3) / 2 = 2 ^ (window - 3) by omega] at hlow hhigh
   rw [abs_le]
   push_cast
-  constructor <;> push_cast [hunit] <;> nlinarith
+  constructor <;> push_cast [hunit] <;> linarith
 
 /-! ## Accepted reductions -/
 

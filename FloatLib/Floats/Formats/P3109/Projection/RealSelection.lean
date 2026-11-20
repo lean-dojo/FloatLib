@@ -98,7 +98,7 @@ theorem floor_selection_iff (root : Real) (lower scale random : Nat)
   have hs : (0 : Real) < scale := by exact_mod_cast hscale
   rw [div_le_iff₀ hs]
   push_cast
-  constructor <;> intro h <;> nlinarith
+  constructor <;> intro h <;> linarith
 
 /-- Nearest-even stochastic selection includes its halfway point if and only if the boundary is
 even. -/

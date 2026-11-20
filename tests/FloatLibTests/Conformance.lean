@@ -11,6 +11,8 @@ public import FloatLibTests.Conformance.BinaryInterchange.ComplexElementary
 public import FloatLibTests.Conformance.BinaryInterchange.ComplexErrorBounds
 public import FloatLibTests.Conformance.BinaryInterchange.CorrectlyRounded
 public import FloatLibTests.Conformance.BinaryInterchange.Expm1x
+public import FloatLibTests.Conformance.BinaryInterchange.KernelCoverage
+public import FloatLibTests.Conformance.BinaryInterchange.KernelDirected
 public import FloatLibTests.Conformance.BinaryInterchange.MixedError
 public import FloatLibTests.Conformance.BinaryInterchange.NativeModel
 public import FloatLibTests.Conformance.Execution.AutomaticDispatch
@@ -19,9 +21,11 @@ public import FloatLibTests.Conformance.Execution.Certificates
 public import FloatLibTests.Conformance.Formats.BinaryConveniences
 public import FloatLibTests.Conformance.Formats.DecimalRecommended
 public import FloatLibTests.Conformance.Formats.DecimalFunctions
+public import FloatLibTests.Conformance.Formats.DecimalRecommendedFunctions
 public import FloatLibTests.Conformance.Formats.IEEENames
 public import FloatLibTests.Conformance.BinaryInterchange.Recommended
 public import FloatLibTests.Conformance.BinaryInterchange.RecommendedFunctions
+public import FloatLibTests.Conformance.BinaryInterchange.DirectedFunctions
 public import FloatLibTests.Conformance.BinaryInterchange.RecommendedKernelPath
 public import FloatLibTests.Conformance.BinaryInterchange.ReductionSchedule
 public import FloatLibTests.Conformance.BinaryInterchange.FormatOf
@@ -30,6 +34,7 @@ public import FloatLibTests.Conformance.Formats.KernelPaths
 public import FloatLibTests.Conformance.Formats.BlockBackend
 public import FloatLibTests.Conformance.Formats.BlockExamples
 public import FloatLibTests.Conformance.Formats.BlockTheory
+public import FloatLibTests.Conformance.Formats.BlockWorking
 public import FloatLibTests.Conformance.Formats.Configured
 public import FloatLibTests.Conformance.Formats.Conversion
 public import FloatLibTests.Conformance.Formats.EmbeddedFixedPoint
@@ -47,6 +52,7 @@ public import FloatLibTests.Conformance.Numerics.FixedInt
 public import FloatLibTests.Conformance.Numerics.FixedPoint
 public import FloatLibTests.Conformance.Numerics.KernelComplex
 public import FloatLibTests.Conformance.Numerics.KernelExact
+public import FloatLibTests.Conformance.Numerics.KernelSearch
 public import FloatLibTests.Conformance.Numerics.MagnitudeRounding
 public import FloatLibTests.Conformance.Numerics.Packed
 public import FloatLibTests.Conformance.Numerics.Quantization.Affine
@@ -64,8 +70,10 @@ public import FloatLibTests.Conformance.P3109.Block
 public import FloatLibTests.Conformance.P3109.Projection
 public import FloatLibTests.Conformance.P3109.Standard
 public import FloatLibTests.Conformance.P3109.Functions
+public import FloatLibTests.Conformance.P3109.RecommendedFunctions
 public import FloatLibTests.Conformance.P3109.BlockFunctions
 public import FloatLibTests.Conformance.Posit
+public import FloatLibTests.Conformance.Posit.General
 public import FloatLibTests.Conformance.Posit.Standard
 public import FloatLibTests.Conformance.Trust.Axioms
 public import FloatLibTests.Conformance.Trust.RootImports
@@ -95,6 +103,7 @@ public import FloatLibTests.Tactic.Roundoff.Cases
 public import FloatLibTests.Tactic.Roundoff.Check
 public import FloatLibTests.Tactic.Roundoff.Closed
 public import FloatLibTests.Tactic.Roundoff.Expm1x
+public import FloatLibTests.Tactic.Roundoff.GivenFacts
 public import FloatLibTests.Tactic.Roundoff.Guards
 public import FloatLibTests.Tactic.Roundoff.Kernels
 public import FloatLibTests.Tactic.Roundoff.MixedPrecision
@@ -110,6 +119,7 @@ public import FloatLibTests.Tactic.Roundoff.Tuples
 public import FloatLibTests.Tactic.FloatDecide
 public import FloatLibTests.Tactic.KernelEval
 public import FloatLibTests.Tactic.KernelRefl
+public import FloatLibTests.Tactic.KernelShape
 public import FloatLibTests.Tactic.LaneDecide
 public import FloatLibTests.Tactic.LaneTable
 public import FloatLibTests.Tactic.PackedRow

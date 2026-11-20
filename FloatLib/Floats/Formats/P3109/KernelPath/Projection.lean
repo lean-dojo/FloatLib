@@ -84,9 +84,7 @@ theorem quantumOf_eq (B P n d : Nat) (hn : n ≠ 0) (hd : d ≠ 0) :
   unfold quantumOf
   rw [size_sub_one hn, size_sub_one hd]
   kernel_notation
-  have hiff : (n * 2 ^ d.log2 + 1 ≤ d * 2 ^ n.log2) ↔ (n * 2 ^ d.log2 < d * 2 ^ n.log2) :=
-    Iff.rfl
-  simp only [hiff]
+  simp only [Nat.add_one_le_iff]
   split_ifs <;> omega
 
 /-! ## The rounding decision -/

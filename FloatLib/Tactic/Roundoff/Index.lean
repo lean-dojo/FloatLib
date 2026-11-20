@@ -29,10 +29,11 @@ through the definitions it calls:
 In all of this, local definitions in types are expanded first.
 
 Registered rules are classified by their conclusions: numerical bounds and observations, mixed
-bounds, finiteness theorems and order facts. Each is prepared once per call, with its container
-reads normalized like the analyzed program, and indexed in a discrimination tree by the complete
-computation it concerns. Retrieval ignores instances, but applying a candidate checks its whole
-statement, selected dictionaries included.
+bounds, finiteness theorems and order facts. Each is indexed in a discrimination tree by the
+complete computation it concerns. A rule that reads a container is prepared once per call, with
+its reads normalized like the analyzed program, and any other rule once per process and set of
+registered rules (`indexedRules`). Retrieval ignores instances, but applying a candidate checks
+its whole statement, selected dictionaries included.
 -/
 
 public meta section
@@ -46,8 +47,8 @@ open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
 registered observations, function coercions and `GetElem.getElem`. -/
 def hasObservation (expression : Lean.Expr) : CoreM Bool := do
   let heads := (← extension).observations ++ #[``CoeFun.coe, ``GetElem.getElem]
-  return (expression.find? fun term =>
-    heads.contains (term.getAppFn.constName?.getD .anonymous)).isSome
+  -- A head of an application is itself a subterm, so the constants are enough.
+  return (expression.find? fun term => term.isConst && heads.contains term.constName!).isSome
 
 /-- Data fields of an input are inputs too, and so is the value of an optional input
 (`Option.get`). Class methods and applied function fields still need their implementation or a
@@ -125,6 +126,19 @@ partial def importedSource (observe value : Lean.Expr) : MetaM (Lean.Expr × Lea
     let converted := mkAppN value.getAppFn (value.getAppArgs.set! entry.value binder)
     mkLambdaFVars #[binder] (mkApp observe converted).headBeta
   importedSource through inner.consumeMData
+
+/-- The value that `value` imports, through every registered import it applies in turn, or
+`value` itself. -/
+partial def importedValue (value : Lean.Expr) : MetaM Lean.Expr := do
+  let some entry ← import? value | return value
+  importedValue (value.getArg! entry.value).consumeMData
+
+/-- The heads of `value` (`BoundHeads`). The value it observes is read under its imports
+(`importedValue`): an import is the head of every value of its carrier, so it would let a
+hypothesis about one imported value be compared with every other, unfolding both. -/
+def boundHeads (value : Lean.Expr) : MetaM BoundHeads := do
+  let some observed := value.getAppArgs.back? | return (value.getAppFn.constName?, none)
+  return (value.getAppFn.constName?, some (← importedValue observed).getAppFn.constName?)
 
 /-- Whether `value`, or the model it decodes to, is an input as stored: a local variable, a data
 field of one, an entry of such a container that a read selecting stored entries takes
@@ -391,7 +405,7 @@ private def carrierHead? (type : Lean.Expr) (cache? : Option CarrierCache := non
   unless (← getEnv).find? name matches some (.defnInfo _) do return none
   unless ← mentionsTypeParameter current cache? do return none
   let folded (config : Meta.Config) (info : ConstantInfo) : CoreM Bool :=
-    if carrierTypes.contains info.name then pure false else canUnfoldDefault config info
+    if carrierTypes.contains info.name then pure false else canUnfoldExported config info
   match (← withCanUnfoldPred folded (whnfD current)).getAppFn with
   | .fvar id => if ← isTypeParameter id cache? then return some true
   | .proj _ _ record => if ← mentionsTypeParameter record cache? then return some true
@@ -890,21 +904,6 @@ def numericalConclusion? (type : Lean.Expr) :
   return some (actual, ← withLocalDeclD `value q(ℝ) fun value =>
     mkLambdaFVars #[value] (bound.statement value reference), false)
 
-/-- Abstract the theorem parameters left after specializing its local rounding premise. -/
-partial def closeRuleArguments (arguments : Array Lean.Expr) (binders : Array BinderInfo)
-    (index : Nat) (opened : Array Lean.Expr) (proof : Lean.Expr) : MetaM Lean.Expr := do
-  if index == arguments.size then
-    return ← mkLambdaFVars opened (← instantiateMVars proof)
-  let argument ← instantiateMVars arguments[index]!
-  unless argument.isMVar do
-    return ← closeRuleArguments arguments binders (index + 1) opened proof
-  let goal := argument.mvarId!
-  let declaration ← goal.getDecl
-  let type ← instantiateMVars declaration.type
-  withLocalDecl declaration.userName binders[index]! type fun value => do
-    goal.assign value
-    closeRuleArguments arguments binders (index + 1) (opened.push value) proof
-
 /-- A scalar error transformer also describes an exact real operation. Discharge its local
 rounding premise with reflexivity, retaining its input-error and domain premises. -/
 def specializeLocalError (rule : Lean.Expr) : MetaM Lean.Expr := do
@@ -1167,24 +1166,32 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
   let mut refutations : Array Name := #[]
   -- The heads of the indexed computations and of the values they observe (`Session.ruled`).
   let ruled ← IO.mkRef ({} : NameSet)
-  let record (computation : Lean.Expr) : MetaM Unit := do
-    for term in #[computation] ++ computation.getAppArgs.back?.toArray do
-      if let some head := term.consumeMData.getAppFn.constName? then ruled.modify (·.insert head)
-  -- Index a mixed, exact or finiteness rule by the computation `observed` reads from its
-  -- conclusion: the left side of an equality, or the value a bound concerns.
-  let insert (tree : DiscrTree Rule) (name : Name) (exact : Bool) (order : Nat)
-      (observed : Lean.Expr → Option Lean.Expr) : MetaM (DiscrTree Rule) := withNewMCtxDepth do
-    let rule ← mkConstWithFreshMVarLevels name
-    let prepared ← abstractMVars rule
-    let (_, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
-    let some computation := observed conclusion | do
-      trace[roundoff] "rule {name} not indexed: its conclusion is {conclusion}"
-      return tree
-    record computation
+  -- The entry of `rule` for `computation`: its path, and the heads it adds to `ruled`.
+  let located (computation : Lean.Expr) (rule : Rule) (observation? : Option Name := none) :
+      MetaM IndexedRule := do
     let pattern ← withReducible <| withCanUnfoldPred (programCanUnfold session.boundaries false)
       (numericalPattern computation)
-    withCanUnfoldPred (fun _ _ => pure false)
-      (tree.insertIfSpecific pattern { name, exact, prepared, order })
+    let keys ← withCanUnfoldPred (fun _ _ => pure false) (DiscrTree.mkPath pattern)
+    let heads := (#[computation] ++ computation.getAppArgs.back?.toArray).filterMap
+      (·.consumeMData.getAppFn.constName?)
+    return { keys, rule, heads, observation? }
+  let add (tree : DiscrTree Rule) (entry? : Option IndexedRule) : MetaM (DiscrTree Rule) := do
+    let some entry := entry? | return tree
+    ruled.modify (entry.heads.foldl (·.insert ·) ·)
+    return entry.insertInto tree
+  -- Index a mixed, exact or finiteness rule by the computation `observed` reads from its
+  -- conclusion: the left side of an equality, or the value a bound concerns. Such a rule is
+  -- prepared without the goal, so its entry is kept (`indexedRule`) under `kind`.
+  let insert (tree : DiscrTree Rule) (kind : Nat) (name : Name) (exact : Bool) (order : Nat)
+      (observed : Lean.Expr → Option Lean.Expr) : MetaM (DiscrTree Rule) := do
+    add tree (← indexedRule session.seed name kind (pure false) <| withNewMCtxDepth do
+      let rule ← mkConstWithFreshMVarLevels name
+      let prepared ← abstractMVars rule
+      let (_, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
+      let some computation := observed conclusion | do
+        trace[roundoff] "rule {name} not indexed: its conclusion is {conclusion}"
+        return none
+      some <$> located computation { name, exact, prepared, order })
   -- Order facts read containers like the analyzed program, so their reads are normalized once.
   -- `project` selects a part of the conclusion first.
   let normalizeFact (name : Name) (project : Option Name := none) :
@@ -1214,26 +1221,24 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
   -- Index a prepared rule by the computation `observed` reads from its conclusion. A rule whose
   -- normalized conclusion no longer has that form, such as a finiteness that normalization
   -- decided, is not indexed.
-  let insertPrepared (tree : DiscrTree Rule) (name : Name) (prepared : AbstractMVarsResult)
-      (order : Nat) (observed : Lean.Expr → Option Lean.Expr) : MetaM (DiscrTree Rule) :=
+  let entryOf (name : Name) (prepared : AbstractMVarsResult) (order : Nat)
+      (observed : Lean.Expr → Option Lean.Expr) : MetaM (Option IndexedRule) :=
     withNewMCtxDepth do
       let (_, _, rule) ← openAbstractMVarsResult prepared
       let (_, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
       let some computation := observed conclusion | do
         trace[roundoff] "a conclusion of rule {name} is not indexed: normalized, it is {conclusion}"
-        return tree
-      record computation
-      let pattern ← withReducible <|
-        withCanUnfoldPred (programCanUnfold session.boundaries false)
-          (numericalPattern computation)
+        return none
       let ulps := conclusion.isAppOfArity ``MixedError 4 &&
         conclusion.getAppArgs[3]!.isAppOf ``Model.halfUlpAt
-      withCanUnfoldPred (fun _ _ => pure false)
-        (tree.insertIfSpecific pattern { name, exact := false, prepared, order, ulps })
+      some <$> located computation { name, exact := false, prepared, order, ulps }
+  let insertPrepared (tree : DiscrTree Rule) (name : Name) (prepared : AbstractMVarsResult)
+      (order : Nat) (observed : Lean.Expr → Option Lean.Expr) : MetaM (DiscrTree Rule) := do
+    add tree (← entryOf name prepared order observed)
   if mixed then
     for h : index in [:exactOperations.size] do
       if environment.contains exactOperations[index] then
-        mixedEntries ← insert mixedEntries exactOperations[index] true index equalityLeft?
+        mixedEntries ← insert mixedEntries 3 exactOperations[index] true index equalityLeft?
   let rules := roundoffRules.getState environment
   for h : index in [:rules.size] do
     let name := rules[index]
@@ -1242,15 +1247,18 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
     match ruleKind info.type with
     | .mixed =>
         if mixed then
-          -- Its container reads are normalized like the analyzed program's.
-          let prepared? ← try
-              some <$> withNewMCtxDepth (do
-                abstractMVars (← normalizeRule session (← mkConstWithFreshMVarLevels name)))
-            catch error => do
-              trace[roundoff] "rule {name} not indexed: {error.toMessageData}"
-              pure none
-          if let some prepared := prepared? then
-            mixedEntries ← insertPrepared mixedEntries name prepared index mixedValue?
+          -- Its container reads are normalized like the analyzed program's, which reads the
+          -- goal's rewrites; a rule that reads no container is prepared without them.
+          mixedEntries ← add mixedEntries
+            (← indexedRule session.seed name 1 (hasObservation info.type) do
+              let prepared? ← try
+                  some <$> withNewMCtxDepth (do
+                    abstractMVars (← normalizeRule session (← mkConstWithFreshMVarLevels name)))
+                catch error => do
+                  trace[roundoff] "rule {name} not indexed: {error.toMessageData}"
+                  pure none
+              let some prepared := prepared? | return none
+              entryOf name prepared index mixedValue?)
         continue
     | .finiteness =>
         if mixed then
@@ -1261,7 +1269,7 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
               pure none
             if let some prepared := prepared? then
               finiteness ← insertPrepared finiteness name prepared index equalityLeft?
-          else finiteness ← insert finiteness name false index equalityLeft?
+          else finiteness ← insert finiteness 2 name false index equalityLeft?
         continue
     | .order =>
         if mixed then
@@ -1275,9 +1283,11 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
         continue
     | .numerical => pure ()
     -- A generated statement concludes the finiteness of its output and its mixed bound. Both
-    -- parts are rules, under the statement's conditions.
-    let generated ← withNewMCtxDepth do
-      forallTelescopeReducing info.type fun _ conclusion => pure (finiteMixed? conclusion).isSome
+    -- parts are rules, under the statement's conditions. A rule with a kept entry is none.
+    let generated ← if (← keptRule? session.seed name 0).any (·.isSome) then
+        pure false else
+      withNewMCtxDepth do
+        forallTelescopeReducing info.type fun _ conclusion => pure (finiteMixed? conclusion).isSome
     if generated then
       if mixed then
         -- Only the bound's computation is normalized; its reference and budget stay as stated.
@@ -1290,12 +1300,14 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
         let finite ← normalizeFact name ``And.left
         finiteness ← insertPrepared finiteness name finite index equalityLeft?
       continue
-    let entry? ← withNewMCtxDepth do
+    -- A rule that reads no container is prepared without the goal, and its entry is kept.
+    let entry? ← indexedRule session.seed name 0 (hasObservation info.type) <|
+        withNewMCtxDepth do
       -- Normalization runs once, in the main goal's context, so a hypothesis that only a branch
       -- introduces does not rewrite a registered rule. A theorem that cannot be prepared would
       -- fail at every node, so it is not indexed.
       let rule? ← try
-        let rule ← specializeLocalError (← mkConstWithFreshMVarLevels name)
+        let rule ← specializeLocalError (← realForm (← mkConstWithFreshMVarLevels name))
         pure (some (← normalizeRule session rule))
       catch error =>
         trace[roundoff] "rule {name} not indexed: {error.toMessageData}"
@@ -1304,27 +1316,26 @@ def Session.index (session : Session) (mixed : Bool := false) : TacticM Session 
       let prepared ← abstractMVars rule
       let (arguments, _, conclusion) ← forallMetaTelescopeReducing (← ruleType rule)
       let some (actual, _, exact) ← numericalConclusion? conclusion | return none
-      record actual
       let selective ← pure exact <&&> arguments.anyM fun argument => do
         selects (← instantiateMVars (← inferType argument))
+      let entry : Rule := { name, exact, prepared, order := index, selective }
       let reference? ← if exact then
           pure (conclusion.eq?.map fun (_, _, reference) => reference)
         else do
           pure ((← errorConclusion? conclusion).map fun (_, reference, _) => reference)
-      let some reference := reference? | return none
+      -- A rule without a reference has no entry; its heads are still read as ruled.
+      let some reference := reference? |
+        return some { (← located actual entry) with keys := #[] }
       let reference ← instantiateMVars reference
-      let pattern ← withReducible <|
-        withCanUnfoldPred (programCanUnfold session.boundaries false) (numericalPattern actual)
       let observation? ← if ← referenceObservesOperands session.containerFree actual reference then
           pure actual.getAppFn.constName?
         else pure none
-      let indexed ← withCanUnfoldPred (fun _ _ => pure false)
-        (entries.insertIfSpecific pattern { name, exact, prepared, order := index, selective })
-      pure (some (indexed, observation?))
-    if let some (indexed, observation?) := entry? then
-      trace[roundoff] "rule {name}: {observation?.getD .anonymous}"
-      entries := indexed
-      if let some observation := observation? then observations := observations.insert observation
+      some <$> located actual entry observation?
+    entries ← add entries entry?
+    if let some entry := entry?.filter (!·.keys.isEmpty) then
+      trace[roundoff] "rule {name}: {entry.observation?.getD .anonymous}"
+      if let some observation := entry.observation? then
+        observations := observations.insert observation
   -- Mixed analysis also proves literal finiteness and the range conditions it generates.
   let mixedHelpers ← if mixed then do
       pure #[(``ExecFloat.Binary.isFinite_one,
@@ -1430,8 +1441,9 @@ def classified? (type : Lean.Expr) : Option Lean.Expr := do
   let value := test.appArg!
   return if value.isAppOf ``ExecFloat.Binary.toModel then value.appArg! else value
 
-/-- Whether `fact` and `target` classify values computed by different operations, so that `fact`
-cannot supply `target`. Comparing them by unification would evaluate floating-point code. -/
+/-- Whether `fact` and `target` classify values whose heads differ as they are written: values
+of different operations, unless a name stands for one of them (`exposedHead?` in `Discharge`).
+Comparing them by unification would evaluate floating-point code. -/
 def otherClassified (fact target : Lean.Expr) : Bool :=
   match classified? fact, classified? target with
   | some left, some right => left.getAppFn != right.getAppFn
@@ -1453,12 +1465,16 @@ def foldDecodedFinite (proposition : Lean.Expr) : MetaM Lean.Expr :=
 
 
 /-- Compare predicate heads without evaluating floating-point classifiers. Ordinary aliases may
-expose those heads, while dependent propositions and unresolved control flow stay conservative. -/
+expose those heads, while dependent propositions and unresolved control flow stay conservative.
+An equation between values that are not Booleans has the head of their type, since it states
+only an equation between such values: the equation of a `match` case, such as `mask = some m`,
+supplies no bound, finiteness or loop condition. -/
 def assumptionHead (type : Expr) : MetaM (Option Name) := do
   if type.isForall then return none
   let conclusion := type.consumeMData
   let some (scalar, predicate, _) := conclusion.eq? | return conditionHead type true
-  unless scalar.isConstOf ``Bool do return none
+  let scalar ← whnfR scalar
+  unless scalar.isConstOf ``Bool do return scalar.getAppFn.constName?
   let classifier ← withCanUnfoldPred (fun config info => do
       if (← getProjectionFnInfo? info.name).any (·.fromClass) then return false
       programCanUnfold {} false config info) <| withDefault (whnf predicate)

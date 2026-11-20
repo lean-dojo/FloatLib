@@ -36,9 +36,8 @@ payload. The special cases are those of the operations of one format:
 * an exact zero sum has the sign that the rounding direction prescribes: negative when both
   terms are negative, and when they differ and the direction is toward negative infinity.
 
-`formatOfSquareRoot` is not provided: the square root kernels of the library round to nearest in
-the format of their operand only. `ExecDType.convertFromInt` is the formatOf conversion from an
-integer.
+`formatOfSquareRoot` is in `Operations.FormatOf.SquareRoot`. `ExecDType.convertFromInt` is the
+formatOf conversion from an integer.
 -/
 
 @[expose] public section

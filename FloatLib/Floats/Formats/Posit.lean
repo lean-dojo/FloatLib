@@ -55,11 +55,15 @@ accumulator, `ExecFloat.Posit.Quire (bits := n)`.
 ## Other exponent sizes
 
 The Posit Standard (2022) fixes two exponent bits. `Posit.General` is a FloatLib extension
-beyond it: the values of the codes, their order and the rounding of a result are proved for
-every number `es` of exponent bits and every width (`General.value`, `General.value_strictMono`,
-`General.encode_value`, `General.encode_between`), on the natural-number encodings that
-`Posit.KernelPath.Core` computes with. `General.Standard` identifies the instance `es = 2` with
-the standard's model. The public types and their arithmetic stay at `es = 2`.
+beyond it, on the natural-number encodings that `Posit.KernelPath.Core` computes with: the
+values of the codes, their order and the rounding of a result are proved for every number `es`
+of exponent bits and every width (`General.value`, `General.value_strictMono`,
+`General.encode_value`, `General.encode_between`), and so is every operation of the kernel path
+against a specification on values (`General.IsRoundedTo`): the sum, the difference, the
+product, the fused multiply-add, the quotient, the square root, literals, the conversions
+between formats and to integers, the negation, the absolute value, the comparisons and the
+neighbours. `General.Standard` identifies the instance `es = 2` with the standard's model. The
+public types, the quire and the elementary functions stay at `es = 2`.
 
 ## Arithmetic
 

@@ -52,6 +52,28 @@ theorem Term.value?_mul {left right : Term} {p q : ℚ} (hp : left.value? = some
     (hq : right.value? = some q) : (left.mul right).value? = some (p * q) := by
   cases left <;> cases right <;> simp_all [Term.mul, Term.value?]
 
+/--
+Pairs of finite data, combined by an operation on terms that acts on the values of finite terms
+as `op`, are finite terms with the combined values.
+-/
+theorem map_value?_zipWith (combine : Term → Term → Term) (op : ℚ → ℚ → ℚ)
+    (hcombine : ∀ {left right : Term} {p q : ℚ}, left.value? = some p → right.value? = some q →
+      (combine left right).value? = some (op p q)) :
+    ∀ (leftData rightData : List Datum) (xs ys : List ℚ),
+      leftData.map Datum.toRat? = xs.map some → rightData.map Datum.toRat? = ys.map some →
+      (List.zipWith (fun x y => combine (Term.ofDatum x) (Term.ofDatum y)) leftData
+        rightData).map Term.value? = (List.zipWith op xs ys).map some
+  | [], _, xs, _, hleft, _ => by cases xs <;> simp_all
+  | _ :: _, _, [], _, hleft, _ => by simp at hleft
+  | _ :: _, [], _ :: _, ys, _, hright => by cases ys <;> simp_all
+  | _ :: _, _ :: _, _ :: _, [], _, hright => by simp at hright
+  | x :: leftData, y :: rightData, p :: xs, q :: ys, hleft, hright => by
+      simp only [List.map_cons, List.cons.injEq] at hleft hright
+      simp only [List.zipWith_cons_cons, List.map_cons, List.cons.injEq]
+      exact ⟨hcombine (by rw [Term.value?_ofDatum]; exact hleft.1)
+        (by rw [Term.value?_ofDatum]; exact hright.1),
+        map_value?_zipWith combine op hcombine leftData rightData xs ys hleft.2 hright.2⟩
+
 /-- Finite terms only add their values to the exact sum. -/
 theorem foldl_push_of_values (mode : RoundingMode) :
     ∀ (terms : List Term) (exacts : List ℚ) (total : Total),
@@ -209,27 +231,8 @@ theorem dot_eq_project (f : Format) (mode : RoundingMode) (left right : Array Da
     ∃ preferred negativeZero,
       dot f mode left right =
         .ok (project f mode (List.zipWith (· * ·) xs ys).sum preferred negativeZero) := by
-  have hterms : (List.zipWith (fun x y => (Term.ofDatum x).mul (Term.ofDatum y)) left.toList
-      right.toList).map Term.value? = (List.zipWith (· * ·) xs ys).map some := by
-    generalize left.toList = leftData at hleft
-    generalize right.toList = rightData at hright
-    induction leftData generalizing rightData xs ys with
-    | nil => cases xs <;> simp_all
-    | cons x leftData ih =>
-        cases xs with
-        | nil => simp at hleft
-        | cons p xs =>
-            cases rightData with
-            | nil => cases ys <;> simp_all
-            | cons y rightData =>
-                cases ys with
-                | nil => simp at hright
-                | cons q ys =>
-                    simp only [List.map_cons, List.cons.injEq] at hleft hright
-                    simp only [List.zipWith_cons_cons, List.map_cons, List.cons.injEq]
-                    exact ⟨Term.value?_mul (by rw [Term.value?_ofDatum]; exact hleft.1)
-                      (by rw [Term.value?_ofDatum]; exact hright.1),
-                      ih (rightData := rightData) (xs := xs) (ys := ys) hleft.2 hright.2⟩
+  have hterms := map_value?_zipWith Term.mul (· * ·) Term.value?_mul left.toList right.toList
+    xs ys hleft hright
   obtain ⟨preferred, negativeZero, h, -⟩ := deliver_total_of_values f mode _ _ hterms
   exact ⟨preferred, negativeZero, by simp only [dot, hsize, ↓reduceIte, h]⟩
 

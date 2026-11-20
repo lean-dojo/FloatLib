@@ -70,7 +70,7 @@ theorem RoundingMode.sqrtRound_nat_sq (mode : RoundingMode) (n : Nat) :
     unfold sqrtFloor
     rw [← Nat.cast_pow, Nat.floor_natCast, Nat.sqrt_eq']
   have h : ¬(2 * (n : ℚ) + 1) ^ 2 ≤ 4 * (n : ℚ) ^ 2 := by
-    nlinarith [Nat.cast_nonneg (α := ℚ) n]
+    linarith [Nat.cast_nonneg (α := ℚ) n]
   have h' : ¬(2 * (n : ℚ) + 1) ^ 2 = 4 * (n : ℚ) ^ 2 := by exact fun heq => h heq.le
   cases mode <;> simp [sqrtRound, hf, sqrtIncrement, h, h', not_lt_of_ge (le_of_not_ge h)]
 
@@ -82,10 +82,10 @@ theorem sqrtFloor_midpoint_sq (n : Nat) :
   constructor
   · apply Nat.le_floor
     push_cast
-    nlinarith [Nat.cast_nonneg (α := ℚ) n]
+    linarith [Nat.cast_nonneg (α := ℚ) n]
   · apply (Nat.floor_lt (sq_nonneg _)).mpr
     push_cast
-    nlinarith [Nat.cast_nonneg (α := ℚ) n]
+    linarith [Nat.cast_nonneg (α := ℚ) n]
 
 /-- A tie, a radicand equal to the square of a midpoint `n + 1/2`, rounds to the even neighbor under
 nearest-even. -/
@@ -138,14 +138,14 @@ private theorem abs_sub_sqrt_le_half {x : ℚ} (hx : 0 ≤ x) {n : Nat}
       apply Real.le_sqrt_of_sq_le
       have hc : (2 * (sqrtFloor x : ℝ) + 1) ^ 2 ≤ 4 * (x : ℝ) := by
         exact_mod_cast h
-      nlinarith
+      linarith
     rw [Nat.cast_add, Nat.cast_one, abs_of_nonneg (by positivity)]
     linarith
   · have hmid : Real.sqrt (x : ℝ) ≤ (sqrtFloor x : ℝ) + 1 / 2 := by
       apply (Real.sqrt_le_left (by positivity)).mpr
       have hc : 4 * (x : ℝ) ≤ (2 * (sqrtFloor x : ℝ) + 1) ^ 2 := by
         exact_mod_cast h
-      nlinarith
+      linarith
     rw [abs_of_nonpos (sub_nonpos.mpr hlo)]
     linarith
 

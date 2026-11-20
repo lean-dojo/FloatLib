@@ -177,10 +177,10 @@ theorem one_add_mul_abs_toReal_foldl_add_sub_le (hfmt : fmt.isIEEE = true)
       have habsorb : m * u * (u * P) ≤ m * u * ((1 + u) * |t|) :=
         mul_le_mul_of_nonneg_left (not_le.mp hx).le hm
       have hscaled : (1 + u) * (u * |b - S|) ≤ (1 + u) * (m * u * |t|) := by
-        nlinarith [mul_le_mul_of_nonneg_left ih hu]
+        linarith [mul_le_mul_of_nonneg_left ih hu]
       have hsecond : u * |b - S| ≤ m * u * |t| :=
         le_of_mul_le_mul_left hscaled (by linarith)
-      nlinarith [mul_le_mul_of_nonneg_left hsplit (by linarith : (0 : ℝ) ≤ 1 + u)]
+      linarith [mul_le_mul_of_nonneg_left hsplit (by linarith : (0 : ℝ) ≤ 1 + u)]
 
 /-- A left-to-right sum from a seed of real value zero: adding the `n` terms of a list in order
 has error at most `(n - 1) * u / (1 + u) * ∑ |term i|` against the exact sum, when the result is
@@ -267,7 +267,7 @@ theorem abs_toReal_foldl_add_mul_sub_le (hfmt : fmt.isIEEE = true) (hseed : toRe
             (l.map fun i => toReal (left i) * toReal (right i)).sum) =
           q + (l.map fun i => toReal (mul (left i) (right i))).sum -
             (t + (l.map fun i => toReal (left i) * toReal (right i)).sum) by ring] at h
-        nlinarith [mul_le_mul_of_nonneg_left h (by linarith : (0 : ℝ) ≤ 1 + unitRoundoffAt fmt)]
+        linarith [mul_le_mul_of_nonneg_left h (by linarith : (0 : ℝ) ≤ 1 + unitRoundoffAt fmt)]
       · have h := abs_sub_abs_le_abs_sub q t
         nlinarith [abs_nonneg t, abs_nonneg q]
   obtain ⟨hdiff, hsize⟩ := hterms

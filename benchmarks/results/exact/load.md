@@ -4,8 +4,8 @@
 
 | imports | modules loaded | wall | peak memory |
 | --- | --- | --- | --- |
-| core only: `FloatLib.Numerics.Kernel.Frac` | 12615 | 1.11 s | 1639 MB |
-| the proof module: `FloatLib.Numerics.Kernel.FracProof` | 17840 | 1.63 s | 2274 MB |
-| `Frac` and one analysis module of Mathlib (`Mathlib.Analysis.SpecialFunctions.Log.Basic`) | 22060 | 2.01 s | 2841 MB |
-| all of FloatLib: `FloatLib` | 36615 | 2.95 s | 4301 MB |
-| all of Mathlib: `Mathlib` | 57740 | 4.81 s | 6796 MB |
+| core only: `FloatLib.Numerics.Kernel.Frac` | 3360 | 0.27 s | 461 MB |
+| the proof module: `FloatLib.Numerics.Kernel.FracProof` | 17840 | 1.83 s | 2286 MB |
+| `Frac` and one analysis module of Mathlib (`Mathlib.Analysis.SpecialFunctions.Log.Basic`) | 18255 | 1.83 s | 2453 MB |
+| all of FloatLib: `FloatLib` | 36875 | 3.03 s | 4316 MB |
+| all of Mathlib: `Mathlib` | 55645 | 4.62 s | 6566 MB |

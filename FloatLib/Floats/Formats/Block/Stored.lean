@@ -47,7 +47,9 @@ The executable storage formats and scale-selection policies of the block formats
   for every rational tensor. `combine_value_eq_reconstruct` is the case of the combine format.
 
 The codecs round exact rationals. Scale arithmetic in a finite working precision, which the
-reference implementations of these formats use, is not part of these definitions.
+reference implementations of these formats use, is not part of these definitions:
+`Block.Working.Quantizer` is the quantizer on the encodings of a binary working format, and
+`Block.nvfp4Working` is NVFP4 in binary32.
 -/
 
 @[expose] public section

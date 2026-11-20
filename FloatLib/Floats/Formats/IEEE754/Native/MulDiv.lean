@@ -174,9 +174,7 @@ private theorem signBit_roundRatScaled {fmt : FloatFormat} (hfmt : fmt.isIEEE = 
     (sign : Bool) (num den : Nat) (exponent : Int) (hden : den ≠ 0) :
     signBit (roundRatScaled fmt sign num den exponent) = sign := by
   rw [roundRatScaled, dite_eq_left_of_eq_true (eq_true hfmt)]
-  unfold ieeeRoundRatScaled
-  simp only [beq_iff_eq, hden, ite_false]
-  split_ifs <;> (try split) <;> simp_all
+  exact signBit_ieeeRoundRatScaled hfmt sign num den exponent hden
 
 /--
 Positive nearest-even rounding of a nonzero scaled rational is finite, or it is `+∞` and the

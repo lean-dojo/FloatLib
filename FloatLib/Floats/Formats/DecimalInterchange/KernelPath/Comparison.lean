@@ -363,6 +363,17 @@ The minimum and maximum operations of IEEE 754-2019 §9.6 on decimal data are
     | (cases magnitude <;>
         simp [Arithmetic.extremum, Datum.isNaN, selectExtremum_eq, selectByMagnitude_eq])
 
+/-! ## Kernel shapes -/
+
+kernel_shape compareNat
+kernel_shape compareFinite
+kernel_shape compare
+kernel_shape totalOrderFinite
+kernel_shape totalOrder
+kernel_shape selectExtremum
+kernel_shape selectByMagnitude
+kernel_shape extremum
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath
 
 /-

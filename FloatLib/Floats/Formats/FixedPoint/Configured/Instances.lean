@@ -6,16 +6,21 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.ExecFloat.Backends.Kernel.Exact
 public import FloatLib.Floats.ExecFloat.Backends.Kernel.Form
 public import FloatLib.Kernels.Execution.Instances -- shake: keep
 public import FloatLib.Floats.Formats.FixedPoint.Configured.Plan
+public import FloatLib.Floats.Formats.FixedPoint.Configured.Proof
 
 /-!
 # Literal and dispatch instances for exact fixed point
 
 A natural-number literal lands on the grid with no rounding. A decimal or scientific literal takes
 one rational rounding step, ties to even, so `2.5` with no fractional digits becomes `2`.
-Same-scale addition and subtraction dispatch to their certified direct kernels.
+Same-scale addition and subtraction dispatch to their certified direct kernels. For Lean's
+kernel, `spec_add_eq_ofCoefficient` and `spec_sub_eq_ofCoefficient` state the reference sum and
+difference as the value of the sum and the difference of the two coefficients, computed with the
+kernel arithmetic of `Int`.
 -/
 
 @[expose] public section
@@ -78,5 +83,36 @@ instance [Backend.PolicyFor (Family radix fractionalDigits)]
 instance [Backend.PolicyFor (Family radix fractionalDigits)]
     [Backend.Portfolio (FixedPoint.sub (radix := radix) (fractionalDigits := fractionalDigits))] :
     KernelPath.DirectReference (Family radix fractionalDigits) .sub where
+
+/-! ## Kernel rules -/
+
+open FloatLib.Numerics.Kernel in
+/--
+The reference sum of two fixed-point values is the value of the sum of their coefficients, with
+the kernel arithmetic of `Int`: Lean's kernel computes it without unfolding the capability.
+-/
+@[kernel_optimize (cost := 25)]
+theorem spec_add_eq_ofCoefficient [Backend.PolicyFor (Family radix fractionalDigits)]
+    [Backend.Portfolio (FixedPoint.add (radix := radix) (fractionalDigits := fractionalDigits))]
+    (left right : ExecFloat.FixedPoint radix fractionalDigits) :
+    Spec.add left right = ofCoefficient (Z.add (coefficient left) (coefficient right)) := by
+  rw [Z.add_eq]
+  rfl
+
+open FloatLib.Numerics.Kernel in
+/--
+The reference difference of two fixed-point values is the value of the difference of their
+coefficients, with the kernel arithmetic of `Int`.
+-/
+@[kernel_optimize (cost := 25)]
+theorem spec_sub_eq_ofCoefficient [Backend.PolicyFor (Family radix fractionalDigits)]
+    [Backend.Portfolio (FixedPoint.sub (radix := radix) (fractionalDigits := fractionalDigits))]
+    (left right : ExecFloat.FixedPoint radix fractionalDigits) :
+    Spec.sub left right = ofCoefficient (Z.sub (coefficient left) (coefficient right)) := by
+  rw [Z.sub_eq]
+  rfl
+
+-- The coefficient of the value of a coefficient is that coefficient: a kernel rule as well.
+attribute [kernel_optimize (cost := 1)] coefficient_ofCoefficient
 
 end FloatLib.Floats.ExecFloat.FixedPoint

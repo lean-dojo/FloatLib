@@ -58,7 +58,7 @@ theorem contains_smallAngleBounds? {trig : Trig} {angle : RationalInterval} {a :
       · have hsin := Real.sin_gt_sub_cube ha0
         simp only [Trig.eval]
         push_cast
-        nlinarith [mul_nonneg (sub_nonneg.mpr hlo) (by nlinarith : 0 ≤ 6 - (a ^ 2 +
+        linarith [mul_nonneg (sub_nonneg.mpr hlo) (by nlinarith : 0 ≤ 6 - (a ^ 2 +
           a * (angle.lo : ℝ) + (angle.lo : ℝ) ^ 2))]
       · exact (Real.sin_lt ha0).le.trans hhi
   · split at h
@@ -85,7 +85,7 @@ theorem contains_smallAngleBounds? {trig : Trig} {angle : RationalInterval} {a :
           linarith
         · simp only [Trig.eval]
           push_cast
-          nlinarith [mul_nonneg (sub_nonneg.mpr hhi) (by nlinarith : 0 ≤ 6 - (a ^ 2 +
+          linarith [mul_nonneg (sub_nonneg.mpr hhi) (by nlinarith : 0 ≤ 6 - (a ^ 2 +
             a * (angle.hi : ℝ) + (angle.hi : ℝ) ^ 2))]
     · simp at h
 

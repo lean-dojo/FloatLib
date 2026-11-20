@@ -26,8 +26,8 @@ row is `[6, -1, 12]` with the denominator `4`.
 ## Main definitions
 
 * `ExactLanes`: the exact lanes of a value, one for a scalar and one per position for a
-  block-scaled tensor (`ExecFloat.Block.exactLanes`). A lane with no finite value, an infinity or
-  a NaN, is `none`.
+  block-scaled tensor (the instance for `ExecFloat.Block`). A lane with no finite value, an
+  infinity or a NaN, is `none`.
 * `Packed.values xs`: the lanes of all the values in `xs`.
 * `Packed.link w d vs u`: the kernel check that `u` holds `vs` at the denominator `d`.
 * `packed_values r (width := w) := xs`: the command that decodes `xs` by kernel reduction, picks

@@ -10,6 +10,8 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Direc
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.HalfUlp
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Exact
+public import FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.Grid
+public import FloatLib.Floats.Formats.Flocq.Calculation.GuardSticky
 public import FloatLib.Floats.Formats.BinaryInterchange.DirectedSemantics.Rational.RoundingSemantics.RoundedReal
 public import FloatLib.Floats.Formats.BinaryInterchange.Model.ERealSemantics
 public import FloatLib.Numerics.Exact.Dyadic.Order
@@ -23,19 +25,26 @@ executable oracle that orders `x` against every rational gives the same encoding
 (`roundSigned_eq_roundReal`), with no premise on a search budget or on the distance of `x` from a
 rounding boundary.
 
-`roundReal_roundsTo` states what that encoding is for an IEEE descriptor, in the words of
+`roundReal_roundsTo` states what that encoding is for every format descriptor, in the words of
 IEEE 754-2019: with `roundAt fmt x mode` the rounding of `x` on the grid of the format with an
 unbounded exponent range (clause 4.3), the result is that value when it is at most the largest
-finite magnitude, and otherwise the overflow result of the direction (clause 7.4). The sign bit
-is the sign of `x`, also when the result is a zero or an infinity.
+finite magnitude, and otherwise the overflow result of the direction (clause 7.4). The
+descriptors are the IEEE ones, the formats without an infinity such as OCP E4M3, whose overflow
+result is their NaN when the direction rounds away and their largest finite value otherwise,
+the formats with one zero such as ONNX E4M3FNUZ, and the formats in which every encoding is
+finite. In a format with signed zeros the sign bit is the sign of `x`, also when the result is a
+zero or an infinity. `roundMagnitude_roundsTo`, `roundLocated_roundsTo` and `packGrid_roundsTo`
+are its steps.
 
 Negation mirrors the direction: `roundReal_neg` and, on oracles, `roundSigned_neg` say that
 rounding `-x` is the negation of rounding `x` in the direction `mode.negate`.
 
 The proof reads the rounding off a bracket of the scaled significand. The oracle's truncated
 significand has two bits below the last place and a flag for exactness, which locate the
-significand between two integers and against their midpoint, and
-`Flocq.round_floor_of_scaledBracket` and its siblings compute each direction from that location.
+significand between two integers and against their midpoint, and `Flocq.round_of_guardSticky`
+computes each direction from that location. A located magnitude is delivered through
+`roundRatScaled` at a value of the grid, which every descriptor delivers exactly
+(`roundRatScaled_of_grid`).
 -/
 
 @[expose] public section
@@ -45,11 +54,14 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.Model
 open FloatLib.Floats.Formats.Flocq FloatLib.Numerics
 
 /--
-`result` is the rounding of the real `x` in the direction `mode`, with the sign bit `sign`.
+`result` is the rounding of the real `x` in the direction `mode`, with the sign `sign`.
 
 `roundAt fmt x mode` rounds on the grid of `fmt` with an unbounded exponent range. When that value
 is at most the largest finite magnitude, `result` is finite and denotes it. Otherwise `result`
-is the overflow result of IEEE 754-2019, clause 7.4.
+is the overflow result of IEEE 754-2019, clause 7.4. In a format with signed zeros `result`
+carries the sign bit `sign`, also when it is a zero. A format with one zero delivers that zero
+for a negative value that rounds to zero and its NaN, whose encoding is fixed, as the overflow
+result of either sign, so its sign bit is not part of the contract.
 -/
 structure RoundsTo (fmt : FloatFormat) (mode : IEEERoundingMode) (x : ℝ) (sign : Bool)
     (result : Model fmt) : Prop where
@@ -59,8 +71,14 @@ structure RoundsTo (fmt : FloatFormat) (mode : IEEERoundingMode) (x : ℝ) (sign
   /-- Out of range, the result is the overflow value of the direction. -/
   overflow : toReal (posMaxFinite fmt) < |roundAt fmt x mode| →
     result = directedOverflow fmt sign (mode.overflowRoundsMagnitudeUp sign)
-  /-- The result carries the given sign bit. -/
-  signBit : signBit result = sign
+  /-- In a format with signed zeros the result carries the given sign bit. -/
+  signBit : fmt.supportsSignedZero = true → signBit result = sign
+
+/-- In an IEEE format, which has signed zeros, the result carries the given sign bit. -/
+theorem RoundsTo.signBit_of_isIEEE {fmt : FloatFormat} {mode : IEEERoundingMode} {x : ℝ}
+    {sign : Bool} {result : Model fmt} (h : RoundsTo fmt mode x sign result)
+    (hfmt : fmt.isIEEE = true) : Model.signBit result = sign :=
+  h.signBit (FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt)
 
 /-- A downward rounding contract gives an extended-real lower bound, including overflow. -/
 theorem RoundsTo.toEReal_down_le {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
@@ -122,23 +140,29 @@ theorem signBit_roundRatScaled {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) (s
     (numerator denominator : Nat) (exponent : Int) (hdenominator : denominator ≠ 0) :
     signBit (roundRatScaled fmt sign numerator denominator exponent) = sign := by
   rw [roundRatScaled, dite_eq_left hfmt]
-  unfold ieeeRoundRatScaled
-  simp only [beq_iff_eq, hdenominator, ite_false]
-  split_ifs <;> (try split) <;> simp_all
+  exact signBit_ieeeRoundRatScaled hfmt sign numerator denominator exponent hdenominator
 
-/-- The overflow result of every direction carries the sign of the value that overflowed. -/
-theorem signBit_directedOverflow {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
-    (sign roundMagnitudeUp : Bool) :
+/-- In a format with signed zeros, the overflow result of every direction carries the sign of
+the value that overflowed: an infinity, the NaN of a format without one, or the largest finite
+value. -/
+theorem signBit_directedOverflow {fmt : FloatFormat}
+    (hzero : fmt.supportsSignedZero = true) (sign roundMagnitudeUp : Bool) :
     signBit (directedOverflow fmt sign roundMagnitudeUp) = sign := by
-  cases roundMagnitudeUp <;> cases sign <;>
-    simp [directedOverflow, nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
+  cases roundMagnitudeUp
+  · simp [directedOverflow]
+  · simp only [directedOverflow, ↓reduceIte, nativeOverflow]
+    cases hencoding : fmt.encoding with
+    | ieee => cases sign <;> simp
+    | finiteMaxNaN => simp [propagatedNaN, hencoding]
+    | finiteUnsignedZero => simp [FloatFormat.supportsSignedZero, hencoding] at hzero
+    | finite => simp
 
 /--
-`packGrid` delivers a magnitude that is already on the grid of the format: in range it is the
-finite encoding of the signed magnitude, and beyond the largest finite value it is the overflow
-result of the direction.
+`packGrid` delivers a magnitude that is already on the grid of the format, for every format
+descriptor: in range it is the finite encoding of the signed magnitude, and beyond the largest
+finite value it is the overflow result of the direction.
 -/
-theorem packGrid_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+theorem packGrid_roundsTo {fmt : FloatFormat}
     (mode : IEEERoundingMode) (sign : Bool) (mantissa : Nat) (exponent : Int) (x : ℝ)
     (hround : roundAt fmt x mode =
       (if sign then (-1 : ℝ) else 1) * ((mantissa : ℝ) * Flocq.bpow binaryRadix exponent)) :
@@ -152,15 +176,17 @@ theorem packGrid_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
   simp only [Dyadic.Internal.compareScalable_eq_compare,
     Dyadic.compare_eq_lt_iff]
   split
-  · rename_i hzero
-    have hvalue : roundAt fmt x mode = 0 := by simp [hround, hzero]
+  · rename_i hmantissa
+    have hvalue : roundAt fmt x mode = 0 := by simp [hround, hmantissa]
     refine ⟨fun _ => ⟨isFinite_eq_true_of_isZero_eq_true _ (isZero_zero fmt sign), ?_⟩,
       fun hover => ?_, ?_⟩
     · rw [toReal_zero, hvalue]
     · rw [hvalue, abs_zero] at hover
       exact absurd hover (not_lt.mpr hmax.le)
-    · simp [signBit_zero, FloatFormat.supportsSignedZero_eq_true_of_isIEEE fmt hfmt]
-  · have hcompare : (maxFiniteDyadic fmt).toRat < (Dyadic.mk false mantissa exponent).toRat ↔
+    · intro hzero
+      simp [signBit_zero, hzero]
+  · rename_i hmantissa
+    have hcompare : (maxFiniteDyadic fmt).toRat < (Dyadic.mk false mantissa exponent).toRat ↔
         toReal (posMaxFinite fmt) < |roundAt fmt x mode| := by
       rw [habs, ← Dyadic.toReal_maxFiniteDyadic, ← Dyadic.cast_toRat, Flocq.bpow_binaryRadix,
         ← Dyadic.toReal_mk_false, ← Dyadic.cast_toRat]
@@ -168,19 +194,22 @@ theorem packGrid_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     split
     · rename_i hover
       exact ⟨fun hin => absurd (hcompare.mp hover) (not_lt.mpr hin), fun _ => rfl,
-        signBit_directedOverflow hfmt sign _⟩
+        fun hzero => signBit_directedOverflow hzero sign _⟩
     · rename_i hin
       have hin : |roundAt fmt x mode| ≤ toReal (posMaxFinite fmt) :=
         not_lt.mp (mt hcompare.mpr hin)
       have hexact : signedScaledRatToReal sign mantissa 1 exponent = roundAt fmt x mode := by
         rw [hround]
         cases sign <;> simp [signedScaledRatToReal, scaledRatToReal]
-      have hfinite := isFinite_roundRatScaled_of_abs_le_posMaxFinite fmt sign mantissa 1
-        exponent hfmt one_ne_zero (hexact ▸ hin)
-      refine ⟨fun _ => ⟨hfinite, ?_⟩, fun hover => absurd hover (not_lt.mpr hin),
-        signBit_roundRatScaled hfmt sign mantissa 1 exponent one_ne_zero⟩
-      rw [toReal_roundRatScaled_eq_roundAt fmt sign mantissa 1 exponent hfmt hfinite, hexact]
-      exact roundAt_of_genericFormat fmt (genericFormat_roundAt fmt x mode)
+      have hgrid : roundAt fmt (signedScaledRatToReal sign mantissa 1 exponent) =
+          signedScaledRatToReal sign mantissa 1 exponent := by
+        rw [hexact]
+        exact roundAt_of_genericFormat fmt (genericFormat_roundAt fmt x mode)
+      obtain ⟨hfinite, hvalue⟩ :=
+        roundRatScaled_of_grid fmt sign hmantissa exponent hgrid (hexact ▸ hin)
+      exact ⟨fun _ => ⟨hfinite, hvalue.trans hexact⟩,
+        fun hover => absurd hover (not_lt.mpr hin),
+        fun _ => signBit_roundRatScaled_of_grid fmt sign hmantissa exponent hgrid (hexact ▸ hin)⟩
 
 /--
 For an exact comparator, the bounded power search gives the same outer tests as direct
@@ -204,13 +233,10 @@ theorem roundMagnitude_eq (fmt : FloatFormat) (mode : IEEERoundingMode) (sign : 
 
 /-! ## Rounding a located magnitude -/
 
-/-- The bracket location that a guard bit and a sticky bit name. -/
-def location (guard sticky : Bool) : Location :=
-  match guard, sticky with
-  | false, false => .exact
-  | false, true => .inexact .lt
-  | true, false => .inexact .eq
-  | true, true => .inexact .gt
+/-- The bracket location that a guard bit and a sticky bit name: `Flocq.guardStickyLocation`,
+which the decimal formats use too. -/
+abbrev location (guard sticky : Bool) : Location :=
+  guardStickyLocation guard sticky
 
 /--
 A nonnegative magnitude located on the grid of `fmt`: `exponent` is its canonical exponent, and
@@ -235,58 +261,18 @@ theorem Located.roundAt_eq {fmt : FloatFormat} {t : ℝ} {mantissa : Nat} {expon
     roundAt fmt t mode =
       ((if (mode.magnitudeRounding false).increment (mantissa % 2 == 1) guard sticky
         then mantissa + 1 else mantissa : ℕ) : ℝ) * Flocq.bpow binaryRadix exponent := by
-  have hparity : nearestEvenChoice (mantissa : ℤ) = (mantissa % 2 == 1) := by
-    rcases Nat.mod_two_eq_zero_or_one mantissa with hm | hm <;>
-      simp [nearestEvenChoice, Int.even_natCast, Nat.even_iff, hm]
-  have haway : nearestAwayChoice (mantissa : ℤ) = true := by simp [nearestAwayChoice]
-  have hnonneg : ¬(mantissa : ℤ) < 0 := not_lt.mpr (Int.natCast_nonneg mantissa)
-  have hbracket := h.bracket
-  rw [roundAt_eq_round]
-  cases mode with
-  | nearest =>
-      rw [show roundingFunction .nearest = nearestEven from rfl,
-        round_nearestEven_of_scaledBracket t hbracket, h.exponent_eq]
-      rcases Nat.mod_two_eq_zero_or_one mantissa with hm | hm <;>
-        cases guard <;> cases sticky <;>
-        simp [location, Flocq.toReal, conditionalIncrement, roundNearestLocation, hparity,
-          IEEERoundingMode.magnitudeRounding, MagnitudeRounding.increment, hm]
-  | nearestAway =>
-      rw [show roundingFunction .nearestAway = nearestChoice nearestAwayChoice from rfl,
-        round_nearestChoice_of_scaledBracket nearestAwayChoice t hbracket, h.exponent_eq]
-      cases guard <;> cases sticky <;>
-        simp [location, Flocq.toReal, conditionalIncrement, roundNearestLocation, haway,
-          IEEERoundingMode.magnitudeRounding, MagnitudeRounding.increment]
-  | towardZero =>
-      rw [show roundingFunction .towardZero = truncRound from rfl,
-        round_trunc_of_scaledBracket t hbracket, h.exponent_eq, ite_eq_right hnonneg]
-      simp [Flocq.toReal, IEEERoundingMode.magnitudeRounding, MagnitudeRounding.increment]
-  | up =>
-      rw [show roundingFunction .up = ceilRound from rfl,
-        round_ceil_of_scaledBracket t hbracket, h.exponent_eq]
-      cases guard <;> cases sticky <;>
-        simp [location, Flocq.toReal, conditionalIncrement, roundUpLocation,
-          IEEERoundingMode.magnitudeRounding, MagnitudeRounding.increment]
-  | down =>
-      rw [show roundingFunction .down = floorRound from rfl,
-        round_floor_of_scaledBracket t hbracket, h.exponent_eq]
-      simp [Flocq.toReal, IEEERoundingMode.magnitudeRounding, MagnitudeRounding.increment]
-  | away =>
-      rw [show roundingFunction .away = awayRound from rfl,
-        round_away_of_scaledBracket t hbracket, h.exponent_eq, ite_eq_right hnonneg]
-      cases guard <;> cases sticky <;>
-        simp [location, Flocq.toReal, conditionalIncrement, roundUpLocation,
-          IEEERoundingMode.magnitudeRounding, MagnitudeRounding.increment]
+  rw [roundAt_eq_round, round_of_guardSticky h.bracket mode, h.exponent_eq]
 
 /--
-`roundLocated` rounds a located magnitude with either sign: the negative value rounds its
-magnitude in the mirrored direction.
+`roundLocated` rounds a located magnitude with either sign, for every format descriptor: the
+negative value rounds its magnitude in the mirrored direction.
 -/
-theorem roundLocated_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true) {t : ℝ}
+theorem roundLocated_roundsTo {fmt : FloatFormat} {t : ℝ}
     {mantissa : Nat} {exponent : Int} {guard sticky : Bool}
     (h : Located fmt t mantissa exponent guard sticky) (mode : IEEERoundingMode) (sign : Bool) :
     RoundsTo fmt mode (if sign then -t else t) sign
       (roundLocated fmt mode sign mantissa exponent guard sticky) := by
-  apply packGrid_roundsTo hfmt
+  apply packGrid_roundsTo
   cases sign with
   | false => simpa using h.roundAt_eq mode
   | true =>
@@ -374,6 +360,41 @@ theorem inbetweenInt_of_guarded (mantissa remainder : Nat) (v : ℝ) (exact : Bo
     exact inbetweenInt_gt (by push_cast at hlower; linarith) (by push_cast at hupper; linarith)
 
 /--
+A magnitude in a binade whose scaled significand at the certificate exponent has the integer
+part `mantissa` is located: the two low bits of `mantissa` are below the last place of the
+format at that magnitude, and `exact` says that nothing was discarded.
+-/
+theorem located_of_truncated (fmt : FloatFormat) {t : ℝ} (ht : 0 < t) {binade : Int}
+    (hblo : Flocq.bpow binaryRadix binade ≤ t)
+    (hbhi : t < Flocq.bpow binaryRadix (binade + 1)) {mantissa : Nat} {exact : Bool}
+    (hfloorLo : (mantissa : ℝ) ≤ t / Flocq.bpow binaryRadix (certificateExponent fmt binade))
+    (hfloorHi : t / Flocq.bpow binaryRadix (certificateExponent fmt binade) < (mantissa : ℝ) + 1)
+    (hexact : exact = true ↔
+      t / Flocq.bpow binaryRadix (certificateExponent fmt binade) = (mantissa : ℝ)) :
+    Located fmt t (mantissa / 4) (certificateExponent fmt binade + 2)
+      (decide (2 ≤ mantissa % 4)) (mantissa % 2 == 1 || !exact) := by
+  generalize hexponent : certificateExponent fmt binade = exponent at hfloorLo hfloorHi hexact ⊢
+  have hmag : magnitude binaryRadix t = binade + 1 :=
+    magnitude_eq_of_bpow_bounds _ _ _ (by simpa [abs_of_pos ht] using hblo)
+      (by simpa [abs_of_pos ht] using hbhi)
+  have hcexp : cexp binaryRadix (fexpOf fmt) t = exponent + 2 := by
+    simp only [cexp, hmag, fexpOf, fltExp, ← hexponent, certificateExponent]
+    omega
+  refine ⟨hcexp, ?_⟩
+  have hscale : t / Flocq.bpow binaryRadix (exponent + 2) =
+      t / Flocq.bpow binaryRadix exponent / 4 := by
+    rw [Flocq.bpow.add_exp, show Flocq.bpow binaryRadix 2 = 4 by
+      norm_num [Flocq.bpow_binaryRadix], div_mul_eq_div_div]
+  have hsplit : (mantissa : ℝ) = 4 * ((mantissa / 4 : ℕ) : ℝ) + ((mantissa % 4 : ℕ) : ℝ) := by
+    exact_mod_cast (Nat.div_add_mod mantissa 4).symm
+  rw [scaledMantissa_eq_div, hcexp, hscale,
+    ← Nat.mod_mod_of_dvd mantissa (by norm_num : 2 ∣ 4)]
+  apply inbetweenInt_of_guarded _ _ _ _ (Nat.mod_lt _ (by norm_num))
+  · rw [← hsplit]; exact hfloorLo
+  · rw [← hsplit]; exact hfloorHi
+  · rw [← hsplit]; exact hexact
+
+/--
 For a magnitude in the searched range, the truncated significand of the oracle locates it: its
 two low bits are below the last place of the format at that magnitude.
 -/
@@ -394,34 +415,133 @@ theorem located_of_certificate (fmt : FloatFormat) (compare : Rat → Ordering) 
   obtain ⟨hvlo, hvhi⟩ := certificate_scaled_bounds fmt compare t hcompare hlower hupper
   change 1 ≤ t / Flocq.bpow binaryRadix (certificateExponent fmt (binade fmt compare)) at hvlo
   change t / Flocq.bpow binaryRadix (certificateExponent fmt (binade fmt compare)) < _ at hvhi
-  generalize hexponent : certificateExponent fmt (binade fmt compare) = exponent at hvlo hvhi ⊢
-  have hpow := Flocq.bpow.pos binaryRadix exponent
-  obtain ⟨hfloorLo, hfloorHi⟩ := truncatedMantissa_bounds fmt compare t exponent hcompare
+  obtain ⟨hfloorLo, hfloorHi⟩ := truncatedMantissa_bounds fmt compare t _ hcompare
     (by linarith) hvhi
-  generalize truncatedMantissa fmt compare exponent = mantissa at hfloorLo hfloorHi ⊢
-  have hmag : magnitude binaryRadix t = binade fmt compare + 1 :=
-    magnitude_eq_of_bpow_bounds _ _ _ (by simpa [abs_of_pos ht] using hblo)
-      (by simpa [abs_of_pos ht] using hbhi)
-  have hcexp : cexp binaryRadix (fexpOf fmt) t = exponent + 2 := by
-    have hmin := binade_ge_lowerExponent fmt compare
-    simp only [cexp, hmag, fexpOf, fltExp, ← hexponent, certificateExponent, lowerExponent]
-      at hmin ⊢
+  refine located_of_truncated fmt ht hblo hbhi hfloorLo
+    hfloorHi ?_
+  rw [beq_iff_eq, hcompare, cmp_eq_eq_iff, div_eq_iff (Flocq.bpow.pos _ _).ne']
+  push_cast [cast_powerOfTwo]
+  rfl
+
+/-- The accuracy class of a scaled significand is exact when the significand is its integer
+part. -/
+theorem accuracyQuarter_eq_zero_iff {mantissa : Nat}
+    {accuracy : Float.Model.UnpackedFloat.Accuracy} {value : ℝ}
+    (h : AccuracyRepresents mantissa accuracy value) :
+    (accuracyQuarter accuracy == 0) = true ↔ value = (mantissa : ℝ) := by
+  rcases accuracy with _ | (_ | _ | _) <;> simp only [AccuracyRepresents] at h
+  · simpa [accuracyQuarter] using h
+  · simpa [accuracyQuarter] using h.1.ne'
+  · simp [accuracyQuarter, h]
+  · simp only [accuracyQuarter, Nat.reduceBEq, Bool.false_eq_true, false_iff]
+    intro heq
+    linarith [h.1]
+
+/--
+The quarter-integer stand-in of a located magnitude is located at the same place. For a
+magnitude `t` in a binade whose scaled significand at the certificate exponent has the integer
+part `mantissa` and the accuracy class `accuracy`, the dyadic number
+`(4 * mantissa + accuracyQuarter accuracy) * 2 ^ (exponent - 2)` lies in the same binade and has
+the same integer part and class, so every direction rounds it as it rounds `t`.
+-/
+theorem located_of_quarter (fmt : FloatFormat) {t : ℝ} {binade : Int}
+    (hbinade : lowerExponent fmt ≤ binade)
+    (hblo : Flocq.bpow binaryRadix binade ≤ t)
+    (hbhi : t < Flocq.bpow binaryRadix (binade + 1)) {mantissa : Nat}
+    {accuracy : Float.Model.UnpackedFloat.Accuracy}
+    (hrep : AccuracyRepresents mantissa accuracy
+      (t / Flocq.bpow binaryRadix (certificateExponent fmt binade))) :
+    Located fmt (((4 * mantissa + accuracyQuarter accuracy : ℕ) : ℝ) *
+        Flocq.bpow binaryRadix (certificateExponent fmt binade - 2))
+      (mantissa / 4) (certificateExponent fmt binade + 2) (decide (2 ≤ mantissa % 4))
+      (mantissa % 2 == 1 || !(accuracyQuarter accuracy == 0)) := by
+  obtain ⟨hlo, hhi⟩ := accuracyRepresents_bounds hrep
+  have hquarter : accuracyQuarter accuracy ≤ 3 := by
+    rcases accuracy with _ | (_ | _ | _) <;> simp [accuracyQuarter]
+  obtain ⟨n, hn⟩ : ∃ n : ℕ, binade = certificateExponent fmt binade + n := by
+    refine ⟨(binade - certificateExponent fmt binade).toNat, ?_⟩
+    simp only [certificateExponent, lowerExponent] at hbinade ⊢
     omega
-  refine ⟨hcexp, ?_⟩
-  have hscale : t / Flocq.bpow binaryRadix (exponent + 2) =
-      t / Flocq.bpow binaryRadix exponent / 4 := by
-    rw [Flocq.bpow.add_exp, show Flocq.bpow binaryRadix 2 = 4 by
-      norm_num [Flocq.bpow_binaryRadix], div_mul_eq_div_div]
-  have hsplit : (mantissa : ℝ) = 4 * ((mantissa / 4 : ℕ) : ℝ) + ((mantissa % 4 : ℕ) : ℝ) := by
-    exact_mod_cast (Nat.div_add_mod mantissa 4).symm
-  rw [scaledMantissa_eq_div, hcexp, hscale,
-    ← Nat.mod_mod_of_dvd mantissa (by norm_num : 2 ∣ 4)]
-  apply inbetweenInt_of_guarded _ _ _ _ (Nat.mod_lt _ (by norm_num))
-  · rw [← hsplit]; exact hfloorLo
-  · rw [← hsplit]; exact hfloorHi
-  · rw [beq_iff_eq, hcompare, cmp_eq_eq_iff, ← hsplit, div_eq_iff hpow.ne']
-    push_cast [cast_powerOfTwo]
-    rfl
+  set exponent := certificateExponent fmt binade with hexponentDef
+  have htwo : (2 : ℝ) ≠ 0 := by norm_num
+  have hunit : (0 : ℝ) < (2 : ℝ) ^ (exponent - 2) := zpow_pos (by norm_num) _
+  have hexponent : Flocq.bpow binaryRadix exponent = 4 * (2 : ℝ) ^ (exponent - 2) := by
+    rw [Flocq.bpow_binaryRadix, zpow_sub₀ htwo]
+    norm_num
+    field_simp
+  have hlowerPower : Flocq.bpow binaryRadix binade =
+      4 * (2 : ℝ) ^ n * (2 : ℝ) ^ (exponent - 2) := by
+    rw [Flocq.bpow_binaryRadix, hn, zpow_add₀ htwo, zpow_natCast, zpow_sub₀ htwo]
+    norm_num
+    field_simp
+  have hupperPower : Flocq.bpow binaryRadix (binade + 1) =
+      8 * (2 : ℝ) ^ n * (2 : ℝ) ^ (exponent - 2) := by
+    rw [Flocq.bpow_binaryRadix, hn, zpow_add₀ htwo, zpow_add₀ htwo, zpow_natCast, zpow_one,
+      zpow_sub₀ htwo]
+    norm_num
+    field_simp
+    ring
+  rw [hexponent] at hlo hhi
+  rw [le_div_iff₀ (by positivity)] at hlo
+  rw [div_lt_iff₀ (by positivity)] at hhi
+  rw [hlowerPower] at hblo
+  rw [hupperPower] at hbhi
+  have hbelow : 2 ^ n ≤ mantissa := by
+    have h : (4 * (2 : ℝ) ^ n) * (2 : ℝ) ^ (exponent - 2) <
+        (4 * ((mantissa : ℝ) + 1)) * (2 : ℝ) ^ (exponent - 2) := by
+      linarith
+    have h := lt_of_mul_lt_mul_right h hunit.le
+    have hcast : ((2 ^ n : ℕ) : ℝ) < ((mantissa + 1 : ℕ) : ℝ) := by
+      push_cast
+      linarith
+    exact Nat.lt_succ_iff.mp (Nat.cast_lt.mp hcast)
+  have habove : mantissa + 1 ≤ 2 * 2 ^ n := by
+    have h : (4 * (mantissa : ℝ)) * (2 : ℝ) ^ (exponent - 2) <
+        (8 * (2 : ℝ) ^ n) * (2 : ℝ) ^ (exponent - 2) := by
+      linarith
+    have h := lt_of_mul_lt_mul_right h hunit.le
+    have hcast : ((mantissa : ℕ) : ℝ) < ((2 * 2 ^ n : ℕ) : ℝ) := by
+      push_cast
+      linarith
+    exact Nat.cast_lt.mp hcast
+  have hratio : ((4 * mantissa + accuracyQuarter accuracy : ℕ) : ℝ) *
+        Flocq.bpow binaryRadix (exponent - 2) / Flocq.bpow binaryRadix exponent =
+        ((4 * mantissa + accuracyQuarter accuracy : ℕ) : ℝ) / 4 := by
+    rw [hexponent, Flocq.bpow_binaryRadix]
+    field_simp
+  have hpositive : 0 < 2 ^ n := Nat.pos_of_ne_zero (by positivity)
+  refine located_of_truncated fmt ?_ ?_ ?_ ?_ ?_ ?_
+  · rw [Flocq.bpow_binaryRadix]
+    have : (0 : ℝ) < ((4 * mantissa + accuracyQuarter accuracy : ℕ) : ℝ) := by
+      exact_mod_cast (by omega : 0 < 4 * mantissa + accuracyQuarter accuracy)
+    positivity
+  · rw [hlowerPower, Flocq.bpow_binaryRadix]
+    refine mul_le_mul_of_nonneg_right ?_ hunit.le
+    have : 4 * 2 ^ n ≤ 4 * mantissa + accuracyQuarter accuracy := by omega
+    exact_mod_cast this
+  · rw [hupperPower, Flocq.bpow_binaryRadix]
+    refine mul_lt_mul_of_pos_right ?_ hunit
+    have : 4 * mantissa + accuracyQuarter accuracy < 8 * 2 ^ n := by omega
+    exact_mod_cast this
+  · rw [hratio, le_div_iff₀ (by norm_num)]
+    push_cast
+    linarith [(Nat.cast_nonneg (accuracyQuarter accuracy) : (0 : ℝ) ≤ _)]
+  · rw [hratio, div_lt_iff₀ (by norm_num)]
+    have : ((accuracyQuarter accuracy : ℕ) : ℝ) ≤ 3 := by exact_mod_cast hquarter
+    push_cast
+    linarith
+  · rw [hratio, div_eq_iff (by norm_num), beq_iff_eq]
+    constructor
+    · intro hzero
+      rw [hzero]
+      push_cast
+      ring
+    · intro hvalue
+      have : ((4 * mantissa + accuracyQuarter accuracy : ℕ) : ℝ) = ((4 * mantissa : ℕ) : ℝ) := by
+        push_cast at hvalue ⊢
+        linarith
+      have := Nat.cast_injective this
+      omega
 
 /-! ## Rounding the magnitude and the signed value of an oracle -/
 
@@ -443,10 +563,10 @@ theorem bpow_le_abs_roundAt (fmt : FloatFormat) (mode : IEEERoundingMode) {x : �
 
 /--
 `roundMagnitude` rounds a positive magnitude given by an exact oracle, with either sign, in
-every direction. No premise restricts the magnitude: it may underflow, overflow or lie on a
-rounding boundary.
+every direction and for every format descriptor. No premise restricts the magnitude: it may
+underflow, overflow or lie on a rounding boundary.
 -/
-theorem roundMagnitude_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+theorem roundMagnitude_roundsTo {fmt : FloatFormat}
     (mode : IEEERoundingMode) (sign : Bool) (compare : Rat → Ordering) {t : ℝ} (ht : 0 < t)
     (hcompare : ∀ candidate : Rat, compare candidate = cmp t (candidate : ℝ)) :
     RoundsTo fmt mode (if sign then -t else t) sign (roundMagnitude fmt mode sign compare) := by
@@ -463,19 +583,19 @@ theorem roundMagnitude_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
         omega
       · cases sign <;> simpa [abs_of_pos ht, upperExponent] using hge
     exact ⟨fun hin => absurd hbeyond (not_lt.mpr hin), fun _ => rfl,
-      signBit_directedOverflow hfmt sign _⟩
+      fun hzero => signBit_directedOverflow hzero sign _⟩
   · have hlt : t < Flocq.bpow binaryRadix (upperExponent fmt) :=
       lt_bpow_upperExponent_of_compare_eq_lt fmt hcompare (by simpa only [not_not] using hlarge)
     by_cases hsmall : compare (powerOfTwo (lowerExponent fmt)) = .lt
     · rw [roundMagnitude_eq fmt mode sign hcompare, ite_eq_right hlarge,
         ite_eq_left hsmall]
-      exact roundLocated_roundsTo hfmt (located_of_lt_lowerExponent fmt ht
+      exact roundLocated_roundsTo (located_of_lt_lowerExponent fmt ht
         (by simpa only [hcompare, cast_powerOfTwo, cmp_eq_lt_iff] using hsmall)) mode sign
     · rw [roundMagnitude_eq fmt mode sign hcompare, ite_eq_right hlarge,
         ite_eq_right hsmall]
-      exact roundLocated_roundsTo hfmt (located_of_certificate fmt compare t hcompare
-        (by simpa only [hcompare, cast_powerOfTwo, cmp_eq_lt_iff, not_lt] using hsmall) hlt)
-        mode sign
+      exact roundLocated_roundsTo (located_of_certificate fmt compare t
+        hcompare (by simpa only [hcompare, cast_powerOfTwo, cmp_eq_lt_iff, not_lt] using hsmall)
+        hlt) mode sign
 
 /-! ## Negation -/
 
@@ -579,19 +699,20 @@ theorem AlgebraicRounding.roundSigned_eq_roundReal (fmt : FloatFormat) (mode : I
   simp [roundReal, AlgebraicRounding.roundSigned]
 
 /--
-For an IEEE descriptor, `roundReal` of a nonzero real is its rounding in the sense of
+For every format descriptor, `roundReal` of a nonzero real is its rounding in the sense of
 IEEE 754-2019, clauses 4.3 and 7.4: the grid rounding `roundAt fmt x mode` when that is at most
-the largest finite magnitude, the overflow result of the direction otherwise, and the sign bit
-of `x` in both cases.
+the largest finite magnitude, the overflow result of the direction otherwise (the NaN of a
+format without an infinity when the direction rounds away), and in a format with signed zeros
+the sign bit of `x` in both cases.
 -/
-theorem roundReal_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
+theorem roundReal_roundsTo {fmt : FloatFormat}
     (mode : IEEERoundingMode) {x : ℝ} (hx : x ≠ 0) (zeroSign : Bool := false) :
     RoundsTo fmt mode x (decide (x < 0)) (roundReal fmt mode x zeroSign) := by
   unfold roundReal AlgebraicRounding.roundSigned
   rcases lt_or_gt_of_ne hx with hneg | hpos
   · have hcmp : cmp x ((0 : Rat) : ℝ) = .lt := (cmp_eq_lt_iff _ _).mpr (by simpa using hneg)
     simp only [hcmp, decide_eq_true hneg]
-    have h := AlgebraicRounding.roundMagnitude_roundsTo hfmt mode true
+    have h := AlgebraicRounding.roundMagnitude_roundsTo (fmt := fmt) mode true
       (fun boundary : Rat => (cmp x ((-boundary : Rat) : ℝ)).swap) (neg_pos.mpr hneg)
       (fun candidate => by
         rw [cmp_swap]
@@ -600,7 +721,7 @@ theorem roundReal_roundsTo {fmt : FloatFormat} (hfmt : fmt.isIEEE = true)
     simpa using h
   · have hcmp : cmp x ((0 : Rat) : ℝ) = .gt := (cmp_eq_gt_iff _ _).mpr (by simpa using hpos)
     simp only [hcmp, decide_eq_false (not_lt.mpr hpos.le)]
-    simpa using AlgebraicRounding.roundMagnitude_roundsTo hfmt mode false
+    simpa using AlgebraicRounding.roundMagnitude_roundsTo (fmt := fmt) mode false
       (fun boundary : Rat => cmp x (boundary : ℝ)) hpos (fun _ => rfl)
 
 /--

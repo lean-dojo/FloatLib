@@ -548,8 +548,8 @@ theorem floorLog2RatWord_eq (num den : UInt64) (hden : den ≠ 0) :
   have hdenLogLt : den.toNat.log2 < 64 := by
     rw [Nat.log2_lt hdenNat]
     exact den.toNat_lt
+  rw [FloatLib.Numerics.RationalBinary.floorLog2_eq_log2]
   unfold floorLog2RatWord
-    FloatLib.Numerics.RationalBinary.floorLog2
   simp only [log2Word_eq_log2]
   rw [← hnumLog, ← hdenLog]
   by_cases hlogs : den.log2.toNat ≤ num.log2.toNat

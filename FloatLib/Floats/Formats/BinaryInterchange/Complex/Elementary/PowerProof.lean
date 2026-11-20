@@ -11,6 +11,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Logar
 public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.AlgebraicProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.ExponentialProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.DirectedEnclosureProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Rounding.DirectedRange
 public import FloatLib.Numerics.Enclosure.Rational.Converges
 public import FloatLib.Numerics.Exact.Product.FactorsProof
 public import FloatLib.Numerics.Exact.RationalPower.Proof
@@ -30,9 +31,11 @@ cut. The proof writes both parts as `exp (c L - d θ) cos (d L + c θ)` and
 `exp (c L - d θ) sin (d L + c θ)` with `L = log |z|` and the angle `θ` (`powExact_eq`), and
 treats the certified cases of `powRat` in turn: the exact powers of a complex rational root
 (`gaussRatPow?_spec`, with `gaussZPow_spec` for the integer power and `gaussRoot?_spec` for the
-principal `2 ^ k`-th root), the powers that stay on an axis (`axisComparators_spec`), and the
-parts decided by an enclosure (`contains_powEnclosure?` with
-`Model.AlgebraicRounding.roundReal_eq_of_zivRound?`).
+principal `2 ^ k`-th root), the powers that stay on an axis (`axisComparators_spec`, with
+`powAngle_of_diagonal` for a base on a diagonal), the parts that leave the range of the format
+(`powExtreme?_eq`, with `Model.roundReal_of_upperExponent_le` and
+`Model.roundReal_of_lt_lowerExponent`), and the parts decided by an enclosure
+(`contains_powEnclosure?` with `Model.AlgebraicRounding.roundReal_eq_of_zivRound?`).
 -/
 
 @[expose] public section
@@ -292,34 +295,357 @@ theorem sumSq_pos {x y : Rat} (hne : ¬(x = 0 ∧ y = 0)) : 0 < x * x + y * y :=
   · exact absurd ⟨by nlinarith [mul_self_nonneg x, mul_self_nonneg y],
       by nlinarith [mul_self_nonneg x, mul_self_nonneg y]⟩ hne
 
+/-- The angle of a complex rational with a nonnegative imaginary part is the arctangent of the
+slope of `axisReduction` and its quarter turns. -/
+theorem axisReduction_eq_arg {x y : Rat} (hy : 0 ≤ y) (hne : ¬(x = 0 ∧ y = 0)) :
+    Real.arctan ((axisReduction x y).1 : ℝ) + ((axisReduction x y).2 : ℝ) * (Real.pi / 2) =
+      Complex.arg ⟨(x : ℝ), (y : ℝ)⟩ := by
+  have hgeneral := TrigonometricComparison.atan2Reduction_eq_arg x y
+  unfold axisReduction
+  split
+  · rename_i hyx
+    have hx : 0 < x := by
+      rcases lt_trichotomy x 0 with h | h | h
+      · exact absurd (hy.trans hyx) (not_le.mpr h)
+      · exact absurd ⟨h, le_antisymm (h ▸ hyx) hy⟩ hne
+      · exact h
+    rw [arg_eq_arctan (by exact_mod_cast hx)]
+    push_cast
+    ring
+  · rename_i hyx
+    have hxy : x < y := not_le.mp hyx
+    split
+    · rename_i hynx
+      have hx : x < 0 := by linarith
+      simp only [TrigonometricComparison.atan2Reduction, ite_eq_right (not_lt.mpr hx.le),
+        ite_eq_left hx, ite_eq_left hy] at hgeneral
+      rw [← hgeneral]
+      push_cast
+      ring
+    · rename_i hynx
+      have hnxy : -x < y := not_le.mp hynx
+      have hypos : 0 < y := by linarith
+      have hyR : (0 : ℝ) < (y : ℝ) := by exact_mod_cast hypos
+      rcases lt_trichotomy x 0 with hx | hx | hx
+      · simp only [TrigonometricComparison.atan2Reduction, ite_eq_right (not_lt.mpr hx.le),
+          ite_eq_left hx, ite_eq_left hy] at hgeneral
+        rw [← hgeneral]
+        have hinv : Real.arctan ((y : ℝ) / (x : ℝ)) =
+            -(Real.pi / 2) - Real.arctan ((x : ℝ) / (y : ℝ)) := by
+          have h := Real.arctan_inv_of_neg (x := (x : ℝ) / (y : ℝ))
+            (div_neg_of_neg_of_pos (by exact_mod_cast hx) hyR)
+          rwa [inv_div] at h
+        push_cast
+        rw [hinv, Real.arctan_neg]
+        ring
+      · subst hx
+        simp only [TrigonometricComparison.atan2Reduction, lt_irrefl, ite_false,
+          ite_eq_left hypos] at hgeneral
+        rw [← hgeneral]
+        push_cast
+        simp only [zero_div, neg_zero, Real.arctan_zero]
+        ring
+      · rw [arg_eq_arctan (by exact_mod_cast hx)]
+        have hinv : Real.arctan ((y : ℝ) / (x : ℝ)) =
+            Real.pi / 2 - Real.arctan ((x : ℝ) / (y : ℝ)) := by
+          have h := Real.arctan_inv_of_pos (x := (x : ℝ) / (y : ℝ))
+            (div_pos (by exact_mod_cast hx) hyR)
+          rwa [inv_div] at h
+        push_cast
+        rw [hinv, Real.arctan_neg]
+        ring
+
+/-- The angle of a base on a diagonal, with a nonnegative imaginary part, is `diagonalTurns`
+eighth turns. -/
+theorem powAngle_of_diagonal {x y : Rat} (hne : ¬(x = 0 ∧ y = 0)) (hy : 0 ≤ y) (h : |x| = y)
+    (negative : Bool) :
+    powAngle x y negative = (diagonalTurns x negative : ℝ) * (Real.pi / 4) := by
+  have harg : Complex.arg ⟨(x : ℝ), (y : ℝ)⟩ =
+      ((if 0 < x then 1 else 3 : ℤ) : ℝ) * (Real.pi / 4) := by
+    rw [← axisReduction_eq_arg hy hne]
+    unfold axisReduction
+    by_cases hx : 0 < x
+    · have hxy : y = x := by rw [← h, abs_of_pos hx]
+      subst hxy
+      rw [ite_eq_left le_rfl, ite_eq_left hx, div_self hx.ne']
+      simp only [Rat.cast_one, Real.arctan_one, Int.cast_zero, Int.cast_one]
+      ring
+    · have hxneg : x < 0 := by
+        rcases lt_or_eq_of_le (not_lt.mp hx) with hlt | heq
+        · exact hlt
+        · exact absurd ⟨heq, by rw [← h, heq, abs_zero]⟩ hne
+      have hxy : y = -x := by rw [← h, abs_of_neg hxneg]
+      subst hxy
+      rw [ite_eq_right (by linarith : ¬(-x ≤ x)), ite_eq_left le_rfl, ite_eq_right hx,
+        neg_div, div_self hxneg.ne]
+      simp only [Rat.cast_neg, Rat.cast_one, Real.arctan_neg, Real.arctan_one, Int.cast_ofNat]
+      ring
+  unfold powAngle diagonalTurns
+  rw [harg]
+  cases negative
+  · simp
+  · simp only [↓reduceIte]
+    push_cast
+    ring
+
+/-- A cosine or a sine after quarter turns lies in the enclosure of `turnedBounds?`. -/
+theorem contains_turnedBounds? {trig : Trig} {angle : RationalInterval} {φ : ℝ} {turns : Int}
+    {precision : Nat} {interval : RationalInterval} (hφ : angle.Contains φ)
+    (h : turnedBounds? trig angle turns precision = some interval) :
+    interval.Contains (trig.eval (φ + (turns : ℝ) * (Real.pi / 2))) := by
+  obtain ⟨bounded, hbounded, rfl⟩ := Option.map_eq_some_iff.mp h
+  have htrig := ProductComparison.contains_trigBounds? hφ hbounded
+  rw [ProductComparison.eval_add_quarterTurns trig φ turns]
+  split
+  · simpa using RationalInterval.contains_neg htrig
+  · simpa using htrig
+
+/--
+For every nonzero base, the enclosures of `powArguments` contain the exponent `c L - d θ` of the
+power and an angle that differs from `d L + c θ` by the quarter turns.
+-/
+theorem contains_powArguments {x y c d : Rat} (hne : ¬(x = 0 ∧ y = 0)) (negative : Bool)
+    (precision : Nat) :
+    (powArguments x y c d negative precision).1.Contains
+        ((c : ℝ) * (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re - (d : ℝ) * powAngle x y negative) ∧
+      ∃ φ : ℝ, (powArguments x y c d negative precision).2.1.Contains φ ∧
+        (d : ℝ) * (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re + (c : ℝ) * powAngle x y negative =
+          φ + ((powArguments x y c d negative precision).2.2 : ℝ) * (Real.pi / 2) := by
+  have hlog : ((ratLogEnclosure (x * x + y * y) precision).scale (1 / 2)).Contains
+      (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re := by
+    rw [log_re_mk]
+    exact RationalInterval.contains_scale (contains_ratLogEnclosure (sumSq_pos hne) _) (1 / 2)
+  unfold powArguments
+  split
+  · rename_i haxis
+    obtain ⟨hy, hturn⟩ := haxis
+    have harg := axisReduction_eq_arg hy hne
+    dsimp only
+    generalize (ratLogEnclosure (x * x + y * y) precision).scale (1 / 2) = logBound at hlog
+    generalize (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re = L at hlog ⊢
+    have hslope := contains_coarseAtan (axisReduction x y).1 precision
+    have hangle : (if negative then (coarseAtan (axisReduction x y).1 precision).neg
+        else coarseAtan (axisReduction x y).1 precision).Contains
+        (if negative then -Real.arctan ((axisReduction x y).1 : ℝ)
+          else Real.arctan ((axisReduction x y).1 : ℝ)) := by
+      cases negative
+      · exact hslope
+      · exact RationalInterval.contains_neg hslope
+    have hvalue : powAngle x y negative =
+        (if negative then -Real.arctan ((axisReduction x y).1 : ℝ)
+          else Real.arctan ((axisReduction x y).1 : ℝ)) +
+          (((if negative then -(axisReduction x y).2 else (axisReduction x y).2 : Int) : Rat) : ℝ) *
+            (Real.pi / 2) := by
+      unfold powAngle
+      rw [← harg]
+      cases negative
+      · simp
+      · simp only [↓reduceIte]
+        push_cast
+        ring
+    have hden : (c * ((if negative then -(axisReduction x y).2 else (axisReduction x y).2 : Int) :
+        Rat)).den = 1 := by
+      cases negative
+      · exact hturn
+      · simp only [↓reduceIte]
+        rw [show c * ((-(axisReduction x y).2 : Int) : Rat) =
+            -(c * ((axisReduction x y).2 : Rat)) by
+          push_cast
+          ring, Rat.den_neg_eq_den]
+        exact hturn
+    generalize (if negative then (coarseAtan (axisReduction x y).1 precision).neg
+      else coarseAtan (axisReduction x y).1 precision) = angle at hangle ⊢
+    generalize (if negative then -Real.arctan ((axisReduction x y).1 : ℝ)
+      else Real.arctan ((axisReduction x y).1 : ℝ)) = θ at hangle hvalue
+    generalize (if negative then -(axisReduction x y).2 else (axisReduction x y).2 : Int) = turns
+      at hvalue hden ⊢
+    have hk : ((c * (turns : Rat) : Rat) : ℝ) = (((c * (turns : Rat)).num : Int) : ℝ) := by
+      have hnum := Rat.intCast_num_of_den_eq_one hden
+      exact_mod_cast hnum.symm
+    rw [hvalue]
+    refine ⟨RationalInterval.contains_sub (RationalInterval.contains_scale hlog c)
+      (RationalInterval.contains_scale (RationalInterval.contains_add hangle
+        (RationalInterval.contains_scale (ProductComparison.contains_halfPiBounds precision)
+          (turns : Rat))) d), (d : ℝ) * L + (c : ℝ) * θ,
+      RationalInterval.contains_add (RationalInterval.contains_scale hlog d)
+        (RationalInterval.contains_scale hangle c), ?_⟩
+    rw [← hk]
+    push_cast
+    ring
+  · have htheta : (logArgEnclosures x y negative precision).2.Contains
+        (powAngle x y negative) := by
+      unfold powAngle logArgEnclosures
+      cases negative
+      · exact TrigonometricComparison.contains_atan2Interval x y _
+      · exact RationalInterval.contains_neg
+          (TrigonometricComparison.contains_atan2Interval x y _)
+    have hlog' : (logArgEnclosures x y negative precision).1.Contains
+        (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re := hlog
+    exact ⟨RationalInterval.contains_sub (RationalInterval.contains_scale hlog' c)
+        (RationalInterval.contains_scale htheta d), _,
+      RationalInterval.contains_add (RationalInterval.contains_scale hlog' d)
+        (RationalInterval.contains_scale htheta c), by simp⟩
+
 /-- Every enclosure that `powEnclosure?` returns contains the part of the power. -/
 theorem contains_powEnclosure? {trig : Trig} {x y c d : Rat} {negative : Bool}
     {precision : Nat} {interval : RationalInterval} (hne : ¬(x = 0 ∧ y = 0))
     (h : powEnclosure? fmt trig x y c d negative precision = some interval) :
     interval.Contains (powPartValue trig x y c d negative) := by
-  have hlog (precision : Nat) : (logArgEnclosures x y negative precision).1.Contains
-      (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re := by
-    rw [log_re_mk]
-    exact RationalInterval.contains_scale (contains_ratLogEnclosure (sumSq_pos hne) _) (1 / 2)
-  have htheta (precision : Nat) : (logArgEnclosures x y negative precision).2.Contains
-      (powAngle x y negative) := by
-    unfold powAngle logArgEnclosures
-    cases negative
-    · exact TrigonometricComparison.contains_atan2Interval x y _
-    · exact RationalInterval.contains_neg
-        (TrigonometricComparison.contains_atan2Interval x y _)
+  obtain ⟨hexponent, φ, hφ, hsum⟩ := contains_powArguments (c := c) (d := d) hne negative
+    (precision + ⌈|c| + |d|⌉₊.log2 + 8)
   unfold powEnclosure? at h
   dsimp only at h
   split at h
   · simp at h
-  · obtain ⟨angleBounds, hangle, rfl⟩ := Option.map_eq_some_iff.mp h
-    have hexponent := RationalInterval.contains_sub
-      (RationalInterval.contains_scale (hlog (precision + ⌈|c| + |d|⌉₊.log2 + 8)) c)
-      (RationalInterval.contains_scale (htheta (precision + ⌈|c| + |d|⌉₊.log2 + 8)) d)
+  · obtain ⟨bounded, hbounded, rfl⟩ := Option.map_eq_some_iff.mp h
+    unfold powPartValue
+    rw [hsum]
     exact RationalInterval.contains_mul (contains_expBounds hexponent _ _)
-      (ProductComparison.contains_trigBounds? (RationalInterval.contains_add
-        (RationalInterval.contains_scale (hlog (precision + ⌈|c| + |d|⌉₊.log2 + 8)) d)
-        (RationalInterval.contains_scale (htheta (precision + ⌈|c| + |d|⌉₊.log2 + 8)) c)) hangle)
+      (contains_turnedBounds? hφ hbounded)
+
+/-! ## Parts that leave the range -/
+
+/-- `2 ^ n ≤ exp t` for a natural `n ≤ t`. -/
+private theorem two_pow_le_exp {n : ℕ} {t : ℝ} (h : (n : ℝ) ≤ t) : (2 : ℝ) ^ n ≤ Real.exp t := by
+  have htwo : (2 : ℝ) ≤ Real.exp 1 := by
+    have := Real.add_one_le_exp (1 : ℝ)
+    linarith
+  calc (2 : ℝ) ^ n ≤ Real.exp 1 ^ n := pow_le_pow_left₀ (by norm_num) htwo n
+    _ = Real.exp n := by rw [← Real.exp_nat_mul, mul_one]
+    _ ≤ Real.exp t := Real.exp_le_exp.mpr h
+
+/-- A positive rational is more than `2 ^ -(k + 1)` for the bit length `k` of its denominator. -/
+private theorem one_le_two_pow_mul {size : Rat} (h : 0 < size) :
+    (1 : ℝ) ≤ 2 ^ (size.den.log2 + 1) * (size : ℝ) := by
+  have hnum : (1 : Rat) ≤ size * size.den := by
+    rw [Rat.mul_den_eq_num]
+    exact_mod_cast Rat.num_pos.mpr h
+  have hden : (size.den : Rat) ≤ 2 ^ (size.den.log2 + 1) := by
+    exact_mod_cast (Nat.lt_log2_self (n := size.den)).le
+  have hrat : (1 : Rat) ≤ 2 ^ (size.den.log2 + 1) * size :=
+    calc (1 : Rat) ≤ size * size.den := hnum
+      _ ≤ size * 2 ^ (size.den.log2 + 1) := mul_le_mul_of_nonneg_left hden h.le
+      _ = 2 ^ (size.den.log2 + 1) * size := mul_comm _ _
+  exact_mod_cast hrat
+
+/--
+A part that `powExtreme?` returns is the rounding of the part of the power, for every format
+descriptor, every rounding direction and every nonzero base: the overflow result of its sign,
+or the rounding of a nonzero number below half the least positive one.
+-/
+theorem powExtreme?_eq (mode : Model.IEEERoundingMode) {trig : Trig} {x y c d : Rat}
+    {negative : Bool} {result : Model fmt} (hne : ¬(x = 0 ∧ y = 0))
+    (h : powExtreme? fmt mode trig x y c d negative = some result) (zeroSign : Bool) :
+    result = Model.roundReal fmt mode (powPartValue trig x y c d negative) zeroSign := by
+  obtain ⟨hexponent, φ, hφ, hsum⟩ := contains_powArguments (c := c) (d := d) hne negative
+    (fmt.fracWidth + 32 + ⌈|c| + |d|⌉₊.log2 + 8)
+  unfold powExtreme? at h
+  dsimp only at h
+  split at h
+  · simp at h
+  split at h
+  swap
+  · simp at h
+  obtain ⟨factor, hfactor, hresult⟩ := Option.bind_eq_some_iff.mp h
+  have hτ := contains_turnedBounds? hφ hfactor
+  have hone : |trig.eval (φ + ((powArguments x y c d negative
+      (fmt.fracWidth + 32 + ⌈|c| + |d|⌉₊.log2 + 8)).2.2 : ℝ) * (Real.pi / 2))| ≤ 1 := by
+    cases trig
+    · exact Real.abs_cos_le_one _
+    · exact Real.abs_sin_le_one _
+  unfold powPartValue
+  rw [hsum]
+  generalize trig.eval (φ + ((powArguments x y c d negative
+    (fmt.fracWidth + 32 + ⌈|c| + |d|⌉₊.log2 + 8)).2.2 : ℝ) * (Real.pi / 2)) = τ at hτ hone ⊢
+  generalize (c : ℝ) * (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re - (d : ℝ) * powAngle x y negative = E
+    at hexponent ⊢
+  generalize (powArguments x y c d negative
+    (fmt.fracWidth + 32 + ⌈|c| + |d|⌉₊.log2 + 8)).1 = exponent at hexponent hresult
+  split at hresult
+  swap
+  · simp at hresult
+  rename_i hsigned
+  have hsign : decide (factor.hi < 0) = decide (Real.exp E * τ < 0) := by
+    rw [decide_eq_decide]
+    constructor
+    · intro hneg
+      exact mul_neg_of_pos_of_neg (Real.exp_pos E) (hτ.2.trans_lt (by exact_mod_cast hneg))
+    · intro hneg
+      by_contra hhi
+      have hlo : (0 : ℝ) < (factor.lo : ℝ) := by exact_mod_cast hsigned.resolve_right hhi
+      exact absurd hneg (not_lt.mpr (mul_pos (Real.exp_pos E) (hlo.trans_le hτ.1)).le)
+  have hsize : 0 < (if factor.hi < 0 then -factor.hi else factor.lo) ∧
+      (((if factor.hi < 0 then -factor.hi else factor.lo : Rat)) : ℝ) ≤ |τ| := by
+    by_cases hneg : factor.hi < 0
+    · have hτneg : τ < 0 := hτ.2.trans_lt (by exact_mod_cast hneg)
+      rw [ite_eq_left hneg, abs_of_neg hτneg]
+      exact ⟨neg_pos.mpr hneg, by push_cast; linarith [hτ.2]⟩
+    · have hlo : (0 : ℝ) < (factor.lo : ℝ) := by exact_mod_cast hsigned.resolve_right hneg
+      rw [ite_eq_right hneg, abs_of_pos (hlo.trans_le hτ.1)]
+      exact ⟨hsigned.resolve_right hneg, hτ.1⟩
+  generalize (if factor.hi < 0 then -factor.hi else factor.lo) = size at hsize hresult
+  have habs : |Real.exp E * τ| = Real.exp E * |τ| := by
+    rw [abs_mul, abs_of_pos (Real.exp_pos E)]
+  split at hresult
+  · rename_i hover
+    obtain rfl := Option.some.inj hresult
+    rw [hsign]
+    refine (Model.roundReal_of_upperExponent_le mode ?_ zeroSign).symm
+    have hE : (((Model.AlgebraicRounding.upperExponent fmt).toNat + size.den.log2 + 1 : ℕ) : ℝ) ≤
+        E := by
+      have hcast : ((((Model.AlgebraicRounding.upperExponent fmt).toNat + size.den.log2 + 1 : ℕ) :
+          Rat) : ℝ) ≤ (exponent.lo : ℝ) := by exact_mod_cast hover
+      exact (by exact_mod_cast hcast : _ ≤ (exponent.lo : ℝ)).trans hexponent.1
+    have hupper : Flocq.bpow binaryRadix (Model.AlgebraicRounding.upperExponent fmt) ≤
+        (2 : ℝ) ^ (Model.AlgebraicRounding.upperExponent fmt).toNat := by
+      rw [Flocq.bpow_binaryRadix, ← zpow_natCast]
+      exact zpow_le_zpow_right₀ (by norm_num) (Int.self_le_toNat _)
+    rw [habs]
+    calc Flocq.bpow binaryRadix (Model.AlgebraicRounding.upperExponent fmt)
+        ≤ (2 : ℝ) ^ (Model.AlgebraicRounding.upperExponent fmt).toNat := hupper
+      _ ≤ (2 : ℝ) ^ (Model.AlgebraicRounding.upperExponent fmt).toNat *
+          (2 ^ (size.den.log2 + 1) * (size : ℝ)) :=
+        le_mul_of_one_le_right (by positivity) (one_le_two_pow_mul hsize.1)
+      _ ≤ (2 : ℝ) ^ (Model.AlgebraicRounding.upperExponent fmt).toNat *
+          (2 ^ (size.den.log2 + 1) * |τ|) := by
+        gcongr
+        exact hsize.2
+      _ = (2 : ℝ) ^ ((Model.AlgebraicRounding.upperExponent fmt).toNat + size.den.log2 + 1) *
+          |τ| := by ring
+      _ ≤ Real.exp E * |τ| := mul_le_mul_of_nonneg_right (two_pow_le_exp hE) (abs_nonneg τ)
+  · split at hresult
+    swap
+    · simp at hresult
+    rename_i hunder
+    obtain rfl := Option.some.inj hresult
+    have hτne : τ ≠ 0 := fun hzero => by
+      have := hsize.2
+      rw [hzero, abs_zero] at this
+      exact absurd (by exact_mod_cast hsize.1 : (0 : ℝ) < (size : ℝ)) (not_lt.mpr this)
+    rw [hsign]
+    refine (Model.roundReal_of_lt_lowerExponent mode
+      (mul_ne_zero (Real.exp_pos E).ne' hτne) ?_ zeroSign).symm
+    have hE : E ≤ -(((1 - Model.AlgebraicRounding.lowerExponent fmt).toNat : ℕ) : ℝ) :=
+      hexponent.2.trans (by exact_mod_cast hunder)
+    have hexp : Real.exp E ≤
+        ((2 : ℝ) ^ (1 - Model.AlgebraicRounding.lowerExponent fmt).toNat)⁻¹ :=
+      calc Real.exp E
+          ≤ Real.exp (-(((1 - Model.AlgebraicRounding.lowerExponent fmt).toNat : ℕ) : ℝ)) :=
+            Real.exp_le_exp.mpr hE
+        _ = (Real.exp (((1 - Model.AlgebraicRounding.lowerExponent fmt).toNat : ℕ) : ℝ))⁻¹ :=
+            Real.exp_neg _
+        _ ≤ ((2 : ℝ) ^ (1 - Model.AlgebraicRounding.lowerExponent fmt).toNat)⁻¹ :=
+            inv_anti₀ (by positivity) (two_pow_le_exp le_rfl)
+    have hlower : ((2 : ℝ) ^ (1 - Model.AlgebraicRounding.lowerExponent fmt).toNat)⁻¹ <
+        Flocq.bpow binaryRadix (Model.AlgebraicRounding.lowerExponent fmt) := by
+      rw [Flocq.bpow_binaryRadix, ← zpow_natCast, ← zpow_neg]
+      exact zpow_lt_zpow_right₀ (by norm_num) (by omega)
+    rw [habs]
+    calc Real.exp E * |τ| ≤ Real.exp E * 1 :=
+          mul_le_mul_of_nonneg_left hone (Real.exp_pos E).le
+      _ = Real.exp E := mul_one _
+      _ ≤ ((2 : ℝ) ^ (1 - Model.AlgebraicRounding.lowerExponent fmt).toNat)⁻¹ := hexp
+      _ < Flocq.bpow binaryRadix (Model.AlgebraicRounding.lowerExponent fmt) := hlower
 
 /-- A certified part of the general case is the rounding of the part of the power. -/
 theorem powPart_eq (hfmt : fmt.isIEEE = true) (mode : Model.IEEERoundingMode) {trig : Trig}
@@ -328,12 +654,15 @@ theorem powPart_eq (hfmt : fmt.isIEEE = true) (mode : Model.IEEERoundingMode) {t
     (powPart fmt mode trig x y c d negative levels).1 =
       Model.roundReal fmt mode (powPartValue trig x y c d negative) zeroSign := by
   unfold powPart at h ⊢
-  cases hziv : zivRound? fmt mode (powEnclosure? fmt trig x y c d negative) levels
-      (fmt.fracWidth + 32) with
-  | some result =>
-      exact (roundReal_eq_of_zivRound? hfmt mode
-        (fun _ _ hinterval => contains_powEnclosure? hne hinterval) hziv zeroSign).symm
-  | none => simp [hziv] at h
+  cases hextreme : powExtreme? fmt mode trig x y c d negative with
+  | some result => exact powExtreme?_eq mode hne hextreme zeroSign
+  | none =>
+      cases hziv : zivRound? fmt mode (powEnclosure? fmt trig x y c d negative) levels
+          (fmt.fracWidth + 32) with
+      | some result =>
+          exact (roundReal_eq_of_zivRound? hfmt mode
+            (fun _ _ hinterval => contains_powEnclosure? hne hinterval) hziv zeroSign).symm
+      | none => simp [hextreme, hziv] at h
 
 /-! ## The certified power -/
 
@@ -424,44 +753,81 @@ theorem powRat_eq (hfmt : fmt.isIEEE = true) (mode : Model.IEEERoundingMode) {x 
         · exact roundSigned_eq_roundReal fmt mode (fun boundary => (hspec boundary).1) false
         · exact roundSigned_eq_roundReal fmt mode (fun boundary => (hspec boundary).2) negative
       · rw [ite_eq_right haxis] at h ⊢
-        by_cases hunit : |x| + |y| = 1 ∧ (x = 0 ∨ y = 0) ∧ (c * axisTurns x y negative).den = 1
-        · rw [ite_eq_left hunit] at h ⊢
-          obtain ⟨hmodulus, hax, hden⟩ := hunit
-          have hturns : ((c * axisTurns x y negative : Rat) : ℝ) =
-              (((c * axisTurns x y negative).num : ℤ) : ℝ) := by
-            exact_mod_cast congrArg (fun q : Rat => (q : ℝ))
-              (Rat.intCast_num_of_den_eq_one hden).symm
-          have hlog : (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re = 0 := by
-            rw [Complex.log_re, norm_mk_of_axis (by exact_mod_cast hax)]
-            have hreal : |(x : ℝ)| + |(y : ℝ)| = 1 := by exact_mod_cast hmodulus
-            rw [hreal, Real.log_one]
-          have hvalue (trig : Trig) : powPartValue trig x y c d negative =
-              Real.exp (-(d * powAngle x y negative)) *
-                trig.eval (((c * axisTurns x y negative).num : ℤ) * (Real.pi / 2)) := by
-            rw [powPartValue, hlog, ← hturns, powAngle_of_axis hne hy hax]
+        by_cases hdiagonal : d = 0 ∧ |x| = y ∧ (c / 2).den = 1
+        · rw [ite_eq_left hdiagonal]
+          obtain ⟨hd, hxy, hden⟩ := hdiagonal
+          have hypos : 0 < y := by
+            rcases lt_or_eq_of_le hy with hlt | heq
+            · exact hlt
+            · exact absurd ⟨abs_eq_zero.mp (hxy.trans heq.symm), heq.symm⟩ hne
+          have hr : (0 : Rat) ≤ 2 * y * y := by positivity
+          have hrpos : (0 : ℝ) < ((2 * y * y : Rat) : ℝ) := by
+            have : (0 : Rat) < 2 * y * y := by positivity
+            exact_mod_cast this
+          have hnum : (((c / 2).num : ℤ) : ℝ) = (c : ℝ) / 2 := by
+            have hcast := congrArg (fun q : Rat => (q : ℝ)) (Rat.intCast_num_of_den_eq_one hden)
+            simp only [Rat.cast_intCast] at hcast
+            rw [hcast]
             push_cast
+            ring
+          have hsquare : x * x = y * y := by rw [← hxy, abs_mul_abs_self]
+          have hlog : (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re =
+              ((1 / 2 : Rat) : ℝ) * Real.log ((2 * y * y : Rat) : ℝ) := by
+            rw [log_re_mk, show x * x + y * y = 2 * y * y by rw [hsquare]; ring]
+          have hvalue (trig : Trig) : powPartValue trig x y c d negative =
+              ((2 * y * y : Rat) : ℝ) ^ ((c / 2 : Rat) : ℝ) *
+                trig.eval ((((c / 2).num * diagonalTurns x negative : ℤ) : ℝ) *
+                  (Real.pi / 2)) := by
+            rw [powPartValue, hd, powAngle_of_diagonal hne hy hxy, hlog,
+              Real.rpow_def_of_pos hrpos]
+            push_cast
+            rw [hnum]
             congr 2 <;> ring
-          have hlower := Int.emod_nonneg (c * axisTurns x y negative).num
-            (by norm_num : (4 : ℤ) ≠ 0)
-          have hupper := Int.emod_lt_of_pos (c * axisTurns x y negative).num
-            (by norm_num : (0 : ℤ) < 4)
-          by_cases heven : (c * axisTurns x y negative).num % 2 = 0
-          · rw [ite_eq_left heven] at h ⊢
+          have hspec := axisComparators_spec hr (c / 2) ((c / 2).num * diagonalTurns x negative)
+          rw [hvalue .cos, hvalue .sin]
+          dsimp only
+          congr 1
+          · exact roundSigned_eq_roundReal fmt mode (fun boundary => (hspec boundary).1) false
+          · exact roundSigned_eq_roundReal fmt mode (fun boundary => (hspec boundary).2) negative
+        · rw [ite_eq_right hdiagonal] at h ⊢
+          by_cases hunit : |x| + |y| = 1 ∧ (x = 0 ∨ y = 0) ∧ (c * axisTurns x y negative).den = 1
+          · rw [ite_eq_left hunit] at h ⊢
+            obtain ⟨hmodulus, hax, hden⟩ := hunit
+            have hturns : ((c * axisTurns x y negative : Rat) : ℝ) =
+                (((c * axisTurns x y negative).num : ℤ) : ℝ) := by
+              exact_mod_cast congrArg (fun q : Rat => (q : ℝ))
+                (Rat.intCast_num_of_den_eq_one hden).symm
+            have hlog : (Complex.log ⟨(x : ℝ), (y : ℝ)⟩).re = 0 := by
+              rw [Complex.log_re, norm_mk_of_axis (by exact_mod_cast hax)]
+              have hreal : |(x : ℝ)| + |(y : ℝ)| = 1 := by exact_mod_cast hmodulus
+              rw [hreal, Real.log_one]
+            have hvalue (trig : Trig) : powPartValue trig x y c d negative =
+                Real.exp (-(d * powAngle x y negative)) *
+                  trig.eval (((c * axisTurns x y negative).num : ℤ) * (Real.pi / 2)) := by
+              rw [powPartValue, hlog, ← hturns, powAngle_of_axis hne hy hax]
+              push_cast
+              congr 2 <;> ring
+            have hlower := Int.emod_nonneg (c * axisTurns x y negative).num
+              (by norm_num : (4 : ℤ) ≠ 0)
+            have hupper := Int.emod_lt_of_pos (c * axisTurns x y negative).num
+              (by norm_num : (0 : ℤ) < 4)
+            by_cases heven : (c * axisTurns x y negative).num % 2 = 0
+            · rw [ite_eq_left heven] at h ⊢
+              dsimp only at h ⊢
+              have hsin : powPartValue .sin x y c d negative = 0 := by
+                rw [hvalue, Trig.eval, sin_int_mul_pi_div_two,
+                  ite_eq_right (by omega), ite_eq_right (by omega), mul_zero]
+              rw [powPart_eq hfmt mode hne h false, hsin, Model.roundReal_zero]
+            · rw [ite_eq_right heven] at h ⊢
+              dsimp only at h ⊢
+              have hcos : powPartValue .cos x y c d negative = 0 := by
+                rw [hvalue, Trig.eval, cos_int_mul_pi_div_two,
+                  ite_eq_right (by omega), ite_eq_right (by omega), mul_zero]
+              rw [powPart_eq hfmt mode hne h negative, hcos, Model.roundReal_zero]
+          · rw [ite_eq_right hunit] at h ⊢
             dsimp only at h ⊢
-            have hsin : powPartValue .sin x y c d negative = 0 := by
-              rw [hvalue, Trig.eval, sin_int_mul_pi_div_two,
-                ite_eq_right (by omega), ite_eq_right (by omega), mul_zero]
-            rw [powPart_eq hfmt mode hne h false, hsin, Model.roundReal_zero]
-          · rw [ite_eq_right heven] at h ⊢
-            dsimp only at h ⊢
-            have hcos : powPartValue .cos x y c d negative = 0 := by
-              rw [hvalue, Trig.eval, cos_int_mul_pi_div_two,
-                ite_eq_right (by omega), ite_eq_right (by omega), mul_zero]
-            rw [powPart_eq hfmt mode hne h negative, hcos, Model.roundReal_zero]
-        · rw [ite_eq_right hunit] at h ⊢
-          dsimp only at h ⊢
-          rw [Bool.and_eq_true] at h
-          rw [powPart_eq hfmt mode hne h.1 false, powPart_eq hfmt mode hne h.2 negative]
+            rw [Bool.and_eq_true] at h
+            rw [powPart_eq hfmt mode hne h.1 false, powPart_eq hfmt mode hne h.2 negative]
 
 /--
 For an IEEE descriptor, a certified `powChecked` at a finite base other than zero and a finite
@@ -469,7 +835,7 @@ exponent is the exact power with each part rounded once in the direction `mode`.
 -/
 theorem powChecked_eq (hfmt : fmt.isIEEE = true) {z w : ExecComplex fmt}
     (hz : isFinite z = true) (hw : isFinite w = true) (hne : toComplex z ≠ 0)
-    (mode : Model.IEEERoundingMode := .nearest) (levels : Nat := 4)
+    (mode : Model.IEEERoundingMode := .nearest) (levels : Nat := powLevels fmt)
     (h : (powChecked z w mode levels).2 = true) :
     (powChecked z w mode levels).1 = (powExact z w).round fmt mode := by
   obtain ⟨c, d, hc, hd, hexponent, -⟩ := exists_toRat?_of_isFinite hw
@@ -530,7 +896,7 @@ is the exact power with each part rounded once in the direction `mode`.
 -/
 theorem pow_eq (hfmt : fmt.isIEEE = true) {z w : ExecComplex fmt} (hz : isFinite z = true)
     (hw : isFinite w = true) (hne : toComplex z ≠ 0)
-    (mode : Model.IEEERoundingMode := .nearest) (levels : Nat := 4)
+    (mode : Model.IEEERoundingMode := .nearest) (levels : Nat := powLevels fmt)
     (h : powCertified z w mode levels = true) :
     pow z w mode levels = (powExact z w).round fmt mode :=
   powChecked_eq hfmt hz hw hne mode levels h

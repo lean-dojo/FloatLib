@@ -6,8 +6,10 @@ Authors: FloatLib Team
 
 module
 
+public import FloatLib.Floats.Formats.BinaryInterchange.Algebraic.Directed.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Operations.PowerProof
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.CorrectlyRounded.Proof
+public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Directed.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Recommended.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.Trig
 public import FloatLib.Numerics.Capabilities.Elementary
@@ -50,11 +52,14 @@ non-finite input is outside that statement, since `exp (-∞)` is a finite zero.
 `Transcendentals.Recommended` adds the other functions that IEEE 754-2019 §9.2 recommends, in
 the same namespace: `exp2`, `exp2m1`, `exp10`, `exp10m1`, `log2`, `log10`, `log2p1`, `log10p1`,
 the trigonometric functions in radians and in half-turns with their inverses, the hyperbolic
-functions with their inverses, `atan2`, `atan2Pi`, `powr` and `compound`. They return the value
-with its exception flags, and round the exact result once by exact comparisons, so they are
-correctly rounded for every finite operand of an IEEE descriptor
-(`CorrectlyRounded.Function.toReal_apply`). They are slower than the approximation kernels
-`sin`, `cos`, `sinh`, `cosh` and `tanh` of this module, which have no error bound.
+functions with their inverses, `atan2`, `atan2Pi`, `powr`, `pow` and `compound`. They return the
+value with its exception flags in the rounding direction they are given, and round the exact
+result once by exact comparisons, so they are correctly rounded in every rounding direction for
+every finite operand of an IEEE descriptor (`CorrectlyRounded.Function.apply_roundsTo`, and
+`Function.toReal_apply` to nearest-even). `Transcendentals.Directed` has `exp`, `expm1`, `log`
+and `logp1` in that form, and `Algebraic.Directed` has `rSqrt`, `hypot`, `rootn`, `cbrt` and
+`pown`. They are slower than the approximation kernels `sin`, `cos`, `sinh`, `cosh` and `tanh`
+of this module, which have no error bound.
 
 `Model.Transcendentals.CorrectlyRounded.mathFunctions` is the same dictionary with the correctly
 rounded `exp` and `log` for an IEEE descriptor, and

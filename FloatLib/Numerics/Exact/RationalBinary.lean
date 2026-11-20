@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Exact.Dyadic.Basic
+public import FloatLib.Numerics.Kernel.Log2
 
 /-!
 # Exact rational scaling by powers of two
@@ -87,10 +88,15 @@ Compute `⌊log₂(numerator / denominator)⌋`.
 It is meant for a positive numerator and denominator. We keep the kernel total because that's
 convenient inside executable quantizers, and proofs establish the preconditions where logarithmic
 bounds are used.
+
+The first estimate is the difference of the positions of the two leading bits. They are read by
+`Kernel.log2`, which Lean's kernel evaluates in a few native operations where `Nat.log2` takes
+one step for each bit, and which compiled code runs as `Nat.log2`; `floorLog2_eq_log2` is the
+definition with `Nat.log2`.
 -/
 @[inline] def floorLog2 (numerator denominator : Nat) : Int :=
   let initial :=
-    Int.ofNat numerator.log2 - Int.ofNat denominator.log2
+    Int.ofNat (Kernel.log2 numerator) - Int.ofNat (Kernel.log2 denominator)
   let lower :=
     if lessThanPowerOfTwo numerator denominator initial then
       initial - 1
@@ -100,6 +106,23 @@ bounds are used.
     lower + 1
   else
     lower
+
+/-- `floorLog2` with the leading bits read by `Nat.log2`: the form that proofs unfold. -/
+theorem floorLog2_eq_log2 (numerator denominator : Nat) :
+    floorLog2 numerator denominator =
+      (let initial :=
+        Int.ofNat numerator.log2 - Int.ofNat denominator.log2
+      let lower :=
+        if lessThanPowerOfTwo numerator denominator initial then
+          initial - 1
+        else
+          initial
+      if atLeastPowerOfTwo numerator denominator (lower + 1) then
+        lower + 1
+      else
+        lower) := by
+  unfold floorLog2
+  rw [Kernel.log2_eq, Kernel.log2_eq]
 
 /--
 Represent `(numerator / denominator) * 2^exponent` as a ratio of natural numbers.

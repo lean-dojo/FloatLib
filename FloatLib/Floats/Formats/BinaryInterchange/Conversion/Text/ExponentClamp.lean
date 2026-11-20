@@ -218,7 +218,8 @@ theorem rationalEqualsDyadicScaled_finite_of_low (fmt : FloatFormat) (sign : Boo
   generalize finiteDyadic rounded hfinite = a at hexp ⊢
   by_cases hs : a.significand = 0
   · simp only [rationalEqualsDyadicScaled, RationalBinary.compareDyadicScaled?, hs]
-    split_ifs <;> simp_all
+    repeat' split
+    all_goals simp_all
   · have hlt := compare_lt_of_lead (n := n) (e := e) { a with negative := false } hd rfl hs
       (by simp only [dyadicLeadingExponent]; omega)
     simp only [rationalEqualsDyadicScaled]
@@ -381,7 +382,7 @@ theorem rationalTernaryScaled_eq_of_low (fmt : FloatFormat) (sign : Bool)
     unfold signedScaledRatToReal
     have hminimum : decimalSaturationLow fmt + 1 ≤ fmt.minSubnormalExponent := by
       simp only [decimalSaturationLow]
-      omega
+      lia
     have hsmall : ∀ {n d : Nat} {e : Int}, n ≠ 0 → d ≠ 0 →
         RationalBinary.floorLog2 n d + e ≤ decimalSaturationLow fmt →
         toReal rounded ≠ 0 → scaledRatToReal n d e < |toReal rounded| := by

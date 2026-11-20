@@ -30,8 +30,10 @@
 # With KERNEL_BENCH_ROW_TIMEOUT (seconds) every row is reduced by its own Lean process with that
 # limit, KERNEL_BENCH_JOBS of them at a time (default 1), so that a row that does not finish
 # costs one cell and not the rest of its format. This is how the formats of 1,024 and 4,096
-# bits are measured. KERNEL_BENCH_ONLY is an extended regular expression: only the rows whose
-# name it matches are measured, with the rows that give the time of the preparation.
+# bits are measured. KERNEL_BENCH_FUNCTION_ROW_TIMEOUT (seconds, default the row limit) is the
+# limit of a row of the certified functions of clause 9.2, which take the longest.
+# KERNEL_BENCH_ONLY is an extended regular expression: only the rows whose name it matches are
+# measured, with the rows that give the time of the preparation.
 #
 # The formatOf rows round into binary32 from operands of the row's format. The rows `sumInOrder`
 # to `sumAlong` are the reductions of clause 9.4 with one rounding at each addition, on the
@@ -237,9 +239,11 @@ EOF2
 import FloatLib.Floats.Formats.BinaryInterchange.Configured
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.KernelPath
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.Recommended.KernelPath
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.Text.KernelPath
 import FloatLib.Floats.Formats.BinaryInterchange.DType.Cast
+import FloatLib.Floats.Formats.BinaryInterchange.DType.KernelPath
 import FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.Runtime
-import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.Runtime
+import FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.KernelPath
 import FloatLib.Floats.Formats.BinaryInterchange.Configured.CorrectlyRounded
 import Harness
 open FloatLib.Floats FloatLib.Floats.Formats.BinaryInterchange
@@ -442,16 +446,22 @@ EOF2
       number=$((number + 1))
       { cat "$rows/prelude"; printf '%s\n' "$line"; } > "$(printf '%s/Row%04d.lean' "$rows" "$number")"
     done < <(grep '^#kernel_bench ' "$cell")
+    # A row of a certified function of clause 9.2 has its own limit.
+    function_rows='^#kernel_bench .*(CorrectlyRounded|Transcendentals\.Certified)\.'
+    function_limit="${KERNEL_BENCH_FUNCTION_ROW_TIMEOUT:-$KERNEL_BENCH_ROW_TIMEOUT}"
     printf '%s\n' "$rows"/Row*.lean | LEAN_PATH="$work:$lean_path" \
       xargs -P "${KERNEL_BENCH_JOBS:-1}" -I{} bash -c \
-        'timeout --kill-after=10 "$1" "$2" "$3" > "${3%.lean}.out" 2>&1; echo "$?" > "${3%.lean}.exit"' \
-        _ "$KERNEL_BENCH_ROW_TIMEOUT" "$lean" {} || true
+        'limit="$1"; grep -qE "$5" "$3" && limit="$4"
+         timeout --kill-after=10 "$limit" "$2" "$3" > "${3%.lean}.out" 2>&1; echo "$?" > "${3%.lean}.exit"' \
+        _ "$KERNEL_BENCH_ROW_TIMEOUT" "$lean" {} "$function_limit" "$function_rows" || true
     for file in "$rows"/Row*.lean; do
       label="$(sed -n 's/^#kernel_bench "\([^"]*\)".*/\1/p' "$file")"
       if grep -q '^KBENCH ' "${file%.lean}.out"; then
         grep '^KBENCH ' "${file%.lean}.out" | cut -c1-200 | tee -a "$log"
       else
-        echo "KBENCH-FAILED $label: exit $(cat "${file%.lean}.exit") (124 means no result within $KERNEL_BENCH_ROW_TIMEOUT s)" \
+        limit="$KERNEL_BENCH_ROW_TIMEOUT"
+        if grep -qE "$function_rows" "$file"; then limit="$function_limit"; fi
+        echo "KBENCH-FAILED $label: exit $(cat "${file%.lean}.exit") (124 means no result within $limit s)" \
           | tee -a "$log"
       fi
     done

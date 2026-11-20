@@ -305,4 +305,45 @@ theorem roundRatEven_eq_floor_ceil (x : Rat) :
         conv_lhs => rw [hx]
         rw [roundRatEven_half_step, hstep]
 
+/-- Nearest-even rounding commutes with negation. -/
+theorem roundRatEven_neg (x : ℚ) : roundRatEven (-x) = -roundRatEven x := by
+  by_cases hx : x = 0
+  · simp [hx, roundRatEven, roundQuotientEven]
+  · have hn : x.num ≠ 0 := by simpa using hx
+    simp only [roundRatEven, Rat.num_neg_eq_neg_num, Rat.den_neg_eq_den,
+      Int.natAbs_neg, neg_lt_zero]
+    split_ifs <;> omega
+
+/--
+The nearest-even rounding of a ratio of natural numbers is the nearest-even quotient of the
+numerator by the denominator as they are given, for every nonzero denominator: the ratio does
+not have to be in lowest terms.
+-/
+theorem roundRatEven_natCast_div (n : Nat) {d : Nat} (hd : d ≠ 0) :
+    roundRatEven ((n : ℚ) / (d : ℚ)) = (roundQuotientEven n d : Int) := by
+  by_cases ht : 2 * (n % d) = d
+  · -- a tie: the ratio is the quotient plus one half
+    have hratio : (n : ℚ) / (d : ℚ) = (((n / d : Nat) : Int) : ℚ) + 1 / 2 := by
+      have hcast : (n : ℚ) = (d : ℚ) * ((n / d : Nat) : ℚ) + ((n % d : Nat) : ℚ) := by
+        exact_mod_cast (Nat.div_add_mod n d).symm
+      have hhalf : ((n % d : Nat) : ℚ) = (d : ℚ) / 2 := by
+        have htwo : (2 : ℚ) * ((n % d : Nat) : ℚ) = (d : ℚ) := by exact_mod_cast ht
+        linarith
+      rw [Int.cast_natCast, hcast, hhalf]
+      field_simp
+    rw [hratio, roundRatEven_half_step]
+    have hlt : ¬ 2 * (n % d) < d := by omega
+    have hgt : ¬ d < 2 * (n % d) := by omega
+    simp only [roundQuotientEven, hlt, hgt, ite_false, beq_iff_eq]
+    by_cases hpar : (n / d) % 2 = 0
+    · have hpar' : ((n / d : Nat) : Int) % 2 = 0 := by omega
+      rw [ite_eq_left hpar', ite_eq_left hpar]
+    · have hpar' : ¬ ((n / d : Nat) : Int) % 2 = 0 := by omega
+      rw [ite_eq_right hpar', ite_eq_right hpar]
+      push_cast
+      rfl
+  · exact roundRatEven_eq_of_error_lt_half _ _ (by
+      have h := roundQuotientEven_error_lt_half n d hd ht
+      exact_mod_cast h)
+
 end FloatLib.Numerics

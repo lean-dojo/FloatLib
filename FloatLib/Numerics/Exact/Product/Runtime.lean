@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Rational.Runtime
-public import Mathlib.Data.Nat.Find
+public import FloatLib.Numerics.Order.Search.Runtime
 
 /-!
 # Exact comparison of a product with one unbounded factor
@@ -20,7 +20,8 @@ leaves the range of a format.
 `compare` orders such a product against a rational boundary without evaluating `F`. It asks an
 exact comparator of `F`, which can work through a logarithm, where `F` lies relative to
 `boundary / C` for rational bounds on `C`, and refines those bounds until one answer settles the
-order. The termination argument is a proposition, so it is erased from compiled code.
+order. The termination argument is a proposition, so it is erased from compiled code, and the
+search is `findLeastFrom`, which Lean's kernel runs without reducing that proposition.
 `Product.Proof` proves the answer and that the refinement terminates.
 -/
 
@@ -56,7 +57,8 @@ that some enclosure does.
 -/
 def compare (compareFactor : ℚ → Ordering) (intervals : Nat → RationalInterval) (boundary : ℚ)
     (terminates : ∃ n, (decide? compareFactor (intervals n) boundary).isSome) : Ordering :=
-  (decide? compareFactor (intervals (Nat.find terminates)) boundary).get
-    (Nat.find_spec terminates)
+  let found := findLeastFrom (fun n => (decide? compareFactor (intervals n) boundary).isSome)
+    terminates 0 fun _ h => absurd h (Nat.not_lt_zero _)
+  (decide? compareFactor (intervals found.1) boundary).get found.2.1
 
 end FloatLib.Numerics.ProductComparison

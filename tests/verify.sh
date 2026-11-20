@@ -13,6 +13,7 @@ python3 tests/checks/doc-links.py
 
 "$ROOT/tests/checks/linters.sh"
 floatlib_test_lake test
+"$ROOT/tests/checks/plain-file.sh"
 
 if [[ "${FLOATLIB_RUN_INDEPENDENT_CHECKER:-0}" == "1" ]]; then
   # Give every compiled declaration of the library to Lean's kernel once more, one module per

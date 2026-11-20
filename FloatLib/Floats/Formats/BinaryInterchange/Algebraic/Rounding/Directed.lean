@@ -133,11 +133,11 @@ theorem roundAt_down_le_posMaxFinite (fmt : FloatFormat) (hfmt : fmt.isIEEE = tr
   exact neg_le_neg_iff.mp h
 
 /-- An exact positive downward result is already finite, so the wrapper leaves it unchanged. -/
-theorem roundDown_eq_roundMagnitude (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+theorem roundDown_eq_roundMagnitude (fmt : FloatFormat)
     (compare : Rat → Ordering) {target : ℝ} (hpositive : 0 < target)
     (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ)) :
     roundDown fmt compare = roundMagnitude fmt .down false compare := by
-  have hround := roundMagnitude_roundsTo hfmt .down false compare hpositive hcompare
+  have hround := roundMagnitude_roundsTo (fmt := fmt) .down false compare hpositive hcompare
   simp only [Bool.false_eq_true, ↓reduceIte] at hround
   have hfinite : isFinite (roundMagnitude fmt .down false compare) = true := by
     by_cases hrange : |roundAt fmt target .down| ≤ toReal (posMaxFinite fmt)
@@ -153,8 +153,8 @@ theorem toReal_roundDown_eq_roundAt (fmt : FloatFormat) (hfmt : fmt.isIEEE = tru
     (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
     (hupper : target < Flocq.bpow binaryRadix (upperExponent fmt)) :
     toReal (roundDown fmt compare) = roundAt fmt target .down := by
-  rw [roundDown_eq_roundMagnitude fmt hfmt compare hpositive hcompare]
-  have hround := roundMagnitude_roundsTo hfmt .down false compare hpositive hcompare
+  rw [roundDown_eq_roundMagnitude fmt compare hpositive hcompare]
+  have hround := roundMagnitude_roundsTo (fmt := fmt) .down false compare hpositive hcompare
   simp only [Bool.false_eq_true, ↓reduceIte] at hround
   apply (hround.finite _).2
   have hnonneg : 0 ≤ roundAt fmt target .down := by
@@ -169,7 +169,7 @@ theorem roundUp_eq_posInf_or_finite_roundAt (fmt : FloatFormat) (hfmt : fmt.isIE
     roundUp fmt compare = posInf fmt ∨
       (isFinite (roundUp fmt compare) = true ∧
         toReal (roundUp fmt compare) = roundAt fmt target .up) := by
-  have hround := roundMagnitude_roundsTo hfmt .up false compare hpositive hcompare
+  have hround := roundMagnitude_roundsTo (fmt := fmt) .up false compare hpositive hcompare
   simp only [Bool.false_eq_true, ↓reduceIte] at hround
   by_cases hrange : |roundAt fmt target .up| ≤ toReal (posMaxFinite fmt)
   · exact Or.inr (hround.finite hrange)
@@ -180,13 +180,13 @@ theorem roundUp_eq_posInf_or_finite_roundAt (fmt : FloatFormat) (hfmt : fmt.isIE
       IEEERoundingMode.roundsAwayFromZero, nativeOverflow_eq_signedInf_of_isIEEE fmt hfmt]
 
 /-- A positive target at most the largest finite value has a finite upward comparison rounding. -/
-theorem roundUp_finite_roundAt_of_le_posMaxFinite (fmt : FloatFormat) (hfmt : fmt.isIEEE = true)
+theorem roundUp_finite_roundAt_of_le_posMaxFinite (fmt : FloatFormat)
     (compare : Rat → Ordering) (target : ℝ) (hpositive : 0 < target)
     (hcompare : ∀ candidate : Rat, compare candidate = cmp target (candidate : ℝ))
     (hbound : target ≤ toReal (posMaxFinite fmt)) :
     isFinite (roundUp fmt compare) = true ∧
       toReal (roundUp fmt compare) = roundAt fmt target .up := by
-  have hround := roundMagnitude_roundsTo hfmt .up false compare hpositive hcompare
+  have hround := roundMagnitude_roundsTo (fmt := fmt) .up false compare hpositive hcompare
   simp only [Bool.false_eq_true, ↓reduceIte] at hround
   apply hround.finite
   have hnonneg : 0 ≤ roundAt fmt target .up := by

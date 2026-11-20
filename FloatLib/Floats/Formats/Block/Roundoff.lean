@@ -35,9 +35,8 @@ is then bounded by the existing rules for real sums and products.
 `Format.quantize_mixedError` is not a rule. It states the same budget for the stored element
 against its exact scaled input. A kernel on stored element words and scale words takes it as a
 hypothesis about its operands, and `roundoff` then states the kernel's bound against the exact
-scaled inputs (a dot product in the order of NVFP4's matrix product in the tests, and the
-TorchLean layer `TorchLean.Roundoff.BlockScaled.forward_error`). For the codes of the stored
-formats with OCP MX elements the hypothesis is the theorem
+scaled inputs (the tests do this for a dot product in the order of NVFP4's matrix product). For
+the codes of the stored formats with OCP MX elements the hypothesis is the theorem
 `OCP.MX.Standard.Profile.encode_mixedError`.
 
 `Tensor.Dot_rounding` and `Tensor.DotGeneral_rounding` cover exact dot products of stored

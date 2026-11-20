@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Tactic.InlineStages
 public import FloatLib.Tactic.InlineStatus
+public meta import FloatLib.Tactic.KernelRefl
 public import FloatLib.Tactic.SpecializeDirections
 public import FloatLib.Tactic.SpecializeSums
 
@@ -16,7 +17,8 @@ public import FloatLib.Tactic.SpecializeSums
 
 `Flat.add`, `Flat.sub`, `Flat.mul`, `Flat.fma`, `Flat.div` and `Flat.sqrt` are the
 operations of `BinaryInterchange.KernelPath` on natural-number encodings with every stage
-unfolded at elaboration time. Their equations with the staged operations hold by reflexivity.
+unfolded at elaboration time. Their equations with the staged operations hold by reflexivity,
+which Lean's kernel checks (`kernel_refl%`).
 Addition, subtraction and multiplication use the short paths of `KernelPath.Fast`.
 
 The module also expands status, comparison, conversion and literal computations, then
@@ -143,7 +145,7 @@ noncomputable def totalOrder (fmt : FloatFormat) (a b : Nat) : Nat :=
     KernelPath.signalingFlag] (KernelPath.totalOrderCode fmt a b)
 
 /-- The flat total-order code is the staged one. -/
-theorem totalOrder_eq : @totalOrder = @KernelPath.totalOrderCode := rfl
+theorem totalOrder_eq : @totalOrder = @KernelPath.totalOrderCode := kernel_refl%
 
 /--
 `KernelPath.cast` with its stages unfolded: the encoding in `dst` of the value that `a` encodes
@@ -153,7 +155,7 @@ noncomputable def cast (src dst : FloatFormat) (mode : Model.IEEERoundingMode) (
   inline_stages% (KernelPath.cast src dst mode a)
 
 /-- The flat cast is the staged one. -/
-theorem cast_eq : @cast = @KernelPath.cast := rfl
+theorem cast_eq : @cast = @KernelPath.cast := kernel_refl%
 
 /--
 `KernelPath.castStatus` with its stages unfolded: the status number of the cast into `dst` of
@@ -164,7 +166,24 @@ noncomputable def castStatus (src dst : FloatFormat) (mode : Model.IEEERoundingM
   inline_status% (KernelPath.castStatus src dst mode a)
 
 /-- The flat status of a cast is the staged one. -/
-theorem castStatus_eq : @castStatus = @KernelPath.castStatus := rfl
+theorem castStatus_eq : @castStatus = @KernelPath.castStatus := kernel_refl%
+
+/--
+`KernelPath.castStatusWith` with its stages unfolded: the status number of the cast into `dst`
+of the value that `a` encodes in `src`, when the cast has the word `w`.
+-/
+noncomputable def castStatusWith (src dst : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a w : Nat) : Nat :=
+  inline_status% (KernelPath.castStatusWith src dst mode a w)
+
+/-- The flat status of a cast with a given word is the staged one. -/
+theorem castStatusWith_eq : @castStatusWith = @KernelPath.castStatusWith := kernel_refl%
+
+/-- The flat status of a cast with the word of the flat cast is the flat status of the cast. -/
+theorem castStatusWith_cast (src dst : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat) :
+    castStatusWith src dst mode a (cast src dst mode a) = castStatus src dst mode a := by
+  rw [castStatusWith_eq, castStatus_eq, cast_eq]
+  rfl
 
 /--
 `KernelPath.intMagnitude` with its stages unfolded: the magnitude of the integer that rounds a
@@ -175,7 +194,7 @@ noncomputable def intMagnitude (fmt : FloatFormat) (mode : Model.IEEERoundingMod
   inline_stages% (KernelPath.intMagnitude fmt mode a)
 
 /-- The flat integer magnitude is the staged one. -/
-theorem intMagnitude_eq : @intMagnitude = @KernelPath.intMagnitude := rfl
+theorem intMagnitude_eq : @intMagnitude = @KernelPath.intMagnitude := kernel_refl%
 
 /--
 `KernelPath.roundToIntegral` with its stages unfolded: the encoding of a value rounded to an
@@ -228,63 +247,134 @@ noncomputable def sqrtStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
     Kernel.laneLength, KernelPath.significandLength,
     KernelPath.nonFinite] (KernelPath.sqrtStatus fmt mode a)
 
+/-- Unfold every stage of the status of a rounded ratio and of the rounding whose word it reads. -/
+local macro "inline_ratio% " body:term : term =>
+  `(kernel_inline% [KernelPath.ratioStatus, KernelPath.ratioStatusWith, KernelPath.ofRatio,
+      KernelPath.natLength, KernelPath.divCore, KernelPath.roundQuotient, KernelPath.roundUp,
+      KernelPath.pack, KernelPath.roundStatus, KernelPath.overflowFlag, KernelPath.tinyFlag,
+      KernelPath.signedCompare, KernelPath.gtFlag, KernelPath.geFlag, KernelPath.nonFinite]
+      $body)
+
 /--
 `KernelPath.ratioStatus` with its stages unfolded: the status number of `± num / den` rounded in
 the direction `mode`.
 -/
 noncomputable def ratioStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
     (sign num den : Nat) : Nat :=
-  kernel_inline% [KernelPath.ratioStatus, KernelPath.ofRatio, KernelPath.natLength,
-    KernelPath.divCore, KernelPath.roundQuotient, KernelPath.roundUp, KernelPath.pack,
-    KernelPath.roundStatus, KernelPath.overflowFlag, KernelPath.tinyFlag,
-    KernelPath.signedCompare, KernelPath.gtFlag, KernelPath.geFlag, KernelPath.nonFinite]
-    (KernelPath.ratioStatus fmt mode sign num den)
+  inline_ratio% (KernelPath.ratioStatus fmt mode sign num den)
+
+/--
+`KernelPath.ratioStatusWith` with its stages unfolded: the status number of `± num / den`
+rounded in the direction `mode`, when the rounded ratio has the word `w`.
+-/
+noncomputable def ratioStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (sign num den w : Nat) : Nat :=
+  inline_ratio% (KernelPath.ratioStatusWith fmt mode sign num den w)
+
+/--
+`KernelPath.addStatusWith` with its stages unfolded: the status number of an addition whose
+rounded sum has the word `w`. A statement about the value and the flags of one addition passes
+the word of its value, which Lean's kernel then computes once.
+-/
+noncomputable def addStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a b w : Nat) : Nat :=
+  inline_status% (KernelPath.addStatusWith fmt mode a b w)
+
+/-- `KernelPath.subStatusWith` with its stages unfolded. -/
+noncomputable def subStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a b w : Nat) : Nat :=
+  inline_status% (KernelPath.subStatusWith fmt mode a b w)
+
+/-- `KernelPath.mulStatusWith` with its stages unfolded. -/
+noncomputable def mulStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a b w : Nat) : Nat :=
+  inline_status% (KernelPath.mulStatusWith fmt mode a b w)
+
+/-- `KernelPath.fmaStatusWith` with its stages unfolded. -/
+noncomputable def fmaStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a b c w : Nat) : Nat :=
+  inline_status% (KernelPath.fmaStatusWith fmt mode a b c w)
+
+/-- `KernelPath.divStatusWith` with its stages unfolded. -/
+noncomputable def divStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a b w : Nat) : Nat :=
+  inline_status% (KernelPath.divStatusWith fmt mode a b w)
+
+/-- `KernelPath.roundToIntegralStatusWith` with its stages unfolded. -/
+noncomputable def roundToIntegralStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode)
+    (a w : Nat) : Nat :=
+  inline_status% (KernelPath.roundToIntegralStatusWith fmt mode a w)
+
+/-- The flat status of an addition with a given word is the staged one. -/
+theorem addStatusWith_eq : @addStatusWith = @KernelPath.addStatusWith := kernel_refl%
+
+/-- The flat status of a subtraction with a given word is the staged one. -/
+theorem subStatusWith_eq : @subStatusWith = @KernelPath.subStatusWith := kernel_refl%
+
+/-- The flat status of a multiplication with a given word is the staged one. -/
+theorem mulStatusWith_eq : @mulStatusWith = @KernelPath.mulStatusWith := kernel_refl%
+
+/-- The flat status of a fused multiply-add with a given word is the staged one. -/
+theorem fmaStatusWith_eq : @fmaStatusWith = @KernelPath.fmaStatusWith := kernel_refl%
+
+/-- The flat status of a division with a given word is the staged one. -/
+theorem divStatusWith_eq : @divStatusWith = @KernelPath.divStatusWith := kernel_refl%
+
+/-- The flat status of an integral rounding with a given word is the staged one. -/
+theorem roundToIntegralStatusWith_eq :
+    @roundToIntegralStatusWith = @KernelPath.roundToIntegralStatusWith := kernel_refl%
+
+/-- The flat integral rounding is the staged one. -/
+theorem roundToIntegral_eq : @roundToIntegral = @KernelPath.roundToIntegral := kernel_refl%
 
 /-- The flat status of an addition is the staged one. -/
-theorem addStatus_eq : @addStatus = @KernelPath.addStatus := rfl
+theorem addStatus_eq : @addStatus = @KernelPath.addStatus := kernel_refl%
 
 /-- The flat status of a subtraction is the staged one. -/
-theorem subStatus_eq : @subStatus = @KernelPath.subStatus := rfl
+theorem subStatus_eq : @subStatus = @KernelPath.subStatus := kernel_refl%
 
 /-- The flat status of a multiplication is the staged one. -/
-theorem mulStatus_eq : @mulStatus = @KernelPath.mulStatus := rfl
+theorem mulStatus_eq : @mulStatus = @KernelPath.mulStatus := kernel_refl%
 
 /-- The flat status of a fused multiply-add is the staged one. -/
-theorem fmaStatus_eq : @fmaStatus = @KernelPath.fmaStatus := rfl
+theorem fmaStatus_eq : @fmaStatus = @KernelPath.fmaStatus := kernel_refl%
 
 /-- The flat status of a division is the staged one. -/
-theorem divStatus_eq : @divStatus = @KernelPath.divStatus := rfl
+theorem divStatus_eq : @divStatus = @KernelPath.divStatus := kernel_refl%
 
 /-- The flat status of a square root is the staged one. -/
-theorem sqrtStatus_eq : @sqrtStatus = @KernelPath.sqrtStatus := rfl
+theorem sqrtStatus_eq : @sqrtStatus = @KernelPath.sqrtStatus := kernel_refl%
 
 /-- The flat status of a rounding to an integral value is the staged one. -/
 theorem roundToIntegralStatus_eq :
-    @roundToIntegralStatus = @KernelPath.roundToIntegralStatus := rfl
+    @roundToIntegralStatus = @KernelPath.roundToIntegralStatus := kernel_refl%
 
 /-- The flat status of a rounded ratio is the staged one. -/
-theorem ratioStatus_eq : @ratioStatus = @KernelPath.ratioStatus := rfl
+theorem ratioStatus_eq : @ratioStatus = @KernelPath.ratioStatus := kernel_refl%
+
+/-- The flat status of a rounded ratio with a given word is the staged one. -/
+theorem ratioStatusWith_eq : @ratioStatusWith = @KernelPath.ratioStatusWith := kernel_refl%
 
 /-- The flat addition is the staged short path. -/
-theorem add_eq : @add = @KernelPath.addShort := rfl
+theorem add_eq : @add = @KernelPath.addShort := kernel_refl%
 
 /-- The flat subtraction is the staged short path. -/
-theorem sub_eq : @sub = @KernelPath.subShort := rfl
+theorem sub_eq : @sub = @KernelPath.subShort := kernel_refl%
 
 /-- The flat multiplication is the staged short path. -/
-theorem mul_eq : @mul = @KernelPath.mulFast := rfl
+theorem mul_eq : @mul = @KernelPath.mulFast := kernel_refl%
 
 /-- The flat fused multiply-add is the staged one. -/
-theorem fma_eq : @fma = @KernelPath.fma := rfl
+theorem fma_eq : @fma = @KernelPath.fma := kernel_refl%
 
 /-- The flat division is the staged one. -/
-theorem div_eq : @div = @KernelPath.div := rfl
+theorem div_eq : @div = @KernelPath.div := kernel_refl%
 
 /-- The flat rounding of a ratio is the staged one. -/
-theorem ofRatio_eq : @ofRatio = @KernelPath.ofRatio := rfl
+theorem ofRatio_eq : @ofRatio = @KernelPath.ofRatio := kernel_refl%
 
 /-- The flat square root is the staged one. -/
-theorem sqrt_eq : @sqrt = @KernelPath.sqrt := rfl
+theorem sqrt_eq : @sqrt = @KernelPath.sqrt := kernel_refl%
 
 /--
 An equation that holds by unfolding, as a rewrite rule with a proof term: `simp` applies it by
@@ -320,6 +410,54 @@ specialize_directions div [a b]
 /-- Square root on encodings in one rounding direction, with the code of that direction only. -/
 /-- The flat square root in a literal direction is its specialization to that direction. -/
 specialize_directions sqrt [a]
+
+/--
+The status number of an addition with a given word in one rounding direction, with the code of
+that direction only.
+-/
+/-- The flat status of an addition with a given word in a literal direction is its
+specialization to that direction. -/
+specialize_directions addStatusWith [a b w]
+
+/--
+The status number of a subtraction with a given word in one rounding direction, with the code of
+that direction only.
+-/
+/-- The flat status of a subtraction with a given word in a literal direction is its
+specialization to that direction. -/
+specialize_directions subStatusWith [a b w]
+
+/--
+The status number of a multiplication with a given word in one rounding direction, with the code of
+that direction only.
+-/
+/-- The flat status of a multiplication with a given word in a literal direction is its
+specialization to that direction. -/
+specialize_directions mulStatusWith [a b w]
+
+/--
+The status number of a fused multiply-add with a given word in one rounding direction, with the
+code of that direction only.
+-/
+/-- The flat status of a fused multiply-add with a given word in a literal direction is its
+specialization to that direction. -/
+specialize_directions fmaStatusWith [a b c w]
+
+/--
+The status number of a division with a given word in one rounding direction, with the code of
+that direction only.
+-/
+/-- The flat status of a division with a given word in a literal direction is its
+specialization to that direction. -/
+specialize_directions divStatusWith [a b w]
+
+/--
+The status number of an integral rounding with a given word in one rounding direction, with the
+code of that direction only.
+-/
+/-- The flat status of an integral rounding with a given word in a literal direction is its
+specialization to that direction. -/
+specialize_directions roundToIntegralStatusWith [a w]
 
 end Flat
 

@@ -475,7 +475,7 @@ theorem sqrt (h : MixedError x x₀ r a) (hx₀ : 0 ≤ x₀) :
       _ ≤ √(r * x₀ + a) := Real.sqrt_le_sqrt hb
       _ ≤ r * √x₀ + √a := by
         rw [Real.sqrt_le_left (by positivity)]
-        nlinarith [mul_le_mul_of_nonneg_left hsle hr,
+        linarith [mul_le_mul_of_nonneg_left hsle hr,
           congrArg (r * ·) (Real.mul_self_sqrt hx₀), Real.mul_self_sqrt ha,
           mul_nonneg (mul_nonneg hr (Real.sqrt_nonneg x₀)) (Real.sqrt_nonneg a),
           mul_nonneg (mul_nonneg hr hr) (mul_self_nonneg √x₀)]
@@ -487,7 +487,7 @@ theorem sqrt (h : MixedError x x₀ r a) (hx₀ : 0 ≤ x₀) :
       _ ≤ r * √x₀ + √a := by
         gcongr
         rw [div_le_iff₀ hs₀]
-        nlinarith [Real.mul_self_sqrt ha,
+        linarith [Real.mul_self_sqrt ha,
           mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt hax.le) (Real.sqrt_nonneg a)]
 
 /--

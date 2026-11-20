@@ -214,6 +214,11 @@ structure Memo where
   values : Std.HashMap Lean.Expr (Option ℚ) := {}
   /-- The enclosures of the named real values, by number. -/
   ranges : Array Range := #[]
+  /-- The scalars sampled for the statement (`scalars`), in their order. -/
+  sampled : Array Lean.Expr := #[]
+  /-- The programs that the command has compiled (`program`), by the function each one runs. A
+  command that samples one input compiles none. -/
+  programs? : Option (IO.Ref (Std.HashMap Lean.Expr Name)) := none
 
 /-- The evaluation of one statement. -/
 abbrev EvalM := StateRefT Memo MetaM
@@ -234,6 +239,64 @@ def named? (term : Lean.Expr) : EvalM (Option Range) := do
   let some (.ofNat index) := data.find rangeKey | return none
   return (← get).ranges[index]?
 
+/-- The scalars that `sampleScalar` wrote in `term`, after those of `found`: the literals
+`OfScientific.ofScientific _ _ _` and their negations, each once, in the order of the term. -/
+partial def scalars (term : Lean.Expr) (found : Array Lean.Expr := #[]) : Array Lean.Expr :=
+  let literal (term : Lean.Expr) : Bool := term.isAppOfArity ``OfScientific.ofScientific 5
+  if literal term || (term.isAppOfArity ``Neg.neg 3 && literal term.appArg!) then
+    if found.contains term then found else found.push term
+  else match term with
+    | .app function argument => scalars argument (scalars function found)
+    | .lam _ domain body _ | .forallE _ domain body _ => scalars body (scalars domain found)
+    | .letE _ type value body _ => scalars body (scalars value (scalars type found))
+    | .mdata _ inner | .proj _ _ inner => scalars inner found
+    | _ => found
+
+/-- `term` as a function of the sampled scalars that occur in it, with those scalars: the terms
+that two inputs give are then one function at two lists of scalars. A negated literal is replaced
+before the literal inside it. `none` when no sampled scalar occurs. -/
+def function? (term : Lean.Expr) (sampled : Array Lean.Expr) :
+    MetaM (Option (Lean.Expr × Array Lean.Expr)) := do
+  let used := sampled.filter fun scalar => (term.find? (· == scalar)).isSome
+  if used.isEmpty then return none
+  let binders ← used.mapM fun _ => return mkFVar (← mkFreshFVarId)
+  let mut body := term
+  for negated in [true, false] do
+    let mut places : Std.HashMap Lean.Expr Lean.Expr := {}
+    for scalar in used, binder in binders do
+      if scalar.isAppOf ``Neg.neg == negated then places := places.insert scalar binder
+    body := body.replace places.get?
+  let mut function := body.abstract binders
+  for index in (List.range used.size).reverse do
+    function := .lam ((`scalar).appendIndexAfter index) (← inferType used[index]!) function .default
+  if function.hasFVar || function.hasMVar || function.hasLevelParam then return none
+  return some (function, used)
+
+/-- The closed term that `run` evaluates for `term`. When the command samples several inputs and
+`term` reads sampled scalars, it is the program compiled for the function of those scalars that
+`term` is (`function?`), at these scalars: the command compiles that function at its first input
+and runs it at the others. The program is an ordinary definition, which the kernel checks. A
+function that is not well typed, as one whose proofs read a scalar, or that the kernel does not
+accept as a definition is not compiled, and `term` is evaluated as it is. -/
+def program (term : Lean.Expr) : EvalM Lean.Expr := do
+  let memo ← get
+  let some programs := memo.programs? | return term
+  let some (function, used) ← function? term memo.sampled | return term
+  if let some name := (← programs.get).get? function then return mkAppN (mkConst name) used
+  try
+    unless ← Meta.isTypeCorrect function do return term
+    let name := mkPrivateName (← getEnv) (← mkFreshUserName `_roundoffCheck)
+    let declaration := Declaration.defnDecl {
+      name, levelParams := [], type := ← inferType function, value := function
+      hints := ReducibilityHints.opaque, safety := .safe }
+    modifyEnv (markMeta · name)
+    withOptions (fun options => ((options.setBool `Elab.async false).setBool
+        `compiler.postponeCompile false).setBool `compiler.relaxedMetaCheck true) do
+      addAndCompile declaration
+    programs.modify (·.insert function name)
+    return mkAppN (mkConst name) used
+  catch _ => return term
+
 /-- Run the closed term `term`, of type `Option (Int × Nat)`, in the interpreter. Compiling the
 program at its inputs is not counted against the heartbeats of the command. The compiled code of
 an imported definition must be there to run: a file of the module system has it for the modules
@@ -252,6 +315,14 @@ def run (term : Lean.Expr) : MetaM (Option (Int × Nat)) := do
       else ""
     throwError "roundoff_check: could not evaluate `{term}`: {reason}{hint}"
 
+/-- `run` on the program of `term` (`program`), and on `term` itself when the command compiles no
+program for it or the program does not evaluate. -/
+def runProgram (term : Lean.Expr) : EvalM (Option (Int × Nat)) := do
+  if term.hasFVar || term.hasMVar then return ← run term
+  let shared ← withTheReader Core.Context ({ · with maxHeartbeats := 0 }) (program term)
+  if shared == term then run term else
+    try run shared catch _ => run term
+
 /-- The closed natural number `term` as a literal, when a bounded reduction finds one. Such a
 number, like the half units in the last place of a rounding attribute, needs no compiled code. -/
 def literal? (term : Lean.Expr) : MetaM (Option Nat) := do
@@ -268,7 +339,7 @@ type `Option ℚ`: `none` for a value that is not finite. Each term is run once.
 def rational (value decode : Lean.Expr) : EvalM (Option ℚ) := do
   if let some known := (← get).values.get? value then return known
   let pair ← mkAppM ``Option.map #[q(fun q : ℚ => (q.num, q.den)), decode]
-  let result := (← run pair).map fun (numerator, denominator) => mkRat numerator denominator
+  let result := (← runProgram pair).map fun (numerator, denominator) => mkRat numerator denominator
   modify fun memo => { memo with values := memo.values.insert value result }
   return result
 
@@ -726,31 +797,44 @@ def elabRoundoffCheck : CommandElab := fun stx => do
     let mut errors := #[]
     let mut missed := 0
     let mut excluded? : Option (Check.Outcome × Array (Name × Lean.Expr)) := none
-    for _ in [0:count] do
-      let saved ← saveState
-      -- Each input has the heartbeats of a command to itself.
-      let ((statement, premises, inputs), next) ← withCurrHeartbeats
-        ((Check.instantiate sampling type).run generator)
-      generator := next
-      try
-        let outcome ← withCurrHeartbeats ((Check.outcome statement premises.toList).run' {})
-        -- A sampled input that misses a premise is not an input of the theorem.
-        if outcome.failed?.isSome && !inputs.isEmpty then
-          missed := missed + 1
-          if excluded?.isNone then excluded? := some (outcome, inputs)
-          saved.restore
-          continue
-        evaluated := evaluated + 1
-        if outcome.cancels then cancelling := cancelling + 1
-        -- The input with the largest bound over magnitude is reported.
-        let weight := if outcome.magnitude == 0 then outcome.bound.upper + 10 ^ 30
-          else outcome.bound.upper / outcome.magnitude
-        if worst?.all (·.1 < weight) then
-          worst? := some (weight, outcome, ← inputs.mapM fun (name, value) =>
-            return (name, ← instantiateMVars value))
-      catch error =>
-        errors := errors.push (← error.toMessageData.toString)
+    -- The programs compiled at one input stay in the environment for the inputs after it.
+    let initial ← getEnv
+    let programs? ← if count == 1 then pure none else some <$> IO.mkRef {}
+    let restore (saved : Term.SavedState) : TermElabM Unit := do
+      let environment ← getEnv
       saved.restore
+      setEnv environment
+    try
+      for _ in [0:count] do
+        let saved ← saveState
+        -- Each input has the heartbeats of a command to itself.
+        let ((statement, premises, inputs), next) ← withCurrHeartbeats
+          ((Check.instantiate sampling type).run generator)
+        generator := next
+        try
+          let mut sampled := #[]
+          for (_, value) in inputs do sampled := Check.scalars (← instantiateMVars value) sampled
+          let outcome ← withCurrHeartbeats
+            ((Check.outcome statement premises.toList).run' { sampled, programs? })
+          -- A sampled input that misses a premise is not an input of the theorem.
+          if outcome.failed?.isSome && !inputs.isEmpty then
+            missed := missed + 1
+            if excluded?.isNone then excluded? := some (outcome, inputs)
+            restore saved
+            continue
+          evaluated := evaluated + 1
+          if outcome.cancels then cancelling := cancelling + 1
+          -- The input with the largest bound over magnitude is reported.
+          let weight := if outcome.magnitude == 0 then outcome.bound.upper + 10 ^ 30
+            else outcome.bound.upper / outcome.magnitude
+          if worst?.all (·.1 < weight) then
+            worst? := some (weight, outcome, ← inputs.mapM fun (name, value) =>
+              return (name, ← instantiateMVars value))
+        catch error =>
+          errors := errors.push (← error.toMessageData.toString)
+        restore saved
+    finally
+      setEnv initial
     let some (_, outcome, inputs) := worst? | do
       if let some (outcome, _) := excluded? then
         throwError "roundoff_check: none of the {missed} sampled inputs meets the premises of \

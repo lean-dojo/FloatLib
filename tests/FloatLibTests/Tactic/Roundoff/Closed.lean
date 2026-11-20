@@ -34,6 +34,8 @@ fails here.
 * The exponential of an input takes a rounding as an input does, and the rounding of an
   exponential or a logarithm of a computed value stays on its result. So a sum of exponentials,
   a softmax weight and a log-sum-exp have closed forward bounds.
+* A correctly rounded call in a format without variables, such as a binary64 exponential, is
+  analyzed like one in a format variable.
 * A product whose rounding is given to the entries and a quotient by a perturbed divisor inside
   a loop step are refused.
 -/
@@ -341,6 +343,14 @@ roundoff closed theorem dot32_closed :=
 finite. -/
 example := dot32_closed (fun _ => 0.1) (fun _ => 3) (by float_decide)
 
+/-- A binary64 exponential minus one. The rounding and the finiteness theorems of the
+exponential both ask for an IEEE encoding, a test that counts down from the exponent bias when
+it is unfolded, so their premises are matched by what they state. -/
+roundoff closed theorem expSubOne64_closed :=
+  fun (x : Binary64) =>
+    ExecFloat.Binary.toReal (ExecFloat.Binary.CorrectlyRounded.exp x -
+      (ExecFloat.Binary.ofRat (1 : ℚ) .nearest : Binary64))
+
 /-- A bfloat16 dot product accumulated in binary32: the products are exact, so only the
 additions weigh on the entries, and there is no underflow term. -/
 roundoff closed theorem wideDot_closed :=
@@ -353,7 +363,8 @@ roundoff closed theorem wideDot_closed :=
 run_cmd do
   for name in [``dot_closed, ``sum_closed, ``horner_closed, ``hornerList_closed,
       ``sumList_closed, ``linear_closed, ``total_closed, ``squarePlus_closed,
-      ``perceptron_closed, ``norm_closed, ``dot32_closed, ``wideDot_closed, ``literal_closed,
+      ``perceptron_closed, ``norm_closed, ``dot32_closed, ``expSubOne64_closed, ``wideDot_closed,
+      ``literal_closed,
       ``cancellation_closed, ``product_closed, ``quotient_closed, ``gradientSubtracted_closed,
       ``gradientDivided_closed, ``expSum_closed, ``softmax_closed, ``logSumExp_closed,
       ``exponential_closed, ``FloatLib.Numerics.Backward.deviation_div,

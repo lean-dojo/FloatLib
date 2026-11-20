@@ -49,9 +49,9 @@ private theorem eval_zero_conjugatePairs_ne_zero {ι : Type*} (s : Finset ι) (D
     mul_zero, zero_sub]
   refine Finset.prod_ne_zero_iff.mpr fun k hk hzero => hargument k hk ?_
   have hre : (argument k).re ^ 2 = 0 := by
-    nlinarith [sq_nonneg (argument k).re, sq_nonneg (argument k).im]
+    linarith [sq_nonneg (argument k).re, sq_nonneg (argument k).im]
   have him : (argument k).im ^ 2 = 0 := by
-    nlinarith [sq_nonneg (argument k).re, sq_nonneg (argument k).im]
+    linarith [sq_nonneg (argument k).re, sq_nonneg (argument k).im]
   exact Zsqrtd.ext (by simpa using hre) (by simpa using him)
 
 private theorem div_mem_aroots_conjugatePairs {ι : Type*} (s : Finset ι) {D : ℕ} (hD : 0 < D)
@@ -133,7 +133,7 @@ theorem gaussianInt_add_sum_exp_div_ne_zero {ι : Type*} (s : Finset ι) (D : �
       have := Nat.le_of_dvd hD hdvd
       omega
   have hzlower := one_le_norm_gaussianInt _
-    (gaussianInt_mul_add_prime_mul_ne_zero hp hpD ha₀ (by omega) (by omega) (∑ k ∈ s, a k * E k))
+    (gaussianInt_mul_add_prime_mul_ne_zero hp hpD ha₀ (by omega) (by lia) (∑ k ∈ s, a k * E k))
   have herror (k : ι) (hk : k ∈ s) :
       ‖(n : ℂ) * Complex.exp ((argument k : ℂ) / D) -
         (p : ℂ) * aeval ((argument k : ℂ) / D) g‖ ≤ c ^ p / (p - 1).factorial := by

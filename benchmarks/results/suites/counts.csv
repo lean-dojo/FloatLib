@@ -2,28 +2,25 @@ suite,group,outcome,count
 fpbench,"backward, conditional theorem",proved,22
 fpbench,"backward, conditional theorem",refused,166
 fpbench,"backward, conditional theorem",translation_refusal,84
-fpbench,"closed, conditional theorem",proved,156
-fpbench,"closed, conditional theorem",refused,32
+fpbench,"closed, conditional theorem",proved,180
+fpbench,"closed, conditional theorem",refused,8
 fpbench,"closed, conditional theorem",translation_refusal,84
-fpbench,"forward, conditional theorem",proved,165
-fpbench,"forward, conditional theorem",refused,23
+fpbench,"forward, conditional theorem",proved,184
+fpbench,"forward, conditional theorem",refused,4
 fpbench,"forward, conditional theorem",translation_refusal,84
-fpbench,"closed, numerical bound",not_attempted,16
-fpbench,"closed, numerical bound",proved,12
-fpbench,"closed, numerical bound",refused,46
-fpbench,"closed, numerical bound",runner_error,19
-fpbench,"closed, numerical bound",timeout,15
+fpbench,"closed, numerical bound",not_attempted,6
+fpbench,"closed, numerical bound",proved,18
+fpbench,"closed, numerical bound",refused,82
+fpbench,"closed, numerical bound",timeout,2
 fpbench,"closed, numerical bound",translation_refusal,164
-fpbench,"forward, numerical bound",not_attempted,12
-fpbench,"forward, numerical bound",proved,25
-fpbench,"forward, numerical bound",refused,43
-fpbench,"forward, numerical bound",runner_error,15
-fpbench,"forward, numerical bound",timeout,13
+fpbench,"forward, numerical bound",not_attempted,4
+fpbench,"forward, numerical bound",proved,33
+fpbench,"forward, numerical bound",refused,71
 fpbench,"forward, numerical bound",translation_refusal,164
-fpbench,"forward, conditional theorem",proved within 20 s of process time,165
-fpbench,"forward, numerical bound",proved within 20 s of process time,22
-fpbench,"closed, conditional theorem",proved within 20 s of process time,155
-fpbench,"closed, numerical bound",proved within 20 s of process time,10
+fpbench,"forward, conditional theorem",proved within 20 s of process time,184
+fpbench,"forward, numerical bound",proved within 20 s of process time,33
+fpbench,"closed, conditional theorem",proved within 20 s of process time,174
+fpbench,"closed, numerical bound",proved within 20 s of process time,18
 fpbench,"backward, conditional theorem",proved within 20 s of process time,22
 fpbench,tool daisy,bounded,117
 fpbench,tool daisy,export_refusal,54
@@ -41,36 +38,33 @@ fpbench,tool smtlib,export_refusal,130
 fpbench,tool smtlib,exported,142
 fpbench,tool sollya,export_refusal,10
 fpbench,tool sollya,loaded_no_bound,262
-fpbench,numerical coverage (FloatLib and the local tools),both,30
+fpbench,numerical coverage (FloatLib and the local tools),both,41
 fpbench,numerical coverage (FloatLib and the local tools),neither,143
-fpbench,numerical coverage (FloatLib and the local tools),other_tool_only,99
-fpbench,forward bound over the bound of fptaylor,ratio,11
-fpbench,closed bound over the bound of fptaylor,ratio,2
-fpbench,forward bound over the bound of gappa,ratio,7
-fpbench,closed bound over the bound of gappa,ratio,2
+fpbench,numerical coverage (FloatLib and the local tools),other_tool_only,88
+fpbench,forward bound over the bound of fptaylor,ratio,17
+fpbench,closed bound over the bound of fptaylor,ratio,6
+fpbench,forward bound over the bound of gappa,ratio,8
+fpbench,closed bound over the bound of gappa,ratio,6
 fpbench,forward bound over the bound of daisy,ratio,0
 fpbench,closed bound over the bound of daisy,ratio,0
-inequalities,"flyspeck, constraint",proved,5
-inequalities,"flyspeck, constraint",refused,3
-inequalities,"flyspeck, constraint",runner_error,4
-inequalities,"flyspeck, constraint",timeout,8
+inequalities,"flyspeck, constraint",proved,6
+inequalities,"flyspeck, constraint",refused,11
+inequalities,"flyspeck, constraint",timeout,3
 inequalities,"flyspeck, constraint",translation_refusal,144
-inequalities,"flyspeck, interval",proved,2
-inequalities,"flyspeck, interval",refused,18
+inequalities,"flyspeck, interval",proved,3
+inequalities,"flyspeck, interval",refused,17
 inequalities,"flyspeck, interval",translation_refusal,144
-inequalities,"metitarski, constraint",proved,184
-inequalities,"metitarski, constraint",refused,418
-inequalities,"metitarski, constraint",runner_error,7
-inequalities,"metitarski, constraint",timeout,189
+inequalities,"metitarski, constraint",proved,340
+inequalities,"metitarski, constraint",refused,394
+inequalities,"metitarski, constraint",timeout,64
 inequalities,"metitarski, constraint",translation_refusal,150
-inequalities,"metitarski, interval",proved,92
-inequalities,"metitarski, interval",refused,691
-inequalities,"metitarski, interval",timeout,15
+inequalities,"metitarski, interval",proved,124
+inequalities,"metitarski, interval",refused,674
 inequalities,"metitarski, interval",translation_refusal,150
-inequalities,"flyspeck, either route",not proved,159
-inequalities,"flyspeck, either route",proved,5
-inequalities,"metitarski, either route",not proved,760
-inequalities,"metitarski, either route",proved,188
+inequalities,"flyspeck, either route",not proved,158
+inequalities,"flyspeck, either route",proved,6
+inequalities,"metitarski, either route",not proved,608
+inequalities,"metitarski, either route",proved,340
 correct-rounding,"real, CORE-MATH, binary64, exp",matched,16384
 correct-rounding,"complex, CORE-MATH, binary64, exp",matched,32768
 correct-rounding,"real, CORE-MATH, binary64, expm1",matched,16384

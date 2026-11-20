@@ -2,169 +2,210 @@
   "sections": {
     "kernel-binary": {
       "exit": 0,
-      "seconds": 37.3,
+      "seconds": 37.5,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 234,
       "errors": 0
     },
     "families": {
       "exit": 0,
-      "seconds": 21.6,
+      "seconds": 22.5,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 33,
       "errors": 0
     },
     "exhaustive": {
       "exit": 0,
-      "seconds": 63.5,
+      "seconds": 63.8,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T13:55Z",
+      "own_core": true,
       "rows": 9,
       "errors": 0
     },
     "compiled": {
       "exit": 0,
-      "seconds": 569.0,
+      "seconds": 574.5,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 246,
       "errors": 0
     },
     "compiled-comparison": {
       "exit": 0,
-      "seconds": 1375.9,
+      "seconds": 1367.1,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 288,
       "errors": 0
     },
     "matched": {
       "exit": 0,
-      "seconds": 17.8,
+      "seconds": 18.8,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 35,
       "errors": 0
     },
     "kernel-public": {
       "exit": 0,
-      "seconds": 29.1,
+      "seconds": 29.7,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 90,
       "errors": 0
     },
     "kernel-spec": {
       "exit": 0,
-      "seconds": 8.7,
+      "seconds": 9.2,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 36,
       "errors": 0
     },
     "kernel-public-64": {
       "exit": 0,
-      "seconds": 86.1,
+      "seconds": 85.6,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 90,
       "errors": 0
     },
     "kernel-spec-64": {
       "exit": 0,
-      "seconds": 16.0,
+      "seconds": 14.1,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 36,
       "errors": 0
     },
     "kernel-64": {
       "exit": 0,
-      "seconds": 25.8,
+      "seconds": 27.3,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 126,
       "errors": 0
     },
     "ieee2019": {
       "exit": 0,
-      "seconds": 706.4,
+      "seconds": 603.9,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 1212,
       "errors": 0
     },
     "ieee2019-wide": {
       "exit": 0,
-      "seconds": 996.7,
+      "seconds": 5045.4,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
-      "rows": 246,
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T07:21Z",
+      "rows": 282,
       "errors": 0
     },
     "ieee2019-compiled": {
       "exit": 0,
-      "seconds": 182.1,
+      "seconds": 184.6,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 1217,
       "errors": 0
     },
     "functions": {
       "exit": 0,
-      "seconds": 316.9,
+      "seconds": 323.2,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T11:38Z",
+      "own_core": true,
       "rows": 310,
       "errors": 0
     },
     "extras": {
       "exit": 0,
-      "seconds": 100.0,
+      "seconds": 99.5,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 38,
       "errors": 0
     },
     "loops": {
       "exit": 0,
-      "seconds": 101.6,
+      "seconds": 98.5,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T13:55Z",
+      "own_core": true,
       "rows": 6,
       "errors": 0
     },
     "blocks": {
       "exit": 0,
-      "seconds": 12.2,
+      "seconds": 14.3,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 12,
       "errors": 0
     },
     "exact": {
       "exit": 0,
-      "seconds": 150.2,
+      "seconds": 142.7,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T13:55Z",
+      "own_core": true,
       "rows": 1359,
       "errors": 0
     },
     "exact-native": {
       "exit": 0,
-      "seconds": 3.8,
+      "seconds": 4.1,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T13:55Z",
+      "own_core": true,
       "rows": 13,
       "errors": 0
     },
     "exact-compiled": {
       "exit": 0,
-      "seconds": 59.8,
+      "seconds": 56.0,
       "lean": "v4.36.0",
-      "date": "2026-11-18",
+      "date": "2026-11-20",
+      "started_utc": "2026-11-20T10:37Z",
+      "own_core": true,
       "rows": 74,
       "errors": 0
     }
@@ -173,9 +214,38 @@
   "toolchain": "leanprover/lean4:v4.36.0",
   "lean": "v4.36.0",
   "machine": "Intel Xeon Platinum 8275CL @ 3.00GHz, 96 threads, shared with other jobs",
-  "date": "2026-11-18",
-  "started_utc": "2026-11-18T03:19Z",
-  "seconds": 1412.3,
-  "jobs": 8,
-  "threads": 24
+  "date": "2026-11-20",
+  "started_utc": "2026-11-20T13:55Z",
+  "seconds": 320.2,
+  "jobs": 1,
+  "threads": 24,
+  "runs": [
+    {
+      "started_utc": "2026-11-20T07:21Z",
+      "seconds": 5766.8,
+      "jobs": 8,
+      "threads": 24
+    },
+    {
+      "started_utc": "2026-11-20T10:37Z",
+      "seconds": 2678.4,
+      "jobs": 5,
+      "threads": 24,
+      "own_core": true
+    },
+    {
+      "started_utc": "2026-11-20T11:38Z",
+      "seconds": 335.0,
+      "jobs": 1,
+      "threads": 24,
+      "own_core": true
+    },
+    {
+      "started_utc": "2026-11-20T13:55Z",
+      "seconds": 320.2,
+      "jobs": 1,
+      "threads": 24,
+      "own_core": true
+    }
+  ]
 }

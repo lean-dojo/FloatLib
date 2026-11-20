@@ -45,6 +45,7 @@ every fixed-point grid:
   `fixed_round_eq_zero_iff`: the nearest-even case, magnitudes up to half the least subnormal or
   half a step, with the tie stored as zero.
 * `saturating_fixes`, `saturating_monotone`: finite values are stored exactly, and order is kept.
+  `saturating_round_clamp`: clipping the input to the finite range first changes nothing.
 * `saturating_nearest`, `saturating_round_neg`: saturating nearest-even rounding is a nearest
   rounding onto its stored values, and it is odd.
 * `saturating_round_ratCast`, `RoundsTo.round_eq`: its value at a dyadic rational, computed by
@@ -384,6 +385,21 @@ theorem saturating_round_of_le_neg {fmt : FloatFormat} {x : ℝ}
   change clampAt fmt (roundAt fmt x) = _
   unfold clampAt
   rw [min_eq_left (by linarith), max_eq_left hle]
+
+/-- Clipping the input to the finite range first changes nothing: saturating rounding already
+stores everything beyond the largest finite value as that value. -/
+theorem saturating_round_clamp (fmt : FloatFormat) (x : ℝ) :
+    (saturating fmt).round
+        (max (-toReal (posMaxFinite fmt)) (min (toReal (posMaxFinite fmt)) x)) =
+      (saturating fmt).round x := by
+  have hM := toReal_posMaxFinite_pos fmt
+  rcases le_total x (-toReal (posMaxFinite fmt)) with h1 | h1
+  · rw [min_eq_right (by linarith), max_eq_left h1, saturating_round_of_le_neg le_rfl,
+      saturating_round_of_le_neg h1]
+  · rcases le_total (toReal (posMaxFinite fmt)) x with h2 | h2
+    · rw [min_eq_left h2, max_eq_right (by linarith), saturating_round_of_le le_rfl,
+        saturating_round_of_le h2]
+    · rw [min_eq_right h2, max_eq_right h1]
 
 /-- Saturating nearest-even rounding is odd. -/
 theorem saturating_round_neg (fmt : FloatFormat) (x : ℝ) :

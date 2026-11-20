@@ -27,6 +27,10 @@ real part is within `8 exp (-2a)` of one and the imaginary part is of that size 
 small `a` or `b`, where a part is of that size, and an argument near a pole cost no more than an
 ordinary one. On the imaginary axis `tanh (i b) = i tan b`, which the exact tangent comparator
 handles behind the quotient of the enclosures of `sin b` and `cos b` (`tanBounds?`).
+
+At a small argument each part lies next to a part of the argument, a representable number. The
+same formulas on Taylor enclosures of `exp (-2a)`, `cos b` and `sin b` (`smallTanh?`,
+`smallTan?`) separate the two, so the rounding compares nothing exactly there.
 -/
 
 @[expose] public section
@@ -53,6 +57,19 @@ def decayBounds (fmt : FloatFormat) (a : Rat) (precision : Nat) : RationalInterv
       ((precision + 2 * growthCap fmt).sqrt + 8) (precision + 2 * growthCap fmt)).hi⟩
 
 /--
+The real or the imaginary part of `tanh (a + i b)` in interval arithmetic on enclosures `u` of
+`exp (-2a)`, `cosine` of `cos b` and `sine` of `sin b`, by the formulas of `tanhBounds?`. `none`
+when the enclosure of the denominator reaches zero.
+-/
+def tanhFrom (imaginary : Bool) (u cosine sine : RationalInterval) : Option RationalInterval :=
+  let v := (RationalInterval.point 1).sub u
+  let denominator := (v.mul v).add ((u.scale 4).mul (cosine.mul cosine))
+  if 0 < denominator.lo then
+    some ((if imaginary then (u.scale 4).mul (sine.mul cosine)
+      else v.mul ((RationalInterval.point 1).add u)).divPositive denominator)
+  else none
+
+/--
 One enclosure of the real or the imaginary part of `tanh (a + i b)` for a positive `a`, in
 interval arithmetic on an enclosure `u` of `exp (-2a)` and on `cos b` and `sin b`:
 
@@ -66,24 +83,43 @@ def tanhBounds? (imaginary : Bool) (u : RationalInterval) (b : Rat) (precision :
     Option RationalInterval :=
   (ProductComparison.trigBounds? .cos ⟨b, b⟩ precision).bind fun cosine =>
     (ProductComparison.trigBounds? .sin ⟨b, b⟩ precision).bind fun sine =>
-      let v := (RationalInterval.point 1).sub u
-      let denominator := (v.mul v).add ((u.scale 4).mul (cosine.mul cosine))
-      if 0 < denominator.lo then
-        some ((if imaginary then (u.scale 4).mul (sine.mul cosine)
-          else v.mul ((RationalInterval.point 1).add u)).divPositive denominator)
-      else none
+      tanhFrom imaginary u cosine sine
 
 /--
-One enclosure of the real or the imaginary part of `tanh (a + i b)` for a positive `a`, by
-`tanhBounds?`. Beyond `2a = growthCap fmt` it only tells that the real part is within a few
-`exp (-growthCap fmt)` of one and the imaginary part of zero, which leaves the comparison with
-one or with zero to the exact comparator.
+One enclosure of the real or the imaginary part of `tanh (a + i b)` for `0 < a ≤ 1 / 32` and
+`|b| ≤ 1 / 16`, by the formulas of `tanhFrom` on Taylor enclosures of `exp (-2a)`, `cos b` and
+`sin b`, when it is tight for `fmt`. It keeps the relative accuracy of `a` and of `b`.
+-/
+def smallTanh? (fmt : FloatFormat) (imaginary : Bool) (a b : Rat) : Option RationalInterval :=
+  if a ≤ 1 / 32 ∧ |b| ≤ 1 / 16 then
+    (tanhFrom imaginary (Enclosure.expSmall (-(2 * a)) (smallDegree fmt (max (2 * a) |b|)))
+      (Enclosure.cos b (smallDegree fmt (max (2 * a) |b|)))
+      (Enclosure.sin b (smallDegree fmt (max (2 * a) |b|)))).bind (tightOnly fmt)
+  else none
+
+/--
+One enclosure of the real or the imaginary part of `tanh (a + i b)` for a positive `a`: the
+Taylor enclosure `smallTanh?` at a small argument, and `tanhBounds?` elsewhere. Beyond
+`2a = growthCap fmt` it only tells that the real part is within a few `exp (-growthCap fmt)` of
+one and the imaginary part of zero, which leaves the comparison with one or with zero to the
+exact comparator.
 -/
 def tanhEnclosure? (fmt : FloatFormat) (imaginary : Bool) (a b : Rat) :
     Option RationalInterval :=
   if 0 < a then
-    refineTwice fmt fun precision =>
-      tanhBounds? imaginary (decayBounds fmt a precision) b precision
+    smallTanh? fmt imaginary a b <|>
+      refineTwice fmt fun precision =>
+        tanhBounds? imaginary (decayBounds fmt a precision) b precision
+  else none
+
+/--
+One enclosure of `tan b` for `|b| ≤ 1 / 16`: the quotient of the Taylor enclosures of `sin b`
+and `cos b`, when it is tight for `fmt`.
+-/
+def smallTan? (fmt : FloatFormat) (b : Rat) : Option RationalInterval :=
+  if |b| ≤ 1 / 16 ∧ 0 < (Enclosure.cos b (smallDegree fmt |b|)).lo then
+    tightOnly fmt
+      ((Enclosure.sin b (smallDegree fmt |b|)).divPositive (Enclosure.cos b (smallDegree fmt |b|)))
   else none
 
 /--
@@ -107,7 +143,7 @@ def tanhCore (z : ExecComplex fmt) : Parts fmt :=
         let exact := Thunk.mk fun _ => TrigonometricComparison.prepareTan b (cacheLevels fmt)
         ⟨Part.ofRat 0,
           (Part.real (fun boundary => exact.get.compare boundary) false).within
-            (refineTwice fmt (tanBounds? b))⟩
+            (smallTan? fmt b <|> refineTwice fmt (tanBounds? b))⟩
       else
         ⟨(Part.real (TanhComparison.compareRe a b (cacheLevels fmt) ha) false).within
             (tanhEnclosure? fmt false a b),

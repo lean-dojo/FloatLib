@@ -64,8 +64,11 @@ def applyRule? (actual : Q(ℝ)) (label : Name) (prepare : MetaM Lean.Expr) (exa
       else bound.statement actual reference
     let proof ← mkFreshExprMVar target
     let matched? ← attempt? 10000 do
+      -- An operation is matched by its name and its capability, never by the kernel that the
+      -- capability runs: `Capability.run` stays folded.
       let matched ← withCanUnfoldPred (fun config info =>
-        if boundaries.contains info.name then pure false else canUnfoldDefault config info) do
+        if boundaries.contains info.name || info.name == ``ExecFloat.Capability.run then pure false
+        else canUnfoldExported config info) do
           -- Match the computation before its dependent representation parameters.
           if let some source := actual.getAppArgs.back? then
             if let some pattern := candidate.getAppArgs.back? then
@@ -465,15 +468,24 @@ def splitBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimate)
   return some (← rewriteValue estimate observe equality, propagatesInputs)
 
 /-- The finiteness of a primitive call by the theorem `finite` of its contract, under the
-premises already instantiated for the call's rounding theorem. -/
+premises already instantiated for the call's rounding theorem. A premise of one theorem is
+compared with a premise of the other only when both state the same predicate (`conditionHead`,
+with a decoded finiteness read as the finiteness it is): comparing two different ones by
+unfolding would evaluate them, such as the encoding test of a concrete format, which counts
+down from its exponent bias. -/
 def primitiveFiniteness? (contract : PrimitiveContract) (finite : Name) (source : Lean.Expr)
     (premises : Array MVarId) : MetaM (Option Lean.Expr) := do
   let some (proof, remaining) ← instantiatePrimitive contract finite source |
     return none
+  let predicate (type : Lean.Expr) : MetaM (Option Name) :=
+    return conditionHead (← foldDecodedFinite type) (classifiers := true)
   for goal in remaining do
     let type ← instantiateMVars (← goal.getType)
     let some premise ← premises.findM? fun premise => do
-        isDefEq (← instantiateMVars (← premise.getType)) type
+        let stated ← instantiateMVars (← premise.getType)
+        if stated == type then return true
+        unless (← predicate stated) == (← predicate type) do return false
+        withCanUnfoldPred canUnfoldExported (isDefEq stated type)
       | return none
     goal.assign (← instantiateMVars (mkMVar premise))
   return some (← instantiateMVars proof)
@@ -693,7 +705,7 @@ def Session.readGiven (session : Session) (declaration : LocalDecl) : MetaM Give
             pure none
           else pure (some value)
       | _ => if session.mixed then pure ((← mixedConclusion? type).map (·.1)) else pure none
-    return value?.map boundHeads
+    value?.mapM boundHeads
   let generatedHeads? ← if producer?.isSome then heads true else pure none
   return { proposition := true, producer?, heads? := ← heads false, generatedHeads? }
 
@@ -729,7 +741,7 @@ model when it can. -/
 def givenBound? (actual : Q(ℝ)) (deriveInput : Q(ℝ) → AnalyzeM Estimate)
     (prove : MVarId → AnalyzeM Bool) : AnalyzeM (Option (Estimate × Bool)) := do
   let session ← read
-  let heads := boundHeads actual
+  let heads ← boundHeads actual
   let produced? := (decodedValue? actual).map (producer (← getEnv) (← extension).reads)
   for (decl, given) in ← session.hypothesisBounds do
     let generated := session.mixed && given.producer?.isSome && given.producer? == produced?
@@ -939,7 +951,7 @@ def refutedGuard? (condition : Lean.Expr) : AnalyzeM (Option Lean.Expr) := do
       let matched? ← attempt? 10000 do
         let matched ← withCanUnfoldPred (fun config info =>
             if session.boundaries.contains info.name then pure false
-            else canUnfoldDefault config info) do
+            else canUnfoldExported config info) do
           withReducible (isDefEq left test)
         return if matched then some () else none
       unless matched?.isSome do return none
@@ -1055,12 +1067,19 @@ def realOperations : Array Name :=
     ``Real.exp, ``Real.log, ``Real.sqrt]
 
 /-- Compose a local bound of `actual` against an intermediate value with the bound of that
-intermediate value against the final reference. An exact step contributes no budget. -/
-def compose (step input : Estimate) : MetaM Estimate := do
+intermediate value against the final reference. An exact step contributes no budget. The
+absolute bound is `compose_error` at the reals, applied to the parts of both estimates and
+stated in the dictionaries of real arithmetic. -/
+def compose (actual : Q(ℝ)) (step input : Estimate) : MetaM Estimate := do
   match step.bound, input.bound with
   | .absolute error, .absolute inputError =>
-      return ⟨input.reference, .absolute q($inputError + $error),
-        ← mkAppM ``compose_error #[step.proof, input.proof], step.finite?⟩
+      let middle := step.reference
+      let reference := input.reference
+      let inner : Q(|$actual - $middle| ≤ $error) := step.proof
+      let outer : Q(|$middle - $reference| ≤ $inputError) := input.proof
+      let proof : Q(|$actual - $reference| ≤ $inputError + $error) := q(compose_error $inner $outer)
+      return ⟨reference, .absolute q($inputError + $error),
+        ← mkExpectedTypeHint proof q(|$actual - $reference| ≤ $inputError + $error), step.finite?⟩
   | .mixed relative absolute, .mixed inputRelative inputAbsolute =>
       if input.bound.isExact then
         return ← rewriteReference step (← exactEquality input.proof)
@@ -1114,7 +1133,7 @@ def Session.zeroBudget (session : Session) (estimate : Estimate) : MetaM Estimat
 /-- Close an equality between real values by reflexivity, or by the local equalities and the
 identities of zero and one. -/
 def closeExactEquality (goal : MVarId) : TacticM Bool := do
-  let closed? ← attempt? 2000 do
+  let closed? ← attempt? 2000 <| exported do
     let remaining ← Lean.Elab.Tactic.run goal do
       evalTactic (← `(tactic| first
         | rfl

@@ -162,4 +162,9 @@ direction, datum and integer exponent: the same datum and the same flags.
       push_cast
       field_simp
 
+/-! ## Kernel shapes -/
+
+kernel_shape powerSign
+kernel_shape pown
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

@@ -110,6 +110,35 @@ theorem ofRat_value_of_ne_zero {x : SignedRat} (hvalue : x.value ≠ 0) :
     ofRat x.value = x :=
   ext rfl (x.negative_eq_of_ne_zero hvalue).symm
 
+/-- The case of the numerator decides whether a rational is negative. -/
+theorem negSucc_num_eq_decide (q : Rat) :
+    Int.rec (motive := fun _ => Bool) (fun _ => false) (fun _ => true) q.num =
+      decide (q < 0) := by
+  have hsign : q < 0 ↔ q.num < 0 := by
+    rw [← not_le, ← not_le, Rat.num_nonneg]
+  cases hnum : q.num with
+  | ofNat n =>
+      refine (decide_eq_false fun hq => ?_).symm
+      rw [hsign, hnum] at hq
+      exact absurd hq (Int.not_lt.mpr (Int.natCast_nonneg n))
+  | negSucc n =>
+      refine (decide_eq_true (hsign.mpr ?_)).symm
+      rw [hnum]
+      exact Int.negSucc_lt_zero n
+
+/--
+The signed rational of a rational with its sign bit read from the case of the numerator: `ofRat`
+in the form that Lean's kernel evaluates (`ofRat_eq_ofNum`). Deciding `q < 0` costs the kernel a
+comparison of rationals, and the case of the numerator costs it one step.
+-/
+noncomputable def ofNum (q : Rat) : SignedRat :=
+  ⟨q, Int.rec (motive := fun _ => Bool) (fun _ => false) (fun _ => true) q.num,
+    fun _ => negSucc_num_eq_decide q⟩
+
+/-- `ofRat` is `ofNum`. -/
+theorem ofRat_eq_ofNum (q : Rat) : ofRat q = ofNum q :=
+  ext rfl (negSucc_num_eq_decide q).symm
+
 /-- Negative zero, the value a signed rational adds to `Rat`. -/
 def negZero : SignedRat :=
   ⟨0, true, fun h => absurd rfl h⟩

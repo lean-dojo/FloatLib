@@ -743,7 +743,7 @@ theorem isTinyAfterRounding_roundRatGeneralOfDenNeZero_nearestAway_eq_false (fmt
         ring
       rw [hcast]
       push_cast
-      nlinarith
+      linarith
     exact_mod_cast hneededReal
   · simp only [hsub, ite_false]
     exact isTinyAfterRounding_packRoundedNormal fmt sign _ _ _ (by omega)

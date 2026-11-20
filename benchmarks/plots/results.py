@@ -23,6 +23,9 @@ import sys
 from collections import OrderedDict, defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import timing  # noqa: E402  (the row limit of the wide formats)
+
 
 def read_csv(path: Path) -> list:
     with open(path, newline="", encoding="utf-8") as handle_:
@@ -149,18 +152,39 @@ def commit_of(entry: dict, before: str = "", after: str = "") -> str:
 
 
 def record_run(raw: Path, commit: str, dirty: bool, started: str, seconds: float, jobs: int,
-               threads: int, done: list) -> None:
-    """`RAW/run.json`: what the timing mode measured, section by section."""
+               threads: int, done: list, own_core: bool = False, shared: frozenset = frozenset()) -> None:
+    """`RAW/run.json`: what the timing mode measured, section by section.
+
+    `commit` is empty for a checkout whose commit no remote branch has; the record then names none.
+    A run with `--only` measures some sections again and leaves the others as they are, so the
+    record keeps, for every section, the start of the run that measured it, and under `runs` the
+    runs that still have a section: on a machine that other jobs share, the sections whose cells
+    are differences of a few microseconds are best measured again one at a time. `own_core` says
+    that the run had core scheduling, and a section not in `shared` then ran with a cookie.
+    """
     path = raw / "run.json"
     run = json.loads(path.read_text()) if path.exists() else {"sections": {}}
     toolchain = (ROOT / "lean-toolchain").read_text().strip()
     lean = toolchain.rsplit(":", 1)[-1]
-    run.update(commit=commit, short=commit[:8], dirty=dirty, toolchain=toolchain, lean=lean,
+    name_of = dict(commit=commit, short=commit[:8]) if commit else {}
+    for key in ("commit", "short"):
+        run.pop(key, None)
+    if "started_utc" in run:    # the sections of a record without `runs` are those of its one run
+        for entry in run["sections"].values():
+            entry.setdefault("started_utc", run["started_utc"])
+        run.setdefault("runs", [dict(started_utc=run["started_utc"], seconds=run.get("seconds", 0),
+                                     jobs=run.get("jobs", ""), threads=run.get("threads", ""))])
+    run.update(name_of, dirty=dirty, toolchain=toolchain, lean=lean,
                machine=machine(), date=started[:10], started_utc=started, seconds=round(seconds, 1),
                jobs=jobs, threads=threads)
     for name, code, spent in done:
-        run["sections"][name] = dict(exit=code, seconds=round(spent, 1), short=commit[:8], lean=lean,
-                                     date=started[:10])
+        run["sections"][name] = dict(exit=code, seconds=round(spent, 1), lean=lean, date=started[:10],
+                                     started_utc=started, own_core=own_core and name not in shared,
+                                     **({"short": commit[:8]} if commit else {}))
+    runs = run.get("runs", []) + [dict(started_utc=started, seconds=round(seconds, 1), jobs=jobs,
+                                       threads=threads, own_core=own_core)]
+    owners = {entry.get("started_utc") for entry in run["sections"].values()}
+    run["runs"] = [entry for entry in runs if entry["started_utc"] in owners]
     path.write_text(json.dumps(run, indent=2) + "\n")
 
 
@@ -332,7 +356,7 @@ def backends_readme(generated: Path, backends: Path, measured: dict) -> None:
     state = " with uncommitted changes to tracked files" if measured.get("dirty") else ""
     head = [
         "# Benchmark suite: kernel and compiled code", "",
-        "This directory records the suite sections of one timing run of `benchmarks/plots/figures.py`, "
+        "This directory records the suite sections of the timing mode of `benchmarks/plots/figures.py`, "
         "which starts `benchmarks/suite/run.sh` section by section: "
         f"{commit_of(measured, 'commit ', state + ', ')}Lean {measured.get('lean', '')}, "
         f"{measured.get('machine', '')}, {measured.get('date', '')}. Other jobs were running, so read "
@@ -383,8 +407,10 @@ def ieee_readme(ieee: Path, measured: dict) -> None:
         "three decimal formats. Written by the timing mode of `benchmarks/plots/figures.py` on one "
         f"shared machine ({measured.get('machine', '')}); `../figures/measured.json` has the exit "
         "code and the time of every section. `n/a` is a cell without a result, and `< 1` a kernel "
-        "cell under half a microsecond: the difference of two folds, which for the cheapest "
-        "operations can come out at zero or below on a busy machine (the CSV keeps the number).", "",
+        "cell under half a microsecond. A kernel cell is the difference of two folds, and the fold "
+        "that is subtracted reads and stores its operand, so an operation that reads less of it "
+        "(`radix`, `isCanonical`, a test of the class of a decimal datum) comes out at zero or "
+        "below (the CSV keeps the number).", "",
         f"* Compiled time (`compiled.csv`), measured {section('ieee2019-compiled')}: "
         "`execFloatIEEE2019` (`benchmarks/lean/FloatLibBenchmarks/Public/IEEE2019.lean`), "
         "nanoseconds for one call on the descriptor model `Model fmt` or on a decimal `Datum`, the "
@@ -402,7 +428,9 @@ def ieee_readme(ieee: Path, measured: dict) -> None:
         "of a fold that only reads and stores an operand, divided by four, the fastest of three. "
         "The reductions take three elements or two pairs. The decimal operands have full "
         "coefficients, so sums and products drop digits. At 1,024 and 4,096 bits every row runs in "
-        "its own Lean process with a limit of 60 seconds, and a row that needs longer has none. "
+        f"its own Lean process with a limit of {timing.ROW_SECONDS:,} seconds, a certified function "
+        f"of clause 9.2 with a limit of {timing.FUNCTION_ROW_SECONDS:,} seconds, and a row that needs "
+        "longer has none. "
         "The payload rows subtract their preparation.", "",
         "The 8-bit format `e4f3` is the IEEE layout with four exponent bits and three fraction bits; "
         "`binary1024` and `binary4096` are the IEEE layouts with 27 and 35 exponent bits. The figure "
@@ -773,8 +801,11 @@ def install(raw: Path) -> None:
                        check=True, stdout=subprocess.DEVNULL)
 
     for key in ("commit", "short", "dirty", "toolchain", "lean", "machine", "date", "started_utc",
-                "seconds", "jobs", "threads"):
-        measured[key] = run.get(key)
+                "seconds", "jobs", "threads", "runs"):
+        if run.get(key) is None:        # a run that names no commit leaves none of an earlier run
+            measured.pop(key, None)
+        else:
+            measured[key] = run[key]
     if all(ran(name) for name in ("kernel-binary", "matched", "families", "exhaustive", "compiled",
                                   "compiled-comparison")) \
             and (suite / "README.md").exists():

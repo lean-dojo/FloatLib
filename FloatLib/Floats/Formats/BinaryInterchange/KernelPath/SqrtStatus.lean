@@ -427,7 +427,7 @@ theorem sqrtStatus_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x : M
     cases hs : Model.signBit x
     · rfl
     · simp [hs] at hsignBit
-  have hbias2 : fmt.fracWidth + 1 < fmt.exponentBias := by omega
+  have hbias2 : fmt.fracWidth + 1 < fmt.exponentBias := by lia
   have hbias : fmt.fracWidth + 1 ≤ fmt.exponentBias := by omega
   have hlen := significandLength_eq hmlt
   rw [ite_eq_right hm] at hlen

@@ -1,12 +1,12 @@
 {
   "fpbench": {
-    "first_utc": "2026-11-17T23:13:13Z",
-    "last_utc": "2026-11-17T23:24:07Z",
+    "first_utc": "2026-11-20T11:24:20Z",
+    "last_utc": "2026-11-20T11:32:47Z",
     "floatlib_commits": [],
     "rows": 816,
     "results_csv": {
-      "bytes": 4472775,
-      "sha256": "acb5af09e311ddb4c8f9013425310b5d976afc7d7d66801ee5b862bef60a4872"
+      "bytes": 4942110,
+      "sha256": "11cdd9b816ad081a5ed027f2352f71831b00d0ae452269b2b62b82fe44aaa3dc"
     },
     "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
     "thread_limit": "3",
@@ -21,13 +21,13 @@
     "note": "external tools, independent of FloatLib's commit"
   },
   "inequalities": {
-    "first_utc": "2026-11-17T22:02:41Z",
-    "last_utc": "2026-11-17T22:26:49Z",
+    "first_utc": "2026-11-20T11:44:50Z",
+    "last_utc": "2026-11-20T12:03:31Z",
     "floatlib_commits": [],
     "rows": 2224,
     "results_csv": {
-      "bytes": 3046080,
-      "sha256": "154a5a72d0fd671a78b27b15adfdeb16d7b310b4322efbeaabad79139358f458"
+      "bytes": 3134738,
+      "sha256": "981ccfc2939ae0a73429255edb1a98943819b0ec3071b2cc3425c169490f6120"
     },
     "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
     "thread_limit": "3",
@@ -59,5 +59,5 @@
     "thread_limit": "3",
     "workers": 8
   },
-  "conditions": "The run of 2026-11-17 (Lean v4.36.0): eight Lean processes at a time, three threads each, on a shared 96-thread Xeon Platinum 8275CL. Limits per process: FPBench 60 seconds and 4 GB (`lean -M 4096`) for a conditional and for a numerical proof; inequalities 20 seconds and 4 GB; TestFloat 900 seconds per campaign. Hard-to-round inputs: 16,384 sampled CORE-MATH cases per function, and the binary32 screens."
+  "conditions": "FPBench and the inequalities ran on 2026-11-20, the hard-to-round inputs, TestFloat and the external FPBench tools on 2026-11-17 (Lean v4.36.0): eight Lean processes at a time, three threads each, on a shared 96-thread Xeon Platinum 8275CL. Limits per process: FPBench 60 seconds and 4 GB (`lean -M 4096`) for a conditional and for a numerical proof; inequalities 20 seconds and 4 GB, one goal per process; TestFloat 900 seconds per campaign. Hard-to-round inputs: 16,384 sampled CORE-MATH cases per function, and the binary32 screens."
 }

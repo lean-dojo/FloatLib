@@ -235,6 +235,35 @@ Then the same runner times both compiled libraries on identical result-dependent
 focused experiment outside the `release` profile, and its page links the instructions, adapters, and
 individual measurements.
 
+### P3109 operations on encodings
+
+Lean's kernel evaluates the operations of the interim report on natural-number encodings
+(`P3109.KernelPath`). `tests/oracles/p3109_kernel.py` computes each of them independently: it
+decodes the operands to exact values, applies the operation of the report on `Fraction` with its
+rules for infinities and NaN, and projects the exact result with the `Fraction` reference of
+`p3109_comparison.py`. A square root is rounded from integer square roots of scaled radicands,
+and an infinite result is saturated by the table of section 4.7.5. Each request is compared in
+51 rounding modes (the six deterministic ones, and stochastic A, B and C with every random word
+of zero to three bits) and the three saturation modes.
+
+```bash
+source tests/lib/lake.sh
+floatlib_test_lake build oracle
+python3 tests/oracles/p3109_kernel.py --oracle "$FLOATLIB_BUILD_DIR/bin/oracle" \
+  --out /path/to/result.json
+```
+
+The run of 2026-11-19 (seed 20261119): 149,052 requests and 18,554,428 encodings, none
+different.
+
+| Compared | Operands |
+| --- | --- |
+| `convert`, `negate`, `abs`, `recip`, `sqrt`, `rsqrt`, the eight classification queries and the two neighbours | every code of the 42 descriptors of three to five bits |
+| `add`, `sub`, `mul`, `div`, `copysign`, `hypot`, the ten extrema and the three comparisons | every pair of codes of the descriptors of three and four bits, and 48 pairs of each descriptor of five bits |
+| `fma`, `faa`, `clamp` | 64 triples of each of these descriptors |
+| all of the above with operands and destination of different descriptors | 300 draws among the 94 descriptors of three to six and of eight bits |
+| `convertbinary`, the conversion of a word of a binary interchange format | every word of ten binary formats of four to nine bits, IEEE and the three encodings without an infinity, into six drawn descriptors each; the special values and 600 drawn words of binary16, bfloat16, binary32, binary64 and of three wide formats of the other encodings, into drawn descriptors |
+
 ### Scalar conversions with TensorLib
 
 In the [TensorLib comparison](../benchmarks/external/tensorlib/README.md) we convert every FP16,
@@ -273,6 +302,37 @@ rational specification. The 32-bit cases expose inconsistent pX2 endpoint handli
 FMA cases lose sticky information that should decide the rounding. On those inputs FloatLib's
 executable agrees with its exact specification, so the runner classifies the suite as
 `external-limitation`.
+
+#### Other exponent sizes
+
+The Posit Standard (2022) fixes two exponent bits. The kernel operations take the number of
+exponent bits as a parameter, and `Posit.General` proves them for every number. An implementation
+written for other numbers checks them: SoftPosit's 8-bit posits have no exponent bit and its
+16-bit posits have one (the 2018 draft). `tests/oracles/posit_general.py` compares
+`oracle posit-general P ES` with the `softposit` Python package, bit for bit.
+
+```bash
+source tests/lib/lake.sh
+floatlib_test_lake build oracle
+python3 tests/oracles/posit_general.py --oracle "$FLOATLIB_BUILD_DIR/bin/oracle" \
+  --out /path/to/result.json
+```
+
+The run of 2026-11-19 (softposit 0.3.4.4, seed 20261119): 1,478,927 results, none different.
+
+| Compared | 8 bits, no exponent bit | 16 bits, one exponent bit |
+| --- | ---: | ---: |
+| `add`, `sub`, `mul`, `div`, `lt`, `le`, each | 65,536 (every pair) | 62,145 |
+| `fma` | 63,375 | 63,375 |
+| `sqrt`, `neg`, `abs`, each | 256 (every encoding) | 65,536 (every encoding) |
+| to a signed integer of 32 and of 64 bits, each | 255 | 65,535 |
+| to an unsigned integer of 32 and of 64 bits, each | 128 | 32,768 |
+
+Conversions between formats: 8 to 16 bits (256), 16 to 8 bits (65,536), 16 to 32 bits with two
+exponent bits (65,536) and 32 to 16 bits (60,015). SoftPosit follows the 2018 draft for the
+conversions to integers, in which NaR and a negative value converted to an unsigned integer give
+zero. The 2022 standard gives the word with only its most significant bit set, so NaR is left
+out, and the unsigned conversions are compared on the encodings below the sign bit.
 
 ### SMT and transcendentals
 
@@ -335,7 +395,7 @@ exact rational arithmetic in Python; and `getPayload`, `setPayload` and `setPayl
 binary32 and binary64 against glibc 2.34. Python's `decimal` follows IEEE 754-2008 for `max` and
 `min`, so cases with a signaling NaN or with two NaN operands are left out there.
 
-With 150,000 generated cases of each kind that's 1,523,537 cases, and none fails
+With 20,000 generated cases of each kind that's 225,320 cases, and none fails
 ([summary](results/differential/ieee2019.csv)).
 
 The formatOf operations of clause 5.4.1 are compared with `add`, `sub`, `mul`, `div` and `fma`
@@ -345,7 +405,7 @@ rational result: 1,228,800 cases, none fails.
 
 The decimal reductions `sum`, `sumAbs`, `sumSquare` and `dot` of clause 9.4 are compared with
 Python's `decimal`: the reference adds the terms without rounding in a context of 26,000
-digits and rounds the exact sum once in the interchange context, with its flags. 150,000 cases
+digits and rounds the exact sum once in the interchange context, with its flags. 20,000 cases
 of up to five operands in the three formats and the five rounding directions, none fails.
 
 The recommended functions of clause 9.2 on binary formats (`exp2`, `log10p1`, `sinPi`, `atan2Pi`,
@@ -358,11 +418,11 @@ and all five flags are compared, in the five rounding directions of the standard
 encoding of an eight-bit format for the 26 functions of one operand, every pair of encodings of
 a six-bit format for `atan2`, `atan2Pi` and `powr`, `compound` on that format with thirteen
 exponents, and pseudo-random operands of binary16, binary32 and binary64 in a pseudo-random
-direction. With 150 operands for each function and format that's 112,389 cases, and none
-fails. While the reference was written it disagreed with FloatLib twice, and FloatLib was
-right both times: `sin x` is inexact for the smallest subnormal `x`, which a fixed precision of
-800 bits does not show, and `tanh`, `exp2m1` and `exp10m1` of a large operand are inexact
-although the result is the limit.
+direction. With 20 operands for each function and format, and with the other small formats of
+the last paragraph, that's 259,720 cases, and none fails. While the reference was written it
+disagreed with FloatLib twice, and FloatLib was right both times: `sin x` is inexact for the
+smallest subnormal `x`, which a fixed precision of 800 bits does not show, and `tanh`, `exp2m1`
+and `exp10m1` of a large operand are inexact although the result is the limit.
 
 The certified decimal functions of clause 9.2 (`Transcendentals.Certified.exp2`, `sin`, `atanh`
 and the others of one argument, `exp` and `log`) are compared with `mpmath` by
@@ -370,11 +430,38 @@ and the others of one argument, `exp` and `log`) are compared with `mpmath` by
 result with four times the precision of the format and 60 digits more and rounds it to the
 precision of the format with exact rational arithmetic. A decimal function returns a result
 only when an enclosure settles the rounding, so the oracle compares the value of every result
-that is returned and counts the cases without one. With 150 operands of magnitude between
+that is returned and counts the cases without one. With 20 operands of magnitude between
 1/1000 and 100 for each of the 28 functions in each of decimal32, decimal64 and decimal128,
-12,565 of 12,600 cases return a result and none of them differs from the reference; the 35
-cases without a result are `exp10` (31) and `exp` (4) of operands whose result is too small
+1,676 of 1,680 cases return a result and none of them differs from the reference. The 4
+cases without a result are `exp10` (3) and `exp` (1) of operands whose result is too small
 for the two grids.
+
+The same scripts cover the other operations of the clause table. `functions.py` also writes
+`pow`, `hypot`, `rootn`, `pown`, `rSqrt`, `cbrt` and the forms with flags of `exp`, `expm1`,
+`log` and `logp1`, and every encoding of five small formats in each of the five rounding
+directions: an IEEE eight-bit format, OCP E5M2 and E4M3, and the ONNX formats E4M3FNUZ and
+E5M2FNUZ, with every pair of encodings of a six-bit IEEE format and of the four-bit format
+E2M1 for the functions of two operands. A format without an infinity delivers its NaN where an
+IEEE format delivers an infinity, and a format without a NaN its largest finite value and `+0`
+for an invalid operation. The roots of `rSqrt`, `rootn` and `hypot` are computed with exact
+integers. `decimal_functions.py` also writes the total decimal functions
+(`Transcendentals.CorrectlyRounded`) with their flags in the five directions, at ordinary
+operands and at operands whose results overflow or underflow, `atan2`, `atan2Pi`, `pow`, `powr`
+and `compound` included. `reference.py` also writes the decimal scaled products
+(`decimal-scaled`: the exact product in a context of 80,000 digits, scaled by the adjusted
+exponent and rounded once) and the decimal reductions from left to right in an accumulator
+format (`decimal-ordered`: a chain of additions of Python's `decimal` in the accumulator's
+context, whose flags accumulate). The formatOf square root is compared on every encoding of the
+six-bit format in six directions with the rounded exact root, in one format and across three.
+`p3109_functions.py` covers `Exp10`, `Exp2MinusOne`, `Exp10MinusOne`, `Log10`, `Log2OnePlus`,
+`Log10OnePlus` and `Cbrt` on P3109 formats with directed MPFR enclosures, `Pow` and `Powr` with
+an exponent in Binary8p3se, and `Pown`, `Rootn` and `Compound` with the integers from -3 to 3,
+which are exact rationals except for the roots.
+
+In the recorded campaign (`tests/oracles/ieee2019.sh 20000 20261116`) the binary functions of
+clause 9.2 are 461,520 cases, the total decimal functions 13,500, the decimal scaled products
+20,000, the ordered decimal reductions 20,000 and the formatOf square root 3,456. With the groups
+above that's 1,994,276 cases in 145 groups, and none fails.
 
 ### MPFX
 
@@ -418,8 +505,33 @@ script recognizes its class from the input alone:
 | `float8_e4m3fn` cast against the OVF conversion, `float8_e5m2` against the SAT conversion | 10,036 | 1,005 | PyTorch saturates E4M3 and returns the E5M2 infinity above the largest finite value |
 
 The exact-arithmetic NVFP4 format rounds each exact scaled input once. A reference that scales in
-binary32 can differ from it at a tie, and the binary32 model in `oracle block nvfp4f32` shows that
-this is the only arithmetic difference on these inputs.
+binary32 can differ from it at a tie, and `oracle block nvfp4f32` shows that this is the only
+arithmetic difference on these inputs. That command runs `Block.nvfp4Working`, the library's
+quantizer on binary32 encodings in torchao's order.
+
+No tensor of that corpus makes a binary32 operation overflow. `tests/oracles/nvfp4_working.py`
+covers those: it repeats the order of operations with NumPy's float32, which is the binary32
+arithmetic of the processor, rounds to E4M3 and E2M1 with exact fractions and compares the words
+with `oracle block nvfp4f32`. It needs `numpy` only.
+
+```bash
+source tests/lib/lake.sh
+floatlib_test_lake build oracle
+python3 tests/oracles/nvfp4_working.py --oracle "$FLOATLIB_BUILD_DIR/bin/oracle" \
+  --out /path/to/result.json
+```
+
+The run of 2026-11-19 (NumPy 2.5.0, seed 20261119, 4,000 tensors of two blocks without an outer
+scale and 4,000 with one):
+
+| Comparison | Words | Different |
+| --- | ---: | ---: |
+| Without an outer scale: scale words and element words | 136,000 | 0 |
+| With an outer scale, from the least subnormal to the largest finite value | 135,932 | 0 |
+
+Of the tensors with an outer scale, the scale quotient overflows in 719, the reciprocal in 13 and
+a product of an element with the reciprocal in 682. Two tensors have a zero element under an
+overflowed reciprocal, which is `0 * inf`, a NaN: they are counted and left out.
 
 ### The standards' operations and the complex functions
 
@@ -436,6 +548,7 @@ and `release` profiles.
 | `ofp8Standard` | `oracles/ofp8.py`, `oracles/ofp8_secondary.py` | gfloat's encodings, and microxcaling's saturating conversion and PyTorch's casts |
 | `blockStandard` | `oracles/mx_standard.py`, `mx_element.py`, `mx_dot.py`, `mx_finite_dot.py`, `nvfp4.py` | gfloat and microxcaling for MX blocks and elements, exact fractions rounded once by MPFR for the dot products, and CPU torchao for NVFP4 |
 | `p3109Comparison`, `p3109Functions`, `p3109Queries`, `p3109Blocks`, `p3109BlockFunctions` | the scripts of the same names in `oracles/` | the formulas of the interim report v4.1 on `Fraction`, MPFR directed enclosures for the functions, and gfloat 0.5.2 for the queries and the small-word block operations |
+| `oracle p3109-kernel` | `oracles/p3109_kernel.py` | the operations of sections 4.10 to 4.13 and 4.16 of the interim report v4.1 on `Fraction`, and the conversion of a binary interchange word decoded from its fields, projected by the reference of `p3109_comparison.py` |
 | `embeddedFixedPoint`, `embeddedText`, `embeddedConstant`, `embeddedFormatted` | the scripts of the same names in `oracles/` | exact `Fraction` arithmetic, regular expressions and an independent automaton for the text conversions, and Clang's fixed-point types |
 | `oracle complex` | `oracles/complex_mpc.py`, `oracles/complex_cmath.py` | GNU MPC through gmpy2 in every rounding direction, and CPython's `cmath` for the special values of C23 Annex G |
 
@@ -450,6 +563,8 @@ unexplained difference:
 | OCP MX and NVFP4 | 75,240 and 368,603 |
 | Embedded C fixed point | 1,196,256 interface cases, with 160,196 ordinary and 409,536 policy comparisons |
 | Complex functions | 10,944 MPC comparisons in binary16, bfloat16, binary32 and binary64, and 1,673 `cmath` references: 1,648 agreements, 19 signs that C23 leaves unspecified and six values that C23 requires where `cmath` returns NaN |
+| Complex functions at small arguments (run of 2026-11-19, `--styles small,wide --hard`) | 234,744 MPC comparisons of sixteen functions: 117,372 in binary64 in six rounding directions, and 58,686 each in binary32 and binary16 in three |
+| Complex powers (run of 2026-11-19, `--functions pow --modes all --samples 600 --hard`) | 60,204 MPC comparisons in six rounding directions: 20,364 in binary64, 20,364 in binary32 and 19,476 in binary16, with bases next to an axis, perturbed perfect powers, bases whose parts have the least ratio of the format, even powers of a base on a diagonal and exponents up to `2^90`. No difference and no power without a certificate; 12 results are not compared, two exactly real powers in six directions on which MPC at two precisions disagrees |
 
 Two differences from a reference are known, and in both FloatLib has the result of the exact
 specification. One is `nearestInt` of the eight-bit posit word 129: the word denotes the integer

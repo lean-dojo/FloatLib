@@ -12,7 +12,9 @@ import FloatLibTests.Oracle.Complex
 import FloatLibTests.Oracle.ComplexTiming
 import FloatLibTests.Oracle.Formats
 import FloatLibTests.Oracle.IEEE2019
+import FloatLibTests.Oracle.P3109Kernel
 import FloatLibTests.Oracle.Posit
+import FloatLibTests.Oracle.PositGeneral
 import FloatLibTests.Oracle.Primitives
 import FloatLibTests.Oracle.Reductions
 import FloatLibTests.Oracle.TestFloat
@@ -34,6 +36,8 @@ def usage : String :=
   "  block CASE [ARGS]                  block-format codes for tensors on stdin\n" ++
   "  complex                            complex function requests on stdin\n" ++
   "  posit [REPORTS]                     check a SoftPosit binary stream\n" ++
+  "  posit-general P ES                 posit operations with ES exponent bits, from stdin\n" ++
+  "  p3109-kernel                       P3109 kernel operations on encodings, from stdin\n" ++
   "  testfloat FORMAT OP MODE [REPORTS]  check vectors from stdin\n" ++
   "  ieee2019 exhaustive                IEEE 754-2019 clause 9 on a six-bit format\n" ++
   "  ieee2019 check                     IEEE 754-2019 cases from stdin"
@@ -49,7 +53,11 @@ public def main (args : List String) : IO UInt32 := do
   | "block" :: rest => Block.run rest
   | ["complex"] => Complex.run; return 0
   | ["complex-timing"] => ComplexTiming.run; return 0
+  | ["complex-timing", "functions"] => ComplexTiming.runFunctions; return 0
+  | ["complex-timing", "pow"] => ComplexTiming.runPow; return 0
   | "posit" :: rest => Posit.run rest
+  | "posit-general" :: rest => PositGeneral.run rest
+  | "p3109-kernel" :: rest => P3109Kernel.run rest
   | "testfloat" :: rest => TestFloat.run rest
   | "ieee2019" :: rest => IEEE2019.run rest
   | ["--help"] | ["-h"] => IO.println usage; return 0

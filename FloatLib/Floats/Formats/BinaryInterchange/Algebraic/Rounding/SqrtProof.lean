@@ -51,7 +51,7 @@ theorem rootBinade_bounds (radicand : Rat) (degree : Nat) (target : ℝ)
   have hhi : logarithm + 1 ≤ (rootBinade radicand degree + 1) * degree := by
     have := Int.lt_mul_ediv_self_add (x := logarithm) hnInt
     change logarithm + 1 ≤ (logarithm / (degree : Int) + 1) * degree
-    nlinarith
+    linarith
   have hp (exponent : Int) :
       Flocq.bpow Numerics.binaryRadix exponent ^ degree =
         Flocq.bpow Numerics.binaryRadix (exponent * degree) := by

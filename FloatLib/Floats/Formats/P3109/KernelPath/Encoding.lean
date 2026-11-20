@@ -17,6 +17,8 @@ P3109 Interim Report v4.1 (14 September 2026), §§4.7.3 to 4.7.6, an unapproved
 * `magnitudeCode_eq`: `magnitudeCode` is the reference encoding of a positive finite datum;
 * `aboveCode_eq`, `belowCode_eq`: the codes of the saturated results of §4.7.5, for every
   saturation mode, rounding mode, signedness and domain;
+* `encodeRounded_eq`: the saturation and the code of a magnitude that is already rounded,
+  the last stage of every projection and of the square roots;
 * `projectFinite_eq`: the code of a nonzero ratio, rounded, saturated and encoded;
 * `projectRat_eq`: `project` is the stored reference projection `ExecFloat.P3109.projectRat` of
   the closed value of a class and a ratio of natural numbers, for every descriptor, every
@@ -183,31 +185,26 @@ theorem encode_saturate_zero (format : Format) (mode : RoundingMode)
   rfl
 
 /--
-P3109 interim report v4.1, §§4.7.3 to 4.7.6: `projectFinite` is the reference code of the
-    nonzero ratio
-`(-1) ^ s * n / d`, rounded to the precision grid, saturated and encoded, for every descriptor,
-rounding mode, random word, saturation mode and ratio with `n ≠ 0` and `d ≠ 0`.
+P3109 interim report v4.1, §§4.7.5 and 4.7.6: `encodeRounded` is the reference code of the
+saturation of a rounded dyadic `(-1) ^ s * r * 2 ^ (Qb - beta)`, and of zero for `r = 0`, for
+every descriptor, rounding mode, saturation mode, significand and bias `beta` of at least the
+exponent bias.
 -/
-theorem projectFinite_eq (format : Format) (mode : RoundingMode) (saturation : SaturationMode)
-    (negative : Bool) (n d : Nat) (hn : n ≠ 0) (hd : d ≠ 0) :
+theorem encodeRounded_eq (format : Format) (mode : RoundingMode) (saturation : SaturationMode)
+    (negative : Bool) (r Qb beta : Nat) (hbeta : format.exponentBias ≤ beta) :
     Format.Internal.encodeDatumNat format
         (format.saturate saturation mode
-          (.finite (format.roundFiniteRatToPrecision mode
-            ((if negative then -(n : Rat) else (n : Rat)) / (d : Rat))))) =
-      projectFinite format.bitWidth format.precision (sgOf format) (exOf format)
-        (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation)
-        (if negative then 1 else 0) n d := by
+          (.finite (if r = 0 then Numerics.Dyadic.zero
+            else { negative := negative, significand := r,
+                   exponent := (Qb : Int) - (beta : Int) }))) =
+      encodeRounded format.bitWidth format.precision (sgOf format) (exOf format)
+        (modeIndex mode) (satIndex saturation) format.exponentBias (if negative then 1 else 0) r
+        Qb beta := by
   have hmaxpos := format.maxFinite_toRat_pos
   have hmin := minFinite_toRat format
-  rw [roundFiniteRatToPrecision_eq format mode negative n d hn hd]
-  unfold projectFinite
-  rw [exponentBias_eq, size_sub_one hd]
+  unfold encodeRounded
   kernel_notation
   simp only [Bool.or_eq_true, Nat.beq_eq]
-  generalize quantumOf format.exponentBias n d = Qb
-  generalize roundedOf format.precision format.exponentBias (modeIndex mode) (modeWidth mode)
-    (modeRandom mode) (if negative = true then 1 else 0) n d Qb = r
-  generalize hbeta : d.log2 + 1 + (format.exponentBias + format.precision) = beta
   by_cases hr : r = 0
   · rw [ite_eq_left hr, ite_eq_left hr]
     exact encode_saturate_zero format mode saturation
@@ -215,7 +212,7 @@ theorem projectFinite_eq (format : Format) (mode : RoundingMode) (saturation : S
   have hexceeds := exceeds_eq format r Qb beta
   have hV : (0 : Rat) < (r : Rat) * (2 : Rat) ^ ((Qb : Int) - (beta : Int)) :=
     mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hr) (zpow_pos (by norm_num) _)
-  have hmag := magnitudeCode_eq format r Qb beta hr (by omega)
+  have hmag := magnitudeCode_eq format r Qb beta hr hbeta
   have htF : (Numerics.Dyadic.mk false r ((Qb : Int) - (beta : Int))).toRat =
       (r : Rat) * (2 : Rat) ^ ((Qb : Int) - (beta : Int)) := Numerics.Dyadic.toRat_mk_false _ _
   have htT : (Numerics.Dyadic.mk true r ((Qb : Int) - (beta : Int))).toRat =
@@ -261,6 +258,27 @@ theorem projectFinite_eq (format : Format) (mode : RoundingMode) (saturation : S
       unfold Format.Internal.encodeDatumNat
       simp only [beq_iff_eq, hr, ite_false, ite_true]
       rw [hmag]
+
+/--
+P3109 interim report v4.1, §§4.7.3 to 4.7.6: `projectFinite` is the reference code of the
+    nonzero ratio
+`(-1) ^ s * n / d`, rounded to the precision grid, saturated and encoded, for every descriptor,
+rounding mode, random word, saturation mode and ratio with `n ≠ 0` and `d ≠ 0`.
+-/
+theorem projectFinite_eq (format : Format) (mode : RoundingMode) (saturation : SaturationMode)
+    (negative : Bool) (n d : Nat) (hn : n ≠ 0) (hd : d ≠ 0) :
+    Format.Internal.encodeDatumNat format
+        (format.saturate saturation mode
+          (.finite (format.roundFiniteRatToPrecision mode
+            ((if negative then -(n : Rat) else (n : Rat)) / (d : Rat))))) =
+      projectFinite format.bitWidth format.precision (sgOf format) (exOf format)
+        (modeIndex mode) (modeWidth mode) (modeRandom mode) (satIndex saturation)
+        (if negative then 1 else 0) n d := by
+  rw [roundFiniteRatToPrecision_eq format mode negative n d hn hd,
+    encodeRounded_eq format mode saturation negative _ _ _ (by omega)]
+  unfold projectFinite
+  rw [exponentBias_eq, size_sub_one hd]
+  rfl
 
 /-! ## The projection of a closed value -/
 

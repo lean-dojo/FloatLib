@@ -479,4 +479,16 @@ direction and pair of arrays.
             Arithmetic.dot, ite_eq_left hsize]
           rfl
 
+/-! ## Kernel shapes -/
+
+kernel_shape sumLoop
+kernel_shape deliverSum
+kernel_shape collect
+kernel_shape reduce
+kernel_shape sum
+kernel_shape sumAbs
+kernel_shape sumSquare
+kernel_shape collectProducts
+kernel_shape dot
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

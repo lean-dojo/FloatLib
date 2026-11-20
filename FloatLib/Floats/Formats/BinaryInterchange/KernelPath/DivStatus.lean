@@ -48,9 +48,10 @@ def divideByZeroStatus (fmt : FloatFormat) (sign w : Nat) : Nat :=
 
 /--
 The status number of the quotient of the values encoded by `a` and `b`, rounded in the direction
-`mode` (`divStatus_eq`). See the module documentation.
+`mode`, when `w` is the word of the rounded quotient. `divStatus` is this number at
+`div fmt mode a b`.
 -/
-def divStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : Nat :=
+def divStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b w : Nat) : Nat :=
   (fun sa sb ua ub =>
     Bool.casesOn (motive := fun _ => Nat)
       (Nat.beq (Nat.add (nonFinite fmt sa ua) (nonFinite fmt sb ub)) 0)
@@ -68,11 +69,11 @@ def divStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : 
                     roundStatus fmt mode (Nat.xor sa sb)
                       (Nat.add (Nat.mul 2 (Nat.div num den))
                         (Nat.sub 1 (Nat.sub 1 (Nat.mod num den))))
-                      1 (div fmt mode a b))
+                      1 w)
                     (Nat.shiftLeft ma (Nat.sub K hb)) (Nat.shiftLeft mb (Nat.sub hb K)))
                 (Nat.add (Nat.add ha fmt.exponentBias) (Nat.add fmt.fracWidth 1)))
               (Bool.casesOn (motive := fun _ => Nat) (Nat.beq ma 0)
-                (divideByZeroStatus fmt (Nat.xor sa sb) (div fmt mode a b))
+                (divideByZeroStatus fmt (Nat.xor sa sb) w)
                 (invalidStatus 1)))
             (Nat.sub ua (Nat.shiftLeft ha fmt.fracWidth))
             (Nat.sub ub (Nat.shiftLeft hb fmt.fracWidth)))
@@ -80,6 +81,13 @@ def divStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : 
         (Nat.sub (Nat.shiftRight ub fmt.fracWidth) 1)))
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
+
+/--
+The status number of the quotient of the values encoded by `a` and `b`, rounded in the direction
+`mode` (`divStatus_eq`). See the module documentation.
+-/
+def divStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (a b : Nat) : Nat :=
+  divStatusWith fmt mode a b (div fmt mode a b)
 
 /-! ## The sticky quotient of two significands -/
 
@@ -188,7 +196,7 @@ theorem divStatus_eq {fmt : FloatFormat} (mode : Model.IEEERoundingMode) (x y : 
   have hfy := Model.fracField_lt_pow2 y
   have hresult : div fmt mode x.toNatBits y.toNatBits =
       (Model.div x y (mode := mode)).toNatBits := div_eq_spec mode x y
-  unfold divStatus
+  unfold divStatus divStatusWith
   simp only [Nat.shiftRight_eq', Nat.land_eq, Nat.shiftLeft_eq', Nat.sub_eq, Nat.add_eq,
     Nat.mul_eq, Nat.xor_eq, div_def, mod_def, sign_toNatBits, magnitude_toNatBits,
     fields_shiftRight _ _ _ hfx, fields_shiftRight _ _ _ hfy, fields_sub_shiftLeft, xor_sign,

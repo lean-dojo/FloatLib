@@ -196,6 +196,127 @@ theorem arcoshPart_denotes (p q : Rat) :
     rw [← Option.some.inj henclosure]
     exact contains_arcoshEnclosure p q _
 
+/-- Every enclosure that `smallArcsinCore?` returns contains the inverse sine of the half
+difference of the distances. -/
+theorem contains_smallArcsinCore? {p q : Rat} {interval : RationalInterval}
+    (h : smallArcsinCore? fmt p q = some interval) :
+    interval.Contains (Real.arcsin (minor p q)) := by
+  unfold smallArcsinCore? at h
+  dsimp only at h
+  split at h
+  · rename_i hcondition
+    obtain ⟨hq, hq16, hrootLow, hslope0, hslope1⟩ := hcondition
+    rw [← eq_of_tightOnly h]
+    generalize smallDegree fmt _ = degree
+    generalize fmt.fracWidth + 36 + 2 * bitsBelowOne (max |p| q) = precision
+      at hrootLow hslope0 hslope1 ⊢
+    obtain ⟨hone, hlower, hupper⟩ := majorBounds_spec p q precision
+    have hmajor := ConfocalComparison.one_le_major (p : ℝ) q
+    have hproduct := ConfocalComparison.major_mul_minor (p : ℝ) q
+    have hqR : (0 : ℝ) < (q : ℝ) := by exact_mod_cast hq
+    have hb1 : (0 : ℝ) < ((majorBounds p q precision).1 : ℝ) :=
+      lt_of_lt_of_le one_pos (by exact_mod_cast hone)
+    have hb2 : (0 : ℝ) < ((majorBounds p q precision).2 : ℝ) :=
+      lt_of_lt_of_le (lt_of_lt_of_le one_pos hmajor) hupper
+    have hminor : minor (p : ℝ) q = (q : ℝ) / major (p : ℝ) q := by
+      rw [eq_div_iff (by linarith), mul_comm]
+      exact hproduct
+    generalize major (p : ℝ) q = M at hlower hupper hmajor hminor
+    generalize minor (p : ℝ) q = m at hminor ⊢
+    have hlowR : (((q / (majorBounds p q precision).2 : Rat)) : ℝ) ≤ m := by
+      rw [hminor]
+      push_cast
+      exact div_le_div_of_nonneg_left hqR.le (by linarith) hupper
+    have hhighR : m ≤ (((q / (majorBounds p q precision).1 : Rat)) : ℝ) := by
+      rw [hminor]
+      push_cast
+      exact div_le_div_of_nonneg_left hqR.le hb1 hlower
+    have hlow0 : (0 : Rat) ≤ q / (majorBounds p q precision).2 :=
+      div_nonneg hq.le (by exact_mod_cast hb2.le)
+    have hhigh16 : q / (majorBounds p q precision).1 ≤ 1 / 16 :=
+      (div_le_self hq.le hone).trans hq16
+    generalize q / (majorBounds p q precision).2 = low at hlowR hlow0 hrootLow hslope0 hslope1 ⊢
+    generalize q / (majorBounds p q precision).1 = high
+      at hhighR hhigh16 hrootLow hslope0 hslope1 ⊢
+    have hlow0R : (0 : ℝ) ≤ (low : ℝ) := by exact_mod_cast hlow0
+    have hhigh16R : (high : ℝ) ≤ 1 / 16 := by
+      have hcast := (Rat.cast_le (K := ℝ)).mpr hhigh16
+      push_cast at hcast
+      exact hcast
+    have hm0 : 0 ≤ m := hlow0R.trans hlowR
+    have : m ≤ 1 / 16 := hhighR.trans hhigh16R
+    have hlowHigh : low ≤ high := by exact_mod_cast hlowR.trans hhighR
+    have hhigh1 : high ≤ 1 := hhigh16.trans (by norm_num)
+    have hlowSq : (0 : Rat) ≤ 1 - low ^ 2 :=
+      sub_nonneg.mpr (pow_le_one₀ hlow0 (hlowHigh.trans hhigh1))
+    have hhighSq : (0 : Rat) ≤ 1 - high ^ 2 :=
+      sub_nonneg.mpr (pow_le_one₀ (hlow0.trans hlowHigh) hhigh1)
+    have hrootHigh := ((Interval.containsReal_some_iff _ _).mp
+      (Interval.containsReal_sqrtPointBounds (1 - low ^ 2) precision hlowSq)).2
+    have hrootLowR := ((Interval.containsReal_some_iff _ _).mp
+      (Interval.containsReal_sqrtPointBounds (1 - high ^ 2) precision hhighSq)).1
+    push_cast at hrootHigh hrootLowR
+    have hupperRoot : √(1 - m ^ 2) ≤ √(1 - (low : ℝ) ^ 2) :=
+      Real.sqrt_le_sqrt (sub_le_sub_left (pow_le_pow_left₀ hlow0R hlowR 2) 1)
+    have hlowerRoot : √(1 - (high : ℝ) ^ 2) ≤ √(1 - m ^ 2) :=
+      Real.sqrt_le_sqrt (sub_le_sub_left (pow_le_pow_left₀ hm0 hhighR 2) 1)
+    generalize (Interval.sqrtPointBounds (1 - low ^ 2) precision).hi = rootHigh
+      at hrootHigh hslope0 hslope1 ⊢
+    generalize (Interval.sqrtPointBounds (1 - high ^ 2) precision).lo = rootLow
+      at hrootLowR hrootLow hslope0 hslope1 ⊢
+    have hrootLow0 : (0 : ℝ) < (rootLow : ℝ) := by exact_mod_cast hrootLow
+    have hroot : (0 : ℝ) < √(1 - m ^ 2) := hrootLow0.trans_le (hrootLowR.trans hlowerRoot)
+    have hslopeLow : (((dyadicAround (low / rootHigh) precision).lo : Rat) : ℝ) ≤
+        m / √(1 - m ^ 2) := by
+      have hcoarse : (((dyadicAround (low / rootHigh) precision).lo : Rat) : ℝ) ≤
+          ((low / rootHigh : Rat) : ℝ) := by
+        exact_mod_cast (dyadicAround_bounds (low / rootHigh) precision).1
+      refine hcoarse.trans ?_
+      push_cast
+      exact div_le_div₀ hm0 hlowR hroot (hupperRoot.trans hrootHigh)
+    have hslopeHigh : m / √(1 - m ^ 2) ≤
+        (((dyadicAround (high / rootLow) precision).hi : Rat) : ℝ) := by
+      have hcoarse : ((high / rootLow : Rat) : ℝ) ≤
+          (((dyadicAround (high / rootLow) precision).hi : Rat) : ℝ) := by
+        exact_mod_cast (dyadicAround_bounds (high / rootLow) precision).2
+      refine le_trans ?_ hcoarse
+      push_cast
+      exact div_le_div₀ (hm0.trans hhighR) hhighR hrootLow0 (hrootLowR.trans hlowerRoot)
+    generalize (dyadicAround (low / rootHigh) precision).lo = slopeLow
+      at hslopeLow hslope0 ⊢
+    generalize (dyadicAround (high / rootLow) precision).hi = slopeHigh
+      at hslopeHigh hslope1 ⊢
+    have hle : slopeLow ≤ slopeHigh := by exact_mod_cast hslopeLow.trans hslopeHigh
+    have hhighLt : |slopeHigh| < 1 := by
+      rw [abs_of_nonneg (hslope0.trans hle)]
+      exact hslope1
+    have hlowLt : |slopeLow| < 1 := by
+      rw [abs_of_nonneg hslope0]
+      exact lt_of_le_of_lt hle hslope1
+    rw [Real.arcsin_eq_arctan ⟨by linarith, by linarith⟩]
+    exact ⟨(Enclosure.contains_atanSmall _ degree hlowLt).1.trans
+        (Real.arctan_strictMono.monotone hslopeLow),
+      (Real.arctan_strictMono.monotone hslopeHigh).trans
+        (Enclosure.contains_atanSmall _ degree hhighLt).2⟩
+  · simp at h
+
+/-- Every enclosure that `smallArcsin?` returns contains the inverse sine of the half
+difference of the distances. -/
+theorem contains_smallArcsin? {p q : Rat} {interval : RationalInterval}
+    (h : smallArcsin? fmt p q = some interval) :
+    interval.Contains (Real.arcsin (minor p q)) := by
+  unfold smallArcsin? at h
+  split at h
+  · split at h
+    · exact contains_smallArcsinCore? h
+    · obtain ⟨core, hcore, rfl⟩ := Option.map_eq_some_iff.mp h
+      have hmirror := RationalInterval.contains_neg (contains_smallArcsinCore? hcore)
+      have hvalue : -Real.arcsin (minor (p : ℝ) ((-q : Rat) : ℝ)) =
+          Real.arcsin (minor (p : ℝ) (q : ℝ)) := by
+        rw [Rat.cast_neg, ConfocalComparison.minor_neg, Real.arcsin_neg, neg_neg]
+      rwa [hvalue] at hmirror
+  · simp at h
+
 /-- `arcsinPart` denotes the inverse sine of the half difference of the distances. -/
 theorem arcsinPart_denotes (p q : Rat) :
     (arcsinPart fmt p q).Denotes (Real.arcsin (minor p q)) false := by
@@ -206,8 +327,10 @@ theorem arcsinPart_denotes (p q : Rat) :
   refine hexact.within fun interval hinterval => ?_
   split at hinterval
   · simp at hinterval
-  · rw [← eval_arcsinExpr]
-    exact contains_exprEnclosure? hinterval
+  · refine contains_orElse (fun _ hsmall => contains_smallArcsin? hsmall)
+      (fun general hgeneral => ?_) interval hinterval
+    rw [← eval_arcsinExpr]
+    exact contains_exprEnclosure? hgeneral
 
 /-- `arccosPart` denotes the inverse cosine of the half difference of the distances. -/
 theorem arccosPart_denotes (p q : Rat) :

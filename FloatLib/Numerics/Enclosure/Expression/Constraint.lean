@@ -20,8 +20,8 @@ atoms before a constraint is built, which is why there is no constructor for the
 A `Refutation` is a certificate that a constraint has no point in a box: a tree whose inner nodes
 cut the box along one coordinate and whose leaves say which part of the constraint is false on the
 whole leaf box. `Constraint.refutes` checks a certificate. It evaluates an expression only at a
-leaf, and only the atom that the leaf names, with the checker of `Check` (`Expr.check`), so a leaf
-may also ask for that checker's own bisection. `ConstraintProof` proves that an accepted
+leaf, and only the atom that the leaf names, with the checker of `Check` (`Expr.checkZero`), so
+a leaf may also ask for that checker's own bisection. `ConstraintProof` proves that an accepted
 certificate excludes every real point of the box (`Constraint.refutes_sound`).
 
 At a boundary, subdivision alone can leave a constraint undecided. If a form's matrix is
@@ -66,7 +66,7 @@ A certificate that a constraint has no point in a box. The check of each constru
 `Constraint.refutes`.
 -/
 inductive Refutation where
-  /-- The constraint is an atom whose relation holds on the whole box, by `Expr.check` with at
+  /-- The constraint is an atom whose relation holds on the whole box, by `Expr.checkZero` with at
   most `depth` bisections of the widest coordinate along a branch. -/
   | atom (depth : Nat)
   /-- The constraint is a conjunction whose left part has no point in the box. -/
@@ -132,14 +132,14 @@ theorem Box.halve_eq (box : Box) (i : Nat) :
 /--
 Check a certificate against a constraint and a box.
 
-A leaf `atom depth` asks `Expr.check` for the relation of the atom on the box. `left` and `right`
-choose the part of a conjunction that fails, `both` needs each part of a disjunction to fail, and
-`bisect` and `cut` need the constraint to fail on both parts of the box. `definite` and `pin` ask
-`Form.definiteOn` for the matrix of a form atom on the box. Any other combination of certificate
-and constraint is rejected.
+A leaf `atom depth` asks `Expr.checkZero` for the relation of the atom on the box. `left` and
+`right` choose the part of a conjunction that fails, `both` needs each part of a disjunction to
+fail, and `bisect` and `cut` need the constraint to fail on both parts of the box. `definite`
+and `pin` ask `Form.definiteOn` for the matrix of a form atom on the box. Any other combination
+of certificate and constraint is rejected.
 -/
 def Constraint.refutes {α : Type*} (B : Backend α) : Refutation → Constraint → Box → Bool
-  | .atom depth, .fails relation e, box => e.check B relation box depth
+  | .atom depth, .fails relation e, box => e.checkZero B relation box depth
   | .left r, .and a _, box => Constraint.refutes B r a box
   | .right r, .and _ b, box => Constraint.refutes B r b box
   | .both l r, .or a b, box => Constraint.refutes B l a box && Constraint.refutes B r b box

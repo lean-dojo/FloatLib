@@ -27,6 +27,12 @@ The definitions branch with `casesOn` on Booleans and options and read a variabl
 indexing notation. Each has a theorem that states it in the ordinary notation: `Relation.check_def`,
 `Backend.encloseInterval?_def`, `Box.enclose?_nil`, `Box.enclose?_cons`, `Box.widest?_nil`,
 `Box.widest?_cons`, `Box.bisect?_def`, `Expr.checkBox_def`, `Expr.check_def`.
+
+`Expr.checkZero` is the same check on the evaluation with the zero rule (`Expr.evalZero?`): a
+product with a factor that is exactly zero, and a quotient with such a numerator, need no
+enclosure of the other operand. It passes every box that `Expr.check` passes
+(`Expr.checkZero_of_check`). Both are instances of one leaf check on a given evaluation
+(`Box.checkWith`) and of one subdivision on a given leaf check (`Box.checkAdaptive`).
 -/
 
 @[expose] public section
@@ -214,6 +220,50 @@ theorem Box.bisect?_def (box : Box) :
       · rw [decide_eq_false hwidth, ite_eq_right hwidth]
 
 /--
+The check of one box on a given evaluation of the expression: enclose the box, evaluate, decode
+the upper endpoint and test it (`Box.checkWith_def`). `Expr.checkBox` is this check on
+`Expr.eval?`, and `Expr.checkBoxZero` on `Expr.evalZero?`.
+-/
+def Box.checkWith {α : Type*} (B : Backend α) (relation : Relation)
+    (evaluate : (Nat → Option (Interval α)) → Option (Interval α)) (box : Box) : Bool :=
+  Option.casesOn (motive := fun _ => Bool) (box.enclose? B) false
+    (fun intervals =>
+      Option.casesOn (motive := fun _ => Bool)
+        (evaluate (fun i => Kernel.Seq.nth? intervals i)) false
+        (fun I => Option.casesOn (motive := fun _ => Bool) (B.decode I.hi) false
+          (fun hi => relation.check hi)))
+
+/-- The check of one box on a given evaluation, in the ordinary notation. -/
+theorem Box.checkWith_def {α : Type*} (B : Backend α) (relation : Relation)
+    (evaluate : (Nat → Option (Interval α)) → Option (Interval α)) (box : Box) :
+    box.checkWith B relation evaluate =
+      match box.enclose? B with
+      | none => false
+      | some intervals =>
+        match evaluate (fun i => intervals[i]?) with
+        | none => false
+        | some I =>
+          match B.decode I.hi with
+          | none => false
+          | some hi => relation.check hi := by
+  unfold Box.checkWith
+  cases box.enclose? B with
+  | none => rfl
+  | some intervals =>
+    change Option.casesOn (motive := fun _ => Bool)
+      (evaluate (fun i => Kernel.Seq.nth? intervals i)) false _ = _
+    simp only [Kernel.Seq.nth?_eq]
+    cases evaluate (fun i => intervals[i]?) with
+    | none => rfl
+    | some I =>
+      change Option.casesOn (motive := fun _ => Bool) (B.decode I.hi) false
+        (fun hi => relation.check hi) =
+          match B.decode I.hi with
+          | none => false
+          | some hi => relation.check hi
+      cases B.decode I.hi <;> rfl
+
+/--
 Check one box using the decoded upper endpoint of a successful expression evaluation
 (`Expr.checkBox_def`).
 -/
@@ -238,23 +288,8 @@ theorem Expr.checkBox_def {α : Type*} (e : Expr) (B : Backend α)
         | some I =>
           match B.decode I.hi with
           | none => false
-          | some hi => relation.check hi := by
-  unfold Expr.checkBox
-  cases box.enclose? B with
-  | none => rfl
-  | some intervals =>
-    change Option.casesOn (motive := fun _ => Bool)
-      (e.eval? B (fun i => Kernel.Seq.nth? intervals i)) false _ = _
-    simp only [Kernel.Seq.nth?_eq]
-    cases e.eval? B (fun i => intervals[i]?) with
-    | none => rfl
-    | some I =>
-      change Option.casesOn (motive := fun _ => Bool) (B.decode I.hi) false
-        (fun hi => relation.check hi) =
-          match B.decode I.hi with
-          | none => false
-          | some hi => relation.check hi
-      cases B.decode I.hi <;> rfl
+          | some hi => relation.check hi :=
+  Box.checkWith_def B relation (e.eval? B) box
 
 /--
 Check a real inequality, subdividing inconclusive boxes up to the supplied depth
@@ -305,6 +340,112 @@ theorem Expr.check_def {α : Type*} (e : Expr) (B : Backend α)
           (e.check B relation right depth) =
             (e.check B relation left depth && e.check B relation right depth)
         cases e.check B relation left depth <;> rfl
+
+/-! ## The check with the zero rule -/
+
+/--
+Check a box with a given leaf check, subdividing inconclusive boxes up to the supplied depth:
+the box passes, or it is split and both halves pass at one depth less. `Expr.check` is this
+check on the leaf `Expr.checkBox` (`Expr.check_eq_checkAdaptive`).
+-/
+def Box.checkAdaptive (leaf : Box → Bool) : Box → Nat → Bool
+  | box, 0 => leaf box
+  | box, depth + 1 =>
+    Bool.casesOn (motive := fun _ => Bool) (leaf box)
+      (Option.casesOn (motive := fun _ => Bool) box.bisect? false
+        (fun children =>
+          Bool.casesOn (motive := fun _ => Bool) (Box.checkAdaptive leaf children.1 depth) false
+            (Box.checkAdaptive leaf children.2 depth)))
+      true
+
+/-- The adaptive check is the subdivision on the leaf check of one box. -/
+theorem Expr.check_eq_checkAdaptive {α : Type*} (e : Expr) (B : Backend α)
+    (relation : Relation) (box : Box) (depth : Nat) :
+    e.check B relation box depth = Box.checkAdaptive (e.checkBox B relation) box depth := by
+  induction depth generalizing box with
+  | zero => rfl
+  | succ depth ih =>
+    rw [Expr.check, Box.checkAdaptive]
+    simp only [ih]
+
+/--
+Check one box as `Expr.checkBox` does, on the evaluation with the zero rule (`Expr.evalZero?`):
+a product with a factor that is exactly zero, and a quotient with such a numerator, need no
+enclosure of the other operand.
+-/
+def Expr.checkBoxZero {α : Type*} (e : Expr) (B : Backend α)
+    (relation : Relation) (box : Box) : Bool :=
+  box.checkWith B relation (e.evalZero? B)
+
+/--
+Check a real inequality as `Expr.check` does, on the evaluation with the zero rule
+(`Expr.evalZero?`), subdividing inconclusive boxes up to the supplied depth. It passes every
+box that `Expr.check` passes (`Expr.checkZero_of_check`).
+-/
+def Expr.checkZero {α : Type*} (e : Expr) (B : Backend α) (relation : Relation) (box : Box)
+    (depth : Nat) : Bool :=
+  Box.checkAdaptive (e.checkBoxZero B relation) box depth
+
+/-- A leaf check that passes wherever another one does passes the same subdivisions. -/
+theorem Box.checkAdaptive_mono {leaf stronger : Box → Bool}
+    (h : ∀ box, leaf box = true → stronger box = true) {box : Box} {depth : Nat}
+    (hcheck : Box.checkAdaptive leaf box depth = true) :
+    Box.checkAdaptive stronger box depth = true := by
+  induction depth generalizing box with
+  | zero => exact h box hcheck
+  | succ depth ih =>
+    rw [Box.checkAdaptive] at hcheck ⊢
+    cases hleaf : leaf box with
+    | true => rw [h box hleaf]
+    | false =>
+      rw [hleaf] at hcheck
+      cases stronger box with
+      | true => rfl
+      | false =>
+        cases hsplit : box.bisect? with
+        | none => rw [hsplit] at hcheck; exact hcheck
+        | some children =>
+          rw [hsplit] at hcheck
+          change Bool.casesOn (motive := fun _ => Bool)
+            (Box.checkAdaptive leaf children.1 depth) false
+            (Box.checkAdaptive leaf children.2 depth) = true at hcheck
+          change Bool.casesOn (motive := fun _ => Bool)
+            (Box.checkAdaptive stronger children.1 depth) false
+            (Box.checkAdaptive stronger children.2 depth) = true
+          cases hleft : Box.checkAdaptive leaf children.1 depth with
+          | false => rw [hleft] at hcheck; exact absurd hcheck Bool.false_ne_true
+          | true =>
+            rw [hleft] at hcheck
+            rw [ih hleft]
+            exact ih hcheck
+
+/-- A box that passes the leaf check passes the leaf check with the zero rule. -/
+theorem Expr.checkBoxZero_of_checkBox {α : Type*} (e : Expr) {B : Backend α}
+    {relation : Relation} {box : Box} (h : e.checkBox B relation box = true) :
+    e.checkBoxZero B relation box = true := by
+  unfold Expr.checkBox at h
+  unfold Expr.checkBoxZero Box.checkWith
+  cases hbox : box.enclose? B with
+  | none => rw [hbox] at h; exact h
+  | some intervals =>
+    rw [hbox] at h
+    change Option.casesOn (motive := fun _ => Bool)
+      (e.eval? B (fun i => Kernel.Seq.nth? intervals i)) false _ = true at h
+    change Option.casesOn (motive := fun _ => Bool)
+      (e.evalZero? B (fun i => Kernel.Seq.nth? intervals i)) false _ = true
+    cases heval : e.eval? B (fun i => Kernel.Seq.nth? intervals i) with
+    | none => rw [heval] at h; exact absurd h Bool.false_ne_true
+    | some I =>
+      rw [heval] at h
+      rw [e.evalZero?_of_eval? B _ heval]
+      exact h
+
+/-- A box that passes the adaptive check passes the adaptive check with the zero rule. -/
+theorem Expr.checkZero_of_check {α : Type*} (e : Expr) {B : Backend α}
+    {relation : Relation} {box : Box} {depth : Nat} (h : e.check B relation box depth = true) :
+    e.checkZero B relation box depth = true :=
+  Box.checkAdaptive_mono (fun _ hleaf => e.checkBoxZero_of_checkBox hleaf)
+    (by rwa [← Expr.check_eq_checkAdaptive])
 
 end FloatLib.Numerics.Interval
 

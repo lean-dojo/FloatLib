@@ -33,9 +33,13 @@ open FloatLib.Numerics
 def addGap (fmt : FloatFormat) : Nat :=
   2 * fmt.fracWidth + 7
 
+kernel_constant addGap
+
 /-- Bound on the bit length of an aligned sum of two values of `fmt`. -/
 def addBits (fmt : FloatFormat) : Nat :=
   3 * fmt.fracWidth + 9
+
+kernel_constant addBits
 
 /--
 The sum of two words that are not both finite, by the rules of `Model.Spec.add`: a NaN operand
@@ -56,6 +60,8 @@ def addSpecial (fmt : FloatFormat) (a b : Nat) : Nat :=
       (infFlag fmt ua) (infFlag fmt ub) (nanFlag fmt sa ua) (nanFlag fmt sb ub))
     (Nat.shiftRight a (signPos fmt)) (Nat.shiftRight b (signPos fmt))
     (Nat.land a (magnitudeMask fmt)) (Nat.land b (magnitudeMask fmt))
+
+kernel_constant addSpecial
 
 /--
 Encoding of the sum of the values encoded by `a` and `b`, rounded in the direction `mode`
@@ -80,6 +86,8 @@ def signedZero (fmt : FloatFormat) : Nat :=
   match fmt.encoding with
   | .finiteUnsignedZero => 0
   | .ieee | .finiteMaxNaN | .finite => 1
+
+kernel_constant signedZero
 
 /--
 Encoding of the negation (`neg_eq_spec`): the sign bit is flipped, except for the zero and the NaN
@@ -125,6 +133,7 @@ theorem addSpecial_eq {fmt : FloatFormat} (x y : Model fmt)
   rw [hspec]
   refine (chooseNaN2_getD_bits x y _ _ ?_).symm
   intro _ _
+  simp only [invalidWord_eq]
   cases Model.isInfinite x <;> cases Model.isInfinite y <;>
     cases (Model.signBit x == Model.signBit y) <;> rfl
 

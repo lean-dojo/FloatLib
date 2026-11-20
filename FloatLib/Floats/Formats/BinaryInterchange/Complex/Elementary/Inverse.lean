@@ -37,6 +37,11 @@ the correctly rounded real `log` for the inverse hyperbolic cosine, and the bina
 sine and cosine. The sign of a zero
 part of the argument selects the side of a branch cut: the cuts of `asinh` are the imaginary axis
 outside `[-i, i]`, and those of `acosh` and `acos` lie on the real axis.
+
+At a small argument each part of `asinh` and `asin` lies next to a part of the argument, a
+representable number. The inverse hyperbolic cosine then works with twice more bits, and the
+inverse sine has the enclosure `smallArcsin?` with no cancellation, so that both separate the
+part from that number.
 -/
 
 @[expose] public section
@@ -133,30 +138,65 @@ def exprEnclosure? (fmt : FloatFormat) (e : Interval.Expr) (extra : Nat) :
   refineTwice fmt fun precision => e.gridEnclosure? (precision + extra) (precision / 4 + 8)
 
 /--
+One enclosure of `arcsin (m (p, q))` for `0 < q ≤ 1 / 16`, with no cancellation: the half
+difference is `q / M (p, q)`, and its inverse sine is `arctan (m / √(1 - m²))`, enclosed by the
+Taylor polynomial of the arctangent at both ends of a short interval around the slope
+(`dyadicAround`). The half sum and the root are bounded on a
+grid finer than the working precision of `fmt` by twice the bits that `p` and `q` lie below
+one, so that the enclosure separates the part from `q`, the nearest representable number at a
+small argument.
+-/
+def smallArcsinCore? (fmt : FloatFormat) (p q : Rat) : Option RationalInterval :=
+  let precision := fmt.fracWidth + 36 + 2 * bitsBelowOne (max |p| q)
+  let bounds := majorBounds p q precision
+  let low := q / bounds.2
+  let high := q / bounds.1
+  let rootHigh := (Interval.sqrtPointBounds (1 - low ^ 2) precision).hi
+  let rootLow := (Interval.sqrtPointBounds (1 - high ^ 2) precision).lo
+  let slopeLow := (dyadicAround (low / rootHigh) precision).lo
+  let slopeHigh := (dyadicAround (high / rootLow) precision).hi
+  if 0 < q ∧ q ≤ 1 / 16 ∧ 0 < rootLow ∧ 0 ≤ slopeLow ∧ slopeHigh < 1 then
+    tightOnly fmt
+      ⟨(Enclosure.atanSmall slopeLow (smallDegree fmt slopeHigh)).lo,
+        (Enclosure.atanSmall slopeHigh (smallDegree fmt slopeHigh)).hi⟩
+  else none
+
+/-- One enclosure of `arcsin (m (p, q))` for `0 < |q| ≤ 1 / 16`: `smallArcsinCore?`, mirrored
+for a negative `q`. -/
+def smallArcsin? (fmt : FloatFormat) (p q : Rat) : Option RationalInterval :=
+  if |q| ≤ 1 / 16 then
+    if 0 < q then smallArcsinCore? fmt p q
+    else (smallArcsinCore? fmt p (-q)).map RationalInterval.neg
+  else none
+
+/--
 The part `arcosh (M (p, q))`, as an exact comparator. It is zero on the segment between the foci,
 `p = 0` and `|q| ≤ 1`, and positive elsewhere.
 
 The enclosure works with as many extra bits as `M (p, q) - 1` has leading zeros, by the rational
-lower bound `(|q + 1| + |q - 1| - 2) / 2 + p² / (4 (|p| + |q| + 1))` of that difference.
+lower bound `(|q + 1| + |q - 1| - 2) / 2 + p² / (4 (|p| + |q| + 1))` of that difference, and with
+twice the bits that `p` and `q` lie below one: at a small argument the part is within
+`p² + q²`, relatively, of `|p|`, a representable number, and the enclosure separates the two.
 -/
 def arcoshPart (fmt : FloatFormat) (p q : Rat) : Part fmt :=
   (Part.real (ConfocalComparison.compareArcosh p q (cacheLevels fmt)) false).within
     (if p = 0 ∧ |q| ≤ 1 then none
       else
         let extra := bitsBelowOne
-          ((|q + 1| + |q - 1| - 2) / 2 + p ^ 2 / (4 * (|p| + |q| + 1)))
+          ((|q + 1| + |q - 1| - 2) / 2 + p ^ 2 / (4 * (|p| + |q| + 1))) +
+            2 * bitsBelowOne (max |p| |q|)
         refineTwice fmt fun precision => some (arcoshEnclosure p q (precision + extra)))
 
 /--
 The part `arcsin (m (p, q))`, as an exact comparator. It has the sign of `q`.
 
-The enclosure works with extra bits for a small result and for a half difference near `±1`,
-where the inverse sine is steep.
+The enclosure is `smallArcsin?` for a small `q`. Elsewhere it works with extra bits for a half
+difference near `±1`, where the inverse sine is steep.
 -/
 def arcsinPart (fmt : FloatFormat) (p q : Rat) : Part fmt :=
   (Part.real (ConfocalComparison.compareArcsin p q (cacheLevels fmt)) false).within
     (if q = 0 then none
-      else exprEnclosure? fmt (arcsinExpr p q)
+      else smallArcsin? fmt p q <|> exprEnclosure? fmt (arcsinExpr p q)
         (max (bitsBelowOne (|q| / (|p| + |q| + 1))) (bitsBelowOne (minorGap p q) / 2 + 1)))
 
 /--

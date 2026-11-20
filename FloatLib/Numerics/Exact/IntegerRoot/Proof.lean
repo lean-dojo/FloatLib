@@ -44,7 +44,7 @@ private theorem go_eq_nthRoot (n value fuel guess : Nat) (hguess : guess ≤ fue
     · rename_i hnext
       apply (Nat.nthRoot_eq_of_le_of_lt ?_ hupper).symm
       have hmul := Nat.mul_le_of_le_div _ _ _ (Nat.le_of_not_lt hnext)
-      have hdiv : guess ≤ value / guess ^ (n + 1) := by nlinarith
+      have hdiv : guess ≤ value / guess ^ (n + 1) := by linarith
       have h := Nat.mul_le_of_le_div _ _ _ hdiv
       simpa [pow_succ, Nat.mul_comm] using h
 

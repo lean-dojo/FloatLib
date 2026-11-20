@@ -23,6 +23,12 @@ theorems available for every configured binary type, whatever its descriptor and
 `liftBinary_add_eq` and its siblings rewrite the mode-taking operations `ExecFloat.Binary.add`,
 `sub`, `mul`, `fma`, `div` and `sqrt` in a direction other than nearest-even to the kernel
 operations.
+
+`add_outcome_eq` and its siblings rewrite an operation with `status := true` to the kernel value
+with the flags and the ternary value decoded from one status number. `add_outcome_eq_with` and
+its siblings, `ofRat_outcome_eq_with` and `cast_status_eq_with` take that status number at the
+encoding of the kernel value, so that a statement about the value and the flags of one operation
+contains the value once. They declare a kernel cost, so `float_decide` rewrites with them.
 -/
 
 @[expose] public section
@@ -280,6 +286,14 @@ theorem ofModel_eq_natView {plan : StoragePlan format} (value : Model format) :
   cases plan <;> rfl
 
 open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
+/-- A model value stored in a configured format is the stored encoding of the value. -/
+theorem ofModel_eq_ofNat {plan : StoragePlan format} (value : Model format) :
+    (FloatLib.Floats.ExecFloat.Binary.ofModel value :
+        FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) =
+      KernelPath.ofNat value.toNatBits := by
+  rw [KernelPath.ofNat_eq, Model.ofNatBits_toNatBits, ofModel_eq_natView]
+
+open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
 /--
 A rational number rounded into a configured format in a direction is the kernel rounding of its
 numerator and denominator.
@@ -315,6 +329,31 @@ decoded from one status number.
 
 open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
 /--
+The outcome of rounding a rational number into a configured format with `status := true`: the
+kernel rounding of its numerator and denominator, with the exception flags and the ternary value
+decoded from the status number at the word of that rounding.
+-/
+@[kernel_optimize (cost := 490)] theorem ofRat_outcome_eq_with {plan : StoragePlan format}
+    (q : ℚ) (mode : Model.IEEERoundingMode) :
+    FloatLib.Floats.ExecFloat.Binary.IEEEOutcome.ofModel (plan := plan) (code := Code plan)
+        (Model.ofRat format q (mode := mode) (status := true)) =
+      { value := KernelPath.Value.ofRatio mode (decide (q.num < 0)) q.num.natAbs q.den
+        status := KernelPath.decodeStatus
+          (KernelPath.Flat.ratioStatusWith format mode (signNat (decide (q.num < 0)))
+            q.num.natAbs q.den
+            (KernelPath.toNat
+              (KernelPath.Value.ofRatio mode (decide (q.num < 0)) q.num.natAbs q.den :
+                FloatLib.Floats.ExecFloat (Family format (Code plan) plan))))
+        ternary := KernelPath.decodeTernary
+          (KernelPath.Flat.ratioStatusWith format mode (signNat (decide (q.num < 0)))
+            q.num.natAbs q.den
+            (KernelPath.toNat
+              (KernelPath.Value.ofRatio mode (decide (q.num < 0)) q.num.natAbs q.den :
+                FloatLib.Floats.ExecFloat (Family format (Code plan) plan)))) } := by
+  rw [ofRat_outcome_eq, KernelPath.Value.ofRatio_status_eq_with]
+
+open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
+/--
 The reference cast of a configured value, stored in a configured format, is the kernel cast.
 -/
 @[kernel_optimize] theorem cast_eq {target : FloatFormat} {plan : StoragePlan format}
@@ -344,6 +383,28 @@ descriptor.
   rw [toModel_eq_natView]
   exact KernelPath.Value.cast_status_eq_lift mode x
 
+open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
+/--
+The exception flags and the ternary value of the reference cast of a configured value with
+`status := true` are decoded from the status number at the flat cast of its encoding, which is
+the word of the value of the cast, for every destination descriptor.
+-/
+@[kernel_optimize (cost := 100)] theorem cast_status_eq_with {target : FloatFormat}
+    {plan : StoragePlan format} (mode : Model.IEEERoundingMode)
+    (x : FloatLib.Floats.ExecFloat (Family format (Code plan) plan)) :
+    (Model.cast format target (FloatLib.Floats.ExecFloat.Binary.toModel x) mode
+          (status := true)).status =
+        KernelPath.decodeStatus
+          (KernelPath.Flat.castStatusWith format target mode (toNat x)
+            (KernelPath.Flat.cast format target mode (toNat x))) ∧
+      (Model.cast format target (FloatLib.Floats.ExecFloat.Binary.toModel x) mode
+          (status := true)).ternary =
+        KernelPath.decodeTernary
+          (KernelPath.Flat.castStatusWith format target mode (toNat x)
+            (KernelPath.Flat.cast format target mode (toNat x))) := by
+  rw [KernelPath.Flat.castStatusWith_cast]
+  exact cast_status_eq mode x
+
 set_option hygiene false in
 outcome_rule add for format [left right]
 
@@ -358,6 +419,18 @@ outcome_rule div for format [left right]
 outcome_rule sqrt for format [value]
 
 outcome_rule roundToIntegral for format [value]
+
+outcome_with_rule add for format [left right] cost 270
+
+outcome_with_rule sub for format [left right] cost 280
+
+outcome_with_rule mul for format [left right] cost 230
+
+outcome_with_rule fma for format [left right addend] cost 340
+
+outcome_with_rule div for format [left right] cost 270
+
+outcome_with_rule roundToIntegral for format [value] cost 245
 
 open FloatLib.Floats.Formats.BinaryInterchange.KernelPath in
 /--

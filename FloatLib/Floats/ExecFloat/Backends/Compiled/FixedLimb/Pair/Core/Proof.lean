@@ -367,7 +367,7 @@ private theorem mul_two_pow_add_lt {field low E n : Nat} (hfield : field < 2 ^ E
     field * 2 ^ n + low < 2 ^ (E + n) := by
   have hstep : (field + 1) * 2 ^ n ≤ 2 ^ E * 2 ^ n := Nat.mul_le_mul_right _ hfield
   rw [pow_add]
-  nlinarith
+  linarith
 
 /--
 Native packing agrees with the field constructor for a normalized significand and an in-range

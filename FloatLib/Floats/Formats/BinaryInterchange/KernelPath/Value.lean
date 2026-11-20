@@ -37,6 +37,12 @@ decode the five IEEE exception flags and the ternary value of an operation with 
 from one status number computed on the encodings. `Flat.ratioStatus` is the status number of a
 rounded ratio of naturals (`KernelPath.ofRat_status_eq`).
 
+`Value.add_status_eq_with` and its siblings for subtraction, multiplication, fused multiply-add,
+division and rounding to an integral value, and `Value.ofRatio_status_eq_with` for a rounded
+ratio, give the same status number as a function of the encoding of the kernel value
+(`Flat.addStatusWith`). A statement about the value and the flags of one operation then contains
+the value once, and Lean's kernel computes it once.
+
 `Value.roundToIntegral mode x` rounds to an integer in the format, and `Value.toInt?_eq_lift`
 computes the integer conversion on the encoding. `Value.cast mode x` is the cast into another
 family: the reference `Model.cast` between the two descriptors, with the destination's overflow
@@ -194,6 +200,18 @@ theorem ofRatio_eq_lift (mode : Model.IEEERoundingMode) (negative : Bool) (num d
       Flat.ofRatio format mode (signNat negative) num den :=
   toNat_nullary _ _ _
 
+/--
+The status number of a rounded ratio at the encoding of its kernel rounding is the flat status
+number of the ratio.
+-/
+theorem ofRatio_status_eq_with (mode : Model.IEEERoundingMode) (negative : Bool)
+    (num den : Nat) :
+    Flat.ratioStatusWith format mode (signNat negative) num den
+        (toNat (ofRatio (F := F) mode negative num den)) =
+      Flat.ratioStatus format mode (signNat negative) num den := by
+  rw [toNat_ofRatio, Flat.ratioStatusWith_eq, Flat.ratioStatus_eq, Flat.ofRatio_eq]
+  rfl
+
 /-! ### Casts -/
 
 section Cast
@@ -263,6 +281,26 @@ status_operation roundToIntegral := Flat.roundToIntegralStatus, Model.roundToInt
   KernelPath.roundToIntegralStatus_eq, Flat.roundToIntegralStatus_eq [x]
 
 /-!
+The status numbers as functions of the word of the value: a statement about the value and the
+flags of one operation then makes Lean's kernel compute the value once.
+-/
+
+status_with add := Flat.addStatusWith, Flat.addStatusWith_eq, Flat.addStatus, Flat.addStatus_eq
+  using [Flat.add_eq, KernelPath.addShort_eq_spec, ← KernelPath.add_eq_spec] [x y]
+
+status_with sub := Flat.subStatusWith, Flat.subStatusWith_eq, Flat.subStatus, Flat.subStatus_eq
+  using [Flat.sub_eq, KernelPath.subShort_eq_spec, ← KernelPath.sub_eq_spec] [x y]
+
+status_with mul := Flat.mulStatusWith, Flat.mulStatusWith_eq, Flat.mulStatus, Flat.mulStatus_eq
+  using [Flat.mul_eq, KernelPath.mulFast_eq_spec, ← KernelPath.mul_eq_spec] [x y]
+
+status_with fma := Flat.fmaStatusWith, Flat.fmaStatusWith_eq, Flat.fmaStatus, Flat.fmaStatus_eq
+  using [Flat.fma_eq] [x y z]
+
+status_with div := Flat.divStatusWith, Flat.divStatusWith_eq, Flat.divStatus, Flat.divStatus_eq
+  using [Flat.div_eq] [x y]
+
+/-!
 A statement that the flags of an outcome are a given record becomes one comparison of natural
 numbers (`decodeStatus_eq_iff`).
 -/
@@ -289,6 +327,10 @@ theorem roundToIntegral_eq_lift (mode : Model.IEEERoundingMode)
     (x : FloatLib.Floats.ExecFloat F) :
     toNat (roundToIntegral mode x) = Flat.roundToIntegral format mode (toNat x) :=
   toNat_unary _ _ _ x
+
+status_with roundToIntegral := Flat.roundToIntegralStatusWith,
+  Flat.roundToIntegralStatusWith_eq, Flat.roundToIntegralStatus, Flat.roundToIntegralStatus_eq
+  using [Flat.roundToIntegral_eq] [x]
 
 /--
 The integer that rounds a stored value in the direction `mode`, computed on its encoding: `none`

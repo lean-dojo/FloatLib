@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Parts
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Small
 public import FloatLib.Numerics.Exact.Elementary.Runtime
 public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Runtime
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.CorrectlyRounded.Runtime
@@ -31,7 +31,11 @@ the single rounding, and `ElementaryComparison.prepareLog` and
 `TrigonometricComparison.prepareAtan2` compare each part with every rational. One enclosure of
 each part, from the table-reduced logarithm of the correctly rounded real `log` and from the
 arctangent series, answers the comparisons away from the part (`Part.within`), so the exact
-comparators run only for a boundary inside that enclosure. The angles of the
+comparators run only for a boundary inside that enclosure. At a small argument, where a part
+of `log1p`, `atanh` or `atan` lies next to a part of the argument, the enclosure is a Taylor
+enclosure of `Small` that separates the two (`smallLog?`, `smallArg?`), and a rational that a
+subnormal part makes thousands of bits long is replaced by a short interval around it
+(`coarseLog`, `coarseArg`). The angles of the
 special values (`π`, `π / 2`, `π / 4`, `3 π / 4`) are arguments of the direction of an infinite or
 zero input, rounded in the requested direction like every other part.
 -/
@@ -60,26 +64,77 @@ def ratLogEnclosure (q : Rat) (precision : Nat) : RationalInterval :=
   Model.Transcendentals.CorrectlyRounded.logEnclosure split.1 split.2 precision
 
 /--
+Enclose `log q` for a positive rational `q` on the grid of `precision` fractional bits. For a
+`q` that is written with thousands of bits (`isLong`) it is the logarithms at the two ends of a
+short interval around `q` (`dyadicAround`), so that the cost does not grow with the length of
+`q`.
+-/
+def coarseLog (q : Rat) (precision : Nat) : RationalInterval :=
+  if isLong q (precision + 8) ∧ 0 < (dyadicAround q (precision + 8)).lo then
+    ⟨(ratLogEnclosure (dyadicAround q (precision + 8)).lo precision).lo,
+      (ratLogEnclosure (dyadicAround q (precision + 8)).hi precision).hi⟩
+  else ratLogEnclosure q precision
+
+/--
+The degree of the arctangent series at `slope` for `precision` bits: half the precision, and
+less for a slope below a quarter, whose series gains twice the bits that the slope lies below
+one with each term.
+-/
+def atanDegree (slope : Rat) (precision : Nat) : Nat :=
+  if 3 ≤ bitsBelowOne |slope| then
+    min (precision / 2) (precision / (2 * (bitsBelowOne |slope| - 1)) + 4)
+  else precision / 2
+
+/--
+Enclose `arctan slope` at `precision` bits, with the relative accuracy of a small slope. For a
+slope that is written with thousands of bits (`isLong`) it is the arctangent at the two ends of
+a short interval around the slope (`dyadicAround`).
+-/
+def coarseAtan (slope : Rat) (precision : Nat) : RationalInterval :=
+  if isLong slope (precision + 8) then
+    ⟨(Enclosure.atan (dyadicAround slope (precision + 8)).lo (atanDegree slope precision)).lo,
+      (Enclosure.atan (dyadicAround slope (precision + 8)).hi (atanDegree slope precision)).hi⟩
+  else Enclosure.atan slope (atanDegree slope precision)
+
+/--
+Enclose the principal argument of `x + i y` at `precision` bits: the arctangent of the slope
+(`coarseAtan`) with the multiple of `π / 4` of the quadrant.
+-/
+def coarseArg (x y : Rat) (precision : Nat) : RationalInterval :=
+  (coarseAtan (TrigonometricComparison.atan2Reduction x y).1 precision).add
+    ((Enclosure.piQuarter (precision / 2)).scale (TrigonometricComparison.atan2Reduction x y).2)
+
+/--
 The part `log q / scale` for a positive rational `q` and a positive `scale`, as an exact
 comparator. A zero value, at `q = 1`, is a positive zero.
+
+For `q` near one the enclosure is the Taylor enclosure `smallLog?`, which keeps the relative
+accuracy of `q - 1`, and elsewhere the table-reduced logarithm `coarseLog`.
 -/
 def logPart (fmt : FloatFormat) (q scale : Rat) : Part fmt :=
   if hq : 0 < q then
     (Part.real (fun boundary =>
       (ElementaryComparison.prepareLog q (cacheLevels fmt) hq).compare (scale * boundary))
-      false).within (refineTwice fmt fun precision =>
-        some ((ratLogEnclosure q precision).scale (1 / scale)))
+      false).within
+        ((smallLog? fmt q).map (fun interval => interval.scale (1 / scale)) <|>
+          refineTwice fmt fun precision =>
+            some ((coarseLog q precision).scale (1 / scale)))
   else .exact (Model.invalidResult fmt)
 
 /--
 The part `arg (x + i y) / scale` for a positive `scale`, as an exact comparator, with the
 principal argument in `(-π, π]`. A zero value, on the positive real axis, is a positive zero.
+
+For a small angle from the positive real axis the enclosure is the Taylor enclosure
+`smallArg?`, with the degree that the size of the angle needs, and elsewhere `coarseArg`.
 -/
 def argPart (fmt : FloatFormat) (x y scale : Rat) : Part fmt :=
   (Part.real (fun boundary =>
     (TrigonometricComparison.prepareAtan2 x y (cacheLevels fmt)).compare (scale * boundary))
-    false).within (refineTwice fmt fun precision =>
-      some ((TrigonometricComparison.atan2Interval x y (precision / 2)).scale (1 / scale)))
+    false).within
+      ((smallArg? fmt x y).map (fun interval => interval.scale (1 / scale)) <|>
+        refineTwice fmt fun precision =>
+          some ((coarseArg x y precision).scale (1 / scale)))
 
 /--
 The direction of one part of an infinite argument: `±1` for an infinite part and `0` for a finite

@@ -214,7 +214,7 @@ def close (precision degree depth : Nat)
     let ⟨_, exactBackend, exactBackendProof⟩ := tables.rationalBackend config
     let (exactProof?, limit) ← try
       let checked ← verifyClosedCheck
-        q(Interval.Expr.check $expression $exactBackend $relation $box 0 = true)
+        q(Interval.Expr.checkZero $expression $exactBackend $relation $box 0 = true)
         maxHeartbeats
       pure (some checked, (none : Option ResourceLimit))
     catch error =>
@@ -222,7 +222,7 @@ def close (precision degree depth : Nat)
       pure (none, ← resourceLimit? error)
     exactLimit := limit
     if let some checked := exactProof? then
-      let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
+      let sound := mkAppN (mkConst ``Interval.Expr.checkZero_sound [Level.zero])
         #[functions, q(ℚ), expression, exactBackend, exactBackendProof,
           relation, box, q(0), checked, values, membership]
       let proof ← if strict then do
@@ -235,7 +235,7 @@ def close (precision degree depth : Nat)
         pure q(sub_nonpos.mp $h)
       closeMainGoal `interval proof
       return
-  let checked : Q(Interval.Expr.check $expression $backend $relation $box $depth = true) ←
+  let checked : Q(Interval.Expr.checkZero $expression $backend $relation $box $depth = true) ←
     try
       let preflight ← if cache.extensions.isEmpty then try
         withCheckBudget maxHeartbeats do
@@ -246,7 +246,7 @@ def close (precision degree depth : Nat)
       else pure none
       if preflight == some false then
         throwError "interval checker returned false"
-      verifyClosedCheck q(Interval.Expr.check $expression $backend $relation $box $depth = true)
+      verifyClosedCheck q(Interval.Expr.checkZero $expression $backend $relation $box $depth = true)
         maxHeartbeats
     catch error =>
       if error.isInterrupt then throw error
@@ -265,7 +265,7 @@ def close (precision degree depth : Nat)
       let gridAdvice := resourceAdvice "the binary-grid attempt" maxHeartbeats limit
       throwError "{diagnostic}{exactAdvice}{gridAdvice}"
   -- All arguments are known; assembling the application avoids re-elaborating the closed check.
-  let sound := mkAppN (mkConst ``Interval.Expr.check_sound [Level.zero])
+  let sound := mkAppN (mkConst ``Interval.Expr.checkZero_sound [Level.zero])
     #[functions, q(Int), expression, backend, backendProof,
       relation, box, depth, checked, values, membership]
   let proof ← if strict then do
@@ -369,6 +369,9 @@ real function:
   with a nonnegative lower endpoint,
 * inverse sine and cosine need an argument enclosure inside `[-1, 1]`, and tangent a cosine
   enclosure that excludes zero.
+
+A product with a factor that is exactly zero, and a quotient with such a numerator, need no
+enclosure of the other operand: their value is zero.
 
 A failure restores the original proof state and names the operation whose enclosure was rejected or
 the bound that wasn't small enough. It suggests a larger `maxHeartbeats`, naming the attempt, only

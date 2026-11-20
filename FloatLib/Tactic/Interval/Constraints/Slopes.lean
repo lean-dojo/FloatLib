@@ -109,13 +109,23 @@ def openAbsoluteValues (literals : Array Literal) (limit : Nat := 3) :
 The facts about function values that need the sign of the argument, for the values in some
 terms: `√t ^ 2 = t` where `0 ≤ t`, `Real.exp t ≤ 1` where `t ≤ 0`, and
 `Real.log t ≤ t - 1` where `0 < t`. The sign is proved by `positivity`, or by `linarith` from
-the given facts; a value whose argument has no such sign gets no fact.
+the given facts; a value whose argument has no such sign gets no fact. `failed` remembers the
+signs that `linarith` did not prove, with the statements of the facts it had, so that a later
+round with the same facts does not ask again.
 -/
-def signedFacts (terms : Array Lean.Expr) (facts : Array Lean.Expr) :
-    TacticM (Array Lean.Expr) := do
+def signedFacts (terms : Array Lean.Expr) (facts : Array Lean.Expr)
+    (failed : Option (IO.Ref (Std.HashSet UInt64)) := none) : TacticM (Array Lean.Expr) := do
+  -- what `linarith` reads: a sign that it did not prove from these facts is not asked again
+  let reading ← facts.foldlM (init := (7 : UInt64)) fun code proof =>
+    return mixHash code (← instantiateMVars (← inferType proof)).hash
   let prove (statement : Q(Prop)) : TacticM (Option Lean.Expr) := do
     if let some proof ← positivityProof? statement then return some proof
-    return (← linarithProof? statement facts).map fun proof => (proof : Lean.Expr)
+    let key := mixHash statement.hash reading
+    if let some failed := failed then
+      if (← failed.get).contains key then return none
+    let proof? ← linarithProof? statement facts
+    if let (none, some failed) := (proof?, failed) then failed.modify (·.insert key)
+    return proof?.map fun proof => (proof : Lean.Expr)
   let mut found := #[]
   for value in valuesOf ``Real.sqrt terms do
     have t : Q(ℝ) := value.appArg!

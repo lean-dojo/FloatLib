@@ -1,13 +1,13 @@
 family,row,with_rules_microseconds
-MX,e5m2 finite,1732.6
-MX,e4m3 finite,1746.3
-MX,e3m2 finite,1679.1
-MX,e2m3 finite,1687.8
-MX,e2m1 finite,1614.1
-MX,int8 finite,1470.2
-MX,e4m3 block32 element,24006.8
-NVFP4,quantize-element n=16,917512.8
-NVFP4,quantize-scales n=16,846053.3
-NVFP4,decode-element n=16,5478.0
-NVFP4,Dot n=16,67069.3
-NVFP4,DotGeneral n=16,68345.1
+MX,e5m2 finite,328.4
+MX,e4m3 finite,343.3
+MX,e3m2 finite,342.8
+MX,e2m3 finite,342.5
+MX,e2m1 finite,339.7
+MX,int8 finite,257.1
+MX,e4m3 block32 element,23108.3
+NVFP4,quantize-element n=16,1050117.8
+NVFP4,quantize-scales n=16,846258.6
+NVFP4,decode-element n=16,5482.3
+NVFP4,Dot n=16,66456.6
+NVFP4,DotGeneral n=16,66166.4

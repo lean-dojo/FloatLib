@@ -83,18 +83,18 @@ theorem roundEvenDoubled_twice (num den : Nat) (hden : den ≠ 0) :
   unfold roundQuotientEven
   by_cases hbelow : 2 * (num % den) < den
   · have hquotient : 2 * num / den = 2 * (num / den) := by
-      apply Nat.div_eq_of_lt_le <;> nlinarith only [hdiv, hbelow, Nat.zero_le (num % den)]
+      apply Nat.div_eq_of_lt_le <;> linarith only [hdiv, hbelow, Nat.zero_le (num % den)]
     simp [hquotient, hbelow]
   · have hquotient : 2 * num / den = 2 * (num / den) + 1 := by
-      apply Nat.div_eq_of_lt_le <;> nlinarith
+      apply Nat.div_eq_of_lt_le <;> linarith
     have hlower : (2 * (num / den) + 1) / 2 = num / den := by omega
     rw [hquotient]
     simp only [hlower, Nat.add_mod, Nat.mul_mod_right, Nat.zero_add, Nat.one_mod,
       Nat.one_ne_zero, beq_iff_eq, bne_iff_ne, ite_false, hbelow]
     by_cases habove : den < 2 * (num % den)
-    · have hproduct : (2 * (num / den) + 1) * den ≠ 2 * num := by nlinarith
+    · have hproduct : (2 * (num / den) + 1) * den ≠ 2 * num := by linarith
       simp [habove, hproduct]
-    · have hproduct : (2 * (num / den) + 1) * den = 2 * num := by nlinarith
+    · have hproduct : (2 * (num / den) + 1) * den = 2 * num := by linarith
       simp only [ne_eq, Nat.mod_two_not_eq_zero, hproduct, not_true_eq_false, ↓reduceIte, habove]
       split <;> simp_all
 
@@ -213,8 +213,7 @@ theorem floorLog2_eq_of_normal (precision num den : Nat)
   have hdenNe := Nat.ne_of_gt (lt_of_lt_of_le (Nat.two_pow_pos _) hden.1)
   have hnumLog := (Nat.log2_eq_iff hnumNe).2 hnum
   have hdenLog := (Nat.log2_eq_iff hdenNe).2 hden
-  unfold RationalBinary.floorLog2
-  rw [hnumLog, hdenLog, sub_self]
+  rw [RationalBinary.floorLog2_eq_log2, hnumLog, hdenLog, sub_self]
   norm_num
   by_cases hle : den ≤ num
   · have hltTwice : num < den * 2 := calc

@@ -7,6 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Numerics.Enclosure.Interval.Basic
+public import FloatLib.Numerics.Kernel.QProof
 public import Mathlib.Data.Rat.Defs
 
 /-!
@@ -25,6 +26,13 @@ backend may reject division across zero, for instance, or an interval outside a 
 node of an expression. Its equations by pattern matching are the theorems `Expr.eval?_const` to
 `Expr.eval?_call`, and compiled code runs `Expr.Compiled.eval?`, the recursion by pattern
 matching.
+
+One case needs no enclosure of an operand: a product with a factor that is exactly zero, or a
+quotient with such a numerator, is zero whatever the other operand is (`Expr.zeroOperand?`).
+`Expr.evalZero?` is the evaluation with that rule. It has every enclosure that `Expr.eval?` has
+(`Expr.evalZero?_of_eval?`), its equations are `Expr.evalZero?_const` to `Expr.evalZero?_call`,
+and compiled code runs `Expr.Compiled.evalZero?`, which evaluates the right operand of an
+operation whose left operand has no enclosure only for a product.
 -/
 
 @[expose] public section
@@ -216,6 +224,42 @@ structure Backend (α : Type*) where
   /-- Enclose a registered operation. An unavailable index must fail. -/
   call? : Nat → List (Interval α) → Option (Interval α) := fun _ _ => none
 
+/-- Whether an enclosure is the point zero: the backend decodes its lower end to a number that
+is at least zero and its upper end to one that is at most zero. -/
+def Backend.isZero {α : Type*} (B : Backend α) (I : Interval α) : Bool :=
+  match B.decode I.lo, B.decode I.hi with
+  | some lo, some hi => Kernel.Q.le 0 lo && Kernel.Q.le hi 0
+  | _, _ => false
+
+/--
+The enclosure of a product or a quotient whose value does not depend on one operand: a factor
+that is the point zero makes a product zero, and a numerator that is the point zero makes a
+quotient zero, whatever the other operand is and whether or not it has an enclosure. The result
+is the enclosure of that zero operand, and `none` for any other operation or operands.
+-/
+def Expr.zeroOperand? {α : Type*} (B : Backend α) (op : BinaryOp)
+    (left right : Option (Interval α)) : Option (Interval α) :=
+  match op, left, right with
+  | .mul, some I, some J => if B.isZero I then some I else if B.isZero J then some J else none
+  | .mul, some I, none => if B.isZero I then some I else none
+  | .mul, none, some J => if B.isZero J then some J else none
+  | .div, some I, _ => if B.isZero I then some I else none
+  | _, _, _ => none
+
+/--
+The step of `Expr.evalZero?` at a binary operation, by pattern matching: the backend's operation
+on the enclosures of the two operands. Where an operand or the result has no enclosure, a
+product or a quotient that is zero anyway has the enclosure of `Expr.zeroOperand?`.
+-/
+def Expr.zeroBinary? {α : Type*} (B : Backend α) (op : BinaryOp)
+    (left right : Option (Interval α)) : Option (Interval α) :=
+  match left, right with
+  | some I, some J =>
+    match B.binary? op I J with
+    | some K => some K
+    | none => Expr.zeroOperand? B op left right
+  | _, _ => Expr.zeroOperand? B op left right
+
 mutual
 /--
 The evaluation of an expression as compiled code runs it: recursion by pattern matching. It is
@@ -352,6 +396,14 @@ theorem Expr.eval?_binary (op : BinaryOp) (a b : Expr) :
   change Expr.evalBinary? B op (a.eval? B env) (b.eval? B env) = _
   cases a.eval? B env <;> cases b.eval? B env <;> rfl
 
+/-- Where the backend encloses both operands and the operation, a binary operation evaluates to
+the backend's enclosure. -/
+theorem Expr.eval?_binary_of_some {op : BinaryOp} {a b : Expr} {I J K : Interval α}
+    (ha : a.eval? B env = some I) (hb : b.eval? B env = some J)
+    (hK : B.binary? op I J = some K) : (Expr.binary op a b).eval? B env = some K := by
+  rw [Expr.eval?_binary, ha, hb]
+  exact hK
+
 /-- A three-input operation evaluates its arguments in order and applies the backend's. -/
 theorem Expr.eval?_ternary (op : TernaryOp) (a b c : Expr) :
     (Expr.ternary op a b c).eval? B env = (do
@@ -408,6 +460,247 @@ end Equations
 @[csimp] theorem Expr.eval?_eq_compiled : @Expr.eval? = @Expr.Compiled.eval? := by
   funext α e B env
   exact Expr.eval?_eq B env e
+
+/-! ## Evaluation with the zero rule -/
+
+mutual
+/--
+`Expr.evalZero?` as compiled code runs it: recursion by pattern matching
+(`Expr.evalZero?_eq_compiled`). Where the left operand of a binary operation has no enclosure,
+the right operand is evaluated only for a product, the one operation that a right operand can
+still make zero.
+-/
+def Expr.Compiled.evalZero? {α : Type*} (e : Expr) (B : Backend α)
+    (env : Nat → Option (Interval α)) : Option (Interval α) :=
+  match e with
+  | .const q => B.const? q
+  | .var i => env i
+  | .unary op a => (Expr.Compiled.evalZero? a B env).bind (B.unary? op)
+  | .binary op a b =>
+    match Expr.Compiled.evalZero? a B env with
+    | some I => Expr.zeroBinary? B op (some I) (Expr.Compiled.evalZero? b B env)
+    | none =>
+      if op = .mul then Expr.zeroBinary? B .mul none (Expr.Compiled.evalZero? b B env) else none
+  | .ternary op a b c => do
+    let I ← Expr.Compiled.evalZero? a B env
+    let J ← Expr.Compiled.evalZero? b B env
+    let K ← Expr.Compiled.evalZero? c B env
+    B.ternary? op I J K
+  | .call index args => (Expr.Compiled.evalZeroArgs? args B env).bind (B.call? index)
+termination_by structural e
+
+/-- The arguments of a registered call under `Expr.evalZero?`, as compiled code runs them. -/
+def Expr.Compiled.evalZeroArgs? {α : Type*} (args : List Expr) (B : Backend α)
+    (env : Nat → Option (Interval α)) : Option (List (Interval α)) :=
+  match args with
+  | [] => some []
+  | arg :: args => do
+    let I ← Expr.Compiled.evalZero? arg B env
+    let rest ← Expr.Compiled.evalZeroArgs? args B env
+    return I :: rest
+termination_by structural args
+end
+
+/-- The step of `Expr.evalZero?` at a binary operation: the backend's operation on the
+enclosures of the operands, and `Expr.zeroOperand?` where an operand or the result has none
+(`Expr.evalZeroBinary?_eq`). The kernel evaluates `Expr.zeroOperand?` only there. -/
+noncomputable def Expr.evalZeroBinary? {α : Type*} (B : Backend α) (op : BinaryOp)
+    (left right : Option (Interval α)) : Option (Interval α) :=
+  Option.rec (motive := fun _ => Option (Interval α)) (Expr.zeroOperand? B op none right)
+    (fun I => Option.rec (motive := fun _ => Option (Interval α))
+      (Expr.zeroOperand? B op (some I) none)
+      (fun J => Option.rec (motive := fun _ => Option (Interval α))
+        (Expr.zeroOperand? B op (some I) (some J)) (fun K => some K) (B.binary? op I J))
+      right) left
+
+/--
+Evaluate an expression as `Expr.eval?` does, with one more rule: a product with a factor that is
+exactly zero, and a quotient with such a numerator, have the enclosure of that zero whether or
+not the other operand has an enclosure (`Expr.zeroOperand?`). So `0 * (1 / x)` has the enclosure
+of zero on a box that contains `x = 0`, where `Expr.eval?` has none. Every enclosure of
+`Expr.eval?` is the enclosure here (`Expr.evalZero?_of_eval?`).
+
+The definition is the recursor of `Expr`, as that of `Expr.eval?` is. `Expr.evalZero?_const` to
+`Expr.evalZero?_call` state the recursion by pattern matching, and compiled code runs
+`Expr.Compiled.evalZero?` (`Expr.evalZero?_eq_compiled`).
+-/
+noncomputable def Expr.evalZero? {α : Type*} (e : Expr) (B : Backend α)
+    (env : Nat → Option (Interval α)) : Option (Interval α) :=
+  Expr.rec (motive_1 := fun _ => Option (Interval α))
+    (motive_2 := fun _ => Option (List (Interval α)))
+    (fun q => B.const? q)
+    (fun i => env i)
+    (fun op _ arg => Expr.evalUnary? B op arg)
+    (fun op _ _ left right => Expr.evalZeroBinary? B op left right)
+    (fun op _ _ _ first second third => Expr.evalTernary? B op first second third)
+    (fun index _ args => Expr.evalCall? B index args)
+    (some [])
+    (fun _ _ head tail => Expr.evalCons? head tail)
+    e
+
+/-- Evaluate all arguments of a registered call with `Expr.evalZero?`, preserving failure and
+argument order (`Expr.evalZeroArgs?_nil`, `Expr.evalZeroArgs?_cons`). -/
+noncomputable def Expr.evalZeroArgs? {α : Type*} (args : List Expr) (B : Backend α)
+    (env : Nat → Option (Interval α)) : Option (List (Interval α)) :=
+  Expr.rec_1 (motive_1 := fun _ => Option (Interval α))
+    (motive_2 := fun _ => Option (List (Interval α)))
+    (fun q => B.const? q)
+    (fun i => env i)
+    (fun op _ arg => Expr.evalUnary? B op arg)
+    (fun op _ _ left right => Expr.evalZeroBinary? B op left right)
+    (fun op _ _ _ first second third => Expr.evalTernary? B op first second third)
+    (fun index _ args => Expr.evalCall? B index args)
+    (some [])
+    (fun _ _ head tail => Expr.evalCons? head tail)
+    args
+
+section ZeroEquations
+
+variable {α : Type*} (B : Backend α) (env : Nat → Option (Interval α))
+
+/-- A constant evaluates to the backend's enclosure of it. -/
+theorem Expr.evalZero?_const (q : ℚ) : (Expr.const q).evalZero? B env = B.const? q := rfl
+
+/-- A variable evaluates to its interval in the environment. -/
+theorem Expr.evalZero?_var (i : Nat) : (Expr.var i).evalZero? B env = env i := rfl
+
+/-- A unary operation evaluates its argument and applies the backend's operation. -/
+theorem Expr.evalZero?_unary (op : UnaryOp) (a : Expr) :
+    (Expr.unary op a).evalZero? B env = (a.evalZero? B env).bind (B.unary? op) := by
+  change Expr.evalUnary? B op (a.evalZero? B env) = _
+  cases a.evalZero? B env <;> rfl
+
+/-- The step at a binary operation in its kernel form is the step by pattern matching. -/
+theorem Expr.evalZeroBinary?_eq (op : BinaryOp) (left right : Option (Interval α)) :
+    Expr.evalZeroBinary? B op left right = Expr.zeroBinary? B op left right := by
+  cases left with
+  | none => rfl
+  | some I =>
+    cases right with
+    | none => rfl
+    | some J =>
+      change Option.rec (motive := fun _ => Option (Interval α))
+          (Expr.zeroOperand? B op (some I) (some J)) (fun K => some K) (B.binary? op I J) =
+        match B.binary? op I J with
+        | some K => some K
+        | none => Expr.zeroOperand? B op (some I) (some J)
+      cases B.binary? op I J <;> rfl
+
+/-- A binary operation evaluates its arguments and applies the backend's operation to their
+enclosures; a product or a quotient that is zero whatever one operand is has the enclosure of
+that zero where the backend has none (`Expr.zeroBinary?`). -/
+theorem Expr.evalZero?_binary (op : BinaryOp) (a b : Expr) :
+    (Expr.binary op a b).evalZero? B env =
+      Expr.zeroBinary? B op (a.evalZero? B env) (b.evalZero? B env) :=
+  Expr.evalZeroBinary?_eq B op _ _
+
+/-- A three-input operation evaluates its arguments in order and applies the backend's. -/
+theorem Expr.evalZero?_ternary (op : TernaryOp) (a b c : Expr) :
+    (Expr.ternary op a b c).evalZero? B env = (do
+      let I ← a.evalZero? B env
+      let J ← b.evalZero? B env
+      let K ← c.evalZero? B env
+      B.ternary? op I J K) := by
+  change Expr.evalTernary? B op (a.evalZero? B env) (b.evalZero? B env) (c.evalZero? B env) = _
+  cases a.evalZero? B env <;> cases b.evalZero? B env <;> cases c.evalZero? B env <;> rfl
+
+/-- A registered call evaluates its arguments and applies the backend's call. -/
+theorem Expr.evalZero?_call (index : Nat) (args : List Expr) :
+    (Expr.call index args).evalZero? B env =
+      (Expr.evalZeroArgs? args B env).bind (B.call? index) := by
+  change Expr.evalCall? B index (Expr.evalZeroArgs? args B env) = _
+  cases Expr.evalZeroArgs? args B env <;> rfl
+
+/-- No arguments evaluate to the empty list. -/
+theorem Expr.evalZeroArgs?_nil : Expr.evalZeroArgs? [] B env = some [] := rfl
+
+/-- Arguments evaluate in order, and a failed one fails the list. -/
+theorem Expr.evalZeroArgs?_cons (arg : Expr) (args : List Expr) :
+    Expr.evalZeroArgs? (arg :: args) B env = (do
+      let I ← arg.evalZero? B env
+      let rest ← Expr.evalZeroArgs? args B env
+      return I :: rest) := by
+  change Expr.evalCons? (arg.evalZero? B env) (Expr.evalZeroArgs? args B env) = _
+  cases arg.evalZero? B env <;> cases Expr.evalZeroArgs? args B env <;> rfl
+
+/-- The kernel form and the compiled form of the evaluation with the zero rule agree on every
+expression. -/
+theorem Expr.evalZero?_eq (e : Expr) : e.evalZero? B env = Expr.Compiled.evalZero? e B env := by
+  refine Expr.rec
+    (motive_1 := fun e => e.evalZero? B env = Expr.Compiled.evalZero? e B env)
+    (motive_2 := fun args =>
+      Expr.evalZeroArgs? args B env = Expr.Compiled.evalZeroArgs? args B env)
+    ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ e
+  · intro q
+    rw [Expr.evalZero?_const, Expr.Compiled.evalZero?]
+  · intro i
+    rw [Expr.evalZero?_var, Expr.Compiled.evalZero?]
+  · intro op a ha
+    rw [Expr.evalZero?_unary, Expr.Compiled.evalZero?, ha]
+  · intro op a b ha hb
+    rw [Expr.evalZero?_binary, Expr.Compiled.evalZero?, ha, hb]
+    cases Expr.Compiled.evalZero? a B env with
+    | some I => rfl
+    | none => cases op <;> rfl
+  · intro op a b c ha hb hc
+    rw [Expr.evalZero?_ternary, Expr.Compiled.evalZero?, ha, hb, hc]
+  · intro index args hargs
+    rw [Expr.evalZero?_call, Expr.Compiled.evalZero?, hargs]
+  · rw [Expr.evalZeroArgs?_nil, Expr.Compiled.evalZeroArgs?]
+  · intro arg args ha hargs
+    rw [Expr.evalZeroArgs?_cons, Expr.Compiled.evalZeroArgs?, ha, hargs]
+
+/-- The evaluation with the zero rule has every enclosure that `Expr.eval?` has. -/
+theorem Expr.evalZero?_of_eval? (e : Expr) {I : Interval α} (h : e.eval? B env = some I) :
+    e.evalZero? B env = some I := by
+  revert I
+  refine Expr.rec
+    (motive_1 := fun e => ∀ {I}, e.eval? B env = some I → e.evalZero? B env = some I)
+    (motive_2 := fun args => ∀ {inputs},
+      Expr.evalArgs? args B env = some inputs → Expr.evalZeroArgs? args B env = some inputs)
+    ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ e
+  · intro q I h
+    exact h
+  · intro i I h
+    exact h
+  · intro op a ha I h
+    rw [Expr.eval?_unary] at h
+    obtain ⟨J, hJ, hop⟩ := Option.bind_eq_some_iff.1 h
+    rw [Expr.evalZero?_unary, ha hJ]
+    exact hop
+  · intro op a b ha hb I h
+    rw [Expr.eval?_binary] at h
+    obtain ⟨J, hJ, h⟩ := Option.bind_eq_some_iff.1 h
+    obtain ⟨K, hK, hop⟩ := Option.bind_eq_some_iff.1 h
+    rw [Expr.evalZero?_binary, ha hJ, hb hK]
+    simp only [Expr.zeroBinary?, hop]
+  · intro op a b c ha hb hc I h
+    rw [Expr.eval?_ternary] at h
+    obtain ⟨J, hJ, h⟩ := Option.bind_eq_some_iff.1 h
+    obtain ⟨K, hK, h⟩ := Option.bind_eq_some_iff.1 h
+    obtain ⟨L, hL, hop⟩ := Option.bind_eq_some_iff.1 h
+    rw [Expr.evalZero?_ternary, ha hJ, hb hK, hc hL]
+    exact hop
+  · intro index args hargs I h
+    rw [Expr.eval?_call] at h
+    obtain ⟨inputs, hinputs, hcall⟩ := Option.bind_eq_some_iff.1 h
+    rw [Expr.evalZero?_call, hargs hinputs]
+    exact hcall
+  · intro inputs h
+    exact h
+  · intro arg args ha hargs inputs h
+    rw [Expr.evalArgs?_cons] at h
+    obtain ⟨J, hJ, h⟩ := Option.bind_eq_some_iff.1 h
+    obtain ⟨rest, hrest, hcons⟩ := Option.bind_eq_some_iff.1 h
+    rw [Expr.evalZeroArgs?_cons, ha hJ, hargs hrest]
+    exact hcons
+
+end ZeroEquations
+
+/-- Compiled code runs the recursion by pattern matching in place of `Expr.evalZero?`. -/
+@[csimp] theorem Expr.evalZero?_eq_compiled : @Expr.evalZero? = @Expr.Compiled.evalZero? := by
+  funext α e B env
+  exact Expr.evalZero?_eq B env e
 
 end FloatLib.Numerics.Interval
 

@@ -1,882 +1,882 @@
-KOP nat/Nat.add bits=64 ns=1868 warm=2167 value= 25279206180181325503 29139274835588044698 2971644
-KOP nat/Nat.add bits=1024 ns=1330 warm=1538 value= 2846874461051719487364189774111792275070… 2253660
-KOP nat/Nat.add bits=4096 ns=1386 warm=1663 value= 1395756298975591246757024812458026846458… 1490250
-KOP nat/Nat.add bits=16384 ns=1653 warm=2069 value= 1562444710510880168107601642853196652959… 1630857
-KOP nat/Nat.add bits=100000 ns=3773 warm=6218 value= 1080624681232133423425938792739151353440… 1718452
-KOP nat/a + b bits=64 ns=11863 warm=3769 value= 25279206180181325503 29139274835588044698 2971644
-KOP nat/a + b bits=1024 ns=11951 warm=3951 value= 2846874461051719487364189774111792275070… 2253660
-KOP nat/a + b bits=4096 ns=11883 warm=4015 value= 1395756298975591246757024812458026846458… 1490250
-KOP nat/a + b bits=16384 ns=12311 warm=4468 value= 1562444710510880168107601642853196652959… 1630857
-KOP nat/a + b bits=100000 ns=14642 warm=8343 value= 1080624681232133423425938792739151353440… 1718452
-KOP nat/Nat.mul bits=64 ns=1359 warm=1482 value= 157678915075894430950759513426154968930 211858088
-KOP nat/Nat.mul bits=1024 ns=1528 warm=1794 value= 1916175786633667293154866738692323551040… 1234725
-KOP nat/Nat.mul bits=4096 ns=3373 warm=3668 value= 4831852873852533305149681071999887000288… 5534380
-KOP nat/Nat.mul bits=16384 ns=18133 warm=18592 value= 6055786516700815211891394449959964923210… 6310341
-KOP nat/Nat.mul bits=100000 ns=214344 warm=219104 value= 2914646913212551895919598222965367794633… 7250584
-KOP nat/a * b bits=64 ns=11931 warm=4574 value= 157678915075894430950759513426154968930 211858088
-KOP nat/a * b bits=1024 ns=12278 warm=4188 value= 1916175786633667293154866738692323551040… 1234725
-KOP nat/a * b bits=4096 ns=14080 warm=6101 value= 4831852873852533305149681071999887000288… 5534380
-KOP nat/a * b bits=16384 ns=29018 warm=21470 value= 6055786516700815211891394449959964923210… 6310341
-KOP nat/a * b bits=100000 ns=229813 warm=228031 value= 2914646913212551895919598222965367794633… 7250584
-KOP nat/Nat.div (2n by n bits) bits=64 ns=2123 warm=2206 value= 11323875245121334505 11450637739921900687 1401529
-KOP nat/Nat.div (2n by n bits) bits=1024 ns=2485 warm=2799 value= 2039153370985955090393277925790686810396… 1335219
-KOP nat/Nat.div (2n by n bits) bits=4096 ns=6120 warm=6507 value= 6873066906188902505997951593090573137950… 7863504
-KOP nat/Nat.div (2n by n bits) bits=16384 ns=43261 warm=43542 value= 9591998686005278055922396614599586927773… 1031469
-KOP nat/Nat.div (2n by n bits) bits=100000 ns=647385 warm=656766 value= 2991941112061442661427102068723277589926… 4537337
-KOP nat/Nat.gcd bits=64 ns=2220 warm=2094 value= 1 6 1 12 1 2 2 1
-KOP nat/Nat.gcd bits=1024 ns=11338 warm=11225 value= 2 1 1 17 1 1 2 1
-KOP nat/Nat.gcd bits=4096 ns=36368 warm=35963 value= 1 1 3 7 10 2 2 1
-KOP nat/Nat.gcd bits=16384 ns=219903 warm=219759 value= 1 2 1 3 1 1 1 33
-KOP nat/Nat.gcd bits=100000 ns=3560493 warm=3563764 value= 6 1 1 4 1 1 1 1
-KOP nat/Nat.ble bits=64 ns=1134 warm=2050 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
-KOP nat/Nat.ble bits=1024 ns=1101 warm=1914 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
-KOP nat/Nat.ble bits=4096 ns=1098 warm=1978 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
-KOP nat/Nat.ble bits=16384 ns=1140 warm=2003 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Nat.ble bits=100000 ns=1710 warm=2602 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
-KOP nat/decide (a ≤ b) bits=64 ns=4264 warm=5521 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
-KOP nat/decide (a ≤ b) bits=1024 ns=4234 warm=5503 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
-KOP nat/decide (a ≤ b) bits=4096 ns=4232 warm=5474 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
-KOP nat/decide (a ≤ b) bits=16384 ns=4269 warm=5495 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/decide (a ≤ b) bits=100000 ns=4243 warm=5488 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
-KOP nat/Nat.log2 bits=64 ns=445547 warm=452144 value= 63 63 63 63
-KOP nat/Nat.log2 bits=1024 ns=8318414 warm=9639532 value= 1023 1023 1023 1023
-KOP nat/Nat.log2 bits=4096 ns=42620798 warm=47294700 value= 4095 4095 4095 4095
-KOP nat/Kernel.size bits=64 ns=46033 warm=19430 value= 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
-KOP nat/Kernel.size bits=1024 ns=136745 warm=82579 value= 1024 1024 1024 1024 1024 1024 1024 1024 1024 1024
-KOP nat/Kernel.size bits=4096 ns=168281 warm=110770 value= 4096 4096 4096 4096 4096 4096 4096 4096 4096 4096
-KOP nat/Kernel.size bits=16384 ns=205741 warm=141396 value= 16384 16384 16384 16384 16384 16384 16384 16384 1
-KOP nat/Kernel.size bits=100000 ns=250324 warm=190427 value= 100000 100000 100000 100000 100000 100000 100000 
-KOP nat/Nat.testBit bits=64 ns=53728 warm=18955 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
-KOP nat/Nat.testBit bits=1024 ns=54227 warm=19210 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
-KOP nat/Nat.testBit bits=4096 ns=54597 warm=19219 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Nat.testBit bits=16384 ns=54793 warm=19965 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
-KOP nat/Nat.testBit bits=100000 ns=56130 warm=21876 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Kernel.testBit bits=64 ns=16165 warm=4794 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
-KOP nat/Kernel.testBit bits=1024 ns=8900 warm=5242 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
-KOP nat/Kernel.testBit bits=4096 ns=8924 warm=5199 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Kernel.testBit bits=16384 ns=9245 warm=5521 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
-KOP nat/Kernel.testBit bits=100000 ns=10749 warm=7323 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/(Nat.digits 2 n).sum bits=64 ns=4265739 warm=4555361 value= 37 34 32 33
-KOP nat/(Nat.digits 2 n).sum bits=1024 ns=85866404 warm=98287370 value= 515 487 501 527
-KOP nat/Kernel.popCount bits=64 ns=40604 warm=25516 value= 37 34 32 33
-KOP nat/Kernel.popCount bits=1024 ns=293027 warm=228369 value= 515 487 501 527
-KOP nat/Kernel.popCount bits=4096 ns=326794 warm=261165 value= 2098 1996 2044 2048
-KOP nat/Kernel.popCount bits=16384 ns=374519 warm=303867 value= 8212 8290 8283 8177
-KOP nat/Kernel.popCount bits=100000 ns=517950 warm=455633 value= 49471 49906 49702 50097
-KOP nat/Nat.sqrt bits=64 ns=898860 warm=763467 value= 3346215300 3752605674
-KOP nat/Nat.sqrt bits=1024 ns=9233047 warm=10414024 value= 1044881871071839445174998052346018630303… 1324800
-KOP nat/Nat.sqrt bits=4096 ns=42781795 warm=48340965 value= 2521588525485262866122483652684743232899… 2756656
-KOP nat/Kernel.isqrt bits=64 ns=148218 warm=118359 value= 3346215300 3752605674 3731550071 3900616477
-KOP nat/Kernel.isqrt bits=1024 ns=316420 warm=268128 value= 1044881871071839445174998052346018630303… 1324800
-KOP nat/Kernel.isqrt bits=4096 ns=399233 warm=341302 value= 2521588525485262866122483652684743232899… 2756656
-KOP nat/Kernel.isqrt bits=16384 ns=559384 warm=519678 value= 8440671890226942577403134328513869856690… 9219518
-KOP nat/Kernel.isqrt bits=100000 ns=3166991 warm=3200202 value= 2370769474026390679630519027624414884569… 2277212
-KOP nat/Kernel.isRoot 3 bits=64 ns=13996 warm=12158 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=1024 ns=15801 warm=13971 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=4096 ns=30616 warm=29361 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=16384 ns=143322 warm=141184 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=100000 ns=1753657 warm=1812274 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/a + b bits=64 ns=76404 warm=40657 value= 2884892510396184268 1290342970354498891 419485868
-KOP int/a + b bits=1024 ns=76600 warm=42035 value= 6633182120625432698096524129190336298522… 3742766
-KOP int/a + b bits=4096 ns=76464 warm=42019 value= 1240745606038028117807023933665717564591… 8422513
-KOP int/a + b bits=16384 ns=78344 warm=43317 value= 1375458713415348127573401792011872296614… 3681825
-KOP int/a + b bits=100000 ns=86328 warm=52291 value= 4348489856294039884065974464237100312237… 2298794
-KOP int/Z.add bits=64 ns=20177 warm=21016 value= 2884892510396184268 1290342970354498891 419485868
-KOP int/Z.add bits=1024 ns=21309 warm=21967 value= 6633182120625432698096524129190336298522… 3742766
-KOP int/Z.add bits=4096 ns=16891 warm=17939 value= 1240745606038028117807023933665717564591… 8422513
-KOP int/Z.add bits=16384 ns=22161 warm=23472 value= 1375458713415348127573401792011872296614… 3681825
-KOP int/Z.add bits=100000 ns=22857 warm=27453 value= 4348489856294039884065974464237100312237… 2298794
-KOP int/a * b bits=64 ns=67071 warm=40327 value= 157678915075894430961956670261047539548 211858088
-KOP int/a * b bits=1024 ns=67210 warm=40641 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/a * b bits=4096 ns=69764 warm=43982 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/a * b bits=16384 ns=87875 warm=61994 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/a * b bits=100000 ns=303149 warm=286491 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/Z.mul bits=64 ns=17374 warm=18009 value= 157678915075894430961956670261047539548 211858088
-KOP int/Z.mul bits=1024 ns=17624 warm=18726 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/Z.mul bits=4096 ns=19804 warm=21004 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/Z.mul bits=16384 ns=35819 warm=38408 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/Z.mul bits=100000 ns=242348 warm=257265 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/decide (a ≤ b) bits=64 ns=90884 warm=51792 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=1024 ns=91222 warm=51319 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=4096 ns=90835 warm=51251 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=16384 ns=90114 warm=50941 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=100000 ns=90875 warm=51081 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=64 ns=6683 warm=7798 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=1024 ns=6605 warm=7800 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=4096 ns=6625 warm=7754 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=16384 ns=6654 warm=7722 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=100000 ns=6655 warm=7754 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/a / b bits=64 ns=85242 warm=44354 value= 11323875245121334506 11450637739921900688 1401529
-KOP int/a / b bits=1024 ns=85851 warm=45459 value= 2039153370985955090393277925790686810396… 1335219
-KOP int/a / b bits=4096 ns=90073 warm=50617 value= 6873066906188902505997951593090573137950… 7863504
-KOP int/a / b bits=16384 ns=136725 warm=94513 value= 9591998686005278055922396614599586927773… 1031469
-KOP int/a / b bits=100000 ns=764030 warm=732023 value= 2991941112061442661427102068723277589926… 4537337
-KOP int/Z.ediv bits=64 ns=39634 warm=26227 value= 11323875245121334506 11450637739921900688 1401529
-KOP int/Z.ediv bits=1024 ns=40578 warm=27537 value= 2039153370985955090393277925790686810396… 1335219
-KOP int/Z.ediv bits=4096 ns=44771 warm=32174 value= 6873066906188902505997951593090573137950… 7863504
-KOP int/Z.ediv bits=16384 ns=89706 warm=76696 value= 9591998686005278055922396614599586927773… 1031469
-KOP int/Z.ediv bits=100000 ns=718367 warm=716072 value= 2991941112061442661427102068723277589926… 4537337
-KOP int/Signed.mul bits=64 ns=19466 warm=17054 value= 157678915075894430950759513426154968930 211858088
-KOP int/Signed.mul bits=1024 ns=19607 warm=17858 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/Signed.mul bits=4096 ns=21961 warm=20085 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/Signed.mul bits=16384 ns=38098 warm=36964 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/Signed.mul bits=100000 ns=249878 warm=260005 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/y² = x³ + a x + b (Int) bits=64 ns=310433 warm=234667 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Int) bits=1024 ns=308179 warm=233396 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Int) bits=4096 ns=319603 warm=253889 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=64 ns=66051 warm=68183 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=1024 ns=67129 warm=70395 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=4096 ns=77368 warm=82638 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP rat/mkRat (two operands) bits=64 ns=120178 warm=96255 value= 29296858248260026679 30133195878082948465 3137769
-KOP rat/mkRat (two operands) bits=1024 ns=143748 warm=117492 value= 2191516610208562246921190544213209483223… 2578687
-KOP rat/mkRat (two operands) bits=4096 ns=210135 warm=181560 value= 1022328018592883015232968679511766566572… 4061526
-KOP rat/mkRat (two operands) bits=16384 ns=593508 warm=565290 value= 1849515149768549709221856300834284284359… 1669812
-KOP rat/a + b < c (Rat) bits=64 ns=890878 warm=774241 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=1024 ns=847260 warm=717107 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=4096 ns=960838 warm=842601 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=16384 ns=1645405 warm=1548787 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=64 ns=638349 warm=501365 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=1024 ns=694873 warm=560626 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=4096 ns=822792 warm=702420 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=16384 ns=1604923 warm=1490767 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=64 ns=36425 warm=35439 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=1024 ns=37526 warm=37353 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=4096 ns=52006 warm=51679 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=16384 ns=155399 warm=153166 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=100000 ns=1532117 warm=1562122 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=64 ns=35209 warm=32486 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=1024 ns=36019 warm=33910 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=4096 ns=47734 warm=46201 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=16384 ns=134223 warm=131505 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=100000 ns=1317091 warm=1329855 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/Frac.normalize bits=64 ns=15265 warm=13027 value= 7041024672644377443 15214808902971271795 84778256
-KOP rat/Frac.normalize bits=1024 ns=23096 warm=20736 value= 1755096336557131378586921093515412952461… 3284921
-KOP rat/Frac.normalize bits=4096 ns=53387 warm=50274 value= 3799577148948485146344318014561496507294… 1968094
-KOP rat/Frac.normalize bits=16384 ns=242764 warm=238279 value= 2124988227315518726081177277567979853276… 9995198
-KOP rat/Frac.normalize bits=100000 ns=3596463 warm=3601300 value= 5185698913345965122926395240483901751593… 7442864
-KOP rat/Q.mk (two operands) bits=64 ns=33246 warm=32999 value= 29296858248260026679 30133195878082948465 3137769
-KOP rat/Q.mk (two operands) bits=1024 ns=48688 warm=49324 value= 2191516610208562246921190544213209483223… 2578687
-KOP rat/Q.mk (two operands) bits=4096 ns=109123 warm=108450 value= 1022328018592883015232968679511766566572… 4061526
-KOP rat/Q.mk (two operands) bits=16384 ns=488031 warm=487273 value= 1849515149768549709221856300834284284359… 1669812
-KOP rat/Q.mk (two operands) bits=100000 ns=7241065 warm=7276981 value= 1484521853005402720784168173694470708110… 1580071
-KOP rat/a + b < c (Q) bits=64 ns=144077 warm=152918 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=1024 ns=184844 warm=187649 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=4096 ns=335173 warm=338352 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=16384 ns=1380908 warm=1395444 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=100000 ns=17987133 warm=18082434 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=64 ns=125093 warm=128127 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=1024 ns=161571 warm=165703 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=4096 ns=305120 warm=310170 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=16384 ns=1328313 warm=1339966 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=100000 ns=17668818 warm=17741467 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a ^ 21 (Rat) bits=64 ns=141488 warm=92051 value= 1789520631001425295481058345922002653733… 6723517
-KOP rat/a ^ 21 (Rat) bits=1024 ns=161204 warm=108660 value= 1349957679978372795780467546858182697234… 3092314
-KOP rat/a ^ 21 (Q) bits=64 ns=26665 warm=23990 value= 1789520631001425295481058345922002653733… 6723517
-KOP rat/a ^ 21 (Q) bits=1024 ns=46748 warm=45074 value= 1349957679978372795780467546858182697234… 3092314
-KOP rat/a ^ 21 (Q) bits=4096 ns=178405 warm=176883 value= 3133794531801837586793949378301037036052… 6290395
-KOP rat/SignedRat a + b bits=64 ns=214752 warm=180485 value= 214255689750780116915589120675180213690 223433851
-KOP rat/SignedRat a + b bits=1024 ns=247428 warm=204628 value= 1153070599391509388128604763500066619144… 1596034
-KOP rat/SignedRat a * b bits=64 ns=230063 warm=187911 value= 21425568975078011691558912067518021369 3723897520
-KOP rat/SignedRat a * b bits=1024 ns=291897 warm=247077 value= 1153070599391509388128604763500066619144… 3192068
-KOP dyad/Dyad.add bits=64 ns=28960 warm=23441 value= 57668876961467847438342 62305932800637712495320 6
-KOP dyad/Dyad.add bits=1024 ns=28956 warm=23875 value= 7187782816413515538583251530358535073958… 5381075
-KOP dyad/Dyad.add bits=4096 ns=28931 warm=24391 value= 3111977759549413137667777156319232211230… 3223822
-KOP dyad/Dyad.add bits=16384 ns=30695 warm=25939 value= 3480868262214161208133725720835552186896… 4093402
-KOP dyad/Dyad.add bits=100000 ns=37061 warm=36734 value= 2123500220116609777439518191233515396274… 3047623
-KOP dyad/Dyad.mul bits=64 ns=14610 warm=12610 value= 157678915075894430950759513426154968930 211858088
-KOP dyad/Dyad.mul bits=1024 ns=14649 warm=13011 value= 1916175786633667293154866738692323551040… 1234725
-KOP dyad/Dyad.mul bits=4096 ns=16682 warm=15055 value= 4831852873852533305149681071999887000288… 5534380
-KOP dyad/Dyad.mul bits=16384 ns=32215 warm=30793 value= 6055786516700815211891394449959964923210… 6310341
-KOP dyad/Dyad.mul bits=100000 ns=231564 warm=237062 value= 2914646913212551895919598222965367794633… 7250584
-KOP dyad/Dyad.lt bits=64 ns=25490 warm=21156 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=1024 ns=25704 warm=21472 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=4096 ns=25750 warm=22027 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=16384 ns=27037 warm=23216 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=100000 ns=32564 warm=30513 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.roundDown bits=64 ns=25182 warm=17344 value= 10428164932 13114930453 12968169463 14169895000 1
-KOP dyad/Dyad.roundDown bits=1024 ns=25472 warm=18433 value= 1016797613813158225992013402838613207087… 1634560
-KOP dyad/Dyad.roundDown bits=4096 ns=25717 warm=18787 value= 5921729553359506814630340873689647251736… 7077263
-KOP dyad/Dyad.roundDown bits=16384 ns=28319 warm=19445 value= 6635202277309006803437422326076819669912… 7916198
-KOP dyad/Dyad.roundDown bits=100000 ns=31331 warm=27856 value= 5234543140023359201227307959373678809792… 4829558
-KOP dyad/Dyad.trimDown 53 bits=64 ns=80537 warm=41534 value= 5467361735787388 6876000656879275 679905563116053
-KOP dyad/Dyad.trimDown 53 bits=1024 ns=176405 warm=113887 value= 9469665715593455767701296047170795724960… 1522303
-KOP dyad/Dyad.trimDown 53 bits=4096 ns=209943 warm=142589 value= 5515040413811344349255336476954599778090… 6591215
-KOP dyad/Dyad.trimDown 53 bits=16384 ns=248129 warm=177298 value= 6179513667997911136134087503797421499314… 7372533
-KOP dyad/Dyad.trimDown 53 bits=100000 ns=302446 warm=244002 value= 4875048194102347060598284729670626129651… 4497876
-KOP ball/Ball.add bits=64 ns=30523 warm=25416 value= 57668876961467847438342 62305932800637712495320 6
-KOP ball/Ball.add bits=1024 ns=30903 warm=25886 value= 7187782816413515538583251530358535073958… 5381075
-KOP ball/Ball.add bits=4096 ns=31021 warm=26325 value= 3111977759549413137667777156319232211230… 3223822
-KOP ball/Ball.add bits=16384 ns=32447 warm=27471 value= 3480868262214161208133725720835552186896… 4093402
-KOP ball/Ball.add bits=100000 ns=38723 warm=38208 value= 2123500220116609777439518191233515396274… 3047623
-KOP ball/Ball.mul bits=64 ns=21524 warm=19412 value= 157678915075894430950759513426154968930 211858088
-KOP ball/Ball.mul bits=1024 ns=21737 warm=19747 value= 1916175786633667293154866738692323551040… 1234725
-KOP ball/Ball.mul bits=4096 ns=23528 warm=21991 value= 4831852873852533305149681071999887000288… 5534380
-KOP ball/Ball.mul bits=16384 ns=39699 warm=38801 value= 6055786516700815211891394449959964923210… 6310341
-KOP ball/Ball.mul bits=100000 ns=244065 warm=255200 value= 2914646913212551895919598222965367794633… 7250584
-KOP ball/Ball.mul, round 64 bits=64 ns=48917 warm=43760 value= 8547791114022104965 11484849976459515425 11729308
-KOP ball/Ball.mul, round 64 bits=1024 ns=49742 warm=43256 value= 1038760975366171244156115765768911961449… 6693459
-KOP ball/Ball.mul, round 64 bits=4096 ns=52128 warm=47186 value= 2619352691480622305936340711227044791131… 3000193
-KOP ball/Ball.mul, round 64 bits=16384 ns=72403 warm=67564 value= 3282848448757724666082041749281554968333… 3420843
-KOP ball/Ball.mul, round 64 bits=100000 ns=290251 warm=301150 value= 1580033257666609131574787871840413459560… 3930549
-KOP ball/Ball.le bits=64 ns=43971 warm=35111 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=1024 ns=43100 warm=35631 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=4096 ns=43354 warm=35882 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=16384 ns=44952 warm=37991 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=100000 ns=50312 warm=44974 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.inv, near one, as many digits bits=64 ns=41961 warm=30954 value= 60780137661473284129 48328529261230324713 4887546
-KOP ball/Ball.inv, near one, as many digits bits=1024 ns=43199 warm=32960 value= 5920068436299064376931790202140607438684… 3682647
-KOP ball/Ball.inv, near one, as many digits bits=4096 ns=48561 warm=37776 value= 3430884010384444728926205244104377550526… 2870709
-KOP ball/Ball.inv, near one, as many digits bits=16384 ns=99579 warm=86720 value= 3973506026210555685638522874168397995638… 3330514
-KOP ball/Ball.inv, near one, as many digits bits=100000 ns=927833 warm=927995 value= 3551273647286444048424091549448131096268… 3849067
-KOP ball/Ball.div, near one, as many digits bits=64 ns=62858 warm=51824 value= 541142121737690726837934473011423082634 622847155
-KOP ball/Ball.div, near one, as many digits bits=1024 ns=64791 warm=54208 value= 4020634029358037676130087738418409790246… 4622337
-KOP ball/Ball.div, near one, as many digits bits=4096 ns=72216 warm=61462 value= 1825314279529967056364118464669967581421… 1948101
-KOP ball/Ball.div, near one, as many digits bits=16384 ns=147806 warm=132812 value= 2372823475089695980362992660577539913858… 1788125
-KOP ball/Ball.div, near one, as many digits bits=100000 ns=1185199 warm=1201302 value= 2163386660787854618117163103646123486627… 2612495
-KOP ball/Ball.apart bits=64 ns=10587 warm=9414 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=1024 ns=11170 warm=9983 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=4096 ns=11446 warm=10044 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=16384 ns=12087 warm=10718 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=100000 ns=14788 warm=14013 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP complex/CBall.add bits=64 ns=37519 warm=33304 value= 57691271275137632579578 62333781732502946041128 6
-KOP complex/CBall.add bits=1024 ns=37836 warm=34259 value= 7189966372662504714800806067719727832603… 5382954
-KOP complex/CBall.add bits=4096 ns=37882 warm=34877 value= 3113249441287784926102753478738323666320… 3225228
-KOP complex/CBall.add bits=16384 ns=39065 warm=36368 value= 3482293161053330553489075982299204196319… 4094664
-KOP complex/CBall.add bits=100000 ns=43298 warm=44547 value= 2124624329696404851261784789770896918630… 3049571
-KOP complex/CBall.mul bits=64 ns=87606 warm=80645 value= 315357830151788861901519026852309937860 423716176
-KOP complex/CBall.mul bits=1024 ns=88195 warm=83843 value= 3832351573267334586309733477384647102081… 2469450
-KOP complex/CBall.mul bits=4096 ns=92901 warm=88373 value= 9663705747705066610299362143999774000577… 1106876
-KOP complex/CBall.mul bits=16384 ns=127904 warm=124005 value= 1211157303340163042378278889991992984642… 1262068
-KOP complex/CBall.mul bits=100000 ns=548639 warm=574017 value= 5829293826425103791839196445930735589267… 1450116
-KOP complex/CBall.mul, round 64 bits=64 ns=105868 warm=100294 value= 17095582228044209929 22969699952919030848 2345861
-KOP complex/CBall.mul, round 64 bits=1024 ns=106716 warm=102951 value= 2077521950732342488312231531537823922898… 1338691
-KOP complex/CBall.mul, round 64 bits=4096 ns=112269 warm=108462 value= 5238705382961244611872681422454089582263… 6000387
-KOP complex/CBall.mul, round 64 bits=16384 ns=151242 warm=147972 value= 6565696897515449332164083498563109936666… 6841686
-KOP complex/CBall.mul, round 64 bits=100000 ns=579372 warm=612740 value= 3160066515333218263149575743680826919121… 7861099
-KOP complex/CFix.mul, as many digits bits=64 ns=58032 warm=47486 value= 36893488147419103232 36893488147419103232 3689348
-KOP complex/CFix.mul, as many digits bits=1024 ns=59564 warm=51055 value= 3595386269724631815458610381578049467235… 3595386
-KOP complex/CFix.mul, as many digits bits=4096 ns=69012 warm=60124 value= 2088777762826305013383505421433248765159… 2088777
-KOP list/(List.range 256).map, length bits=64 ns=22682118 warm=22083042 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/(List.range 256).map, length bits=1024 ns=22956438 warm=21726994 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/Seq.tabulate 256, Seq.len bits=64 ns=3187161 warm=3933794 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/Seq.tabulate 256, Seq.len bits=1024 ns=3203714 warm=4052496 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/(List.range 256).map, getD 200 bits=64 ns=23637023 warm=21528907 value= 11197156834892570818 14082049345288755085 1392446
-KOP list/(List.range 256).map, getD 200 bits=1024 ns=23734839 warm=21810358 value= 1091778124494588108777268680596379322609… 1755096
-KOP list/Seq.tabulate 256, Seq.getD 200 bits=64 ns=3606643 warm=5777713 value= 11197156834892570818 14082049345288755085 1392446
-KOP list/Seq.tabulate 256, Seq.getD 200 bits=1024 ns=3582593 warm=5018956 value= 1091778124494588108777268680596379322609… 1755096
-KOP list/Split.cover of 1 to 64 bits=64 ns=3733731 warm=2851398 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP search/Kernel.bisect, square root bits=64 ns=413914 warm=361737 value= 3346215300 3752605674 3731550071 3900616477
-KOP search/Kernel.bisect, square root bits=1024 ns=6111658 warm=6626336 value= 1044881871071839445174998052346018630303… 1324800
-KOP search/Kernel.bisect, square root bits=4096 ns=30377411 warm=33987820 value= 2521588525485262866122483652684743232899… 2756656
-KOP search/Kernel.isqrt bits=64 ns=150552 warm=122801 value= 3346215300 3752605674 3731550071 3900616477
-KOP search/Kernel.isqrt bits=1024 ns=318510 warm=270408 value= 1044881871071839445174998052346018630303… 1324800
-KOP search/Kernel.isqrt bits=4096 ns=397632 warm=345261 value= 2521588525485262866122483652684743232899… 2756656
-KOP search/strict (a * b), then successor bits=64 ns=10328 warm=9511 value= 157678915075894430950759513426154968931 211858088
-KOP search/strict (a * b), then successor bits=1024 ns=10616 warm=9709 value= 1916175786633667293154866738692323551040… 1234725
-KOP search/strict (a * b), then successor bits=4096 ns=12657 warm=12399 value= 4831852873852533305149681071999887000288… 5534380
-KOP search/strict (a * b), then successor bits=16384 ns=28649 warm=28742 value= 6055786516700815211891394449959964923210… 6310341
-KOP search/strict (a * b), then successor bits=100000 ns=236696 warm=247820 value= 2914646913212551895919598222965367794633… 7250584
-KOP mod/powMod bits=64 ns=313813 warm=259973 value= 8459997921108424760 13444525620439207419
-KOP mod/powMod bits=256 ns=1015381 warm=1021333 value= 5640093348772905311122866003548787154451… 9271461
-KOP mod/powMod bits=1024 ns=8154683 warm=8611766 value= 7783751213703164086373369761643069718396… 2476133
-KOP mod/powMod bits=4096 ns=94411113 warm=99552666 value= 2820865641670868989175562975596822487706… 8362799
-KOP mod/powModWindow 0 (binary) bits=64 ns=836826 warm=777247 value= 8459997921108424760 13444525620439207419
-KOP mod/powModWindow 0 (binary) bits=256 ns=3348447 warm=3401067 value= 5640093348772905311122866003548787154451… 9271461
-KOP mod/powModWindow 0 (binary) bits=1024 ns=16041145 warm=17722237 value= 7783751213703164086373369761643069718396… 2476133
-KOP mod/powModWindow 0 (binary) bits=4096 ns=120378231 warm=134203949 value= 2820865641670868989175562975596822487706… 8362799
-KOP mod/invMod bits=64 ns=539538 warm=509983 value= 8872622468939417957 14698634583709348197 15050626
-KOP mod/invMod bits=256 ns=1978176 warm=2166153 value= 7155145171555236484987376839733363866491… 6576478
-KOP mod/invMod bits=1024 ns=9063157 warm=10837267 value= 3447251263311814177689609313497096743036… 1214012
-KOP mod/invMod bits=4096 ns=46233337 warm=60767248 value= 5367353293423106862047231812559382848551… 3271604
-KOP mod/isInvMod bits=64 ns=7350 warm=5570 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=256 ns=7469 warm=5629 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=1024 ns=7952 warm=6184 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=4096 ns=12878 warm=11114 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Nat.add bits=64 ns=1302 warm=1440 value= 25279206180181325503 29139274835588044698 2971644
-KOP nat/Nat.add bits=1024 ns=1366 warm=1544 value= 2846874461051719487364189774111792275070… 2253660
-KOP nat/Nat.add bits=4096 ns=1369 warm=1646 value= 1395756298975591246757024812458026846458… 1490250
-KOP nat/Nat.add bits=16384 ns=1643 warm=2067 value= 1562444710510880168107601642853196652959… 1630857
-KOP nat/Nat.add bits=100000 ns=3804 warm=5915 value= 1080624681232133423425938792739151353440… 1718452
-KOP nat/a + b bits=64 ns=11920 warm=3735 value= 25279206180181325503 29139274835588044698 2971644
-KOP nat/a + b bits=1024 ns=11890 warm=3907 value= 2846874461051719487364189774111792275070… 2253660
-KOP nat/a + b bits=4096 ns=11970 warm=4039 value= 1395756298975591246757024812458026846458… 1490250
-KOP nat/a + b bits=16384 ns=12160 warm=4492 value= 1562444710510880168107601642853196652959… 1630857
-KOP nat/a + b bits=100000 ns=14555 warm=8662 value= 1080624681232133423425938792739151353440… 1718452
-KOP nat/Nat.mul bits=64 ns=1346 warm=1492 value= 157678915075894430950759513426154968930 211858088
-KOP nat/Nat.mul bits=1024 ns=1568 warm=1817 value= 1916175786633667293154866738692323551040… 1234725
-KOP nat/Nat.mul bits=4096 ns=3422 warm=3655 value= 4831852873852533305149681071999887000288… 5534380
-KOP nat/Nat.mul bits=16384 ns=18069 warm=18640 value= 6055786516700815211891394449959964923210… 6310341
-KOP nat/Nat.mul bits=100000 ns=215485 warm=221566 value= 2914646913212551895919598222965367794633… 7250584
-KOP nat/a * b bits=64 ns=12016 warm=4332 value= 157678915075894430950759513426154968930 211858088
-KOP nat/a * b bits=1024 ns=12249 warm=4214 value= 1916175786633667293154866738692323551040… 1234725
-KOP nat/a * b bits=4096 ns=14190 warm=6193 value= 4831852873852533305149681071999887000288… 5534380
-KOP nat/a * b bits=16384 ns=28962 warm=21594 value= 6055786516700815211891394449959964923210… 6310341
-KOP nat/a * b bits=100000 ns=230299 warm=230421 value= 2914646913212551895919598222965367794633… 7250584
-KOP nat/Nat.div (2n by n bits) bits=64 ns=2055 warm=2247 value= 11323875245121334505 11450637739921900687 1401529
-KOP nat/Nat.div (2n by n bits) bits=1024 ns=2515 warm=2789 value= 2039153370985955090393277925790686810396… 1335219
-KOP nat/Nat.div (2n by n bits) bits=4096 ns=6155 warm=6487 value= 6873066906188902505997951593090573137950… 7863504
-KOP nat/Nat.div (2n by n bits) bits=16384 ns=43264 warm=43753 value= 9591998686005278055922396614599586927773… 1031469
-KOP nat/Nat.div (2n by n bits) bits=100000 ns=646446 warm=650571 value= 2991941112061442661427102068723277589926… 4537337
-KOP nat/Nat.gcd bits=64 ns=1404 warm=1314 value= 1 6 1 12 1 2 2 1
-KOP nat/Nat.gcd bits=1024 ns=7937 warm=7480 value= 2 1 1 17 1 1 2 1
-KOP nat/Nat.gcd bits=4096 ns=35903 warm=35919 value= 1 1 3 7 10 2 2 1
-KOP nat/Nat.gcd bits=16384 ns=219208 warm=219450 value= 1 2 1 3 1 1 1 33
-KOP nat/Nat.gcd bits=100000 ns=3554883 warm=3569559 value= 6 1 1 4 1 1 1 1
-KOP nat/Nat.ble bits=64 ns=1126 warm=2332 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
-KOP nat/Nat.ble bits=1024 ns=1081 warm=1945 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
-KOP nat/Nat.ble bits=4096 ns=1120 warm=1987 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
-KOP nat/Nat.ble bits=16384 ns=1133 warm=2028 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Nat.ble bits=100000 ns=1346 warm=2116 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
-KOP nat/decide (a ≤ b) bits=64 ns=4240 warm=5423 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
-KOP nat/decide (a ≤ b) bits=1024 ns=4197 warm=5552 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
-KOP nat/decide (a ≤ b) bits=4096 ns=4209 warm=5435 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
-KOP nat/decide (a ≤ b) bits=16384 ns=4224 warm=5478 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/decide (a ≤ b) bits=100000 ns=4217 warm=5505 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
-KOP nat/Nat.log2 bits=64 ns=465526 warm=454915 value= 63 63 63 63
-KOP nat/Nat.log2 bits=1024 ns=8237688 warm=10224527 value= 1023 1023 1023 1023
-KOP nat/Nat.log2 bits=4096 ns=40476506 warm=49103821 value= 4095 4095 4095 4095
-KOP nat/Kernel.size bits=64 ns=46154 warm=19514 value= 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
-KOP nat/Kernel.size bits=1024 ns=136933 warm=83674 value= 1024 1024 1024 1024 1024 1024 1024 1024 1024 1024
-KOP nat/Kernel.size bits=4096 ns=169814 warm=113216 value= 4096 4096 4096 4096 4096 4096 4096 4096 4096 4096
-KOP nat/Kernel.size bits=16384 ns=206846 warm=143038 value= 16384 16384 16384 16384 16384 16384 16384 16384 1
-KOP nat/Kernel.size bits=100000 ns=251951 warm=191694 value= 100000 100000 100000 100000 100000 100000 100000 
-KOP nat/Nat.testBit bits=64 ns=54494 warm=19029 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
-KOP nat/Nat.testBit bits=1024 ns=55363 warm=19627 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
-KOP nat/Nat.testBit bits=4096 ns=55520 warm=20287 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Nat.testBit bits=16384 ns=55685 warm=19971 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
-KOP nat/Nat.testBit bits=100000 ns=56062 warm=21287 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Kernel.testBit bits=64 ns=8537 warm=4743 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
-KOP nat/Kernel.testBit bits=1024 ns=8827 warm=5271 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
-KOP nat/Kernel.testBit bits=4096 ns=8934 warm=5224 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Kernel.testBit bits=16384 ns=9245 warm=5507 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
-KOP nat/Kernel.testBit bits=100000 ns=10665 warm=7373 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/(Nat.digits 2 n).sum bits=64 ns=4293581 warm=4496679 value= 37 34 32 33
-KOP nat/(Nat.digits 2 n).sum bits=1024 ns=84230431 warm=100295347 value= 515 487 501 527
-KOP nat/Kernel.popCount bits=64 ns=41644 warm=28196 value= 37 34 32 33
-KOP nat/Kernel.popCount bits=1024 ns=300301 warm=230873 value= 515 487 501 527
-KOP nat/Kernel.popCount bits=4096 ns=330283 warm=261824 value= 2098 1996 2044 2048
-KOP nat/Kernel.popCount bits=16384 ns=376682 warm=304112 value= 8212 8290 8283 8177
-KOP nat/Kernel.popCount bits=100000 ns=508728 warm=456439 value= 49471 49906 49702 50097
-KOP nat/Nat.sqrt bits=64 ns=892831 warm=780784 value= 3346215300 3752605674
-KOP nat/Nat.sqrt bits=1024 ns=9311240 warm=10083271 value= 1044881871071839445174998052346018630303… 1324800
-KOP nat/Nat.sqrt bits=4096 ns=43780489 warm=60528156 value= 2521588525485262866122483652684743232899… 2756656
-KOP nat/Kernel.isqrt bits=64 ns=152959 warm=122524 value= 3346215300 3752605674 3731550071 3900616477
-KOP nat/Kernel.isqrt bits=1024 ns=317133 warm=274420 value= 1044881871071839445174998052346018630303… 1324800
-KOP nat/Kernel.isqrt bits=4096 ns=396994 warm=357292 value= 2521588525485262866122483652684743232899… 2756656
-KOP nat/Kernel.isqrt bits=16384 ns=619102 warm=530424 value= 8440671890226942577403134328513869856690… 9219518
-KOP nat/Kernel.isqrt bits=100000 ns=3227217 warm=3344903 value= 2370769474026390679630519027624414884569… 2277212
-KOP nat/Kernel.isRoot 3 bits=64 ns=13951 warm=12294 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=1024 ns=20103 warm=14180 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=4096 ns=30524 warm=29616 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=16384 ns=143883 warm=142149 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=100000 ns=1756640 warm=1765570 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/a + b bits=64 ns=75956 warm=41158 value= 2884892510396184268 1290342970354498891 419485868
-KOP int/a + b bits=1024 ns=76314 warm=41499 value= 6633182120625432698096524129190336298522… 3742766
-KOP int/a + b bits=4096 ns=76266 warm=42132 value= 1240745606038028117807023933665717564591… 8422513
-KOP int/a + b bits=16384 ns=77654 warm=43963 value= 1375458713415348127573401792011872296614… 3681825
-KOP int/a + b bits=100000 ns=84039 warm=54013 value= 4348489856294039884065974464237100312237… 2298794
-KOP int/Z.add bits=64 ns=16318 warm=16724 value= 2884892510396184268 1290342970354498891 419485868
-KOP int/Z.add bits=1024 ns=17002 warm=17699 value= 6633182120625432698096524129190336298522… 3742766
-KOP int/Z.add bits=4096 ns=16927 warm=17819 value= 1240745606038028117807023933665717564591… 8422513
-KOP int/Z.add bits=16384 ns=17735 warm=19027 value= 1375458713415348127573401792011872296614… 3681825
-KOP int/Z.add bits=100000 ns=22583 warm=27465 value= 4348489856294039884065974464237100312237… 2298794
-KOP int/a * b bits=64 ns=67656 warm=40087 value= 157678915075894430961956670261047539548 211858088
-KOP int/a * b bits=1024 ns=67903 warm=40416 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/a * b bits=4096 ns=70049 warm=43755 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/a * b bits=16384 ns=88627 warm=61758 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/a * b bits=100000 ns=308342 warm=293931 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/Z.mul bits=64 ns=18559 warm=17974 value= 157678915075894430961956670261047539548 211858088
-KOP int/Z.mul bits=1024 ns=17828 warm=18530 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/Z.mul bits=4096 ns=19577 warm=20931 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/Z.mul bits=16384 ns=35779 warm=38261 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/Z.mul bits=100000 ns=243147 warm=257994 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/decide (a ≤ b) bits=64 ns=90659 warm=51121 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=1024 ns=89413 warm=50850 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=4096 ns=90331 warm=50805 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=16384 ns=90137 warm=50625 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=100000 ns=90600 warm=50922 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=64 ns=6693 warm=7857 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=1024 ns=6627 warm=7788 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=4096 ns=6610 warm=7733 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=16384 ns=6619 warm=7704 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=100000 ns=6656 warm=7770 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/a / b bits=64 ns=85828 warm=44375 value= 11323875245121334506 11450637739921900688 1401529
-KOP int/a / b bits=1024 ns=85666 warm=45906 value= 2039153370985955090393277925790686810396… 1335219
-KOP int/a / b bits=4096 ns=90202 warm=51102 value= 6873066906188902505997951593090573137950… 7863504
-KOP int/a / b bits=16384 ns=137918 warm=94629 value= 9591998686005278055922396614599586927773… 1031469
-KOP int/a / b bits=100000 ns=765712 warm=735930 value= 2991941112061442661427102068723277589926… 4537337
-KOP int/Z.ediv bits=64 ns=39648 warm=26521 value= 11323875245121334506 11450637739921900688 1401529
-KOP int/Z.ediv bits=1024 ns=40545 warm=27659 value= 2039153370985955090393277925790686810396… 1335219
-KOP int/Z.ediv bits=4096 ns=44830 warm=32040 value= 6873066906188902505997951593090573137950… 7863504
-KOP int/Z.ediv bits=16384 ns=91380 warm=77394 value= 9591998686005278055922396614599586927773… 1031469
-KOP int/Z.ediv bits=100000 ns=728663 warm=729033 value= 2991941112061442661427102068723277589926… 4537337
-KOP int/Signed.mul bits=64 ns=19496 warm=17676 value= 157678915075894430950759513426154968930 211858088
-KOP int/Signed.mul bits=1024 ns=19908 warm=18049 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/Signed.mul bits=4096 ns=21970 warm=20284 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/Signed.mul bits=16384 ns=38241 warm=37196 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/Signed.mul bits=100000 ns=249728 warm=266333 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/y² = x³ + a x + b (Int) bits=64 ns=318544 warm=256777 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Int) bits=1024 ns=319931 warm=262722 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Int) bits=4096 ns=326311 warm=271271 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=64 ns=67758 warm=71755 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=1024 ns=68424 warm=73833 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=4096 ns=78738 warm=83507 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP rat/mkRat (two operands) bits=64 ns=130921 warm=97523 value= 29296858248260026679 30133195878082948465 3137769
-KOP rat/mkRat (two operands) bits=1024 ns=146658 warm=117207 value= 2191516610208562246921190544213209483223… 2578687
-KOP rat/mkRat (two operands) bits=4096 ns=211494 warm=184302 value= 1022328018592883015232968679511766566572… 4061526
-KOP rat/mkRat (two operands) bits=16384 ns=606790 warm=577103 value= 1849515149768549709221856300834284284359… 1669812
-KOP rat/a + b < c (Rat) bits=64 ns=907929 warm=768957 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=1024 ns=869002 warm=750778 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=4096 ns=989635 warm=874047 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=16384 ns=1701985 warm=1599567 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=64 ns=668101 warm=521067 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=1024 ns=715684 warm=569093 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=4096 ns=834893 warm=723650 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=16384 ns=1638150 warm=1504745 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=64 ns=36266 warm=35210 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=1024 ns=37526 warm=37714 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=4096 ns=51796 warm=51544 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=16384 ns=153637 warm=153029 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=100000 ns=1540497 warm=1575805 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=64 ns=34724 warm=32422 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=1024 ns=36227 warm=34224 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=4096 ns=48598 warm=46012 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=16384 ns=134540 warm=132192 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=100000 ns=1322573 warm=1336160 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/Frac.normalize bits=64 ns=16599 warm=13369 value= 7041024672644377443 15214808902971271795 84778256
-KOP rat/Frac.normalize bits=1024 ns=23379 warm=21111 value= 1755096336557131378586921093515412952461… 3284921
-KOP rat/Frac.normalize bits=4096 ns=54312 warm=50506 value= 3799577148948485146344318014561496507294… 1968094
-KOP rat/Frac.normalize bits=16384 ns=243334 warm=237837 value= 2124988227315518726081177277567979853276… 9995198
-KOP rat/Frac.normalize bits=100000 ns=3609958 warm=3614035 value= 5185698913345965122926395240483901751593… 7442864
-KOP rat/Q.mk (two operands) bits=64 ns=33574 warm=33902 value= 29296858248260026679 30133195878082948465 3137769
-KOP rat/Q.mk (two operands) bits=1024 ns=48914 warm=49700 value= 2191516610208562246921190544213209483223… 2578687
-KOP rat/Q.mk (two operands) bits=4096 ns=109480 warm=109667 value= 1022328018592883015232968679511766566572… 4061526
-KOP rat/Q.mk (two operands) bits=16384 ns=492542 warm=488791 value= 1849515149768549709221856300834284284359… 1669812
-KOP rat/Q.mk (two operands) bits=100000 ns=7256651 warm=7244328 value= 1484521853005402720784168173694470708110… 1580071
-KOP rat/a + b < c (Q) bits=64 ns=143311 warm=152268 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=1024 ns=184504 warm=187261 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=4096 ns=334884 warm=339094 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=16384 ns=1387615 warm=1510695 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=100000 ns=18108830 warm=18080933 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=64 ns=127208 warm=128518 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=1024 ns=161038 warm=166978 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=4096 ns=305823 warm=315207 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=16384 ns=1332697 warm=1354736 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=100000 ns=17888399 warm=17813775 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a ^ 21 (Rat) bits=64 ns=170398 warm=108601 value= 1789520631001425295481058345922002653733… 6723517
-KOP rat/a ^ 21 (Rat) bits=1024 ns=165468 warm=111248 value= 1349957679978372795780467546858182697234… 3092314
-KOP rat/a ^ 21 (Q) bits=64 ns=27543 warm=24692 value= 1789520631001425295481058345922002653733… 6723517
-KOP rat/a ^ 21 (Q) bits=1024 ns=47417 warm=45617 value= 1349957679978372795780467546858182697234… 3092314
-KOP rat/a ^ 21 (Q) bits=4096 ns=217357 warm=216357 value= 3133794531801837586793949378301037036052… 6290395
-KOP rat/SignedRat a + b bits=64 ns=220100 warm=178660 value= 214255689750780116915589120675180213690 223433851
-KOP rat/SignedRat a + b bits=1024 ns=249529 warm=206933 value= 1153070599391509388128604763500066619144… 1596034
-KOP rat/SignedRat a * b bits=64 ns=231371 warm=188895 value= 21425568975078011691558912067518021369 3723897520
-KOP rat/SignedRat a * b bits=1024 ns=293787 warm=248203 value= 1153070599391509388128604763500066619144… 3192068
-KOP dyad/Dyad.add bits=64 ns=29017 warm=23556 value= 57668876961467847438342 62305932800637712495320 6
-KOP dyad/Dyad.add bits=1024 ns=29139 warm=24049 value= 7187782816413515538583251530358535073958… 5381075
-KOP dyad/Dyad.add bits=4096 ns=29136 warm=24465 value= 3111977759549413137667777156319232211230… 3223822
-KOP dyad/Dyad.add bits=16384 ns=30604 warm=25508 value= 3480868262214161208133725720835552186896… 4093402
-KOP dyad/Dyad.add bits=100000 ns=38117 warm=36459 value= 2123500220116609777439518191233515396274… 3047623
-KOP dyad/Dyad.mul bits=64 ns=14694 warm=12441 value= 157678915075894430950759513426154968930 211858088
-KOP dyad/Dyad.mul bits=1024 ns=14765 warm=12762 value= 1916175786633667293154866738692323551040… 1234725
-KOP dyad/Dyad.mul bits=4096 ns=16755 warm=14996 value= 4831852873852533305149681071999887000288… 5534380
-KOP dyad/Dyad.mul bits=16384 ns=32294 warm=30791 value= 6055786516700815211891394449959964923210… 6310341
-KOP dyad/Dyad.mul bits=100000 ns=233243 warm=239785 value= 2914646913212551895919598222965367794633… 7250584
-KOP dyad/Dyad.lt bits=64 ns=25731 warm=21308 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=1024 ns=25927 warm=21732 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=4096 ns=26085 warm=22034 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=16384 ns=27311 warm=23511 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=100000 ns=32074 warm=30619 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.roundDown bits=64 ns=25499 warm=17686 value= 10428164932 13114930453 12968169463 14169895000 1
-KOP dyad/Dyad.roundDown bits=1024 ns=25849 warm=18247 value= 1016797613813158225992013402838613207087… 1634560
-KOP dyad/Dyad.roundDown bits=4096 ns=27127 warm=18401 value= 5921729553359506814630340873689647251736… 7077263
-KOP dyad/Dyad.roundDown bits=16384 ns=26727 warm=19332 value= 6635202277309006803437422326076819669912… 7916198
-KOP dyad/Dyad.roundDown bits=100000 ns=31831 warm=27697 value= 5234543140023359201227307959373678809792… 4829558
-KOP dyad/Dyad.trimDown 53 bits=64 ns=80803 warm=44157 value= 5467361735787388 6876000656879275 679905563116053
-KOP dyad/Dyad.trimDown 53 bits=1024 ns=176914 warm=115096 value= 9469665715593455767701296047170795724960… 1522303
-KOP dyad/Dyad.trimDown 53 bits=4096 ns=210959 warm=142006 value= 5515040413811344349255336476954599778090… 6591215
-KOP dyad/Dyad.trimDown 53 bits=16384 ns=250739 warm=177087 value= 6179513667997911136134087503797421499314… 7372533
-KOP dyad/Dyad.trimDown 53 bits=100000 ns=305947 warm=248826 value= 4875048194102347060598284729670626129651… 4497876
-KOP ball/Ball.add bits=64 ns=30979 warm=25455 value= 57668876961467847438342 62305932800637712495320 6
-KOP ball/Ball.add bits=1024 ns=31167 warm=25859 value= 7187782816413515538583251530358535073958… 5381075
-KOP ball/Ball.add bits=4096 ns=31015 warm=26296 value= 3111977759549413137667777156319232211230… 3223822
-KOP ball/Ball.add bits=16384 ns=32576 warm=27842 value= 3480868262214161208133725720835552186896… 4093402
-KOP ball/Ball.add bits=100000 ns=38847 warm=37609 value= 2123500220116609777439518191233515396274… 3047623
-KOP ball/Ball.mul bits=64 ns=21702 warm=20741 value= 157678915075894430950759513426154968930 211858088
-KOP ball/Ball.mul bits=1024 ns=34941 warm=19878 value= 1916175786633667293154866738692323551040… 1234725
-KOP ball/Ball.mul bits=4096 ns=24774 warm=22120 value= 4831852873852533305149681071999887000288… 5534380
-KOP ball/Ball.mul bits=16384 ns=39827 warm=38590 value= 6055786516700815211891394449959964923210… 6310341
-KOP ball/Ball.mul bits=100000 ns=245623 warm=249273 value= 2914646913212551895919598222965367794633… 7250584
-KOP ball/Ball.mul, round 64 bits=64 ns=48084 warm=44040 value= 8547791114022104965 11484849976459515425 11729308
-KOP ball/Ball.mul, round 64 bits=1024 ns=63387 warm=44497 value= 1038760975366171244156115765768911961449… 6693459
-KOP ball/Ball.mul, round 64 bits=4096 ns=58129 warm=57809 value= 2619352691480622305936340711227044791131… 3000193
-KOP ball/Ball.mul, round 64 bits=16384 ns=82301 warm=71694 value= 3282848448757724666082041749281554968333… 3420843
-KOP ball/Ball.mul, round 64 bits=100000 ns=292498 warm=302010 value= 1580033257666609131574787871840413459560… 3930549
-KOP ball/Ball.le bits=64 ns=42794 warm=35301 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=1024 ns=43916 warm=35757 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=4096 ns=43083 warm=36269 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=16384 ns=44648 warm=37772 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=100000 ns=49888 warm=45341 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.inv, near one, as many digits bits=64 ns=42925 warm=31377 value= 60780137661473284129 48328529261230324713 4887546
-KOP ball/Ball.inv, near one, as many digits bits=1024 ns=42588 warm=33083 value= 5920068436299064376931790202140607438684… 3682647
-KOP ball/Ball.inv, near one, as many digits bits=4096 ns=48547 warm=38025 value= 3430884010384444728926205244104377550526… 2870709
-KOP ball/Ball.inv, near one, as many digits bits=16384 ns=99241 warm=87909 value= 3973506026210555685638522874168397995638… 3330514
-KOP ball/Ball.inv, near one, as many digits bits=100000 ns=928679 warm=934484 value= 3551273647286444048424091549448131096268… 3849067
-KOP ball/Ball.div, near one, as many digits bits=64 ns=63368 warm=51987 value= 541142121737690726837934473011423082634 622847155
-KOP ball/Ball.div, near one, as many digits bits=1024 ns=64884 warm=54603 value= 4020634029358037676130087738418409790246… 4622337
-KOP ball/Ball.div, near one, as many digits bits=4096 ns=72654 warm=63361 value= 1825314279529967056364118464669967581421… 1948101
-KOP ball/Ball.div, near one, as many digits bits=16384 ns=146200 warm=136357 value= 2372823475089695980362992660577539913858… 1788125
-KOP ball/Ball.div, near one, as many digits bits=100000 ns=1184109 warm=1198983 value= 2163386660787854618117163103646123486627… 2612495
-KOP ball/Ball.apart bits=64 ns=10945 warm=9365 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=1024 ns=11357 warm=10012 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=4096 ns=11458 warm=10101 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=16384 ns=11961 warm=10741 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=100000 ns=14804 warm=13949 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP complex/CBall.add bits=64 ns=37531 warm=33889 value= 57691271275137632579578 62333781732502946041128 6
-KOP complex/CBall.add bits=1024 ns=37567 warm=34975 value= 7189966372662504714800806067719727832603… 5382954
-KOP complex/CBall.add bits=4096 ns=38205 warm=35428 value= 3113249441287784926102753478738323666320… 3225228
-KOP complex/CBall.add bits=16384 ns=39284 warm=36883 value= 3482293161053330553489075982299204196319… 4094664
-KOP complex/CBall.add bits=100000 ns=43446 warm=44360 value= 2124624329696404851261784789770896918630… 3049571
-KOP complex/CBall.mul bits=64 ns=87929 warm=81194 value= 315357830151788861901519026852309937860 423716176
-KOP complex/CBall.mul bits=1024 ns=88725 warm=83317 value= 3832351573267334586309733477384647102081… 2469450
-KOP complex/CBall.mul bits=4096 ns=93509 warm=88539 value= 9663705747705066610299362143999774000577… 1106876
-KOP complex/CBall.mul bits=16384 ns=128393 warm=125059 value= 1211157303340163042378278889991992984642… 1262068
-KOP complex/CBall.mul bits=100000 ns=554001 warm=572729 value= 5829293826425103791839196445930735589267… 1450116
-KOP complex/CBall.mul, round 64 bits=64 ns=106104 warm=100560 value= 17095582228044209929 22969699952919030848 2345861
-KOP complex/CBall.mul, round 64 bits=1024 ns=107526 warm=107587 value= 2077521950732342488312231531537823922898… 1338691
-KOP complex/CBall.mul, round 64 bits=4096 ns=112009 warm=108579 value= 5238705382961244611872681422454089582263… 6000387
-KOP complex/CBall.mul, round 64 bits=16384 ns=150243 warm=148106 value= 6565696897515449332164083498563109936666… 6841686
-KOP complex/CBall.mul, round 64 bits=100000 ns=580224 warm=611865 value= 3160066515333218263149575743680826919121… 7861099
-KOP complex/CFix.mul, as many digits bits=64 ns=57805 warm=47553 value= 36893488147419103232 36893488147419103232 3689348
-KOP complex/CFix.mul, as many digits bits=1024 ns=59952 warm=50806 value= 3595386269724631815458610381578049467235… 3595386
-KOP complex/CFix.mul, as many digits bits=4096 ns=68781 warm=60420 value= 2088777762826305013383505421433248765159… 2088777
-KOP list/(List.range 256).map, length bits=64 ns=23122189 warm=21965268 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/(List.range 256).map, length bits=1024 ns=22837552 warm=21853074 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/Seq.tabulate 256, Seq.len bits=64 ns=3187711 warm=3966382 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/Seq.tabulate 256, Seq.len bits=1024 ns=3193536 warm=4022543 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/(List.range 256).map, getD 200 bits=64 ns=23130181 warm=21570594 value= 11197156834892570818 14082049345288755085 1392446
-KOP list/(List.range 256).map, getD 200 bits=1024 ns=23569365 warm=21381858 value= 1091778124494588108777268680596379322609… 1755096
-KOP list/Seq.tabulate 256, Seq.getD 200 bits=64 ns=3771938 warm=4589083 value= 11197156834892570818 14082049345288755085 1392446
-KOP list/Seq.tabulate 256, Seq.getD 200 bits=1024 ns=3642469 warm=4667042 value= 1091778124494588108777268680596379322609… 1755096
-KOP list/Split.cover of 1 to 64 bits=64 ns=3832866 warm=2892054 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP search/Kernel.bisect, square root bits=64 ns=414086 warm=383492 value= 3346215300 3752605674 3731550071 3900616477
-KOP search/Kernel.bisect, square root bits=1024 ns=6028076 warm=6722616 value= 1044881871071839445174998052346018630303… 1324800
-KOP search/Kernel.bisect, square root bits=4096 ns=30323700 warm=34183013 value= 2521588525485262866122483652684743232899… 2756656
-KOP search/Kernel.isqrt bits=64 ns=152576 warm=121506 value= 3346215300 3752605674 3731550071 3900616477
-KOP search/Kernel.isqrt bits=1024 ns=315873 warm=273796 value= 1044881871071839445174998052346018630303… 1324800
-KOP search/Kernel.isqrt bits=4096 ns=395194 warm=343741 value= 2521588525485262866122483652684743232899… 2756656
-KOP search/strict (a * b), then successor bits=64 ns=10383 warm=9102 value= 157678915075894430950759513426154968931 211858088
-KOP search/strict (a * b), then successor bits=1024 ns=10782 warm=9922 value= 1916175786633667293154866738692323551040… 1234725
-KOP search/strict (a * b), then successor bits=4096 ns=12875 warm=12235 value= 4831852873852533305149681071999887000288… 5534380
-KOP search/strict (a * b), then successor bits=16384 ns=29225 warm=29069 value= 6055786516700815211891394449959964923210… 6310341
-KOP search/strict (a * b), then successor bits=100000 ns=237918 warm=248595 value= 2914646913212551895919598222965367794633… 7250584
-KOP mod/powMod bits=64 ns=303070 warm=252020 value= 8459997921108424760 13444525620439207419
-KOP mod/powMod bits=256 ns=1029439 warm=1014297 value= 5640093348772905311122866003548787154451… 9271461
-KOP mod/powMod bits=1024 ns=8155827 warm=8622494 value= 7783751213703164086373369761643069718396… 2476133
-KOP mod/powMod bits=4096 ns=93425068 warm=99981324 value= 2820865641670868989175562975596822487706… 8362799
-KOP mod/powModWindow 0 (binary) bits=64 ns=845196 warm=831511 value= 8459997921108424760 13444525620439207419
-KOP mod/powModWindow 0 (binary) bits=256 ns=3549621 warm=4332764 value= 5640093348772905311122866003548787154451… 9271461
-KOP mod/powModWindow 0 (binary) bits=1024 ns=18950649 warm=21270530 value= 7783751213703164086373369761643069718396… 2476133
-KOP mod/powModWindow 0 (binary) bits=4096 ns=124347571 warm=129835199 value= 2820865641670868989175562975596822487706… 8362799
-KOP mod/invMod bits=64 ns=530166 warm=515148 value= 8872622468939417957 14698634583709348197 15050626
-KOP mod/invMod bits=256 ns=1957075 warm=2143383 value= 7155145171555236484987376839733363866491… 6576478
-KOP mod/invMod bits=1024 ns=9155234 warm=10597195 value= 3447251263311814177689609313497096743036… 1214012
-KOP mod/invMod bits=4096 ns=45619153 warm=55952272 value= 5367353293423106862047231812559382848551… 3271604
-KOP mod/isInvMod bits=64 ns=9626 warm=5467 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=256 ns=7407 warm=5582 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=1024 ns=7882 warm=6190 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=4096 ns=12740 warm=11124 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Nat.add bits=64 ns=1302 warm=1430 value= 25279206180181325503 29139274835588044698 2971644
-KOP nat/Nat.add bits=1024 ns=1339 warm=1558 value= 2846874461051719487364189774111792275070… 2253660
-KOP nat/Nat.add bits=4096 ns=1355 warm=1657 value= 1395756298975591246757024812458026846458… 1490250
-KOP nat/Nat.add bits=16384 ns=1618 warm=2050 value= 1562444710510880168107601642853196652959… 1630857
-KOP nat/Nat.add bits=100000 ns=3818 warm=6067 value= 1080624681232133423425938792739151353440… 1718452
-KOP nat/a + b bits=64 ns=11856 warm=3727 value= 25279206180181325503 29139274835588044698 2971644
-KOP nat/a + b bits=1024 ns=11975 warm=3946 value= 2846874461051719487364189774111792275070… 2253660
-KOP nat/a + b bits=4096 ns=11919 warm=4029 value= 1395756298975591246757024812458026846458… 1490250
-KOP nat/a + b bits=16384 ns=14273 warm=4470 value= 1562444710510880168107601642853196652959… 1630857
-KOP nat/a + b bits=100000 ns=14493 warm=8654 value= 1080624681232133423425938792739151353440… 1718452
-KOP nat/Nat.mul bits=64 ns=1349 warm=1510 value= 157678915075894430950759513426154968930 211858088
-KOP nat/Nat.mul bits=1024 ns=1551 warm=1791 value= 1916175786633667293154866738692323551040… 1234725
-KOP nat/Nat.mul bits=4096 ns=3373 warm=3673 value= 4831852873852533305149681071999887000288… 5534380
-KOP nat/Nat.mul bits=16384 ns=18001 warm=18769 value= 6055786516700815211891394449959964923210… 6310341
-KOP nat/Nat.mul bits=100000 ns=215526 warm=222272 value= 2914646913212551895919598222965367794633… 7250584
-KOP nat/a * b bits=64 ns=12041 warm=4362 value= 157678915075894430950759513426154968930 211858088
-KOP nat/a * b bits=1024 ns=12241 warm=4197 value= 1916175786633667293154866738692323551040… 1234725
-KOP nat/a * b bits=4096 ns=14238 warm=6188 value= 4831852873852533305149681071999887000288… 5534380
-KOP nat/a * b bits=16384 ns=28883 warm=21539 value= 6055786516700815211891394449959964923210… 6310341
-KOP nat/a * b bits=100000 ns=227857 warm=229273 value= 2914646913212551895919598222965367794633… 7250584
-KOP nat/Nat.div (2n by n bits) bits=64 ns=2049 warm=2242 value= 11323875245121334505 11450637739921900687 1401529
-KOP nat/Nat.div (2n by n bits) bits=1024 ns=2515 warm=2840 value= 2039153370985955090393277925790686810396… 1335219
-KOP nat/Nat.div (2n by n bits) bits=4096 ns=10882 warm=11616 value= 6873066906188902505997951593090573137950… 7863504
-KOP nat/Nat.div (2n by n bits) bits=16384 ns=77700 warm=78985 value= 9591998686005278055922396614599586927773… 1031469
-KOP nat/Nat.div (2n by n bits) bits=100000 ns=654908 warm=692877 value= 2991941112061442661427102068723277589926… 4537337
-KOP nat/Nat.gcd bits=64 ns=1453 warm=1362 value= 1 6 1 12 1 2 2 1
-KOP nat/Nat.gcd bits=1024 ns=7938 warm=7485 value= 2 1 1 17 1 1 2 1
-KOP nat/Nat.gcd bits=4096 ns=36325 warm=36281 value= 1 1 3 7 10 2 2 1
-KOP nat/Nat.gcd bits=16384 ns=220362 warm=219855 value= 1 2 1 3 1 1 1 33
-KOP nat/Nat.gcd bits=100000 ns=3572402 warm=3562131 value= 6 1 1 4 1 1 1 1
-KOP nat/Nat.ble bits=64 ns=1077 warm=2005 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
-KOP nat/Nat.ble bits=1024 ns=1072 warm=1928 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
-KOP nat/Nat.ble bits=4096 ns=1091 warm=1959 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
-KOP nat/Nat.ble bits=16384 ns=1114 warm=1988 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Nat.ble bits=100000 ns=1356 warm=2110 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
-KOP nat/decide (a ≤ b) bits=64 ns=6941 warm=5668 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
-KOP nat/decide (a ≤ b) bits=1024 ns=4222 warm=5532 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
-KOP nat/decide (a ≤ b) bits=4096 ns=4240 warm=5546 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
-KOP nat/decide (a ≤ b) bits=16384 ns=4248 warm=5524 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/decide (a ≤ b) bits=100000 ns=4227 warm=5508 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
-KOP nat/Nat.log2 bits=64 ns=457747 warm=456231 value= 63 63 63 63
-KOP nat/Nat.log2 bits=1024 ns=8412318 warm=9834431 value= 1023 1023 1023 1023
-KOP nat/Nat.log2 bits=4096 ns=44545267 warm=58889931 value= 4095 4095 4095 4095
-KOP nat/Kernel.size bits=64 ns=79410 warm=32464 value= 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
-KOP nat/Kernel.size bits=1024 ns=222630 warm=136482 value= 1024 1024 1024 1024 1024 1024 1024 1024 1024 1024
-KOP nat/Kernel.size bits=4096 ns=276834 warm=183244 value= 4096 4096 4096 4096 4096 4096 4096 4096 4096 4096
-KOP nat/Kernel.size bits=16384 ns=338464 warm=147051 value= 16384 16384 16384 16384 16384 16384 16384 16384 1
-KOP nat/Kernel.size bits=100000 ns=287245 warm=193581 value= 100000 100000 100000 100000 100000 100000 100000 
-KOP nat/Nat.testBit bits=64 ns=64649 warm=22799 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
-KOP nat/Nat.testBit bits=1024 ns=65276 warm=19286 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
-KOP nat/Nat.testBit bits=4096 ns=57492 warm=23269 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Nat.testBit bits=16384 ns=55335 warm=24327 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
-KOP nat/Nat.testBit bits=100000 ns=56003 warm=21378 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Kernel.testBit bits=64 ns=8518 warm=4760 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
-KOP nat/Kernel.testBit bits=1024 ns=8896 warm=5258 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
-KOP nat/Kernel.testBit bits=4096 ns=8970 warm=5227 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/Kernel.testBit bits=16384 ns=9260 warm=5544 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
-KOP nat/Kernel.testBit bits=100000 ns=10731 warm=7388 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
-KOP nat/(Nat.digits 2 n).sum bits=64 ns=4291269 warm=4584432 value= 37 34 32 33
-KOP nat/(Nat.digits 2 n).sum bits=1024 ns=88510275 warm=97751348 value= 515 487 501 527
-KOP nat/Kernel.popCount bits=64 ns=40764 warm=26045 value= 37 34 32 33
-KOP nat/Kernel.popCount bits=1024 ns=297072 warm=234083 value= 515 487 501 527
-KOP nat/Kernel.popCount bits=4096 ns=332771 warm=267177 value= 2098 1996 2044 2048
-KOP nat/Kernel.popCount bits=16384 ns=431803 warm=303586 value= 8212 8290 8283 8177
-KOP nat/Kernel.popCount bits=100000 ns=508951 warm=457937 value= 49471 49906 49702 50097
-KOP nat/Nat.sqrt bits=64 ns=873389 warm=779216 value= 3346215300 3752605674
-KOP nat/Nat.sqrt bits=1024 ns=9293587 warm=10111348 value= 1044881871071839445174998052346018630303… 1324800
-KOP nat/Nat.sqrt bits=4096 ns=42417572 warm=46698255 value= 2521588525485262866122483652684743232899… 2756656
-KOP nat/Kernel.isqrt bits=64 ns=148577 warm=119716 value= 3346215300 3752605674 3731550071 3900616477
-KOP nat/Kernel.isqrt bits=1024 ns=316810 warm=272237 value= 1044881871071839445174998052346018630303… 1324800
-KOP nat/Kernel.isqrt bits=4096 ns=389805 warm=345004 value= 2521588525485262866122483652684743232899… 2756656
-KOP nat/Kernel.isqrt bits=16384 ns=563872 warm=527944 value= 8440671890226942577403134328513869856690… 9219518
-KOP nat/Kernel.isqrt bits=100000 ns=3159765 warm=3193551 value= 2370769474026390679630519027624414884569… 2277212
-KOP nat/Kernel.isRoot 3 bits=64 ns=17101 warm=12988 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=1024 ns=22045 warm=20510 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=4096 ns=44334 warm=43840 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=16384 ns=154245 warm=141616 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP nat/Kernel.isRoot 3 bits=100000 ns=1799315 warm=1808034 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/a + b bits=64 ns=75943 warm=41006 value= 2884892510396184268 1290342970354498891 419485868
-KOP int/a + b bits=1024 ns=76567 warm=41615 value= 6633182120625432698096524129190336298522… 3742766
-KOP int/a + b bits=4096 ns=77295 warm=42030 value= 1240745606038028117807023933665717564591… 8422513
-KOP int/a + b bits=16384 ns=77952 warm=44251 value= 1375458713415348127573401792011872296614… 3681825
-KOP int/a + b bits=100000 ns=83642 warm=53874 value= 4348489856294039884065974464237100312237… 2298794
-KOP int/Z.add bits=64 ns=16332 warm=16815 value= 2884892510396184268 1290342970354498891 419485868
-KOP int/Z.add bits=1024 ns=17025 warm=17625 value= 6633182120625432698096524129190336298522… 3742766
-KOP int/Z.add bits=4096 ns=16875 warm=17770 value= 1240745606038028117807023933665717564591… 8422513
-KOP int/Z.add bits=16384 ns=17671 warm=19140 value= 1375458713415348127573401792011872296614… 3681825
-KOP int/Z.add bits=100000 ns=22271 warm=26801 value= 4348489856294039884065974464237100312237… 2298794
-KOP int/a * b bits=64 ns=67788 warm=40323 value= 157678915075894430961956670261047539548 211858088
-KOP int/a * b bits=1024 ns=67542 warm=40860 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/a * b bits=4096 ns=70302 warm=43705 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/a * b bits=16384 ns=88835 warm=61741 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/a * b bits=100000 ns=520314 warm=285250 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/Z.mul bits=64 ns=17496 warm=19899 value= 157678915075894430961956670261047539548 211858088
-KOP int/Z.mul bits=1024 ns=22125 warm=18563 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/Z.mul bits=4096 ns=19773 warm=20999 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/Z.mul bits=16384 ns=42448 warm=47065 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/Z.mul bits=100000 ns=242385 warm=256285 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/decide (a ≤ b) bits=64 ns=90018 warm=51521 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=1024 ns=90449 warm=50938 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=4096 ns=90167 warm=50862 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=16384 ns=89899 warm=50744 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/decide (a ≤ b) bits=100000 ns=90875 warm=50894 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=64 ns=6623 warm=7773 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=1024 ns=6622 warm=7800 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=4096 ns=6646 warm=7749 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=16384 ns=6668 warm=7714 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/Int.ble' bits=100000 ns=6647 warm=7696 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP int/a / b bits=64 ns=85260 warm=44699 value= 11323875245121334506 11450637739921900688 1401529
-KOP int/a / b bits=1024 ns=85815 warm=45965 value= 2039153370985955090393277925790686810396… 1335219
-KOP int/a / b bits=4096 ns=90608 warm=50216 value= 6873066906188902505997951593090573137950… 7863504
-KOP int/a / b bits=16384 ns=136631 warm=94048 value= 9591998686005278055922396614599586927773… 1031469
-KOP int/a / b bits=100000 ns=767151 warm=732753 value= 2991941112061442661427102068723277589926… 4537337
-KOP int/Z.ediv bits=64 ns=39536 warm=26373 value= 11323875245121334506 11450637739921900688 1401529
-KOP int/Z.ediv bits=1024 ns=40184 warm=27521 value= 2039153370985955090393277925790686810396… 1335219
-KOP int/Z.ediv bits=4096 ns=44721 warm=31836 value= 6873066906188902505997951593090573137950… 7863504
-KOP int/Z.ediv bits=16384 ns=89849 warm=75233 value= 9591998686005278055922396614599586927773… 1031469
-KOP int/Z.ediv bits=100000 ns=720101 warm=715194 value= 2991941112061442661427102068723277589926… 4537337
-KOP int/Signed.mul bits=64 ns=19522 warm=17075 value= 157678915075894430950759513426154968930 211858088
-KOP int/Signed.mul bits=1024 ns=19610 warm=17785 value= 1916175786633667293154866738692323551040… 1234725
-KOP int/Signed.mul bits=4096 ns=22085 warm=20114 value= 4831852873852533305149681071999887000288… 5534380
-KOP int/Signed.mul bits=16384 ns=38518 warm=37128 value= 6055786516700815211891394449959964923210… 6310341
-KOP int/Signed.mul bits=100000 ns=247304 warm=258885 value= 2914646913212551895919598222965367794633… 7250584
-KOP int/y² = x³ + a x + b (Int) bits=64 ns=307914 warm=237745 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Int) bits=1024 ns=324284 warm=244560 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Int) bits=4096 ns=320364 warm=252950 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=64 ns=65626 warm=68726 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=1024 ns=67360 warm=71037 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP int/y² = x³ + a x + b (Z) bits=4096 ns=78546 warm=83179 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP rat/mkRat (two operands) bits=64 ns=122334 warm=97704 value= 29296858248260026679 30133195878082948465 3137769
-KOP rat/mkRat (two operands) bits=1024 ns=146296 warm=117290 value= 2191516610208562246921190544213209483223… 2578687
-KOP rat/mkRat (two operands) bits=4096 ns=209793 warm=181617 value= 1022328018592883015232968679511766566572… 4061526
-KOP rat/mkRat (two operands) bits=16384 ns=593556 warm=562068 value= 1849515149768549709221856300834284284359… 1669812
-KOP rat/a + b < c (Rat) bits=64 ns=890260 warm=763869 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=1024 ns=847908 warm=721268 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=4096 ns=963911 warm=842135 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Rat) bits=16384 ns=1652762 warm=1558167 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=64 ns=641706 warm=506167 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=1024 ns=698099 warm=572052 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=4096 ns=826848 warm=696735 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Rat) bits=16384 ns=1613489 warm=1493016 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=64 ns=36322 warm=35121 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=1024 ns=37627 warm=37277 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=4096 ns=51865 warm=51433 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=16384 ns=155127 warm=155004 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Frac) bits=100000 ns=1543369 warm=1566821 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=64 ns=35404 warm=32304 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=1024 ns=36104 warm=33692 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=4096 ns=48474 warm=46165 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=16384 ns=133146 warm=131949 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Frac) bits=100000 ns=1319153 warm=1333415 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/Frac.normalize bits=64 ns=15578 warm=13009 value= 7041024672644377443 15214808902971271795 84778256
-KOP rat/Frac.normalize bits=1024 ns=23073 warm=20843 value= 1755096336557131378586921093515412952461… 3284921
-KOP rat/Frac.normalize bits=4096 ns=53348 warm=50606 value= 3799577148948485146344318014561496507294… 1968094
-KOP rat/Frac.normalize bits=16384 ns=245015 warm=238206 value= 2124988227315518726081177277567979853276… 9995198
-KOP rat/Frac.normalize bits=100000 ns=3598636 warm=3606283 value= 5185698913345965122926395240483901751593… 7442864
-KOP rat/Q.mk (two operands) bits=64 ns=41753 warm=41021 value= 29296858248260026679 30133195878082948465 3137769
-KOP rat/Q.mk (two operands) bits=1024 ns=58414 warm=59004 value= 2191516610208562246921190544213209483223… 2578687
-KOP rat/Q.mk (two operands) bits=4096 ns=117402 warm=109572 value= 1022328018592883015232968679511766566572… 4061526
-KOP rat/Q.mk (two operands) bits=16384 ns=493438 warm=489255 value= 1849515149768549709221856300834284284359… 1669812
-KOP rat/Q.mk (two operands) bits=100000 ns=7257362 warm=7256215 value= 1484521853005402720784168173694470708110… 1580071
-KOP rat/a + b < c (Q) bits=64 ns=144125 warm=148367 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=1024 ns=186597 warm=188032 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=4096 ns=334556 warm=341192 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=16384 ns=1390592 warm=1405107 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a + b < c (Q) bits=100000 ns=18065414 warm=18136924 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=64 ns=122295 warm=126958 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=1024 ns=159863 warm=162760 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=4096 ns=306914 warm=309527 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=16384 ns=1326482 warm=1340229 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a * b < c (Q) bits=100000 ns=17698320 warm=17730373 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP rat/a ^ 21 (Rat) bits=64 ns=144155 warm=92848 value= 1789520631001425295481058345922002653733… 6723517
-KOP rat/a ^ 21 (Rat) bits=1024 ns=161517 warm=110199 value= 1349957679978372795780467546858182697234… 3092314
-KOP rat/a ^ 21 (Q) bits=64 ns=26495 warm=24703 value= 1789520631001425295481058345922002653733… 6723517
-KOP rat/a ^ 21 (Q) bits=1024 ns=47767 warm=46011 value= 1349957679978372795780467546858182697234… 3092314
-KOP rat/a ^ 21 (Q) bits=4096 ns=178029 warm=176112 value= 3133794531801837586793949378301037036052… 6290395
-KOP rat/SignedRat a + b bits=64 ns=216317 warm=177049 value= 214255689750780116915589120675180213690 223433851
-KOP rat/SignedRat a + b bits=1024 ns=248288 warm=208559 value= 1153070599391509388128604763500066619144… 1596034
-KOP rat/SignedRat a * b bits=64 ns=231083 warm=188407 value= 21425568975078011691558912067518021369 3723897520
-KOP rat/SignedRat a * b bits=1024 ns=293392 warm=248896 value= 1153070599391509388128604763500066619144… 3192068
-KOP dyad/Dyad.add bits=64 ns=28741 warm=23522 value= 57668876961467847438342 62305932800637712495320 6
-KOP dyad/Dyad.add bits=1024 ns=29082 warm=23908 value= 7187782816413515538583251530358535073958… 5381075
-KOP dyad/Dyad.add bits=4096 ns=29101 warm=24461 value= 3111977759549413137667777156319232211230… 3223822
-KOP dyad/Dyad.add bits=16384 ns=30782 warm=25545 value= 3480868262214161208133725720835552186896… 4093402
-KOP dyad/Dyad.add bits=100000 ns=45170 warm=36105 value= 2123500220116609777439518191233515396274… 3047623
-KOP dyad/Dyad.mul bits=64 ns=14633 warm=12778 value= 157678915075894430950759513426154968930 211858088
-KOP dyad/Dyad.mul bits=1024 ns=14758 warm=12824 value= 1916175786633667293154866738692323551040… 1234725
-KOP dyad/Dyad.mul bits=4096 ns=16680 warm=15093 value= 4831852873852533305149681071999887000288… 5534380
-KOP dyad/Dyad.mul bits=16384 ns=40936 warm=34883 value= 6055786516700815211891394449959964923210… 6310341
-KOP dyad/Dyad.mul bits=100000 ns=231621 warm=238188 value= 2914646913212551895919598222965367794633… 7250584
-KOP dyad/Dyad.lt bits=64 ns=25587 warm=21303 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=1024 ns=25826 warm=21578 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=4096 ns=25937 warm=22054 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=16384 ns=26870 warm=23129 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.lt bits=100000 ns=32065 warm=29792 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP dyad/Dyad.roundDown bits=64 ns=25329 warm=17420 value= 10428164932 13114930453 12968169463 14169895000 1
-KOP dyad/Dyad.roundDown bits=1024 ns=25726 warm=18288 value= 1016797613813158225992013402838613207087… 1634560
-KOP dyad/Dyad.roundDown bits=4096 ns=25829 warm=18844 value= 5921729553359506814630340873689647251736… 7077263
-KOP dyad/Dyad.roundDown bits=16384 ns=26664 warm=19371 value= 6635202277309006803437422326076819669912… 7916198
-KOP dyad/Dyad.roundDown bits=100000 ns=31404 warm=27204 value= 5234543140023359201227307959373678809792… 4829558
-KOP dyad/Dyad.trimDown 53 bits=64 ns=81273 warm=43045 value= 5467361735787388 6876000656879275 679905563116053
-KOP dyad/Dyad.trimDown 53 bits=1024 ns=178518 warm=111910 value= 9469665715593455767701296047170795724960… 1522303
-KOP dyad/Dyad.trimDown 53 bits=4096 ns=209858 warm=142438 value= 5515040413811344349255336476954599778090… 6591215
-KOP dyad/Dyad.trimDown 53 bits=16384 ns=249651 warm=176775 value= 6179513667997911136134087503797421499314… 7372533
-KOP dyad/Dyad.trimDown 53 bits=100000 ns=305478 warm=236207 value= 4875048194102347060598284729670626129651… 4497876
-KOP ball/Ball.add bits=64 ns=32057 warm=25571 value= 57668876961467847438342 62305932800637712495320 6
-KOP ball/Ball.add bits=1024 ns=34313 warm=26072 value= 7187782816413515538583251530358535073958… 5381075
-KOP ball/Ball.add bits=4096 ns=31167 warm=26210 value= 3111977759549413137667777156319232211230… 3223822
-KOP ball/Ball.add bits=16384 ns=32694 warm=27446 value= 3480868262214161208133725720835552186896… 4093402
-KOP ball/Ball.add bits=100000 ns=39159 warm=38104 value= 2123500220116609777439518191233515396274… 3047623
-KOP ball/Ball.mul bits=64 ns=21416 warm=19754 value= 157678915075894430950759513426154968930 211858088
-KOP ball/Ball.mul bits=1024 ns=22047 warm=20392 value= 1916175786633667293154866738692323551040… 1234725
-KOP ball/Ball.mul bits=4096 ns=23874 warm=22740 value= 4831852873852533305149681071999887000288… 5534380
-KOP ball/Ball.mul bits=16384 ns=40295 warm=39084 value= 6055786516700815211891394449959964923210… 6310341
-KOP ball/Ball.mul bits=100000 ns=244826 warm=250890 value= 2914646913212551895919598222965367794633… 7250584
-KOP ball/Ball.mul, round 64 bits=64 ns=49990 warm=45070 value= 8547791114022104965 11484849976459515425 11729308
-KOP ball/Ball.mul, round 64 bits=1024 ns=51017 warm=44007 value= 1038760975366171244156115765768911961449… 6693459
-KOP ball/Ball.mul, round 64 bits=4096 ns=53623 warm=47338 value= 2619352691480622305936340711227044791131… 3000193
-KOP ball/Ball.mul, round 64 bits=16384 ns=74163 warm=66320 value= 3282848448757724666082041749281554968333… 3420843
-KOP ball/Ball.mul, round 64 bits=100000 ns=292840 warm=304294 value= 1580033257666609131574787871840413459560… 3930549
-KOP ball/Ball.le bits=64 ns=43098 warm=35331 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=1024 ns=44001 warm=36007 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=4096 ns=43131 warm=36334 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=16384 ns=45100 warm=38025 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.le bits=100000 ns=60282 warm=55928 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.inv, near one, as many digits bits=64 ns=51568 warm=38903 value= 60780137661473284129 48328529261230324713 4887546
-KOP ball/Ball.inv, near one, as many digits bits=1024 ns=43593 warm=33135 value= 5920068436299064376931790202140607438684… 3682647
-KOP ball/Ball.inv, near one, as many digits bits=4096 ns=49081 warm=38645 value= 3430884010384444728926205244104377550526… 2870709
-KOP ball/Ball.inv, near one, as many digits bits=16384 ns=124339 warm=110591 value= 3973506026210555685638522874168397995638… 3330514
-KOP ball/Ball.inv, near one, as many digits bits=100000 ns=928759 warm=932488 value= 3551273647286444048424091549448131096268… 3849067
-KOP ball/Ball.div, near one, as many digits bits=64 ns=63111 warm=52047 value= 541142121737690726837934473011423082634 622847155
-KOP ball/Ball.div, near one, as many digits bits=1024 ns=64779 warm=54548 value= 4020634029358037676130087738418409790246… 4622337
-KOP ball/Ball.div, near one, as many digits bits=4096 ns=72367 warm=61779 value= 1825314279529967056364118464669967581421… 1948101
-KOP ball/Ball.div, near one, as many digits bits=16384 ns=146161 warm=134554 value= 2372823475089695980362992660577539913858… 1788125
-KOP ball/Ball.div, near one, as many digits bits=100000 ns=1200137 warm=1205741 value= 2163386660787854618117163103646123486627… 2612495
-KOP ball/Ball.apart bits=64 ns=10756 warm=9951 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=1024 ns=11264 warm=10058 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=4096 ns=11668 warm=10112 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=16384 ns=12198 warm=10655 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP ball/Ball.apart bits=100000 ns=15764 warm=14012 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP complex/CBall.add bits=64 ns=47755 warm=33888 value= 57691271275137632579578 62333781732502946041128 6
-KOP complex/CBall.add bits=1024 ns=65417 warm=34357 value= 7189966372662504714800806067719727832603… 5382954
-KOP complex/CBall.add bits=4096 ns=51833 warm=35005 value= 3113249441287784926102753478738323666320… 3225228
-KOP complex/CBall.add bits=16384 ns=38977 warm=36816 value= 3482293161053330553489075982299204196319… 4094664
-KOP complex/CBall.add bits=100000 ns=74536 warm=74527 value= 2124624329696404851261784789770896918630… 3049571
-KOP complex/CBall.mul bits=64 ns=147794 warm=136353 value= 315357830151788861901519026852309937860 423716176
-KOP complex/CBall.mul bits=1024 ns=149090 warm=140710 value= 3832351573267334586309733477384647102081… 2469450
-KOP complex/CBall.mul bits=4096 ns=157463 warm=149327 value= 9663705747705066610299362143999774000577… 1106876
-KOP complex/CBall.mul bits=16384 ns=222286 warm=215137 value= 1211157303340163042378278889991992984642… 1262068
-KOP complex/CBall.mul bits=100000 ns=552102 warm=574793 value= 5829293826425103791839196445930735589267… 1450116
-KOP complex/CBall.mul, round 64 bits=64 ns=106789 warm=101940 value= 17095582228044209929 22969699952919030848 2345861
-KOP complex/CBall.mul, round 64 bits=1024 ns=107287 warm=102378 value= 2077521950732342488312231531537823922898… 1338691
-KOP complex/CBall.mul, round 64 bits=4096 ns=112176 warm=109046 value= 5238705382961244611872681422454089582263… 6000387
-KOP complex/CBall.mul, round 64 bits=16384 ns=151649 warm=148303 value= 6565696897515449332164083498563109936666… 6841686
-KOP complex/CBall.mul, round 64 bits=100000 ns=645728 warm=660793 value= 3160066515333218263149575743680826919121… 7861099
-KOP complex/CFix.mul, as many digits bits=64 ns=57909 warm=47639 value= 36893488147419103232 36893488147419103232 3689348
-KOP complex/CFix.mul, as many digits bits=1024 ns=59729 warm=51044 value= 3595386269724631815458610381578049467235… 3595386
-KOP complex/CFix.mul, as many digits bits=4096 ns=69348 warm=60610 value= 2088777762826305013383505421433248765159… 2088777
-KOP list/(List.range 256).map, length bits=64 ns=22995774 warm=21466936 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/(List.range 256).map, length bits=1024 ns=22259911 warm=21191928 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/Seq.tabulate 256, Seq.len bits=64 ns=3328969 warm=3940229 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/Seq.tabulate 256, Seq.len bits=1024 ns=3216144 warm=3976574 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
-KOP list/(List.range 256).map, getD 200 bits=64 ns=23337867 warm=21355633 value= 11197156834892570818 14082049345288755085 1392446
-KOP list/(List.range 256).map, getD 200 bits=1024 ns=23205650 warm=21255923 value= 1091778124494588108777268680596379322609… 1755096
-KOP list/Seq.tabulate 256, Seq.getD 200 bits=64 ns=3593629 warm=4472879 value= 11197156834892570818 14082049345288755085 1392446
-KOP list/Seq.tabulate 256, Seq.getD 200 bits=1024 ns=3593013 warm=4340979 value= 1091778124494588108777268680596379322609… 1755096
-KOP list/Split.cover of 1 to 64 bits=64 ns=3785620 warm=2851020 value= Bool.true Bool.true Bool.true Bool.true Bool.true
-KOP search/Kernel.bisect, square root bits=64 ns=417908 warm=366518 value= 3346215300 3752605674 3731550071 3900616477
-KOP search/Kernel.bisect, square root bits=1024 ns=6098393 warm=6699396 value= 1044881871071839445174998052346018630303… 1324800
-KOP search/Kernel.bisect, square root bits=4096 ns=29687312 warm=34648133 value= 2521588525485262866122483652684743232899… 2756656
-KOP search/Kernel.isqrt bits=64 ns=154185 warm=122108 value= 3346215300 3752605674 3731550071 3900616477
-KOP search/Kernel.isqrt bits=1024 ns=317592 warm=274101 value= 1044881871071839445174998052346018630303… 1324800
-KOP search/Kernel.isqrt bits=4096 ns=398113 warm=345420 value= 2521588525485262866122483652684743232899… 2756656
-KOP search/strict (a * b), then successor bits=64 ns=10360 warm=9203 value= 157678915075894430950759513426154968931 211858088
-KOP search/strict (a * b), then successor bits=1024 ns=10629 warm=9762 value= 1916175786633667293154866738692323551040… 1234725
-KOP search/strict (a * b), then successor bits=4096 ns=12923 warm=12219 value= 4831852873852533305149681071999887000288… 5534380
-KOP search/strict (a * b), then successor bits=16384 ns=28921 warm=29009 value= 6055786516700815211891394449959964923210… 6310341
-KOP search/strict (a * b), then successor bits=100000 ns=235426 warm=247110 value= 2914646913212551895919598222965367794633… 7250584
-KOP mod/powMod bits=64 ns=298319 warm=250116 value= 8459997921108424760 13444525620439207419
-KOP mod/powMod bits=256 ns=997279 warm=1012404 value= 5640093348772905311122866003548787154451… 9271461
-KOP mod/powMod bits=1024 ns=8063800 warm=8321722 value= 7783751213703164086373369761643069718396… 2476133
-KOP mod/powMod bits=4096 ns=91753747 warm=104503381 value= 2820865641670868989175562975596822487706… 8362799
-KOP mod/powModWindow 0 (binary) bits=64 ns=852027 warm=796337 value= 8459997921108424760 13444525620439207419
-KOP mod/powModWindow 0 (binary) bits=256 ns=3284804 warm=3515385 value= 5640093348772905311122866003548787154451… 9271461
-KOP mod/powModWindow 0 (binary) bits=1024 ns=17496943 warm=19175831 value= 7783751213703164086373369761643069718396… 2476133
-KOP mod/powModWindow 0 (binary) bits=4096 ns=114421645 warm=129503282 value= 2820865641670868989175562975596822487706… 8362799
-KOP mod/invMod bits=64 ns=531545 warm=504835 value= 8872622468939417957 14698634583709348197 15050626
-KOP mod/invMod bits=256 ns=2022882 warm=2122843 value= 7155145171555236484987376839733363866491… 6576478
-KOP mod/invMod bits=1024 ns=9232717 warm=12576979 value= 3447251263311814177689609313497096743036… 1214012
-KOP mod/invMod bits=4096 ns=45754770 warm=54074372 value= 5367353293423106862047231812559382848551… 3271604
-KOP mod/isInvMod bits=64 ns=7338 warm=5479 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=256 ns=7437 warm=5645 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=1024 ns=7935 warm=6153 value= Bool.false Bool.false Bool.false Bool.false Bool.
-KOP mod/isInvMod bits=4096 ns=12818 warm=11129 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Nat.add bits=64 ns=1325 warm=1428 value= 25279206180181325503 29139274835588044698 2971644
+KOP nat/Nat.add bits=1024 ns=1345 warm=1550 value= 2846874461051719487364189774111792275070… 2253660
+KOP nat/Nat.add bits=4096 ns=1367 warm=1655 value= 1395756298975591246757024812458026846458… 1490250
+KOP nat/Nat.add bits=16384 ns=1664 warm=2045 value= 1562444710510880168107601642853196652959… 1630857
+KOP nat/Nat.add bits=100000 ns=3774 warm=5949 value= 1080624681232133423425938792739151353440… 1718452
+KOP nat/a + b bits=64 ns=11761 warm=3733 value= 25279206180181325503 29139274835588044698 2971644
+KOP nat/a + b bits=1024 ns=11841 warm=3902 value= 2846874461051719487364189774111792275070… 2253660
+KOP nat/a + b bits=4096 ns=11880 warm=4004 value= 1395756298975591246757024812458026846458… 1490250
+KOP nat/a + b bits=16384 ns=12180 warm=4476 value= 1562444710510880168107601642853196652959… 1630857
+KOP nat/a + b bits=100000 ns=14730 warm=8391 value= 1080624681232133423425938792739151353440… 1718452
+KOP nat/Nat.mul bits=64 ns=1317 warm=1504 value= 157678915075894430950759513426154968930 211858088
+KOP nat/Nat.mul bits=1024 ns=1531 warm=1778 value= 1916175786633667293154866738692323551040… 1234725
+KOP nat/Nat.mul bits=4096 ns=3365 warm=3637 value= 4831852873852533305149681071999887000288… 5534380
+KOP nat/Nat.mul bits=16384 ns=17959 warm=18640 value= 6055786516700815211891394449959964923210… 6310341
+KOP nat/Nat.mul bits=100000 ns=212176 warm=216413 value= 2914646913212551895919598222965367794633… 7250584
+KOP nat/a * b bits=64 ns=11937 warm=3831 value= 157678915075894430950759513426154968930 211858088
+KOP nat/a * b bits=1024 ns=12167 warm=4212 value= 1916175786633667293154866738692323551040… 1234725
+KOP nat/a * b bits=4096 ns=14120 warm=6185 value= 4831852873852533305149681071999887000288… 5534380
+KOP nat/a * b bits=16384 ns=28870 warm=21116 value= 6055786516700815211891394449959964923210… 6310341
+KOP nat/a * b bits=100000 ns=222963 warm=219409 value= 2914646913212551895919598222965367794633… 7250584
+KOP nat/Nat.div (2n by n bits) bits=64 ns=2102 warm=2269 value= 11323875245121334505 11450637739921900687 1401529
+KOP nat/Nat.div (2n by n bits) bits=1024 ns=2484 warm=2790 value= 2039153370985955090393277925790686810396… 1335219
+KOP nat/Nat.div (2n by n bits) bits=4096 ns=6089 warm=6384 value= 6873066906188902505997951593090573137950… 7863504
+KOP nat/Nat.div (2n by n bits) bits=16384 ns=42987 warm=43336 value= 9591998686005278055922396614599586927773… 1031469
+KOP nat/Nat.div (2n by n bits) bits=100000 ns=645951 warm=651398 value= 2991941112061442661427102068723277589926… 4537337
+KOP nat/Nat.gcd bits=64 ns=1373 warm=1210 value= 1 6 1 12 1 2 2 1
+KOP nat/Nat.gcd bits=1024 ns=7794 warm=7329 value= 2 1 1 17 1 1 2 1
+KOP nat/Nat.gcd bits=4096 ns=36011 warm=35703 value= 1 1 3 7 10 2 2 1
+KOP nat/Nat.gcd bits=16384 ns=218682 warm=218517 value= 1 2 1 3 1 1 1 33
+KOP nat/Nat.gcd bits=100000 ns=3551562 warm=3554915 value= 6 1 1 4 1 1 1 1
+KOP nat/Nat.ble bits=64 ns=1138 warm=1931 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
+KOP nat/Nat.ble bits=1024 ns=1059 warm=1934 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
+KOP nat/Nat.ble bits=4096 ns=1077 warm=1917 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
+KOP nat/Nat.ble bits=16384 ns=1128 warm=1943 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Nat.ble bits=100000 ns=1301 warm=2086 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
+KOP nat/decide (a ≤ b) bits=64 ns=4227 warm=5402 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
+KOP nat/decide (a ≤ b) bits=1024 ns=4205 warm=5494 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
+KOP nat/decide (a ≤ b) bits=4096 ns=4259 warm=5427 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
+KOP nat/decide (a ≤ b) bits=16384 ns=4242 warm=5469 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/decide (a ≤ b) bits=100000 ns=4235 warm=5385 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
+KOP nat/Nat.log2 bits=64 ns=446329 warm=448823 value= 63 63 63 63
+KOP nat/Nat.log2 bits=1024 ns=8072313 warm=9511801 value= 1023 1023 1023 1023
+KOP nat/Nat.log2 bits=4096 ns=40185882 warm=49903667 value= 4095 4095 4095 4095
+KOP nat/Kernel.size bits=64 ns=43646 warm=17109 value= 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
+KOP nat/Kernel.size bits=1024 ns=97904 warm=58231 value= 1024 1024 1024 1024 1024 1024 1024 1024 1024 1024
+KOP nat/Kernel.size bits=4096 ns=170123 warm=112985 value= 4096 4096 4096 4096 4096 4096 4096 4096 4096 4096
+KOP nat/Kernel.size bits=16384 ns=206490 warm=145522 value= 16384 16384 16384 16384 16384 16384 16384 16384 1
+KOP nat/Kernel.size bits=100000 ns=254636 warm=195721 value= 100000 100000 100000 100000 100000 100000 100000 
+KOP nat/Nat.testBit bits=64 ns=54354 warm=18736 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
+KOP nat/Nat.testBit bits=1024 ns=54307 warm=19200 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
+KOP nat/Nat.testBit bits=4096 ns=54638 warm=19070 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Nat.testBit bits=16384 ns=55563 warm=19748 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
+KOP nat/Nat.testBit bits=100000 ns=56274 warm=21498 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Kernel.testBit bits=64 ns=8552 warm=4637 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
+KOP nat/Kernel.testBit bits=1024 ns=8776 warm=5117 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
+KOP nat/Kernel.testBit bits=4096 ns=8825 warm=5138 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Kernel.testBit bits=16384 ns=9202 warm=5397 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
+KOP nat/Kernel.testBit bits=100000 ns=10635 warm=7226 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/(Nat.digits 2 n).sum bits=64 ns=4284560 warm=4465423 value= 37 34 32 33
+KOP nat/(Nat.digits 2 n).sum bits=1024 ns=97884715 warm=105396928 value= 515 487 501 527
+KOP nat/Kernel.popCount bits=64 ns=40100 warm=25271 value= 37 34 32 33
+KOP nat/Kernel.popCount bits=1024 ns=228140 warm=188357 value= 515 487 501 527
+KOP nat/Kernel.popCount bits=4096 ns=340128 warm=261673 value= 2098 1996 2044 2048
+KOP nat/Kernel.popCount bits=16384 ns=371189 warm=306493 value= 8212 8290 8283 8177
+KOP nat/Kernel.popCount bits=100000 ns=513435 warm=467439 value= 49471 49906 49702 50097
+KOP nat/Nat.sqrt bits=64 ns=904754 warm=963298 value= 3346215300 3752605674
+KOP nat/Nat.sqrt bits=1024 ns=10068090 warm=9336660 value= 1044881871071839445174998052346018630303… 1324800
+KOP nat/Nat.sqrt bits=4096 ns=42905136 warm=45463754 value= 2521588525485262866122483652684743232899… 2756656
+KOP nat/Kernel.isqrt bits=64 ns=129256 warm=98914 value= 3346215300 3752605674 3731550071 3900616477
+KOP nat/Kernel.isqrt bits=1024 ns=282406 warm=246651 value= 1044881871071839445174998052346018630303… 1324800
+KOP nat/Kernel.isqrt bits=4096 ns=401093 warm=348784 value= 2521588525485262866122483652684743232899… 2756656
+KOP nat/Kernel.isqrt bits=16384 ns=576006 warm=550585 value= 8440671890226942577403134328513869856690… 9219518
+KOP nat/Kernel.isqrt bits=100000 ns=3131034 warm=3180357 value= 2370769474026390679630519027624414884569… 2277212
+KOP nat/Kernel.isRoot 3 bits=64 ns=13606 warm=12022 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=1024 ns=15425 warm=13810 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=4096 ns=30623 warm=29137 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=16384 ns=143170 warm=141828 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=100000 ns=1744389 warm=1783372 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/a + b bits=64 ns=75943 warm=40410 value= 2884892510396184268 1290342970354498891 419485868
+KOP int/a + b bits=1024 ns=76752 warm=41123 value= 6633182120625432698096524129190336298522… 3742766
+KOP int/a + b bits=4096 ns=76375 warm=41531 value= 1240745606038028117807023933665717564591… 8422513
+KOP int/a + b bits=16384 ns=76966 warm=43387 value= 1375458713415348127573401792011872296614… 3681825
+KOP int/a + b bits=100000 ns=84037 warm=51506 value= 4348489856294039884065974464237100312237… 2298794
+KOP int/Z.add bits=64 ns=16107 warm=16562 value= 2884892510396184268 1290342970354498891 419485868
+KOP int/Z.add bits=1024 ns=16863 warm=17525 value= 6633182120625432698096524129190336298522… 3742766
+KOP int/Z.add bits=4096 ns=16754 warm=17708 value= 1240745606038028117807023933665717564591… 8422513
+KOP int/Z.add bits=16384 ns=17701 warm=18837 value= 1375458713415348127573401792011872296614… 3681825
+KOP int/Z.add bits=100000 ns=22195 warm=26087 value= 4348489856294039884065974464237100312237… 2298794
+KOP int/a * b bits=64 ns=66812 warm=39675 value= 157678915075894430961956670261047539548 211858088
+KOP int/a * b bits=1024 ns=67079 warm=40594 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/a * b bits=4096 ns=69807 warm=43138 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/a * b bits=16384 ns=88149 warm=61357 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/a * b bits=100000 ns=304385 warm=282464 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/Z.mul bits=64 ns=17817 warm=18063 value= 157678915075894430961956670261047539548 211858088
+KOP int/Z.mul bits=1024 ns=17661 warm=18494 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/Z.mul bits=4096 ns=19730 warm=20996 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/Z.mul bits=16384 ns=36827 warm=37355 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/Z.mul bits=100000 ns=241446 warm=252731 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/decide (a ≤ b) bits=64 ns=89841 warm=51257 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=1024 ns=89161 warm=51314 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=4096 ns=89822 warm=50433 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=16384 ns=89434 warm=51099 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=100000 ns=89665 warm=50840 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=64 ns=6643 warm=7869 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=1024 ns=6608 warm=7780 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=4096 ns=6619 warm=7781 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=16384 ns=6607 warm=7704 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=100000 ns=6564 warm=7801 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/a / b bits=64 ns=84868 warm=43740 value= 11323875245121334506 11450637739921900688 1401529
+KOP int/a / b bits=1024 ns=85678 warm=45004 value= 2039153370985955090393277925790686810396… 1335219
+KOP int/a / b bits=4096 ns=91294 warm=50122 value= 6873066906188902505997951593090573137950… 7863504
+KOP int/a / b bits=16384 ns=137439 warm=93496 value= 9591998686005278055922396614599586927773… 1031469
+KOP int/a / b bits=100000 ns=762167 warm=726524 value= 2991941112061442661427102068723277589926… 4537337
+KOP int/Z.ediv bits=64 ns=39566 warm=26278 value= 11323875245121334506 11450637739921900688 1401529
+KOP int/Z.ediv bits=1024 ns=40534 warm=27275 value= 2039153370985955090393277925790686810396… 1335219
+KOP int/Z.ediv bits=4096 ns=44980 warm=31823 value= 6873066906188902505997951593090573137950… 7863504
+KOP int/Z.ediv bits=16384 ns=89553 warm=74655 value= 9591998686005278055922396614599586927773… 1031469
+KOP int/Z.ediv bits=100000 ns=720214 warm=709617 value= 2991941112061442661427102068723277589926… 4537337
+KOP int/Signed.mul bits=64 ns=19356 warm=17079 value= 157678915075894430950759513426154968930 211858088
+KOP int/Signed.mul bits=1024 ns=19644 warm=17769 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/Signed.mul bits=4096 ns=22029 warm=19851 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/Signed.mul bits=16384 ns=37986 warm=36500 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/Signed.mul bits=100000 ns=241942 warm=252676 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/y² = x³ + a x + b (Int) bits=64 ns=306794 warm=229355 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Int) bits=1024 ns=308023 warm=230334 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Int) bits=4096 ns=319085 warm=243914 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=64 ns=65387 warm=67917 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=1024 ns=67021 warm=69590 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=4096 ns=76662 warm=81475 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP rat/mkRat (two operands) bits=64 ns=119052 warm=96362 value= 29296858248260026679 30133195878082948465 3137769
+KOP rat/mkRat (two operands) bits=1024 ns=143990 warm=115574 value= 2191516610208562246921190544213209483223… 2578687
+KOP rat/mkRat (two operands) bits=4096 ns=209682 warm=181488 value= 1022328018592883015232968679511766566572… 4061526
+KOP rat/mkRat (two operands) bits=16384 ns=592459 warm=563594 value= 1849515149768549709221856300834284284359… 1669812
+KOP rat/a + b < c (Rat) bits=64 ns=877868 warm=744328 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=1024 ns=839322 warm=704270 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=4096 ns=959516 warm=828055 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=16384 ns=1638560 warm=1501334 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=64 ns=636931 warm=495794 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=1024 ns=692209 warm=557885 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=4096 ns=821236 warm=689196 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=16384 ns=1601758 warm=1471906 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=64 ns=36130 warm=34898 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=1024 ns=37365 warm=37259 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=4096 ns=51556 warm=51356 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=16384 ns=153375 warm=152435 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=100000 ns=1525526 warm=1546876 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=64 ns=34813 warm=32246 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=1024 ns=34978 warm=33785 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=4096 ns=46867 warm=46052 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=16384 ns=131188 warm=129638 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=100000 ns=1310255 warm=1325627 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/Frac.normalize bits=64 ns=15440 warm=12929 value= 7041024672644377443 15214808902971271795 84778256
+KOP rat/Frac.normalize bits=1024 ns=22996 warm=21024 value= 1755096336557131378586921093515412952461… 3284921
+KOP rat/Frac.normalize bits=4096 ns=53072 warm=50294 value= 3799577148948485146344318014561496507294… 1968094
+KOP rat/Frac.normalize bits=16384 ns=241875 warm=237443 value= 2124988227315518726081177277567979853276… 9995198
+KOP rat/Frac.normalize bits=100000 ns=3591316 warm=3587025 value= 5185698913345965122926395240483901751593… 7442864
+KOP rat/Q.mk (two operands) bits=64 ns=33777 warm=32907 value= 29296858248260026679 30133195878082948465 3137769
+KOP rat/Q.mk (two operands) bits=1024 ns=48873 warm=49300 value= 2191516610208562246921190544213209483223… 2578687
+KOP rat/Q.mk (two operands) bits=4096 ns=109796 warm=108447 value= 1022328018592883015232968679511766566572… 4061526
+KOP rat/Q.mk (two operands) bits=16384 ns=490157 warm=487432 value= 1849515149768549709221856300834284284359… 1669812
+KOP rat/Q.mk (two operands) bits=100000 ns=7189260 warm=7207338 value= 1484521853005402720784168173694470708110… 1580071
+KOP rat/a + b < c (Q) bits=64 ns=143143 warm=146690 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=1024 ns=184591 warm=186878 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=4096 ns=334999 warm=336996 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=16384 ns=1379668 warm=1391413 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=100000 ns=17941654 warm=17991455 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=64 ns=124382 warm=126327 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=1024 ns=159875 warm=163708 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=4096 ns=305217 warm=308377 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=16384 ns=1322664 warm=1331581 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=100000 ns=17550788 warm=17630911 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a ^ 21 (Rat) bits=64 ns=144132 warm=94638 value= 1789520631001425295481058345922002653733… 6723517
+KOP rat/a ^ 21 (Rat) bits=1024 ns=166278 warm=114407 value= 1349957679978372795780467546858182697234… 3092314
+KOP rat/a ^ 21 (Q) bits=64 ns=26204 warm=24137 value= 1789520631001425295481058345922002653733… 6723517
+KOP rat/a ^ 21 (Q) bits=1024 ns=47060 warm=44767 value= 1349957679978372795780467546858182697234… 3092314
+KOP rat/a ^ 21 (Q) bits=4096 ns=178493 warm=175500 value= 3133794531801837586793949378301037036052… 6290395
+KOP rat/SignedRat a + b bits=64 ns=215724 warm=177374 value= 214255689750780116915589120675180213690 223433851
+KOP rat/SignedRat a + b bits=1024 ns=248042 warm=204709 value= 1153070599391509388128604763500066619144… 1596034
+KOP rat/SignedRat a * b bits=64 ns=228555 warm=186927 value= 21425568975078011691558912067518021369 3723897520
+KOP rat/SignedRat a * b bits=1024 ns=291421 warm=247040 value= 1153070599391509388128604763500066619144… 3192068
+KOP dyad/Dyad.add bits=64 ns=29274 warm=23667 value= 57668876961467847438342 62305932800637712495320 6
+KOP dyad/Dyad.add bits=1024 ns=28954 warm=24276 value= 7187782816413515538583251530358535073958… 5381075
+KOP dyad/Dyad.add bits=4096 ns=29143 warm=24632 value= 3111977759549413137667777156319232211230… 3223822
+KOP dyad/Dyad.add bits=16384 ns=30816 warm=25641 value= 3480868262214161208133725720835552186896… 4093402
+KOP dyad/Dyad.add bits=100000 ns=37089 warm=35127 value= 2123500220116609777439518191233515396274… 3047623
+KOP dyad/Dyad.mul bits=64 ns=14433 warm=12280 value= 157678915075894430950759513426154968930 211858088
+KOP dyad/Dyad.mul bits=1024 ns=14526 warm=12635 value= 1916175786633667293154866738692323551040… 1234725
+KOP dyad/Dyad.mul bits=4096 ns=16607 warm=14854 value= 4831852873852533305149681071999887000288… 5534380
+KOP dyad/Dyad.mul bits=16384 ns=32043 warm=30485 value= 6055786516700815211891394449959964923210… 6310341
+KOP dyad/Dyad.mul bits=100000 ns=229420 warm=232715 value= 2914646913212551895919598222965367794633… 7250584
+KOP dyad/Dyad.lt bits=64 ns=25452 warm=21019 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=1024 ns=25522 warm=21523 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=4096 ns=25938 warm=21691 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=16384 ns=27662 warm=22823 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=100000 ns=34755 warm=31782 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.roundDown bits=64 ns=25147 warm=17595 value= 10428164932 13114930453 12968169463 14169895000 1
+KOP dyad/Dyad.roundDown bits=1024 ns=26238 warm=19056 value= 1016797613813158225992013402838613207087… 1634560
+KOP dyad/Dyad.roundDown bits=4096 ns=29415 warm=18624 value= 5921729553359506814630340873689647251736… 7077263
+KOP dyad/Dyad.roundDown bits=16384 ns=26944 warm=19224 value= 6635202277309006803437422326076819669912… 7916198
+KOP dyad/Dyad.roundDown bits=100000 ns=30674 warm=27003 value= 5234543140023359201227307959373678809792… 4829558
+KOP dyad/Dyad.trimDown 53 bits=64 ns=76206 warm=39091 value= 5467361735787388 6876000656879275 679905563116053
+KOP dyad/Dyad.trimDown 53 bits=1024 ns=133387 warm=85051 value= 9469665715593455767701296047170795724960… 1522303
+KOP dyad/Dyad.trimDown 53 bits=4096 ns=212073 warm=143251 value= 5515040413811344349255336476954599778090… 6591215
+KOP dyad/Dyad.trimDown 53 bits=16384 ns=249585 warm=174754 value= 6179513667997911136134087503797421499314… 7372533
+KOP dyad/Dyad.trimDown 53 bits=100000 ns=304538 warm=239258 value= 4875048194102347060598284729670626129651… 4497876
+KOP ball/Ball.add bits=64 ns=31463 warm=25272 value= 57668876961467847438342 62305932800637712495320 6
+KOP ball/Ball.add bits=1024 ns=30984 warm=25746 value= 7187782816413515538583251530358535073958… 5381075
+KOP ball/Ball.add bits=4096 ns=30957 warm=26279 value= 3111977759549413137667777156319232211230… 3223822
+KOP ball/Ball.add bits=16384 ns=32711 warm=27404 value= 3480868262214161208133725720835552186896… 4093402
+KOP ball/Ball.add bits=100000 ns=39141 warm=37334 value= 2123500220116609777439518191233515396274… 3047623
+KOP ball/Ball.mul bits=64 ns=21163 warm=19128 value= 157678915075894430950759513426154968930 211858088
+KOP ball/Ball.mul bits=1024 ns=21463 warm=19591 value= 1916175786633667293154866738692323551040… 1234725
+KOP ball/Ball.mul bits=4096 ns=23447 warm=21718 value= 4831852873852533305149681071999887000288… 5534380
+KOP ball/Ball.mul bits=16384 ns=39607 warm=38000 value= 6055786516700815211891394449959964923210… 6310341
+KOP ball/Ball.mul bits=100000 ns=244136 warm=244873 value= 2914646913212551895919598222965367794633… 7250584
+KOP ball/Ball.mul, round 64 bits=64 ns=50018 warm=43910 value= 8547791114022104965 11484849976459515425 11729308
+KOP ball/Ball.mul, round 64 bits=1024 ns=48092 warm=44517 value= 1038760975366171244156115765768911961449… 6693459
+KOP ball/Ball.mul, round 64 bits=4096 ns=50219 warm=46988 value= 2619352691480622305936340711227044791131… 3000193
+KOP ball/Ball.mul, round 64 bits=16384 ns=69924 warm=67004 value= 3282848448757724666082041749281554968333… 3420843
+KOP ball/Ball.mul, round 64 bits=100000 ns=285273 warm=293940 value= 1580033257666609131574787871840413459560… 3930549
+KOP ball/Ball.le bits=64 ns=44006 warm=35650 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=1024 ns=42996 warm=35766 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=4096 ns=42768 warm=36213 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=16384 ns=44346 warm=37101 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=100000 ns=50572 warm=44143 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.inv, near one, as many digits bits=64 ns=41974 warm=30953 value= 60780137661473284129 48328529261230324713 4887546
+KOP ball/Ball.inv, near one, as many digits bits=1024 ns=43077 warm=32895 value= 5920068436299064376931790202140607438684… 3682647
+KOP ball/Ball.inv, near one, as many digits bits=4096 ns=47039 warm=37647 value= 3430884010384444728926205244104377550526… 2870709
+KOP ball/Ball.inv, near one, as many digits bits=16384 ns=99155 warm=86170 value= 3973506026210555685638522874168397995638… 3330514
+KOP ball/Ball.inv, near one, as many digits bits=100000 ns=931717 warm=927825 value= 3551273647286444048424091549448131096268… 3849067
+KOP ball/Ball.div, near one, as many digits bits=64 ns=63077 warm=51631 value= 541142121737690726837934473011423082634 622847155
+KOP ball/Ball.div, near one, as many digits bits=1024 ns=65139 warm=54244 value= 4020634029358037676130087738418409790246… 4622337
+KOP ball/Ball.div, near one, as many digits bits=4096 ns=72211 warm=61751 value= 1825314279529967056364118464669967581421… 1948101
+KOP ball/Ball.div, near one, as many digits bits=16384 ns=144018 warm=133742 value= 2372823475089695980362992660577539913858… 1788125
+KOP ball/Ball.div, near one, as many digits bits=100000 ns=1182202 warm=1194139 value= 2163386660787854618117163103646123486627… 2612495
+KOP ball/Ball.apart bits=64 ns=17233 warm=9522 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=1024 ns=11179 warm=9967 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=4096 ns=11378 warm=10064 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=16384 ns=12638 warm=10742 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=100000 ns=15339 warm=13940 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP complex/CBall.add bits=64 ns=37824 warm=32720 value= 57691271275137632579578 62333781732502946041128 6
+KOP complex/CBall.add bits=1024 ns=37351 warm=33220 value= 7189966372662504714800806067719727832603… 5382954
+KOP complex/CBall.add bits=4096 ns=37882 warm=33478 value= 3113249441287784926102753478738323666320… 3225228
+KOP complex/CBall.add bits=16384 ns=39047 warm=35145 value= 3482293161053330553489075982299204196319… 4094664
+KOP complex/CBall.add bits=100000 ns=43481 warm=42856 value= 2124624329696404851261784789770896918630… 3049571
+KOP complex/CBall.mul bits=64 ns=87118 warm=82372 value= 315357830151788861901519026852309937860 423716176
+KOP complex/CBall.mul bits=1024 ns=90735 warm=83555 value= 3832351573267334586309733477384647102081… 2469450
+KOP complex/CBall.mul bits=4096 ns=95604 warm=88193 value= 9663705747705066610299362143999774000577… 1106876
+KOP complex/CBall.mul bits=16384 ns=131538 warm=125087 value= 1211157303340163042378278889991992984642… 1262068
+KOP complex/CBall.mul bits=100000 ns=549550 warm=566062 value= 5829293826425103791839196445930735589267… 1450116
+KOP complex/CBall.mul, round 64 bits=64 ns=105609 warm=100290 value= 17095582228044209929 22969699952919030848 2345861
+KOP complex/CBall.mul, round 64 bits=1024 ns=107269 warm=102276 value= 2077521950732342488312231531537823922898… 1338691
+KOP complex/CBall.mul, round 64 bits=4096 ns=113289 warm=108164 value= 5238705382961244611872681422454089582263… 6000387
+KOP complex/CBall.mul, round 64 bits=16384 ns=151193 warm=148969 value= 6565696897515449332164083498563109936666… 6841686
+KOP complex/CBall.mul, round 64 bits=100000 ns=575153 warm=603446 value= 3160066515333218263149575743680826919121… 7861099
+KOP complex/CFix.mul, as many digits bits=64 ns=57457 warm=47329 value= 36893488147419103232 36893488147419103232 3689348
+KOP complex/CFix.mul, as many digits bits=1024 ns=59851 warm=50564 value= 3595386269724631815458610381578049467235… 3595386
+KOP complex/CFix.mul, as many digits bits=4096 ns=69175 warm=60204 value= 2088777762826305013383505421433248765159… 2088777
+KOP list/(List.range 256).map, length bits=64 ns=21624988 warm=20221979 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/(List.range 256).map, length bits=1024 ns=21350922 warm=19999563 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/Seq.tabulate 256, Seq.len bits=64 ns=3172812 warm=3766385 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/Seq.tabulate 256, Seq.len bits=1024 ns=3189950 warm=3712590 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/(List.range 256).map, getD 200 bits=64 ns=21059849 warm=19435563 value= 11197156834892570818 14082049345288755085 1392446
+KOP list/(List.range 256).map, getD 200 bits=1024 ns=21177021 warm=19525711 value= 1091778124494588108777268680596379322609… 1755096
+KOP list/Seq.tabulate 256, Seq.getD 200 bits=64 ns=3556778 warm=4171393 value= 11197156834892570818 14082049345288755085 1392446
+KOP list/Seq.tabulate 256, Seq.getD 200 bits=1024 ns=3558004 warm=4043390 value= 1091778124494588108777268680596379322609… 1755096
+KOP list/Split.cover of 1 to 64 bits=64 ns=3694620 warm=2672428 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP search/Kernel.bisect, square root bits=64 ns=409462 warm=358036 value= 3346215300 3752605674 3731550071 3900616477
+KOP search/Kernel.bisect, square root bits=1024 ns=5896523 warm=5782222 value= 1044881871071839445174998052346018630303… 1324800
+KOP search/Kernel.bisect, square root bits=4096 ns=27150659 warm=31115720 value= 2521588525485262866122483652684743232899… 2756656
+KOP search/Kernel.isqrt bits=64 ns=129053 warm=98272 value= 3346215300 3752605674 3731550071 3900616477
+KOP search/Kernel.isqrt bits=1024 ns=280719 warm=244300 value= 1044881871071839445174998052346018630303… 1324800
+KOP search/Kernel.isqrt bits=4096 ns=403992 warm=350466 value= 2521588525485262866122483652684743232899… 2756656
+KOP search/strict (a * b), then successor bits=64 ns=10389 warm=9064 value= 157678915075894430950759513426154968931 211858088
+KOP search/strict (a * b), then successor bits=1024 ns=10600 warm=9606 value= 1916175786633667293154866738692323551040… 1234725
+KOP search/strict (a * b), then successor bits=4096 ns=12608 warm=11812 value= 4831852873852533305149681071999887000288… 5534380
+KOP search/strict (a * b), then successor bits=16384 ns=28687 warm=28341 value= 6055786516700815211891394449959964923210… 6310341
+KOP search/strict (a * b), then successor bits=100000 ns=231521 warm=244932 value= 2914646913212551895919598222965367794633… 7250584
+KOP mod/powMod bits=64 ns=440048 warm=255686 value= 8459997921108424760 13444525620439207419
+KOP mod/powMod bits=256 ns=996595 warm=1023371 value= 5640093348772905311122866003548787154451… 9271461
+KOP mod/powMod bits=1024 ns=7940635 warm=8158061 value= 7783751213703164086373369761643069718396… 2476133
+KOP mod/powMod bits=4096 ns=88427484 warm=94972391 value= 2820865641670868989175562975596822487706… 8362799
+KOP mod/powModWindow 0 (binary) bits=64 ns=829325 warm=806636 value= 8459997921108424760 13444525620439207419
+KOP mod/powModWindow 0 (binary) bits=256 ns=3207567 warm=3327595 value= 5640093348772905311122866003548787154451… 9271461
+KOP mod/powModWindow 0 (binary) bits=1024 ns=15223601 warm=16293167 value= 7783751213703164086373369761643069718396… 2476133
+KOP mod/powModWindow 0 (binary) bits=4096 ns=105411503 warm=116387703 value= 2820865641670868989175562975596822487706… 8362799
+KOP mod/invMod bits=64 ns=535947 warm=504690 value= 8872622468939417957 14698634583709348197 15050626
+KOP mod/invMod bits=256 ns=1946265 warm=2077974 value= 7155145171555236484987376839733363866491… 6576478
+KOP mod/invMod bits=1024 ns=8445863 warm=9752421 value= 3447251263311814177689609313497096743036… 1214012
+KOP mod/invMod bits=4096 ns=40957906 warm=49602079 value= 5367353293423106862047231812559382848551… 3271604
+KOP mod/isInvMod bits=64 ns=7398 warm=5492 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=256 ns=7466 warm=5704 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=1024 ns=7863 warm=6209 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=4096 ns=12753 warm=11126 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Nat.add bits=64 ns=1315 warm=1426 value= 25279206180181325503 29139274835588044698 2971644
+KOP nat/Nat.add bits=1024 ns=1329 warm=1568 value= 2846874461051719487364189774111792275070… 2253660
+KOP nat/Nat.add bits=4096 ns=1373 warm=1649 value= 1395756298975591246757024812458026846458… 1490250
+KOP nat/Nat.add bits=16384 ns=1669 warm=2058 value= 1562444710510880168107601642853196652959… 1630857
+KOP nat/Nat.add bits=100000 ns=3907 warm=5950 value= 1080624681232133423425938792739151353440… 1718452
+KOP nat/a + b bits=64 ns=11830 warm=3726 value= 25279206180181325503 29139274835588044698 2971644
+KOP nat/a + b bits=1024 ns=11895 warm=3932 value= 2846874461051719487364189774111792275070… 2253660
+KOP nat/a + b bits=4096 ns=11870 warm=4025 value= 1395756298975591246757024812458026846458… 1490250
+KOP nat/a + b bits=16384 ns=12173 warm=4484 value= 1562444710510880168107601642853196652959… 1630857
+KOP nat/a + b bits=100000 ns=14269 warm=8623 value= 1080624681232133423425938792739151353440… 1718452
+KOP nat/Nat.mul bits=64 ns=1322 warm=1487 value= 157678915075894430950759513426154968930 211858088
+KOP nat/Nat.mul bits=1024 ns=1517 warm=1777 value= 1916175786633667293154866738692323551040… 1234725
+KOP nat/Nat.mul bits=4096 ns=3353 warm=3641 value= 4831852873852533305149681071999887000288… 5534380
+KOP nat/Nat.mul bits=16384 ns=17967 warm=18551 value= 6055786516700815211891394449959964923210… 6310341
+KOP nat/Nat.mul bits=100000 ns=212365 warm=217202 value= 2914646913212551895919598222965367794633… 7250584
+KOP nat/a * b bits=64 ns=12007 warm=3912 value= 157678915075894430950759513426154968930 211858088
+KOP nat/a * b bits=1024 ns=12231 warm=4222 value= 1916175786633667293154866738692323551040… 1234725
+KOP nat/a * b bits=4096 ns=14277 warm=6168 value= 4831852873852533305149681071999887000288… 5534380
+KOP nat/a * b bits=16384 ns=28889 warm=21155 value= 6055786516700815211891394449959964923210… 6310341
+KOP nat/a * b bits=100000 ns=224420 warm=219939 value= 2914646913212551895919598222965367794633… 7250584
+KOP nat/Nat.div (2n by n bits) bits=64 ns=2066 warm=2210 value= 11323875245121334505 11450637739921900687 1401529
+KOP nat/Nat.div (2n by n bits) bits=1024 ns=2480 warm=2788 value= 2039153370985955090393277925790686810396… 1335219
+KOP nat/Nat.div (2n by n bits) bits=4096 ns=6048 warm=6396 value= 6873066906188902505997951593090573137950… 7863504
+KOP nat/Nat.div (2n by n bits) bits=16384 ns=43077 warm=43401 value= 9591998686005278055922396614599586927773… 1031469
+KOP nat/Nat.div (2n by n bits) bits=100000 ns=657563 warm=664033 value= 2991941112061442661427102068723277589926… 4537337
+KOP nat/Nat.gcd bits=64 ns=1390 warm=1262 value= 1 6 1 12 1 2 2 1
+KOP nat/Nat.gcd bits=1024 ns=7834 warm=7357 value= 2 1 1 17 1 1 2 1
+KOP nat/Nat.gcd bits=4096 ns=36105 warm=35798 value= 1 1 3 7 10 2 2 1
+KOP nat/Nat.gcd bits=16384 ns=218476 warm=219058 value= 1 2 1 3 1 1 1 33
+KOP nat/Nat.gcd bits=100000 ns=3588897 warm=3578693 value= 6 1 1 4 1 1 1 1
+KOP nat/Nat.ble bits=64 ns=1166 warm=1915 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
+KOP nat/Nat.ble bits=1024 ns=1056 warm=1923 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
+KOP nat/Nat.ble bits=4096 ns=1062 warm=1910 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
+KOP nat/Nat.ble bits=16384 ns=1259 warm=1968 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Nat.ble bits=100000 ns=1305 warm=2061 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
+KOP nat/decide (a ≤ b) bits=64 ns=4283 warm=5443 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
+KOP nat/decide (a ≤ b) bits=1024 ns=4218 warm=5461 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
+KOP nat/decide (a ≤ b) bits=4096 ns=4227 warm=5403 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
+KOP nat/decide (a ≤ b) bits=16384 ns=4238 warm=5529 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/decide (a ≤ b) bits=100000 ns=4259 warm=5412 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
+KOP nat/Nat.log2 bits=64 ns=445630 warm=486411 value= 63 63 63 63
+KOP nat/Nat.log2 bits=1024 ns=8068099 warm=8730637 value= 1023 1023 1023 1023
+KOP nat/Nat.log2 bits=4096 ns=36669195 warm=43224212 value= 4095 4095 4095 4095
+KOP nat/Kernel.size bits=64 ns=43552 warm=17007 value= 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
+KOP nat/Kernel.size bits=1024 ns=97499 warm=57862 value= 1024 1024 1024 1024 1024 1024 1024 1024 1024 1024
+KOP nat/Kernel.size bits=4096 ns=169909 warm=111097 value= 4096 4096 4096 4096 4096 4096 4096 4096 4096 4096
+KOP nat/Kernel.size bits=16384 ns=205513 warm=145932 value= 16384 16384 16384 16384 16384 16384 16384 16384 1
+KOP nat/Kernel.size bits=100000 ns=254093 warm=192030 value= 100000 100000 100000 100000 100000 100000 100000 
+KOP nat/Nat.testBit bits=64 ns=53818 warm=18672 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
+KOP nat/Nat.testBit bits=1024 ns=54013 warm=19186 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
+KOP nat/Nat.testBit bits=4096 ns=54058 warm=19139 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Nat.testBit bits=16384 ns=54614 warm=19514 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
+KOP nat/Nat.testBit bits=100000 ns=56020 warm=21115 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Kernel.testBit bits=64 ns=8418 warm=4697 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
+KOP nat/Kernel.testBit bits=1024 ns=8791 warm=5167 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
+KOP nat/Kernel.testBit bits=4096 ns=9176 warm=5175 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Kernel.testBit bits=16384 ns=9138 warm=5513 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
+KOP nat/Kernel.testBit bits=100000 ns=10632 warm=7148 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/(Nat.digits 2 n).sum bits=64 ns=4231568 warm=4214057 value= 37 34 32 33
+KOP nat/(Nat.digits 2 n).sum bits=1024 ns=76657378 warm=85460970 value= 515 487 501 527
+KOP nat/Kernel.popCount bits=64 ns=39848 warm=24949 value= 37 34 32 33
+KOP nat/Kernel.popCount bits=1024 ns=229651 warm=187506 value= 515 487 501 527
+KOP nat/Kernel.popCount bits=4096 ns=324392 warm=256273 value= 2098 1996 2044 2048
+KOP nat/Kernel.popCount bits=16384 ns=371902 warm=301145 value= 8212 8290 8283 8177
+KOP nat/Kernel.popCount bits=100000 ns=501412 warm=438448 value= 49471 49906 49702 50097
+KOP nat/Nat.sqrt bits=64 ns=893461 warm=766842 value= 3346215300 3752605674
+KOP nat/Nat.sqrt bits=1024 ns=8907825 warm=8972310 value= 1044881871071839445174998052346018630303… 1324800
+KOP nat/Nat.sqrt bits=4096 ns=37744884 warm=42354388 value= 2521588525485262866122483652684743232899… 2756656
+KOP nat/Kernel.isqrt bits=64 ns=129213 warm=98209 value= 3346215300 3752605674 3731550071 3900616477
+KOP nat/Kernel.isqrt bits=1024 ns=280036 warm=241671 value= 1044881871071839445174998052346018630303… 1324800
+KOP nat/Kernel.isqrt bits=4096 ns=401188 warm=350117 value= 2521588525485262866122483652684743232899… 2756656
+KOP nat/Kernel.isqrt bits=16384 ns=575252 warm=514656 value= 8440671890226942577403134328513869856690… 9219518
+KOP nat/Kernel.isqrt bits=100000 ns=3132667 warm=3119352 value= 2370769474026390679630519027624414884569… 2277212
+KOP nat/Kernel.isRoot 3 bits=64 ns=13605 warm=12111 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=1024 ns=15369 warm=13695 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=4096 ns=30560 warm=28990 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=16384 ns=142299 warm=140690 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=100000 ns=1739428 warm=1747278 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/a + b bits=64 ns=75498 warm=40141 value= 2884892510396184268 1290342970354498891 419485868
+KOP int/a + b bits=1024 ns=76464 warm=42156 value= 6633182120625432698096524129190336298522… 3742766
+KOP int/a + b bits=4096 ns=76628 warm=41308 value= 1240745606038028117807023933665717564591… 8422513
+KOP int/a + b bits=16384 ns=77416 warm=43191 value= 1375458713415348127573401792011872296614… 3681825
+KOP int/a + b bits=100000 ns=84008 warm=50932 value= 4348489856294039884065974464237100312237… 2298794
+KOP int/Z.add bits=64 ns=16112 warm=16664 value= 2884892510396184268 1290342970354498891 419485868
+KOP int/Z.add bits=1024 ns=17018 warm=17591 value= 6633182120625432698096524129190336298522… 3742766
+KOP int/Z.add bits=4096 ns=16778 warm=17634 value= 1240745606038028117807023933665717564591… 8422513
+KOP int/Z.add bits=16384 ns=17745 warm=19046 value= 1375458713415348127573401792011872296614… 3681825
+KOP int/Z.add bits=100000 ns=22317 warm=26927 value= 4348489856294039884065974464237100312237… 2298794
+KOP int/a * b bits=64 ns=67084 warm=39710 value= 157678915075894430961956670261047539548 211858088
+KOP int/a * b bits=1024 ns=67138 warm=40387 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/a * b bits=4096 ns=69656 warm=43650 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/a * b bits=16384 ns=87437 warm=61285 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/a * b bits=100000 ns=300510 warm=276607 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/Z.mul bits=64 ns=17317 warm=17934 value= 157678915075894430961956670261047539548 211858088
+KOP int/Z.mul bits=1024 ns=17551 warm=18446 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/Z.mul bits=4096 ns=19714 warm=20955 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/Z.mul bits=16384 ns=35931 warm=37525 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/Z.mul bits=100000 ns=239175 warm=252971 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/decide (a ≤ b) bits=64 ns=90042 warm=52471 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=1024 ns=89921 warm=50666 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=4096 ns=90412 warm=50756 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=16384 ns=90266 warm=51039 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=100000 ns=90652 warm=50897 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=64 ns=6797 warm=7782 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=1024 ns=6620 warm=7714 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=4096 ns=6618 warm=7694 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=16384 ns=6583 warm=7712 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=100000 ns=6649 warm=7836 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/a / b bits=64 ns=85502 warm=43996 value= 11323875245121334506 11450637739921900688 1401529
+KOP int/a / b bits=1024 ns=86504 warm=45100 value= 2039153370985955090393277925790686810396… 1335219
+KOP int/a / b bits=4096 ns=91019 warm=49931 value= 6873066906188902505997951593090573137950… 7863504
+KOP int/a / b bits=16384 ns=137472 warm=92897 value= 9591998686005278055922396614599586927773… 1031469
+KOP int/a / b bits=100000 ns=762581 warm=723697 value= 2991941112061442661427102068723277589926… 4537337
+KOP int/Z.ediv bits=64 ns=39487 warm=26182 value= 11323875245121334506 11450637739921900688 1401529
+KOP int/Z.ediv bits=1024 ns=43021 warm=27358 value= 2039153370985955090393277925790686810396… 1335219
+KOP int/Z.ediv bits=4096 ns=44777 warm=31720 value= 6873066906188902505997951593090573137950… 7863504
+KOP int/Z.ediv bits=16384 ns=89517 warm=74044 value= 9591998686005278055922396614599586927773… 1031469
+KOP int/Z.ediv bits=100000 ns=718167 warm=711709 value= 2991941112061442661427102068723277589926… 4537337
+KOP int/Signed.mul bits=64 ns=19304 warm=17175 value= 157678915075894430950759513426154968930 211858088
+KOP int/Signed.mul bits=1024 ns=19648 warm=17803 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/Signed.mul bits=4096 ns=21916 warm=19934 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/Signed.mul bits=16384 ns=37873 warm=36705 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/Signed.mul bits=100000 ns=244287 warm=251802 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/y² = x³ + a x + b (Int) bits=64 ns=307795 warm=229852 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Int) bits=1024 ns=307216 warm=231710 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Int) bits=4096 ns=319752 warm=243920 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=64 ns=65086 warm=68381 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=1024 ns=67023 warm=70007 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=4096 ns=78994 warm=81834 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP rat/mkRat (two operands) bits=64 ns=120026 warm=96230 value= 29296858248260026679 30133195878082948465 3137769
+KOP rat/mkRat (two operands) bits=1024 ns=144881 warm=115779 value= 2191516610208562246921190544213209483223… 2578687
+KOP rat/mkRat (two operands) bits=4096 ns=211103 warm=180552 value= 1022328018592883015232968679511766566572… 4061526
+KOP rat/mkRat (two operands) bits=16384 ns=590605 warm=560441 value= 1849515149768549709221856300834284284359… 1669812
+KOP rat/a + b < c (Rat) bits=64 ns=882545 warm=745735 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=1024 ns=842607 warm=709732 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=4096 ns=959742 warm=830331 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=16384 ns=1638033 warm=1507860 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=64 ns=635862 warm=499948 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=1024 ns=695121 warm=557946 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=4096 ns=823124 warm=687531 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=16384 ns=1596916 warm=1482228 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=64 ns=36391 warm=35393 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=1024 ns=37883 warm=37266 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=4096 ns=51152 warm=51771 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=16384 ns=152524 warm=152047 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=100000 ns=1527745 warm=1544625 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=64 ns=34355 warm=32370 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=1024 ns=35062 warm=34067 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=4096 ns=47185 warm=46105 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=16384 ns=132224 warm=129644 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=100000 ns=1310400 warm=1317763 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/Frac.normalize bits=64 ns=15895 warm=13016 value= 7041024672644377443 15214808902971271795 84778256
+KOP rat/Frac.normalize bits=1024 ns=23150 warm=20952 value= 1755096336557131378586921093515412952461… 3284921
+KOP rat/Frac.normalize bits=4096 ns=53458 warm=50289 value= 3799577148948485146344318014561496507294… 1968094
+KOP rat/Frac.normalize bits=16384 ns=241918 warm=238227 value= 2124988227315518726081177277567979853276… 9995198
+KOP rat/Frac.normalize bits=100000 ns=3587369 warm=3585044 value= 5185698913345965122926395240483901751593… 7442864
+KOP rat/Q.mk (two operands) bits=64 ns=33636 warm=32850 value= 29296858248260026679 30133195878082948465 3137769
+KOP rat/Q.mk (two operands) bits=1024 ns=48997 warm=49356 value= 2191516610208562246921190544213209483223… 2578687
+KOP rat/Q.mk (two operands) bits=4096 ns=109480 warm=108790 value= 1022328018592883015232968679511766566572… 4061526
+KOP rat/Q.mk (two operands) bits=16384 ns=487570 warm=487088 value= 1849515149768549709221856300834284284359… 1669812
+KOP rat/Q.mk (two operands) bits=100000 ns=7197060 warm=7207422 value= 1484521853005402720784168173694470708110… 1580071
+KOP rat/a + b < c (Q) bits=64 ns=143471 warm=148429 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=1024 ns=184053 warm=187410 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=4096 ns=332981 warm=335980 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=16384 ns=1379697 warm=1387981 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=100000 ns=17902145 warm=17984069 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=64 ns=122400 warm=125560 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=1024 ns=160807 warm=164462 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=4096 ns=304824 warm=309394 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=16384 ns=1322270 warm=1330376 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=100000 ns=17573018 warm=17622803 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a ^ 21 (Rat) bits=64 ns=142317 warm=95474 value= 1789520631001425295481058345922002653733… 6723517
+KOP rat/a ^ 21 (Rat) bits=1024 ns=164058 warm=113702 value= 1349957679978372795780467546858182697234… 3092314
+KOP rat/a ^ 21 (Q) bits=64 ns=26730 warm=24013 value= 1789520631001425295481058345922002653733… 6723517
+KOP rat/a ^ 21 (Q) bits=1024 ns=47008 warm=44790 value= 1349957679978372795780467546858182697234… 3092314
+KOP rat/a ^ 21 (Q) bits=4096 ns=177514 warm=175319 value= 3133794531801837586793949378301037036052… 6290395
+KOP rat/SignedRat a + b bits=64 ns=213719 warm=177104 value= 214255689750780116915589120675180213690 223433851
+KOP rat/SignedRat a + b bits=1024 ns=246787 warm=204612 value= 1153070599391509388128604763500066619144… 1596034
+KOP rat/SignedRat a * b bits=64 ns=228224 warm=187404 value= 21425568975078011691558912067518021369 3723897520
+KOP rat/SignedRat a * b bits=1024 ns=293237 warm=247060 value= 1153070599391509388128604763500066619144… 3192068
+KOP dyad/Dyad.add bits=64 ns=28850 warm=23824 value= 57668876961467847438342 62305932800637712495320 6
+KOP dyad/Dyad.add bits=1024 ns=29017 warm=24387 value= 7187782816413515538583251530358535073958… 5381075
+KOP dyad/Dyad.add bits=4096 ns=29297 warm=24627 value= 3111977759549413137667777156319232211230… 3223822
+KOP dyad/Dyad.add bits=16384 ns=31205 warm=25767 value= 3480868262214161208133725720835552186896… 4093402
+KOP dyad/Dyad.add bits=100000 ns=36927 warm=36120 value= 2123500220116609777439518191233515396274… 3047623
+KOP dyad/Dyad.mul bits=64 ns=14840 warm=12213 value= 157678915075894430950759513426154968930 211858088
+KOP dyad/Dyad.mul bits=1024 ns=14618 warm=12654 value= 1916175786633667293154866738692323551040… 1234725
+KOP dyad/Dyad.mul bits=4096 ns=16839 warm=14797 value= 4831852873852533305149681071999887000288… 5534380
+KOP dyad/Dyad.mul bits=16384 ns=32427 warm=30464 value= 6055786516700815211891394449959964923210… 6310341
+KOP dyad/Dyad.mul bits=100000 ns=232961 warm=235899 value= 2914646913212551895919598222965367794633… 7250584
+KOP dyad/Dyad.lt bits=64 ns=25691 warm=21169 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=1024 ns=25625 warm=21493 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=4096 ns=25806 warm=21817 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=16384 ns=26983 warm=22840 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=100000 ns=32086 warm=29676 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.roundDown bits=64 ns=25122 warm=17333 value= 10428164932 13114930453 12968169463 14169895000 1
+KOP dyad/Dyad.roundDown bits=1024 ns=25451 warm=18071 value= 1016797613813158225992013402838613207087… 1634560
+KOP dyad/Dyad.roundDown bits=4096 ns=25582 warm=18331 value= 5921729553359506814630340873689647251736… 7077263
+KOP dyad/Dyad.roundDown bits=16384 ns=26552 warm=19113 value= 6635202277309006803437422326076819669912… 7916198
+KOP dyad/Dyad.roundDown bits=100000 ns=30776 warm=28449 value= 5234543140023359201227307959373678809792… 4829558
+KOP dyad/Dyad.trimDown 53 bits=64 ns=76129 warm=39138 value= 5467361735787388 6876000656879275 679905563116053
+KOP dyad/Dyad.trimDown 53 bits=1024 ns=133710 warm=84761 value= 9469665715593455767701296047170795724960… 1522303
+KOP dyad/Dyad.trimDown 53 bits=4096 ns=211967 warm=140982 value= 5515040413811344349255336476954599778090… 6591215
+KOP dyad/Dyad.trimDown 53 bits=16384 ns=249333 warm=173819 value= 6179513667997911136134087503797421499314… 7372533
+KOP dyad/Dyad.trimDown 53 bits=100000 ns=303299 warm=236814 value= 4875048194102347060598284729670626129651… 4497876
+KOP ball/Ball.add bits=64 ns=30681 warm=25261 value= 57668876961467847438342 62305932800637712495320 6
+KOP ball/Ball.add bits=1024 ns=30966 warm=25757 value= 7187782816413515538583251530358535073958… 5381075
+KOP ball/Ball.add bits=4096 ns=31026 warm=26239 value= 3111977759549413137667777156319232211230… 3223822
+KOP ball/Ball.add bits=16384 ns=32806 warm=27567 value= 3480868262214161208133725720835552186896… 4093402
+KOP ball/Ball.add bits=100000 ns=39686 warm=38004 value= 2123500220116609777439518191233515396274… 3047623
+KOP ball/Ball.mul bits=64 ns=21238 warm=19130 value= 157678915075894430950759513426154968930 211858088
+KOP ball/Ball.mul bits=1024 ns=21647 warm=19538 value= 1916175786633667293154866738692323551040… 1234725
+KOP ball/Ball.mul bits=4096 ns=23438 warm=21777 value= 4831852873852533305149681071999887000288… 5534380
+KOP ball/Ball.mul bits=16384 ns=39736 warm=38186 value= 6055786516700815211891394449959964923210… 6310341
+KOP ball/Ball.mul bits=100000 ns=241530 warm=244757 value= 2914646913212551895919598222965367794633… 7250584
+KOP ball/Ball.mul, round 64 bits=64 ns=47951 warm=43782 value= 8547791114022104965 11484849976459515425 11729308
+KOP ball/Ball.mul, round 64 bits=1024 ns=48648 warm=43974 value= 1038760975366171244156115765768911961449… 6693459
+KOP ball/Ball.mul, round 64 bits=4096 ns=50471 warm=47279 value= 2619352691480622305936340711227044791131… 3000193
+KOP ball/Ball.mul, round 64 bits=16384 ns=69962 warm=65489 value= 3282848448757724666082041749281554968333… 3420843
+KOP ball/Ball.mul, round 64 bits=100000 ns=284364 warm=288817 value= 1580033257666609131574787871840413459560… 3930549
+KOP ball/Ball.le bits=64 ns=44150 warm=35621 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=1024 ns=45444 warm=36030 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=4096 ns=42784 warm=35860 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=16384 ns=44507 warm=37095 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=100000 ns=49733 warm=43956 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.inv, near one, as many digits bits=64 ns=41929 warm=30936 value= 60780137661473284129 48328529261230324713 4887546
+KOP ball/Ball.inv, near one, as many digits bits=1024 ns=42819 warm=33359 value= 5920068436299064376931790202140607438684… 3682647
+KOP ball/Ball.inv, near one, as many digits bits=4096 ns=47160 warm=37545 value= 3430884010384444728926205244104377550526… 2870709
+KOP ball/Ball.inv, near one, as many digits bits=16384 ns=100059 warm=87740 value= 3973506026210555685638522874168397995638… 3330514
+KOP ball/Ball.inv, near one, as many digits bits=100000 ns=923302 warm=917613 value= 3551273647286444048424091549448131096268… 3849067
+KOP ball/Ball.div, near one, as many digits bits=64 ns=62850 warm=51854 value= 541142121737690726837934473011423082634 622847155
+KOP ball/Ball.div, near one, as many digits bits=1024 ns=64746 warm=54181 value= 4020634029358037676130087738418409790246… 4622337
+KOP ball/Ball.div, near one, as many digits bits=4096 ns=71854 warm=62004 value= 1825314279529967056364118464669967581421… 1948101
+KOP ball/Ball.div, near one, as many digits bits=16384 ns=144686 warm=132001 value= 2372823475089695980362992660577539913858… 1788125
+KOP ball/Ball.div, near one, as many digits bits=100000 ns=1180183 warm=1184234 value= 2163386660787854618117163103646123486627… 2612495
+KOP ball/Ball.apart bits=64 ns=10721 warm=9534 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=1024 ns=11194 warm=10029 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=4096 ns=11352 warm=10126 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=16384 ns=12353 warm=10637 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=100000 ns=14854 warm=14170 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP complex/CBall.add bits=64 ns=37792 warm=32513 value= 57691271275137632579578 62333781732502946041128 6
+KOP complex/CBall.add bits=1024 ns=37742 warm=33017 value= 7189966372662504714800806067719727832603… 5382954
+KOP complex/CBall.add bits=4096 ns=38082 warm=33243 value= 3113249441287784926102753478738323666320… 3225228
+KOP complex/CBall.add bits=16384 ns=39247 warm=34628 value= 3482293161053330553489075982299204196319… 4094664
+KOP complex/CBall.add bits=100000 ns=43572 warm=43497 value= 2124624329696404851261784789770896918630… 3049571
+KOP complex/CBall.mul bits=64 ns=88188 warm=83298 value= 315357830151788861901519026852309937860 423716176
+KOP complex/CBall.mul bits=1024 ns=92944 warm=84307 value= 3832351573267334586309733477384647102081… 2469450
+KOP complex/CBall.mul bits=4096 ns=96766 warm=89030 value= 9663705747705066610299362143999774000577… 1106876
+KOP complex/CBall.mul bits=16384 ns=134547 warm=123695 value= 1211157303340163042378278889991992984642… 1262068
+KOP complex/CBall.mul bits=100000 ns=549388 warm=556184 value= 5829293826425103791839196445930735589267… 1450116
+KOP complex/CBall.mul, round 64 bits=64 ns=105635 warm=100264 value= 17095582228044209929 22969699952919030848 2345861
+KOP complex/CBall.mul, round 64 bits=1024 ns=106660 warm=102305 value= 2077521950732342488312231531537823922898… 1338691
+KOP complex/CBall.mul, round 64 bits=4096 ns=112159 warm=107914 value= 5238705382961244611872681422454089582263… 6000387
+KOP complex/CBall.mul, round 64 bits=16384 ns=149152 warm=145375 value= 6565696897515449332164083498563109936666… 6841686
+KOP complex/CBall.mul, round 64 bits=100000 ns=570653 warm=593494 value= 3160066515333218263149575743680826919121… 7861099
+KOP complex/CFix.mul, as many digits bits=64 ns=56867 warm=47427 value= 36893488147419103232 36893488147419103232 3689348
+KOP complex/CFix.mul, as many digits bits=1024 ns=59346 warm=50318 value= 3595386269724631815458610381578049467235… 3595386
+KOP complex/CFix.mul, as many digits bits=4096 ns=69344 warm=60138 value= 2088777762826305013383505421433248765159… 2088777
+KOP list/(List.range 256).map, length bits=64 ns=20328605 warm=18946878 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/(List.range 256).map, length bits=1024 ns=20318619 warm=20140431 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/Seq.tabulate 256, Seq.len bits=64 ns=3170244 warm=3698908 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/Seq.tabulate 256, Seq.len bits=1024 ns=3169421 warm=3608759 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/(List.range 256).map, getD 200 bits=64 ns=20532858 warm=19516107 value= 11197156834892570818 14082049345288755085 1392446
+KOP list/(List.range 256).map, getD 200 bits=1024 ns=20571064 warm=20207064 value= 1091778124494588108777268680596379322609… 1755096
+KOP list/Seq.tabulate 256, Seq.getD 200 bits=64 ns=3539091 warm=4095259 value= 11197156834892570818 14082049345288755085 1392446
+KOP list/Seq.tabulate 256, Seq.getD 200 bits=1024 ns=3538953 warm=4126558 value= 1091778124494588108777268680596379322609… 1755096
+KOP list/Split.cover of 1 to 64 bits=64 ns=3744289 warm=2568324 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP search/Kernel.bisect, square root bits=64 ns=412232 warm=360114 value= 3346215300 3752605674 3731550071 3900616477
+KOP search/Kernel.bisect, square root bits=1024 ns=5902813 warm=5720417 value= 1044881871071839445174998052346018630303… 1324800
+KOP search/Kernel.bisect, square root bits=4096 ns=26284399 warm=29597898 value= 2521588525485262866122483652684743232899… 2756656
+KOP search/Kernel.isqrt bits=64 ns=127754 warm=98109 value= 3346215300 3752605674 3731550071 3900616477
+KOP search/Kernel.isqrt bits=1024 ns=278888 warm=243557 value= 1044881871071839445174998052346018630303… 1324800
+KOP search/Kernel.isqrt bits=4096 ns=403028 warm=349463 value= 2521588525485262866122483652684743232899… 2756656
+KOP search/strict (a * b), then successor bits=64 ns=10332 warm=9016 value= 157678915075894430950759513426154968931 211858088
+KOP search/strict (a * b), then successor bits=1024 ns=10525 warm=9570 value= 1916175786633667293154866738692323551040… 1234725
+KOP search/strict (a * b), then successor bits=4096 ns=12585 warm=11904 value= 4831852873852533305149681071999887000288… 5534380
+KOP search/strict (a * b), then successor bits=16384 ns=28682 warm=28735 value= 6055786516700815211891394449959964923210… 6310341
+KOP search/strict (a * b), then successor bits=100000 ns=230740 warm=239313 value= 2914646913212551895919598222965367794633… 7250584
+KOP mod/powMod bits=64 ns=294871 warm=252607 value= 8459997921108424760 13444525620439207419
+KOP mod/powMod bits=256 ns=996101 warm=979215 value= 5640093348772905311122866003548787154451… 9271461
+KOP mod/powMod bits=1024 ns=7808769 warm=8056264 value= 7783751213703164086373369761643069718396… 2476133
+KOP mod/powMod bits=4096 ns=88014274 warm=93973648 value= 2820865641670868989175562975596822487706… 8362799
+KOP mod/powModWindow 0 (binary) bits=64 ns=817561 warm=776251 value= 8459997921108424760 13444525620439207419
+KOP mod/powModWindow 0 (binary) bits=256 ns=3221203 warm=3301507 value= 5640093348772905311122866003548787154451… 9271461
+KOP mod/powModWindow 0 (binary) bits=1024 ns=14740450 warm=15631217 value= 7783751213703164086373369761643069718396… 2476133
+KOP mod/powModWindow 0 (binary) bits=4096 ns=101715352 warm=109501910 value= 2820865641670868989175562975596822487706… 8362799
+KOP mod/invMod bits=64 ns=523952 warm=492416 value= 8872622468939417957 14698634583709348197 15050626
+KOP mod/invMod bits=256 ns=1937843 warm=2025137 value= 7155145171555236484987376839733363866491… 6576478
+KOP mod/invMod bits=1024 ns=8358080 warm=9296042 value= 3447251263311814177689609313497096743036… 1214012
+KOP mod/invMod bits=4096 ns=38262611 warm=47646859 value= 5367353293423106862047231812559382848551… 3271604
+KOP mod/isInvMod bits=64 ns=7380 warm=5502 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=256 ns=7451 warm=5582 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=1024 ns=7894 warm=6298 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=4096 ns=12817 warm=11130 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Nat.add bits=64 ns=1324 warm=1438 value= 25279206180181325503 29139274835588044698 2971644
+KOP nat/Nat.add bits=1024 ns=1352 warm=1552 value= 2846874461051719487364189774111792275070… 2253660
+KOP nat/Nat.add bits=4096 ns=1393 warm=1632 value= 1395756298975591246757024812458026846458… 1490250
+KOP nat/Nat.add bits=16384 ns=1641 warm=2036 value= 1562444710510880168107601642853196652959… 1630857
+KOP nat/Nat.add bits=100000 ns=3880 warm=5881 value= 1080624681232133423425938792739151353440… 1718452
+KOP nat/a + b bits=64 ns=11844 warm=3722 value= 25279206180181325503 29139274835588044698 2971644
+KOP nat/a + b bits=1024 ns=11910 warm=3897 value= 2846874461051719487364189774111792275070… 2253660
+KOP nat/a + b bits=4096 ns=11950 warm=4000 value= 1395756298975591246757024812458026846458… 1490250
+KOP nat/a + b bits=16384 ns=12194 warm=4461 value= 1562444710510880168107601642853196652959… 1630857
+KOP nat/a + b bits=100000 ns=14200 warm=8429 value= 1080624681232133423425938792739151353440… 1718452
+KOP nat/Nat.mul bits=64 ns=1325 warm=1466 value= 157678915075894430950759513426154968930 211858088
+KOP nat/Nat.mul bits=1024 ns=1515 warm=1766 value= 1916175786633667293154866738692323551040… 1234725
+KOP nat/Nat.mul bits=4096 ns=3313 warm=3641 value= 4831852873852533305149681071999887000288… 5534380
+KOP nat/Nat.mul bits=16384 ns=17935 warm=18566 value= 6055786516700815211891394449959964923210… 6310341
+KOP nat/Nat.mul bits=100000 ns=210502 warm=214783 value= 2914646913212551895919598222965367794633… 7250584
+KOP nat/a * b bits=64 ns=11984 warm=3851 value= 157678915075894430950759513426154968930 211858088
+KOP nat/a * b bits=1024 ns=12166 warm=4176 value= 1916175786633667293154866738692323551040… 1234725
+KOP nat/a * b bits=4096 ns=14126 warm=6128 value= 4831852873852533305149681071999887000288… 5534380
+KOP nat/a * b bits=16384 ns=28835 warm=21070 value= 6055786516700815211891394449959964923210… 6310341
+KOP nat/a * b bits=100000 ns=224307 warm=219806 value= 2914646913212551895919598222965367794633… 7250584
+KOP nat/Nat.div (2n by n bits) bits=64 ns=2085 warm=2199 value= 11323875245121334505 11450637739921900687 1401529
+KOP nat/Nat.div (2n by n bits) bits=1024 ns=2478 warm=2785 value= 2039153370985955090393277925790686810396… 1335219
+KOP nat/Nat.div (2n by n bits) bits=4096 ns=5986 warm=6365 value= 6873066906188902505997951593090573137950… 7863504
+KOP nat/Nat.div (2n by n bits) bits=16384 ns=42980 warm=43659 value= 9591998686005278055922396614599586927773… 1031469
+KOP nat/Nat.div (2n by n bits) bits=100000 ns=641667 warm=647689 value= 2991941112061442661427102068723277589926… 4537337
+KOP nat/Nat.gcd bits=64 ns=1340 warm=1239 value= 1 6 1 12 1 2 2 1
+KOP nat/Nat.gcd bits=1024 ns=7896 warm=7353 value= 2 1 1 17 1 1 2 1
+KOP nat/Nat.gcd bits=4096 ns=35887 warm=35748 value= 1 1 3 7 10 2 2 1
+KOP nat/Nat.gcd bits=16384 ns=218575 warm=217944 value= 1 2 1 3 1 1 1 33
+KOP nat/Nat.gcd bits=100000 ns=3547178 warm=3551510 value= 6 1 1 4 1 1 1 1
+KOP nat/Nat.ble bits=64 ns=1109 warm=1929 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
+KOP nat/Nat.ble bits=1024 ns=1053 warm=1912 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
+KOP nat/Nat.ble bits=4096 ns=1073 warm=1913 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
+KOP nat/Nat.ble bits=16384 ns=1058 warm=1913 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Nat.ble bits=100000 ns=1253 warm=2070 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
+KOP nat/decide (a ≤ b) bits=64 ns=4295 warm=5459 value= Bool.true Bool.true Bool.true Bool.false Bool.fal
+KOP nat/decide (a ≤ b) bits=1024 ns=4217 warm=5518 value= Bool.true Bool.true Bool.false Bool.false Bool.tr
+KOP nat/decide (a ≤ b) bits=4096 ns=4232 warm=5493 value= Bool.true Bool.true Bool.true Bool.true Bool.fals
+KOP nat/decide (a ≤ b) bits=16384 ns=4227 warm=5551 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/decide (a ≤ b) bits=100000 ns=4225 warm=5475 value= Bool.false Bool.false Bool.true Bool.true Bool.tr
+KOP nat/Nat.log2 bits=64 ns=446704 warm=448322 value= 63 63 63 63
+KOP nat/Nat.log2 bits=1024 ns=7926699 warm=8614940 value= 1023 1023 1023 1023
+KOP nat/Nat.log2 bits=4096 ns=36535400 warm=45483603 value= 4095 4095 4095 4095
+KOP nat/Kernel.size bits=64 ns=43659 warm=17121 value= 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
+KOP nat/Kernel.size bits=1024 ns=98876 warm=58563 value= 1024 1024 1024 1024 1024 1024 1024 1024 1024 1024
+KOP nat/Kernel.size bits=4096 ns=170148 warm=112676 value= 4096 4096 4096 4096 4096 4096 4096 4096 4096 4096
+KOP nat/Kernel.size bits=16384 ns=205855 warm=148907 value= 16384 16384 16384 16384 16384 16384 16384 16384 1
+KOP nat/Kernel.size bits=100000 ns=277347 warm=204569 value= 100000 100000 100000 100000 100000 100000 100000 
+KOP nat/Nat.testBit bits=64 ns=55562 warm=18775 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
+KOP nat/Nat.testBit bits=1024 ns=54102 warm=19215 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
+KOP nat/Nat.testBit bits=4096 ns=54418 warm=18970 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Nat.testBit bits=16384 ns=55138 warm=19696 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
+KOP nat/Nat.testBit bits=100000 ns=56207 warm=21570 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Kernel.testBit bits=64 ns=8651 warm=4712 value= Bool.false Bool.true Bool.true Bool.false Bool.tr
+KOP nat/Kernel.testBit bits=1024 ns=8788 warm=5159 value= Bool.true Bool.false Bool.false Bool.true Bool.tr
+KOP nat/Kernel.testBit bits=4096 ns=8941 warm=5173 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/Kernel.testBit bits=16384 ns=9213 warm=5435 value= Bool.true Bool.true Bool.true Bool.false Bool.tru
+KOP nat/Kernel.testBit bits=100000 ns=10581 warm=7300 value= Bool.true Bool.true Bool.false Bool.false Bool.fa
+KOP nat/(Nat.digits 2 n).sum bits=64 ns=4304297 warm=4798997 value= 37 34 32 33
+KOP nat/(Nat.digits 2 n).sum bits=1024 ns=75773927 warm=89498169 value= 515 487 501 527
+KOP nat/Kernel.popCount bits=64 ns=40291 warm=24841 value= 37 34 32 33
+KOP nat/Kernel.popCount bits=1024 ns=236973 warm=190496 value= 515 487 501 527
+KOP nat/Kernel.popCount bits=4096 ns=333773 warm=257582 value= 2098 1996 2044 2048
+KOP nat/Kernel.popCount bits=16384 ns=384549 warm=302192 value= 8212 8290 8283 8177
+KOP nat/Kernel.popCount bits=100000 ns=507238 warm=459108 value= 49471 49906 49702 50097
+KOP nat/Nat.sqrt bits=64 ns=902448 warm=799264 value= 3346215300 3752605674
+KOP nat/Nat.sqrt bits=1024 ns=9283449 warm=9411120 value= 1044881871071839445174998052346018630303… 1324800
+KOP nat/Nat.sqrt bits=4096 ns=39277453 warm=43196381 value= 2521588525485262866122483652684743232899… 2756656
+KOP nat/Kernel.isqrt bits=64 ns=129908 warm=97562 value= 3346215300 3752605674 3731550071 3900616477
+KOP nat/Kernel.isqrt bits=1024 ns=279571 warm=240896 value= 1044881871071839445174998052346018630303… 1324800
+KOP nat/Kernel.isqrt bits=4096 ns=400527 warm=348132 value= 2521588525485262866122483652684743232899… 2756656
+KOP nat/Kernel.isqrt bits=16384 ns=573924 warm=515005 value= 8440671890226942577403134328513869856690… 9219518
+KOP nat/Kernel.isqrt bits=100000 ns=3131172 warm=3143333 value= 2370769474026390679630519027624414884569… 2277212
+KOP nat/Kernel.isRoot 3 bits=64 ns=13553 warm=12003 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=1024 ns=15266 warm=13734 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=4096 ns=30403 warm=29015 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=16384 ns=142879 warm=142064 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP nat/Kernel.isRoot 3 bits=100000 ns=1749416 warm=1748936 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/a + b bits=64 ns=76452 warm=41091 value= 2884892510396184268 1290342970354498891 419485868
+KOP int/a + b bits=1024 ns=76465 warm=41305 value= 6633182120625432698096524129190336298522… 3742766
+KOP int/a + b bits=4096 ns=76574 warm=41421 value= 1240745606038028117807023933665717564591… 8422513
+KOP int/a + b bits=16384 ns=77119 warm=42662 value= 1375458713415348127573401792011872296614… 3681825
+KOP int/a + b bits=100000 ns=82091 warm=49916 value= 4348489856294039884065974464237100312237… 2298794
+KOP int/Z.add bits=64 ns=16037 warm=16577 value= 2884892510396184268 1290342970354498891 419485868
+KOP int/Z.add bits=1024 ns=16937 warm=17456 value= 6633182120625432698096524129190336298522… 3742766
+KOP int/Z.add bits=4096 ns=16773 warm=17570 value= 1240745606038028117807023933665717564591… 8422513
+KOP int/Z.add bits=16384 ns=17638 warm=18657 value= 1375458713415348127573401792011872296614… 3681825
+KOP int/Z.add bits=100000 ns=23525 warm=25715 value= 4348489856294039884065974464237100312237… 2298794
+KOP int/a * b bits=64 ns=67119 warm=39629 value= 157678915075894430961956670261047539548 211858088
+KOP int/a * b bits=1024 ns=67467 warm=40451 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/a * b bits=4096 ns=69625 warm=43772 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/a * b bits=16384 ns=87719 warm=60490 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/a * b bits=100000 ns=300400 warm=275123 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/Z.mul bits=64 ns=17421 warm=18035 value= 157678915075894430961956670261047539548 211858088
+KOP int/Z.mul bits=1024 ns=17706 warm=18493 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/Z.mul bits=4096 ns=19875 warm=20849 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/Z.mul bits=16384 ns=35960 warm=41125 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/Z.mul bits=100000 ns=239816 warm=249547 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/decide (a ≤ b) bits=64 ns=91432 warm=52452 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=1024 ns=89402 warm=50796 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=4096 ns=90033 warm=51451 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=16384 ns=89491 warm=50365 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/decide (a ≤ b) bits=100000 ns=89491 warm=51229 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=64 ns=6576 warm=7731 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=1024 ns=6560 warm=7684 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=4096 ns=6584 warm=7710 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=16384 ns=6601 warm=7695 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/Int.ble' bits=100000 ns=6597 warm=7782 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP int/a / b bits=64 ns=86338 warm=44236 value= 11323875245121334506 11450637739921900688 1401529
+KOP int/a / b bits=1024 ns=86254 warm=45382 value= 2039153370985955090393277925790686810396… 1335219
+KOP int/a / b bits=4096 ns=92909 warm=51979 value= 6873066906188902505997951593090573137950… 7863504
+KOP int/a / b bits=16384 ns=140497 warm=95286 value= 9591998686005278055922396614599586927773… 1031469
+KOP int/a / b bits=100000 ns=764011 warm=728859 value= 2991941112061442661427102068723277589926… 4537337
+KOP int/Z.ediv bits=64 ns=39452 warm=26240 value= 11323875245121334506 11450637739921900688 1401529
+KOP int/Z.ediv bits=1024 ns=40116 warm=27368 value= 2039153370985955090393277925790686810396… 1335219
+KOP int/Z.ediv bits=4096 ns=44781 warm=32075 value= 6873066906188902505997951593090573137950… 7863504
+KOP int/Z.ediv bits=16384 ns=89264 warm=74202 value= 9591998686005278055922396614599586927773… 1031469
+KOP int/Z.ediv bits=100000 ns=715275 warm=706314 value= 2991941112061442661427102068723277589926… 4537337
+KOP int/Signed.mul bits=64 ns=19242 warm=16924 value= 157678915075894430950759513426154968930 211858088
+KOP int/Signed.mul bits=1024 ns=19552 warm=17759 value= 1916175786633667293154866738692323551040… 1234725
+KOP int/Signed.mul bits=4096 ns=21961 warm=19873 value= 4831852873852533305149681071999887000288… 5534380
+KOP int/Signed.mul bits=16384 ns=37964 warm=36529 value= 6055786516700815211891394449959964923210… 6310341
+KOP int/Signed.mul bits=100000 ns=242211 warm=250575 value= 2914646913212551895919598222965367794633… 7250584
+KOP int/y² = x³ + a x + b (Int) bits=64 ns=306114 warm=228184 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Int) bits=1024 ns=307235 warm=228693 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Int) bits=4096 ns=318622 warm=242666 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=64 ns=65681 warm=67946 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=1024 ns=66690 warm=70178 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP int/y² = x³ + a x + b (Z) bits=4096 ns=77052 warm=82019 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP rat/mkRat (two operands) bits=64 ns=120041 warm=95947 value= 29296858248260026679 30133195878082948465 3137769
+KOP rat/mkRat (two operands) bits=1024 ns=144097 warm=115765 value= 2191516610208562246921190544213209483223… 2578687
+KOP rat/mkRat (two operands) bits=4096 ns=208622 warm=180266 value= 1022328018592883015232968679511766566572… 4061526
+KOP rat/mkRat (two operands) bits=16384 ns=590752 warm=562166 value= 1849515149768549709221856300834284284359… 1669812
+KOP rat/a + b < c (Rat) bits=64 ns=879874 warm=753249 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=1024 ns=837618 warm=703657 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=4096 ns=955529 warm=822647 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Rat) bits=16384 ns=1687652 warm=1512232 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=64 ns=635370 warm=493968 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=1024 ns=692501 warm=554770 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=4096 ns=822433 warm=683313 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Rat) bits=16384 ns=1594426 warm=1464222 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=64 ns=35961 warm=34957 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=1024 ns=37439 warm=37203 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=4096 ns=51629 warm=51739 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=16384 ns=152715 warm=152542 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Frac) bits=100000 ns=1525188 warm=1531216 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=64 ns=34633 warm=32444 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=1024 ns=34966 warm=33885 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=4096 ns=46498 warm=45910 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=16384 ns=131470 warm=130155 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Frac) bits=100000 ns=1306183 warm=1307658 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/Frac.normalize bits=64 ns=15331 warm=12928 value= 7041024672644377443 15214808902971271795 84778256
+KOP rat/Frac.normalize bits=1024 ns=23258 warm=20995 value= 1755096336557131378586921093515412952461… 3284921
+KOP rat/Frac.normalize bits=4096 ns=53166 warm=50056 value= 3799577148948485146344318014561496507294… 1968094
+KOP rat/Frac.normalize bits=16384 ns=241455 warm=238178 value= 2124988227315518726081177277567979853276… 9995198
+KOP rat/Frac.normalize bits=100000 ns=3589897 warm=3592430 value= 5185698913345965122926395240483901751593… 7442864
+KOP rat/Q.mk (two operands) bits=64 ns=33446 warm=32700 value= 29296858248260026679 30133195878082948465 3137769
+KOP rat/Q.mk (two operands) bits=1024 ns=48993 warm=49081 value= 2191516610208562246921190544213209483223… 2578687
+KOP rat/Q.mk (two operands) bits=4096 ns=112647 warm=108679 value= 1022328018592883015232968679511766566572… 4061526
+KOP rat/Q.mk (two operands) bits=16384 ns=492645 warm=487123 value= 1849515149768549709221856300834284284359… 1669812
+KOP rat/Q.mk (two operands) bits=100000 ns=7213690 warm=7237908 value= 1484521853005402720784168173694470708110… 1580071
+KOP rat/a + b < c (Q) bits=64 ns=143103 warm=148331 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=1024 ns=184865 warm=187424 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=4096 ns=335703 warm=336202 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=16384 ns=1379927 warm=1398879 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a + b < c (Q) bits=100000 ns=17957066 warm=18077379 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=64 ns=122654 warm=126010 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=1024 ns=160005 warm=164438 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=4096 ns=304820 warm=312582 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=16384 ns=1324608 warm=1339459 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a * b < c (Q) bits=100000 ns=17686919 warm=17696479 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP rat/a ^ 21 (Rat) bits=64 ns=142851 warm=95256 value= 1789520631001425295481058345922002653733… 6723517
+KOP rat/a ^ 21 (Rat) bits=1024 ns=165890 warm=113817 value= 1349957679978372795780467546858182697234… 3092314
+KOP rat/a ^ 21 (Q) bits=64 ns=26937 warm=24667 value= 1789520631001425295481058345922002653733… 6723517
+KOP rat/a ^ 21 (Q) bits=1024 ns=47359 warm=45280 value= 1349957679978372795780467546858182697234… 3092314
+KOP rat/a ^ 21 (Q) bits=4096 ns=177959 warm=175281 value= 3133794531801837586793949378301037036052… 6290395
+KOP rat/SignedRat a + b bits=64 ns=214830 warm=176739 value= 214255689750780116915589120675180213690 223433851
+KOP rat/SignedRat a + b bits=1024 ns=246401 warm=205294 value= 1153070599391509388128604763500066619144… 1596034
+KOP rat/SignedRat a * b bits=64 ns=229757 warm=187064 value= 21425568975078011691558912067518021369 3723897520
+KOP rat/SignedRat a * b bits=1024 ns=292093 warm=247340 value= 1153070599391509388128604763500066619144… 3192068
+KOP dyad/Dyad.add bits=64 ns=28931 warm=23712 value= 57668876961467847438342 62305932800637712495320 6
+KOP dyad/Dyad.add bits=1024 ns=29067 warm=24254 value= 7187782816413515538583251530358535073958… 5381075
+KOP dyad/Dyad.add bits=4096 ns=29080 warm=24596 value= 3111977759549413137667777156319232211230… 3223822
+KOP dyad/Dyad.add bits=16384 ns=30738 warm=25822 value= 3480868262214161208133725720835552186896… 4093402
+KOP dyad/Dyad.add bits=100000 ns=36841 warm=35517 value= 2123500220116609777439518191233515396274… 3047623
+KOP dyad/Dyad.mul bits=64 ns=14687 warm=12243 value= 157678915075894430950759513426154968930 211858088
+KOP dyad/Dyad.mul bits=1024 ns=14656 warm=12621 value= 1916175786633667293154866738692323551040… 1234725
+KOP dyad/Dyad.mul bits=4096 ns=16695 warm=14896 value= 4831852873852533305149681071999887000288… 5534380
+KOP dyad/Dyad.mul bits=16384 ns=31981 warm=30219 value= 6055786516700815211891394449959964923210… 6310341
+KOP dyad/Dyad.mul bits=100000 ns=229060 warm=231733 value= 2914646913212551895919598222965367794633… 7250584
+KOP dyad/Dyad.lt bits=64 ns=27008 warm=21094 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=1024 ns=25510 warm=21501 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=4096 ns=25806 warm=21767 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=16384 ns=26883 warm=22857 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.lt bits=100000 ns=32148 warm=29146 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP dyad/Dyad.roundDown bits=64 ns=25128 warm=17353 value= 10428164932 13114930453 12968169463 14169895000 1
+KOP dyad/Dyad.roundDown bits=1024 ns=25681 warm=18114 value= 1016797613813158225992013402838613207087… 1634560
+KOP dyad/Dyad.roundDown bits=4096 ns=25711 warm=18405 value= 5921729553359506814630340873689647251736… 7077263
+KOP dyad/Dyad.roundDown bits=16384 ns=26685 warm=19179 value= 6635202277309006803437422326076819669912… 7916198
+KOP dyad/Dyad.roundDown bits=100000 ns=31206 warm=26531 value= 5234543140023359201227307959373678809792… 4829558
+KOP dyad/Dyad.trimDown 53 bits=64 ns=77326 warm=39277 value= 5467361735787388 6876000656879275 679905563116053
+KOP dyad/Dyad.trimDown 53 bits=1024 ns=134791 warm=84315 value= 9469665715593455767701296047170795724960… 1522303
+KOP dyad/Dyad.trimDown 53 bits=4096 ns=213000 warm=141594 value= 5515040413811344349255336476954599778090… 6591215
+KOP dyad/Dyad.trimDown 53 bits=16384 ns=250334 warm=175351 value= 6179513667997911136134087503797421499314… 7372533
+KOP dyad/Dyad.trimDown 53 bits=100000 ns=304766 warm=236933 value= 4875048194102347060598284729670626129651… 4497876
+KOP ball/Ball.add bits=64 ns=30483 warm=25279 value= 57668876961467847438342 62305932800637712495320 6
+KOP ball/Ball.add bits=1024 ns=31039 warm=25674 value= 7187782816413515538583251530358535073958… 5381075
+KOP ball/Ball.add bits=4096 ns=30938 warm=26346 value= 3111977759549413137667777156319232211230… 3223822
+KOP ball/Ball.add bits=16384 ns=32591 warm=27341 value= 3480868262214161208133725720835552186896… 4093402
+KOP ball/Ball.add bits=100000 ns=39799 warm=37354 value= 2123500220116609777439518191233515396274… 3047623
+KOP ball/Ball.mul bits=64 ns=21259 warm=19171 value= 157678915075894430950759513426154968930 211858088
+KOP ball/Ball.mul bits=1024 ns=24758 warm=19626 value= 1916175786633667293154866738692323551040… 1234725
+KOP ball/Ball.mul bits=4096 ns=23454 warm=21797 value= 4831852873852533305149681071999887000288… 5534380
+KOP ball/Ball.mul bits=16384 ns=39914 warm=38401 value= 6055786516700815211891394449959964923210… 6310341
+KOP ball/Ball.mul bits=100000 ns=241861 warm=249378 value= 2914646913212551895919598222965367794633… 7250584
+KOP ball/Ball.mul, round 64 bits=64 ns=47658 warm=43936 value= 8547791114022104965 11484849976459515425 11729308
+KOP ball/Ball.mul, round 64 bits=1024 ns=48178 warm=44254 value= 1038760975366171244156115765768911961449… 6693459
+KOP ball/Ball.mul, round 64 bits=4096 ns=50458 warm=47936 value= 2619352691480622305936340711227044791131… 3000193
+KOP ball/Ball.mul, round 64 bits=16384 ns=69831 warm=66691 value= 3282848448757724666082041749281554968333… 3420843
+KOP ball/Ball.mul, round 64 bits=100000 ns=289033 warm=293074 value= 1580033257666609131574787871840413459560… 3930549
+KOP ball/Ball.le bits=64 ns=45209 warm=36174 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=1024 ns=45117 warm=35861 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=4096 ns=42856 warm=35912 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=16384 ns=44508 warm=37039 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.le bits=100000 ns=49918 warm=44052 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.inv, near one, as many digits bits=64 ns=41951 warm=30923 value= 60780137661473284129 48328529261230324713 4887546
+KOP ball/Ball.inv, near one, as many digits bits=1024 ns=42558 warm=33621 value= 5920068436299064376931790202140607438684… 3682647
+KOP ball/Ball.inv, near one, as many digits bits=4096 ns=48558 warm=37825 value= 3430884010384444728926205244104377550526… 2870709
+KOP ball/Ball.inv, near one, as many digits bits=16384 ns=99692 warm=86985 value= 3973506026210555685638522874168397995638… 3330514
+KOP ball/Ball.inv, near one, as many digits bits=100000 ns=924765 warm=916612 value= 3551273647286444048424091549448131096268… 3849067
+KOP ball/Ball.div, near one, as many digits bits=64 ns=63520 warm=51500 value= 541142121737690726837934473011423082634 622847155
+KOP ball/Ball.div, near one, as many digits bits=1024 ns=64576 warm=54687 value= 4020634029358037676130087738418409790246… 4622337
+KOP ball/Ball.div, near one, as many digits bits=4096 ns=72609 warm=61844 value= 1825314279529967056364118464669967581421… 1948101
+KOP ball/Ball.div, near one, as many digits bits=16384 ns=144428 warm=133006 value= 2372823475089695980362992660577539913858… 1788125
+KOP ball/Ball.div, near one, as many digits bits=100000 ns=1178732 warm=1181455 value= 2163386660787854618117163103646123486627… 2612495
+KOP ball/Ball.apart bits=64 ns=10681 warm=9357 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=1024 ns=11216 warm=9994 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=4096 ns=11463 warm=10123 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=16384 ns=12053 warm=10603 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP ball/Ball.apart bits=100000 ns=14972 warm=14045 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP complex/CBall.add bits=64 ns=37680 warm=32557 value= 57691271275137632579578 62333781732502946041128 6
+KOP complex/CBall.add bits=1024 ns=37682 warm=32955 value= 7189966372662504714800806067719727832603… 5382954
+KOP complex/CBall.add bits=4096 ns=37642 warm=33338 value= 3113249441287784926102753478738323666320… 3225228
+KOP complex/CBall.add bits=16384 ns=39259 warm=34903 value= 3482293161053330553489075982299204196319… 4094664
+KOP complex/CBall.add bits=100000 ns=43501 warm=42872 value= 2124624329696404851261784789770896918630… 3049571
+KOP complex/CBall.mul bits=64 ns=88236 warm=82598 value= 315357830151788861901519026852309937860 423716176
+KOP complex/CBall.mul bits=1024 ns=91061 warm=84080 value= 3832351573267334586309733477384647102081… 2469450
+KOP complex/CBall.mul bits=4096 ns=97448 warm=88761 value= 9663705747705066610299362143999774000577… 1106876
+KOP complex/CBall.mul bits=16384 ns=131068 warm=125157 value= 1211157303340163042378278889991992984642… 1262068
+KOP complex/CBall.mul bits=100000 ns=546808 warm=567797 value= 5829293826425103791839196445930735589267… 1450116
+KOP complex/CBall.mul, round 64 bits=64 ns=105332 warm=100861 value= 17095582228044209929 22969699952919030848 2345861
+KOP complex/CBall.mul, round 64 bits=1024 ns=107194 warm=102562 value= 2077521950732342488312231531537823922898… 1338691
+KOP complex/CBall.mul, round 64 bits=4096 ns=112843 warm=108406 value= 5238705382961244611872681422454089582263… 6000387
+KOP complex/CBall.mul, round 64 bits=16384 ns=149701 warm=145317 value= 6565696897515449332164083498563109936666… 6841686
+KOP complex/CBall.mul, round 64 bits=100000 ns=572879 warm=599651 value= 3160066515333218263149575743680826919121… 7861099
+KOP complex/CFix.mul, as many digits bits=64 ns=56966 warm=47517 value= 36893488147419103232 36893488147419103232 3689348
+KOP complex/CFix.mul, as many digits bits=1024 ns=59332 warm=50466 value= 3595386269724631815458610381578049467235… 3595386
+KOP complex/CFix.mul, as many digits bits=4096 ns=69213 warm=60943 value= 2088777762826305013383505421433248765159… 2088777
+KOP list/(List.range 256).map, length bits=64 ns=20109257 warm=19839421 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/(List.range 256).map, length bits=1024 ns=20886537 warm=19978508 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/Seq.tabulate 256, Seq.len bits=64 ns=3219110 warm=3803251 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/Seq.tabulate 256, Seq.len bits=1024 ns=3258233 warm=3806467 value= 256 256 256 256 256 256 256 256 256 256 256 256 2
+KOP list/(List.range 256).map, getD 200 bits=64 ns=21633689 warm=20934980 value= 11197156834892570818 14082049345288755085 1392446
+KOP list/(List.range 256).map, getD 200 bits=1024 ns=21073322 warm=19741081 value= 1091778124494588108777268680596379322609… 1755096
+KOP list/Seq.tabulate 256, Seq.getD 200 bits=64 ns=3555473 warm=4208133 value= 11197156834892570818 14082049345288755085 1392446
+KOP list/Seq.tabulate 256, Seq.getD 200 bits=1024 ns=3538229 warm=4223540 value= 1091778124494588108777268680596379322609… 1755096
+KOP list/Split.cover of 1 to 64 bits=64 ns=3693047 warm=2684556 value= Bool.true Bool.true Bool.true Bool.true Bool.true
+KOP search/Kernel.bisect, square root bits=64 ns=410785 warm=358719 value= 3346215300 3752605674 3731550071 3900616477
+KOP search/Kernel.bisect, square root bits=1024 ns=5916129 warm=6031736 value= 1044881871071839445174998052346018630303… 1324800
+KOP search/Kernel.bisect, square root bits=4096 ns=27591699 warm=30090081 value= 2521588525485262866122483652684743232899… 2756656
+KOP search/Kernel.isqrt bits=64 ns=128666 warm=99023 value= 3346215300 3752605674 3731550071 3900616477
+KOP search/Kernel.isqrt bits=1024 ns=289486 warm=243053 value= 1044881871071839445174998052346018630303… 1324800
+KOP search/Kernel.isqrt bits=4096 ns=403130 warm=349517 value= 2521588525485262866122483652684743232899… 2756656
+KOP search/strict (a * b), then successor bits=64 ns=10344 warm=9102 value= 157678915075894430950759513426154968931 211858088
+KOP search/strict (a * b), then successor bits=1024 ns=10584 warm=9601 value= 1916175786633667293154866738692323551040… 1234725
+KOP search/strict (a * b), then successor bits=4096 ns=12687 warm=11983 value= 4831852873852533305149681071999887000288… 5534380
+KOP search/strict (a * b), then successor bits=16384 ns=28516 warm=29008 value= 6055786516700815211891394449959964923210… 6310341
+KOP search/strict (a * b), then successor bits=100000 ns=232708 warm=243282 value= 2914646913212551895919598222965367794633… 7250584
+KOP mod/powMod bits=64 ns=331386 warm=284195 value= 8459997921108424760 13444525620439207419
+KOP mod/powMod bits=256 ns=1011087 warm=1019305 value= 5640093348772905311122866003548787154451… 9271461
+KOP mod/powMod bits=1024 ns=7951523 warm=8227016 value= 7783751213703164086373369761643069718396… 2476133
+KOP mod/powMod bits=4096 ns=90751724 warm=96034629 value= 2820865641670868989175562975596822487706… 8362799
+KOP mod/powModWindow 0 (binary) bits=64 ns=822738 warm=775586 value= 8459997921108424760 13444525620439207419
+KOP mod/powModWindow 0 (binary) bits=256 ns=3233452 warm=3384731 value= 5640093348772905311122866003548787154451… 9271461
+KOP mod/powModWindow 0 (binary) bits=1024 ns=15323576 warm=16529963 value= 7783751213703164086373369761643069718396… 2476133
+KOP mod/powModWindow 0 (binary) bits=4096 ns=109377250 warm=119477575 value= 2820865641670868989175562975596822487706… 8362799
+KOP mod/invMod bits=64 ns=522415 warm=535670 value= 8872622468939417957 14698634583709348197 15050626
+KOP mod/invMod bits=256 ns=2104254 warm=2099743 value= 7155145171555236484987376839733363866491… 6576478
+KOP mod/invMod bits=1024 ns=8955742 warm=10327488 value= 3447251263311814177689609313497096743036… 1214012
+KOP mod/invMod bits=4096 ns=41966595 warm=51485560 value= 5367353293423106862047231812559382848551… 3271604
+KOP mod/isInvMod bits=64 ns=7361 warm=5446 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=256 ns=7375 warm=5614 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=1024 ns=7881 warm=6158 value= Bool.false Bool.false Bool.false Bool.false Bool.
+KOP mod/isInvMod bits=4096 ns=12718 warm=11165 value= Bool.false Bool.false Bool.false Bool.false Bool.

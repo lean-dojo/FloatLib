@@ -19,7 +19,8 @@ obligation leaves both. A refutation whose premise is an automatic argument, as 
 take their format proof, is read as the proposition the premise states. A registered rule stated
 like a generated theorem whose finiteness part normalization decides is not indexed by that part,
 and a rule whose input premise bounds every entry of the container a read reads is not applied to
-that read.
+that read. A guard chosen by other guards is simplified once at each level: the analysis under
+twelve nested guards costs about what it costs under four.
 -/
 
 @[expose] public section
@@ -150,6 +151,48 @@ run_cmd do
 example : @flip_sum_error = @flip_sum_entry_error := rfl
 
 end Pointwise
+
+section Nested
+
+/-- `guard% n f` is `f 0` under `n` conditionals `if · then f 1 else f 2`, written out. -/
+local syntax "guard% " num ident : term
+
+local macro_rules
+  | `(guard% $depth $flags) => do
+      let mut guard ← `($flags 0)
+      for _ in [:depth.getNat] do
+        guard ← `(if $guard then $flags 1 else $flags 2)
+      return guard
+
+/-- A square or a double, by a guard that guards choose, four deep. -/
+def gated4 (f : Fin 3 → Bool) (x : Value) : Value := if guard% 4 f then x * x else x + x
+
+/-- The same with the guards twelve deep. -/
+def gated12 (f : Fin 3 → Bool) (x : Value) : Value := if guard% 12 f then x * x else x + x
+
+open Lean Elab Command in
+-- Each guard is simplified once, in the caches of the normalizer, so eight more levels add
+-- little. Conditional rewrites that select a branch simplify its guard for their own premises
+-- and made the deeper analysis several times the shallow one. The first analysis of the
+-- section prepares the rules and is not measured.
+run_cmd do
+  let analyze (name program : Name) : CommandElabM Nat := do
+    let start ← IO.getNumHeartbeats
+    elabCommand (← `(command| roundoff theorem $(mkIdent name) :=
+      fun (f : Fin 3 → Bool) (x : Value) (hformat : format.isIEEE = true) =>
+        ExecFloat.Binary.toReal ($(mkIdent program) f x)))
+    return ((← IO.getNumHeartbeats) - start) / 1000
+  let _ ← analyze `gated4_first_error `gated4
+  let shallow ← analyze `gated4_error `gated4
+  let deep ← analyze `gated12_error `gated12
+  if deep > 2 * shallow then
+    throwError "gated12_error used {deep} heartbeats, gated4_error {shallow}"
+
+/-- Both cases stay in the statement, under the guard as the program writes it. -/
+example (f : Fin 3 → Bool) (x : Value) (hformat : format.isIEEE = true) :=
+  show _ → |ExecFloat.Binary.toReal (gated4 f x) - _| ≤ _ from gated4_error f x hformat
+
+end Nested
 
 /-! ## Closed conditions on literals
 

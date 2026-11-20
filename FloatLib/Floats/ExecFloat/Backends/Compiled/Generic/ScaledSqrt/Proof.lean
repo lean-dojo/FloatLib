@@ -50,7 +50,7 @@ theorem sqrt_div_square (n d : Nat) : Nat.sqrt (n / (d * d)) = Nat.sqrt n / d :=
     have h : Nat.sqrt n < (Nat.sqrt n / d + 1) * d :=
       by simpa [Nat.mul_comm] using Nat.lt_mul_div_succ (Nat.sqrt n) hdpos
     have hn := Nat.sqrt_lt.mp h
-    nlinarith only [hn]
+    linarith only [hn]
 
 /-- Discarding twice as many radicand bits gives the shifted floor square root. -/
 theorem sqrt_shift (n k : Nat) : Nat.sqrt (n >>> (2 * k)) = Nat.sqrt n >>> k := by

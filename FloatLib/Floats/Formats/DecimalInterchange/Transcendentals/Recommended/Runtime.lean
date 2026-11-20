@@ -38,8 +38,9 @@ a function with `f (±0) = ±0` is returned unchanged. There are no flags and no
 direction other than nearest-even.
 
 `exp`, `log`, `powr` and `compound` are certified in the same way, by `unary` with their own
-expressions. `expm1` and `logp1` are in `Certified.Runtime`. `atan2`, `atan2Pi` and `pow` are
-not provided for decimal formats.
+expressions. `expm1` and `logp1` are in `Certified.Runtime`. The same functions as total
+functions with flags in the five rounding directions, with `atan2`, `atan2Pi` and `pow`, are in
+`Transcendentals.CorrectlyRounded`.
 -/
 
 @[expose] public section

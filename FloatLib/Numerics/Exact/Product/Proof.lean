@@ -97,7 +97,7 @@ theorem compare_eq_real (hF : 0 < F) (hcompare : ∀ q : ℚ, compareFactor q = 
     (boundary : ℚ)
     (terminates : ∃ n, (decide? compareFactor (intervals n) boundary).isSome) :
     compare compareFactor intervals boundary terminates = cmp (F * C) (boundary : ℝ) :=
-  decide?_eq_some_cmp hF hcompare (contains (Nat.find terminates)) (Option.some_get _).symm
+  decide?_eq_some_cmp hF hcompare (contains _) (Option.some_get _).symm
 
 /--
 Enclosures that converge to a nonzero `C` eventually settle the order of `F * C` and any boundary

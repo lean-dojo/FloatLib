@@ -151,35 +151,34 @@ The campaign does not search for an optimized bound; Lean must prove the proposa
 
 ## Results on Lean v4.36.0
 
-The suite ran on 2026-11-17, eight Lean processes at a time with
+The suite ran on 2026-11-20, eight Lean processes at a time with
 three threads each and 60 seconds per process. [`../results/suites/README.md`](../results/suites/README.md)
 has the tables, [`fpbench.csv`](../results/suites/fpbench.csv) one row per program, default precision
 and method, and [`fpbench-comparison.csv`](../results/suites/fpbench-comparison.csv) the ratios.
 
 | Method | Conditional proofs | Tactic refusals | Timeouts | Translation refusals | Numerical proofs | Numerical: refused | over 60 s | out of memory |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Forward | 165 | 23 | 0 | 84 | 25 | 43 | 13 | 15 |
-| Closed | 156 | 32 | 0 | 84 | 12 | 46 | 15 | 19 |
+| Forward | 184 | 4 | 0 | 84 | 33 | 71 | 0 | 0 |
+| Closed | 180 | 8 | 0 | 84 | 18 | 82 | 2 | 0 |
 | Backward | 22 | 166 | 0 | 84 | n/a | n/a | n/a | n/a |
 
-With 60 seconds no conditional attempt runs out of time. One conditional theorem is refused by
-the heartbeat limit: `hamming-ch3.fpcore`, program 19, binary32, forward, after 27 seconds with
-`(deterministic) timeout at whnf, maximum number of heartbeats (200000) has been reached`.
+With 60 seconds no conditional attempt runs out of time. The twelve forward and closed theorems
+that are refused all stop at the heartbeat limit (`maximum number of heartbeats (200000) has been
+reached`).
 
-Over all 188 numerical attempts, 28 pass 60 seconds, 34 Lean processes stop at their 4 GB memory
-limit (`lean -M 4096`) and 2 are refused with the kernel's `excessive memory consumption detected`.
+Over all 206 numerical attempts, 2 pass 60 seconds and no Lean process stops at its 4 GB memory
+limit (`lean -M 4096`): the largest takes 2.3 GB. The 153 refusals are refusals of the generated
+proof. In 123 of them an `interval` step gives up: 95 with `interval needs a rational lower bound
+for` or `upper bound for` a computed value, and 40 with `interval expects a real or
+nonnegative-real inequality`.
 
-The external tools' bounds do not depend on FloatLib. Joined with them,
-30 specializations have a numerical Lean proof and a local tool bound,
-99 a tool bound only, 0 a Lean bound only and
-143 neither. The audited contracts admit 13 local FPTaylor
-ratios (2.13333 to 698373), 9 Gappa ratios (1.03854 to 1.93939) and
-2 ratios to bounds that FPTaylor's regression files publish.
+The external tools' bounds do not depend on FloatLib, and they are the ones of 2026-11-17. Joined
+with them, 41 specializations have a numerical Lean proof and a local tool bound,
+88 a tool bound only, 0 a Lean bound only and
+143 neither. The audited contracts admit 23 local FPTaylor
+ratios (2.13333 to 698373), 14 Gappa ratios (1.03854 to 1.93939) and
+7 ratios to bounds that FPTaylor's regression files publish.
 
-The generated numerical proof (`numeric.py`) does two things for Lean v4.36.0, and without them
-every numerical proof fails. It splits the premises with `repeat' apply And.intro`, because
-`constructor` also applies to `a ≤ b` on the reals and goes on into the definition of the
-order. And it sets `maxRecDepth` to 10,000: the premises of a binary64 theorem need a recursion
-depth between 4,000 and 10,000, above the default of 512.
-We have not yet found which part of the generated statement needs that depth, and the memory
-stops above are likely the same thing.
+The generated numerical proof (`numeric.py`) splits the premises with `repeat' apply And.intro`,
+because `constructor` also applies to `a ≤ b` on the reals and goes on into the definition of the
+order, and it sets `maxRecDepth` to 10,000.

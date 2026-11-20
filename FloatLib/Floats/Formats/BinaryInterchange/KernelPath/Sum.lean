@@ -390,7 +390,7 @@ private theorem sumAligned_eq_of_le (fmt : FloatFormat) (mode : Model.IEEERoundi
   by_cases hb0 : bsig = 0
   · -- A zero second operand: the exponents agree and nothing is shifted.
     subst hb0
-    have hgb0 : gb = 0 := by have := hlowb rfl; omega
+    have hgb0 : gb = 0 := by have := hlowb rfl; lia
     subst hgb0
     by_cases ha0 : asig = 0
     · subst ha0
@@ -428,7 +428,7 @@ private theorem sumAligned_eq_of_le (fmt : FloatFormat) (mode : Model.IEEERoundi
           (hb : Int) - Em + fmt.minSubnormalExponent := by omega
       by_cases hfar : hb - ha ≤ G
       · -- The gap is within `G`: the alignment is the exact one.
-        have hgbEq : gb = hb - ha := by omega
+        have hgbEq : gb = hb - ha := by lia
         have hshift : ((hb : Int) - Em + fmt.minSubnormalExponent -
             ((ha : Int) - Em + fmt.minSubnormalExponent)).toNat = gb := by omega
         have hbase : ((hb - gb : Nat) : Int) - Em + fmt.minSubnormalExponent =
@@ -436,7 +436,7 @@ private theorem sumAligned_eq_of_le (fmt : FloatFormat) (mode : Model.IEEERoundi
         simp only [roundedSum, ← Model.Internal.addDyadic_eq, Model.Internal.addDyadic,
           beq_iff_eq, ha0, hb0, ite_false, hexpLe, ite_true, hshift, hbase, Nat.shiftLeft_eq']
       · -- The gap exceeds `G`: lowering it to `G` does not change the rounding.
-        have hgbEq : gb = G := by omega
+        have hgbEq : gb = G := by lia
         subst hgbEq
         rw [roundedSum_far fmt mode
           ⟨an, asig, (ha : Int) - Em + fmt.minSubnormalExponent⟩

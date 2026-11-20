@@ -104,7 +104,13 @@ private theorem tanh_eq_exp_twice (x : ℝ) :
 private theorem tanh_ratio_mono {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) :
     (a - 1) / (a + 1) ≤ (b - 1) / (b + 1) := by
   apply (div_le_div_iff₀ (by linarith) (by linarith)).mpr
-  nlinarith
+  linarith
+
+/-- The hyperbolic tangent is monotone. -/
+theorem tanh_monotone : Monotone Real.tanh := by
+  intro x y hxy
+  rw [tanh_eq_exp_twice, tanh_eq_exp_twice]
+  exact tanh_ratio_mono (Real.exp_pos _).le (Real.exp_le_exp.2 (by linarith))
 
 /-- Hyperbolic tangent bounds contain every real image without a denominator-domain failure. -/
 theorem containsReal_tanhBounds (I : Interval ℚ) (terms : Nat) {x : ℝ}

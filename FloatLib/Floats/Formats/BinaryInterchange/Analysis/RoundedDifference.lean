@@ -128,7 +128,7 @@ theorem roundedSubError_le (p q : ℝ) :
   have h1 := mul_le_mul_of_nonneg_left hp hu
   have h2 := mul_le_mul_of_nonneg_left hq hu
   have := roundedSubError_le_add fmt p q
-  nlinarith
+  linarith
 
 /--
 Without cancellation the `u²` term disappears: for nonnegative `s` and `t`,
@@ -231,7 +231,7 @@ theorem roundedSubError_cases_of_le {p q : ℝ} (hq : 0 ≤ q) (hqp : q ≤ p) :
       have := (abs_le.mp heq).1
       linarith
     have hmul := mul_le_mul_of_nonneg_left (hPQ.trans (add_le_add le_rfl (add_le_add hhp hhq))) hu
-    nlinarith
+    linarith
   · have h1' := two_mul_halfUlpAt_le_of_lt fmt (not_le.mp h1)
     right
     by_cases h2 : halfUlpAt fmt (P - Q) ≤ halfUlpAt fmt q
@@ -320,7 +320,7 @@ theorem abs_roundAt_add_roundAt_sub_le (p q : ℝ) :
   have b₃ := mul_nonneg (mul_nonneg (mul_nonneg hu hu) hu) hq0
   have b₄ := mul_nonneg (mul_nonneg (mul_nonneg hu hu) hu) hpq0
   have b₅ := mul_nonneg hu hη
-  nlinarith
+  linarith
 
 end Model
 end FloatLib.Floats.Formats.BinaryInterchange

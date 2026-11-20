@@ -149,4 +149,12 @@ format, rounding direction and integer.
     congr 1
     simp [Datum.finiteValue, Int.negSucc_eq]
 
+/-! ## Kernel shapes -/
+
+kernel_shape moderate
+kernel_shape scale
+kernel_shape convertFormat
+kernel_shape convertFromInt
+kernel_shape logB
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

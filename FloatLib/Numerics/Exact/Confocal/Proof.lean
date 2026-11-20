@@ -54,18 +54,18 @@ private theorem sq_far : √(p ^ 2 + (q - 1) ^ 2) ^ 2 = p ^ 2 + (q - 1) ^ 2 :=
   Real.sq_sqrt (by positivity)
 
 private theorem abs_le_near : |q + 1| ≤ √(p ^ 2 + (q + 1) ^ 2) :=
-  Real.abs_le_sqrt (by nlinarith [sq_nonneg p])
+  Real.abs_le_sqrt (by linarith [sq_nonneg p])
 
 private theorem abs_le_far : |q - 1| ≤ √(p ^ 2 + (q - 1) ^ 2) :=
-  Real.abs_le_sqrt (by nlinarith [sq_nonneg p])
+  Real.abs_le_sqrt (by linarith [sq_nonneg p])
 
 private theorem near_le : √(p ^ 2 + (q + 1) ^ 2) ≤ √(p ^ 2 + (q - 1) ^ 2) + 2 :=
   Real.sqrt_le_iff.mpr ⟨by positivity, by
-    nlinarith [sq_far p q, abs_le_far p q, le_abs_self (q - 1)]⟩
+    linarith [sq_far p q, abs_le_far p q, le_abs_self (q - 1)]⟩
 
 private theorem far_le : √(p ^ 2 + (q - 1) ^ 2) ≤ √(p ^ 2 + (q + 1) ^ 2) + 2 :=
   Real.sqrt_le_iff.mpr ⟨by positivity, by
-    nlinarith [sq_near p q, abs_le_near p q, neg_abs_le (q + 1)]⟩
+    linarith [sq_near p q, abs_le_near p q, neg_abs_le (q + 1)]⟩
 
 /-- The half sum of the distances to two foci at distance two is at least one. -/
 theorem one_le_major : 1 ≤ major p q := by
@@ -100,11 +100,11 @@ theorem major_sq_add_minor_sq : major p q ^ 2 + minor p q ^ 2 = p ^ 2 + q ^ 2 + 
 theorem major_le : major p q ≤ |p| + |q| + 1 := by
   have h₁ : √(p ^ 2 + (q + 1) ^ 2) ≤ |p| + |q| + 1 :=
     Real.sqrt_le_iff.mpr ⟨by positivity, by
-      nlinarith [abs_nonneg p, abs_nonneg q, sq_abs p, sq_abs q, le_abs_self q,
+      linarith [abs_nonneg p, abs_nonneg q, sq_abs p, sq_abs q, le_abs_self q,
         mul_nonneg (abs_nonneg p) (abs_nonneg q)]⟩
   have h₂ : √(p ^ 2 + (q - 1) ^ 2) ≤ |p| + |q| + 1 :=
     Real.sqrt_le_iff.mpr ⟨by positivity, by
-      nlinarith [abs_nonneg p, abs_nonneg q, sq_abs p, sq_abs q, neg_abs_le q,
+      linarith [abs_nonneg p, abs_nonneg q, sq_abs p, sq_abs q, neg_abs_le q,
         mul_nonneg (abs_nonneg p) (abs_nonneg q)]⟩
   unfold major
   linarith
@@ -208,7 +208,7 @@ theorem one_le_minor_iff : 1 ≤ minor p q ↔ p = 0 ∧ 1 ≤ q := by
     have h₂ := abs_le_far p q
     have h₄ := le_abs_self (q - 1)
     have hfar : √(p ^ 2 + (q - 1) ^ 2) = q - 1 :=
-      le_antisymm (by nlinarith [sq_near p q, sq_far p q]) (by linarith)
+      le_antisymm (by linarith [sq_near p q, sq_far p q]) (by linarith)
     have hfarSquare := sq_far p q
     rw [hfar] at hfarSquare
     exact ⟨pow_eq_zero_iff two_ne_zero |>.mp (by linarith), by linarith⟩

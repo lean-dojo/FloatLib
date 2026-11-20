@@ -7,7 +7,7 @@ Authors: FloatLib Team
 module
 
 public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Logarithm
-public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.PartsProof
+public import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.SmallProof
 public import FloatLib.Numerics.Exact.Elementary.Proof
 public import FloatLib.Numerics.Exact.Trigonometric.Atan2.Proof
 public import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.CorrectlyRounded.Proof
@@ -64,6 +64,43 @@ theorem contains_ratLogEnclosure {q : Rat} (hq : 0 < q) (precision : Nat) :
     (Model.Transcendentals.Certified.splitTwoPow q).2 precision
   rwa [hvalue] at h
 
+/-- `coarseLog` contains the logarithm of a positive rational. -/
+theorem contains_coarseLog {q : Rat} (hq : 0 < q) (precision : Nat) :
+    (coarseLog q precision).Contains (Real.log (q : ℝ)) := by
+  unfold coarseLog
+  obtain ⟨hlo, hhi⟩ := dyadicAround_bounds q (precision + 8)
+  split
+  · rename_i hlong
+    have hpositive := hlong.2
+    have hloR : ((dyadicAround q (precision + 8)).lo : ℝ) ≤ (q : ℝ) := by exact_mod_cast hlo
+    have hhiR : (q : ℝ) ≤ ((dyadicAround q (precision + 8)).hi : ℝ) := by exact_mod_cast hhi
+    exact ⟨(contains_ratLogEnclosure hpositive precision).1.trans
+        (Real.log_le_log (by exact_mod_cast hpositive) hloR),
+      (Real.log_le_log (by exact_mod_cast hq) hhiR).trans
+        (contains_ratLogEnclosure (hq.trans_le hhi) precision).2⟩
+  · exact contains_ratLogEnclosure hq precision
+
+/-- `coarseAtan` contains the arctangent of the slope. -/
+theorem contains_coarseAtan (slope : Rat) (precision : Nat) :
+    (coarseAtan slope precision).Contains (Real.arctan (slope : ℝ)) := by
+  unfold coarseAtan
+  split
+  · obtain ⟨hlo, hhi⟩ := dyadicAround_bounds slope (precision + 8)
+    exact ⟨(Enclosure.contains_atan _ _).1.trans
+        (Real.arctan_strictMono.monotone (by exact_mod_cast hlo)),
+      (Real.arctan_strictMono.monotone (by exact_mod_cast hhi)).trans
+        (Enclosure.contains_atan _ _).2⟩
+  · exact Enclosure.contains_atan slope _
+
+/-- `coarseArg` contains the principal argument. -/
+theorem contains_coarseArg (x y : Rat) (precision : Nat) :
+    (coarseArg x y precision).Contains (Complex.arg ⟨(x : ℝ), (y : ℝ)⟩) := by
+  unfold coarseArg
+  rw [← TrigonometricComparison.atan2Reduction_eq_arg]
+  exact RationalInterval.contains_add (contains_coarseAtan _ precision)
+    (RationalInterval.contains_scale (Enclosure.contains_piQuarter (precision / 2))
+      (TrigonometricComparison.atan2Reduction x y).2)
+
 /-- `logPart` is an oracle for `log q / scale`. -/
 theorem logPart_denotes {q scale : Rat} (hq : 0 < q) (hscale : 0 < scale) :
     (logPart fmt q scale).Denotes (Real.log (q : ℝ) / scale) false := by
@@ -73,13 +110,19 @@ theorem logPart_denotes {q scale : Rat} (hq : 0 < q) (hscale : 0 < scale) :
       false).Denotes (Real.log (q : ℝ) / scale) false :=
     ⟨_, rfl, fun boundary => by
       rw [ElementaryComparison.prepareLog_eq_real, cmp_mul_eq_cmp_div _ hscale]⟩
-  refine hexact.within (contains_of_refineTwice fun precision interval hinterval => ?_)
-  have h := Numerics.RationalInterval.contains_scale (contains_ratLogEnclosure hq precision)
-    (1 / scale)
-  rw [← Option.some.inj hinterval]
-  convert h using 1
-  push_cast
-  ring
+  refine hexact.within (contains_orElse (fun interval hinterval => ?_)
+    (contains_of_refineTwice fun precision interval hinterval => ?_))
+  · obtain ⟨small, hsmall, rfl⟩ := Option.map_eq_some_iff.mp hinterval
+    have h := Numerics.RationalInterval.contains_scale (contains_smallLog? hsmall) (1 / scale)
+    convert h using 1
+    push_cast
+    ring
+  · have h := Numerics.RationalInterval.contains_scale (contains_coarseLog hq precision)
+      (1 / scale)
+    rw [← Option.some.inj hinterval]
+    convert h using 1
+    push_cast
+    ring
 
 /-- `argPart` is an oracle for `arg (x + i y) / scale`. -/
 theorem argPart_denotes (x y : Rat) {scale : Rat} (hscale : 0 < scale) :
@@ -89,13 +132,19 @@ theorem argPart_denotes (x y : Rat) {scale : Rat} (hscale : 0 < scale) :
       false).Denotes (Complex.arg ⟨(x : ℝ), (y : ℝ)⟩ / scale) false :=
     ⟨_, rfl, fun boundary => by
       rw [TrigonometricComparison.prepareAtan2_eq_real, cmp_mul_eq_cmp_div _ hscale]⟩
-  refine hexact.within (contains_of_refineTwice fun precision interval hinterval => ?_)
-  have h := Numerics.RationalInterval.contains_scale
-    (TrigonometricComparison.contains_atan2Interval x y (precision / 2)) (1 / scale)
-  rw [← Option.some.inj hinterval]
-  convert h using 1
-  push_cast
-  ring
+  refine hexact.within (contains_orElse (fun interval hinterval => ?_)
+    (contains_of_refineTwice fun precision interval hinterval => ?_))
+  · obtain ⟨small, hsmall, rfl⟩ := Option.map_eq_some_iff.mp hinterval
+    have h := Numerics.RationalInterval.contains_scale (contains_smallArg? hsmall) (1 / scale)
+    convert h using 1
+    push_cast
+    ring
+  · have h := Numerics.RationalInterval.contains_scale
+      (contains_coarseArg x y precision) (1 / scale)
+    rw [← Option.some.inj hinterval]
+    convert h using 1
+    push_cast
+    ring
 
 /-- The parts of `logRat` are the principal logarithm of a nonzero complex rational. -/
 theorem logRat_denotes {x y : Rat} (hne : ¬(x = 0 ∧ y = 0)) :

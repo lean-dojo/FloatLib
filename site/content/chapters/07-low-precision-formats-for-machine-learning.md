@@ -936,6 +936,22 @@ example :
   float_decide
 ```
 
+The report stops at the natural and base-two exponentials and logarithms, the trigonometric and hyperbolic functions, `Sqrt`, `RSqrt` and `Hypot`. IEEE 754-2019 recommends more in its clause 9.2, so we add `Exp10`, `Exp2MinusOne`, `Exp10MinusOne`, `Log10`, `Log2OnePlus`, `Log10OnePlus`, `Rootn`, `Cbrt`, `Pown`, `Pow`, `Powr` and `Compound` under `ExecFloat.P3109`, for every format, rounding mode and saturation mode, with the source and target formats you choose. These twelve are FloatLib's own, outside the report. They keep its conventions: one zero, one NaN, and NaN at a pole at zero, as `Recip` gives there. Each compares the exact real function with every rounding threshold of the destination, so nothing is rounded on the way, and we compare them with MPFR enclosures and exact rationals ([test methods](https://github.com/lean-dojo/FloatLib/blob/main/tests/EXTERNAL.md#ieee-754-2019-additions)).
+
+Lean's kernel evaluates these operations on the encodings, with no rational number: an arithmetic operation of section 4.10 on operands of any formats, an extremum, the clamp, a comparison, a classification query or a neighbour is one function of natural numbers, and each is proved to store the reference result for every format, rounding mode, random word and saturation mode. On `Binary8p4se` the kernel takes 0.36 to 0.58 ms for an arithmetic operation, a square root, an extremum or the clamp, 0.29 ms for a comparison and 0.13 to 0.19 ms for a query ([`benchmarks/kernel/P3109.lean`](https://github.com/lean-dojo/FloatLib/blob/main/benchmarks/kernel/P3109.lean), Lean v4.36.0). A value of a binary interchange format converts into a P3109 format on its encoding as well (`convertBinary_eq`, for every binary descriptor), in 0.45 ms from binary32. The mixed operations of the report on values of P3109 formats, values of binary interchange formats and rationals, in any combination, are one projection of a class, a sign and a ratio computed from the operands (`mixedAdd_eq` and its siblings), in 0.8 to 1.4 ms. An independent `Fraction` implementation of the same sections agrees on 18,554,428 encodings. Conversions into a binary format, the scaled and the block operations and the elementary functions are evaluated by their definitions.
+
+```lean
+example :
+    (ExecFloat.P3109.Sqrt (2 : ExecFloat.P3109 .binary8p4se) (mode := .up)).toNatBits =
+        (1.5 : ExecFloat.P3109 .binary8p4se).toNatBits ∧
+      (ExecFloat.P3109.MaximumNumber (ExecFloat.P3109.nan : ExecFloat.P3109 .binary8p4se)
+        (2 : ExecFloat.P3109 .binary8p4se)).toNatBits =
+        (2 : ExecFloat.P3109 .binary8p4se).toNatBits ∧
+      ExecFloat.P3109.CompareLess (1.5 : ExecFloat.P3109 .binary8p4se)
+        (2 : ExecFloat.P3109 .binary8p3se) = true := by
+  float_decide
+```
+
 How does a P3109 format round? For a nonzero finite input $x$, section 4.7.4 of the report chooses the quantum
 
 $$Q=\max(\lfloor\log_2|x|\rfloor,\,1-B)-P+1,$$

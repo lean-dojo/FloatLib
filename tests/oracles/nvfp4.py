@@ -1,8 +1,10 @@
 """NVFP4 exact policies and binary32 arithmetic checked under separate contracts.
 
 The exact reference uses gfloat's decoded values, exact Fraction distances and
-MPFR binary32 observations. The implementation reference is CPU torchao. No
-near-tie tolerance or class of ignored discrepancies is used.
+MPFR binary32 observations. The implementation reference is CPU torchao, which
+is compared with `Block.nvfp4Working`, the library's quantizer on binary32
+encodings (`oracle block nvfp4f32`). No near-tie tolerance or class of ignored
+discrepancies is used.
 """
 
 import argparse
@@ -175,8 +177,9 @@ def main():
             "Finite inputs only; whole tensors and rational inputs are not exhaustive.",
             "Two-level tests use supplied positive binary32 scales; all-zero dynamic "
             "outer-scale handling is not claimed to match torchao.",
-            "The binary32 model is test code, not a proved library implementation of "
-            "working-precision scale selection.",
+            "The binary32 comparison covers the tensors of this corpus, in which no "
+            "binary32 operation overflows; nvfp4_working.py compares the overflow cases "
+            "with hardware binary32.",
             "No GPU kernel, GEMM accumulation precision or stochastic rounding is tested.",
         ],
     }

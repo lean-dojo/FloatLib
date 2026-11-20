@@ -25,6 +25,10 @@ the ternary value from that pair and the delivered word.
 
 `ratioStatus_eq` holds for every format descriptor, every rounding direction, every numerator
 and every nonzero denominator. `ofRat_status_eq` states it for every rational number.
+
+`ratioStatusWith fmt mode sign num den w` is the same number as a function of the delivered word
+`w`. A statement about the value and the flags of one rounded ratio gives it the word it has
+already computed.
 -/
 
 @[expose] public section
@@ -34,15 +38,24 @@ namespace FloatLib.Floats.Formats.BinaryInterchange.KernelPath
 open FloatLib.Numerics
 
 /--
-The status number of `± num / den` rounded in the direction `mode`, for a nonzero denominator
-(`ratioStatus_eq`). See the module documentation.
+The status number of `± num / den` rounded in the direction `mode`, for a nonzero denominator,
+when `w` is the word of the rounded ratio. `ratioStatus` is this number at
+`ofRatio fmt mode sign num den`. See the module documentation.
 -/
-def ratioStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (sign num den : Nat) : Nat :=
+def ratioStatusWith (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (sign num den w : Nat) :
+    Nat :=
   (fun shifted =>
     roundStatus fmt mode sign
       (Nat.add (Nat.mul 2 (Nat.div shifted den)) (Nat.sub 1 (Nat.sub 1 (Nat.mod shifted den))))
-      1 (ofRatio fmt mode sign num den))
+      1 w)
     (Nat.shiftLeft num (Nat.add fmt.exponentBias (Nat.add fmt.fracWidth 1)))
+
+/--
+The status number of `± num / den` rounded in the direction `mode`, for a nonzero denominator
+(`ratioStatus_eq`).
+-/
+def ratioStatus (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (sign num den : Nat) : Nat :=
+  ratioStatusWith fmt mode sign num den (ofRatio fmt mode sign num den)
 
 /--
 `ratioStatus` computes the flags and the ternary value of delivering the reference rounding of
@@ -60,7 +73,7 @@ theorem ratioStatus_eq (fmt : FloatFormat) (mode : Model.IEEERoundingMode) (nega
   have hsticky := sticky_quotient fmt num den 0 0 hden
   simp only [Nat.zero_add, Nat.sub_zero, Nat.zero_sub, Nat.shiftLeft_zero, Nat.cast_zero,
     sub_zero] at hsticky
-  unfold ratioStatus
+  unfold ratioStatus ratioStatusWith
   simp only [Nat.shiftLeft_eq', Nat.add_eq, Nat.mul_eq, Nat.sub_eq, div_def, mod_def]
   rw [ofRatio_eq_directed, rationalRoundingStatusScaled_sticky fmt mode _ _ _ _ _ _ hden hsticky,
     rationalTernaryScaled_sticky fmt _ _ _ _ _ _ hden hsticky]

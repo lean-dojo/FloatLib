@@ -8,6 +8,7 @@ module
 
 public import FloatLib.Floats.Formats.DecimalInterchange
 public meta import FloatLib.Floats.Formats.DecimalInterchange
+public import FloatLib.Floats.Formats.DecimalInterchange.Reduction.Schedule.Proof
 public import FloatLib.Tactic.FloatDecide
 
 /-!
@@ -16,17 +17,21 @@ public import FloatLib.Tactic.FloatDecide
 Special cases of the decimal operations of IEEE 754-2019 §5.3.2, §5.5.2, §9.4, §9.6 and §9.7 on
 decimal64, with the examples of Cowlishaw's General Decimal Arithmetic Specification 1.70 for
 `max` and `min` (pages 31 and 32) and the special cases of ISO/IEC TS 18661-4 (N1797) F.10.10a
-for the reductions. `cases` holds every case once, checked by compiled evaluation
-when this module is elaborated.
+for the reductions, the scaled products among them, and members of the family of §9.4 over the
+association order and the accumulator format. `cases` holds every case once, checked by
+compiled evaluation when this module is elaborated.
 
 The kernel path is checked by `float_decide`, which rewrites a decimal sum, difference or
 product with `KernelPath.add_eq`, `sub_eq` and `mul_eq`, a comparison or a minimum or maximum
 with `KernelPath.compareQuiet_eq`, `compareSignaling_eq` and `extremum_eq`, the total order
 with `KernelPath.totalOrder_eq`, and `quantize`, the integral roundings, the conversions to an
-integer, `logB`, `nextUp`, `div`, `sqrt`, `rSqrt`, `hypot`, `pown` and the four reductions with
-`KernelPath.quantize_eq`, `roundToIntegral_eq`, `roundToIntegralExact_eq`,
+integer, `logB`, `nextUp`, `div`, `sqrt`, `rSqrt`, `hypot`, `pown`, `rootn`, `remainder`, the
+four reductions, the four encoding operations and the conversions to and from character
+sequences with `KernelPath.quantize_eq`, `roundToIntegral_eq`, `roundToIntegralExact_eq`,
 `convertToInteger_eq`, `logB_eq`, `nextUp_eq`, `div_eq`, `sqrt_eq`, `rSqrt_eq`, `hypot_eq`,
-`pown_eq`, `sum_eq`, `sumAbs_eq`, `sumSquare_eq` and `dot_eq`, before Lean's kernel decides it.
+`pown_eq`, `rootn_eq`, `remainder_eq`, `sum_eq`, `sumAbs_eq`, `sumSquare_eq`, `dot_eq`,
+`encodeDecimal_eq`, `decodeDecimal_eq`, `encodeBinary_eq`, `decodeBinary_eq`, `formatExact_eq`
+and `parse_eq`, before Lean's kernel decides it.
 The statements over `oneDigit` run through every finite datum of a format with one digit. The
 last part applies the theorems of the operations to decimal64 data.
 -/
@@ -147,7 +152,79 @@ def cases : List (String × Bool) :=
       (dot f .nearest #[.infinity false, .infinity true] #[pos 1 0, pos 1 0]).toOption ==
         some { value := quietNaN, status := { invalid := true } }),
     ("dot of arrays of different lengths is rejected",
-      (dot f .nearest #[pos 1 0] #[]).toOption.isNone) ]
+      (dot f .nearest #[pos 1 0] #[]).toOption.isNone),
+    ("scaledProd 2.50 4 is 1.000 with scale 1",
+      scaledProd f .nearest #[pos 250 (-2), pos 4 0] ==
+        { product := pos 1000 (-3), scaleFactor := 1 }),
+    ("the empty scaledProd is 1 with scale 0",
+      scaledProd f .nearest #[] == { product := pos 1 0, scaleFactor := 0 }),
+    ("scaledProd 1E+384 1E+384 1E-398 neither overflows nor underflows",
+      scaledProd f .nearest #[pos 1000000000000000 369, pos 1000000000000000 369, pos 1 (-398)] ==
+        { product := pos 1000000000000000 (-15), scaleFactor := 370 }),
+    ("scaledProd of two sixteen-digit data rounds once",
+      scaledProd f .nearest #[pos 9999999999999999 0, pos 9999999999999999 0] ==
+        { product := pos 9999999999999998 (-15), scaleFactor := 31,
+          status := { inexact := true } }),
+    ("scaledProd toward positive rounds the scaled product up",
+      scaledProd f .up #[pos 9999999999999999 0, pos 9999999999999999 0] ==
+        { product := pos 9999999999999999 (-15), scaleFactor := 31,
+          status := { inexact := true } }),
+    ("scaledProd 3 -0 is -0", scaledProd f .nearest #[pos 3 0, neg 0 0] ==
+      { product := neg 0 0, scaleFactor := 0 }),
+    ("scaledProd 0 inf is invalid", scaledProd f .nearest #[pos 0 0, .infinity false] ==
+      { product := quietNaN, scaleFactor := 0, status := { invalid := true } }),
+    ("scaledProd -inf 2 is -inf", scaledProd f .nearest #[.infinity true, pos 2 0] ==
+      { product := .infinity true, scaleFactor := 0 }),
+    ("scaledProd with a NaN is the NaN", scaledProd f .nearest #[pos 2 0, quietNaN] ==
+      { product := quietNaN, scaleFactor := 0 }),
+    ("scaledProd with a signaling NaN raises invalid",
+      scaledProd f .nearest #[signalingNaN, pos 2 0] ==
+        { product := quietNaN, scaleFactor := 0, status := { invalid := true } }),
+    ("scaledProdSum (1 + 2) (3 + 4) is 2.1 with scale 1",
+      (scaledProdSum f .nearest #[pos 1 0, pos 3 0] #[pos 2 0, pos 4 0]).toOption ==
+        some { product := pos 21 (-1), scaleFactor := 1 }),
+    ("scaledProdDiff (5 - 2) (1 - 4) is -9",
+      (scaledProdDiff f .nearest #[pos 5 0, pos 1 0] #[pos 2 0, pos 4 0]).toOption ==
+        some { product := neg 9 0, scaleFactor := 0 }),
+    ("scaledProdDiff 1 - 1 toward negative is -0",
+      (scaledProdDiff f .down #[pos 1 0] #[pos 1 0]).toOption ==
+        some { product := neg 0 0, scaleFactor := 0 }),
+    ("scaledProdDiff inf - inf is invalid",
+      (scaledProdDiff f .nearest #[.infinity false] #[.infinity false]).toOption ==
+        some { product := quietNaN, scaleFactor := 0, status := { invalid := true } }),
+    ("scaledProdSum of arrays of different lengths is rejected",
+      (scaledProdSum f .nearest #[pos 1 0] #[]).toOption.isNone),
+    ("in order in decimal64, 1 + 6E-16 + 6E-16 rounds twice",
+      reduceInOrder f f .nearest (Reduction.sumTerm f .nearest)
+          [pos 1 0, pos 6 (-16), pos 6 (-16)] ==
+        { value := pos 1000000000000002 (-15), status := { inexact := true } }),
+    ("in a decimal128 accumulator the same sum rounds once",
+      reduceInOrder .decimal128 f .nearest (Reduction.sumTerm .decimal128 .nearest)
+          [pos 1 0, pos 6 (-16), pos 6 (-16)] ==
+        { value := pos 1000000000000001 (-15), status := { inexact := true } }),
+    ("along the order 1 + (6E-16 + 6E-16) it rounds once",
+      reduceAlong f f .nearest (Reduction.sumTerm f .nearest)
+          (.node (.leaf (pos 1 0)) (.node (.leaf (pos 6 (-16))) (.leaf (pos 6 (-16))))) ==
+        { value := pos 1000000000000001 (-15), status := { inexact := true } }),
+    ("the empty reduction in order is +0",
+      reduceInOrder f f .nearest (Reduction.sumTerm f .nearest) [] == { value := pos 0 0 }),
+    ("in order, an overflow on the way stays in the flags",
+      reduceInOrder f f .nearest (Reduction.sumTerm f .nearest)
+          [pos 9000000000000000 369, pos 9000000000000000 369, neg 9000000000000000 369] ==
+        { value := .infinity false, status := { overflow := true, inexact := true } }),
+    ("sumAbs in order of -3 4 is 7",
+      reduceInOrder f f .nearest (Reduction.sumAbsTerm f .nearest) [neg 3 0, pos 4 0] ==
+        { value := pos 7 0 }),
+    ("sumSquare in order of 3 -4 is 25",
+      reduceInOrder f f .nearest (Reduction.sumSquareTerm f .nearest) [pos 3 0, neg 4 0] ==
+        { value := pos 25 0 }),
+    ("dot in order of (1, 3) (2, 4) is 11",
+      reduceInOrder f f .nearest (Reduction.dotTerm f .nearest)
+          [(pos 1 0, pos 3 0), (pos 2 0, pos 4 0)] == { value := pos 11 0 }),
+    ("a decimal32 accumulator rounds each term of a decimal64 sum",
+      reduceInOrder .decimal32 f .nearest (Reduction.sumTerm .decimal32 .nearest)
+          [pos 1234567890123456 0, pos 1 0] ==
+        { value := pos 1234568 9, status := { inexact := true } }) ]
 
 /-- The names of the cases that fail. -/
 def failing : List String :=
@@ -687,6 +764,162 @@ theorem decimal_pown :
         { value := .infinity false, status := { overflow := true, inexact := true } } := by
   float_decide
 
+/--
+The remainder through its kernel form: the quotient is rounded to the nearest integer, ties to
+even, on the common quantum of the operands; a zero remainder keeps the sign of the dividend;
+an infinite divisor returns the dividend, and an infinite dividend and a zero divisor are
+invalid.
+-/
+theorem decimal_remainder :
+    Arithmetic.remainder .decimal64 (.finite false 5 0) (.finite false 3 0) =
+        { value := .finite true 1 0 } ∧
+      Arithmetic.remainder .decimal64 (.finite false 7 0) (.finite false 2 0) =
+        { value := .finite true 1 0 } ∧
+      Arithmetic.remainder .decimal64 (.finite false 5 0) (.finite false 2 0) =
+        { value := .finite false 1 0 } ∧
+      Arithmetic.remainder .decimal64 (.finite false 55 (-1)) (.finite false 2 0) =
+        { value := .finite true 5 (-1) } ∧
+      Arithmetic.remainder .decimal64 (.finite false 3 2) (.finite false 7 (-1)) =
+        { value := .finite true 3 (-1) } ∧
+      Arithmetic.remainder .decimal64 (.finite false 6 0) (.finite true 3 0) =
+        { value := .finite false 0 0 } ∧
+      Arithmetic.remainder .decimal64 (.finite true 6 1) (.finite false 3 0) =
+        { value := .finite true 0 0 } ∧
+      Arithmetic.remainder .decimal64 (.finite true 25 (-1)) (.infinity false) =
+        { value := .finite true 25 (-1) } ∧
+      (Arithmetic.remainder .decimal64 (.infinity false) (.finite false 1 0)).status.invalid =
+        true ∧
+      (Arithmetic.remainder .decimal64 (.finite false 1 0) (.finite false 0 3)).status.invalid =
+        true ∧
+      (Arithmetic.remainder .decimal64 (.finite false 1 0) signalingNaN).status.invalid = true ∧
+      (Arithmetic.remainder .decimal64 quietNaN (.finite false 1 0)).value.isNaN = true := by
+  float_decide
+
+/-- info: 'FloatLibTests.Conformance.Formats.DecimalRecommended.decimal_remainder' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms decimal_remainder
+
+/--
+The root of integer degree through its kernel form: exact roots at their preferred exponent,
+inexact roots in three rounding directions, the odd root of a negative datum, negative degrees,
+a root at the least quantum, and the cases that the kernel form leaves to the specification
+(a negative datum with an even degree, the degree zero, zeros and an infinity).
+-/
+theorem decimal_rootn :
+    Arithmetic.rootn .decimal64 .nearest (.finite false 27 0) 3 =
+        { value := .finite false 3 0 } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 2 0) 3 =
+        { value := .finite false 1259921049894873 (-15), status := { inexact := true } } ∧
+      Arithmetic.rootn .decimal64 .up (.finite false 2 0) 3 =
+        { value := .finite false 1259921049894874 (-15), status := { inexact := true } } ∧
+      Arithmetic.rootn .decimal64 .down (.finite false 2 0) 3 =
+        { value := .finite false 1259921049894873 (-15), status := { inexact := true } } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite true 8 0) 3 =
+        { value := .finite true 2 0 } ∧
+      Arithmetic.rootn .decimal64 .up (.finite true 2 0) 3 =
+        { value := .finite true 1259921049894873 (-15), status := { inexact := true } } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 16 0) (-2) =
+        { value := .finite false 25 (-2) } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 3 0) (-1) =
+        { value := .finite false 3333333333333333 (-16), status := { inexact := true } } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 1024 (-10)) 10 =
+        { value := .finite false 2 (-1) } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 1 (-398)) 2 =
+        { value := .finite false 1 (-199) } ∧
+      Arithmetic.rootn .decimal32 .nearestAway (.finite false 15625 (-3)) 3 =
+        { value := .finite false 25 (-1) } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 100000 (-5)) 5 =
+        { value := .finite false 10 (-1) } ∧
+      (Arithmetic.rootn .decimal64 .nearest (.finite true 4 0) 2).status.invalid = true ∧
+      (Arithmetic.rootn .decimal64 .nearest (.finite false 4 0) 0).status.invalid = true ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite false 0 0) (-3) =
+        { value := .infinity false, status := { divideByZero := true } } ∧
+      Arithmetic.rootn .decimal64 .nearest (.finite true 0 5) 3 =
+        { value := .finite true 0 1 } ∧
+      Arithmetic.rootn .decimal64 .nearest (.infinity false) 3 =
+        { value := .infinity false } := by
+  float_decide
+
+/-- info: 'FloatLibTests.Conformance.Formats.DecimalRecommended.decimal_rootn' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms decimal_rootn
+
+/--
+The encoding operations through their kernel forms: the words of finite data with a small and
+with a full coefficient in both encodings of the significand, of an infinity and of NaNs with
+their payloads, a datum outside the format, and the data of words, with a coefficient and a
+payload beyond their bounds and a declet that is not canonical.
+-/
+theorem decimal_encodings :
+    (encodeDecimal .decimal64 (.finite false 1 0)).map BitVec.toNat =
+        some 2465720795985346561 ∧
+      (encodeDecimal .decimal64 (.finite true 9999999999999999 369)).map BitVec.toNat =
+        some 17869438071036181759 ∧
+      (encodeDecimal .decimal64 (.finite false 1 400)).map BitVec.toNat = none ∧
+      (encodeDecimal .decimal64 (.infinity true)).map BitVec.toNat =
+        some 17870283321406128128 ∧
+      (encodeDecimal .decimal64 (.nan false true 123)).map BitVec.toNat =
+        some 9079256848778920099 ∧
+      (encodeBinary .decimal64 (.finite false 1 0)).map BitVec.toNat =
+        some 3584865303386914817 ∧
+      (encodeBinary .decimal64 (.finite true 9999999999999999 369)).map BitVec.toNat =
+        some 17869024322337701887 ∧
+      (encodeBinary .decimal32 (.finite false 9999999 90)).map BitVec.toNat = some 2012780159 ∧
+      (encodeDecimal .decimal32 (.finite false 9999999 90)).map BitVec.toNat =
+        some 2012478719 ∧
+      (encodeBinary .decimal64 (.nan true false 77)).map BitVec.toNat =
+        some 18158513697557839949 ∧
+      decodeDecimal .decimal32 0x22500001 = .finite false 1 0 ∧
+      decodeDecimal .decimal32 0x77f3fcff = .finite false 9999999 90 ∧
+      decodeBinary .decimal32 0x77f8967f = .finite false 9999999 90 ∧
+      decodeBinary .decimal32 0x6cb8967f = .finite false 9999999 0 ∧
+      decodeBinary .decimal32 0x7c0f4240 = .nan false false 0 ∧
+      decodeDecimal .decimal32 0x7e0003ff = .nan false true 999 ∧
+      decodeDecimal .decimal32 0x0000006e = .finite false 888 (-101) ∧
+      decodeDecimal .decimal32 0x0000036e = .finite false 888 (-101) ∧
+      decodeBinary .decimal32 0xf8000000 = .infinity true := by
+  float_decide
+
+/-- info: 'FloatLibTests.Conformance.Formats.DecimalRecommended.decimal_encodings' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms decimal_encodings
+
+/--
+The conversions to and from character sequences through their kernel forms: the exact spelling
+of a datum with its quantum, of an infinity and of a signaling NaN with its payload, and the
+data read from text, exact, rounded in two directions, beyond the range, special, and not a
+number.
+-/
+theorem decimal_text :
+    Formatting.formatExact (.finite true 12345 (-3)) = "-12345e-3" ∧
+      Formatting.formatExact (.finite false 0 0) = "0" ∧
+      Formatting.formatExact (.finite false 7 5) = "7e5" ∧
+      Formatting.formatExact (.infinity true) = "-Infinity" ∧
+      Formatting.formatExact (.nan false true 42) = "sNaN42" ∧
+      Formatting.parse .decimal64 .nearest "-12345e-3" = { value := .finite true 12345 (-3) } ∧
+      Formatting.parse .decimal64 .nearest "1.50" = { value := .finite false 150 (-2) } ∧
+      Formatting.parse .decimal32 .nearest "1234567.5" =
+        { value := .finite false 1234568 0, status := { inexact := true } } ∧
+      Formatting.parse .decimal32 .down "1234567.5" =
+        { value := .finite false 1234567 0, status := { inexact := true } } ∧
+      Formatting.parse .decimal32 .nearest "1e999" =
+        { value := .infinity false, status := { overflow := true, inexact := true } } ∧
+      Formatting.parse .decimal64 .nearest "-Infinity" = { value := .infinity true } ∧
+      Formatting.parse .decimal64 .nearest "sNaN42" = { value := .nan false true 42 } ∧
+      (Formatting.parse .decimal64 .nearest "abc").status.invalid = true ∧
+      (Formatting.parse .decimal64 .nearest "NaN99999999999999999").status.invalid = true := by
+  float_decide
+
+/-- info: 'FloatLibTests.Conformance.Formats.DecimalRecommended.decimal_text' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms decimal_text
+
 /-! ## Every finite datum of a one-digit format -/
 
 /-- A decimal layout of one digit with the quantum exponents from -5 to 6: 240 finite data. -/
@@ -862,6 +1095,22 @@ example (x y : Datum) :
         (KernelPath.nextUp .decimal64 x.negate).value.negate := by
   simp only [kernel_optimize, and_self]
 
+/--
+On 576 pairs of finite data of the one-digit format: the remainder is invalid exactly for a
+zero divisor, and otherwise twice its magnitude does not exceed the magnitude of the divisor.
+-/
+theorem oneDigit_remainder : ∀ c q : Fin 24,
+    (Arithmetic.remainder oneDigit (oneDigitDatum c q) (oneDigitDatum q c)).status.invalid =
+        (oneDigitDatum q c).isZero ∧
+      ((oneDigitDatum q c).isZero = true ∨
+        (Datum.compareQuietLessEqual
+          (Arithmetic.add .decimal64 .nearest
+            (Arithmetic.remainder oneDigit (oneDigitDatum c q) (oneDigitDatum q c)).value.abs
+            (Arithmetic.remainder oneDigit (oneDigitDatum c q)
+              (oneDigitDatum q c)).value.abs).value
+          (oneDigitDatum q c).abs).value = true) := by
+  float_decide
+
 /-! ## The theorems on decimal64 data -/
 
 example (s : Bool) (c : Nat) (q : Int) :
@@ -961,5 +1210,123 @@ example (mode : RoundingMode) (left right : Array Datum) (xs ys : List ℚ)
     ∃ preferred negativeZero, dot .decimal64 mode left right =
       .ok (project .decimal64 mode (List.zipWith (· * ·) xs ys).sum preferred negativeZero) :=
   dot_eq_project _ mode left right xs ys hleft hright hsize
+
+/--
+On every finite datum of the one-digit format: the root of degree one is the datum in value,
+the root of degree two of a positive datum is the square root with the same flags in every
+rounding direction, and the exact text of the datum reads back as the datum with its sign and
+its quantum.
+-/
+theorem oneDigit_rootn_text : ∀ c q : Fin 24,
+    (Datum.compareQuietEqual (Arithmetic.rootn oneDigit .nearest (oneDigitDatum c q) 1).value
+        (oneDigitDatum c q)).value = true ∧
+      (decide (12 ≤ q.val) = true ∨
+        Arithmetic.rootn oneDigit .nearest (oneDigitDatum c q) 2 =
+            Arithmetic.sqrt oneDigit .nearest (oneDigitDatum c q) ∧
+          Arithmetic.rootn oneDigit .nearestAway (oneDigitDatum c q) 2 =
+            Arithmetic.sqrt oneDigit .nearestAway (oneDigitDatum c q) ∧
+          Arithmetic.rootn oneDigit .towardZero (oneDigitDatum c q) 2 =
+            Arithmetic.sqrt oneDigit .towardZero (oneDigitDatum c q) ∧
+          Arithmetic.rootn oneDigit .up (oneDigitDatum c q) 2 =
+            Arithmetic.sqrt oneDigit .up (oneDigitDatum c q) ∧
+          Arithmetic.rootn oneDigit .down (oneDigitDatum c q) 2 =
+            Arithmetic.sqrt oneDigit .down (oneDigitDatum c q)) ∧
+      Formatting.parse oneDigit .nearest (Formatting.formatExact (oneDigitDatum c q)) =
+        { value := oneDigitDatum c q } := by
+  float_decide
+
+/--
+On the 256 words of the one-digit format: a word decoded, encoded and decoded again is the datum
+of the word, in both encodings of the significand, and the datum of a word in one encoding,
+encoded in the other, decodes to the same datum.
+-/
+theorem oneDigit_encodings : ∀ w : Fin 256,
+    decodeDecimal oneDigit
+        ((encodeDecimal oneDigit
+          (decodeDecimal oneDigit (BitVec.ofNat oneDigit.bitWidth w))).getD 0) =
+        decodeDecimal oneDigit (BitVec.ofNat oneDigit.bitWidth w) ∧
+      decodeBinary oneDigit
+        ((encodeBinary oneDigit
+          (decodeBinary oneDigit (BitVec.ofNat oneDigit.bitWidth w))).getD 0) =
+        decodeBinary oneDigit (BitVec.ofNat oneDigit.bitWidth w) ∧
+      decodeBinary oneDigit
+        ((encodeBinary oneDigit
+          (decodeDecimal oneDigit (BitVec.ofNat oneDigit.bitWidth w))).getD 0) =
+        decodeDecimal oneDigit (BitVec.ofNat oneDigit.bitWidth w) := by
+  float_decide
+
+example (mode : RoundingMode) (values : Array Datum) (exacts : List ℚ)
+    (hexact : values.toList.map Datum.toRat? = exacts.map some) (hne : exacts.prod ≠ 0) :
+    (∃ preferred, scaledProd .decimal64 mode values =
+        Reduction.scaled (project .decimal64 mode
+          (exacts.prod / (10 : ℚ) ^ Int.log 10 |exacts.prod|) preferred)
+          (Int.log 10 |exacts.prod|)) ∧
+      (scaledProd .decimal64 mode values).status.overflow = false ∧
+      (scaledProd .decimal64 mode values).status.underflow = false :=
+  have hdecade := Format.unitDecade_of_quantum .decimal64 (by decide) (by decide)
+  ⟨scaledProd_eq_project _ mode values exacts hexact hne,
+    scaledProd_status _ mode values exacts hexact hne hdecade.1 hdecade.2⟩
+
+example (mode : RoundingMode) (values : Array Datum) (exacts : List ℚ)
+    (hexact : values.toList.map Datum.toRat? = exacts.map some) (hne : exacts.prod ≠ 0)
+    (value : ℚ) (hvalue : (scaledProd .decimal128 mode values).product.toRat? = some value) :
+    (scaledProd .decimal128 mode values).status.inexact = true ↔
+      value * (10 : ℚ) ^ (scaledProd .decimal128 mode values).scaleFactor ≠ exacts.prod :=
+  scaledProd_inexact_iff _ mode values exacts hexact hne value hvalue
+
+example (mode : RoundingMode) (left right : Array Datum) (xs ys : List ℚ)
+    (hleft : left.toList.map Datum.toRat? = xs.map some)
+    (hright : right.toList.map Datum.toRat? = ys.map some) (hsize : left.size = right.size)
+    (hne : (List.zipWith (· - ·) xs ys).prod ≠ 0) :
+    ∃ preferred, scaledProdDiff .decimal32 mode left right =
+      .ok (Reduction.scaled (project .decimal32 mode ((List.zipWith (· - ·) xs ys).prod /
+        (10 : ℚ) ^ Int.log 10 |(List.zipWith (· - ·) xs ys).prod|) preferred)
+        (Int.log 10 |(List.zipWith (· - ·) xs ys).prod|)) :=
+  scaledProdDiff_eq_project _ mode left right xs ys hleft hright hsize hne
+
+example (mode : RoundingMode) (first : Datum) (rest : List Datum) :
+    reduceInOrder .decimal128 .decimal64 mode (Reduction.sumTerm .decimal128 mode)
+        (first :: rest) =
+      reduceAlong .decimal128 .decimal64 mode (Reduction.sumTerm .decimal128 mode)
+        (FloatLib.Numerics.ReductionTree.leftChain first rest) :=
+  reduceInOrder_eq_reduceAlong _ _ mode _ first rest
+
+open FloatLib.Numerics (ReductionTree) in
+open FloatLib.Floats.Formats.DecimalInterchange.Transcendentals (toReal) in
+example (mode : RoundingMode) (term : Datum → Outcome) (schedule : ReductionTree Datum)
+    (hterm : ∀ x ∈ schedule.leaves, ∃ value, (term x).value.toRat? = some value)
+    (hfinite : (reduceAlong .decimal64 .decimal32 mode term schedule).status.overflow = false) :
+    ∃ total value,
+      (schedule.eval (Reduction.lift₂ (add .decimal64 mode)) term).value.toRat? = some total ∧
+      (reduceAlong .decimal64 .decimal32 mode term schedule).value.toRat? = some value ∧
+      |(value : ℝ) - schedule.eval (· + ·) (fun x => toReal (term x).value)| ≤
+        schedule.mixedBudget (fun x => toReal (term x).value)
+            (1 / (Format.decimal64.payloadBound : ℝ)) ((10 : ℝ) ^ Format.decimal64.minQuantum) +
+          (10 : ℝ) ^ roundingQuantum .decimal32 |total| :=
+  abs_reduceAlong_sub_le _ _ mode term schedule hterm hfinite
+
+example (mode : RoundingMode) (left right : Array Datum) (xs ys : List ℚ)
+    (hleft : left.toList.map Datum.toRat? = xs.map some)
+    (hright : right.toList.map Datum.toRat? = ys.map some) (hsize : left.size = right.size)
+    (hne : (List.zipWith (· + ·) xs ys).prod ≠ 0) :
+    ∃ preferred, scaledProdSum .decimal32 mode left right =
+      .ok (Reduction.scaled (project .decimal32 mode ((List.zipWith (· + ·) xs ys).prod /
+        (10 : ℚ) ^ Int.log 10 |(List.zipWith (· + ·) xs ys).prod|) preferred)
+        (Int.log 10 |(List.zipWith (· + ·) xs ys).prod|)) :=
+  scaledProdSum_eq_project _ mode left right xs ys hleft hright hsize hne
+
+/-- The scaled products and the reductions in a chosen order return data of the format. -/
+example (mode : RoundingMode) (values left right : Array Datum) (term : Datum → Outcome)
+    (schedule : FloatLib.Numerics.ReductionTree Datum) (list : List Datum)
+    {sum difference : FloatLib.Floats.Formats.BinaryInterchange.ScaledProduct Datum}
+    (hsum : scaledProdSum .decimal64 mode left right = .ok sum)
+    (hdifference : scaledProdDiff .decimal64 mode left right = .ok difference) :
+    (scaledProd .decimal64 mode values).product.Valid .decimal64 ∧
+      sum.product.Valid .decimal64 ∧ difference.product.Valid .decimal64 ∧
+      (reduceAlong .decimal128 .decimal64 mode term schedule).value.Valid .decimal64 ∧
+      (reduceInOrder .decimal128 .decimal64 mode term list).value.Valid .decimal64 :=
+  ⟨scaledProd_valid _ mode values, scaledProdSum_valid _ mode left right hsum,
+    scaledProdDiff_valid _ mode left right hdifference, reduceAlong_valid _ _ mode term schedule,
+    reduceInOrder_valid _ _ mode term list⟩
 
 end FloatLibTests.Conformance.Formats.DecimalRecommended

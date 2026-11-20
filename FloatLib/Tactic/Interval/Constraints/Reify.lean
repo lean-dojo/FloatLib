@@ -40,6 +40,15 @@ namespace FloatLib.Numerics.Interval.Tactic.Constraints
 
 initialize registerTraceClass `interval.constraints
 
+initialize registerTraceClass `interval.constraints.time
+
+/-- Run a step of the route as a node of the trace class `interval.constraints.time`. With
+`set_option trace.profiler true` the node reports the time that the step took. -/
+def timed {m : Type → Type} {α : Type} [Monad m] [MonadTrace m] [MonadRef m]
+    [AddMessageContext m] [MonadOptions m] [MonadAlwaysExcept Exception m] [MonadLiftT BaseIO m]
+    (label : String) (step : m α) : m α :=
+  withTraceNode `interval.constraints.time (fun _ => return m!"{label}") step
+
 /-- One atom of a reified constraint, as the search and the messages read it. -/
 structure Atom where
   /-- The relation whose failure is the atom. -/
@@ -88,14 +97,16 @@ def positivityProof? (statement : Q(Prop)) : MetaM (Option Q($statement)) := do
     if error.isInterrupt || error.isRuntime then throw error
     return none
 
-/-- A proof of a proposition by `linarith` from the given facts, if it finds one. -/
+/-- A proof of a proposition by `linarith` from the given facts and no others, if it finds
+one. The hypotheses of the goal are left out: the steps that call this give the comparisons
+they mean, and `linarith` reads every fact it is given before it starts. -/
 def linarithProof? (statement : Q(Prop)) (facts : Array Lean.Expr) :
     Lean.Elab.Tactic.TacticM (Option Q($statement)) := do
   let goal ← mkFreshExprMVar statement
   let hints ← facts.mapM fun proof => Lean.Elab.Term.exprToSyntax proof
   try
     let remaining ← Lean.Elab.Tactic.run goal.mvarId!
-      (Lean.Elab.Tactic.evalTactic (← `(tactic| linarith [$hints,*])))
+      (Lean.Elab.Tactic.evalTactic (← `(tactic| linarith only [$hints,*])))
     unless remaining.isEmpty do return none
   catch error =>
     if error.isInterrupt || error.isRuntime then throw error

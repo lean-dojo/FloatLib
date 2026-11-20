@@ -24,6 +24,8 @@ arithmetic.
   applied to whatever the implementation computed as the scaled input. `Format.reconstructWith`
   decodes it with the total scale. With `input = F.normalized` they are `Format.quantize` and
   `Format.reconstruct`.
+* `Rounding.Budget.abs_round_mul_sub_le` is the same bound for one stored value at any positive
+  scale, with no reference to a scale selection: the form a bit-level quantizer uses.
 * `Format.abs_reconstructWith_sub_le`: if the computed scaled input is within
   `δ * |x i / σ i| + θ` of the exact one and the element format has budget `(u, η, M)`, the error
   of an element is at most
@@ -45,8 +47,9 @@ arithmetic.
 Concrete binary32/NVFP4 corollaries are in `Floats.Formats.Block.Working`.
 
 The statements are about real or rational values. They do not model overflow of the working
-arithmetic (`Accurate` is the budget of a format at every threshold, which `Rounding.grid` has),
-and a bit-level binary32 implementation is not defined here.
+arithmetic (`Accurate` is the budget of a format at every threshold, which `Rounding.grid` has).
+The quantizer on the encodings of a binary working format, with its overflow, is
+`Floats.Formats.Block.Working.Quantizer`.
 -/
 
 @[expose] public section
@@ -132,6 +135,49 @@ theorem Nearest.round_eq_round {E : Rounding K} (h : E.Nearest) {a b y y' : K} (
   · rw [abs_of_pos (by linarith)] at hd
     rw [h.round_eq_right hb hm hgt hy.2, h.round_eq_right hb hm (by linarith [hd.1]) hy'.2]
 
+/--
+One stored value decoded at the scale `σ > 0`, for an element format with budget `(u, η, M)` and
+a scaled input `y'` within `δ * |x / σ| + θ` of the exact one: `E.round y' * σ` is within
+`(u * (1 + δ) + δ) * |x| + σ * (η + (1 + u) * θ) + max 0 ((1 + δ) * |x| + σ * θ - σ * M)` of
+`x`. Nothing is assumed about how the scale was selected.
+-/
+theorem Budget.abs_round_mul_sub_le {E : Rounding K} {u η M δ θ σ x y' : K}
+    (hE : E.Budget u η M) (hu : 0 ≤ u) (hσ : 0 < σ)
+    (hin : |y' - x / σ| ≤ δ * |x / σ| + θ) :
+    |E.round y' * σ - x| ≤
+      (u * (1 + δ) + δ) * |x| + σ * (η + (1 + u) * θ) +
+        max 0 ((1 + δ) * |x| + σ * θ - σ * M) := by
+  set y := x / σ
+  have hx : y * σ = x := div_mul_cancel₀ x hσ.ne'
+  have habs : |y| * σ = |x| := by
+    calc |y| * σ = |y| * |σ| := by rw [abs_of_pos hσ]
+      _ = |x| := by rw [← abs_mul, hx]
+  have hrec : E.round y' * σ - x = (E.round y' - y) * σ := by rw [sub_mul, hx]
+  have hy'le : |y'| ≤ (1 + δ) * |y| + θ := by
+    have h := abs_sub_abs_le_abs_sub y' y
+    linarith
+  have hE' := hE y'
+  have hmax : max 0 (|y'| - M) ≤ max 0 ((1 + δ) * |y| + θ - M) :=
+    max_le_max le_rfl (by linarith)
+  have hmul : u * |y'| ≤ u * ((1 + δ) * |y| + θ) := mul_le_mul_of_nonneg_left hy'le hu
+  have hscale : max 0 ((1 + δ) * |y| + θ - M) * σ = max 0 ((1 + δ) * |x| + σ * θ - σ * M) := by
+    rw [max_mul_of_nonneg _ _ hσ.le, zero_mul, ← habs]
+    congr 1
+    ring
+  have hround : |E.round y' - y| ≤
+      (u * (1 + δ) + δ) * |y| + (η + (1 + u) * θ) + max 0 ((1 + δ) * |y| + θ - M) := by
+    calc |E.round y' - y| ≤ |E.round y' - y'| + |y' - y| := _root_.abs_sub_le _ _ _
+      _ ≤ (u * (1 + δ) + δ) * |y| + (η + (1 + u) * θ) + max 0 ((1 + δ) * |y| + θ - M) := by
+          linarith
+  rw [hrec, abs_mul, abs_of_pos hσ]
+  calc |E.round y' - y| * σ
+      ≤ ((u * (1 + δ) + δ) * |y| + (η + (1 + u) * θ) + max 0 ((1 + δ) * |y| + θ - M)) * σ :=
+        mul_le_mul_of_nonneg_right hround hσ.le
+    _ = (u * (1 + δ) + δ) * |x| + σ * (η + (1 + u) * θ) +
+          max 0 ((1 + δ) * |x| + σ * θ - σ * M) := by
+        rw [add_mul, add_mul, hscale, ← habs]
+        ring
+
 end Rounding
 
 namespace Format
@@ -191,43 +237,8 @@ theorem abs_reconstructWith_sub_le (F : Format ι γ K) (input : (ι → K) → 
     (hin : |input x i - x i / F.scale x i| ≤ δ * |x i / F.scale x i| + θ) :
     |F.reconstructWith input x i - x i| ≤
       (u * (1 + δ) + δ) * |x i| + F.scale x i * (η + (1 + u) * θ) +
-        max 0 ((1 + δ) * |x i| + F.scale x i * θ - F.scale x i * M) := by
-  set σ := F.scale x i
-  set y := x i / σ
-  set y' := input x i
-  have hx : y * σ = x i := div_mul_cancel₀ (x i) hσ.ne'
-  have habs : |y| * σ = |x i| := by
-    calc |y| * σ = |y| * |σ| := by rw [abs_of_pos hσ]
-      _ = |x i| := by rw [← abs_mul, hx]
-  have hrec : F.reconstructWith input x i - x i = ((F.element i).round y' - y) * σ := by
-    change (F.element i).round y' * σ - x i = _
-    rw [sub_mul, hx]
-  have hy'le : |y'| ≤ (1 + δ) * |y| + θ := by
-    have h := abs_sub_abs_le_abs_sub y' y
-    linarith
-  have hE' := hE y'
-  have hmax : max 0 (|y'| - M) ≤ max 0 ((1 + δ) * |y| + θ - M) :=
-    max_le_max le_rfl (by linarith)
-  have hmul : u * |y'| ≤ u * ((1 + δ) * |y| + θ) := mul_le_mul_of_nonneg_left hy'le hu
-  have hscale : max 0 ((1 + δ) * |y| + θ - M) * σ =
-      max 0 ((1 + δ) * |x i| + σ * θ - σ * M) := by
-    rw [max_mul_of_nonneg _ _ hσ.le, zero_mul, ← habs]
-    congr 1
-    ring
-  have hround : |(F.element i).round y' - y| ≤
-      (u * (1 + δ) + δ) * |y| + (η + (1 + u) * θ) + max 0 ((1 + δ) * |y| + θ - M) := by
-    calc |(F.element i).round y' - y| ≤ |(F.element i).round y' - y'| + |y' - y| :=
-          abs_sub_le _ _ _
-      _ ≤ (u * (1 + δ) + δ) * |y| + (η + (1 + u) * θ) + max 0 ((1 + δ) * |y| + θ - M) := by
-          linarith
-  rw [hrec, abs_mul, abs_of_pos hσ]
-  calc |(F.element i).round y' - y| * σ
-      ≤ ((u * (1 + δ) + δ) * |y| + (η + (1 + u) * θ) + max 0 ((1 + δ) * |y| + θ - M)) * σ :=
-        mul_le_mul_of_nonneg_right hround hσ.le
-    _ = (u * (1 + δ) + δ) * |x i| + σ * (η + (1 + u) * θ) +
-          max 0 ((1 + δ) * |x i| + σ * θ - σ * M) := by
-        rw [add_mul, add_mul, hscale, ← habs]
-        ring
+        max 0 ((1 + δ) * |x i| + F.scale x i * θ - F.scale x i * M) :=
+  hE.abs_round_mul_sub_le hu hσ hin
 
 /--
 Error of one element of a quantizer that multiplies by a reciprocal scale in a working

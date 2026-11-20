@@ -140,6 +140,13 @@ def nextUp (f : Format) (x : Datum) : Outcome :=
     · rw [fits_eq, decide_eq_true_iff] at hvalid
       exact nextUpValid_eq f s (Nat.succ_ne_zero c) hvalid.1 hvalid.2.2
 
+/-! ## Kernel shapes -/
+
+kernel_shape neighborAbove
+kernel_shape neighborBelow
+kernel_shape nextUpValid
+kernel_shape nextUp
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath
 
 /-

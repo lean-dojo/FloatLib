@@ -7,146 +7,146 @@ Lean 4.36.0, `Lean.Kernel.whnf`, one operation in a fresh kernel state. The benc
 
 | row | time |
 | --- | --- |
-| `core a + b`, 64 bits | 1.54 ms |
+| `core a + b`, 64 bits | 1.52 ms |
 | `core a + b`, 1,024 bits | 1.48 ms |
 | `core a + b`, 4,096 bits | 1.55 ms |
-| `core a * b`, 64 bits | 1.49 ms |
-| `core a * b`, 1,024 bits | 1.44 ms |
-| `core a * b`, 4,096 bits | 1.52 ms |
-| `FloatLib add`, 64 bits | 541 µs |
+| `core a * b`, 64 bits | 1.48 ms |
+| `core a * b`, 1,024 bits | 1.43 ms |
+| `core a * b`, 4,096 bits | 1.5 ms |
+| `FloatLib add`, 64 bits | 534 µs |
 | `FloatLib add`, 1,024 bits | 536 µs |
-| `FloatLib add`, 4,096 bits | 542 µs |
-| `FloatLib add`, 16,384 bits | 542 µs |
+| `FloatLib add`, 4,096 bits | 537 µs |
+| `FloatLib add`, 16,384 bits | 539 µs |
 | `FloatLib mul`, 64 bits | 20.8 µs |
-| `FloatLib mul`, 1,024 bits | 20.9 µs |
-| `FloatLib mul`, 4,096 bits | 22.9 µs |
-| `FloatLib mul`, 16,384 bits | 38 µs |
-| `FloatLib isLess`, 64 bits | 554 µs |
-| `FloatLib isLess`, 1,024 bits | 552 µs |
-| `FloatLib isLess`, 4,096 bits | 553 µs |
-| `FloatLib isLess`, 16,384 bits | 553 µs |
+| `FloatLib mul`, 1,024 bits | 20.7 µs |
+| `FloatLib mul`, 4,096 bits | 22.8 µs |
+| `FloatLib mul`, 16,384 bits | 37.9 µs |
+| `FloatLib isLess`, 64 bits | 549 µs |
+| `FloatLib isLess`, 1,024 bits | 546 µs |
+| `FloatLib isLess`, 4,096 bits | 547 µs |
+| `FloatLib isLess`, 16,384 bits | 548 µs |
 
 
 ## grid
 
 | row | time |
 | --- | --- |
-| `add`, 64 bits | 41.8 µs |
-| `add`, 1,024 bits | 41.7 µs |
-| `add`, 4,096 bits | 42 µs |
-| `add`, 16,384 bits | 42.5 µs |
-| `sub`, 64 bits | 34.4 µs |
-| `sub`, 1,024 bits | 34.7 µs |
-| `sub`, 4,096 bits | 34.8 µs |
-| `sub`, 16,384 bits | 35.5 µs |
-| `mul`, 64 bits | 147 µs |
-| `mul`, 1,024 bits | 149 µs |
-| `mul`, 4,096 bits | 157 µs |
-| `mul`, 16,384 bits | 225 µs |
-| `square`, 64 bits | 73.7 µs |
-| `square`, 1,024 bits | 74 µs |
-| `square`, 4,096 bits | 78.4 µs |
-| `square`, 16,384 bits | 113 µs |
-| `abs`, 64 bits | 62.1 µs |
-| `abs`, 1,024 bits | 62.1 µs |
-| `abs`, 4,096 bits | 61.6 µs |
-| `abs`, 16,384 bits | 62.8 µs |
-| `div?`, 64 bits | 446 µs |
-| `div?`, 1,024 bits | 446 µs |
-| `div?`, 4,096 bits | 450 µs |
-| `div?`, 16,384 bits | 457 µs |
-| `pow 7`, 64 bits | 459 µs |
-| `pow 7`, 1,024 bits | 467 µs |
-| `pow 7`, 4,096 bits | 525 µs |
-| `divideNat`, 64 bits | 31.7 µs |
-| `divideNat`, 1,024 bits | 32 µs |
-| `divideNat`, 4,096 bits | 32.1 µs |
-| `divideNat`, 16,384 bits | 33.3 µs |
+| `add`, 64 bits | 42.8 µs |
+| `add`, 1,024 bits | 43 µs |
+| `add`, 4,096 bits | 43.1 µs |
+| `add`, 16,384 bits | 43.8 µs |
+| `sub`, 64 bits | 34.1 µs |
+| `sub`, 1,024 bits | 34.2 µs |
+| `sub`, 4,096 bits | 34.6 µs |
+| `sub`, 16,384 bits | 35 µs |
+| `mul`, 64 bits | 146 µs |
+| `mul`, 1,024 bits | 148 µs |
+| `mul`, 4,096 bits | 156 µs |
+| `mul`, 16,384 bits | 223 µs |
+| `square`, 64 bits | 73.3 µs |
+| `square`, 1,024 bits | 73.9 µs |
+| `square`, 4,096 bits | 77.8 µs |
+| `square`, 16,384 bits | 112 µs |
+| `abs`, 64 bits | 62.2 µs |
+| `abs`, 1,024 bits | 62 µs |
+| `abs`, 4,096 bits | 62 µs |
+| `abs`, 16,384 bits | 62.5 µs |
+| `div?`, 64 bits | 445 µs |
+| `div?`, 1,024 bits | 442 µs |
+| `div?`, 4,096 bits | 445 µs |
+| `div?`, 16,384 bits | 451 µs |
+| `pow 7`, 64 bits | 453 µs |
+| `pow 7`, 1,024 bits | 463 µs |
+| `pow 7`, 4,096 bits | 523 µs |
+| `divideNat`, 64 bits | 31.4 µs |
+| `divideNat`, 1,024 bits | 31.5 µs |
+| `divideNat`, 4,096 bits | 31.5 µs |
+| `divideNat`, 16,384 bits | 32.9 µs |
 | `enclose`, 64 bits | 182 µs |
 | `enclose`, 1,024 bits | 183 µs |
-| `enclose`, 4,096 bits | 233 µs |
+| `enclose`, 4,096 bits | 232 µs |
 
 
 ## elementary
 
 | row | time |
 | --- | --- |
-| `grid exp`, 64 bits | 5.18 ms |
-| `grid exp`, 256 bits | 7.07 ms |
+| `grid exp`, 64 bits | 5.08 ms |
+| `grid exp`, 256 bits | 7.08 ms |
 | `grid exp`, 1,024 bits | 16.3 ms |
-| `grid exp`, 4,096 bits | 56.4 ms |
-| `grid log`, 64 bits | 11.1 ms |
-| `grid log`, 256 bits | 12.6 ms |
+| `grid exp`, 4,096 bits | 55.3 ms |
+| `grid log`, 64 bits | 10.9 ms |
+| `grid log`, 256 bits | 12.4 ms |
 | `grid log`, 1,024 bits | 19.3 ms |
-| `grid log`, 4,096 bits | 50.8 ms |
-| `rational exp (1/3), degree 12` | 1.47 ms |
-| `rational exp (1/3), degree 20` | 1.99 ms |
-| `rational exp (1/3), degree 40` | 3.43 ms |
-| `rational log (4/3), degree 12` | 3.2 ms |
-| `rational log (4/3), degree 20` | 4.61 ms |
-| `rational log (4/3), degree 40` | 8.52 ms |
-| `rational sin (1/3), degree 12` | 1.16 ms |
+| `grid log`, 4,096 bits | 49.5 ms |
+| `rational exp (1/3), degree 12` | 1.41 ms |
+| `rational exp (1/3), degree 20` | 1.96 ms |
+| `rational exp (1/3), degree 40` | 3.39 ms |
+| `rational log (4/3), degree 12` | 3.15 ms |
+| `rational log (4/3), degree 20` | 4.58 ms |
+| `rational log (4/3), degree 40` | 8.24 ms |
+| `rational sin (1/3), degree 12` | 1.15 ms |
 | `rational sin (1/3), degree 20` | 1.51 ms |
-| `rational sin (1/3), degree 40` | 2.45 ms |
-| `rational cos (1/3), degree 20` | 1.44 ms |
-| `rational atan (1/3), degree 12` | 1.92 ms |
-| `rational atan (1/3), degree 20` | 2.61 ms |
-| `sqrt bounds`, 64 bits | 1.08 ms |
-| `sqrt bounds`, 256 bits | 2.62 ms |
-| `sqrt bounds`, 1,024 bits | 9.57 ms |
-| `pi`, 64 bits | 5.89 ms |
-| `pi`, 256 bits | 16.8 ms |
-| `pi`, 1,024 bits | 67.1 ms |
-| `log 2`, 64 bits | 11.5 ms |
-| `log 2`, 256 bits | 43.6 ms |
-| `log 2`, 1,024 bits | 202 ms |
+| `rational sin (1/3), degree 40` | 2.41 ms |
+| `rational cos (1/3), degree 20` | 1.42 ms |
+| `rational atan (1/3), degree 12` | 2.01 ms |
+| `rational atan (1/3), degree 20` | 2.66 ms |
+| `sqrt bounds`, 64 bits | 947 µs |
+| `sqrt bounds`, 256 bits | 2.52 ms |
+| `sqrt bounds`, 1,024 bits | 9.07 ms |
+| `pi`, 64 bits | 5.68 ms |
+| `pi`, 256 bits | 15.6 ms |
+| `pi`, 1,024 bits | 62.5 ms |
+| `log 2`, 64 bits | 11.1 ms |
+| `log 2`, 256 bits | 40.3 ms |
+| `log 2`, 1,024 bits | 185 ms |
 
 
 ## backend
 
 | row | time |
 | --- | --- |
-| `exp` | 2.25 ms |
-| `log` | 8.75 ms |
-| `sin` | 2.06 ms |
-| `cos` | 1.89 ms |
-| `sqrt` | 1.46 ms |
-| `atan` | 2.76 ms |
-| `tan` | 3.97 ms |
-| `sinh` | 4.04 ms |
-| `cosh` | 4.91 ms |
-| `tanh` | 2.58 ms |
-| `sin, argument near 10` | 7.57 ms |
-| `log, argument near 10` | 9.1 ms |
+| `exp` | 2.2 ms |
+| `log` | 8.49 ms |
+| `sin` | 1.98 ms |
+| `cos` | 1.85 ms |
+| `sqrt` | 1.39 ms |
+| `atan` | 2.69 ms |
+| `tan` | 3.96 ms |
+| `sinh` | 3.98 ms |
+| `cosh` | 4.52 ms |
+| `tanh` | 2.49 ms |
+| `sin, argument near 10` | 7.31 ms |
+| `log, argument near 10` | 8.72 ms |
 
 
 ## root
 
 | row | time |
 | --- | --- |
-| `IntegerRoot.newton 2`, 64 bits | 220 µs |
-| `IntegerRoot.newton 2`, 1,024 bits | 353 µs |
-| `IntegerRoot.newton 2`, 4,096 bits | 423 µs |
-| `IntegerRoot.newton 3`, 64 bits | 230 µs |
-| `IntegerRoot.newton 3`, 1,024 bits | 364 µs |
-| `IntegerRoot.newton 3`, 4,096 bits | 437 µs |
+| `IntegerRoot.newton 2`, 64 bits | 208 µs |
+| `IntegerRoot.newton 2`, 1,024 bits | 298 µs |
+| `IntegerRoot.newton 2`, 4,096 bits | 417 µs |
+| `IntegerRoot.newton 3`, 64 bits | 212 µs |
+| `IntegerRoot.newton 3`, 1,024 bits | 308 µs |
+| `IntegerRoot.newton 3`, 4,096 bits | 428 µs |
 
 
 ## bound
 
 | row | time |
 | --- | --- |
-| `log (7/5) ≤ 0.3365, degree 18, 64 bits` | 7.65 ms |
-| `log (7/5), degree 40, 192 bits` | 8.31 ms |
-| `exp (7/5) ≤ 4.0553, degree 20, 64 bits` | 6.14 ms |
-| `exp (7/5), degree 40, 192 bits` | 8.8 ms |
+| `log (7/5) ≤ 0.3365, degree 18, 64 bits` | 7.09 ms |
+| `log (7/5), degree 40, 192 bits` | 7.92 ms |
+| `exp (7/5) ≤ 4.0553, degree 20, 64 bits` | 5.78 ms |
+| `exp (7/5), degree 40, 192 bits` | 8.26 ms |
 
 
 ## checker
 
 | row | time |
 | --- | --- |
-| `the whole check, depth 8 (35 boxes)` | 32.9 ms |
-| `one evaluation of the expression`, 60 bits | 941 µs |
-| `one box`, 60 bits | 1.38 ms |
-| `one bisection`, 60 bits | 789 µs |
+| `the whole check, depth 8 (35 boxes)` | 31.3 ms |
+| `one evaluation of the expression`, 60 bits | 938 µs |
+| `one box`, 60 bits | 1.37 ms |
+| `one bisection`, 60 bits | 780 µs |

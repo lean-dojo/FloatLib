@@ -57,7 +57,7 @@ theorem mul_minimumQuantum_le_decode (format : Format) (index : Nat) :
       have hstep := (zpow_right_strictMono₀ (by norm_num : (1 : Rat) < 2)).monotone
         (minimumQuantumExponent_le_decodeQuantum format index)
       push_cast
-      nlinarith
+      linarith
 
 /-- Every nonnegative real lies between two consecutive values of the uncapped code grid. -/
 theorem exists_code_bracket (format : Format) (target : ℝ) (hzero : 0 ≤ target) :

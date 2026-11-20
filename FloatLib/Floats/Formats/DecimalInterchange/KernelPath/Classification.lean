@@ -115,4 +115,11 @@ theorem beq_zero_eq_decide (c : Nat) : Nat.beq c 0 = decide (c = 0) := by
   · cases s <;> rfl
   · cases t <;> rfl
 
+/-! ## Kernel shapes -/
+
+kernel_shape tiny
+kernel_shape isNormal
+kernel_shape isSubnormal
+kernel_shape classify
+
 end FloatLib.Floats.Formats.DecimalInterchange.KernelPath

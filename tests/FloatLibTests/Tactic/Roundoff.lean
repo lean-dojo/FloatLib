@@ -29,7 +29,9 @@ list loop: a sum of exponentials is nonnegative, and the sum in the denominator 
 is analyzed as that loop, so its finiteness and its distance from zero need no conditions of their
 own. A loop that carries a count or a flag beside its sum is analyzed as the loop of the sum alone
 (`foldl_fst`). A rule stated at a vector coordinate `(i, ())` applies at the coordinate a matrix
-coordinate projects and at a pair whose unit component is computed.
+coordinate projects and at a pair whose unit component is computed. A compiler replacement
+registered as a rule is analyzed as its source in every declaration of a file, each of which
+builds the reversed rewrite for itself.
 -/
 
 @[expose] public section
@@ -225,5 +227,39 @@ roundoff mixed theorem unitEntry_pair_mixedError :=
     id (ExecFloat.Binary.toReal (unitEntry xs (i, c.2)))
 
 end Coordinates
+
+section Replacement
+
+/-- A sum as its source writes it. -/
+def sum (x y : Value) : Value := x + y
+
+/-- The same sum as compiled code computes it. -/
+def fastSum (x y : Value) : Value := id (x + y)
+
+/-- The compiler replaces `sum` by `fastSum`. -/
+@[csimp] theorem sum_eq_fastSum : @sum = @fastSum := rfl
+
+attribute [local roundoff_rule] sum_eq_fastSum
+
+open Lean Elab Command in
+-- The analysis reads `fastSum` as `sum` by the replacement in reverse, a rewrite that holds an
+-- auxiliary lemma of the declaration it is built in. The second analysis runs where the first
+-- declaration does not exist, as in another theorem of the file, and builds its own.
+run_cmd do
+  let analyze (name : Name) : CommandElabM Unit := do
+    elabCommand (← `(command| roundoff theorem $(mkIdent name) :=
+      fun (x y : Value) => ExecFloat.Binary.toReal (fastSum x y)))
+  let environment ← getEnv
+  analyze `fast_sum_first_error
+  setEnv environment
+  analyze `fast_sum_error
+
+/-- The replacement has the bound of its source, against the real sum. -/
+example (x y : Value) :=
+  show _ → |ExecFloat.Binary.toReal (fastSum x y) -
+      (ExecFloat.Binary.toReal x + ExecFloat.Binary.toReal y)| ≤ _ from
+    fast_sum_error x y
+
+end Replacement
 
 end FloatLibTests.Conformance.BinaryInterchange.Roundoff

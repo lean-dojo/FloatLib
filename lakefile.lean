@@ -26,10 +26,14 @@ def lintRoots : Array String := #[
   "FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.ValueProof",
   "FloatLib.Floats.Formats.BinaryInterchange.Complex.Roundoff",
   "FloatLib.Floats.Formats.BinaryInterchange.Configured.NativeFPU.Unchecked",
+  "FloatLib.Floats.Formats.BinaryInterchange.Operations.FormatOf.SquareRoot.Proof",
+  "FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.KernelPath",
   "FloatLib.Floats.Formats.BinaryInterchange.Reduction.Schedule.Proof",
   "FloatLib.Floats.Formats.BinaryInterchange.Rounding.Policy.StochasticSupport",
   "FloatLib.Floats.Formats.Block.Roundoff",
+  "FloatLib.Floats.Formats.DecimalInterchange.Reduction.Schedule.Proof",
   "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.Certified.Proof",
+  "FloatLib.Floats.Formats.DecimalInterchange.Transcendentals.CorrectlyRounded.Proof",
   "FloatLib.Floats.Formats.OCP.FP8.KernelTables",
   "FloatLib.Numerics.Quantization.Stochastic.Boundary",
   "FloatLib.Numerics.Quantization.Stochastic.Network",
@@ -65,7 +69,7 @@ def linterOptions : Array LeanOption := #[
   ⟨`weak.linter.docPrime, true⟩]
 
 package floatlib where
-  version := v!"4.0.0"
+  version := v!"4.1.0"
   description := "Executable numerical representations with proof-backed semantics in Lean 4."
   keywords := #["numerics", "floating-point", "IEEE-754", "quantization", "verification", "mathlib"]
   license := "MIT"
@@ -101,7 +105,9 @@ lean_lib FloatLib where
 `lake lint` runs the Batteries linter on each module of `lintRoots`, one process per module, so
 that it holds one environment at a time (about 4.5 GB; combining the environments needs more
 than 16 GB). Arguments after `--` go to every run. After the default linters of a root it runs
-`docBlameThm`, which Batteries registers and leaves off: every theorem has a docstring.
+`docBlameThm`, which Batteries registers and leaves off: every theorem has a docstring. The file
+of that run imports `Batteries.Tactic.Lint` next to the root, because a root that loads no
+package does not bring the `#lint` command.
 -/
 @[lint_driver]
 script lint (args) do
@@ -115,7 +121,8 @@ script lint (args) do
     if code != 0 then
       return code
     let source := sources / s!"{root}.lean"
-    IO.FS.writeFile source s!"import {root}\n#lint- only docBlameThm in FloatLib\n"
+    IO.FS.writeFile source
+      s!"import {root}\nimport Batteries.Tactic.Lint\n#lint- only docBlameThm in FloatLib\n"
     let child ← IO.Process.spawn
       { cmd := lake.toString, args := #["env", "lean", source.toString] }
     let code ← child.wait

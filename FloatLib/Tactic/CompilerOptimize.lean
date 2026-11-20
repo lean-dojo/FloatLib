@@ -45,7 +45,7 @@ The tag has four forms.
 
 * `@[compiler_optimize]`: an alternative, collected by `Tagged`.
 * `@[compiler_optimize direct]`: an alternative that its family's capability names and calls
-  without a closure when the planner selects it (`selectCertified_run_of_last`). It is
+  without a closure when the planner selects it (`Backend.selectCertified_of_winsAfter`). It is
   registered and checked, and the capability lists it after the collected alternatives.
 * `@[compiler_optimize baseline]`: the family's mandatory reference implementation. It is
   registered and checked, and the capability names it.

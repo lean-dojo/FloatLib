@@ -23,7 +23,9 @@ operations of the report act on classes and ratios of natural numbers without no
 * `add_eq`, `mul_eq`, `div_eq`, `fma_eq`, `convert_eq`: `KernelPath.add`, `mul`, `div`, `fma`
   and `convert` on encodings store the reference `Add`, `Subtract`, `Multiply`, `Divide`,
   `FMA`, `Negate`, `Abs` and the plain projection, for independent operand and destination
-  descriptors, every rounding mode with every random word and every saturation mode.
+  descriptors, every rounding mode with every random word and every saturation mode;
+* `recip_eq`, `faa_eq`, `copySign_eq`: the same for `Recip`, `FAA` and `CopySign`, the last
+  through `copySign_closed`.
 -/
 
 @[expose] public section
@@ -388,35 +390,47 @@ theorem mul_eq (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat
       (fun _ _ => Nat.mul_ne_zero (denominatorOf_ne_zero _ _ _ _) (denominatorOf_ne_zero _ _ _ _))]
   rfl
 
+set_option hygiene false in
+/--
+`ternary_eq name Op kernel Reference [rules] sign`, after a docstring, declares the theorem
+`name`: the operation `Op` of the report on three encodings of independent formats stores the
+kernel function `kernel` of the encodings. `rules` rewrite the reference operation `Reference`
+on three closed values into one closed value, and `sign` bounds its sign bit.
+-/
+local macro doc:docComment "ternary_eq " name:ident op:ident kernel:ident reference:ident
+    "[" rules:Lean.Parser.Tactic.rwRule,* "]" sign:term : command =>
+  `($doc:docComment
+    theorem $name (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat)
+        (z : ExecFloat.P3109 thirdFormat) (target : Format) (mode : RoundingMode)
+        (saturation : SaturationMode) :
+        $op x y z target mode saturation =
+          ExecFloat.P3109.ofNatBits
+            ($kernel leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+              rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+              thirdFormat.bitWidth thirdFormat.precision (sgOf thirdFormat) (exOf thirdFormat)
+              target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
+              (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits y.toNatBits
+              z.toNatBits) := by
+      unfold $op ExecFloat.P3109.ternary $reference
+      rw [toClosedRat_eq x, toClosedRat_eq y, toClosedRat_eq z, $rules,*,
+        projectRat_eq _ _ _ _ _ _ _ $sign
+          (fun _ _ => Nat.mul_ne_zero
+            (Nat.mul_ne_zero (denominatorOf_ne_zero _ _ _ _) (denominatorOf_ne_zero _ _ _ _))
+            (denominatorOf_ne_zero _ _ _ _))]
+      rfl)
+
 /--
 P3109 interim report v4.1, §4.10.6: `fma` on three encodings stores the reference `x * y + z` of
-    values of
-independent formats, with no intermediate rounding, projected once into the destination.
+values of independent formats, with no intermediate rounding, projected once into the
+destination.
 -/
-theorem fma_eq (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat)
-    (z : ExecFloat.P3109 thirdFormat) (target : Format) (mode : RoundingMode)
-    (saturation : SaturationMode) :
-    ExecFloat.P3109.FMA x y z target mode saturation =
-      ExecFloat.P3109.ofNatBits
-        (fma leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
-          rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
-          thirdFormat.bitWidth thirdFormat.precision (sgOf thirdFormat) (exOf thirdFormat)
-          target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
-          (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits y.toNatBits
-          z.toNatBits) := by
-  unfold ExecFloat.P3109.FMA ExecFloat.P3109.ternary Arithmetic.FMA
-  rw [toClosedRat_eq x, toClosedRat_eq y, toClosedRat_eq z,
-    multiply_closed _ _ _ _ _ _ _ _ (signOf_le _ _ _) (signOf_le _ _ _)
+ternary_eq fma_eq ExecFloat.P3109.FMA fma Arithmetic.FMA
+  [multiply_closed _ _ _ _ _ _ _ _ (signOf_le _ _ _) (signOf_le _ _ _)
       (denominatorOf_ne_zero _ _ _ _) (denominatorOf_ne_zero _ _ _ _),
     add_closed _ _ _ _ _ _ _ _ (xor_le_one (signOf_le _ _ _) (signOf_le _ _ _)) (signOf_le _ _ _)
       (Nat.mul_ne_zero (denominatorOf_ne_zero _ _ _ _) (denominatorOf_ne_zero _ _ _ _))
-      (denominatorOf_ne_zero _ _ _ _),
-    projectRat_eq _ _ _ _ _ _ _
-      (addSign_le _ _ _ _ (xor_le_one (signOf_le _ _ _) (signOf_le _ _ _)) (signOf_le _ _ _))
-      (fun _ _ => Nat.mul_ne_zero
-        (Nat.mul_ne_zero (denominatorOf_ne_zero _ _ _ _) (denominatorOf_ne_zero _ _ _ _))
-        (denominatorOf_ne_zero _ _ _ _))]
-  rfl
+      (denominatorOf_ne_zero _ _ _ _)]
+  (addSign_le _ _ _ _ (xor_le_one (signOf_le _ _ _) (signOf_le _ _ _)) (signOf_le _ _ _))
 
 /--
 P3109 interim report v4.1, §4.10.1: `convert` with `flip = 1` stores the reference negation of a
@@ -505,5 +519,148 @@ theorem abs_eq (x : ExecFloat.P3109 leftFormat) (target : Format) (mode : Roundi
   unfold convert
   kernel_notation
   simp
+
+/-! ## Reciprocal, fused add-add and the copy of a sign -/
+
+/-- The closed value one is the ratio of one and one. -/
+theorem one_closed : NumericalValue.finite (1 : Rat) = closed 0 0 1 1 := by
+  simp [closed]
+
+/-- The exclusive or with a clear sign bit keeps the other sign bit. -/
+theorem zero_xor (s : Nat) : Nat.xor 0 s = s := Nat.zero_xor s
+
+/--
+P3109 interim report v4.1, §4.10.8: `recip` on an encoding stores the reference reciprocal of
+its value, NaN for zero, projected once into the destination, for every descriptor, rounding
+mode, random word and saturation mode.
+-/
+theorem recip_eq (x : ExecFloat.P3109 leftFormat) (target : Format) (mode : RoundingMode)
+    (saturation : SaturationMode) :
+    ExecFloat.P3109.Recip x target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (recip leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
+          (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits) := by
+  unfold ExecFloat.P3109.Recip ExecFloat.P3109.unary Arithmetic.Recip
+  rw [toClosedRat_eq x, one_closed,
+    divide_closed _ _ _ _ _ _ _ _ (Nat.zero_le 1) (signOf_le _ _ _)
+      (denominatorOf_ne_zero _ _ _ _),
+    zero_xor,
+    projectRat_eq _ _ _ _ _ _ _ (signOf_le _ _ _) (by
+      intro hcls _
+      by_cases hcb : classOf leftFormat.bitWidth (sgOf leftFormat) (exOf leftFormat)
+          x.toNatBits = 0
+      · rw [hcb] at hcls
+        rw [ite_eq_left hcb]
+        exact Nat.mul_ne_zero Nat.one_ne_zero (divClass_eq_zero hcls)
+      · rw [ite_eq_right hcb]
+        exact Nat.one_ne_zero)]
+  unfold recip
+  kernel_notation
+
+/--
+P3109 interim report v4.1, §4.10.7: `faa` on three encodings stores the reference `x + y + z` of
+values of independent formats, with no intermediate rounding, projected once into the
+destination.
+-/
+ternary_eq faa_eq ExecFloat.P3109.FAA faa Arithmetic.FAA
+  [add_closed _ _ _ _ _ _ _ _ (signOf_le _ _ _) (signOf_le _ _ _) (denominatorOf_ne_zero _ _ _ _)
+      (denominatorOf_ne_zero _ _ _ _),
+    add_closed _ _ _ _ _ _ _ _ (addSign_le _ _ _ _ (signOf_le _ _ _) (signOf_le _ _ _))
+      (signOf_le _ _ _)
+      (Nat.mul_ne_zero (denominatorOf_ne_zero _ _ _ _) (denominatorOf_ne_zero _ _ _ _))
+      (denominatorOf_ne_zero _ _ _ _)]
+  (addSign_le _ _ _ _ (addSign_le _ _ _ _ (signOf_le _ _ _) (signOf_le _ _ _))
+    (signOf_le _ _ _))
+
+/-- `negativeOf` with the notation of the library. -/
+theorem negativeOf_eq (c s n : Nat) :
+    negativeOf c s n = if c = 0 then (if n = 0 then 0 else s) else if c = 2 then 1 else 0 := by
+  unfold negativeOf
+  kernel_notation
+
+/-- The sign bit that `negativeOf` returns is at most one. -/
+theorem negativeOf_le (c s n : Nat) (hs : s ≤ 1) : negativeOf c s n ≤ 1 := by
+  rw [negativeOf_eq]
+  split_ifs <;> omega
+
+/-- The absolute value of a closed value, negated when the bit `neg` is set. -/
+theorem signed_abs_closed (c s n d neg : Nat) (hneg : neg ≤ 1) :
+    (if neg = 1 then Arithmetic.Negate (Arithmetic.Abs (closed c s n d))
+      else Arithmetic.Abs (closed c s n d)) = closed (signedClass c neg) neg n d := by
+  rw [abs_closed, negate_closed _ _ _ _ (Nat.zero_le 1)]
+  unfold signedClass negClass
+  kernel_notation
+  simp only [Bool.or_eq_true, Nat.beq_eq]
+  rcases (by omega : neg = 0 ∨ neg = 1) with rfl | rfl <;>
+    rcases (by omega : c = 0 ∨ c = 1 ∨ c = 2 ∨ 3 ≤ c) with rfl | rfl | rfl | hc
+  all_goals first
+    | (simp; done)
+    | (have h1 : ¬c = 1 := by omega
+       have h2 : ¬c = 2 := by omega
+       simp [h1, h2])
+
+/--
+P3109 interim report v4.1, §4.10.2: the closed value of `Arithmetic.CopySign` on closed values
+given by class, sign and ratio: the magnitude of the first with the sign of the second, where a
+zero counts as not negative, and NaN for a NaN second operand.
+-/
+theorem copySign_closed (ca cb sa sb na nb da db : Nat) (hsb : sb ≤ 1) (hdb : db ≠ 0) :
+    Arithmetic.CopySign (closed ca sa na da) (closed cb sb nb db) =
+      closed (if 3 ≤ cb then 3 else signedClass ca (negativeOf cb sb nb)) (negativeOf cb sb nb)
+        na da := by
+  have hneg := ratio_neg_iff sb nb db hsb hdb
+  have hset := signed_abs_closed ca sa na da 1 (Nat.le_refl 1)
+  have hclear := signed_abs_closed ca sa na da 0 (Nat.zero_le 1)
+  rw [ite_eq_left rfl] at hset
+  rw [ite_eq_right Nat.zero_ne_one] at hclear
+  rw [negativeOf_eq]
+  rcases (by omega : cb = 0 ∨ cb = 1 ∨ cb = 2 ∨ 3 ≤ cb) with rfl | rfl | rfl | hb
+  · have hB : closed 0 sb nb db =
+        NumericalValue.finite ((if sb = 0 then (nb : Rat) else -(nb : Rat)) / (db : Rat)) := by
+      simp [closed]
+    rw [hB]
+    by_cases hr : (if sb = 0 then (nb : Rat) else -(nb : Rat)) / (db : Rat) < 0
+    · obtain ⟨hs1, hn0⟩ := hneg.1 hr
+      simp only [Arithmetic.CopySign, hr, ite_true]
+      simpa [hn0, hs1] using hset
+    · have hk : (if nb = 0 then 0 else sb) = 0 := by
+        by_cases hn0 : nb = 0
+        · rw [ite_eq_left hn0]
+        · rw [ite_eq_right hn0]
+          by_contra hs0
+          exact hr (hneg.2 ⟨by omega, hn0⟩)
+      simp only [Arithmetic.CopySign, hr, ite_false]
+      simpa [hk] using hclear
+  · have hB : closed 1 sb nb db = NumericalValue.infinity false := by simp [closed]
+    rw [hB]
+    simpa [Arithmetic.CopySign] using hclear
+  · have hB : closed 2 sb nb db = NumericalValue.infinity true := by simp [closed]
+    rw [hB]
+    simpa [Arithmetic.CopySign] using hset
+  · have h0 : ¬cb = 0 := by omega
+    have h1 : ¬cb = 1 := by omega
+    have h2 : ¬cb = 2 := by omega
+    simp [closed, Arithmetic.CopySign, Arithmetic.nan, h0, h1, h2, hb]
+
+/--
+P3109 interim report v4.1, §4.10.2: `copySign` on two encodings stores the reference value of
+the first with the sign of the second, projected once into the destination.
+-/
+theorem copySign_eq (x : ExecFloat.P3109 leftFormat) (y : ExecFloat.P3109 rightFormat)
+    (target : Format) (mode : RoundingMode) (saturation : SaturationMode) :
+    ExecFloat.P3109.CopySign x y target mode saturation =
+      ExecFloat.P3109.ofNatBits
+        (copySign leftFormat.bitWidth leftFormat.precision (sgOf leftFormat) (exOf leftFormat)
+          rightFormat.bitWidth rightFormat.precision (sgOf rightFormat) (exOf rightFormat)
+          target.bitWidth target.precision (sgOf target) (exOf target) (modeIndex mode)
+          (modeWidth mode) (modeRandom mode) (satIndex saturation) x.toNatBits y.toNatBits) := by
+  unfold ExecFloat.P3109.CopySign ExecFloat.P3109.binary
+  rw [toClosedRat_eq x, toClosedRat_eq y,
+    copySign_closed _ _ _ _ _ _ _ _ (signOf_le _ _ _) (denominatorOf_ne_zero _ _ _ _),
+    projectRat_eq _ _ _ _ _ _ _ (negativeOf_le _ _ _ (signOf_le _ _ _))
+      (fun _ _ => denominatorOf_ne_zero _ _ _ _)]
+  unfold copySign
+  kernel_notation
 
 end FloatLib.Floats.Formats.P3109.KernelPath

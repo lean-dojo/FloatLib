@@ -57,7 +57,7 @@ theorem sqrt_error_le_half (f : Format) (mode : RoundingMode)
       · have hp : (0 : ℚ) < (c : ℚ) * (10 : ℚ) ^ q :=
           mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hc) (zpow_pos (by norm_num) q)
         simp only [↓reduceIte, neg_one_mul] at ha
-        nlinarith
+        linarith
     subst s
     simp only [Bool.false_eq_true, ↓reduceIte, one_mul] at ha ⊢
     simp only [sqrt, ite_eq_right hc, Bool.false_eq_true, ↓reduceIte] at hfinite ⊢

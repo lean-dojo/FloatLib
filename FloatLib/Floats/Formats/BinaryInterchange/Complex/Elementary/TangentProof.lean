@@ -87,20 +87,15 @@ theorem contains_decayBounds (a : Rat) (precision : Nat) :
         (exponent := ⟨-(growthCap fmt : Rat), -(growthCap fmt : Rat)⟩)
         ⟨le_refl _, le_refl _⟩ _ _).2⟩
 
-/-- Every enclosure that `tanhBounds?` returns contains the part of the tangent. -/
-theorem contains_tanhBounds? {imaginary : Bool} {u : RationalInterval} {a b : Rat}
-    {precision : Nat} {interval : RationalInterval}
-    (hu : u.Contains (Real.exp (-(2 * (a : ℝ)))))
-    (h : tanhBounds? imaginary u b precision = some interval) :
+/-- Every enclosure that `tanhFrom` returns contains the part of the tangent, from enclosures
+of `exp (-2a)`, `cos b` and `sin b`. -/
+theorem contains_tanhFrom {imaginary : Bool} {u cosine sine : RationalInterval} {a b : Rat}
+    {interval : RationalInterval} (hu : u.Contains (Real.exp (-(2 * (a : ℝ)))))
+    (hc : cosine.Contains (Real.cos (b : ℝ))) (hs : sine.Contains (Real.sin (b : ℝ)))
+    (h : tanhFrom imaginary u cosine sine = some interval) :
     interval.Contains (if imaginary then TanhComparison.im a b else TanhComparison.re a b) := by
-  unfold tanhBounds? at h
-  obtain ⟨cosine, hcosine, h⟩ := Option.bind_eq_some_iff.mp h
-  obtain ⟨sine, hsine, h⟩ := Option.bind_eq_some_iff.mp h
+  unfold tanhFrom at h
   dsimp only at h
-  have hc : cosine.Contains (Real.cos (b : ℝ)) :=
-    ProductComparison.contains_trigBounds? (trig := .cos) ⟨le_refl _, le_refl _⟩ hcosine
-  have hs : sine.Contains (Real.sin (b : ℝ)) :=
-    ProductComparison.contains_trigBounds? (trig := .sin) ⟨le_refl _, le_refl _⟩ hsine
   have hv := RationalInterval.contains_sub (RationalInterval.contains_point 1) hu
   have hw := RationalInterval.contains_add (RationalInterval.contains_point 1) hu
   have hden := RationalInterval.contains_add (RationalInterval.contains_mul hv hv)
@@ -123,15 +118,59 @@ theorem contains_tanhBounds? {imaginary : Bool} {u : RationalInterval} {a b : Ra
       simpa only [Rat.cast_one, Rat.cast_ofNat] using hvalue
   · simp at h
 
+/-- Every enclosure that `tanhBounds?` returns contains the part of the tangent. -/
+theorem contains_tanhBounds? {imaginary : Bool} {u : RationalInterval} {a b : Rat}
+    {precision : Nat} {interval : RationalInterval}
+    (hu : u.Contains (Real.exp (-(2 * (a : ℝ)))))
+    (h : tanhBounds? imaginary u b precision = some interval) :
+    interval.Contains (if imaginary then TanhComparison.im a b else TanhComparison.re a b) := by
+  unfold tanhBounds? at h
+  obtain ⟨cosine, hcosine, h⟩ := Option.bind_eq_some_iff.mp h
+  obtain ⟨sine, hsine, h⟩ := Option.bind_eq_some_iff.mp h
+  exact contains_tanhFrom hu
+    (ProductComparison.contains_trigBounds? (trig := .cos) ⟨le_refl _, le_refl _⟩ hcosine)
+    (ProductComparison.contains_trigBounds? (trig := .sin) ⟨le_refl _, le_refl _⟩ hsine) h
+
+/-- Every enclosure that `smallTanh?` returns contains the part of the tangent. -/
+theorem contains_smallTanh? {imaginary : Bool} {a b : Rat} {interval : RationalInterval}
+    (ha : 0 < a) (h : smallTanh? fmt imaginary a b = some interval) :
+    interval.Contains (if imaginary then TanhComparison.im a b else TanhComparison.re a b) := by
+  unfold smallTanh? at h
+  split at h
+  · rename_i hsmall
+    obtain ⟨given, hgiven, htight⟩ := Option.bind_eq_some_iff.mp h
+    rw [← eq_of_tightOnly htight]
+    have hdecay : |(-(2 * a) : Rat)| ≤ 1 := by
+      rw [abs_neg, abs_of_pos (by linarith)]
+      linarith [hsmall.1]
+    have hu := Enclosure.contains_expSmall (-(2 * a)) (smallDegree fmt (max (2 * a) |b|)) hdecay
+    have hcast : ((-(2 * a) : Rat) : ℝ) = -(2 * (a : ℝ)) := by push_cast; ring
+    rw [hcast] at hu
+    exact contains_tanhFrom hu (Enclosure.contains_cos b _) (Enclosure.contains_sin b _) hgiven
+  · simp at h
+
+/-- Every enclosure that `smallTan?` returns contains the tangent. -/
+theorem contains_smallTan? {b : Rat} {interval : RationalInterval}
+    (h : smallTan? fmt b = some interval) : interval.Contains (Real.tan (b : ℝ)) := by
+  unfold smallTan? at h
+  split at h
+  · rename_i hsmall
+    rw [← eq_of_tightOnly h, Real.tan_eq_sin_div_cos]
+    exact RationalInterval.contains_divPositive (Enclosure.contains_sin b _)
+      (Enclosure.contains_cos b _) hsmall.2
+  · simp at h
+
 /-- Every enclosure that `tanhEnclosure?` returns contains the part of the tangent. -/
 theorem contains_tanhEnclosure? {imaginary : Bool} {a b : Rat} {interval : RationalInterval}
     (h : tanhEnclosure? fmt imaginary a b = some interval) :
     interval.Contains (if imaginary then TanhComparison.im a b else TanhComparison.re a b) := by
   unfold tanhEnclosure? at h
   split at h
-  · exact contains_of_refineTwice
-      (fun precision _ henclosure =>
-        contains_tanhBounds? (contains_decayBounds a precision) henclosure) interval h
+  · rename_i ha
+    exact contains_orElse (fun _ hsmall => contains_smallTanh? ha hsmall)
+      (contains_of_refineTwice
+        (fun precision _ henclosure =>
+          contains_tanhBounds? (contains_decayBounds a precision) henclosure)) interval h
   · simp at h
 
 /--
@@ -178,7 +217,8 @@ theorem tanhCore_denotes {z : ExecComplex fmt} (hz : isFinite z = true)
         ⟨_, rfl, fun boundary => by rw [TrigonometricComparison.prepareTan_eq_real, htan]⟩
       exact hexact.within fun interval hinterval => by
         rw [← htan]
-        exact contains_of_refineTwice (fun _ _ henclosure => contains_tanBounds? henclosure)
+        exact contains_orElse (fun _ hsmall => contains_smallTan? hsmall)
+          (contains_of_refineTwice (fun _ _ henclosure => contains_tanBounds? henclosure))
           interval hinterval
   · rename_i hne
     have hpos : 0 < a := lt_of_le_of_ne ha0 (Ne.symm hne)

@@ -234,14 +234,14 @@ theorem roundAt_up (quantum : Int) (parity : Nat → Bool) (value : Rat) :
   cases hn : decide (value.num < 0)
   · simp only [hn, signed, Bool.false_eq_true, ite_false] at hx
     simp only [roundAt, hn, signed, Bool.false_eq_true, ite_false]
-    constructor <;> nlinarith
+    constructor <;> linarith
   · have hdown :
         roundedInteger .up true parity (scaledMagnitude value quantum) =
           ⌊scaledMagnitude value quantum⌋₊ := by
       simp [roundedInteger, RoundingFormula.roundAway]
     simp only [hn, signed, ite_true] at hx
     simp only [roundAt, hn, hdown, signed, ite_true]
-    constructor <;> nlinarith
+    constructor <;> linarith
 
 /-- Rounding toward negative infinity is rounding toward positive infinity reflected through zero,
 at the same quantum and parity, for every rational including zero. This is the value before

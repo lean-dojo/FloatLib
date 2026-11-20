@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Small summaries of a run of the standard suites, for the repository, the docs and the figures.
 
-    summarize.py RESULTS [--tools TOOLS.csv] [--out DIRECTORY]
+    summarize.py RESULTS [--tools TOOLS.csv] [--out DIRECTORY] [--conditions TEXT]
 
 RESULTS is the directory that `benchmarks/suites/run.sh` wrote (`FLOATLIB_SUITE_RESULTS`), with
 `fpbench/`, `inequalities/`, `correct-rounding/` and `testfloat/`. Its `results.csv` files hold
@@ -11,7 +11,7 @@ This script keeps one short row per case (per group of cases for the hard-to-rou
     fpbench.csv              one row per program, default precision and method
     fpbench-tools.csv        one row per program, default precision and external tool (`--tools`:
                              the results of `benchmarks/fpbench/tools.py`, which do not depend
-                             on FloatLib)
+                             on FloatLib; without `--tools` the rows of the summary before stay)
     fpbench-comparison.csv   FloatLib's proved numerical bound over each tool's bound
                              (`benchmarks/fpbench/compare.py`), where the contracts allow a ratio
     inequalities.csv         one row per goal and route (`interval`, and `interval` with the
@@ -24,8 +24,10 @@ This script keeps one short row per case (per group of cases for the hard-to-rou
     provenance.json          commits, toolchain, time window, harness settings, and the size and
                              SHA-256 of each `results.csv` that was read
 
-under DIRECTORY (default `benchmarks/results/suites`). Nothing is measured here, and a suite
-whose `results.csv` is missing is left out.
+under DIRECTORY (default `benchmarks/results/suites`). Nothing is measured here. A suite whose
+`results.csv` is missing keeps what DIRECTORY has of it from the summary before: its short file,
+its counts and its record in `provenance.json`, so one suite can be run again alone. A commit is
+named only when a remote branch of the checkout has it.
 """
 from __future__ import annotations
 
@@ -35,6 +37,7 @@ import hashlib
 import json
 import re
 import statistics
+import subprocess
 import sys
 from collections import Counter, OrderedDict, defaultdict
 from pathlib import Path
@@ -75,14 +78,30 @@ def source(path: Path) -> dict:
     return {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
+PUBLISHED = {}
+
+
+def named(commit: str) -> str:
+    """`commit` when a remote-tracking branch of the checkout contains it, so that a reader can
+    look it up, and nothing for a commit that only the measured checkout has."""
+    if commit and commit not in PUBLISHED:
+        try:
+            branches = subprocess.run(["git", "-C", str(ROOT), "branch", "--remotes", "--contains", commit],
+                                      capture_output=True, text=True).stdout
+        except OSError:
+            branches = ""
+        PUBLISHED[commit] = bool(branches.strip())
+    return commit if commit and PUBLISHED[commit] else ""
+
+
 def window(rows: list) -> dict:
     stamps = sorted(r["measurement_utc"] for r in rows if r.get("measurement_utc"))
-    commits = sorted({r["floatlib_commit"] for r in rows if r.get("floatlib_commit")})
+    commits = sorted({named(r.get("floatlib_commit", "")) for r in rows} - {""})
     return {"first_utc": stamps[0] if stamps else "", "last_utc": stamps[-1] if stamps else "",
             "floatlib_commits": commits}
 
 
-def fpbench(results: Path, out: Path, tools: Path, counts: list, provenance: dict) -> None:
+def fpbench(results: Path, out: Path, tools: Path, counts: list, provenance: dict, earlier: dict) -> None:
     path = results / "fpbench" / "results.csv"
     if not path.exists():
         return
@@ -97,6 +116,7 @@ def fpbench(results: Path, out: Path, tools: Path, counts: list, provenance: dic
         entry = {column: row.get(column, "") for column in columns}
         entry["elapsed_ms"] = milliseconds(row.get("elapsed_ns"))
         entry["numeric_elapsed_ms"] = milliseconds(row.get("numeric_elapsed_ns"))
+        entry["floatlib_commit"] = named(row.get("floatlib_commit", ""))
         slim.append(entry)
     write(out / "fpbench.csv", columns, slim)
     for (method, status), count in sorted(Counter((r["method"], r["status"]) for r in rows).items()):
@@ -116,9 +136,18 @@ def fpbench(results: Path, out: Path, tools: Path, counts: list, provenance: dic
                            sum(1 for r in rows if r["method"] == method and r["numeric_status"] == "proved"
                                and within(r, "numeric_process_elapsed_seconds"))])
     provenance["fpbench"] = {**window(rows), "rows": len(rows), "results_csv": source(path)}
+    if not tools and (out / "fpbench-tools.csv").exists():
+        tools = out / "fpbench-tools.csv"       # the rows of the summary before
     if not tools or not tools.exists():
         return
     external = read(tools)
+    recorded = bool(external) and "source_sha256" not in external[0]
+    if recorded:
+        # The short file keeps no source hash. The tools ran on the files that the manifest pins
+        # (`fetch.py` refuses any other), so the hash of a row's source is the manifest's.
+        pinned = json.loads((HERE.parent / "fpbench" / "fpbench-source.json").read_text())["sha256"]
+        for row in external:
+            row["source_sha256"] = pinned.get("benchmarks/" + row["source_file"], "")
     keep = ["source_file", "index", "default_precision", "tool", "status", "numeric_bound",
             "bound_kind", "elapsed_seconds", "comparison_contract", "tool_version", "tool_revision"]
     write(out / "fpbench-tools.csv", keep, [{k: r.get(k, "") for k in keep} for r in external])
@@ -143,8 +172,9 @@ def fpbench(results: Path, out: Path, tools: Path, counts: list, provenance: dic
         for method in ("forward", "closed"):
             ratios = sum(1 for r in joined if r.get(f"{method}_{tool}_bound_ratio"))
             counts.append(["fpbench", f"{method} bound over the bound of {tool}", "ratio", ratios])
-    provenance["fpbench-tools"] = {"rows": len(external), "results_csv": source(tools),
-                                   "note": "external tools, independent of FloatLib's commit"}
+    provenance["fpbench-tools"] = earlier.get("fpbench-tools") if recorded and "fpbench-tools" in earlier \
+        else {"rows": len(external), "results_csv": source(tools),
+              "note": "external tools, independent of FloatLib's commit"}
 
 
 def inequalities(results: Path, out: Path, counts: list, provenance: dict) -> None:
@@ -164,6 +194,7 @@ def inequalities(results: Path, out: Path, counts: list, provenance: dict) -> No
         refused = (row["status"] == "runner_error" and log is not None and log.is_file()
                    and "excessive memory consumption" in log.read_text(errors="replace"))
         entry["memory_refusal"] = "yes" if refused else ""
+        entry["floatlib_commit"] = named(row.get("floatlib_commit", ""))
         slim.append(entry)
     write(out / "inequalities.csv", columns, slim)
     for (suite, method, status), count in sorted(Counter(
@@ -217,7 +248,9 @@ def testfloat(results: Path, out: Path, counts: list, provenance: dict) -> None:
     columns = ["id", "format", "operation", "rounding", "status", "cases", "value_mismatches",
                "flag_mismatches", "parse_errors", "generation_seconds", "lean_check_seconds",
                "vector_sha256", "floatlib_commit", "measurement_utc"]
-    write(out / "testfloat.csv", columns, [{c: r.get(c, "") for c in columns} for r in rows])
+    write(out / "testfloat.csv", columns,
+          [{**{c: r.get(c, "") for c in columns}, "floatlib_commit": named(r.get("floatlib_commit", ""))}
+           for r in rows])
 
     def group(row: dict) -> str:
         operation = row["operation"]
@@ -262,7 +295,9 @@ def readme(out: Path, counts: list, provenance: dict, conditions: str) -> None:
                 + (f" with Lean {release.group(1)}." if release else "."))
 
     lines = ["# Standard suites: results", "",
-             "Written by `benchmarks/suites/summarize.py` from one run of `benchmarks/suites/run.sh`. "
+             "Written by `benchmarks/suites/summarize.py` from the results of "
+             "`benchmarks/suites/run.sh`. Each section gives the time of its run: a suite can be run "
+             "again alone, and the others keep their results. "
              "The CSV files next to this file have one short row per case; `counts.csv` has every "
              "number of the tables below; `provenance.json` has "
              + ("the commits, " if any(isinstance(record, dict) and record.get("floatlib_commits")
@@ -329,8 +364,10 @@ def readme(out: Path, counts: list, provenance: dict, conditions: str) -> None:
         lines += table(["goals", "proved by at least one route", "by neither"],
                        [[g] + [count[("inequalities", g, "proved")], count[("inequalities", g, "not proved")]]
                         for g in either])
-        lines += ["`runner error` is a Lean process that stopped at its 4 GB memory limit (`lean -M 4096`) "
-                  "in the interpreter; `inequalities.csv` marks those rows in `memory_refusal`.", ""]
+        if "runner_error" in statuses:
+            lines += ["`runner error` is a Lean process that stopped at its 4 GB memory limit "
+                      "(`lean -M 4096`) in the interpreter; `inequalities.csv` marks those rows in "
+                      "`memory_refusal`.", ""]
     if "correct-rounding" in provenance:
         lines += ["## Hard-to-round inputs", "", measured("correct-rounding"), ""]
         lines += table(["domain", "matched", "not representable", "excluded"],
@@ -363,10 +400,23 @@ def main() -> int:
                         help="one paragraph on how the run was started (limits, processes at a time)")
     args = parser.parse_args()
     counts, provenance = [], {}
-    fpbench(args.results, args.out, args.tools, counts, provenance)
-    inequalities(args.results, args.out, counts, provenance)
-    correct_rounding(args.results, args.out, counts, provenance)
-    testfloat(args.results, args.out, counts, provenance)
+    before = args.out / "provenance.json"
+    earlier = json.loads(before.read_text()) if before.exists() else {}
+    earlier_counts = read(args.out / "counts.csv") if (args.out / "counts.csv").exists() else []
+    for suite, summarize in (
+            ("fpbench", lambda: fpbench(args.results, args.out, args.tools, counts, provenance, earlier)),
+            ("inequalities", lambda: inequalities(args.results, args.out, counts, provenance)),
+            ("correct-rounding", lambda: correct_rounding(args.results, args.out, counts, provenance)),
+            ("testfloat", lambda: testfloat(args.results, args.out, counts, provenance))):
+        summarize()
+        if suite not in provenance and suite in earlier:
+            # Not in RESULTS: the suite keeps its short file, its counts and its record.
+            counts += [[row["suite"], row["group"], row["outcome"], int(row["count"])]
+                       for row in earlier_counts if row["suite"] == suite]
+            provenance[suite] = earlier[suite]
+            if suite == "fpbench" and "fpbench-tools" in earlier:
+                provenance["fpbench-tools"] = earlier["fpbench-tools"]
+            print(f"{suite}: no results.csv in {args.results}, the summary before stays")
     write(args.out / "counts.csv", ["suite", "group", "outcome", "count"], counts)
     for suite in ("fpbench", "inequalities", "correct-rounding", "testfloat"):
         record = args.results / suite / "provenance.json"
@@ -375,10 +425,11 @@ def main() -> int:
             provenance[suite]["lean_version"] = harness.get("lean_version", "")
             provenance[suite]["thread_limit"] = harness.get("thread_limit", "")
             provenance[suite]["workers"] = harness.get("workers", "")
-    if args.conditions:
-        provenance["conditions"] = args.conditions
+    conditions = args.conditions or earlier.get("conditions", "")
+    if conditions:
+        provenance["conditions"] = conditions
     (args.out / "provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
-    readme(args.out, counts, provenance, args.conditions)
+    readme(args.out, counts, provenance, conditions)
     print(f"{len(counts)} counts and {len(provenance)} suites in {args.out}")
     return 0
 

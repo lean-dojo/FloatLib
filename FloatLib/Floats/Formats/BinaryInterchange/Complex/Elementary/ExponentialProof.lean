@@ -95,12 +95,14 @@ theorem contains_productEnclosure? {growth : Growth} {trig : Trig} {a b : Rat}
     {interval : RationalInterval} (h : productEnclosure? fmt growth trig a b = some interval) :
     interval.Contains (growth.eval (a : ℝ) * trig.eval (b : ℝ)) := by
   unfold productEnclosure? at h
-  split at h
-  · refine contains_of_refineTwice (fun precision enclosure henclosure => ?_) interval h
+  refine contains_orElse (fun _ hsmall => contains_smallProduct? hsmall)
+    (fun general hgeneral => ?_) interval h
+  split at hgeneral
+  · refine contains_of_refineTwice (fun precision enclosure henclosure => ?_) general hgeneral
     obtain ⟨bounded, hbounded, rfl⟩ := Option.map_eq_some_iff.mp henclosure
     exact RationalInterval.contains_mul (contains_growthBounds growth a _)
       (ProductComparison.contains_trigBounds? ⟨le_refl _, le_refl _⟩ hbounded)
-  · simp at h
+  · simp at hgeneral
 
 /--
 `productPart` is an oracle for the product of its two factors, given that the supplied rational

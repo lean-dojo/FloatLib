@@ -8,6 +8,7 @@ module
 
 import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Exponential
 import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Inverse
+import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Power
 import FloatLib.Floats.Formats.BinaryInterchange.Complex.Elementary.Tangent
 import FloatLib.Floats.Formats.BinaryInterchange.Transcendentals.CorrectlyRounded.Runtime
 import FloatLib.Numerics.Enclosure.Expression.Backends
@@ -17,6 +18,11 @@ import FloatLib.Numerics.Enclosure.Expression.Backends
 
 `oracle complex-timing` prints the time of the rational and binary-grid enclosures that the
 complex elementary functions can draw on, at the precisions binary64 needs.
+`oracle complex-timing functions` prints the time of a call of each function in binary64 at
+arguments of six kinds: subnormal, near `2 ^ -600`, near `2 ^ -30`, moderate, and with one
+subnormal and one moderate part. `oracle complex-timing pow` prints the time of a call of `pow`
+in binary64 for a moderate base, a base next to the negative real axis, powers far outside the
+range and an even power of a base on a diagonal.
 -/
 
 open FloatLib.Floats.Formats.BinaryInterchange FloatLib.Numerics
@@ -138,5 +144,62 @@ public def run : IO Unit := do
   timeIt "compareLog near" 50 fun i =>
     if ElementaryComparison.compareLog (sample i + 1) ((i : Rat) / 1000 + 1 / 3) (by
       unfold sample; positivity) == .lt then 1 else 0
+
+/-- The time of each complex function at arguments of four sizes, in two rounding directions. -/
+public def runFunctions : IO Unit := do
+  let fmt := FloatFormat.ieee 11 52 (by decide) (by decide)
+  let functions :
+      List (String × (ExecComplex fmt → Model.IEEERoundingMode → ExecComplex fmt)) :=
+    [("sin", fun z mode => ExecComplex.sin z mode),
+      ("sinh", fun z mode => ExecComplex.sinh z mode),
+      ("tan", fun z mode => ExecComplex.tan z mode),
+      ("tanh", fun z mode => ExecComplex.tanh z mode),
+      ("asin", fun z mode => ExecComplex.asin z mode),
+      ("asinh", fun z mode => ExecComplex.asinh z mode),
+      ("atan", fun z mode => ExecComplex.atan z mode),
+      ("atanh", fun z mode => ExecComplex.atanh z mode),
+      ("expm1", fun z mode => ExecComplex.expm1 z mode),
+      ("log1p", fun z mode => ExecComplex.log1p z mode),
+      ("exp", fun z mode => ExecComplex.exp z mode),
+      ("cos", fun z mode => ExecComplex.cos z mode)]
+  let arguments : List (String × Nat × Nat) :=
+    [("subnormal", 0x000123456789abcd, 0x0000fedcba987654),
+      ("2^-600", 0x1a7123456789abcd, 0x1a6fedcba9876543),
+      ("2^-30", 0x3e1123456789abcd, 0x3e0fedcba9876543),
+      ("moderate", 0x3fe6666666666666, 0x3fd3333333333333),
+      ("subnormal + moderate i", 0x000123456789abcd, 0x3fd3333333333333),
+      ("moderate + subnormal i", 0x3fe6666666666666, 0x0000fedcba987654)]
+  for (name, function) in functions do
+    for (label, re, im) in arguments do
+      for mode in [Model.IEEERoundingMode.nearest, Model.IEEERoundingMode.towardZero] do
+        timeIt s!"{name} {label} {mode}" 4 fun i =>
+          let w := function ⟨Model.ofNatBits (re + 2 * i), Model.ofNatBits (im + 6 * i)⟩ mode
+          (Model.toNatBits w.re + Model.toNatBits w.im) % 1000
+
+/-- The time of `pow` in binary64 at bases and exponents of six kinds, in two rounding
+directions. A call differs from the one before in the last bits of the real part of the base,
+and for the base on the diagonal in the exponent, which stays an even integer. -/
+public def runPow : IO Unit := do
+  let fmt := FloatFormat.ieee 11 52 (by decide) (by decide)
+  let arguments : List (String × (Nat × Nat) × (Nat × Nat) × (Nat × Nat)) :=
+    [("moderate base, complex exponent", (0x3fe6666666666666, 0x3fd3333333333333),
+        (0x3ff4cccccccccccd, 0x3fc999999999999a), (2, 0)),
+      ("moderate base, exponent 5", (0x3fe6666666666666, 0x3fd3333333333333),
+        (0x4014000000000000, 0), (2, 0)),
+      ("base next to the negative real axis, exponent 5/2",
+        (0xbff8000000000000, 0x0010000000000000), (0x4004000000000000, 0), (2, 0)),
+      ("3 - 2 i, exponent 10^7 + 1/2", (0x4008000000000000, 0xc000000000000000),
+        (0x416312d010000000, 0), (2, 0)),
+      ("3 - 2 i, exponent -2^40 + i/2", (0x4008000000000000, 0xc000000000000000),
+        (0xc270000000000000, 0x3fe0000000000000), (2, 0)),
+      ("1 + i, exponent 2^40", (0x3ff0000000000000, 0x3ff0000000000000),
+        (0x4270000000000000, 0), (0, 8192))]
+  for (label, base, exponent, step) in arguments do
+    for mode in [Model.IEEERoundingMode.nearest, Model.IEEERoundingMode.towardZero] do
+      timeIt s!"pow {label} {mode}" 4 fun i =>
+        let w := ExecComplex.powChecked (fmt := fmt)
+          ⟨Model.ofNatBits (base.1 + step.1 * i), Model.ofNatBits base.2⟩
+          ⟨Model.ofNatBits (exponent.1 + step.2 * i), Model.ofNatBits exponent.2⟩ mode
+        (Model.toNatBits w.1.re + Model.toNatBits w.1.im + (if w.2 then 1 else 0)) % 1000
 
 end FloatLibTests.Oracle.ComplexTiming

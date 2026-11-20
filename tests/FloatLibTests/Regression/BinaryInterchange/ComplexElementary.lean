@@ -462,7 +462,9 @@ G.6.5.1 gives no table: `rsqrt (±0 + 0 i) = ∞ + NaN i`, `rsqrt (∞ + 0 i) = 
 `rsqrt (4 + 0 i) = 1 / 2 - 0 i`, `rsqrt (-4 + 0 i) = +0 - i / 2`; `pow z 0 = 1 + 0 i` also at a
 NaN, `pow 0 w` by the sign of the real part of `w`, exact integer and half-integer powers, exact
 powers `n / 2 ^ k` of a base with a complex rational root such as `(-4) ^ (1 / 4) = 1 + i`,
-certified in every direction, and the two sides of the cut of the base.
+certified in every direction, the two sides of the cut of the base, powers that overflow or
+lie below the least positive number in each part, with their signs, and even powers of a base on
+a diagonal that are too long to form.
 -/
 def openFailures : List (String × Nat) :=
   let unary (function : (fmt : FloatFormat) → ExecComplex fmt → Model.IEEERoundingMode →
@@ -517,7 +519,23 @@ def openFailures : List (String × Nat) :=
       power (q (-4), p0) (q (3 / 2), p0) (p0, q (-8)) true +
       power (q (-4), n0) (q (3 / 2), p0) (p0, q 8) true +
       power (q (-1), p0) (q 3, p0) (q (-1), p0) true +
-      power (q (-1), n0) (q 3, p0) (q (-1), n0) true)]
+      power (q (-1), n0) (q 3, p0) (q (-1), n0) true),
+    ("pow beyond the range",
+      power (q 3, q 4) (q 32768, p0) (q (2 ^ 2000), q (2 ^ 2000)) true +
+      power (q 3, q (-4)) (q 32768, p0) (q (2 ^ 2000), q (-(2 ^ 2000))) true +
+      power (q 3, q 4) (q (-32768), p0) (q (1 / 2 ^ 3000), q (-1 / 2 ^ 3000)) true +
+      power (q 3, q 4) (q (-32768), q 12288) (q (-1 / 2 ^ 3000), q (-1 / 2 ^ 3000)) true +
+      power (q 3, q 4) (q 32768, q (-12288)) (q (-(2 ^ 2000)), q (2 ^ 2000)) true +
+      power (q (-2), q 1) (q 32768, p0) (q (2 ^ 2000), q (-(2 ^ 2000))) true +
+      power (q (-2), q 1) (q (-32768), p0) (q (1 / 2 ^ 3000), q (1 / 2 ^ 3000)) true),
+    ("pow of a base on a diagonal",
+      power (q 3, q 3) (q 6, p0) (p0, q (-5832)) true +
+      power (q 3, q 3) (q 32768, p0) (q (2 ^ 2000), p0) true +
+      power (q 3, q (-3)) (q 32768, p0) (q (2 ^ 2000), n0) true +
+      power (q (-3), q 3) (q 32768, p0) (q (2 ^ 2000), p0) true +
+      power (q 3, q 3) (q (-32768), p0) (q (1 / 2 ^ 3000), p0) true +
+      power (q (-3), q 3) (q 6, p0) (p0, q 5832) true +
+      power (q 3, q (-3)) (q 6, p0) (p0, q 5832) true)]
 
 /-- The special values of Annex G. -/
 def annexG : Thunk ReportSection := ⟨fun _ =>

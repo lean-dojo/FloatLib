@@ -53,11 +53,24 @@ theorem isRoot_two_iff (r n : Nat) : isRoot 2 r n = true ↔ r = Nat.sqrt n := b
 
 /-- `isqrt n` is the floor of the square root of `n`, for every `n`. -/
 theorem isqrt_eq (n : Nat) : isqrt n = Nat.sqrt n := by
-  change Bool.casesOn (motive := fun _ => Nat) (isRoot 2 (rootGuess 2 n) n) (Nat.sqrt n)
-    (rootGuess 2 n) = _
-  cases h : isRoot 2 (rootGuess 2 n) n
+  have hgeneral : Bool.casesOn (motive := fun _ => Nat) (isRoot 2 (rootGuess 2 n) n)
+      (Nat.sqrt n) (rootGuess 2 n) = Nat.sqrt n := by
+    cases h : isRoot 2 (rootGuess 2 n) n
+    · rfl
+    · exact (isRoot_two_iff _ n).1 h
+  change Bool.casesOn (motive := fun _ => Nat) (Nat.ble (size n) 384)
+    (Bool.casesOn (motive := fun _ => Nat) (isRoot 2 (rootGuess 2 n) n) (Nat.sqrt n)
+      (rootGuess 2 n))
+    (Bool.casesOn (motive := fun _ => Nat) (isRoot 2 (sqrtGuess n (size n)) n)
+      (Bool.casesOn (motive := fun _ => Nat) (isRoot 2 (rootGuess 2 n) n) (Nat.sqrt n)
+        (rootGuess 2 n))
+      (sqrtGuess n (size n))) = _
+  rw [hgeneral]
+  cases Nat.ble (size n) 384
   · rfl
-  · exact (isRoot_two_iff _ n).1 h
+  · cases hfast : isRoot 2 (sqrtGuess n (size n)) n
+    · rfl
+    · exact (isRoot_two_iff _ n).1 hfast
 
 /-- Compiled code runs core's `Nat.sqrt`. -/
 compiled_as isqrt := Nat.sqrt by isqrt_eq

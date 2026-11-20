@@ -253,8 +253,12 @@ def main() -> None:
     while g <= HI:
         tick(ax, float(g), y_target, 0.42, color=fs.INK, linewidth=1.6)
         tick(ax, float(g), y_wide, 0.42, color=fs.INK, linewidth=1.6)
-        ax.text(float(g), y_target - 0.6, f"{float(g):g} = ${binary_mantissa(g, target)}_2$",
-                ha="center", va="top", fontsize=fs.SIZE_TICK)
+        # The arrow of the second rounding comes in from the lower right of its target, so that
+        # tick's label ends at the tick.
+        landing = g == second
+        ax.text(float(g) + (0.004 if landing else 0), y_target - 0.6,
+                f"{float(g):g} = ${binary_mantissa(g, target)}_2$",
+                ha="right" if landing else "center", va="top", fontsize=fs.SIZE_TICK)
         g += step_target
     # Midpoints of the coarse grid.
     m = LO + step_target / 2

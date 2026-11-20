@@ -334,7 +334,8 @@ def mixedFold (r : Recursor) (loop : Loop)
 
 /-- A fold over coordinates whose step branches on a test that holds at a single coordinate. If
 every step elsewhere keeps an exact zero and then the reached value, the fold returns the value its
-step at that coordinate produces from zero, for every length (`fold_eq_of_single`). -/
+step at that coordinate produces from zero, for every length (the law that the loop registers as
+`Loop.single`, such as `Model.toRat?_foldl_add_eq_single`). -/
 partial def singleFold (r : Recursor) (loop : Loop)
     (observe step initial input coordinateType stateType : Lean.Expr) (fuel : Nat) :
     AnalyzeM Estimate := do

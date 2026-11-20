@@ -1,33 +1,33 @@
 operation,size,as_written_us,kernel_us,coq_vm_us
-integer sum,64 bits,75.9,16.3,9.3
-integer product,64 bits,67.1,17.4,
-integer comparison,64 bits,89.99999999999999,6.62,1.55
-integer quotient,64 bits,85.2,39.5,
-fraction sum and comparison,64 bits,890.0,36.3,225.0
-fraction product and comparison,64 bits,638.0,34.7,
-bit length,64 bits,446.0,46.0,
-one bit,64 bits,53.699999999999996,8.52,
-population count,64 bits,4269.999999999999,40.599999999999994,
-integer square root,64 bits,873.0,148.0,
-modular power,64 bits,837.0,298.0,
-dyadic sum,64 bits,,28.7,
-ball product,64 bits,,21.4,
-complex ball product,64 bits,,87.6,
-length of a list of 256,64 bits,22700.0,3190.0,
-entry 200 of a list of 256,64 bits,23100.000000000004,3590.0,
-integer sum,"1,024 bits",76.3,17.0,59.6
-integer product,"1,024 bits",67.19999999999999,17.6,
-integer comparison,"1,024 bits",89.4,6.61,23.3
-integer quotient,"1,024 bits",85.7,40.2,
-fraction sum and comparison,"1,024 bits",847.0,37.5,39500.0
-fraction product and comparison,"1,024 bits",695.0,36.0,
-bit length,"1,024 bits",8240.0,137.0,
-one bit,"1,024 bits",54.2,8.83,
-population count,"1,024 bits",84200.00000000001,292.99999999999994,
-integer square root,"1,024 bits",9230.0,316.0,
-modular power,"1,024 bits",16000.0,8060.000000000001,
+integer sum,64 bits,75.49999999999999,16.0,9.3
+integer product,64 bits,66.8,17.3,
+integer comparison,64 bits,89.79999999999998,6.58,1.55
+integer quotient,64 bits,84.9,39.5,
+fraction sum and comparison,64 bits,878.0,36.0,225.0
+fraction product and comparison,64 bits,634.9999999999999,34.4,
+bit length,64 bits,446.0,43.6,
+one bit,64 bits,53.79999999999999,8.419999999999998,
+population count,64 bits,4230.0,39.8,
+integer square root,64 bits,892.9999999999999,129.0,
+modular power,64 bits,817.9999999999999,294.99999999999994,
+dyadic sum,64 bits,,28.9,
+ball product,64 bits,,21.199999999999996,
+complex ball product,64 bits,,87.1,
+length of a list of 256,64 bits,20100.000000000004,3170.0,
+entry 200 of a list of 256,64 bits,20500.0,3540.0,
+integer sum,"1,024 bits",76.5,16.9,59.6
+integer product,"1,024 bits",67.1,17.6,
+integer comparison,"1,024 bits",89.2,6.559999999999999,23.3
+integer quotient,"1,024 bits",85.7,40.1,
+fraction sum and comparison,"1,024 bits",838.0,37.39999999999999,39500.0
+fraction product and comparison,"1,024 bits",692.0,35.0,
+bit length,"1,024 bits",7930.0,97.5,
+one bit,"1,024 bits",54.0,8.78,
+population count,"1,024 bits",75799.99999999999,227.99999999999997,
+integer square root,"1,024 bits",8910.0,280.0,
+modular power,"1,024 bits",14700.0,7810.0,
 dyadic sum,"1,024 bits",,29.0,
-ball product,"1,024 bits",,21.7,
-complex ball product,"1,024 bits",,88.2,
-length of a list of 256,"1,024 bits",22300.0,3190.0,
-entry 200 of a list of 256,"1,024 bits",23200.0,3580.0000000000005,
+ball product,"1,024 bits",,21.499999999999996,
+complex ball product,"1,024 bits",,90.69999999999999,
+length of a list of 256,"1,024 bits",20300.000000000004,3170.0,
+entry 200 of a list of 256,"1,024 bits",20600.0,3540.0,

@@ -42,10 +42,11 @@ The other recommended functions of IEEE 754-2019 §9.2 are here too, from
 `Model.Transcendentals.CorrectlyRounded` (`Transcendentals.Recommended`): `exp2`, `exp2m1`,
 `exp10`, `exp10m1`, `log2`, `log10`, `log2p1`, `log10p1`, `sin`, `cos`, `tan`, `sinPi`, `cosPi`,
 `tanPi`, `asin`, `acos`, `atan`, `asinPi`, `acosPi`, `atanPi`, `sinh`, `cosh`, `tanh`, `asinh`,
-`acosh`, `atanh`, and `atan2`, `atan2Pi`, `powr`, `compound`. Each returns an `IEEEOutcome`,
-the value with its flags, and rounds the exact result once by exact comparisons, with no
-budget, in the direction `mode` (nearest-even by default). `toReal_apply` states the correct
-rounding to nearest-even for the 26 functions of one argument.
+`acosh`, `atanh`, and `atan2`, `atan2Pi`, `powr`, `pow`, `compound`. Each returns an
+`IEEEOutcome`, the value with its flags, and rounds the exact result once by exact comparisons,
+with no budget, in the direction `mode` (nearest-even by default). For the 26 functions of one
+argument, `toReal_apply` states the correct rounding to nearest-even and `apply_roundsTo` the
+correct rounding in every direction.
 
 ```lean
 (ExecFloat.Binary.CorrectlyRounded.sinPi x).value
@@ -729,6 +730,13 @@ through the storage codec, the value with its flags.
 configured_binary powr
 
 /--
+IEEE 754-2019 §9.2 `pow` (ISO/IEC 9899:2024 7.12.7.5, F.10.4.5) on configured values:
+`left ^ right` with the special cases of §9.2.1, `Model.Transcendentals.CorrectlyRounded.pow`
+through the storage codec, the value with its flags.
+-/
+configured_binary pow
+
+/--
 IEEE 754-2019 §9.2 `compound` (ISO/IEC 9899:2024 `compoundn`, 7.12.7.2, F.10.4.2) on a
 configured value: `(1 + value) ^ n`, `Model.Transcendentals.CorrectlyRounded.compound` through
 the storage codec, the value with its flags.
@@ -759,5 +767,25 @@ theorem toReal_apply (function : Function) {value : Value} {q : ℚ}
     congrArg Model.IEEEOutcome.value (toModel_apply function value .nearest)
   rw [hmodel] at hfinite ⊢
   exact Function.toReal_apply hformat function hvalue hdomain hfinite
+
+/--
+**The recommended functions of one argument are correctly rounded in every direction on
+configured values.** For every format descriptor, a finite value whose exact value `q` is in
+the function's domain with a real value that is not zero, and each rounding direction `mode`,
+the decoded result meets the contract `Model.RoundsTo`: it is finite and denotes
+`roundAt format (function.real q) mode` when that value is at most the largest finite magnitude,
+it is the overflow result of the direction otherwise, and in a format with signed zeros it has
+the sign of the real value.
+-/
+theorem apply_roundsTo (function : Function) {value : Value} {q : ℚ}
+    (hvalue : toRat? value = some q) (hdomain : function.Domain q) (hne : function.real q ≠ 0)
+    (mode : Model.IEEERoundingMode) :
+    Model.RoundsTo format mode (function.real q) (decide (function.real q < 0))
+      (toModel (apply function value mode).value) := by
+  have hmodel : toModel (apply function value mode).value =
+      (function.apply (toModel value) mode).value :=
+    congrArg Model.IEEEOutcome.value (toModel_apply function value mode)
+  rw [hmodel]
+  exact Function.apply_roundsTo function hvalue hdomain hne
 
 end FloatLib.Floats.ExecFloat.Binary.CorrectlyRounded

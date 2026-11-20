@@ -43,6 +43,8 @@ command. Give each run a fresh output directory outside the checkout. Temporary 
 | Kernel time of outcomes with status flags, comparisons, conversions and literals | `benchmarks/kernel/extras.sh` |
 | Kernel time of three theorems about loops of 1,000 steps | `benchmarks/kernel/loops.sh` |
 | Kernel time of two statements about all 65,536 pairs of E4M3 encodings | `benchmarks/kernel/exhaustive.sh` |
+| Kernel time of every operation of IEEE 754-2019, binary and decimal, as written and with the kernel rules | `benchmarks/kernel/ieee2019.sh` |
+| Kernel time of the P3109 operations, of posits with any number of exponent bits, and of the MX and NVFP4 quantizers | `floatlib_lake env lean benchmarks/kernel/P3109.lean`, and `PositGeneral.lean`, `MX.lean`, `NVFP4.lean` beside it |
 | The proof checkers that ship with Lean, on the proofs by kernel evaluation | `benchmarks/kernel/checkers.sh` |
 | Generated `roundoff` bounds against measured errors, in binary32 | `python3 benchmarks/roundoff/bounds.py` |
 | Both modes in one run: kernel and compiled code, every family, Coq with Flocq, MPFR and SoftFloat | `benchmarks/suite/run.sh OUT` |
@@ -55,7 +57,7 @@ positive. `execFloatTimeList` reads space-separated decimal encodings, one case 
 up to three operands, and prints one timing per trial. It handles binary, posit, and explicit
 limb carriers. Run it without arguments and it prints the supported format names.
 
-The four `benchmarks/kernel` scripts time Lean's kernel, the proof checker, not compiled code.
+The `benchmarks/kernel` scripts and files time Lean's kernel, the proof checker, not compiled code.
 `run.sh PATHNAME` prints microseconds per operation for the six operations in seven formats
 (and in the interchange formats of 256 to 4,096 bits when they are named), on
 normal, subnormal and special operands: `public` reduces the public operations, `spec` the
@@ -66,7 +68,12 @@ to exact rational values, casts and literals in binary32 and binary64, each term
 as `float_decide` rewrites it.
 `loops.sh` type-checks three theorems both ways, and
 `FlocqConversion.v` states the same three results for Coq with Flocq. `exhaustive.sh`
-type-checks two statements about all pairs of E4M3 encodings. The
+type-checks two statements about all pairs of E4M3 encodings. `ieee2019.sh` reduces every
+operation of IEEE 754-2019 clauses 5 and 9 under its name in the standard, as written and
+after the rewrite, from 8 to 4,096 bits and in the three decimal formats
+([saved tables](results/ieee2019/README.md)). The four Lean files are a list of
+`#kernel_cost` lines each: elaborate one and it prints the kernel time of every term with the
+rules, and as written where that is fast enough to run. The
 [saved tables](results/kernel/README.md) say what we measured and where.
 
 `checkers.sh` asks whether the proof checkers that ship with the Lean toolchain accept these
@@ -115,11 +122,19 @@ MPFR, Berkeley SoftFloat and the native FPU (`compiled`). `tables` turns the log
 
 `benchmarks/plots/figures.py` is the one script behind the figures of the speed work.
 `figures.py time RAW` measures the checkout it runs in: it starts the runners of
-`benchmarks/kernel/`, `benchmarks/suite/` and `benchmarks/exact/` section by section, at most
-eight at a time, with their logs in `RAW` (a directory outside the checkout), writes their
-tables and CSV files under `results/`, and draws every figure into `results/figures/` as PNG
-and PDF with the CSV of what is drawn. It takes under an hour with 24 threads, needs the
-library built, and records the checkout used in the measurement data.
+`benchmarks/kernel/`, `benchmarks/suite/` and `benchmarks/exact/` section by section, with
+their logs in `RAW` (a directory outside the checkout), writes their tables and CSV files
+under `results/`, and draws every figure into `results/figures/` as PNG and PDF with the CSV
+of what is drawn. The kernel sections run one at a time, because a cell there is a difference
+of a few microseconds and a second job on the machine shows in it. On Linux with core
+scheduling a measuring process also has its cores to itself, because a job on the second
+hardware thread of a core makes a measurement on the first 1.5 to 2 times slower. The rows of
+1,024 and 4,096 bits of the IEEE table are the exception: they run eight at a time. The
+compiled sections and those rows follow the kernel sections, up to eight sections at a time,
+and the rows set the length of a run: they take about 85 minutes here. The mode needs the
+library built and links the benchmark executables itself, which takes about ten minutes the
+first time. `--only` measures some sections again and keeps the others, and the record says
+which run each section is from. It names the measured commit when a remote branch has it.
 `figures.py draw` draws again from the result files, and `figures.py list` names the figures
 and the timing sections. An image holds only the plot: axes with units, a legend of short
 series names and panel letters, in the style of the guide's `figstyle.py`. Everything else is

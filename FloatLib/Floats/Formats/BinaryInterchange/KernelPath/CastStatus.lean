@@ -22,6 +22,9 @@ when `dst` delivers an infinity, and overflow and inexact when `dst` has none an
 or its largest finite value. A NaN raises invalid when it is signaling or when `dst` has no NaN
 to deliver. `castStatus_eq` holds for every pair of format descriptors, every rounding
 direction and every value.
+
+`castStatusWith src dst mode a w` is the same number as a function of the delivered word `w`. A
+statement about the value and the flags of one cast gives it the word it has already computed.
 -/
 
 @[expose] public section
@@ -32,10 +35,11 @@ open FloatLib.Numerics
 
 /--
 The status number of the cast into `dst` of the value that `a` encodes in `src`, rounded in the
-direction `mode` (`castStatus_eq`). See the module documentation.
+direction `mode`, when `w` is the word of the cast. `castStatus` is this number at
+`cast src dst mode a`. See the module documentation.
 -/
-def castStatus (src dst : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat) : Nat :=
-  (fun sa ua w =>
+def castStatusWith (src dst : FloatFormat) (mode : Model.IEEERoundingMode) (a w : Nat) : Nat :=
+  (fun sa ua =>
     Bool.casesOn (motive := fun _ => Nat) (Nat.beq (nonFinite src sa ua) 0)
       ((fun sw uw =>
           Bool.casesOn (motive := fun _ => Nat) (Nat.beq (infFlag src ua) 0)
@@ -55,7 +59,14 @@ def castStatus (src dst : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat)
               (Nat.add dst.exponentBias dst.fracWidth))
             w)
         (Nat.sub (Nat.shiftRight ua src.fracWidth) 1)))
-    (Nat.shiftRight a (signPos src)) (Nat.land a (magnitudeMask src)) (cast src dst mode a)
+    (Nat.shiftRight a (signPos src)) (Nat.land a (magnitudeMask src))
+
+/--
+The status number of the cast into `dst` of the value that `a` encodes in `src`, rounded in the
+direction `mode` (`castStatus_eq`).
+-/
+def castStatus (src dst : FloatFormat) (mode : Model.IEEERoundingMode) (a : Nat) : Nat :=
+  castStatusWith src dst mode a (cast src dst mode a)
 
 /-- The cast of a finite value with a zero significand is finite. -/
 theorem isFinite_cast_zero {src dst : FloatFormat} (mode : Model.IEEERoundingMode)
@@ -88,7 +99,7 @@ theorem castStatus_eq {src dst : FloatFormat} (mode : Model.IEEERoundingMode) (x
       (Model.Internal.Status.cast src dst x mode).status ∧
     decodeTernary (castStatus src dst mode x.toNatBits) =
       (Model.Internal.Status.cast src dst x mode).ternary
-  unfold castStatus infinityTernary Model.Internal.Status.cast
+  unfold castStatus castStatusWith infinityTernary Model.Internal.Status.cast
   simp only [Nat.shiftRight_eq', Nat.land_eq, Nat.shiftLeft_eq', Nat.sub_eq, Nat.add_eq,
     Nat.mul_eq, Nat.xor_eq, cast_eq_spec mode x, Model.Internal.Directed.cast_eq,
     sign_toNatBits, magnitude_toNatBits, fields_shiftRight _ _ _ hfx, fields_sub_shiftLeft,

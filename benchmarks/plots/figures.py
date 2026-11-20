@@ -10,9 +10,12 @@ This file draws. Two modules next to it do the rest: `timing.py` starts the meas
 `results.py` turns their logs into the result files.
 
 `time` is the timing mode. It measures this checkout: it runs every benchmark runner whose
-times a figure draws (`timing.py` lists them), at most `--jobs` at a time, with logs in RAW, a
-directory outside the checkout. Then it does what `install` and `draw` do. The measurement record identifies the checkout. A full run takes under an hour with 24
-threads. The library has to be built already (`FLOATLIB_BUILD_DIR`, or `.lake/build` in the
+times a figure draws (`timing.py` lists them), the kernel sections one at a time and the others
+after them at most `--jobs` at a time, with logs in RAW, a directory outside the checkout. Then it does what `install` and `draw` do. The measurement
+record names the commit when a remote branch of the checkout has it and the tracked files are
+unchanged; a commit that only this checkout has is not named, since nobody else could look it
+up. A full run takes about as long as its longest section, the formats of 1,024 and 4,096 bits
+(`timing.ROW_SECONDS`, `timing.FUNCTION_ROW_SECONDS`): two to three hours with 24 threads. The library has to be built already (`FLOATLIB_BUILD_DIR`, or `.lake/build` in the
 checkout); the timing mode links the benchmark executables it starts and builds nothing else.
 
 `install` turns the logs of a timing run into the result files under `benchmarks/results/`
@@ -387,6 +390,17 @@ def git_head(tree=ROOT, short: bool = True) -> str:
         return "unknown commit"
 
 
+def published(commit: str, tree=ROOT) -> bool:
+    """Whether a remote-tracking branch of the checkout contains `commit`."""
+    try:
+        branches = subprocess.check_output(
+            ["git", "-C", str(tree), "branch", "--remotes", "--contains", commit],
+            text=True, stderr=subprocess.DEVNULL)
+    except (subprocess.CalledProcessError, OSError):
+        return False
+    return bool(branches.strip())
+
+
 def where(prov: dict, more: str = "") -> str:
     """Measurement conditions for a figure caption."""
     text = "Measured"
@@ -638,16 +652,17 @@ def fig_kernel_ieee2019(ctx):
     directory = need(ctx.results / "ieee2019", "ieee2019 results")
     path = need(directory / "kernel.csv", "ieee2019/kernel.csv")
     prov = ctx.provenance("ieee2019", "ieee2019-wide")
-    groups = defaultdict(lambda: defaultdict(lambda: ([], [])))   # group -> bits -> (written, rules)
+    # group -> bits -> (written, rules), each the time of every operation that has one
+    groups = defaultdict(lambda: defaultdict(lambda: ({}, {})))
     for row in read_csv(path):
         if not row["format"].startswith(("binary", "e4f3")):
             continue
         written, rules = positive(row["as_written_microseconds"]), positive(row["with_rules_microseconds"])
         cell = groups[ieee_group(row["operation"])][int(row["bits"])]
         if written:
-            cell[0].append(written)
+            cell[0][row["operation"]] = written
         if rules:
-            cell[1].append(rules)
+            cell[1][row["operation"]] = rules
     names = [label for label, _ in IEEE_GROUPS if label in groups]
     widths = sorted({bits for g in groups.values() for bits in g})
     cols = 4
@@ -656,14 +671,18 @@ def fig_kernel_ieee2019(ctx):
     rows, sizes = [], []
     for index, (axis, name) in enumerate(zip(axes.flat, names)):
         for slot, key in ((0, "written"), (1, "now")):
-            xs = [w for w in widths if groups[name][w][slot]]
-            mid = [statistics.median(groups[name][w][slot]) for w in xs]
-            low = [min(groups[name][w][slot]) for w in xs]
-            high = [max(groups[name][w][slot]) for w in xs]
+            # A line is over one set of operations: it is drawn at the widths at which every
+            # operation of the family has a time, so it never moves because one dropped out.
+            family = set().union(*(groups[name][w][slot].keys() for w in widths))
+            xs = [w for w in widths if family and groups[name][w][slot].keys() == family]
+            times = {w: list(groups[name][w][slot].values()) for w in xs}
+            mid = [statistics.median(times[w]) for w in xs]
+            low = [min(times[w]) for w in xs]
+            high = [max(times[w]) for w in xs]
             axis.fill_between(xs, low, high, color=colour(key), alpha=0.12, linewidth=0)
             axis.plot(xs, mid, zorder=3 if key == "now" else 2, **{**style(key), "markersize": 3.8})
             rows += [[name, "as written" if slot == 0 else "with rules", w, m, l, h,
-                      len(groups[name][w][slot])] for w, m, l, h in zip(xs, mid, low, high)]
+                      len(times[w])] for w, m, l, h in zip(xs, mid, low, high)]
         width_axis(axis, widths)
         sizes.append((IEEE_TITLES.get(name, name), max(len(groups[name][w][1]) for w in widths)))
         panel_title(axis, index, IEEE_TITLES.get(name, name))
@@ -683,18 +702,24 @@ def fig_kernel_ieee2019(ctx):
          "written and a solid line and band for the same operation with the kernel rules.",
          "Kernel time of the operations of IEEE 754-2019 on binary formats, by family and format width, as "
          "written and with FloatLib's kernel rules. A line is the median over the operations of "
-         "a family of the time Lean's kernel takes for one evaluation, and the band is their range; where "
+         "a family of the time Lean's kernel takes for one evaluation, at the widths at which every one "
+         "of them has a time, and the band is their range; where "
          "the two lines coincide the family has no kernel rule. Both axes are logarithmic, and lower is "
          "faster. " + where(prov),
          "Each operation of clauses 5 and 9 is measured under its name in the standard, as written (the "
          "reference definition) and as `float_decide` rewrites it with the rules tagged "
          "`@[kernel_optimize]` (`benchmarks/kernel/ieee2019.sh 4 3`: four operand triples per cell, the "
-         "fastest of three); at 1,024 and 4,096 bits a row has 60 seconds. The panel neighbours holds "
+         f"fastest of three); at 1,024 and 4,096 bits a row has {timing.ROW_SECONDS:,} seconds and a "
+         f"certified function of clause 9.2 {timing.FUNCTION_ROW_SECONDS:,}. "
+         "A line ends where an operation of its family has no time, because it takes longer than a "
+         "row allows or its cell came out at zero or below. "
+         "The panel neighbours holds "
          "`nextUp`, `nextDown` and `remainder`, and the panel functions the recommended functions of "
          "clause 9.2. Operations per family: "
          + ", ".join(f"{name} {count}" for name, count in sizes) + ". A cell is the difference of two "
-         "folds; for the cheapest operations (classification, sign) it can come out at zero or below on a "
-         "busy machine, and such a cell is left out. The comparisons, the conversions to integers, the "
+         "folds, and the fold that is subtracted reads and stores its operand; for an operation that "
+         "reads less of it (`radix`, `isCanonical` as written) the difference is zero or below, and "
+         "such a cell is left out. The comparisons, the conversions to integers, the "
          "casts (`formatOf`, `convertFormat`) and the additions of the 2019 revision are all here; the "
          "decimal formats are in `ieee2019/README.md` and in `kernel-families`. "
          + sources("every time (`Lean.Kernel.whnf`)", "the grouping into families, medians and ranges"),
@@ -1923,8 +1948,12 @@ def write_index(ctx: Context, skipped: list, guide: bool = False) -> None:
         "`RAW` is a directory outside the checkout for the logs. The library has to be built "
         "(`FLOATLIB_BUILD_DIR`, or `.lake/build`); the timing mode links the benchmark executables it "
         "starts and builds nothing else. It runs the runners under `benchmarks/kernel/`, "
-        "`benchmarks/suite/`, `benchmarks/exact/` and `benchmarks/scripts/`, at most eight at a "
-        "time, and those runners print every time (`Lean.Kernel.whnf`, Lean's profiler, "
+        "`benchmarks/suite/`, `benchmarks/exact/` and `benchmarks/scripts/`: the kernel sections one "
+        "at a time, because another job on the machine disturbs their cells, and then the others at "
+        "most eight at a time. On Linux with core scheduling a measuring process has its cores to "
+        "itself, the rows of 1,024 and 4,096 bits of the IEEE table excepted, which run eight at a "
+        "time: a job on the second hardware thread of a core makes a measurement on the first 1.5 "
+        "to 2 times slower. Those runners print every time (`Lean.Kernel.whnf`, Lean's profiler, "
         "`IO.monoNanosNow`, `/usr/bin/time`). Python starts them, copies their tables and draws.", "",
     ]
     if m:
@@ -1933,11 +1962,32 @@ def write_index(ctx: Context, skipped: list, guide: bool = False) -> None:
         # A record names its commit when the run that wrote it did; the column exists only then.
         named = any(entry.get("short") for entry in sections.values())
         subject = commit_of(dict(short=m.get("commit")), "measured commit ", f"{state} with") or "used"
+
+        def at_a_time(count) -> str:
+            return "one section at a time" if count == 1 else f"{count} sections at a time"
+
+        # The runs that still have a section: a run with `--only` measures some sections again.
+        runs = [entry for entry in m.get("runs", [])
+                if any(s.get("started_utc") == entry["started_utc"] for s in sections.values())]
+        if len(runs) > 1:
+            parts = []
+            for entry in runs:
+                own = [name for name, s in sections.items() if s.get("started_utc") == entry["started_utc"]]
+                parts.append(f"started {entry['started_utc']}, {at_a_time(entry['jobs'])}, "
+                             f"{float(entry['seconds']) / 60:.0f} minutes of wall time: "
+                             + ", ".join(f"`{name}`" for name in own))
+            lines += [
+                f"The timing mode {subject} Lean {m.get('lean', '')} on {m.get('machine', '')}, in "
+                f"{len(runs)} runs with {m.get('threads', '')} threads in all. " + " ".join(
+                    f"Run {index}, {part}." for index, part in enumerate(parts, 1))
+                + " A section that is measured again replaces its earlier files.", ""]
+        else:
+            lines += [
+                f"The last timing run {subject} Lean "
+                f"{m.get('lean', '')} on {m.get('machine', '')}, started {m.get('started_utc', '')}, "
+                f"{at_a_time(m.get('jobs', ''))} with {m.get('threads', '')} threads in all, "
+                f"{float(m.get('seconds', 0)) / 60:.0f} minutes of wall time.", ""]
         lines += [
-            f"The last timing run {subject} Lean "
-            f"{m.get('lean', '')} on {m.get('machine', '')}, started {m.get('started_utc', '')}, "
-            f"{m.get('jobs', '')} sections at a time with {m.get('threads', '')} threads in all, "
-            f"{float(m.get('seconds', 0)) / 60:.0f} minutes of wall time.", "",
             "| section | exit | seconds | rows | Lean errors in its logs |" + (" commit |" if named else ""),
             "| --- | ---: | ---: | ---: | ---: |" + (" --- |" if named else "")]
         for name, entry in sections.items():
@@ -2022,7 +2072,8 @@ def write_readme_figures(ctx: Context) -> None:
             continue
         text = path.read_text(encoding="utf-8")
         if README_BEGIN in text:
-            text = text[:text.index(README_BEGIN)].rstrip("\n") + "\n"
+            text = text[:text.index(README_BEGIN)]
+        text = text.rstrip("\n") + "\n"      # the same file whether the tables were just written or not
         if drawn:
             lines = ["", README_BEGIN, "", "## Figures", "",
                      "The captions, alt texts, notes and CSV columns of these figures are in "
@@ -2067,7 +2118,8 @@ def main() -> int:
     modes = parser.add_subparsers(dest="mode", required=True)
     timing_ = modes.add_parser("time", help="measure this checkout, write the results, draw")
     timing_.add_argument("raw", help="directory for the logs, outside the checkout")
-    timing_.add_argument("--jobs", type=int, default=8, help="sections measured at a time")
+    timing_.add_argument("--jobs", type=int, default=8,
+                         help="sections measured at a time, after the kernel sections")
     timing_.add_argument("--threads", type=int, default=24, help="threads in all")
     timing_.add_argument("--only", nargs="*", default=[], help="timing sections (default: all)")
     timing_.add_argument("--reuse", action="store_true",
@@ -2097,15 +2149,18 @@ def main() -> int:
         start = time.time()
         dirty = bool(subprocess.run(["git", "-C", str(ROOT), "diff", "--quiet", "HEAD"]).returncode)
         commit = git_head(short=False)
-        print(f"measuring commit {commit}" + (" with uncommitted changes to tracked files" if dirty else ""),
-              flush=True)
+        # The record names a commit that others can look up: one that a remote branch has.
+        named = commit if published(commit) and not dirty else ""
+        print(f"measuring commit {commit}" + (" with uncommitted changes to tracked files" if dirty else "")
+              + ("" if named else " (not on a remote branch: the record does not name it)"), flush=True)
 
         def log(text: str) -> None:
             print(f"[{time.time() - start:6.0f} s] {text}", flush=True)
 
         started = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
         done = timing.measure(raw, args.jobs, args.threads, args.only, log, args.reuse)
-        record_run(raw, commit, dirty, started, time.time() - start, args.jobs, args.threads, done)
+        record_run(raw, named, dirty, started, time.time() - start, args.jobs, args.threads, done,
+                   timing.own_core(), timing.SHARED)
         log(f"measured commit {commit}: " + ", ".join(f"{n} exit {c}" for n, c, _ in done))
     install(raw)
     return draw([])

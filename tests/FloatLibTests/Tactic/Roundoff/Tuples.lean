@@ -462,29 +462,30 @@ theorem kahanBudget_step_le {u sum A E C a k : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ 
       u * total + u * shift + u * gap ≤ 3 * u * (A + a) := by
   intro entry total shift gap
   have hA : 0 ≤ A := (abs_nonneg _).trans hsum
-  have huA : u * A ≤ A / 64 := by nlinarith
-  have hua : u * a ≤ a / 64 := by nlinarith
-  have huC : u * C ≤ C / 64 := by nlinarith
+  have huA : u * A ≤ A / 64 := by linarith [mul_le_mul_of_nonneg_right hu hA]
+  have hua : u * a ≤ a / 64 := by linarith [mul_le_mul_of_nonneg_right hu ha]
+  have huC : u * C ≤ C / 64 := by linarith [mul_le_mul_of_nonneg_right hu hC0]
   have hku : k * u * (u * A) ≤ 1 / 8 * (u * A) := by
-    have : k * u ≤ 1 / 8 := by nlinarith
+    have : k * u ≤ 1 / 8 := by linarith
     exact mul_le_mul_of_nonneg_right this (by positivity)
   -- The sum of the total and the entry.
   have hT0 : 0 ≤ total + entry := by positivity
   have hT : total + entry ≤ 5 / 4 * A + 21 / 10 * a := by
     simp only [total, entry]
-    nlinarith
+    linarith
   have hC' : u * total + u * shift + u * gap = u * ((1 + u) ^ 2 * (total + entry)) := by
     simp only [gap, shift]; ring
   have hE' : E + u * entry + u * shift + u * gap =
       E + 2 * u * a + 2 * u * C + u ^ 2 * ((2 + u) * (total + entry)) := by
     simp only [gap, shift, entry]; ring
-  have hsq : (1 + u) ^ 2 ≤ (65 / 64) ^ 2 := by nlinarith
+  have hsq : (1 + u) ^ 2 ≤ (65 / 64) ^ 2 := by
+    linarith [mul_le_mul_of_nonneg_left hu hu0]
   have hprod : (1 + u) ^ 2 * (total + entry) ≤ 3 * (A + a) := by
     have := mul_le_mul hsq hT hT0 (by positivity)
-    nlinarith
+    linarith
   have hprod2 : (2 + u) * (total + entry) ≤ 8 * (A + a) := by
     have := mul_le_mul (show 2 + u ≤ 129 / 64 by linarith) hT hT0 (by positivity)
-    nlinarith
+    linarith
   have m1 := mul_le_mul_of_nonneg_left hprod hu0
   have m2 := mul_le_mul_of_nonneg_left hprod2 (sq_nonneg u)
   have m3 := mul_le_mul_of_nonneg_left hC hu0
@@ -494,10 +495,10 @@ theorem kahanBudget_step_le {u sum A E C a k : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ 
   have q1 : 0 ≤ u * ((1 + u) ^ 2 * (total + entry)) := by positivity
   have q2 : 0 ≤ u ^ 2 * ((2 + u) * (total + entry)) := by positivity
   refine ⟨?_, ?_, ?_, ?_⟩
-  · rw [hE']; nlinarith
-  · rw [hE']; nlinarith
+  · rw [hE']; linarith [mul_nonneg hu0 ha, mul_nonneg hu0 hC0]
+  · rw [hE']; linarith
   · rw [hC']; exact q1
-  · rw [hC']; nlinarith
+  · rw [hC']; linarith
 
 /-- From any state and nonnegative budgets `E ≤ (2u + 16 k u²) A` and `C ≤ 3 u A` of a shadow
 sum at most `A` in magnitude, the budgets that `kahanBudget` accumulates over `xs` are
@@ -566,7 +567,7 @@ theorem kahanBudgets_le (xs : List Value) (hu : Model.unitRoundoffAt format ≤ 
     (by simp) le_rfl (by simp) le_rfl (by simp)
   unfold kahanBudgets
   simp only [zero_add] at b2 b4
-  nlinarith [sq_nonneg (Model.unitRoundoffAt format)]
+  linarith [sq_nonneg (Model.unitRoundoffAt format)]
 
 /-- For unit roundoff at most `1/64` and `n u ≤ 1/8` over the `n` entries of `xs`, Kahan's sum is
 finite and within `(5 u + 16 n u²) Σ |x|` of the exact sum, when `KahanValid xs` holds. -/
@@ -1041,11 +1042,14 @@ def neumaier (xs : List Value) : Value :=
   let final := xs.foldl neumaierStep (0, 0)
   final.1 + final.2
 
+-- The refusal has 46,000 heartbeats: a selection rule `if a ≤ b then b else a` is compared with
+-- the branches of the step without unfolding the kernels of their sums.
 /--
 error: roundoff: no numerical rule for a loop whose real reference depends on its rounded
 accumulator; establish agreement of its branch conditions first
 -/
 #guard_msgs (whitespace := lax) in
+set_option maxHeartbeats 46000 in
 roundoff mixed theorem neumaier_mixedError :=
   fun (xs : List Value) (hformat : format.isIEEE = true) => ExecFloat.Binary.toReal (neumaier xs)
 
