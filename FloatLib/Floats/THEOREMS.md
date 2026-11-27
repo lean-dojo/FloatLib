@@ -2234,6 +2234,23 @@ containment, and its `toExtension_sound` theorem supplies the general contract a
 `@[interval_extension]` registers constant certificates or those proofs for the tactic to use.
 `Expr.call` supports any number of arguments and is reevaluated on each subdivision.
 
+A backend doesn't have to round every operation alike. `Backend.ofRoundings_sound` is the contract
+for three outward roundings on one endpoint type, one for the algebraic operations, one for
+quotients and one for the elementary functions, with a table of elementary enclosures, and
+`ofRounding_sound` is its instance with one rounding. `Backend.containsReal_elementaryWith` proves
+the table `Backend.elementaryWith` at every setting: a degree for each family of functions, the
+sharper sine and cosine (`containsReal_sharpSinBounds`, `containsReal_sharpCosBounds`), and
+Mathlib's total square root, arcsine, arccosine and logarithm (`Total.containsReal_sqrt`,
+`Total.containsReal_asin`, `Total.containsReal_acos`, `Total.containsReal_log?`). The roundings to
+a fixed grid, to a relative precision and to the grid for quotients contain every real member of
+their input (`containsReal_dyadicHull`, `containsReal_relativeHull`, `containsReal_quotientHull`),
+and so do the total operations of `Interval.Exact` under the conditions they document
+(`Exact.containsReal_mul`, `Exact.containsReal_div` and the others).
+`Backend.Standard.extensions_sound` covers the calls `π`, `x ^ y` and `e`. `Expr.value?_diagnose`
+says that `Expr.diagnose` keeps the value of the evaluation it explains, and
+`Enclosure.Affine.Expr.containsReal_affineRange?` that an affine range contains the value of the
+expression at every real point of the box. Import `FloatLib.Numerics.Enclosure` for all of them.
+
 Configured binary endpoints are available through
 `FloatLib.Floats.Formats.BinaryInterchange.Configured.Interval`.
 `ExecFloat.Binary.Interval.toModel_ofModel` and `ofModel_toModel` preserve complete endpoint

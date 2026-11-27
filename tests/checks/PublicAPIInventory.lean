@@ -17,8 +17,10 @@ This internal command emits a deterministic JSON inventory of declarations owned
 FloatLib modules. The root import is public while tests are private, so the environment can
 distinguish declarations available to ordinary users from declarations loaded only for audits.
 
-The classification is intentionally explicit. A newly imported module makes this command fail
-until its audience and compatibility status have been reviewed.
+A module gets the group and stability of its directory, and a module whose declarations came
+from another module keeps the classification they had there (`classifyMovedModule`). A module
+outside every listed directory makes this command fail until its audience and compatibility
+status have been reviewed.
 -/
 
 open Lean Lean.Elab Command
@@ -193,6 +195,7 @@ private def classifyMovedModule : String → Option (String × String)
   | "FloatLib.Tactic.ExecFloatSpec"
   | "FloatLib.Tactic.FloatDecide"
   | "FloatLib.Tactic.FormRule"
+  | "FloatLib.Tactic.KernelCheck"
   | "FloatLib.Tactic.KernelCost"
   | "FloatLib.Tactic.KernelEval"
   | "FloatLib.Tactic.KernelInline"

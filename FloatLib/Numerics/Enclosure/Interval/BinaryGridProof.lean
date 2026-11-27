@@ -15,7 +15,9 @@ public import FloatLib.Numerics.Enclosure.Interval.Real
 Signed integer division gives floor and ceiling bounds before anything is read in the reals. The
 four-corner theorems then enclose every real member of the input intervals, values between grid
 points included, while the runtime definitions compute with integers alone once the inputs are
-converted.
+converted. The enclosure of a rational `q` is the floor and the ceiling of `q * 2 ^ precision`
+(`enclose_lo_eq_floor`, `enclose_hi_eq_ceil`), and a coefficient `z` stands for
+`z / 2 ^ precision` (`toRat_eq_div`).
 -/
 
 @[expose] public section
@@ -43,6 +45,13 @@ private theorem real_scale_pos (precision : Nat) : (0 : ℝ) < scale precision :
 theorem cast_toRat (precision : Nat) (z : Int) :
     (toRat precision z : ℝ) = value precision z := by
   simp [toRat_def, value, Rat.divInt_eq_div]
+
+/-- The rational of a coefficient `z` is `z / 2 ^ precision`. -/
+theorem toRat_eq_div (precision : Nat) (z : Int) :
+    toRat precision z = (z : ℚ) / 2 ^ precision := by
+  rw [toRat_def, Rat.divInt_eq_div, scale_eq_pow]
+  push_cast
+  rfl
 
 /-- Real membership in a binary-grid interval is given by its scaled endpoint inequalities. -/
 @[simp]
@@ -217,6 +226,51 @@ theorem contains_enclose (precision : Nat) (q : ℚ) :
     toRat precision (enclose precision q).hi, rfl, rfl, ?_, ?_⟩
   · simpa [enclose_def, toRat_def, Rat.divInt_eq_div] using h.1
   · simpa [enclose_def, toRat_def, Rat.divInt_eq_div] using h.2
+
+/-- The lower quotient bound by a natural denominator is the floor of the quotient. -/
+private theorem divBounds_lo_eq_floor (a : Int) (d : Nat) :
+    (divBounds a d).lo = ⌊(a : ℚ) / d⌋ := by
+  rw [divBounds_def]
+  change a.fdiv d = _
+  rw [fdiv_eq_rat_floor, Int.cast_natCast]
+
+/-- The upper quotient bound by a nonzero natural denominator is the ceiling of the quotient. -/
+private theorem divBounds_hi_eq_ceil (a : Int) {d : Nat} (hd : d ≠ 0) :
+    (divBounds a d).hi = ⌈(a : ℚ) / d⌉ := by
+  have hlo := divBounds_lo_eq_floor a d
+  have hd' : (d : ℚ) ≠ 0 := by exact_mod_cast hd
+  have hfl := Int.floor_le ((a : ℚ) / d)
+  have hlt := Int.lt_floor_add_one ((a : ℚ) / d)
+  rw [divBounds_def] at hlo ⊢
+  change a.fdiv d = _ at hlo
+  change (if a.fdiv d * d = a then a.fdiv d else a.fdiv d + 1) = _
+  rw [hlo, eq_comm, Int.ceil_eq_iff]
+  split_ifs with hex
+  · have hc : (⌊(a : ℚ) / d⌋ : ℚ) = (a : ℚ) / d := by
+      rw [eq_div_iff hd']
+      exact_mod_cast hex
+    constructor <;> linarith
+  · have hne : (⌊(a : ℚ) / d⌋ : ℚ) ≠ (a : ℚ) / d :=
+      fun h ↦ hex (by exact_mod_cast (eq_div_iff hd').mp h)
+    push_cast
+    constructor <;> linarith [lt_of_le_of_ne hfl hne]
+
+/-- The shifted numerator of `q` over its denominator is `q * 2 ^ precision`. -/
+private theorem shiftLeft_num_div_den (precision : Nat) (q : ℚ) :
+    ((q.num <<< precision : Int) : ℚ) / q.den = q * 2 ^ precision := by
+  rw [Int.shiftLeft_eq, Int.cast_mul, mul_div_right_comm, Rat.num_div_den]
+  push_cast
+  rfl
+
+/-- The lower coefficient of the enclosure of `q` is the floor of `q * 2 ^ precision`. -/
+theorem enclose_lo_eq_floor (precision : Nat) (q : ℚ) :
+    (enclose precision q).lo = ⌊q * 2 ^ precision⌋ := by
+  rw [enclose_def, divBounds_lo_eq_floor, shiftLeft_num_div_den]
+
+/-- The upper coefficient of the enclosure of `q` is the ceiling of `q * 2 ^ precision`. -/
+theorem enclose_hi_eq_ceil (precision : Nat) (q : ℚ) :
+    (enclose precision q).hi = ⌈q * 2 ^ precision⌉ := by
+  rw [enclose_def, divBounds_hi_eq_ceil _ q.den_nz, shiftLeft_num_div_den]
 
 /-- Total outward rounding from exact rationals onto a fixed binary grid. -/
 def rounding (precision : Nat) : OutwardRounding Int ℚ where

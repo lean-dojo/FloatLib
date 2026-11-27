@@ -23,7 +23,8 @@ namespace FloatLib.Numerics.Interval
 
 variable {α β : Type*}
 
-private theorem binaryPow_eq_pow {M : Type*} [Monoid M] (x : M) (n : ℕ) :
+/-- Binary exponentiation computes the monoid power. -/
+theorem binaryPow_eq_pow {M : Type*} [Monoid M] (x : M) (n : ℕ) :
     npowBinRec n x = x ^ n := by
   induction n with
   | zero => simp [npowBinRec_zero]

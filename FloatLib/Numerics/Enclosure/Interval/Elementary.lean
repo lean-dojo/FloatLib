@@ -14,7 +14,8 @@ public import FloatLib.Numerics.Kernel.RootProof
 /-!
 # Elementary functions on rational intervals
 
-A monotone function needs only enclosures of its lower and upper endpoints. Sine and cosine aren't
+A monotone function needs only enclosures of its lower and upper endpoints (`monotoneBounds`, and
+`antitoneBounds` for a decreasing function, with the two ends exchanged). Sine and cosine aren't
 monotone, so they enclose the midpoint and add the half-width, using their global Lipschitz constant
 one. Intersecting with `[-1, 1]` keeps the bounds useful even when the requested Taylor degree is
 small.
@@ -42,6 +43,17 @@ evaluates the enclosure only once.
 def monotoneBounds (enclose : ℚ → Interval ℚ) (I : Interval ℚ) : Interval ℚ :=
   let lo := enclose I.lo
   if I.lo = I.hi then lo else ⟨lo.lo, (enclose I.hi).hi⟩
+
+/--
+Combine the lower enclosure at the right endpoint with the upper enclosure at the left, the
+counterpart of `monotoneBounds` for a decreasing function.
+
+Soundness requires an antitone real function and sound point enclosures. A point interval
+evaluates the enclosure only once.
+-/
+def antitoneBounds (enclose : ℚ → Interval ℚ) (I : Interval ℚ) : Interval ℚ :=
+  let hi := enclose I.lo
+  if I.lo = I.hi then hi else ⟨(enclose I.hi).lo, hi.hi⟩
 
 /-- Enclose the exponential on the whole interval, with the supplied Taylor degree. -/
 def expBounds (I : Interval ℚ) (terms : Nat) : Interval ℚ :=

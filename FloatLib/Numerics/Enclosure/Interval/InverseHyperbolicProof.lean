@@ -23,10 +23,6 @@ public section
 
 namespace FloatLib.Numerics.Interval
 
-private theorem containsReal_rationalPoint (q : ℚ) :
-    (point q).ContainsReal Internal.rationalOutwardRounding.decode (q : ℝ) := by
-  simp [containsReal_some_iff, Internal.rationalOutwardRounding, point]
-
 private theorem containsReal_asinhFormulaBounds? {I K : Interval ℚ} {terms precision : Nat}
     (h : Internal.asinhFormulaBounds? I terms precision = some K) {x : ℝ}
     (hx : I.ContainsReal some x) : K.ContainsReal some (Real.arsinh x) := by
@@ -34,7 +30,7 @@ private theorem containsReal_asinhFormulaBounds? {I K : Interval ℚ} {terms pre
   obtain ⟨S, hs, R, hr, T, ht, A, ha, hl⟩ := h
   have hsq := containsReal_pow? Internal.rationalOutwardRounding 2 hs hx
   have hrad := containsReal_add? Internal.rationalOutwardRounding hr
-    (containsReal_rationalPoint 1) hsq
+    (containsReal_point 1) hsq
   have hroot := containsReal_sqrtBounds? ht hrad
   have harg := containsReal_add? Internal.rationalOutwardRounding ha hx hroot
   simpa only [Real.arsinh, Rat.cast_one] using containsReal_logBounds? hl harg
@@ -46,10 +42,10 @@ private theorem containsReal_asinhPointBounds? {q : ℚ} {K : Interval ℚ}
   split at h
   · simp only [Option.bind_eq_bind, Option.bind_eq_some_iff] at h
     obtain ⟨J, hj, hn⟩ := h
-    have hvalue := containsReal_asinhFormulaBounds? hj (containsReal_rationalPoint (-q))
+    have hvalue := containsReal_asinhFormulaBounds? hj (containsReal_point (-q))
     simpa only [Internal.rationalOutwardRounding, Rat.cast_neg, Real.arsinh_neg, neg_neg]
       using containsReal_neg? Internal.rationalOutwardRounding hn hvalue
-  · exact containsReal_asinhFormulaBounds? h (containsReal_rationalPoint q)
+  · exact containsReal_asinhFormulaBounds? h (containsReal_point q)
 
 /-- Successful inverse hyperbolic sine bounds contain the image of every enclosed real value. -/
 theorem containsReal_asinhBounds? {I K : Interval ℚ} {terms precision : Nat}
@@ -75,7 +71,7 @@ theorem containsReal_acoshBounds? {I K : Interval ℚ} {terms precision : Nat}
     obtain ⟨S, hs, R, hr, T, ht, A, ha, hl⟩ := h
     have hsq := containsReal_pow? Internal.rationalOutwardRounding 2 hs hx
     have hrad := containsReal_sub? Internal.rationalOutwardRounding hr hsq
-      (containsReal_rationalPoint 1)
+      (containsReal_point 1)
     have hroot := containsReal_sqrtBounds? ht hrad
     have harg := containsReal_add? Internal.rationalOutwardRounding ha hx hroot
     simpa only [Real.arcosh, Rat.cast_one] using containsReal_logBounds? hl harg
@@ -91,13 +87,13 @@ theorem containsReal_atanhBounds? {I K : Interval ℚ} {terms : Nat}
     simp only [Option.bind_eq_bind, Option.bind_eq_some_iff] at h
     obtain ⟨N, hn, D, hd, Q, hq, L, hl, hm⟩ := h
     have hnum := containsReal_add? Internal.rationalOutwardRounding hn
-      (containsReal_rationalPoint 1) hx
+      (containsReal_point 1) hx
     have hden := containsReal_sub? Internal.rationalOutwardRounding hd
-      (containsReal_rationalPoint 1) hx
+      (containsReal_point 1) hx
     have hquot := containsReal_div? Internal.rationalOutwardRounding hq hnum hden
     have hlog := containsReal_logBounds? hl hquot
     have hresult := containsReal_mul? Internal.rationalOutwardRounding hm
-      (containsReal_rationalPoint (1 / 2)) hlog
+      (containsReal_point (1 / 2)) hlog
     have hxr := (containsReal_some_iff I x).mp hx
     have hdomainReal : (-1 : ℝ) < (I.lo : ℝ) ∧ (I.hi : ℝ) < 1 := by
       exact_mod_cast hdomain

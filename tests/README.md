@@ -47,7 +47,8 @@ root.
 
 The conformance modules are checked when they compile. Besides the format and operation
 contracts they cover the kernel path and its lane programs (`Tactic/FloatDecide`,
-`Tactic/LaneDecide`, `Tactic/LaneTable`, `Conformance/Formats/KernelPaths`, `Conformance/Numerics/KernelExact`), the generated
+`Tactic/KernelCheck`, `Tactic/LaneDecide`, `Tactic/LaneTable`, `Conformance/Formats/KernelPaths`,
+`Conformance/Numerics/KernelExact`), the generated
 `roundoff` theorems (`Tactic/Roundoff/Backward`, `Tactic/Roundoff/Closed`, `Tactic/Roundoff/MixedPrecision`,
 `Tactic/Roundoff/Block`, `Tactic/Roundoff/Shape`), the backend tags and what they refuse
 (`Tactic/KernelOptimize`, `Tactic/CompilerOptimize`), the block formats
@@ -56,6 +57,11 @@ stochastic rounding (`Numerics/Stochastic*`), the constraint route of `interval`
 (`Tactic/Interval/Constraints`: goal shapes, zero margins, sets without a box, hints,
 failure messages, the trace of the route, and certificates written by hand) and the bounds
 that its enclosure route gives `π` without a hypothesis (`Tactic/Interval/Constants`).
+
+The other modules under `Numerics/` test the interval evaluator on its own, without the tactic:
+exact and rounded endpoints (`Exact`, `Rounding`, `Roundings`), the table of elementary functions
+and its settings (`ElementaryTable`, `SharpTrig`, `Total`), the standard calls (`Standard`), the
+diagnosis of an evaluation that fails (`Diagnose`) and affine ranges (`Affine`, `AffineExpr`).
 
 Native suites cover models, public instances, rounding policies, integer kernels, tiny formats,
 transcendental kernels (behind the named `Configured.Transcendentals` import), exact
@@ -253,6 +259,8 @@ bash tests/checks/plain-file.sh
 | --- | --- |
 | `Check.lean` / `Oracle.lean` | Native driver; external-tool commands |
 | `FloatLibTests/Conformance/` | Symbolic API integration, automation, trust, and selected finite checks |
+| `FloatLibTests/Tactic/` | Tactics, commands and attributes: `roundoff`, `interval`, `float_decide`, the backend tags, `#float_info` |
+| `FloatLibTests/Numerics/` | Stochastic rounding, and the interval evaluator without the tactic |
 | `FloatLibTests/Regression/` | Executable arithmetic and backends |
 | `FloatLibTests/Fixtures/` | Shared encodings (also used by benchmarks) |
 | `FloatLibTests/Oracle/`, `Arb/`, `External/` | Vector emitters, Arb, process support |

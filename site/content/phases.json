@@ -687,6 +687,38 @@
           "title": "Custom outward rounders satisfy the expression contract"
         },
         {
+          "name": "FloatLib.Numerics.Interval.Backend.ofRoundings_sound",
+          "title": "Three roundings that decode alike and a sound table give a sound backend"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Exact.containsReal_mul",
+          "title": "Exact interval multiplication encloses real products"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.containsReal_quotientHull",
+          "title": "The grid for quotients rounds outward"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Backend.containsReal_elementaryWith",
+          "title": "Every setting of the elementary table is sound"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Backend.elementaryWith_legacy",
+          "title": "The legacy setting is the table of interval"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Backend.Standard.extensions_sound",
+          "title": "The standard calls for pi, real powers, and e are sound"
+        },
+        {
+          "name": "FloatLib.Numerics.Interval.Expr.diagnose_eq_success_iff",
+          "title": "A diagnosis succeeds exactly when evaluation with the zero rule does"
+        },
+        {
+          "name": "FloatLib.Numerics.Enclosure.Affine.Expr.containsReal_affineRange?",
+          "title": "Affine ranges contain the value at every point of the box"
+        },
+        {
           "name": "FloatLib.Numerics.Interval.Expr.check_sound",
           "title": "Certified bounds through midpoint subdivision"
         },

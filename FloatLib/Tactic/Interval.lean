@@ -9,7 +9,7 @@ module
 public meta import FloatLib.Tactic.Interval.Coeff
 public meta import FloatLib.Tactic.Interval.Diagnostics
 public meta import FloatLib.Tactic.Interval.Reify
-public meta import Lean.Elab.Tactic.Decide
+public meta import FloatLib.Tactic.KernelCheck
 public import FloatLib.Numerics.Coeff.Bound
 public import FloatLib.Numerics.Enclosure.Expression.BackendsProof
 public import FloatLib.Numerics.Enclosure.Expression.CheckProof
@@ -30,7 +30,9 @@ use the same checker, with nonnegative-real inputs supplying their zero lower bo
 Three options tune the search. `precision` sets the fractional endpoint bits, `degree` the
 elementary-function approximation degree, and `depth` the subdivision depth. Lean's kernel verifies
 a closed Boolean check, and the expression equality and the input bounds are proved as well. No
-sampled values enter the proof.
+sampled values enter the proof. The closed check goes through `KernelCheck.prove`, so the rules
+tagged `@[kernel_optimize]` rewrite it before the kernel decides it, as they do for
+`float_decide`.
 
 A bound over a whole domain, `∀ u : ℝ, …` for a trigonometric polynomial, `∀ x ∈ Set.Icc lo hi, …`
 for a power or Chebyshev series, or `∀ z : ℂ, ‖z‖ = 1 → …` for a polynomial in `z`, goes to the
@@ -49,14 +51,19 @@ namespace FloatLib.Numerics.Interval.Tactic
 def withCheckBudget {α : Type} (heartbeats : Nat) (action : TacticM α) : TacticM α := do
   if heartbeats == 0 then
     throwError "interval maxHeartbeats must be positive"
-  withOptions (fun opts => Elab.async.set (Lean.maxHeartbeats.set opts heartbeats) false) do
-    withCurrHeartbeats action
+  FloatLib.Tactic.KernelCheck.withBudget heartbeats action
 
-/-- Cache a closed decision proof only after the kernel has checked it within the budget. -/
+/--
+Prove the closed check `proposition` with `KernelCheck.prove` within the budget, so that the
+rules tagged `@[kernel_optimize]` apply to it, and store the proof as a fresh auxiliary lemma
+once the kernel has checked all of it. When the kernel rejects the check, the error is the
+kernel's own, which `resourceLimit?` reads.
+-/
 def verifyClosedCheck (proposition : Q(Prop)) (heartbeats : Nat) : TacticM Lean.Expr :=
   withCheckBudget heartbeats do
-    let proof ← withTransparency .all (mkDecideProof proposition)
-    let name ← mkAuxLemma [] proposition proof
+    let proof ← FloatLib.Tactic.KernelCheck.prove proposition
+      (maxHeartbeats := some heartbeats) (tactic := `interval)
+    let name ← mkAuxLemma [] proposition proof (cache := false)
     return mkConst name
 
 /-- A resource limit that stopped a verification attempt. -/
@@ -350,9 +357,9 @@ Prove a real or nonnegative-real inequality from rational bounds in the local co
 
 `interval (precision := 64) (degree := 16) (depth := 8)` uses a binary endpoint grid with 64
 fractional bits, degree-16 elementary enclosures, and at most eight midpoint subdivisions along any
-branch, and these are also the defaults. Each verification attempt and the failure diagnostics have
-budgets of 20,000 heartbeats apiece, even when the surrounding declaration disables heartbeat
-limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
+branch, and these are also the defaults. Each verification attempt and the failure diagnostics get
+`maxHeartbeats := 20000` apiece, in thousands of heartbeats, even when the surrounding declaration
+disables heartbeat limits. Use `(maxHeartbeats := 40000)` for a larger finite budget.
 
 Algebraic goals first use exact rational endpoints without subdivision, which keeps equality at
 non-dyadic hypothesis bounds. For arithmetic without registered calls, an advisory executable check

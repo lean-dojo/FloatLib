@@ -6,7 +6,7 @@ Authors: FloatLib Team
 
 module
 
-public import FloatLib.Numerics.Enclosure.Expression.Basic
+public import FloatLib.Numerics.Enclosure.Expression.ElementaryTable
 public import FloatLib.Numerics.Enclosure.Interval.Fused
 public import FloatLib.Numerics.Enclosure.Interval.InverseHyperbolic
 public import FloatLib.Numerics.Enclosure.Interval.InverseTrig
@@ -15,11 +15,13 @@ public import FloatLib.Numerics.Enclosure.Interval.Powers
 /-!
 # Rational and binary-grid expression backends
 
-There are three backends. `Backend.ofRounding` combines the interval operations with any rational
-outward rounder, `Backend.rational` keeps exact rational endpoints, and `Backend.binaryGrid` uses
-integer arithmetic for algebraic operations and rounds rational elementary-function bounds back onto
-its grid. All of them share the elementary enclosures and their domain checks, and `BackendsProof`
-proves the common `Backend.Sound` contract for each.
+`Backend.ofRoundings` combines the interval operations with three rational outward rounders on one
+endpoint carrier. One rounds the algebraic operations, one rounds reciprocals and quotients, and
+one rounds the elementary functions, whose enclosures come from a table that you pass in.
+`Backend.ofRounding` uses one rounder for all three and the table `elementaryBounds?`, and
+`Backend.rational` is that backend with exact rational endpoints. `Backend.binaryGrid` uses
+integer arithmetic for algebraic operations and rounds the bounds of `elementaryBounds?` back onto
+its grid. `BackendsProof` proves the common `Backend.Sound` contract for each.
 -/
 
 @[expose] public section
@@ -35,55 +37,61 @@ Arithmetic constructors return `none`, because each backend sends them to its ow
 Logarithm needs a positive lower endpoint and square root a nonnegative one. Inverse sine and cosine
 need inputs in `[-1, 1]`, and tangent needs a cosine enclosure that excludes zero.
 -/
-def elementaryBounds? (config : Config) : UnaryOp → Interval ℚ → Option (Interval ℚ)
-  | .exp, I => some (expBounds I config.degree)
-  | .log, I => logBounds? I config.degree
-  | .sin, I => some (sinBounds I config.degree)
-  | .cos, I => some (cosBounds I config.degree)
-  | .tan, I => tanBounds? I config.degree
-  | .asin, I => asinBounds? I config.degree config.precision
-  | .acos, I => acosBounds? I config.degree config.precision
-  | .atan, I => some (atanBounds I config.degree)
-  | .sinh, I => some (sinhBounds I config.degree)
-  | .cosh, I => some (coshBounds I config.degree)
-  | .tanh, I => some (tanhBounds I config.degree)
-  | .sqrt, I => sqrtBounds? I config.precision
-  | _, _ => none
+def elementaryBounds? (config : Config) : UnaryOp → Interval ℚ → Option (Interval ℚ) :=
+  elementaryWith (.legacy config)
 
 /--
-Build an expression backend from a partial rational outward rounder.
+Build an expression backend from three partial rational outward rounders on one endpoint carrier
+and a table of rational elementary enclosures.
+
+`algebra` encloses constants and rounds negation, absolute value, natural powers, addition,
+subtraction, multiplication, minimum, maximum and fused multiply-add. `quotient` rounds
+reciprocals and quotients, and `elementary` rounds the enclosures that `table` gives for the
+other unary operations. Each operation decodes its inputs with the rounder of its result,
+computes rational bounds exactly and then rounds them outward. The backend reads endpoints with
+`algebra.decode`, so `ofRoundings_sound` asks the three decoders to agree. Failed decoding, a
+domain that the operation or the table rejects, and bounds that a rounder cannot represent all
+give `none`.
+-/
+def ofRoundings (algebra quotient elementary : OutwardRounding α ℚ)
+    (table : UnaryOp → Interval ℚ → Option (Interval ℚ)) : Backend α where
+  decode := algebra.decode
+  const? := algebra.enclose?
+  unary? op I :=
+    match op with
+    | .neg => neg? algebra I
+    | .abs => abs? algebra I
+    | .inv => inv? quotient I
+    | .pow n => pow? algebra I n
+    | _ =>
+      match I.decode? elementary.decode with
+      | none => none
+      | some a =>
+        match table op a with
+        | none => none
+        | some b => encloseInterval? elementary b
+  binary? op I J :=
+    match op with
+    | .add => add? algebra I J
+    | .sub => sub? algebra I J
+    | .mul => mul? algebra I J
+    | .div => div? quotient I J
+    | .min => min? algebra I J
+    | .max => max? algebra I J
+  ternary? op I J K :=
+    match op with
+    | .fma => fma? algebra I J K
+
+/--
+Build an expression backend from one partial rational outward rounder: `ofRoundings` with `R`
+for every operation and the elementary enclosures `elementaryBounds? config`.
 
 Algebraic operations compute exact rational endpoint bounds before rounding. Elementary
 operations first produce rational enclosures at the configured accuracy, then round outward.
 Failed decoding, rejected domains, and unrepresentable output bounds propagate as `none`.
 -/
-def ofRounding (R : OutwardRounding α ℚ) (config : Config := {}) : Backend α where
-  decode := R.decode
-  const? := R.enclose?
-  unary? op I :=
-    match op with
-    | .neg => neg? R I
-    | .abs => abs? R I
-    | .inv => inv? R I
-    | .pow n => pow? R I n
-    | _ =>
-      match I.decode? R.decode with
-      | none => none
-      | some a =>
-        match elementaryBounds? config op a with
-        | none => none
-        | some b => encloseInterval? R b
-  binary? op I J :=
-    match op with
-    | .add => add? R I J
-    | .sub => sub? R I J
-    | .mul => mul? R I J
-    | .div => div? R I J
-    | .min => min? R I J
-    | .max => max? R I J
-  ternary? op I J K :=
-    match op with
-    | .fma => fma? R I J K
+def ofRounding (R : OutwardRounding α ℚ) (config : Config := {}) : Backend α :=
+  ofRoundings R R R (elementaryBounds? config)
 
 /-- Exact rational endpoints, with configurable rational elementary-function enclosures. -/
 def rational (config : Config := {}) : Backend ℚ :=

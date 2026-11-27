@@ -634,6 +634,14 @@
     "url": "https://coqinterval.gitlabpages.inria.fr/"
   },
   {
+    "key": "andradeCombaStolfi1994",
+    "authors": "Marcus Vinicius Alvim Andrade, João Luiz Dihl Comba, and Jorge Stolfi",
+    "title": "Affine Arithmetic",
+    "venue": "Interval'94, St. Petersburg, authors' draft",
+    "year": "1994",
+    "url": "https://graphics.stanford.edu/~comba/papers/aa-93-12-petersburg-paper.pdf"
+  },
+  {
     "key": "fejer1916",
     "authors": "Lipót Fejér",
     "title": "Über trigonometrische Polynome",
@@ -741,7 +749,7 @@
   {
     "key": "iso9899_2024",
     "authors": "ISO/IEC JTC 1/SC 22/WG 14",
-    "title": "Programming languages — C, working draft N3220 of ISO/IEC 9899:2024",
+    "title": "Programming languages: C, working draft N3220 of ISO/IEC 9899:2024",
     "venue": "Annex F, ISO/IEC 60559 floating-point arithmetic",
     "year": "2024",
     "url": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf"

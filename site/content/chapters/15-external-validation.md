@@ -33,7 +33,7 @@ For the wider formats we turn to Berkeley TestFloat [@hauserTestFloat], backed b
 
 The level-1 matrix also covers conversions between binary32 and bfloat16. We checked non-NaN results bit for bit, NaN results by class, and all five exception flags. A run that returns the expected value with a missing flag fails.
 
-All 210 campaigns passed, comprising 127,741,704 vectors with zero value or flag mismatches. [Figure 12.13](#/chapter/performance/figure-suites-testfloat) gives the counts by format. TestFloat calls the model operations. The level-2 smoke run exercises the complete generators for three functions. The campaign excludes binary80, decimal formats, round-to-odd and tininess-before-rounding.
+All 210 campaigns passed, comprising 127,741,704 vectors with zero value or flag mismatches. [Figure 12.12](#/chapter/performance/figure-suites-testfloat) gives the counts by format. TestFloat calls the model operations. The level-2 smoke run exercises the complete generators for three functions. The campaign excludes binary80, decimal formats, round-to-odd and tininess-before-rounding.
 
 Separately, IBM's test generator FPgen [@ibmFpgen] supplies more inputs, and the SMT solver Z3 [@z3], a program that decides logical formulas, checks bounded ground cases (concrete cases with no unknowns) in SMT-LIB's floating-point logic QF_FP [@smtLibQfFp]. SMT, short for satisfiability modulo theories, treats floating-point NaNs abstractly, so the Z3 adapter checks the exact encoding where the theory pins it down and the class where it doesn't.
 

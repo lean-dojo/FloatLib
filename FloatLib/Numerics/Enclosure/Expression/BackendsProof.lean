@@ -12,12 +12,18 @@ public import FloatLib.Numerics.Enclosure.Interval.FusedProof
 public import FloatLib.Numerics.Enclosure.Interval.HyperbolicProof
 public import FloatLib.Numerics.Enclosure.Interval.InverseTrigProof
 
+import FloatLib.Numerics.Enclosure.Expression.ElementaryTableProof
+
 /-!
 # Real-containment contracts for expression backends
 
-The elementary-function proofs hold for every real member of the input interval, and outward
-rounding preserves those bounds when they're stored in another endpoint format. For its algebraic
-operations, the integer backend uses the binary-grid arithmetic theorems themselves.
+The elementary enclosures contain the function value at every real member of the input
+interval, and outward rounding keeps those bounds when they're stored in another endpoint format.
+`containsReal_elementaryBounds?` is the containment theorem of `Backend.elementaryWith` at its
+legacy settings. `ofRoundings_sound` asks for that contract from the table it is given and for
+three rounders that read endpoints alike, and `ofRounding_sound` and `rational_sound` are its
+instances. For its algebraic operations, the integer backend uses the binary-grid arithmetic
+theorems themselves.
 -/
 
 public section
@@ -26,102 +32,89 @@ namespace FloatLib.Numerics.Interval.Backend
 
 variable {α : Type*}
 
-/-- Successful elementary enclosures contain the function value at every real input member. -/
+/--
+Successful elementary enclosures contain the function value at every real input member: the table
+`elementaryWith` at its legacy settings (`containsReal_elementaryWith`, `elementaryWith_legacy`).
+-/
 theorem containsReal_elementaryBounds? (config : Config) {op : UnaryOp}
     {I J : Interval ℚ} (h : elementaryBounds? config op I = some J)
-    {x : ℝ} (hx : I.ContainsReal some x) : J.ContainsReal some (op.eval x) := by
-  cases op with
-  | neg | abs | inv | pow => simp [elementaryBounds?] at h
-  | exp =>
-    cases Option.some.inj h
-    exact containsReal_expBounds I config.degree hx
-  | log => exact containsReal_logBounds? h hx
-  | sin =>
-    cases Option.some.inj h
-    exact containsReal_sinBounds I config.degree hx
-  | cos =>
-    cases Option.some.inj h
-    exact containsReal_cosBounds I config.degree hx
-  | tan => exact containsReal_tanBounds? h hx
-  | asin => exact containsReal_asinBounds? h hx
-  | acos => exact containsReal_acosBounds? h hx
-  | atan =>
-    cases Option.some.inj h
-    exact containsReal_atanBounds I config.degree hx
-  | sinh =>
-    cases Option.some.inj h
-    exact containsReal_sinhBounds I config.degree hx
-  | cosh =>
-    cases Option.some.inj h
-    exact containsReal_coshBounds I config.degree hx
-  | tanh =>
-    cases Option.some.inj h
-    exact containsReal_tanhBounds I config.degree hx
-  | sqrt => exact containsReal_sqrtBounds? h hx
+    {x : ℝ} (hx : I.ContainsReal some x) : J.ContainsReal some (op.eval x) :=
+  containsReal_elementaryWith (.legacy config)
+    ((congrFun (congrFun (elementaryWith_legacy config) op) I).trans h) hx
 
-private theorem containsReal_roundElementary? (R : OutwardRounding α ℚ)
-    (config : Config) (op : UnaryOp) {I J : Interval α}
+/-- The elementary step of `ofRoundings`: decode with `R`, enclose with `table` and round outward
+with `R`. When every enclosure of `table` contains the function value, so does the result. -/
+private theorem containsReal_roundTable? (R : OutwardRounding α ℚ)
+    {table : UnaryOp → Interval ℚ → Option (Interval ℚ)}
+    (htable : ∀ {op : UnaryOp} {I J : Interval ℚ}, table op I = some J →
+      ∀ {x : ℝ}, I.ContainsReal some x → J.ContainsReal some (op.eval x))
+    (op : UnaryOp) {I J : Interval α}
     (h : (match I.decode? R.decode with
       | none => none
       | some a =>
-        match elementaryBounds? config op a with
+        match table op a with
         | none => none
         | some b => encloseInterval? R b) = some J)
     {x : ℝ} (hx : I.ContainsReal R.decode x) : J.ContainsReal R.decode (op.eval x) := by
   cases ha : I.decode? R.decode with
   | none => simp [ha] at h
   | some a =>
-    cases hb : elementaryBounds? config op a with
+    cases hb : table op a with
     | none => simp [ha, hb] at h
     | some b =>
       have hxa : a.ContainsReal some x := by
         simpa [ContainsReal, Contains] using (containsReal_iff_of_decode? ha x).mp hx
-      have hxb := containsReal_elementaryBounds? config hb hxa
       exact containsReal_encloseInterval? R (by simpa [ha, hb] using h)
-        (by simpa [ContainsReal, Contains] using hxb)
+        (by simpa [ContainsReal, Contains] using htable hb hxa)
+
+/--
+Three rational outward rounders that decode endpoints alike, and a table whose successful
+enclosures contain the function value at every real member of the input, give a sound expression
+backend. `containsReal_elementaryBounds?` is this contract for `elementaryBounds?`.
+-/
+theorem ofRoundings_sound (algebra quotient elementary : OutwardRounding α ℚ)
+    (table : UnaryOp → Interval ℚ → Option (Interval ℚ))
+    (hquotient : quotient.decode = algebra.decode)
+    (helementary : elementary.decode = algebra.decode)
+    (htable : ∀ {op : UnaryOp} {I J : Interval ℚ}, table op I = some J →
+      ∀ {x : ℝ}, I.ContainsReal some x → J.ContainsReal some (op.eval x)) :
+    (ofRoundings algebra quotient elementary table).Sound := by
+  obtain ⟨_, quotientEnclose, quotientSound⟩ := quotient
+  obtain ⟨_, elementaryEnclose, elementarySound⟩ := elementary
+  dsimp only at hquotient helementary
+  subst hquotient helementary
+  set quotient : OutwardRounding α ℚ := ⟨algebra.decode, quotientEnclose, quotientSound⟩
+  set elementary : OutwardRounding α ℚ := ⟨algebra.decode, elementaryEnclose, elementarySound⟩
+  constructor
+  · intro q I h
+    obtain ⟨lo, hi, hlo, hhi, hl, hh⟩ := algebra.sound h
+    exact ⟨(lo : ℝ), (hi : ℝ), by simp [ofRoundings, hlo], by simp [ofRoundings, hhi],
+      by exact_mod_cast hl, by exact_mod_cast hh⟩
+  · intro op I J x h hx
+    cases op with
+    | neg => exact containsReal_neg? algebra h hx
+    | abs => exact containsReal_abs? algebra h hx
+    | inv => exact containsReal_inv? quotient h hx
+    | pow n => exact containsReal_pow? algebra n h hx
+    | _ => exact containsReal_roundTable? elementary htable _ h hx
+  · intro op I J K x y h hx hy
+    cases op with
+    | add => exact containsReal_add? algebra h hx hy
+    | sub => exact containsReal_sub? algebra h hx hy
+    | mul => exact containsReal_mul? algebra h hx hy
+    | div => exact containsReal_div? quotient h hx hy
+    | min => exact containsReal_min? algebra h hx hy
+    | max => exact containsReal_max? algebra h hx hy
+  · intro op I J K L x y z h hx hy hz
+    cases op with
+    | fma => exact containsReal_fma? algebra h hx hy hz
+  · intros
+    contradiction
 
 /-- Any sound rational outward rounder supplies a sound expression backend. -/
 theorem ofRounding_sound (R : OutwardRounding α ℚ) (config : Config := {}) :
-    (ofRounding R config).Sound where
-  const := by
-    intro q I h
-    obtain ⟨lo, hi, hlo, hhi, hl, hh⟩ := R.sound h
-    exact ⟨(lo : ℝ), (hi : ℝ), by simp [ofRounding, hlo], by simp [ofRounding, hhi],
-      by exact_mod_cast hl, by exact_mod_cast hh⟩
-  unary := by
-    intro op I J x h hx
-    cases op with
-    | neg => exact containsReal_neg? R h hx
-    | abs => exact containsReal_abs? R h hx
-    | inv => exact containsReal_inv? R h hx
-    | pow n => exact containsReal_pow? R n h hx
-    | exp => exact containsReal_roundElementary? R config .exp h hx
-    | log => exact containsReal_roundElementary? R config .log h hx
-    | sin => exact containsReal_roundElementary? R config .sin h hx
-    | cos => exact containsReal_roundElementary? R config .cos h hx
-    | tan => exact containsReal_roundElementary? R config .tan h hx
-    | asin => exact containsReal_roundElementary? R config .asin h hx
-    | acos => exact containsReal_roundElementary? R config .acos h hx
-    | atan => exact containsReal_roundElementary? R config .atan h hx
-    | sinh => exact containsReal_roundElementary? R config .sinh h hx
-    | cosh => exact containsReal_roundElementary? R config .cosh h hx
-    | tanh => exact containsReal_roundElementary? R config .tanh h hx
-    | sqrt => exact containsReal_roundElementary? R config .sqrt h hx
-  binary := by
-    intro op I J K x y h hx hy
-    cases op with
-    | add => exact containsReal_add? R h hx hy
-    | sub => exact containsReal_sub? R h hx hy
-    | mul => exact containsReal_mul? R h hx hy
-    | div => exact containsReal_div? R h hx hy
-    | min => exact containsReal_min? R h hx hy
-    | max => exact containsReal_max? R h hx hy
-  ternary := by
-    intro op I J K L x y z h hx hy hz
-    cases op with
-    | fma => exact containsReal_fma? R h hx hy hz
-
-  call := by intros; contradiction
+    (ofRounding R config).Sound :=
+  ofRoundings_sound R R R _ rfl rfl (containsReal_elementaryBounds? config)
 
 /-- Exact rational endpoints satisfy the common real-containment contract. -/
 theorem rational_sound (config : Config := {}) : (rational config).Sound :=
@@ -160,8 +153,8 @@ theorem binaryGrid_sound (config : Config := {}) : (binaryGrid config).Sound whe
         exact BinaryGrid.containsReal_pow config.precision hx n
     | exp | log | sin | cos | tan | asin | acos | atan | sinh | cosh | tanh | sqrt =>
       apply (ofRounding_sound (BinaryGrid.rounding config.precision) config).unary _ hx
-      simpa [ofRounding, binaryGrid, decode?, BinaryGrid.decode, BinaryGrid.rounding,
-        encloseInterval?, map] using h
+      simpa [ofRounding, ofRoundings, binaryGrid, decode?, BinaryGrid.decode,
+        BinaryGrid.rounding, encloseInterval?, map] using h
   binary := by
     intro op I J K x y h hx hy
     simp only [binaryGrid] at hx hy ⊢

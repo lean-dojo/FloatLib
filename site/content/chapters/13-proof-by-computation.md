@@ -149,6 +149,42 @@ example : reference 2 3 = 5 := by float_decide
 
 `@[kernel_optimize ←]` uses an equality in reverse. `@[kernel_optimize unfold]` exposes the body of a wrapper, such as a definition that selects an operation by rounding direction. When multiple rules match, the smaller declared cost gives a rule priority. `KernelForm` supplies the equations that connect public arithmetic and its notation to a format's kernel implementation.
 
+### Who else uses the rules?
+
+`interval` does. `float_decide` is `KernelCheck.prove` applied to the main goal, and `interval` checks its evaluations, such as `Expr.checkZero … = true`, with the same function, so a rule you tag once reaches both. [The kernel check](https://github.com/lean-dojo/FloatLib/blob/main/FloatLib/Tactic/KernelCheck.lean) rewrites the statement with the tagged rules, cheapest first, and the kernel then decides what's left, which is stored as one auxiliary lemma. A tactic of your own can call it on any closed decidable statement and get the proof term back.
+
+Say we have a definition that rebuilds a number one successor at a time, so the kernel would unfold it a million times for the statement below. One rule turns it into the number itself, and a three-line tactic of ours gets the same rewrite as `float_decide`:
+
+```lean standalone
+import FloatLib.Tactic.FloatDecide
+
+/-- `n`, rebuilt one successor at a time. -/
+def countUp : Nat → Nat
+  | 0 => 0
+  | n + 1 => countUp n + 1
+
+@[kernel_optimize (cost := 1)]
+theorem countUp_eq (n : Nat) : countUp n = n := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [countUp, ih]
+
+open Lean Elab Tactic in
+/-- A tactic of our own on the checker of `float_decide`. -/
+elab "count_check" : tactic => do
+  let goal ← getMainGoal
+  goal.assign (← FloatLib.Tactic.KernelCheck.prove (← goal.getType) (tactic := `count_check))
+  replaceMainGoal []
+
+example : countUp 1000000 + 1 = 1000001 := by count_check
+
+example : countUp 1000000 + 1 = 1000001 := by float_decide
+```
+
+Without a heartbeat budget, a false statement fails with the messages of `float_decide` under the caller's name, here `count_check: the statement is false`.
+
+The rewrite changes the statement it's given, not the definitions that the kernel unfolds later while it evaluates. So a rule reaches a caller only when its left side matches a term of the decided statement. For `interval` that means a rule about `Expr.checkZero`, `Constraint.refutes` or the constant of a backend, and a rule about an operation that only their bodies call never applies. The rules for core Lean's integers and rationals do rewrite the numbers written in a statement, and each rewrite adds to the stored proof. A rational written as `Kernel.Q.mk` of raw literals, which is how the constraint search of `interval` writes the cut points of its certificates, is in kernel form already, so the built-in rules leave it alone.
+
 ### What about compiled code?
 
 For compiled execution, `@[compiler_optimize]` registers a candidate implementing a specification. Its certificate supplies the function to run, a cost estimate, and the proof that the function computes the specification. A candidate can return `none` for formats it does not serve. Here is a candidate that adds the coefficients of decimal fixed-point numbers in reverse order.

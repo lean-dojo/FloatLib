@@ -18,7 +18,7 @@ The figures follow the figure rules of the library: an image holds only the plot
 | Figure 10 | `kernel-exact-library` | Time of FloatLib's own exact arithmetic and of the interval tactic. |
 | Figure 11 | `kernel-exact-native` | Time to prove one closed statement by decide +kernel on the kernel layer of FloatLib and by native_decide. |
 | Figure 12 | `kernel-checkers` | Time the independent checkers of Lean proofs take on the kernel proofs of FloatLib, by family of proofs. |
-| Figure 13 | `interval-corpora` | Goals closed on four test corpora (169 goals) by FloatLib's interval tactic, by Mathlib's dyadic_interval and by SymLean's cega. |
+| Figure 13 | `interval-corpora` | Goals closed on three test corpora (113 goals) by FloatLib's interval tactic and by Mathlib's dyadic_interval. |
 | Figure 14 | `correctly-rounded` | Compiled time of one call of each correctly rounded function of FloatLib by format width: 34 real functions and 18 complex functions. |
 | Figure 15 | `compiled-precision` | Time per operation against format width, both on logarithmic scales. |
 | Figure 16 | `suites-fpbench` | FPBench: what FloatLib's roundoff tactic proves, and its proved bounds against FPTaylor and Gappa. |
@@ -367,15 +367,15 @@ Inputs: `benchmarks/kernel/checkers.csv`.
 
 ## Figure 13: interval-corpora
 
-![Four groups of three horizontal bars, one group per test corpus and one bar per tactic, on an axis from 0 to 100 percent; each bar ends in its count of closed goals out of the goals of the corpus.](figures/interval-corpora.png "Goals closed on four test corpora (169 goals) by FloatLib's interval tactic, by Mathlib's dyadic_interval and by SymLean's cega. A bar is the share of a corpus that one tactic call per goal closes, with the count at its end; a count says what a tactic did on that corpus, not what it does on all goals. Recorded on 2026-11-16 with Lean 4.35.0, and not run again by the timing mode.")
+![Three groups of two horizontal bars, one group per test corpus and one bar per tactic, on an axis from 0 to 100 percent. Each bar ends in its count of closed goals out of the goals of the corpus.](figures/interval-corpora.png "Goals closed on three test corpora (113 goals) by FloatLib's interval tactic and by Mathlib's dyadic_interval. A bar is the share of a corpus that one tactic call per goal closes, with the count at its end. A count says what a tactic did on that corpus, not what it does on all goals. Recorded on 2026-11-16 with Lean 4.35.0, and not run again by the timing mode.")
 
-**Figure 13.** Goals closed on four test corpora (169 goals) by FloatLib's interval tactic, by Mathlib's dyadic_interval and by SymLean's cega. A bar is the share of a corpus that one tactic call per goal closes, with the count at its end; a count says what a tactic did on that corpus, not what it does on all goals. Recorded on 2026-11-16 with Lean 4.35.0, and not run again by the timing mode.
+**Figure 13.** Goals closed on three test corpora (113 goals) by FloatLib's interval tactic and by Mathlib's dyadic_interval. A bar is the share of a corpus that one tactic call per goal closes, with the count at its end. A count says what a tactic did on that corpus, not what it does on all goals. Recorded on 2026-11-16 with Lean 4.35.0, and not run again by the timing mode.
 
-Alt text: Four groups of three horizontal bars, one group per test corpus and one bar per tactic, on an axis from 0 to 100 percent; each bar ends in its count of closed goals out of the goals of the corpus.
+Alt text: Three groups of two horizontal bars, one group per test corpus and one bar per tactic, on an axis from 0 to 100 percent. Each bar ends in its count of closed goals out of the goals of the corpus.
 
-Notes: Each goal is its own file with one tactic call and its axioms checked: Mathlib's `dyadic_interval` (66 closed), SymLean's `cega` (108) and `interval` (161). The CSV has the median time of a closed goal, which is mostly the imports of its file. The corpora are other projects' test files and are not in this repository, so the timing mode does not run them; the time of `interval` on FloatLib's own examples is in `kernel-exact-library`. From Lean: whether each goal closed, and its time. From scripts: the counts and medians.
+Notes: Each goal is its own file with one tactic call and its axioms checked. Of the 113 goals, Mathlib's `dyadic_interval` closed 57 and `interval` closed 106. The CSV has the median time of a closed goal, which is mostly the imports of its file. The goal files are not in this repository, so the timing mode does not run them. The time of `interval` on FloatLib's own examples is in `kernel-exact-library`. From Lean: whether each goal closed, and its time. From scripts: the counts and medians.
 
-Files: `figures/interval-corpora.png`, `figures/interval-corpora.pdf`, `figures/interval-corpora.csv` (12 rows).
+Files: `figures/interval-corpora.png`, `figures/interval-corpora.pdf`, `figures/interval-corpora.csv` (6 rows).
 
 CSV columns:
 

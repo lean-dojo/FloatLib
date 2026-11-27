@@ -190,6 +190,11 @@ example (mode : IEEERoundingMode) (hq : toRat? x = some q) (hpos : 0 < q) :
     RoundsTo FloatFormat.binary32 mode (Real.sqrt q)⁻¹ false (Directed.rSqrt x mode).value :=
   Directed.rSqrt_roundsTo hq hpos
 
+-- Binary32 has signed zeros, so that result carries the sign bit of a positive value.
+example (mode : IEEERoundingMode) (hq : toRat? x = some q) (hpos : 0 < q) :
+    Model.signBit (Directed.rSqrt x mode).value = false :=
+  (Directed.rSqrt_roundsTo hq hpos).signBit_of_isIEEE rfl
+
 example (mode : IEEERoundingMode) (hx : toRat? x = some p) (hy : toRat? y = some q)
     (hne : p ≠ 0 ∨ q ≠ 0) :
     RoundsTo FloatFormat.binary32 mode (Real.sqrt ((p : ℝ) ^ 2 + (q : ℝ) ^ 2)) false

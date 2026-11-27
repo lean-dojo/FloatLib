@@ -64,6 +64,39 @@ FloatLib's exact arithmetic took 11.5 ms with `decide +kernel` and 13.1 ms with
 `native_decide`. See the [floating-point timings](benchmarks/results/kernel/README.md#three-theorems-about-loops-of-1000-steps)
 and [exact arithmetic timings](benchmarks/results/exact/native.md).
 
+## New in 4.2.0
+
+Some new stuff added, mostly in the interval evaluator underneath `interval`, which you can also
+run on its own:
+
+- **One kernel checker.** [`KernelCheck.prove`](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation/who-else-uses-the-rules)
+  checks the goal of `float_decide` and the evaluations of `interval`, and your own tactic can
+  call it too.
+- **Exact intervals.** `Interval.Exact` always returns rational endpoints without rounding. For
+  division, those endpoints enclose the quotient when the denominator interval excludes zero.
+- **Outward roundings.** Rational endpoints go onto a fixed grid, an input-dependent grid with
+  about `bits` significant bits or a grid for quotients. `Backend.ofRoundings` takes one rounding
+  each for the algebraic operations, the quotients and the elementary functions.
+- **One table of elementary enclosures.** `Backend.elementaryWith` takes a degree for each family
+  of functions, and its legacy setting is exactly the table `interval` uses.
+- **Sharper sine and cosine.** `sharpTrig` uses endpoint values to narrow the rounded midpoint
+  enclosure on monotone intervals. At 64 fractional bits, sine on `[0, 1]` gets about `[0, 0.8415]`
+  instead of `[-0.0206, 0.9795]`. A coarse grid can be wider than the unrounded bound; tangent
+  falls back to the unrounded bound if the rounded cosine enclosure contains zero.
+- **Total functions.** With `total := true`, the square root, logarithm, arcsine and arccosine
+  take their total values outside their usual domains, so the square root of `[-1, 4]` is exactly
+  `[0, 2]`. The logarithm accepts `[0, 0]` and strictly negative intervals only with
+  `gridExpLog := none`.
+- **π, e and real powers** are standard calls of the evaluator (`Backend.Standard.extensions`).
+- **Failure diagnosis.** `Expr.diagnose` names the variable or the operation where an evaluation
+  failed.
+- **Affine arithmetic.** `Enclosure.Affine.Expr.affineRange?` keeps track of a variable that
+  occurs twice, so `x * (1 - x)` on `[0, 1]` comes out as `[0, 1/4]` instead of `[0, 1]`.
+
+Every enclosure comes with its containment theorem, and the
+[guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/how-to-round-each-kind-of-operation-differently)
+works through examples.
+
 ## What you can work with
 
 - **Proof by computation.** `float_decide` proves closed, decidable statements by rewriting
@@ -78,9 +111,10 @@ and [exact arithmetic timings](benchmarks/results/exact/native.md).
   [guide](https://lean-dojo.github.io/FloatLib/#/chapter/proof-by-computation) gives examples
   and lists the operations with kernel rules for each format.
 - **Backend registration.** Tag a proved equation with `@[kernel_optimize]` to make it available
-  to `float_decide`, or tag a certified implementation with `@[compiler_optimize]` to make it
-  available to the compiled planner. Both require a complete proof using only Lean's three
-  standard axioms. `#kernel_rules` and `#compiler_backends` list the available implementations.
+  to `float_decide` and `interval`, or tag a certified implementation with `@[compiler_optimize]`
+  to make it available to the compiled planner. Both require a complete proof using only Lean's
+  three standard axioms. `#kernel_rules` and `#compiler_backends` list the available
+  implementations.
 - **Exact arithmetic in the kernel.** `Numerics.Kernel` provides integers, rationals, dyadics
   and real and complex enclosures for checking numerical certificates. Its arithmetic operations
   have proofs relating them to ordinary arithmetic. The packed-row operations can check a dot
@@ -161,10 +195,10 @@ and [exact arithmetic timings](benchmarks/results/exact/native.md).
   bounded on one side only has a range with an infinite end, and the enclosures work on it. A
   comparison in one variable whose two sides meet at an end of the range, such as
   `1 + x ≤ Real.exp x` at zero, is decided by the sign of a derivative, and `∃ x : ℝ, P x` by
-  a witness that the tactic finds. On the 169 goals of four projects' test suites it
-  closes 161. Affine quantization has a real-valued specification with a rounding rule you
-  supply, plus a proof connecting nearest-even quantization to the executable rational
-  implementation. See the
+  a witness that the tactic finds. On November 16, 2026, using Lean 4.35.0, `interval` closed
+  46 of 52 FloatLib tests and 60 of 61 external goals. Affine quantization has a real-valued
+  specification with a rounding rule you supply, plus a proof connecting nearest-even quantization
+  to the executable rational implementation. See the
   [guide](https://lean-dojo.github.io/FloatLib/#/chapter/proving-numerical-bounds/how-to-prove-that-constraints-have-no-common-point).
 - **Bounds from coefficients.** The same `interval` tactic proves bounds over a whole domain
   from coefficients: trigonometric polynomials with cosine and sine terms on the circle, power

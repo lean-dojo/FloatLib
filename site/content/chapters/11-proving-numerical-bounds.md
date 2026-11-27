@@ -96,9 +96,9 @@ example (x : ℝ) (hx : x ∈ Set.Icc 0 (1 / 3 : ℝ)) : x ≤ 1 / 3 := by
 ```
 
 Every successful goal needs a certificate checked by the kernel, the small core of Lean that checks
-every proof. Each attempt gets its own 20,000 heartbeats (Lean's measure of tactic work), even when
-the surrounding declaration sets `maxHeartbeats` to zero. `interval (maxHeartbeats := 40000)` asks
-for more, and every failure restores the original goal.
+every proof. Each attempt gets its own `maxHeartbeats := 20000`, in thousands of heartbeats, even
+when the surrounding declaration sets `maxHeartbeats` to zero. `interval (maxHeartbeats := 40000)`
+asks for more, and every failure restores the original goal.
 
 ## What can a goal contain?
 
@@ -372,19 +372,18 @@ example (x y : ℝ) (h : x ^ 2 + y ^ 2 + Real.cos x ≤ 2) (h' : x * y > 4) : Fa
 
 When the tactic fails, the message names the box where the search stopped, the constraints that are undecided there with the enclosures that fail to exclude them, and the limit that stopped it. You get the same report when the declaration is about to run out of heartbeats: the tactic stops while there is still time to say where it stands. If every constraint holds on a whole box, it says so: the set isn't empty and the goal is false as stated, unless some hypothesis was not read as a constraint, in which case the message lists those. A failed call leaves the goal as it was, and `set_option trace.interval.constraints true` lists the steps it took.
 
-### How much does `interval` prove on other projects' goals?
+### How many goals did `interval` close?
 
-We measured on goals we didn't write for this engine: the tests of `interval` in FloatLib, of `dyadic_interval` in Mathlib, of `cega` in SymLean, and the IEANTN floors, each goal as its own file with one tactic call.
+On November 16, 2026, using Lean 4.35.0, `interval` closed 46 of 52 FloatLib tests and 60 of 61 external goals. Each goal had its own file and one tactic call.
 
-| Corpus | Goals | `interval` | Mathlib `dyadic_interval` | SymLean `cega` |
-| --- | ---: | ---: | ---: | ---: |
-| FloatLib tests of `interval` | 52 | 46 | 1 | 13 |
-| Mathlib tests of `dyadic_interval` | 56 | 55 | 56 | 34 |
-| SymLean tests of `cega` | 56 | 55 | 9 | 56 |
-| IEANTN floors | 5 | 5 | 0 | 5 |
-| all | 169 | 161 | 66 | 108 |
+| Corpus | Goals | `interval` | Mathlib `dyadic_interval` |
+| --- | ---: | ---: | ---: |
+| FloatLib tests of `interval` | 52 | 46 | 1 |
+| Mathlib tests of `dyadic_interval` | 56 | 55 | 56 |
+| IEANTN floors | 5 | 5 | 0 |
+| all | 113 | 106 | 57 |
 
-A count for a corpus says what an engine did on that corpus, not what it does on all goals. Why doesn't `interval` close everything? One Mathlib test has a hypothesis in Mathlib's own interval type, and six FloatLib tests need definitions of their test module, so no engine closes those six as single files. `dyadic_interval` and `cega` each close all of their own tests and far fewer of the others', which is what you'd expect of tests written for one tool :) A closed goal takes 6.0 seconds at the median, most of it the imports of the file.
+A count for a corpus says what an engine did on that corpus, not what it does on all goals. The one external goal `interval` missed had a hypothesis in a different interval type. Six FloatLib tests needed definitions from their test module, so neither tactic closed those six as single files. The median time for `interval` to close a goal was 3.4 seconds, imports included.
 
 ## How to get an error bound for floating-point code
 
@@ -1089,9 +1088,11 @@ the enclosure theorem through subdivision. The tactic runs this check with one m
 evaluation: a product with a factor that is exactly zero needs no enclosure of the other factor
 (`Expr.evalZero?`, and [[FloatLib.Numerics.Interval.Expr.checkZero_sound]] is the theorem for it).
 The tactic proves its translation of the Lean expression
-and builds the input membership proof from the hypotheses. Then it verifies the closed Boolean check
-with `decide +kernel`, which has the kernel run the yes-or-no test itself, and Lean checks the
-resulting proof term.
+and builds the input membership proof from the hypotheses. Then it hands the closed Boolean check to
+the kernel checker of `float_decide`, which rewrites it with the `@[kernel_optimize]` rules and has
+the kernel run the yes-or-no test itself
+([chapter 13](#/chapter/proof-by-computation/who-else-uses-the-rules) has the details). Lean checks
+the resulting proof term.
 
 This is *proof by reflection*, named for reflecting the goal into data a program can compute with.
 You prove the calculator right once, and from then on every yes it gives is a proof. Rocq's Interval
@@ -1143,6 +1144,7 @@ endpoint backends the evaluator accepts:
 | `Backend.rational` | Exact rational arithmetic for algebraic operations; certified rational enclosures for elementary functions. |
 | `Backend.binaryGrid` | Integer arithmetic on a chosen binary grid; elementary bounds are rounded outward onto that grid. |
 | `Backend.ofRounding` | Any endpoint representation with a proved rational outward-rounding contract. |
+| `Backend.ofRoundings` | One such rounding each for the algebraic operations, the quotients and the elementary functions, with a table of elementary enclosures. |
 
 On the binary grid, elementary functions use rational enclosures internally, so the cost depends on
 how algebraic an expression is, how big its endpoints are and the requested degree.
@@ -1227,6 +1229,190 @@ endpoint returns `none`. Any representation can supply the same contract without
 expression language or its proof. A custom endpoint format can use the same evaluator once its
 outward-rounding contract has been proved. If you have an endpoint format you'd like to use,
 you can connect it through this contract :)
+
+### How to round each kind of operation differently
+
+One rounding for every operation isn't always the best trade. Exact rationals never round, but
+their denominators can grow with every product. A binary grid keeps the endpoints short, but on a
+fixed grid a small positive quotient can get a lower end of zero. So `Backend.ofRoundings` takes
+three roundings on one endpoint type: one for the algebraic operations, one for reciprocals and
+quotients, and one for the elementary functions, plus a table of elementary enclosures.
+[[FloatLib.Numerics.Interval.Backend.ofRoundings_sound]] proves the expression contract when the
+three decode endpoints alike and the table's enclosures are sound. `Backend.ofRounding` is the
+case of one rounding with the table that `interval` uses.
+
+For rational endpoints we have three roundings onto binary grids. `OutwardRounding.grid bits`
+rounds to multiples of $2^{-\mathrm{bits}}$, `OutwardRounding.relative bits` keeps about `bits`
+significant bits, and `OutwardRounding.quotient bits` keeps `bits` fractional bits plus one more
+for each bit by which a denominator is longer than its numerator. Here's what the first and the
+last do to $1/10^{30}$:
+
+```lean
+def tinyQuotient : Expr := .binary .div (.const 1) (.const (10 ^ 30))
+
+def fixedGrid : Backend ℚ :=
+  Backend.ofRoundings (.grid 32) (.grid 32) (.grid 32) (Backend.elementaryWith {})
+
+def scaledQuotients : Backend ℚ :=
+  Backend.ofRoundings (.grid 32) (.quotient 32) (.grid 32) (Backend.elementaryWith {})
+
+#eval (tinyQuotient.eval? fixedGrid fun _ => none).map (·.lo) == some 0
+-- true
+
+#eval (tinyQuotient.eval? scaledQuotients fun _ => none).map (fun I => decide (0 < I.lo)) ==
+  some true
+-- true
+```
+
+On the fixed grid the lower end of the quotient drops to zero, so a later division by it would
+fail. The grid for quotients gives it $32 + 99 = 131$ fractional bits, because $10^{30}$ is 99 bits
+longer than $1$, and the lower end stays positive. `dyadicHull`, `relativeHull` and `quotientHull`
+are the same three roundings on whole intervals, with containment theorems such as
+[[FloatLib.Numerics.Interval.containsReal_quotientHull]].
+
+If you want rational endpoints with no rounding at all, `Interval.Exact` has the exact operations.
+They never round and never fail, so you get an interval back instead of an `Option`, and their
+endpoints are `simp` lemmas in ordinary notation, so a proof can work with them without unfolding
+the kernel definitions. The product of $[-1,2]$ and $[3,4]$ is the least and the greatest of the
+four corner products $-3$, $-4$, $6$ and $8$:
+
+```lean
+#eval Exact.mul ⟨-1, 2⟩ ⟨3, 4⟩
+-- { lo := -4, hi := 8 }
+```
+
+Never failing has a price outside an operation's contract. `Exact.div ⟨1, 1⟩ ⟨-1, 1⟩` still
+returns $[-1,1]$, which misses $1/(1/2) = 2$, so the containment theorems carry the conditions
+instead. [[FloatLib.Numerics.Interval.Exact.containsReal_mul]] holds for all real members of the
+two intervals, while `Exact.containsReal_div` asks for a denominator strictly on one side of zero.
+
+### Which elementary enclosures can you choose?
+
+`Backend.elementaryWith` is one table of enclosures for the elementary functions built into
+`Expr`, and its settings say how each one is computed: a degree for each family of functions, the
+bits of the square-root grid, and three switches. `sharpTrig := some bits` rounds the sine and
+cosine midpoint bounds outward before narrowing them with endpoint values on monotone panels.
+On a coarse grid the result can be wider than the unrounded bound: at zero fractional bits the
+sine of $[1,1]$ gets $[0,1]$. Tangent tries the quotient of the sharp enclosures and falls back
+to the unrounded bound if the cosine enclosure contains zero. `total := true` selects the total
+functions outside their usual domains, and `gridExpLog := some bits` computes the exponential
+and the logarithm with the binary-grid kernels.
+
+Take sine on $[0,1]$, whose true range is $[0,\sin 1]$, about $[0,0.8415]$. The bound that
+`interval` uses is the value at the midpoint widened by the half-width, $\sin(1/2) \pm 1/2$, or
+about $[-0.0206,0.9795]$, so it dips a little below zero. Sine increases on $[0,1]$, so the sharp
+enclosure uses its values at the two ends instead:
+
+```lean
+#eval (Backend.elementaryWith {} .sin ⟨0, 1⟩).map (fun I => decide (I.lo < 0)) == some true
+-- true
+
+#eval (Backend.elementaryWith { sharpTrig := some 64 } .sin ⟨0, 1⟩).map (·.lo) == some 0
+-- true
+```
+
+Mathlib defines the square root, the logarithm, the arcsine and the arccosine at every real
+number. `Real.sqrt` is zero below zero, `Real.log x` is `Real.log |x|`, and the arcsine and the
+arccosine are constant outside $[-1,1]$. So a goal can mention $\sqrt{x}$ on an interval that dips
+below zero, and the usual enclosures refuse it. With `total := true` they follow Mathlib, and the
+square root of $[-1,4]$ comes out as exactly $[0,2]$:
+
+```lean
+#eval Backend.elementaryWith {} .sqrt ⟨-1, 4⟩
+-- none
+
+#eval Backend.elementaryWith { total := true } .sqrt ⟨-1, 4⟩ == some ⟨0, 2⟩
+-- true
+```
+
+The logarithm of $[-3,-1]$ is then that of $[1,3]$, and only an interval that contains zero and
+another point still gets no logarithm, since it's unbounded below there. That's with `gridExpLog`
+off: the grid logarithm needs a positive interval whatever `total` says, even for $[0,0]$.
+
+[[FloatLib.Numerics.Interval.Backend.containsReal_elementaryWith]] proves every enclosure of the
+table, whatever the settings. `ElementarySettings.legacy config` turns the three switches off and
+takes the degrees and the precision from `config`. At that setting the table is
+`Backend.elementaryBounds? config`, the one `interval` uses
+([[FloatLib.Numerics.Interval.Backend.elementaryWith_legacy]]), and the default settings `{}` are
+that setting at the default configuration.
+
+### How to evaluate $\pi$, $e$ and real powers
+
+The constants of an `Expr` are rational, so $\pi$ and $x^y$ come in as calls. So does $e$:
+written as $\exp 1$ it would get the degree of the exponential, and as a call its accuracy follows
+the configured precision, like that of $\pi$. `Backend.Standard.extensions` is a table of the
+three, $\pi$ as call 0, $x^y$ as call 1 and $e$ as call 2, and `withExtensions` gives it to any
+backend in place of the backend's own calls. At the default 64 bits the rational enclosure of
+$\pi$ is narrower than $2^{-64}$ before the backend rounds it, and the real power needs a base
+interval with a positive lower end. Here are $2\pi$ and $2^{1/2}$:
+
+```lean
+def twoPi : Expr := .binary .mul (.const 2) (.call 0 [])
+
+def rootTwo : Expr := .call 1 [.const 2, .const (1 / 2)]
+
+def withStandardCalls : Backend ℚ :=
+  (Backend.rational {}).withExtensions {} Backend.Standard.extensions
+
+#eval (twoPi.eval? withStandardCalls fun _ => none).map
+    (fun I => decide (6.283 < I.lo ∧ I.hi < 6.284)) == some true
+-- true
+
+#eval (rootTwo.eval? withStandardCalls fun _ => none).map
+    (fun I => decide (1.4142 < I.lo ∧ I.hi < 1.4143)) == some true
+-- true
+```
+
+[[FloatLib.Numerics.Interval.Backend.Standard.extensions_sound]] proves the three calls, and
+`Backend.withExtensions_sound` turns that into the contract of the extended backend for the call
+table `Standard.functions`, whenever the backend you started from is sound. None of this needs a
+tactic, so an evaluator built on these theorems doesn't load `interval`.
+
+### Why did an evaluation fail?
+
+When an evaluation gives `none`, it doesn't say why. `Expr.diagnose` runs the evaluation that
+`interval` uses, `Expr.evalZero?` with its zero rule, and keeps the reason: a variable with no
+interval, or the first operation that the backend rejected, together with the enclosures of its
+operands. Dividing by $x$ on $[-1,1]$ stops at the quotient:
+
+```lean
+def oneOverX : Expr := .binary .div (.const 1) (.var 0)
+
+#eval oneOverX.diagnose (Backend.rational {}) (fun _ => some ⟨-1, 1⟩) ==
+  .failure (.rejected oneOverX [⟨1, 1⟩, ⟨-1, 1⟩])
+-- true
+```
+
+A diagnosis succeeds exactly when the evaluation with the zero rule does, with the same
+enclosure ([[FloatLib.Numerics.Interval.Expr.diagnose_eq_success_iff]]). If an end of an
+operand's enclosure doesn't decode, such as an infinity of a float format, it says so instead.
+When `interval` fails because an operation has no enclosure on a box, it builds its message from
+the same diagnosis.
+
+### How to keep track of a variable that occurs twice
+
+Back to $x(1-x)$ on $[0,1]$ from the start of the chapter. Interval arithmetic forgets that the
+two occurrences of $x$ are the same number, so it encloses $x(1-x)$ in $[0,1]$, four times as wide
+as the true range $[0,1/4]$. Affine arithmetic [@andradeCombaStolfi1994] writes each variable as
+its midpoint plus its radius times a noise symbol $\varepsilon$ in $[-1,1]$, so that $x - x$ comes
+out as exactly zero. `Enclosure.Affine.Expr.affineRange?` does this for the polynomial part of the
+language: constants, variables, negation, sums, differences, products, natural powers and fused
+multiply-adds.
+
+```lean
+def bump : Expr := .binary .mul (.var 0) (.binary .sub (.const 1) (.var 0))
+
+#eval bump.eval? (Backend.rational {}) (fun _ => some ⟨0, 1⟩) == some ⟨0, 1⟩
+-- true
+
+#eval Enclosure.Affine.Expr.affineRange? bump [⟨0, 1⟩] == some ⟨0, 1 / 4⟩
+-- true
+```
+
+A product keeps its constant and linear terms exact and puts the rest into an interval
+remainder, so the range isn't always this tight.
+[[FloatLib.Numerics.Enclosure.Affine.Expr.containsReal_affineRange?]] proves that the range
+contains the value of the expression at every point of the box.
 
 ## How to bound a polynomial on the whole circle
 

@@ -35,6 +35,10 @@ theorem containsReal_some_iff (I : Interval ℚ) (x : ℝ) :
     I.ContainsReal some x ↔ (I.lo : ℝ) ≤ x ∧ x ≤ (I.hi : ℝ) := by
   simp [ContainsReal, Contains]
 
+/-- The point interval `[q, q]` contains `q`. -/
+theorem containsReal_point (q : ℚ) : (point q).ContainsReal some (q : ℝ) :=
+  (containsReal_some_iff _ _).2 ⟨le_rfl, le_rfl⟩
+
 /-- A successful finite decoder supplies the real endpoint inequalities. -/
 theorem containsReal_iff_of_decode? {decode : α → Option ℚ}
     {I : Interval α} {a : Interval ℚ} (ha : I.decode? decode = some a) (x : ℝ) :

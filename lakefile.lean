@@ -69,7 +69,7 @@ def linterOptions : Array LeanOption := #[
   ⟨`weak.linter.docPrime, true⟩]
 
 package floatlib where
-  version := v!"4.1.0"
+  version := v!"4.2.0"
   description := "Executable numerical representations with proof-backed semantics in Lean 4."
   keywords := #["numerics", "floating-point", "IEEE-754", "quantization", "verification", "mathlib"]
   license := "MIT"

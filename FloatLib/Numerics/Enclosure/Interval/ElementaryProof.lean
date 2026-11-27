@@ -44,6 +44,21 @@ theorem containsReal_monotoneBounds (enclose : ℚ → Interval ℚ) (f : ℝ �
   · simp only [monotoneBounds, heq, ↓reduceIte]
     exact ⟨hl.1.trans hfl, hfh.trans hh.2⟩
 
+/-- Point enclosures and antitonicity on the input interval enclose its entire real image. -/
+theorem containsReal_antitoneBounds (enclose : ℚ → Interval ℚ) (f : ℝ → ℝ)
+    (I : Interval ℚ)
+    (hf : AntitoneOn f (Set.Icc (I.lo : ℝ) (I.hi : ℝ)))
+    (henclose : ∀ q ∈ Set.Icc I.lo I.hi, (enclose q).ContainsReal some (f q))
+    {x : ℝ} (hx : I.ContainsReal some x) :
+    (antitoneBounds enclose I).ContainsReal some (f x) := by
+  -- `-f` is monotone, and its point enclosures are the negated ones.
+  have h := containsReal_monotoneBounds (fun q => ⟨-(enclose q).hi, -(enclose q).lo⟩) (-f ·) I
+    hf.neg (fun q hq => by
+      have := (containsReal_some_iff _ _).1 (henclose q hq)
+      exact (containsReal_some_iff _ _).2 (by push_cast; constructor <;> linarith)) hx
+  simp only [containsReal_some_iff, monotoneBounds, antitoneBounds] at h ⊢
+  split_ifs at h ⊢ <;> push_cast at h ⊢ <;> constructor <;> linarith [h.1, h.2]
+
 /-- The exponential bounds contain `exp x` for every real member of the input interval. -/
 theorem containsReal_expBounds (I : Interval ℚ) (terms : Nat) {x : ℝ}
     (hx : I.ContainsReal some x) : (expBounds I terms).ContainsReal some (Real.exp x) := by

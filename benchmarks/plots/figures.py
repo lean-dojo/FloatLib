@@ -1186,27 +1186,28 @@ def fig_kernel_exact_native(ctx):
 
 
 def fig_interval_corpora(ctx):
-    """Goals closed on four test corpora by `interval` and by two other tactics."""
+    """Goals closed on three test corpora by `interval` and by Mathlib's `dyadic_interval`."""
     path = need(RECORDED / "interval-corpora.csv", "recorded/interval-corpora.csv")
     data = read_csv(path)
     corpora = [("floatlib", "FloatLib tests of interval"), ("mathlib", "Mathlib tests of dyadic_interval"),
-               ("symlean", "SymLean tests of cega"), ("ieantn", "IEANTN floors")]
+               ("ieantn", "IEANTN floors")]
     engines = [("dyadic_interval", "other2", "Mathlib dyadic_interval", "//"),
-               ("cega", "other", "SymLean cega", None),
                ("interval", "now", "FloatLib interval", None)]
     totals = Counter()
     for goal in {r["goal"] for r in data}:
         totals[goal.split("_")[0]] += 1
-    figure, axes = panels(1, 1, 4.6)
+    goals = sum(totals[corpus] for corpus, _ in corpora)
+    figure, axes = panels(1, 1, 3.1)
     axis = axes[0][0]
-    height, rows = 0.24, []
+    height, rows, closed = 0.3, [], Counter()
     for index, (corpus, label) in enumerate(corpora):
         for slot, (engine, key, name, hatch) in enumerate(engines):
             mine = [r for r in data if r["corpus"] == corpus and r["engine"] == engine]
             count = sum(1 for r in mine if r["closed"] == "yes")
+            closed[engine] += count
             elapsed = [float(r["seconds"]) for r in mine if r["closed"] == "yes"]
             share = 100.0 * count / totals[corpus] if totals[corpus] else 0
-            y = index + (slot - 1) * (height + 0.02)
+            y = index + (slot - (len(engines) - 1) / 2) * (height + 0.02)
             axis.barh(y, share, height=height, color=colour(key), hatch=hatch,
                       edgecolor="white", linewidth=0.6)
             axis.text(share + 1, y, f"{count} of {totals[corpus]}", va="center", ha="left",
@@ -1224,22 +1225,19 @@ def fig_interval_corpora(ctx):
     axis.tick_params(axis="y", length=0)
     legend_below(figure, [Patch(facecolor=colour(key), hatch=hatch, edgecolor="white", label=name)
                           for _, key, name, hatch in engines], columns=2)
-    closed = lambda engine: sum(1 for r in data if r["engine"] == engine and r["closed"] == "yes")
     save(ctx, figure, "interval-corpora",
-         "Four groups of three horizontal bars, one group per test corpus and one bar per tactic, on an "
-         "axis from 0 to 100 percent; each bar ends in its count of closed goals out of the goals of the "
+         "Three groups of two horizontal bars, one group per test corpus and one bar per tactic, on an "
+         "axis from 0 to 100 percent. Each bar ends in its count of closed goals out of the goals of the "
          "corpus.",
-         f"Goals closed on four test corpora ({sum(totals.values())} goals) by FloatLib's interval tactic, "
-         "by Mathlib's dyadic_interval and by SymLean's cega. A bar is the "
-         "share of a corpus that one tactic call per goal closes, with the count at its end; a count says "
-         "what a tactic did on that corpus, not what it does on all goals. Recorded on 2026-11-16 with "
-         "Lean 4.35.0, and not run again by the timing mode.",
-         "Each goal is its own file with one tactic call and its axioms checked: Mathlib's "
-         f"`dyadic_interval` ({closed('dyadic_interval')} closed), SymLean's `cega` ({closed('cega')}) and "
-         f"`interval` ({closed('interval')}). The CSV has the median time of a closed goal, which is "
-         "mostly the imports of its file. The corpora are other projects' test files and are not in this "
-         "repository, so the timing mode does not run them; the time of `interval` on FloatLib's own "
-         "examples is in `kernel-exact-library`. "
+         f"Goals closed on three test corpora ({goals} goals) by FloatLib's interval tactic and by "
+         "Mathlib's dyadic_interval. A bar is the share of a corpus that one tactic call per goal closes, "
+         "with the count at its end. A count says what a tactic did on that corpus, not what it does on "
+         "all goals. Recorded on 2026-11-16 with Lean 4.35.0, and not run again by the timing mode.",
+         f"Each goal is its own file with one tactic call and its axioms checked. Of the {goals} goals, "
+         f"Mathlib's `dyadic_interval` closed {closed['dyadic_interval']} and `interval` closed "
+         f"{closed['interval']}. The CSV has the median time of a closed goal, which is mostly the "
+         "imports of its file. The goal files are not in this repository, so the timing mode does not "
+         "run them. The time of `interval` on FloatLib's own examples is in `kernel-exact-library`. "
          + sources("whether each goal closed, and its time", "the counts and medians"),
          ["corpus", "engine", "closed: goals closed", "goals: goals in the corpus",
           "median_seconds: median wall time of a closed goal, imports included"], rows, [path])

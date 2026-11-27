@@ -8,19 +8,22 @@ module
 
 public meta import FloatLib.Numerics.Enclosure.Expression.Backends
 public meta import FloatLib.Numerics.Enclosure.Expression.Check
+public meta import FloatLib.Numerics.Enclosure.Expression.Diagnose
 public meta import Lean.Meta.LitValues
 public meta import Mathlib.Util.Qq
 public import FloatLib.Numerics.Enclosure.Expression.Backends
 public import FloatLib.Numerics.Enclosure.Expression.Check
+public import FloatLib.Numerics.Enclosure.Expression.Diagnose
 
 /-!
 # Failure diagnostics for interval proofs
 
 When a binary-grid check fails, `Tactic.diagnoseFailure` explains why without constructing proof
-evidence. Algebraic failures follow the checker's subdivision order and use the evaluator to locate
-the first rejected operation, and registered functions are inspected through their actual quoted
-backend. An enclosure that includes a forbidden value is reported as an enclosure obstruction, and
-the message makes no claim about the real subexpression.
+evidence. Algebraic failures follow the checker's subdivision order, and `Expr.diagnose` locates
+the first rejected operation on the failing box. A backend with registered functions is inspected
+by reducing `Expr.diagnose` on the actual quoted backend. An enclosure that includes a forbidden
+value is reported as an enclosure obstruction, and the message makes no claim about the real
+subexpression.
 
 A diagnostic retry doubles the endpoint precision. It describes only the inspected box, and the
 tactic verifies every successful proof with its usual kernel check regardless. All the work stays on
@@ -30,7 +33,7 @@ Diagnostics explain what the enclosures show. Only the caller that caught a fail
 heartbeat or recursion limit caused it, so no message here advises raising a budget.
 
 Quoted-syntax readers unfold definitions, so they use `partial` with Lean's resource checks. The
-obstruction walk below recurses structurally over the decoded `Interval.Expr` instead.
+obstruction itself comes from `Expr.diagnose`, which recurses structurally over the expression.
 -/
 
 public meta section
@@ -186,52 +189,49 @@ def boxMessage (atoms : Array Lean.Expr) (box : Box) : MessageData :=
 private def decodeRange (config : Backend.Config) (I : Interval Int) : Interval ℚ :=
   I.map (BinaryGrid.toRat config.precision)
 
-/-- Check interruption and heartbeat limits before and after advisory evaluation. -/
-private def checkedEval (e : Interval.Expr) (B : Backend Int)
-    (env : Nat → Option (Interval Int)) : MetaM (Option (Interval Int)) := do
+/-- Check interruption and heartbeat limits before and after an advisory diagnosis. -/
+private def checkedDiagnose (e : Interval.Expr) (B : Backend Int)
+    (env : Nat → Option (Interval Int)) : MetaM (Diagnosis (Interval Int)) := do
   checkSystem "interval diagnostics"
-  let result := e.evalZero? B env
+  let result := e.diagnose B env
   checkSystem "interval diagnostics"
   return result
 
-/-- Descend in evaluation order, using `evalZero?` itself to distinguish rejected children. -/
-private def firstObstruction (atoms : Array Lean.Expr) (config : Backend.Config)
-    (env : Nat → Option (Interval Int)) (e : Interval.Expr) : MetaM (Interval.Expr × MessageData) :=
-  withIncRecDepth do
-    checkSystem "interval diagnostics"
-    let B := Backend.binaryGrid config
-    match e with
-    | .const r =>
-      return ⟨e, m!"the backend could not enclose the constant {r}"⟩
-    | .var i =>
-      return ⟨e, m!"no interval is available for {atomMessage atoms i}"⟩
-    | .unary op a =>
-      let some I ← checkedEval a B env | firstObstruction atoms config env a
-      let I := decodeRange config I
-      let message := if op == .inv && decide (I.lo ≤ 0 ∧ 0 ≤ I.hi) then
-          m!"inverse: {exprMessage atoms a} is enclosed by {rangeMessage I}, which includes \
-            zero; the denominator enclosure must exclude zero."
-        else m!"the backend returned no enclosure for {exprMessage atoms e}; reason unknown."
-      return ⟨e, message⟩
-    | .binary op a b =>
-      let some _ ← checkedEval a B env | firstObstruction atoms config env a
-      let some J ← checkedEval b B env | firstObstruction atoms config env b
-      let J := decodeRange config J
-      let message := if op == .div && decide (J.lo ≤ 0 ∧ 0 ≤ J.hi) then
-          m!"division in {exprMessage atoms e}: denominator {exprMessage atoms b} is enclosed \
-            by {rangeMessage J}, which includes zero; \
-            the denominator enclosure must exclude zero."
-        else m!"the backend returned no enclosure for {exprMessage atoms e}; reason unknown."
-      return ⟨e, message⟩
-    | .ternary _ a b c =>
-      let some _ ← checkedEval a B env | firstObstruction atoms config env a
-      let some _ ← checkedEval b B env | firstObstruction atoms config env b
-      let some _ ← checkedEval c B env | firstObstruction atoms config env c
-      return ⟨e, m!"the backend returned no enclosure for {exprMessage atoms e}; reason unknown."⟩
-    | .call index _ =>
-      return ⟨e, m!"registered operation {index} returned no enclosure; check its domain \
-        conditions or increase the approximation settings."⟩
-termination_by structural e
+/-- Whether a decoded enclosure includes zero. -/
+private def includesZero (I : Interval ℚ) : Bool :=
+  decide (I.lo ≤ 0) && decide (0 ≤ I.hi)
+
+/-- The message for a rejected operation that the enclosures of its operands do not explain. -/
+private def unknownMessage (atoms : Array Lean.Expr) (node : Interval.Expr) : MessageData :=
+  m!"the backend returned no enclosure for {exprMessage atoms node}; reason unknown."
+
+/-- Explain the rejection of the operation at `node` from the decoded enclosures of its operands.
+A division or reciprocal whose denominator enclosure includes zero says so. -/
+private def rejectedMessage (atoms : Array Lean.Expr) (node : Interval.Expr)
+    (inputs : List (Interval ℚ)) : MessageData :=
+  match node, inputs with
+  | .const r, _ => m!"the backend could not enclose the constant {r}"
+  | .unary .inv a, [I] =>
+    if includesZero I then
+      m!"inverse: {exprMessage atoms a} is enclosed by {rangeMessage I}, which includes zero; \
+        the denominator enclosure must exclude zero."
+    else unknownMessage atoms node
+  | .binary .div _ b, [_, J] =>
+    if includesZero J then
+      m!"division in {exprMessage atoms node}: denominator {exprMessage atoms b} is enclosed \
+        by {rangeMessage J}, which includes zero; the denominator enclosure must exclude zero."
+    else unknownMessage atoms node
+  | .call index _, _ =>
+    m!"registered operation {index} returned no enclosure; check its domain conditions or \
+      increase the approximation settings."
+  | _, _ => unknownMessage atoms node
+
+/-- The node that an obstruction of `Expr.diagnose` names, with the message that explains it. -/
+private def obstructionMessage (atoms : Array Lean.Expr) :
+    Obstruction → Interval.Expr × MessageData
+  | .missingVariable i => ⟨.var i, m!"no interval is available for {atomMessage atoms i}"⟩
+  | .rejected node inputs => ⟨node, rejectedMessage atoms node inputs⟩
+  | .undecodable node => ⟨node, unknownMessage atoms node⟩
 
 /-- A diagnostic search either certifies its boxes, isolates a failing leaf, or runs out of fuel. -/
 private inductive SearchResult where
@@ -287,7 +287,7 @@ private def retryMessage (e : Interval.Expr) (obstruction : Option Interval.Expr
         retry the tactic with that setting."
     if let some operation := obstruction then
       if let some intervals := box.enclose? B then
-        if (← checkedEval operation B (fun i => intervals[i]?)).isSome then
+        if (← checkedDiagnose operation B (fun i => intervals[i]?)).value?.isSome then
           return some m!"A diagnostic retry encloses this operation with {setting} := {value}; \
             the full inequality still needs checking."
   return none
@@ -298,14 +298,14 @@ private def leafMessage (atoms : Array Lean.Expr) (e : Interval.Expr) (box : Box
   let B := Backend.binaryGrid config
   let some intervals := box.enclose? B
     | return "interval could not certify: the backend could not enclose the input box."
-  let (reason, obstruction) ← match ← checkedEval e B (fun i => intervals[i]?) with
-    | none => do
-      let failure ← firstObstruction atoms config (fun i => intervals[i]?) e
-      pure (failure.2, some failure.1)
-    | some I =>
+  let (reason, obstruction) ← match ← checkedDiagnose e B (fun i => intervals[i]?) with
+    | .success I =>
       let required := if relation == .negative then "< 0" else "≤ 0"
       pure (m!"the enclosure of {exprMessage atoms e} is {rangeMessage (decodeRange config I)}; \
         its upper endpoint does not establish {required}.", none)
+    | .failure found =>
+      let (node, message) := obstructionMessage atoms found
+      pure (message, some node)
   let splittable := box.bisect?.isSome
   let budget := if !splittable then
       m!"No input interval can be subdivided."
@@ -319,16 +319,11 @@ private def leafMessage (atoms : Array Lean.Expr) (e : Interval.Expr) (box : Box
     | some hint => m!"{message}\n{hint}"
     | none => message
 
-/-- Evaluate a quoted subexpression on quoted binary-grid inputs by reduction. -/
-private def evalQuoted (backend : Q(Backend Int)) (inputs : Q(List (Interval Int)))
-    (e : Q(Interval.Expr)) : MetaM (Option Q(Interval Int)) := do
+/-- Diagnose a quoted expression on quoted binary-grid inputs by reducing `Expr.diagnose`. -/
+private def diagnoseQuoted (backend : Q(Backend Int)) (inputs : Q(List (Interval Int)))
+    (e : Q(Interval.Expr)) : MetaM Q(Diagnosis (Interval Int)) := do
   checkSystem "interval diagnostics"
-  let result : Q(Option (Interval Int)) ← withTransparency .all
-    (whnf q(Interval.Expr.evalZero? $e $backend (fun i => $inputs[i]?)))
-  match result with
-  | ~q(some $I) => return some I
-  | ~q(none) => return none
-  | _ => throwError "expected a closed interval evaluation"
+  withTransparency .all (whnf q(Interval.Expr.diagnose $e $backend (fun i => $inputs[i]?)))
 
 /-- Decode a quoted binary-grid enclosure to its exact rational endpoints. -/
 private def readRange (precision : Nat) (I : Q(Interval Int)) : MetaM (Interval ℚ) :=
@@ -353,42 +348,42 @@ private inductive Rejection where
   /-- Another rejected operation, or an input the backend could not enclose. -/
   | other (expression : Q(Interval.Expr))
 
-/-- Find the first operation, in evaluation order, whose enclosure the backend rejects. -/
-private partial def findRejection (backend : Q(Backend Int)) (inputs : Q(List (Interval Int)))
-    (precision : Nat) (e : Q(Interval.Expr)) : MetaM Rejection :=
-  withIncRecDepth do
-    let e : Q(Interval.Expr) ← whnf e
-    let search := findRejection backend inputs precision
-    let evaluate := evalQuoted backend inputs
-    let includesZero (I : Interval ℚ) := decide (I.lo ≤ 0) && decide (0 ≤ I.hi)
-    match e with
-    | ~q(Interval.Expr.unary $op $a) =>
-      let some I ← evaluate a | search a
-      let I ← readRange precision I
-      let op : Q(UnaryOp) ← whnf op
-      match op with
-      | ~q(UnaryOp.inv) => return if includesZero I then .division e a I else .other e
-      | _ => return .other e
-    | ~q(Interval.Expr.binary $op $a $b) =>
-      let some _ ← evaluate a | search a
-      let some J ← evaluate b | search b
-      let J ← readRange precision J
-      let op : Q(BinaryOp) ← whnf op
-      match op with
-      | ~q(BinaryOp.div) => return if includesZero J then .division e b J else .other e
-      | _ => return .other e
-    | ~q(Interval.Expr.ternary TernaryOp.fma $a $b $c) =>
-      let some _ ← evaluate a | search a
-      let some _ ← evaluate b | search b
-      let some _ ← evaluate c | search c
-      return .other e
+/-- Read a closed quoted list of rational intervals, such as the decoded operand enclosures of a
+rejected operation. -/
+private partial def readRanges (ranges : Q(List (Interval ℚ))) : MetaM (List (Interval ℚ)) := do
+  let ranges : Q(List (Interval ℚ)) ← withTransparency .all (whnf ranges)
+  match ranges with
+  | ~q([]) => return []
+  | ~q($I :: $rest) =>
+    return ⟨← readRat q(Interval.lo $I), ← readRat q(Interval.hi $I)⟩ :: (← readRanges rest)
+  | _ => throwError "expected a closed list of intervals"
+
+/-- The first operation, in evaluation order, whose enclosure the backend rejects, read from a
+reduced failure of `Expr.diagnose`. A variable without an interval is reported as itself. -/
+private def readRejection (diagnosis : Q(Diagnosis (Interval Int))) : MetaM Rejection := do
+  let ~q(Diagnosis.failure $obstruction) := diagnosis
+    | throwError "expected a closed interval diagnosis"
+  let obstruction : Q(Obstruction) ← withTransparency .all (whnf obstruction)
+  match obstruction with
+  | ~q(Obstruction.rejected $node $ranges) =>
+    let node : Q(Interval.Expr) ← whnf node
+    match node with
     | ~q(Interval.Expr.call $index $args) =>
-      let mut arguments := #[]
-      for arg in ← readArguments args do
-        let some I ← evaluate arg | return (← search arg)
-        arguments := arguments.push (arg, ← readRange precision I)
-      return .call (← readNat index) arguments.toList
-    | _ => return .other e
+      return .call (← readNat index) ((← readArguments args).zip (← readRanges ranges))
+    | ~q(Interval.Expr.unary $op $a) =>
+      let op : Q(UnaryOp) ← whnf op
+      let ~q(UnaryOp.inv) := op | return .other node
+      let [I] ← readRanges ranges | return .other node
+      return if includesZero I then .division node a I else .other node
+    | ~q(Interval.Expr.binary $op $_numerator $b) =>
+      let op : Q(BinaryOp) ← whnf op
+      let ~q(BinaryOp.div) := op | return .other node
+      let [_, J] ← readRanges ranges | return .other node
+      return if includesZero J then .division node b J else .other node
+    | _ => return .other node
+  | ~q(Obstruction.missingVariable $index) => return .other q(Interval.Expr.var $index)
+  | ~q(Obstruction.undecodable $node) => return .other node
+  | _ => throwError "expected a closed interval obstruction"
 
 /-- A quoted operand as source syntax, or `none` when it is not algebraic, such as a call. -/
 private def operandText? (atoms : Array Lean.Expr) (e : Q(Interval.Expr)) :
@@ -445,11 +440,11 @@ private def rejectionMessage (atoms : Array Lean.Expr) (calls : Array Registered
     let operation ← operandMessage atoms "an operation" expression
     return m!"the backend returned no enclosure for {operation}."
 
-/-- Explain why the backend could not evaluate the expression on the original box. -/
+/-- Explain why the backend could not evaluate the expression on the original box, from the
+reduced diagnosis of that evaluation. -/
 private def rejectedOnBox (atoms : Array Lean.Expr) (calls : Array RegisteredCall)
-    (backend : Q(Backend Int)) (inputs : Q(List (Interval Int))) (precision : Nat)
-    (expression : Q(Interval.Expr)) (boxText : MessageData) : MetaM MessageData := do
-  let reason ← rejectionMessage atoms calls (← findRejection backend inputs precision expression)
+    (diagnosis : Q(Diagnosis (Interval Int))) (boxText : MessageData) : MetaM MessageData := do
+  let reason ← rejectionMessage atoms calls (← readRejection diagnosis)
   return m!"interval could not certify: on the original box, {reason}\nBox: {boxText}."
 
 end Diagnostics
@@ -473,8 +468,9 @@ def diagnoseRegisteredFailure (expression : Q(Interval.Expr)) (backend : Q(Backe
   let ~q(some $inputs) := intervals
     | return m!"interval could not enclose the original input box: {boxText}."
   let precision ← Diagnostics.readNat q(Backend.Config.precision $config)
-  let some I ← Diagnostics.evalQuoted backend inputs expression
-    | Diagnostics.rejectedOnBox atoms calls backend inputs precision expression boxText
+  let diagnosis ← Diagnostics.diagnoseQuoted backend inputs expression
+  let ~q(Diagnosis.success $I) := diagnosis
+    | Diagnostics.rejectedOnBox atoms calls diagnosis boxText
   let range ← Diagnostics.readRange precision I
   let relation : Q(Relation) ← whnf relation
   let strict ← match relation with
